@@ -300,10 +300,7 @@ describe('backlinks', () => {
       'ideas/One.md': 'see [[ideas/Plan]] and not [[Plan.md]]',
     })
 
-    expect(links.backlinks(at('ideas/Plan.md')).map((one) => one.path)).toEqual([
-      'ideas/One.md',
-      'ideas/One.md',
-    ])
+    expect(links.backlinks(at('ideas/Plan.md')).map((one) => one.path)).toEqual(['ideas/One.md', 'ideas/One.md'])
     expect(links.backlinks(at('Plan.md'))).toEqual([])
   })
 
@@ -334,16 +331,12 @@ describe('links out', () => {
   })
 
   test('reach a file that is not a note, the way the editor does', async () => {
-    await space(
-      { 'n.md': 'see [[spec.docx]] and [s](docs/spec.docx) and [[shot]]', 'shot.md': '# Shot' },
-      ['docs/spec.docx', 'shot.png'],
-    )
-
-    expect(links.outgoing(at('n.md')).map((one) => one.to)).toEqual([
+    await space({ 'n.md': 'see [[spec.docx]] and [s](docs/spec.docx) and [[shot]]', 'shot.md': '# Shot' }, [
       'docs/spec.docx',
-      'docs/spec.docx',
-      'shot.md',
+      'shot.png',
     ])
+
+    expect(links.outgoing(at('n.md')).map((one) => one.to)).toEqual(['docs/spec.docx', 'docs/spec.docx', 'shot.md'])
     expect(links.reachedOf(at('n.md'), { kind: 'wikilink', target: 'shot.png' })).toBe('shot.png')
     expect(links.reachedOf(at('n.md'), { kind: 'wikilink', target: 'gone.png' })).toBeNull()
   })
@@ -365,9 +358,7 @@ describe('links out', () => {
     const decomposed = 'Übersicht.md'
     await space({ [decomposed]: '# Overview', 'One.md': 'see [[Übersicht]]' })
 
-    expect(links.outgoing(at('One.md'))).toEqual([
-      expect.objectContaining({ target: 'Übersicht', to: decomposed }),
-    ])
+    expect(links.outgoing(at('One.md'))).toEqual([expect.objectContaining({ target: 'Übersicht', to: decomposed })])
     expect(links.backlinks(at(decomposed)).map((one) => one.name)).toEqual(['One.md'])
   })
 })
@@ -514,8 +505,7 @@ describe('a note saved keeps the index up to date', () => {
 
     links.noteSaved(
       site,
-      '[InternetShortcut]\nURL=https://a.example/read\nTitle=A site\n' +
-        'Orden-Icon=https://a.example/icon.png\n',
+      '[InternetShortcut]\nURL=https://a.example/read\nTitle=A site\n' + 'Orden-Icon=https://a.example/icon.png\n',
     )
 
     expect(links.faviconOf(site)).toBe('https://a.example/icon.png')
@@ -526,14 +516,8 @@ describe('a note saved keeps the index up to date', () => {
     await space({ 'Plan.md': '# Plan' })
     const site = at('A site.url')
 
-    links.noteSaved(
-      site,
-      '[InternetShortcut]\nURL=https://a.example/\nOrden-Icon=https://a/one.png\n',
-    )
-    links.noteSaved(
-      site,
-      '[InternetShortcut]\nURL=https://a.example/\nOrden-Icon=https://a/two.png\n',
-    )
+    links.noteSaved(site, '[InternetShortcut]\nURL=https://a.example/\nOrden-Icon=https://a/one.png\n')
+    links.noteSaved(site, '[InternetShortcut]\nURL=https://a.example/\nOrden-Icon=https://a/two.png\n')
 
     expect(links.faviconOf(site)).toBe('https://a/two.png')
   })
@@ -577,10 +561,7 @@ describe('a space still being read', () => {
   })
 
   test('does not bring back a file deleted or moved while the rows were in the air', async () => {
-    const scan = await opening({ 'One.md': 'see [[report.pdf]]' }, ROOT, [
-      'Docs.url',
-      'Papers/report.pdf',
-    ])
+    const scan = await opening({ 'One.md': 'see [[report.pdf]]' }, ROOT, ['Docs.url', 'Papers/report.pdf'])
 
     links.noteGone(at('Docs.url'))
     links.notesMoved(at('Papers'), at('Archive'))
@@ -777,9 +758,7 @@ describe('the blocks the whole space holds', () => {
       'Docs.url': '[InternetShortcut]\r\nURL=https://svelte.dev/docs\r\nTitle=Svelte docs\r\n',
     })
 
-    expect((await links.searchBlocks('svelte docs', 10)).map((one) => one.path)).toEqual([
-      'Plan.md',
-    ])
+    expect((await links.searchBlocks('svelte docs', 10)).map((one) => one.path)).toEqual(['Plan.md'])
   })
 
   test('a word too short to search for finds nothing, and asks nothing', async () => {
@@ -798,9 +777,7 @@ describe('the blocks the whole space holds', () => {
     const left = vi.spyOn(workspace.excluded, 'of').mockReturnValue(['archive'])
 
     try {
-      expect((await links.searchBlocks('second half', 10)).map((one) => one.path)).toEqual([
-        'Plan.md',
-      ])
+      expect((await links.searchBlocks('second half', 10)).map((one) => one.path)).toEqual(['Plan.md'])
     } finally {
       left.mockRestore()
     }
@@ -821,17 +798,12 @@ describe('renaming a note rewrites the links to it', () => {
     await space({ 'Plan.md': '# Plan' }, ['Board.canvas'])
     notes['Board.canvas'] = board
     links.canvasRead(at('Board.canvas'), board)
-    await vi.waitFor(() =>
-      expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toContain('Board.canvas'),
-    )
+    await vi.waitFor(() => expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toContain('Board.canvas'))
 
     expect(await links.retarget(at('Plan.md'), at('Road "x".md'), ROOT)).toBe(1)
 
     const after = JSON.parse(notes['Board.canvas'] ?? '') as { nodes: Record<string, string>[] }
-    expect(after.nodes.map((one) => one.file ?? one.text)).toEqual([
-      'Road "x".md',
-      'see [[Road "x"]]',
-    ])
+    expect(after.nodes.map((one) => one.file ?? one.text)).toEqual(['Road "x".md', 'see [[Road "x"]]'])
   })
 
   test('and the canvas is still read as a canvas, so a second rename follows its card', async () => {
@@ -847,9 +819,7 @@ describe('renaming a note rewrites the links to it', () => {
     await space({ 'Plan.md': '# Plan', 'Other.md': '# Other' }, ['Board.canvas'])
     notes['Board.canvas'] = board
     links.canvasRead(at('Board.canvas'), board)
-    await vi.waitFor(() =>
-      expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toContain('Board.canvas'),
-    )
+    await vi.waitFor(() => expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toContain('Board.canvas'))
 
     notes['Roadmap.md'] = notes['Plan.md'] ?? ''
     delete notes['Plan.md']
@@ -860,54 +830,46 @@ describe('renaming a note rewrites the links to it', () => {
     expect(links.backlinks(at('Other.md'))).toEqual([])
   })
 
-  test.each(['Book.pages', 'x/Book.pages'])(
-    'a link in a text card of %s follows its note',
-    async (book) => {
-      const card = { x: 0, y: 0, width: 10, height: 10 }
-      const plane = JSON.stringify({
-        nodes: [{ id: 'b', type: 'text', text: 'see [[Plan]]', ...card }],
-        edges: [],
-      })
-      await import('@orden/scan/canvas')
-      await space({ 'Plan.md': '# Plan' }, [book])
-      notes[book] = plane
-      links.canvasRead(at(book), plane)
-      await vi.waitFor(() => expect(links.held().map((one) => one.path)).toContain(book))
+  test.each(['Book.pages', 'x/Book.pages'])('a link in a text card of %s follows its note', async (book) => {
+    const card = { x: 0, y: 0, width: 10, height: 10 }
+    const plane = JSON.stringify({
+      nodes: [{ id: 'b', type: 'text', text: 'see [[Plan]]', ...card }],
+      edges: [],
+    })
+    await import('@orden/scan/canvas')
+    await space({ 'Plan.md': '# Plan' }, [book])
+    notes[book] = plane
+    links.canvasRead(at(book), plane)
+    await vi.waitFor(() => expect(links.held().map((one) => one.path)).toContain(book))
 
-      expect(await links.retarget(at('Plan.md'), at('Later.md'), ROOT)).toBe(1)
+    expect(await links.retarget(at('Plan.md'), at('Later.md'), ROOT)).toBe(1)
 
-      const after = JSON.parse(notes[book] ?? '') as { nodes: Record<string, string>[] }
-      expect(after.nodes.map((one) => one.text)).toEqual(['see [[Later]]'])
-    },
-  )
+    const after = JSON.parse(notes[book] ?? '') as { nodes: Record<string, string>[] }
+    expect(after.nodes.map((one) => one.text)).toEqual(['see [[Later]]'])
+  })
 
   test.each([
     ['x/Plan.md', 'x/Road.md', 'see [[Road]]'],
     ['Plan.md', 'Road.md', 'see [[Plan]]'],
-  ])(
-    'a text card link on a canvas in a folder is read from beside it when %s is renamed',
-    async (was, now, words) => {
-      const card = { x: 0, y: 0, width: 10, height: 10 }
-      const plane = JSON.stringify({
-        nodes: [{ id: 'b', type: 'text', text: 'see [[Plan]]', ...card }],
-        edges: [],
-      })
-      await import('@orden/scan/canvas')
-      await space({ 'Plan.md': '# Plan', 'x/Plan.md': '# Other plan' }, ['x/Board.canvas'])
-      notes['x/Board.canvas'] = plane
-      links.canvasRead(at('x/Board.canvas'), plane)
-      await vi.waitFor(() =>
-        expect(links.held().map((one) => one.path)).toContain('x/Board.canvas'),
-      )
+  ])('a text card link on a canvas in a folder is read from beside it when %s is renamed', async (was, now, words) => {
+    const card = { x: 0, y: 0, width: 10, height: 10 }
+    const plane = JSON.stringify({
+      nodes: [{ id: 'b', type: 'text', text: 'see [[Plan]]', ...card }],
+      edges: [],
+    })
+    await import('@orden/scan/canvas')
+    await space({ 'Plan.md': '# Plan', 'x/Plan.md': '# Other plan' }, ['x/Board.canvas'])
+    notes['x/Board.canvas'] = plane
+    links.canvasRead(at('x/Board.canvas'), plane)
+    await vi.waitFor(() => expect(links.held().map((one) => one.path)).toContain('x/Board.canvas'))
 
-      await links.retarget(at(was), at(now), ROOT)
+    await links.retarget(at(was), at(now), ROOT)
 
-      const after = JSON.parse(notes['x/Board.canvas'] ?? '') as {
-        nodes: Record<string, string>[]
-      }
-      expect(after.nodes.map((one) => one.text)).toEqual([words])
-    },
-  )
+    const after = JSON.parse(notes['x/Board.canvas'] ?? '') as {
+      nodes: Record<string, string>[]
+    }
+    expect(after.nodes.map((one) => one.text)).toEqual([words])
+  })
 
   test('a card read before cards named their file from the top still does', async () => {
     const { scanCanvas } = await import('@orden/scan/canvas')
@@ -1049,9 +1011,7 @@ describe('renaming a note rewrites the links to it', () => {
     await links.retarget(at('A/Plan.md'), at('A/Road.md'), ROOT)
     links.notesMoved(at('A/Plan.md'), at('A/Road.md'))
 
-    expect(notes['B/x.md']).toBe(
-      'see [[A/Road]], [[A/Road#Intro|the plan]], [[A/Road#^b1]] and [p](../A/Road.md)',
-    )
+    expect(notes['B/x.md']).toBe('see [[A/Road]], [[A/Road#Intro|the plan]], [[A/Road#^b1]] and [p](../A/Road.md)')
     expect(notes['A/y.md']).toBe('see [[Road]]')
     expect(links.outgoing(at('B/x.md')).map((one) => one.to)).toEqual([
       'A/Road.md',
@@ -1089,11 +1049,7 @@ describe('renaming a note rewrites the links to it', () => {
 
     expect(notes['B/x.md']).toBe('see [[/Road]], [[/Road#Intro|the plan]] and [p](../Road.md)')
     expect(notes['y.md']).toBe('see [[Road]]')
-    expect(links.outgoing(at('B/x.md')).map((one) => one.to)).toEqual([
-      'Road.md',
-      'Road.md',
-      'Road.md',
-    ])
+    expect(links.outgoing(at('B/x.md')).map((one) => one.to)).toEqual(['Road.md', 'Road.md', 'Road.md'])
   })
 
   test('moved to the top of the space and renamed, onto a name a folder holds', async () => {
@@ -1158,10 +1114,7 @@ describe('a file deleted and put back', () => {
   const SITE = '[InternetShortcut]\r\nURL=https://svelte.dev/\r\n'
 
   test('stops answering a link the moment it goes', async () => {
-    await space({ 'Docs.url': SITE, 'One.md': 'see [[Docs.url]]' }, [
-      'Docs.url',
-      'Papers/report.pdf',
-    ])
+    await space({ 'Docs.url': SITE, 'One.md': 'see [[Docs.url]]' }, ['Docs.url', 'Papers/report.pdf'])
 
     links.noteGone(at('Docs.url'))
     links.noteGone(at('Papers'))
@@ -1194,9 +1147,7 @@ describe('a file deleted and put back', () => {
   })
 
   test('a folder brings everything in it back, notes and files', async () => {
-    await space({ 'Papers/Notes.md': '# Notes', 'One.md': 'see [[Notes]] and [[report.pdf]]' }, [
-      'Papers/report.pdf',
-    ])
+    await space({ 'Papers/Notes.md': '# Notes', 'One.md': 'see [[Notes]] and [[report.pdf]]' }, ['Papers/report.pdf'])
     links.noteGone(at('Papers'))
     expect(links.backlinks(at('Papers/Notes.md'))).toEqual([])
 
@@ -1221,9 +1172,7 @@ describe('naming a block of another note', () => {
 
     const id = await links.nameBlock('Plan.md', 2, `${ROOT}/Note.md`)
     expect(id).toMatch(/^[a-z0-9]{6}$/)
-    expect(notes['Plan.md']).toBe(
-      `# Plan\n\nfirst line\nsecond line ^${id ?? ''}\n\nanother block\n`,
-    )
+    expect(notes['Plan.md']).toBe(`# Plan\n\nfirst line\nsecond line ^${id ?? ''}\n\nanother block\n`)
     expect(snapshots).toEqual(['Plan.md'])
   })
 
@@ -1453,9 +1402,7 @@ describe('resolving a page of links', () => {
     for (const from of ['Notes/Today.md', 'ideas/Later.md']) {
       const index = links.index(at(from))
       for (const target of asked) {
-        expect(links.targetOf(at(from), { kind: 'wikilink', target })).toBe(
-          resolveNote(index, target)?.path ?? null,
-        )
+        expect(links.targetOf(at(from), { kind: 'wikilink', target })).toBe(resolveNote(index, target)?.path ?? null)
       }
     }
   })
@@ -1483,9 +1430,7 @@ describe('a folder renamed', () => {
     notes['Board.canvas'] = board
     links.canvasRead(at('Board.canvas'), board)
     await vi.waitFor(() =>
-      expect(links.backlinks(at('Projects/Plan.md')).map((one) => one.path)).toContain(
-        'Board.canvas',
-      ),
+      expect(links.backlinks(at('Projects/Plan.md')).map((one) => one.path)).toContain('Board.canvas'),
     )
 
     const touched = await links.retarget(at('Projects'), at('Work'), ROOT, () => null, {
@@ -1509,9 +1454,7 @@ describe('a folder renamed', () => {
 
     await links.retarget(at('Projects'), at('Area/Projects'), ROOT, () => null, { moved: true })
 
-    expect(notes['Area/Projects/Plan.md']).toBe(
-      'see [o](../../Other.md), [s](Sub.md) and [[Projects/Sub]]\n',
-    )
+    expect(notes['Area/Projects/Plan.md']).toBe('see [o](../../Other.md), [s](Sub.md) and [[Projects/Sub]]\n')
   })
 })
 
@@ -1534,10 +1477,9 @@ describe('a note moved to another folder', () => {
   })
 
   test('and moved back to the top, climbs no further than it has to', async () => {
-    await space(
-      { 'Projects/Plan.md': '![shot](../assets/abc.png) [o](../Other.md)\n', 'Other.md': '#' },
-      ['assets/abc.png'],
-    )
+    await space({ 'Projects/Plan.md': '![shot](../assets/abc.png) [o](../Other.md)\n', 'Other.md': '#' }, [
+      'assets/abc.png',
+    ])
     notes['Plan.md'] = notes['Projects/Plan.md'] ?? ''
 
     await links.retarget(at('Projects/Plan.md'), at('Plan.md'), ROOT, () => null, { moved: true })
@@ -1546,14 +1488,10 @@ describe('a note moved to another folder', () => {
   })
 
   test('renamed in its own folder, its own links are left as they were', async () => {
-    await space({ 'Plan.md': '![shot](assets/abc.png) [o](Other.md)\n', 'Other.md': '#' }, [
-      'assets/abc.png',
-    ])
+    await space({ 'Plan.md': '![shot](assets/abc.png) [o](Other.md)\n', 'Other.md': '#' }, ['assets/abc.png'])
     notes['Goal.md'] = notes['Plan.md'] ?? ''
 
-    expect(
-      await links.retarget(at('Plan.md'), at('Goal.md'), ROOT, () => null, { moved: true }),
-    ).toBe(0)
+    expect(await links.retarget(at('Plan.md'), at('Goal.md'), ROOT, () => null, { moved: true })).toBe(0)
     expect(notes['Goal.md']).toBe('![shot](assets/abc.png) [o](Other.md)\n')
   })
 
@@ -1610,10 +1548,7 @@ describe('a note moved to another folder', () => {
     links.notesMoved(at('Notes/Draft.md'), at('Archive/Draft.md'))
 
     expect(notes['Archive/Draft.md']).toBe('see [[Notes/Ideas]] and [[Other]]')
-    expect(links.outgoing(at('Archive/Draft.md')).map((one) => one.to)).toEqual([
-      'Notes/Ideas.md',
-      'Other.md',
-    ])
+    expect(links.outgoing(at('Archive/Draft.md')).map((one) => one.to)).toEqual(['Notes/Ideas.md', 'Other.md'])
   })
 })
 
@@ -1649,10 +1584,7 @@ describe('an alias that holds a slash', () => {
     })
 
     expect(links.backlinks(at('Networking.md')).map((one) => one.path)).toEqual(['x.md', 'x.md'])
-    expect(links.outgoing(at('x.md')).map((one) => one.to)).toEqual([
-      'Networking.md',
-      'Networking.md',
-    ])
+    expect(links.outgoing(at('x.md')).map((one) => one.to)).toEqual(['Networking.md', 'Networking.md'])
   })
 })
 
@@ -1769,10 +1701,7 @@ describe('another window writing the file as a link is rewritten', () => {
     vi.stubGlobal('navigator', { locks })
     try {
       let letGo = (): unknown => undefined
-      const held = locks.request(
-        `orden:file:${path}`,
-        () => new Promise((go) => (letGo = () => go(undefined))),
-      )
+      const held = locks.request(`orden:file:${path}`, () => new Promise((go) => (letGo = () => go(undefined))))
       const working = work()
       await new Promise((resolve) => setTimeout(resolve, 5))
       write()
@@ -1841,8 +1770,7 @@ describe('a note that is protected and shut', () => {
     links.locksSeen = () => 'shut'
     try {
       await space({
-        'Secret.md':
-          '---\naliases: [Hidden name]\n---\n# Diagnosis\n\nline ^mark #private [[Plan]]',
+        'Secret.md': '---\naliases: [Hidden name]\n---\n# Diagnosis\n\nline ^mark #private [[Plan]]',
         'Plan.md': '# Plan\n\n#shared [[Secret]]',
       })
       const refs = links.index(at('Plan.md')).notes
@@ -1987,15 +1915,8 @@ describe('a move that leaves a bare link pointing at a namesake', () => {
     await links.retarget(at('Draft.md'), at('Bob.md'), ROOT)
     links.notesMoved(at('Draft.md'), at('Bob.md'))
 
-    expect(notes['x.md']).toBe(
-      'see [[Robert|Bob]] and [[Robert#Intro|Bob]] and ![[Robert]]\n| [[Robert\\|Bob]] |\n',
-    )
-    expect(links.backlinks(at('People/Robert.md')).map((one) => one.path)).toEqual([
-      'x.md',
-      'x.md',
-      'x.md',
-      'x.md',
-    ])
+    expect(notes['x.md']).toBe('see [[Robert|Bob]] and [[Robert#Intro|Bob]] and ![[Robert]]\n| [[Robert\\|Bob]] |\n')
+    expect(links.backlinks(at('People/Robert.md')).map((one) => one.path)).toEqual(['x.md', 'x.md', 'x.md', 'x.md'])
     expect(links.backlinks(at('Bob.md'))).toEqual([])
   })
 
@@ -2042,9 +1963,7 @@ describe('a move that leaves a bare link pointing at a namesake', () => {
       moved: true,
     })
 
-    expect(notes['Team/x.md']).toBe(
-      'see [[Robert|Bob]] and [[Robert|Bob]]\nrow | [[Robert\\|Bob]] | end\n',
-    )
+    expect(notes['Team/x.md']).toBe('see [[Robert|Bob]] and [[Robert|Bob]]\nrow | [[Robert\\|Bob]] | end\n')
   })
 
   test('a note moved away from an alias link keeps it when another note shares the alias', async () => {
@@ -2066,9 +1985,7 @@ describe('a move that leaves a bare link pointing at a namesake', () => {
     notes['Y/Plan.md'] = notes['Plan.md'] ?? ''
     delete notes['Plan.md']
 
-    expect(
-      await links.retarget(at('Plan.md'), at('Y/Plan.md'), ROOT, () => null, { moved: true }),
-    ).toBe(0)
+    expect(await links.retarget(at('Plan.md'), at('Y/Plan.md'), ROOT, () => null, { moved: true })).toBe(0)
     expect(notes['One.md']).toBe('see [[Plan]]\n')
   })
 })
@@ -2112,15 +2029,10 @@ describe('a markdown link written from the top or by name alone', () => {
       'journal/Monday.md': 'see [Plan](Plan.md) and [it](ideas/Plan.md)\n',
     })
 
-    expect(links.backlinks(at('ideas/Plan.md')).map((one) => one.name)).toEqual([
-      'Monday.md',
-      'Monday.md',
-    ])
+    expect(links.backlinks(at('ideas/Plan.md')).map((one) => one.name)).toEqual(['Monday.md', 'Monday.md'])
 
     expect(await links.retarget(at('ideas/Plan.md'), at('ideas/Road.md'), ROOT)).toBe(1)
-    expect(notes['journal/Monday.md']).toBe(
-      'see [Plan](../ideas/Road.md) and [it](../ideas/Road.md)\n',
-    )
+    expect(notes['journal/Monday.md']).toBe('see [Plan](../ideas/Road.md) and [it](../ideas/Road.md)\n')
   })
 })
 
@@ -2128,8 +2040,7 @@ describe('an attachment reached by name or from the top', () => {
   test('is followed by a rename however the link was written', async () => {
     await space(
       {
-        'journal/Monday.md':
-          '![](../files/pic.png) and ![](pic.png) and ![](files/pic.png) and [r](report.docx)\n',
+        'journal/Monday.md': '![](../files/pic.png) and ![](pic.png) and ![](files/pic.png) and [r](report.docx)\n',
       },
       ['files/pic.png', 'files/report.docx'],
     )
@@ -2144,10 +2055,7 @@ describe('an attachment reached by name or from the top', () => {
 
 describe('a file renamed across the note extension', () => {
   test('becomes a note when it takes the extension and stops being one when it drops it', async () => {
-    await space(
-      { 'Other.md': 'see [[Draft]]\n', 'Plan.md': 'see [[Target]]\n', 'Target.md': '# t' },
-      ['Draft.txt'],
-    )
+    await space({ 'Other.md': 'see [[Draft]]\n', 'Plan.md': 'see [[Target]]\n', 'Target.md': '# t' }, ['Draft.txt'])
     notes['Draft.md'] = '# Draft'
     await links.follow({
       op: 'moved',
@@ -2235,41 +2143,27 @@ describe('a markdown link to a file written from the top of the space or by its 
     ])
     const from = at('Notes/Day/x.md')
 
-    expect(links.targetOf(from, { kind: 'markdown', target: 'attachments/report.pdf' })).toBe(
-      'attachments/report.pdf',
-    )
-    expect(links.targetOf(from, { kind: 'markdown', target: 'report.pdf' })).toBe(
-      'attachments/report.pdf',
-    )
+    expect(links.targetOf(from, { kind: 'markdown', target: 'attachments/report.pdf' })).toBe('attachments/report.pdf')
+    expect(links.targetOf(from, { kind: 'markdown', target: 'report.pdf' })).toBe('attachments/report.pdf')
     expect(links.targetOf(from, { kind: 'markdown', target: '/report.pdf' })).toBeNull()
     expect(links.targetOf(from, { kind: 'markdown', target: './report.pdf' })).toBeNull()
-    expect(
-      links.targetOf(from, { kind: 'markdown', target: '../attachments/report.pdf' }),
-    ).toBeNull()
+    expect(links.targetOf(from, { kind: 'markdown', target: '../attachments/report.pdf' })).toBeNull()
     expect(notePicture('attachments/cat.png', from, '')).toBe('/asset/space/attachments/cat.png')
     expect(notePicture('cat.png', from, '')).toBe('/asset/space/attachments/cat.png')
-    expect(notePicture('attachments/my%20cat.png', from, '')).toBe(
-      '/asset/space/attachments/my%20cat.png',
-    )
+    expect(notePicture('attachments/my%20cat.png', from, '')).toBe('/asset/space/attachments/my%20cat.png')
 
     await links.retarget(at('attachments/report.pdf'), at('attachments/summary.pdf'), ROOT)
-    expect(notes['Notes/Day/x.md']).toBe(
-      '[r](../../attachments/summary.pdf) and [s](../../attachments/summary.pdf)',
-    )
+    expect(notes['Notes/Day/x.md']).toBe('[r](../../attachments/summary.pdf) and [s](../../attachments/summary.pdf)')
   })
 
   test('a picture named from the top or by name follows its rename', async () => {
-    await space({ 'Notes/Day/x.md': '![](attachments/cat.png) and ![](cat.png)' }, [
-      'attachments/cat.png',
-    ])
+    await space({ 'Notes/Day/x.md': '![](attachments/cat.png) and ![](cat.png)' }, ['attachments/cat.png'])
     const from = at('Notes/Day/x.md')
     expect(notePicture('attachments/cat.png', from, '')).toBe('/asset/space/attachments/cat.png')
     expect(notePicture('cat.png', from, '')).toBe('/asset/space/attachments/cat.png')
 
     await links.retarget(at('attachments/cat.png'), at('attachments/dog.png'), ROOT)
-    expect(notes['Notes/Day/x.md']).toBe(
-      '![](../../attachments/dog.png) and ![](../../attachments/dog.png)',
-    )
+    expect(notes['Notes/Day/x.md']).toBe('![](../../attachments/dog.png) and ![](../../attachments/dog.png)')
   })
 })
 
@@ -2284,12 +2178,8 @@ describe('a file named by a name that more than one folder holds', () => {
 
     expect(notePicture('cover.jpg', at('Trips/Paris.md'), '')).toBe('/asset/space/Trips/cover.jpg')
     expect(links.fileFor('cover.jpg', at('Trips/Paris.md'))).toBe(at('Trips/cover.jpg'))
-    expect(links.targetOf(at('Trips/Paris.md'), { kind: 'wikilink', target: 'guide.pdf' })).toBe(
-      'Trips/guide.pdf',
-    )
-    expect(links.targetOf(at('Notes/x.md'), { kind: 'wikilink', target: 'guide.pdf' })).toBe(
-      'Home/guide.pdf',
-    )
+    expect(links.targetOf(at('Trips/Paris.md'), { kind: 'wikilink', target: 'guide.pdf' })).toBe('Trips/guide.pdf')
+    expect(links.targetOf(at('Notes/x.md'), { kind: 'wikilink', target: 'guide.pdf' })).toBe('Home/guide.pdf')
   })
 })
 
@@ -2300,11 +2190,7 @@ describe('an alias with a slash in it', () => {
       'Build.md': 'See [[CI/CD]].\n',
     })
 
-    expect(links.targetOf(at('Build.md'), { kind: 'wikilink', target: 'CI/CD' })).toBe(
-      'Continuous integration.md',
-    )
-    expect(links.backlinks(at('Continuous integration.md')).map((one) => one.path)).toEqual([
-      'Build.md',
-    ])
+    expect(links.targetOf(at('Build.md'), { kind: 'wikilink', target: 'CI/CD' })).toBe('Continuous integration.md')
+    expect(links.backlinks(at('Continuous integration.md')).map((one) => one.path)).toEqual(['Build.md'])
   })
 })

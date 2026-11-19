@@ -17,16 +17,11 @@
   const property = $derived(view?.groupBy?.property)
   const image = $derived(typeof view?.options.image === 'string' ? view.options.image : null)
   const fit = $derived(view?.options.imageFit === 'contain' ? 'contain' : 'cover')
-  const ratio = $derived(
-    typeof view?.options.imageAspectRatio === 'number' ? view.options.imageAspectRatio : 0.5,
-  )
+  const ratio = $derived(typeof view?.options.imageAspectRatio === 'number' ? view.options.imageAspectRatio : 0.5)
   const size = $derived(typeof view?.options.cardSize === 'number' ? view.options.cardSize : 220)
   const shown = $derived(
     live.columns
-      .filter(
-        (one) =>
-          one !== 'file.name' && one !== 'file.basename' && one !== 'task.text' && one !== image,
-      )
+      .filter((one) => one !== 'file.name' && one !== 'file.basename' && one !== 'task.text' && one !== image)
       .slice(0, 4),
   )
 
@@ -51,10 +46,7 @@
 <div class="cards" style:--card={`${size}px`}>
   {#each live.answer?.groups ?? [] as group (groupName(group.key))}
     {#if property !== undefined}
-      <p
-        class="orden-section"
-        use:droppable={(row, _at, _box, from) => kit.drop(row, group.key, undefined, from)}
-      >
+      <p class="orden-section" use:droppable={(row, _at, _box, from) => kit.drop(row, group.key, undefined, from)}>
         {groupLabel(property, group.key, live.today, names)}<span>{group.rows.length}</span>
       </p>
     {/if}
@@ -83,13 +75,7 @@
           {#if image !== null}
             <div class="cover" style:aspect-ratio={1 / ratio}>
               {#if cover && 'src' in cover}
-                <img
-                  src={cover.src}
-                  alt=""
-                  style:object-fit={fit}
-                  loading="lazy"
-                  draggable="false"
-                />
+                <img src={cover.src} alt="" style:object-fit={fit} loading="lazy" draggable="false" />
               {:else if cover}
                 <span class="host">{cover.host}</span>
               {/if}
@@ -99,14 +85,10 @@
             <span>{title}</span>
           </div>
           {#each shown as one (one)}
-            {@const value = live.base
-              ? valueText(cellValue(live.base, one, row, live.context), live.today)
-              : ''}
+            {@const value = live.base ? valueText(cellValue(live.base, one, row, live.context), live.today) : ''}
             {#if value}
               <div class="prop">
-                <span class="key"
-                  >{propertyName(one, live.base ? displayName(live.base, one) : undefined)}</span
-                >
+                <span class="key">{propertyName(one, live.base ? displayName(live.base, one) : undefined)}</span>
                 <span class="said">{value}</span>
               </div>
             {/if}

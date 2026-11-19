@@ -56,12 +56,7 @@ async function opened() {
 
 test('the palette’s row shows one window per tab, the strip leaves them out, the keyboard on the one in front', async () => {
   await opened()
-  expect(windows().map((one) => one.getAttribute('aria-label'))).toEqual([
-    'One',
-    'Two',
-    'Three',
-    'Three',
-  ])
+  expect(windows().map((one) => one.getAttribute('aria-label'))).toEqual(['One', 'Two', 'Three', 'Three'])
   expect(tabOverview.out).toHaveLength(4)
   expect(document.activeElement).toBe(document.querySelector('.window[aria-current="page"]'))
 })
@@ -143,9 +138,7 @@ test('it comes back where the camera was left', async () => {
   await opened()
   const world = () => document.querySelector<HTMLElement>('.world')?.style.transform
   const canvas = layer()
-  canvas?.dispatchEvent(
-    new WheelEvent('wheel', { deltaX: 120, deltaY: 40, bubbles: true, cancelable: true }),
-  )
+  canvas?.dispatchEvent(new WheelEvent('wheel', { deltaX: 120, deltaY: 40, bubbles: true, cancelable: true }))
   flushSync()
   const moved = world()
   expect(overlays.escape()).toBe(true)
@@ -184,18 +177,13 @@ test('a window put by hand is found again by the next run, whose tabs have new i
 test('windows kept where they were put on each other open apart, with nothing to drag', async () => {
   const { places } = await import('../../src/lib/overview/src/places.svelte')
   const kept = Object.fromEntries(
-    workspace.tabs.map((one, index) => [
-      one.id,
-      { x: 100 + index * 30, y: 100 + index * 20, w: 300, h: 200 },
-    ]),
+    workspace.tabs.map((one, index) => [one.id, { x: 100 + index * 30, y: 100 + index * 20, w: 300, h: 200 }]),
   )
   places.keepWindows(kept, workspace.tabs)
   await opened()
   const boxes = windows().map((one) => {
     const [x, y, sx, sy] = (
-      /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+), ([-\d.]+)\)/.exec(
-        one.style.transform,
-      ) ?? []
+      /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+), ([-\d.]+)\)/.exec(one.style.transform) ?? []
     )
       .slice(1)
       .map(Number)
@@ -276,8 +264,7 @@ test('a pane holding a web page moves as its window, its picture in its hole and
   expect(pane.style.transform).toContain('scale(')
   expect(tabOverview.lifted).not.toContain(paneId)
   const window = windows().find(
-    (one) =>
-      one.getAttribute('aria-label') === workspace.tabs.find((tab) => tab.id === page)?.shown,
+    (one) => one.getAttribute('aria-label') === workspace.tabs.find((tab) => tab.id === page)?.shown,
   )
   expect(window?.querySelector('.face-box > .face')).toBe(null)
   expect(pages.still).toBe(true)
@@ -338,8 +325,7 @@ test('a window’s cross sits on its corner, red, and answers the pointer', asyn
   const window = windows()[0]
   const cross = window?.nextElementSibling as HTMLElement | null
   const [x, y, zoom] = (
-    /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)/.exec(window?.style.transform ?? '') ??
-    []
+    /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)/.exec(window?.style.transform ?? '') ?? []
   )
     .slice(1)
     .map(Number)
@@ -357,15 +343,10 @@ test('a window’s cross sits on its corner, red, and answers the pointer', asyn
   expect(rule('.closer {')).not.toMatch(/background:[^;]*--danger/)
   expect(rule('.closer {')).toContain('translate(-50%, -50%)')
   expect(rule('.closer {')).toMatch(/--closer-size: 2[0-4]px/)
-  const hovered = [...source.matchAll(/\n {2}([^{}]*\.closer:hover[^{}]*)\{([^}]*)\}/g)].map(
-    (one) => one[2] ?? '',
-  )
+  const hovered = [...source.matchAll(/\n {2}([^{}]*\.closer:hover[^{}]*)\{([^}]*)\}/g)].map((one) => one[2] ?? '')
   expect(
     hovered.some(
-      (one) =>
-        one.includes('--surface-hover') &&
-        one.includes('scale(1.18)') &&
-        !/background:[^;]*--danger/.test(one),
+      (one) => one.includes('--surface-hover') && one.includes('scale(1.18)') && !/background:[^;]*--danger/.test(one),
     ),
   ).toBe(true)
 })
@@ -389,9 +370,7 @@ test('every scroll zooms about the pointer, Ctrl or not, and none moves the canv
   const world = () => document.querySelector<HTMLElement>('.world')
   const read = () => {
     const transform = world()?.style.transform ?? ''
-    const [x, y, zoom] = (
-      /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(transform) ?? []
-    )
+    const [x, y, zoom] = (/translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(transform) ?? [])
       .slice(1)
       .map(Number)
     return { x: x ?? 0, y: y ?? 0, zoom: zoom ?? 1 }
@@ -438,9 +417,7 @@ test('a zoom only moves the camera: where the windows lie, and how big, is the s
       .slice(1)
       .map(Number)
     return windows().map((one) => {
-      const [x, y] = (/translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(one.style.transform) ?? [])
-        .slice(1)
-        .map(Number)
+      const [x, y] = (/translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(one.style.transform) ?? []).slice(1).map(Number)
       const at = [((x ?? 0) - (cx ?? 0)) / (zoom ?? 1), ((y ?? 0) - (cy ?? 0)) / (zoom ?? 1)]
       return [one.style.width, one.style.height, ...at.map((v) => v.toFixed(2))].join(' ')
     })
@@ -503,9 +480,7 @@ test('a launcher or top button that comes while the overview is open is under it
   expect(pane).toMatch(
     /\.pane:has\(> \.card > :global\(\.here\)\) \{\s+opacity: calc\(1 - var\(--overview-open, 1\)\);/,
   )
-  expect(overview).toMatch(
-    /\[data-box\] \*\s+\)\s+\) \{\s+opacity: calc\(1 - var\(--overview-open, 1\)\);/,
-  )
+  expect(overview).toMatch(/\[data-box\] \*\s+\)\s+\) \{\s+opacity: calc\(1 - var\(--overview-open, 1\)\);/)
 })
 
 test('a hand on the ground when it is put away is let go, so the next one does not follow a pointer nobody presses', async () => {

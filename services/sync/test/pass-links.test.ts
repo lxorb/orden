@@ -42,11 +42,9 @@ function makeLink(
 }
 
 const open = (id: string, machine = '203.0.113.1') =>
-  call<{ body?: string; expires?: number; left?: number | null; error?: string }>(
-    env,
-    `/v1/pass-link/${id}`,
-    { headers: { 'cf-connecting-ip': machine } },
-  )
+  call<{ body?: string; expires?: number; left?: number | null; error?: string }>(env, `/v1/pass-link/${id}`, {
+    headers: { 'cf-connecting-ip': machine },
+  })
 
 describe('a secure link', () => {
   test('is made by an editor, listed, and opened by anybody without an account', async () => {
@@ -254,16 +252,13 @@ describe('a secure link', () => {
     ]) {
       expect((await makeLink(ada, bad)).status, JSON.stringify(bad)).toBe(400)
     }
-    expect((await makeLink(ada, { expires: at + LONGEST_LINK - 60_000, views: 100 })).status).toBe(
-      200,
-    )
+    expect((await makeLink(ada, { expires: at + LONGEST_LINK - 60_000, views: 100 })).status).toBe(200)
   })
 
   test('is opened only so often from one machine', async () => {
     const link = (await makeLink(ada)).json.link!
     let status = 200
-    for (let tries = 0; tries < 301 && status === 200; tries++)
-      status = (await open(link.id)).status
+    for (let tries = 0; tries < 301 && status === 200; tries++) status = (await open(link.id)).status
     expect(status).toBe(429)
     expect((await open(link.id, '203.0.113.2')).status).toBe(200)
   })

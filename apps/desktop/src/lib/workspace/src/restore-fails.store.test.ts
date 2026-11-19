@@ -48,8 +48,7 @@ describe('a launch whose restore throws before the first paint', () => {
     ['loadTree', 'a kept session', SESSION],
     ['loadSpaces', 'no session', null],
     ['loadTree', 'no session', null],
-  ] as const)(
-    'where %s fails with %s still lets every later stage take its turn',
-    (failing, _, session) => launch(session, failing),
+  ] as const)('where %s fails with %s still lets every later stage take its turn', (failing, _, session) =>
+    launch(session, failing),
   )
 })

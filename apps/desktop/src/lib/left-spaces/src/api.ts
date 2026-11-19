@@ -11,8 +11,7 @@ interface Home {
   space: string
 }
 
-const isHome = (value: unknown): value is Home =>
-  isRecord(value) && isString(value.by) && isString(value.space)
+const isHome = (value: unknown): value is Home => isRecord(value) && isString(value.by) && isString(value.space)
 
 function homes(): Record<string, Home> {
   const saved = stored(HOMES)
@@ -61,18 +60,13 @@ export function leaveSpaces(accountId: string, roots: readonly string[]) {
   kept(marks)
 }
 
-export function keepHomes(
-  accountId: string,
-  pairs: readonly { readonly root: string; readonly spaceId: string }[],
-) {
+export function keepHomes(accountId: string, pairs: readonly { readonly root: string; readonly spaceId: string }[]) {
   let next = homes()
   const before = JSON.stringify(next)
   for (const { root, spaceId } of pairs) {
     if (leftByAnother(root, accountId)) continue
     next = Object.fromEntries(
-      Object.entries(others(next, root)).filter(
-        ([, home]) => home.by !== accountId || home.space !== spaceId,
-      ),
+      Object.entries(others(next, root)).filter(([, home]) => home.by !== accountId || home.space !== spaceId),
     )
     next[root] = { by: accountId, space: spaceId }
   }

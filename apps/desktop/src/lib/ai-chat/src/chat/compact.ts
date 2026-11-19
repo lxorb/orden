@@ -109,10 +109,7 @@ async function anthropicCompaction(job: Compacting, signal?: AbortSignal): Promi
   }
 }
 
-async function responsesCompaction(
-  job: Compacting,
-  signal?: AbortSignal,
-): Promise<Omit<Compaction, 'upTo'> | null> {
+async function responsesCompaction(job: Compacting, signal?: AbortSignal): Promise<Omit<Compaction, 'upTo'> | null> {
   const input = itemsOf(stepsOf(job.thread, 'responses', job.model.id))
   const response = await request(
     job.provider,
@@ -131,10 +128,7 @@ async function responsesCompaction(
   return { kind: 'responses', model: job.model.id, summary: '', block: output }
 }
 
-async function ownSummary(
-  job: Compacting,
-  signal?: AbortSignal,
-): Promise<Omit<Compaction, 'upTo'>> {
+async function ownSummary(job: Compacting, signal?: AbortSignal): Promise<Omit<Compaction, 'upTo'>> {
   const steps = [
     ...stepsOf(job.thread, job.api, job.model.id),
     { role: 'user' as const, text: summaryPrompt(job.focus), images: [] },

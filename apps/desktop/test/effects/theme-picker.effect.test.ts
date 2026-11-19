@@ -45,9 +45,10 @@ const sheet = () => document.getElementById('orden-user-theme')?.textContent ?? 
 
 const storage = () =>
   Object.fromEntries(
-    Array.from({ length: localStorage.length }, (_, at) => localStorage.key(at) ?? '').map(
-      (name) => [name, localStorage.getItem(name)],
-    ),
+    Array.from({ length: localStorage.length }, (_, at) => localStorage.key(at) ?? '').map((name) => [
+      name,
+      localStorage.getItem(name),
+    ]),
   )
 
 const dialog = () => document.querySelector<HTMLElement>('[role="dialog"]')
@@ -105,9 +106,7 @@ test('Themes in the account menu opens it, and the sidebar foot holds no themes 
   const foot = mount(SidebarFoot, { target })
   flushSync()
 
-  expect(
-    target.querySelector('[aria-label="Themes"], [aria-label="Light"], [aria-label="Dark"]'),
-  ).toBeNull()
+  expect(target.querySelector('[aria-label="Themes"], [aria-label="Light"], [aria-label="Dark"]')).toBeNull()
   target.querySelector<HTMLElement>('[aria-haspopup="menu"]')?.click()
   const rows = menu.items.filter((one): one is MenuItem => one !== null)
   rows.find((one) => one.label === 'Themes')?.run()
@@ -158,10 +157,7 @@ test('the native drives switch the scheme through the account menu and the choic
     expect(document.querySelector(driven('PICKER'))).not.toBeNull()
 
     const choice = [...document.querySelectorAll<HTMLElement>(modeOf(scheme))].at(-1) ?? null
-    expect(
-      choice,
-      `the drives choose ${scheme} with a control the picker no longer draws`,
-    ).not.toBeNull()
+    expect(choice, `the drives choose ${scheme} with a control the picker no longer draws`).not.toBeNull()
     choice?.click()
     flushSync()
     expect(root.dataset.theme).toBe(scheme)
@@ -384,11 +380,7 @@ test('draws the wallpaper with the picture the window would wear, and tries it o
   await opened()
 
   await expect
-    .poll(() =>
-      card('Wallpaper')
-        ?.querySelector<HTMLElement>('.window')
-        ?.style.getPropertyValue('--mini-picture'),
-    )
+    .poll(() => card('Wallpaper')?.querySelector<HTMLElement>('.window')?.style.getPropertyValue('--mini-picture'))
     .toBe(`url("${picture}")`)
   expect(card('Wallpaper')?.querySelector('.mini')?.classList.contains('pictured')).toBe(true)
 

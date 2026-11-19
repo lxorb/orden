@@ -1,13 +1,6 @@
 import { mapSources, sourcesOf } from '@orden/markdown/sources'
 import { busy } from '../../ui-kit/src/api'
-import {
-  assetPath,
-  invoke,
-  isNative,
-  mimeOfPath,
-  pageBytes,
-  toBase64,
-} from '../../platform/src/api'
+import { assetPath, invoke, isNative, mimeOfPath, pageBytes, toBase64 } from '../../platform/src/api'
 import { type PaperInches, printInFrame, printsInFrame } from './frame'
 
 interface Placed {
@@ -36,10 +29,7 @@ export function localSources(html: string): string[] {
   return sourcesOf(html, (src) => assetPath(src) !== null || !/^(data:|https?:|\/\/)/i.test(src))
 }
 
-export async function inlineImages(
-  html: string,
-  resolve: (src: string) => string,
-): Promise<string> {
+export async function inlineImages(html: string, resolve: (src: string) => string): Promise<string> {
   const sources = localSources(html)
   if (!sources.length) return html
 
@@ -68,11 +58,7 @@ export function swapSources(html: string, wanted: ReadonlyMap<string, string>): 
   return mapSources(html, (src) => wanted.get(src) ?? null)
 }
 
-export async function writtenPdf(
-  html: string | Blob,
-  target: string,
-  page: PaperInches,
-): Promise<boolean> {
+export async function writtenPdf(html: string | Blob, target: string, page: PaperInches): Promise<boolean> {
   try {
     await invoke('print_pdf', { bytes: await pageBytes(html), output: target, page })
     return true
@@ -110,9 +96,7 @@ function placed(html: string, wanted: ReadonlyMap<string, string | Blob>): (stri
 }
 
 export function pageWith(html: string, pictures: readonly Placed[]): Blob {
-  const wanted = new Map(
-    pictures.map((one) => [one.src, new Blob([`data:${one.mime};base64,`, toBase64(one.bytes)])]),
-  )
+  const wanted = new Map(pictures.map((one) => [one.src, new Blob([`data:${one.mime};base64,`, toBase64(one.bytes)])]))
   return new Blob(placed(html, wanted), { type: 'text/html' })
 }
 
@@ -136,10 +120,7 @@ async function pictureOf(path: string, mime: string): Promise<Blob | null> {
   return picture?.size ? picture : null
 }
 
-async function linked(
-  sources: readonly string[],
-  resolve: (src: string) => string,
-): Promise<Map<string, string>> {
+async function linked(sources: readonly string[], resolve: (src: string) => string): Promise<Map<string, string>> {
   const links = new Map<string, string>()
   await Promise.all(
     sources.map(async (src) => {
@@ -150,18 +131,12 @@ async function linked(
   return links
 }
 
-async function inlined(
-  sources: readonly string[],
-  resolve: (src: string) => string,
-): Promise<Map<string, Blob>> {
+async function inlined(sources: readonly string[], resolve: (src: string) => string): Promise<Map<string, Blob>> {
   const found = await assetsOf(sources, resolve)
   return new Map([...found].map(([src, data]) => [src, new Blob([data])]))
 }
 
-export async function wholeSheet(
-  html: string,
-  resolve: ((src: string) => string) | undefined,
-): Promise<string | Blob> {
+export async function wholeSheet(html: string, resolve: ((src: string) => string) | undefined): Promise<string | Blob> {
   const sources = resolve ? localOf(html) : []
   if (!resolve || !sources.length) return html
 

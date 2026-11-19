@@ -50,8 +50,7 @@ describe('hooks', () => {
         linkPointer: () => Promise.resolve(),
       },
       feedback: {
-        withdrawIssues: (_env: unknown, numbers: readonly number[]) =>
-          Promise.resolve([...numbers]),
+        withdrawIssues: (_env: unknown, numbers: readonly number[]) => Promise.resolve([...numbers]),
       },
       machines: {
         eraseMachines: (_env: unknown, ids: readonly string[]) => Promise.resolve([...ids]),

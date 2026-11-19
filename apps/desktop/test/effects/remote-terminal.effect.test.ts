@@ -26,9 +26,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     if (command === 'pty_program') return Promise.resolve(front)
     if (command === 'pty_ssh') return Promise.resolve(reached)
     if (command === 'pty_spawn') {
-      return refuse
-        ? Promise.reject(new Error('no ssh on this machine'))
-        : Promise.resolve({ pid: 1 })
+      return refuse ? Promise.reject(new Error('no ssh on this machine')) : Promise.resolve({ pid: 1 })
     }
     return Promise.resolve(null)
   },
@@ -177,9 +175,7 @@ test('it is the system ssh for the host, named and coloured for it, whatever run
   flushSync()
   expect(tab.shown).toBe('pi')
   await idle(400)
-  expect(asked.some((one) => one.command === 'pty_program' || one.command === 'pty_folder')).toBe(
-    false,
-  )
+  expect(asked.some((one) => one.command === 'pty_program' || one.command === 'pty_folder')).toBe(false)
 })
 
 test('a dropped connection puts up Reconnect, which connects again; never by itself', async () => {
@@ -244,11 +240,7 @@ test('one that will not start is never swapped for a shell on this machine', asy
 })
 
 async function local() {
-  workspace.openUnsaved(
-    'terminal',
-    writeSpec({ shell: 'pwsh', folder: null, key: 'here', name: null }),
-    'PowerShell',
-  )
+  workspace.openUnsaved('terminal', writeSpec({ shell: 'pwsh', folder: null, key: 'here', name: null }), 'PowerShell')
   const tab = workspace.tabs.at(-1)
   if (!tab) throw new Error('no tab')
   await sessionOf(tab).attach(place, false)

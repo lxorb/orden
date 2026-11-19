@@ -67,12 +67,7 @@ describe('a picture for a report', () => {
     const drawn = await redrawn(new Blob([], { type: 'image/png' }), drawing)
     expect(drawn?.type).toBe('image/jpeg')
     expect(drawn?.blob.size).toBeLessThanOrEqual(MOST_PICTURE_BYTES)
-    expect(asked).toEqual([
-      '2400x1200 image/png',
-      '2400x1200 image/jpeg',
-      '1800x900 image/jpeg',
-      '1400x700 image/jpeg',
-    ])
+    expect(asked).toEqual(['2400x1200 image/png', '2400x1200 image/jpeg', '1800x900 image/jpeg', '1400x700 image/jpeg'])
   })
 
   test('is refused where it will not fit however small, or cannot be drawn', async () => {

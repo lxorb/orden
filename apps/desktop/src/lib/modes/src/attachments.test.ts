@@ -24,13 +24,9 @@ describe("the space's assets folder", () => {
   })
 
   test('is worked out the same from a path a platform writes with backslashes', () => {
-    expect(
-      attachmentFolder(
-        'space',
-        String.raw`C:\Orden\Notes\Work\Plan.md`,
-        String.raw`C:\Orden\Notes`,
-      ),
-    ).toBe('../assets')
+    expect(attachmentFolder('space', String.raw`C:\Orden\Notes\Work\Plan.md`, String.raw`C:\Orden\Notes`)).toBe(
+      '../assets',
+    )
   })
 
   test('falls back to one beside a note that is in no space at all', () => {
@@ -56,8 +52,6 @@ describe('a folder named after the note', () => {
   })
 
   test('reads a backslash path too', () => {
-    expect(
-      attachmentFolder('named', String.raw`C:\Orden\Notes\Plan.md`, String.raw`C:\Orden\Notes`),
-    ).toBe('Plan')
+    expect(attachmentFolder('named', String.raw`C:\Orden\Notes\Plan.md`, String.raw`C:\Orden\Notes`)).toBe('Plan')
   })
 })

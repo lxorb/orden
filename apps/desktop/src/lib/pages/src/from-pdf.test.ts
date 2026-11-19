@@ -1,15 +1,7 @@
 import { readCanvas } from '@orden/markdown/canvas'
 import { pagesOf } from '@orden/markdown/pages'
 import { describe, expect, test } from 'vitest'
-import {
-  adoptBeside,
-  asDraft,
-  asItself,
-  asPageNote,
-  paperNamed,
-  paperOutside,
-  type Turning,
-} from './from-pdf'
+import { adoptBeside, asDraft, asItself, asPageNote, paperNamed, paperOutside, type Turning } from './from-pdf'
 
 function disk(start: Record<string, string>, refuse: boolean | 'after' = false) {
   const files = new Map(Object.entries(start))
@@ -76,10 +68,7 @@ describe('a PDF, as the page note that holds it', () => {
 
     expect(await asPageNote('/s/Week/Lecture.pdf', how)).toBe('/s/Week/Lecture.pages')
     expect(moves).toEqual(['/s/Week/Lecture.pdf -> /s/Week/Lecture.pages.pdf'])
-    expect(pages(files.get('/s/Week/Lecture.pages'))).toEqual([
-      'Lecture.pages.pdf#1',
-      'Lecture.pages.pdf#2',
-    ])
+    expect(pages(files.get('/s/Week/Lecture.pages'))).toEqual(['Lecture.pages.pdf#1', 'Lecture.pages.pdf#2'])
     expect([...files.keys()].sort()).toEqual(['/s/Week/Lecture.pages', '/s/Week/Lecture.pages.pdf'])
   })
 
@@ -182,9 +171,7 @@ describe('a PDF from outside every space, as a page note nobody has saved', () =
   })
 
   test('a paper of a space or named from the note is no paper from outside', async () => {
-    expect(
-      paperOutside(await asDraft('/s/Paper.pdf', sizes), (path) => path.startsWith('/s/')),
-    ).toBe(null)
+    expect(paperOutside(await asDraft('/s/Paper.pdf', sizes), (path) => path.startsWith('/s/'))).toBe(null)
     expect(paperOutside(await asDraft('Paper.pdf', sizes), nowhere)).toBeNull()
     expect(paperOutside('not a plane', nowhere)).toBeNull()
   })

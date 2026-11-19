@@ -49,18 +49,12 @@ function folded(minute: Minute, sample: Sample): Minute {
     at: minute.at,
     active: Math.min(60, minute.active + (busy ? SAMPLE_EVERY / 1000 : 0)),
     samples,
-    cpu:
-      cpu === null
-        ? minute.cpu
-        : minute.cpu === null
-          ? cpu
-          : minute.cpu + (cpu - minute.cpu) / samples,
+    cpu: cpu === null ? minute.cpu : minute.cpu === null ? cpu : minute.cpu + (cpu - minute.cpu) / samples,
     memory: share(sample.memory) ?? minute.memory,
     battery: share(sample.battery) ?? minute.battery,
     charging: sample.charging ?? minute.charging,
     lid: sample.lid === false || minute.lid === false ? false : (sample.lid ?? minute.lid),
-    locked:
-      sample.locked === true || minute.locked === true ? true : (sample.locked ?? minute.locked),
+    locked: sample.locked === true || minute.locked === true ? true : (sample.locked ?? minute.locked),
   }
 }
 
@@ -91,8 +85,7 @@ export class MinuteFold {
 export function minuteValue(value: unknown): Minute | null {
   if (typeof value !== 'object' || value === null) return null
   const one = value as Record<string, unknown>
-  const number = (key: string) =>
-    typeof one[key] === 'number' && Number.isFinite(one[key]) ? one[key] : null
+  const number = (key: string) => (typeof one[key] === 'number' && Number.isFinite(one[key]) ? one[key] : null)
   const flag = (key: string) => (typeof one[key] === 'boolean' ? one[key] : null)
   const at = number('at')
   if (at === null) return null

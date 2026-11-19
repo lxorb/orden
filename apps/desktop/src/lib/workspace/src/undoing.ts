@@ -36,13 +36,7 @@ export interface PutsBack {
   retarget(from: string, to: string, how?: Retargeting): Promise<number>
   fileMoved(from: string, to: string, kind: Kind): Promise<void>
   fileGone(path: string, kind: 'file' | 'folder', back?: string): Promise<void>
-  fileCame(
-    path: string,
-    kind: 'file' | 'folder',
-    key?: string,
-    back?: string,
-    putBack?: boolean,
-  ): Promise<void>
+  fileCame(path: string, kind: 'file' | 'folder', key?: string, back?: string, putBack?: boolean): Promise<void>
   undoFileAction(): Promise<void>
   renameOnDisk(from: string, to: string, kind: Kind): Promise<void>
   holdingUnder(path: string, run: () => Promise<void>): Promise<void>
@@ -195,8 +189,7 @@ export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): 
 
   const restored = await invoke<string>('restore_trash', { id: action.trashId }).catch(() => null)
 
-  if (restored !== null)
-    return action.trashedAt ? cameOver(action, restored) : restored || action.path
+  if (restored !== null) return action.trashedAt ? cameOver(action, restored) : restored || action.path
   if (!action.content) throw new Error('the deleted note is no longer in the trash')
 
   return writeBeside(action.path, action.content)
@@ -307,10 +300,7 @@ const CLUTTER = /^(~\$.*|thumbs\.db|desktop\.ini|Icon\r)$/i
 
 const HELD = 4_000_000
 
-async function unarchive(
-  ws: PutsBack,
-  action: Extract<FileAction, { kind: 'archive' | 'unarchive' }>,
-) {
+async function unarchive(ws: PutsBack, action: Extract<FileAction, { kind: 'archive' | 'unarchive' }>) {
   await ws.archive.change(action.root, action.restored, action.archived)
   for (const path of action.closed) await ws.openEntry(path)
 }
@@ -335,8 +325,7 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
 
     const down = await oneWriteAt(note.path, async () => {
       const file = await readText(note.path)
-      if (file === null)
-        throw new Error(`${note.path} will not read, so nothing is written over it`)
+      if (file === null) throw new Error(`${note.path} will not read, so nothing is written over it`)
       const now = endingsLike(file, note.after)
       const words = now === note.after ? note.content : carriedPast(note, file, now)
       await writeInTurn(note.path, words, false)
@@ -346,11 +335,7 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
   }
 }
 
-function carriedPast(
-  note: { after: string; edits: readonly Edit[] },
-  file: string,
-  now: string,
-): string {
+function carriedPast(note: { after: string; edits: readonly Edit[] }, file: string, now: string): string {
   const since = oneEdit(note.after, now)
   if (!since) return applied(now, note.edits)
 
@@ -369,8 +354,7 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
     ;(await import('./moving-space')).followsTo(action.from)
   }
   const kind = ws.entryAt(action.to)?.is_dir === true ? 'folder' : 'file'
-  const back =
-    action.kind === 'move' ? await services().chatsCarried(action.to, folderOf(action.from)) : null
+  const back = action.kind === 'move' ? await services().chatsCarried(action.to, folderOf(action.from)) : null
 
   await inFlight(action.from, () =>
     ws.holdingUnder(action.to, async () => {
@@ -379,8 +363,7 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
         throw error
       })
 
-      if (action.rewrote)
-        await ws.retarget(action.to, action.from, { moved: true }).catch(() => undefined)
+      if (action.rewrote) await ws.retarget(action.to, action.from, { moved: true }).catch(() => undefined)
       await ws.fileMoved(action.to, action.from, kind)
       if (action.retitled) await titledBack(ws, action.from, action.to)
     }),
@@ -424,9 +407,7 @@ async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge'
     ws.reload(one.path, one.before)
     restored.push(one.path)
   }
-  const rest = action.relinked
-    ?.filter(others)
-    .filter((path) => !restored.some((one) => samePath(one, path)))
+  const rest = action.relinked?.filter(others).filter((path) => !restored.some((one) => samePath(one, path)))
   if (!rest || rest.length) await ws.retarget(action.into, from, rest ? { only: rest } : {})
 }
 

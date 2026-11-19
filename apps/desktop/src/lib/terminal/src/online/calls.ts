@@ -1,11 +1,4 @@
-import {
-  type Allowance,
-  type Disk,
-  type HostKind,
-  type MachineState,
-  type Term,
-  termOf,
-} from '@orden/online'
+import { type Allowance, type Disk, type HostKind, type MachineState, type Term, termOf } from '@orden/online'
 import { account, ApiError, request } from '../../../accounts/src/api'
 import { isNumber, isRecord, isString } from '../../../platform/src/api'
 
@@ -61,16 +54,14 @@ export interface Online {
   resets: number
 }
 
-export type Refused =
-  'signed-out' | 'list' | 'allowance' | 'budget' | 'off' | 'flag' | 'sessions' | 'other'
+export type Refused = 'signed-out' | 'list' | 'allowance' | 'budget' | 'off' | 'flag' | 'sessions' | 'other'
 
 const STATES: readonly MachineState[] = ['asleep', 'starting', 'awake', 'stopping']
 
 function allowanceOf(value: unknown): Allowance | null {
   if (!isRecord(value)) return null
   const { awakeS, cpuS, homeBytes, egressBytes } = value
-  if (!isNumber(awakeS) || !isNumber(cpuS) || !isNumber(homeBytes) || !isNumber(egressBytes))
-    return null
+  if (!isNumber(awakeS) || !isNumber(cpuS) || !isNumber(homeBytes) || !isNumber(egressBytes)) return null
   return { awakeS, cpuS, homeBytes, egressBytes }
 }
 
@@ -173,9 +164,7 @@ export function onlineOf(value: unknown): Online | null {
 }
 
 const saidBy = (error: unknown) =>
-  error instanceof ApiError && isRecord(error.body) && isString(error.body.error)
-    ? error.body.error
-    : ''
+  error instanceof ApiError && isRecord(error.body) && isString(error.body.error) ? error.body.error : ''
 
 const REFUSALS: readonly Refused[] = ['list', 'allowance', 'budget', 'off', 'flag', 'sessions']
 
@@ -252,8 +241,7 @@ export interface Listed {
   at: number | null
 }
 
-const orNull = <T>(value: unknown, is: (one: unknown) => one is T): T | null =>
-  is(value) ? value : null
+const orNull = <T>(value: unknown, is: (one: unknown) => one is T): T | null => (is(value) ? value : null)
 
 function listedOf(value: unknown): Listed | null {
   if (!isRecord(value) || !isString(value.session)) return null

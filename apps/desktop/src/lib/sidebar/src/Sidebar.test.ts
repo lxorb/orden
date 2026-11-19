@@ -17,8 +17,7 @@ vi.mock('../../surfaces/src/api', () => ({
 const { workspace } = await import('../../workspace/src/api')
 const { viewport } = await import('../../ui-kit/src/viewport.svelte')
 const { agentMarks } = await import('../../workspace/src/api')
-const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } =
-  await import('../../gates/src/api')
+const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, TIME_WORD } = await import('../../gates/src/api')
 const Sidebar = (await import('./Sidebar.svelte')).default
 await (await import('../../../../test/sidebar-parts')).registerSidebarParts()
 const { loadPhoneTabs, loadPhoneYou } = await import('../../phone/src/api')
@@ -32,10 +31,7 @@ function open(text: string) {
   workspace.openBlank('A note', text)
 }
 
-function drawn(
-  panel: Parameters<typeof workspace.showPanel>[0],
-  device: typeof viewport.device = 'desktop',
-) {
+function drawn(panel: Parameters<typeof workspace.showPanel>[0], device: typeof viewport.device = 'desktop') {
   viewport.device = device
   workspace.panel = panel
   return render(Sidebar, { props: { side: 'left' as const } }).body

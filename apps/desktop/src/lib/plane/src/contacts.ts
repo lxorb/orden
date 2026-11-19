@@ -29,10 +29,7 @@ export interface Glass {
   touch: boolean
 }
 
-export function penKind(
-  event: Reported,
-  glass: Glass,
-): { kind: 'mouse' | 'pen' | 'touch'; eraser: boolean } {
+export function penKind(event: Reported, glass: Glass): { kind: 'mouse' | 'pen' | 'touch'; eraser: boolean } {
   const held = (event.buttons & ERASER_BIT) !== 0 || (event.buttons & RIGHT_BIT) !== 0
   const asked = event.button === 2 || event.button === 5
 

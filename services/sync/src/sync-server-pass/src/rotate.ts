@@ -20,14 +20,7 @@ import {
   type Variables,
 } from '../../sync-server/src/api'
 import { activeIn, holdsSql, mayAct, membershipOf } from './access'
-import {
-  KEEPS_ITS_OWNER,
-  NO_SUCH_VAULT,
-  NOT_A_KEY,
-  NOT_EVERYONE,
-  NOT_YOUR_ROLE,
-  STALE,
-} from './refusals'
+import { KEEPS_ITS_OWNER, NO_SUCH_VAULT, NOT_A_KEY, NOT_EVERYONE, NOT_YOUR_ROLE, STALE } from './refusals'
 import { vaultRowOf } from './rows'
 import { bump, SEQ } from './seq'
 import { fromOf, tellVault } from './tell'
@@ -90,12 +83,7 @@ rotations.post('/vaults/:id/rotate', async (context) => {
   if (!sent) return context.json({ error: NOT_AN_OBJECT }, 400)
   const { rev, keyVersion, meta } = sent
   const people = entriesIn(sent.members, MOST_MEMBERS, emailIn, keyIn)
-  const sealed = entriesIn(
-    sent.items,
-    MOST_ITEMS,
-    (raw) => (isPassId(raw) ? raw : null),
-    resealedIn,
-  )
+  const sealed = entriesIn(sent.items, MOST_ITEMS, (raw) => (isPassId(raw) ? raw : null), resealedIn)
   const proof = optionalIn(sent.proof, keyProofIn)
   if (
     !isCount(rev) ||

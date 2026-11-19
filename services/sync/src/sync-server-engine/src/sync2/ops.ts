@@ -8,15 +8,7 @@ import {
   type ItemMeta,
 } from '@orden/sync-core'
 import { type Env, newId, type Reached } from '../../../sync-server/src/api'
-import {
-  type Changed,
-  changeTree,
-  type Content,
-  kindOfName,
-  type Reach,
-  reachOf,
-  type Tree,
-} from './tree'
+import { type Changed, changeTree, type Content, kindOfName, type Reach, reachOf, type Tree } from './tree'
 
 const SAW_EVERYTHING = Number.MAX_SAFE_INTEGER
 
@@ -117,12 +109,7 @@ function applied(
   return result
 }
 
-function foldersFor(
-  tree: Tree,
-  folders: readonly string[],
-  context: OpContext,
-  fresh: () => string,
-): string | null {
+function foldersFor(tree: Tree, folders: readonly string[], context: OpContext, fresh: () => string): string | null {
   let parent: string | null = null
   for (const name of folders) {
     const found = tree.child(parent, name)
@@ -132,10 +119,7 @@ function foldersFor(
     }
 
     const id = fresh()
-    const made = tree.apply(
-      { op: fresh(), t: 'mkdir', id, parent, name, seen: SAW_EVERYTHING },
-      context,
-    )
+    const made = tree.apply({ op: fresh(), t: 'mkdir', id, parent, name, seen: SAW_EVERYTHING }, context)
     if (!('id' in made)) throw new Error(`a folder could not be made for ${name}`)
     parent = id
   }
@@ -205,21 +189,14 @@ export function creatingAt(
   }
 }
 
-export function movingTo(
-  id: string,
-  path: string,
-  device: string | undefined,
-): ByPath<string | null> {
+export function movingTo(id: string, path: string, device: string | undefined): ByPath<string | null> {
   const context: OpContext = { role: 'write', ...(device === undefined ? {} : { device }) }
   const { folders, name } = split(path)
   return {
     reach: { ids: [id], touched: [{ id }], under: [id], walks: [{ id, folders, name }] },
     work: (tree, fresh = newId) => {
       const parent = foldersFor(tree, folders, context, fresh)
-      const result = tree.apply(
-        { op: fresh(), t: 'move', id, parent, name, seen: SAW_EVERYTHING },
-        context,
-      )
+      const result = tree.apply({ op: fresh(), t: 'move', id, parent, name, seen: SAW_EVERYTHING }, context)
       return 'id' in result ? tree.pathOf(id) : null
     },
   }
@@ -259,14 +236,7 @@ export async function deleteById(
 ): Promise<OpResult> {
   const context: OpContext = { role: 'write', ...(device === undefined ? {} : { device }) }
   const op: Op = { op: newId(), t: restore ? 'restore' : 'delete', id, seen: SAW_EVERYTHING }
-  const { value } = await changeTree(
-    env,
-    spaceId,
-    device,
-    (tree) => tree.apply(op, context),
-    [],
-    reachOf([op]),
-  )
+  const { value } = await changeTree(env, spaceId, device, (tree) => tree.apply(op, context), [], reachOf([op]))
   return value
 }
 

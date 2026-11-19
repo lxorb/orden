@@ -1,13 +1,6 @@
 import type { Row } from '@orden/bases'
 import { type ScannedNote, type SpaceLinks, scanNote } from '@orden/scan/note'
-import {
-  AGENTS_NAME,
-  insideSpace,
-  isMarkdownPath,
-  pathKey,
-  samePath,
-  within,
-} from '../../platform/src/api'
+import { AGENTS_NAME, insideSpace, isMarkdownPath, pathKey, samePath, within } from '../../platform/src/api'
 import { scanRows } from '@orden/bases/scan'
 import { type FileOp } from '../../file-ops/src/api'
 import { movedRows, type NoteRead, rowsOf } from '@orden/bases/rows'
@@ -69,9 +62,7 @@ export class RowsStore {
   of(space?: string): readonly Row[] {
     if (space === undefined) return [...this.spaces.values()].flatMap((held) => this.flat(held))
 
-    const held = [...this.spaces.values()].find(
-      (one) => one.name === space || samePath(one.root, space),
-    )
+    const held = [...this.spaces.values()].find((one) => one.name === space || samePath(one.root, space))
     return held ? this.flat(held) : []
   }
 
@@ -146,10 +137,7 @@ export class RowsStore {
       const known = before?.[0]?.file.ctime ?? 0
       const ctime = known > 0 ? known : now
       const stamp = { size: bytesOf(content), mtime: now, ctime }
-      return this.rowsIn(
-        held,
-        readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }),
-      )
+      return this.rowsIn(held, readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }))
     })
   }
 
@@ -207,12 +195,7 @@ export class RowsStore {
     for (const listener of this.listeners) listener(change)
   }
 
-  private edit(
-    held: Held,
-    key: string,
-    next: (before: Row[] | undefined) => Row[] | null,
-    from?: RowsChange['from'],
-  ) {
+  private edit(held: Held, key: string, next: (before: Row[] | undefined) => Row[] | null, from?: RowsChange['from']) {
     const change = (files: Map<string, Row[]>) => {
       const rows = next(files.get(key))
       if (!rows?.length) files.delete(key)
@@ -366,9 +349,7 @@ export class RowsStore {
     for (const note of found.notes) {
       const relative = at ? `${at}/${note.path}` : note.path
       if (!isMarkdownPath(relative)) continue
-      this.edit(held, pathKey(relative, held.root), () =>
-        this.rowsIn(held, readOf({ ...note, path: relative })),
-      )
+      this.edit(held, pathKey(relative, held.root), () => this.rowsIn(held, readOf({ ...note, path: relative })))
     }
   }
 
@@ -399,10 +380,7 @@ export class RowsStore {
         const content = await this.host.read(insideSpace(held.root, note.path))
         if (content !== null) {
           const stamp = { size: bytesOf(content), mtime: this.host.now(), ctime: this.host.now() }
-          files.set(
-            pathKey(note.path, held.root),
-            this.rowsIn(held, readOf({ ...note, ...scanRows(content), stamp })),
-          )
+          files.set(pathKey(note.path, held.root), this.rowsIn(held, readOf({ ...note, ...scanRows(content), stamp })))
         }
       } else {
         files.set(pathKey(note.path, held.root), this.rowsIn(held, readOf(note)))

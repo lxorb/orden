@@ -111,14 +111,10 @@
         size={32}
       />
       <span class="name"
-        ><span class="orden-named"
-          >Picture<Hint text="The picture the others see beside your name." /></span
-        ></span
+        ><span class="orden-named">Picture<Hint text="The picture the others see beside your name." /></span></span
       >
       <span class="ends">
-        <button class="orden-chip" aria-haspopup={camera ? 'menu' : undefined} onclick={change}
-          >Change</button
-        >
+        <button class="orden-chip" aria-haspopup={camera ? 'menu' : undefined} onclick={change}>Change</button>
         {#if user.avatar}
           <button class="orden-chip" onclick={() => void kept(removeFace)}>Remove</button>
         {/if}
@@ -127,8 +123,7 @@
 
     <label class="orden-setting setting">
       <span class="name"
-        ><span class="orden-named"
-          >Pronouns<Hint text="Shown to the others beside your name, such as she/her." /></span
+        ><span class="orden-named">Pronouns<Hint text="Shown to the others beside your name, such as she/her." /></span
         ></span
       >
       <input
@@ -137,15 +132,13 @@
         placeholder="Optional"
         maxlength="40"
         spellcheck="false"
-        onchange={(event) =>
-          void kept(() => changeProfile({ pronouns: event.currentTarget.value }))}
+        onchange={(event) => void kept(() => changeProfile({ pronouns: event.currentTarget.value }))}
       />
     </label>
 
     <label class="orden-setting setting is-tall">
       <span class="name"
-        ><span class="orden-named"
-          >Bio<Hint text="A few words about you that the others see on your profile." /></span
+        ><span class="orden-named">Bio<Hint text="A few words about you that the others see on your profile." /></span
         ></span
       >
       <textarea
@@ -154,16 +147,13 @@
         maxlength="190"
         placeholder="A few words about you"
         value={user.bio ?? ''}
-        onchange={(event) => void kept(() => changeProfile({ bio: event.currentTarget.value }))}
-      ></textarea>
+        onchange={(event) => void kept(() => changeProfile({ bio: event.currentTarget.value }))}></textarea>
     </label>
 
     <div class="orden-setting setting is-tall">
       <span class="name"
         ><span class="orden-named"
-          >Status<Hint
-            text="What you are up to, shown to the others beside your name until it clears."
-          /></span
+          >Status<Hint text="What you are up to, shown to the others beside your name until it clears." /></span
         ></span
       >
       <span class="orden-field is-value">
@@ -195,7 +185,7 @@
     </div>
 
     {#if picking}
-      {#await Promise.all( [import('../../chat-kit/src/api'), import('../../emoji/src/api')] ) then [float, picker]}
+      {#await Promise.all([import('../../chat-kit/src/api'), import('../../emoji/src/api')]) then [float, picker]}
         <div use:portal>
           <float.Float at={picking} label="Emoji" onclose={() => (picking = null)}>
             <picker.EmojiPicker
@@ -212,9 +202,7 @@
     {#if status}
       <div class="orden-setting setting">
         <span class="name"
-          ><span class="orden-named"
-            >Clear after<Hint text="When your status is taken away again." /></span
-          ></span
+          ><span class="orden-named">Clear after<Hint text="When your status is taken away again." /></span></span
         >
         <div class="orden-setting-value">
           <Select
@@ -232,15 +220,10 @@
     {/if}
 
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-    <div
-      class="orden-setting setting pressable"
-      onclick={() => withStatus({ quiet: !(status?.quiet ?? false) })}
-    >
+    <div class="orden-setting setting pressable" onclick={() => withStatus({ quiet: !(status?.quiet ?? false) })}>
       <span class="name"
         ><span class="orden-named"
-          >Do not disturb<Hint
-            text="Silences chat notifications and shows the others you are busy."
-          /></span
+          >Do not disturb<Hint text="Silences chat notifications and shows the others you are busy." /></span
         ></span
       >
       <Switch
@@ -257,9 +240,7 @@
     >
       <span class="name"
         ><span class="orden-named"
-          >Appear offline<Hint
-            text="The others see you as offline even while you are here."
-          /></span
+          >Appear offline<Hint text="The others see you as offline even while you are here." /></span
         ></span
       >
       <Switch

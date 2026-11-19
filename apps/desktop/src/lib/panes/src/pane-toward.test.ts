@@ -32,12 +32,7 @@ describe('the pane next over', () => {
   })
 
   test('goes every way round a 2x2', () => {
-    const four = split(
-      split(split(pane('a'), 'a', 'row', 'b'), 'a', 'column', 'c'),
-      'b',
-      'column',
-      'd',
-    )
+    const four = split(split(split(pane('a'), 'a', 'row', 'b'), 'a', 'column', 'c'), 'b', 'column', 'd')
     expect(to(four, 'a', 'right')).toBe('b')
     expect(to(four, 'a', 'down')).toBe('c')
     expect(to(four, 'c', 'right')).toBe('d')

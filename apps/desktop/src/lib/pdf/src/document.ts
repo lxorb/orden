@@ -94,8 +94,7 @@ export async function openDocument(path: string): Promise<OpenPdf> {
   return await opening(library, data)
 }
 
-export const openBytes = async (data: Uint8Array): Promise<OpenPdf> =>
-  await opening(await pdfjs(), data)
+export const openBytes = async (data: Uint8Array): Promise<OpenPdf> => await opening(await pdfjs(), data)
 
 async function opening(library: Library, data: Uint8Array): Promise<OpenPdf> {
   const hash = await sha256(data)
@@ -108,9 +107,7 @@ async function opening(library: Library, data: Uint8Array): Promise<OpenPdf> {
 
 const AT_ONCE = 200
 
-export async function pageSizes(
-  from: string | Uint8Array,
-): Promise<{ width: number; height: number }[]> {
+export async function pageSizes(from: string | Uint8Array): Promise<{ width: number; height: number }[]> {
   if (typeof from !== 'string') {
     const opened = await pdfjs().then((library) => {
       const task = loading(library, from.slice())
@@ -137,10 +134,7 @@ export async function pageSizes(
 async function sizesOf(doc: PDFDocumentProxy): Promise<{ width: number; height: number }[]> {
   const sizes: { width: number; height: number }[] = []
   for (let from = 1; from <= doc.numPages; from += AT_ONCE) {
-    const numbers = Array.from(
-      { length: Math.min(AT_ONCE, doc.numPages - from + 1) },
-      (_unused, at) => from + at,
-    )
+    const numbers = Array.from({ length: Math.min(AT_ONCE, doc.numPages - from + 1) }, (_unused, at) => from + at)
     for (const page of await Promise.all(numbers.map((one) => doc.getPage(one)))) {
       const view = page.getViewport({ scale: PDF_TO_CSS })
       sizes.push({ width: Math.round(view.width), height: Math.round(view.height) })

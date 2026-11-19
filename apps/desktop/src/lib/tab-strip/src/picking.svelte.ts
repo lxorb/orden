@@ -7,10 +7,7 @@ import { duplicateTab, moveToOtherPane } from './ops'
 
 export type Picking = 'toggle' | 'run' | 'add-run'
 
-export function pickingOf(
-  event: Pick<MouseEvent, 'ctrlKey' | 'metaKey' | 'shiftKey'>,
-  mac: boolean,
-): Picking | null {
+export function pickingOf(event: Pick<MouseEvent, 'ctrlKey' | 'metaKey' | 'shiftKey'>, mac: boolean): Picking | null {
   const toggle = mac ? event.metaKey : event.ctrlKey
   if (toggle && event.shiftKey) return 'add-run'
   if (event.shiftKey) return 'run'
@@ -188,8 +185,7 @@ export class Block {
   }
 
   dropped(where: Landing) {
-    const before =
-      where.kind === 'strip' ? (workspace.tabsIn(where.paneId)[where.at]?.id ?? null) : null
+    const before = where.kind === 'strip' ? (workspace.tabsIn(where.paneId)[where.at]?.id ?? null) : null
     workspace.dropTab(this.lead, where)
     const into = workspace.tabs.find((one) => one.id === this.lead)?.paneId
     if (into) this.land(into, before)

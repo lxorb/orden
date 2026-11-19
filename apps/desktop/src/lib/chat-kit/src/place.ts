@@ -17,7 +17,6 @@ export function placeNear(
   const wanted = end ? at.right - size.width : at.left
   const left = Math.min(Math.max(ROOM, wanted), window.width - size.width - ROOM)
   const below = at.bottom + GAP
-  const top =
-    below + size.height + ROOM > window.height ? Math.max(ROOM, at.top - GAP - size.height) : below
+  const top = below + size.height + ROOM > window.height ? Math.max(ROOM, at.top - GAP - size.height) : below
   return { left: Math.max(ROOM, left), top }
 }

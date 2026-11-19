@@ -118,8 +118,7 @@ export class SocketLock<V extends Holder> {
       socket.serializeAttachment({ ...viewer, parked: true, lost: false })
       const key = holdKey(viewer.session)
       const hold = holdOf(await this.host.ctx.storage.get(key))
-      if (hold?.device !== viewer.device || this.present(viewer.session, hold.device, socket))
-        return
+      if (hold?.device !== viewer.device || this.present(viewer.session, hold.device, socket)) return
       await this.host.ctx.storage.delete(key)
       await this.handOn(viewer.session, socket)
     })
@@ -159,9 +158,7 @@ export class SocketLock<V extends Holder> {
       if (!this.host.drives(viewer)) return []
       return Date.now() - this.lastHeard(socket, viewer) > HOLD_QUIET ? [] : [{ socket, viewer }]
     })
-    const next = waiting.sort(
-      (a, b) => this.lastHeard(b.socket, b.viewer) - this.lastHeard(a.socket, a.viewer),
-    )[0]
+    const next = waiting.sort((a, b) => this.lastHeard(b.socket, b.viewer) - this.lastHeard(a.socket, a.viewer))[0]
     if (!next) return
     const hold: Hold = {
       device: next.viewer.device,

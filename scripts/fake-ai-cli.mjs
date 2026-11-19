@@ -362,9 +362,7 @@ function claudeSession() {
         type: 'assistant',
         message: {
           model: state.model,
-          content: [
-            { type: 'tool_use', id, name: 'mcp__orden__read_note', input: { path: 'Herons.md' } },
-          ],
+          content: [{ type: 'tool_use', id, name: 'mcp__orden__read_note', input: { path: 'Herons.md' } }],
         },
       })
       say({
@@ -485,10 +483,7 @@ function appServer() {
       return fail(id, 'configured beyond Orden')
     if (config['mcp_servers.orden.command']) {
       if (config['mcp_servers.orden.args']?.join(' ') !== 'mcp') return fail(id, 'not orden mcp')
-      if (
-        !config['mcp_servers.orden.env_vars']?.includes('ORDEN_MCP_TOKEN') ||
-        !process.env.ORDEN_MCP_TOKEN
-      )
+      if (!config['mcp_servers.orden.env_vars']?.includes('ORDEN_MCP_TOKEN') || !process.env.ORDEN_MCP_TOKEN)
         return fail(id, 'orden mcp has no token')
     }
     const thread = { id: `thread-${++threads}` }

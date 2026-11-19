@@ -28,10 +28,7 @@ export function statementOf(kind: string, ...parts: string[]): Uint8Array<ArrayB
   return utf8(`orden pass sign\n${kind}\n${parts.join('\n')}`)
 }
 
-export async function signatureOf(
-  signer: Signer,
-  statement: Uint8Array<ArrayBuffer>,
-): Promise<string> {
+export async function signatureOf(signer: Signer, statement: Uint8Array<ArrayBuffer>): Promise<string> {
   const key = await subtle().importKey('jwk', signer.priv, CURVE, false, ['sign'])
   return base64(new Uint8Array(await subtle().sign(HASHED, key, statement)))
 }
@@ -45,11 +42,7 @@ function bytesOf(text: string, length: number): Uint8Array<ArrayBuffer> | null {
   }
 }
 
-export async function isSignedBy(
-  pub: string,
-  statement: Uint8Array<ArrayBuffer>,
-  signature: string,
-): Promise<boolean> {
+export async function isSignedBy(pub: string, statement: Uint8Array<ArrayBuffer>, signature: string): Promise<boolean> {
   const point = bytesOf(pub, POINT)
   const signed = bytesOf(signature, SIGNATURE)
   if (point === null || signed === null) return false

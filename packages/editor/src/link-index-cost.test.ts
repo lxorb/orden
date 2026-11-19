@@ -37,10 +37,7 @@ const notes: NoteRef[] = Array.from({ length: 3000 }, (_, at) => {
   }
 })
 
-const doc = Array.from(
-  { length: 30 },
-  (_, at) => `- Follow up from [[Meeting ${at * 11}]] with the team.`,
-).join('\n')
+const doc = Array.from({ length: 30 }, (_, at) => `- Follow up from [[Meeting ${at * 11}]] with the team.`).join('\n')
 
 function typed(view: EditorView, keys: number): number {
   read = 0

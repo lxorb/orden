@@ -2,16 +2,7 @@ import { type Member, MOST_MEMBERS, memberIn } from '@orden/pass/wire'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { type TestEnv, testEnv } from './harness'
 import { hubs } from './hub-fakes'
-import {
-  aKeyring,
-  anId,
-  pass,
-  passCall,
-  type Person,
-  person,
-  sealed,
-  sharedVault,
-} from './pass-fakes'
+import { aKeyring, anId, pass, passCall, type Person, person, sealed, sharedVault } from './pass-fakes'
 
 let env: TestEnv
 let running: ReturnType<typeof hubs>
@@ -125,15 +116,11 @@ describe('an invitation without a key', () => {
   })
 
   test('to an address with no account waits for one', async () => {
-    expect((await api.invite(ada, vault, 'new@example.com', 'viewer', null)).json.state).toBe(
-      'pending',
-    )
+    expect((await api.invite(ada, vault, 'new@example.com', 'viewer', null)).json.state).toBe('pending')
     const newcomer = await person(env, 'new@example.com')
     expect((await api.changes(newcomer)).invites).toHaveLength(1)
     await api.keyring(newcomer, 0, aKeyring())
-    expect((await membersOf(ada)).find((one) => one.email === newcomer.email)?.state).toBe(
-      'confirm',
-    )
+    expect((await membersOf(ada)).find((one) => one.email === newcomer.email)?.state).toBe('confirm')
   })
 })
 
@@ -159,31 +146,24 @@ describe('roles', () => {
     vault = await sharedVault(env, ada, bob, 'manager')
     expect((await api.invite(bob, vault, cy.email, 'viewer')).status).toBe(200)
     expect((await api.vault(bob, vault, 1)).status).toBe(200)
-    expect(
-      (await passCall(env, bob, 'PUT', `/vaults/${vault}/members/${cy.email}`, { role: 'editor' }))
-        .status,
-    ).toBe(200)
+    expect((await passCall(env, bob, 'PUT', `/vaults/${vault}/members/${cy.email}`, { role: 'editor' })).status).toBe(
+      200,
+    )
     expect((await passCall(env, bob, 'DELETE', `/vaults/${vault}`)).status).toBe(403)
-    expect(
-      (await passCall(env, bob, 'PUT', `/vaults/${vault}/owner`, { email: bob.email })).status,
-    ).toBe(403)
+    expect((await passCall(env, bob, 'PUT', `/vaults/${vault}/owner`, { email: bob.email })).status).toBe(403)
   })
 
   test('nobody makes an owner by a role, or changes the owner’s', async () => {
     vault = await sharedVault(env, ada, bob, 'manager')
     expect((await api.invite(bob, vault, cy.email, 'owner')).status).toBe(400)
     await api.invite(bob, vault, cy.email, 'viewer')
-    expect(
-      (await passCall(env, bob, 'PUT', `/vaults/${vault}/members/${cy.email}`, { role: 'owner' }))
-        .status,
-    ).toBe(400)
-    expect(
-      (await passCall(env, bob, 'PUT', `/vaults/${vault}/members/${ada.email}`, { role: 'viewer' }))
-        .status,
-    ).toBe(409)
-    expect(
-      (await passCall(env, bob, 'DELETE', `/vaults/${vault}/members/${ada.email}`)).status,
-    ).toBe(409)
+    expect((await passCall(env, bob, 'PUT', `/vaults/${vault}/members/${cy.email}`, { role: 'owner' })).status).toBe(
+      400,
+    )
+    expect((await passCall(env, bob, 'PUT', `/vaults/${vault}/members/${ada.email}`, { role: 'viewer' })).status).toBe(
+      409,
+    )
+    expect((await passCall(env, bob, 'DELETE', `/vaults/${vault}/members/${ada.email}`)).status).toBe(409)
   })
 
   test('a changed role shows in the member’s changes', async () => {
@@ -198,22 +178,16 @@ describe('roles', () => {
 describe('leaving and removing', () => {
   test('a member leaves on their own, and the owner cannot', async () => {
     vault = await sharedVault(env, ada, bob)
-    expect(
-      (await passCall(env, bob, 'DELETE', `/vaults/${vault}/members/${bob.email}`)).status,
-    ).toBe(200)
+    expect((await passCall(env, bob, 'DELETE', `/vaults/${vault}/members/${bob.email}`)).status).toBe(200)
     expect((await membersOf(ada)).map((one) => one.email)).toEqual([ada.email])
-    expect(
-      (await passCall(env, ada, 'DELETE', `/vaults/${vault}/members/${ada.email}`)).status,
-    ).toBe(409)
+    expect((await passCall(env, ada, 'DELETE', `/vaults/${vault}/members/${ada.email}`)).status).toBe(409)
   })
 
   test('an editor does not remove anybody else', async () => {
     vault = await sharedVault(env, ada, bob)
     await api.invite(ada, vault, cy.email)
     await api.accept(cy, vault)
-    expect(
-      (await passCall(env, bob, 'DELETE', `/vaults/${vault}/members/${cy.email}`)).status,
-    ).toBe(403)
+    expect((await passCall(env, bob, 'DELETE', `/vaults/${vault}/members/${cy.email}`)).status).toBe(403)
   })
 
   test('a removed member writes nothing more, and may be asked back', async () => {
@@ -234,17 +208,13 @@ describe('leaving and removing', () => {
     const more = await api.invite(ada, vault, 'more@example.com')
     expect(more.status).toBe(409)
     expect(more.json.error).toBe('that is as many people as one vault holds')
-    expect((await api.invite(ada, vault, 'p1@example.com')).json.error).toBe(
-      'already in this vault',
-    )
+    expect((await api.invite(ada, vault, 'p1@example.com')).json.error).toBe('already in this vault')
   })
 })
 
 describe('a manager whose place changes while acting', () => {
   const demote = (who: Person) => () =>
-    env.db
-      .prepare("update pass_members set role = 'editor' where vault_id = ? and email = ?")
-      .run(vault, who.email)
+    env.db.prepare("update pass_members set role = 'editor' where vault_id = ? and email = ?").run(vault, who.email)
 
   const state = () =>
     env.db
@@ -254,8 +224,7 @@ describe('a manager whose place changes while acting', () => {
       )
       .all(vault) as { email: string; role: string }[]
 
-  const vaultRow = () =>
-    env.db.prepare('select rev, meta, key_proof from pass_vaults where id = ?').get(vault)
+  const vaultRow = () => env.db.prepare('select rev, meta, key_proof from pass_vaults where id = ?').get(vault)
 
   beforeEach(async () => {
     vault = await sharedVault(env, ada, bob, 'manager')
@@ -281,24 +250,18 @@ describe('a manager whose place changes while acting', () => {
     const named = vaultRow()
     env.justBefore(sql, demote(bob))
     expect((await act()).status).toBe(403)
-    expect(state()).toEqual(
-      members.map((one) => (one.email === bob.email ? { ...one, role: 'editor' } : one)),
-    )
+    expect(state()).toEqual(members.map((one) => (one.email === bob.email ? { ...one, role: 'editor' } : one)))
     expect(vaultRow()).toEqual(named)
   })
 
   test('two managers removing each other at once leave one of them in', async () => {
     env.justBefore(/update pass_members set state = 'removed'/, () =>
       env.db
-        .prepare(
-          "update pass_members set state = 'removed', key = null where vault_id = ? and email = ?",
-        )
+        .prepare("update pass_members set state = 'removed', key = null where vault_id = ? and email = ?")
         .run(vault, bob.email),
     )
     await passCall(env, ada, 'PUT', `/vaults/${vault}/members/${cy.email}`, { role: 'manager' })
-    expect(
-      (await passCall(env, bob, 'DELETE', `/vaults/${vault}/members/${cy.email}`)).status,
-    ).toBe(404)
+    expect((await passCall(env, bob, 'DELETE', `/vaults/${vault}/members/${cy.email}`)).status).toBe(404)
     expect((await membersOf(ada)).map((one) => one.email)).toEqual([ada.email, cy.email])
   })
 })
@@ -306,24 +269,18 @@ describe('a manager whose place changes while acting', () => {
 describe('handing a vault on', () => {
   test('makes an active member the owner and the old owner a manager', async () => {
     vault = await sharedVault(env, ada, bob)
-    expect(
-      (await passCall(env, ada, 'PUT', `/vaults/${vault}/owner`, { email: bob.email })).status,
-    ).toBe(200)
+    expect((await passCall(env, ada, 'PUT', `/vaults/${vault}/owner`, { email: bob.email })).status).toBe(200)
     const roles = Object.fromEntries((await membersOf(ada)).map((one) => [one.email, one.role]))
     expect(roles).toEqual({ [ada.email]: 'manager', [bob.email]: 'owner' })
     const bobs = (await api.changes(bob)).vaults[0]!
     expect(bobs).toMatchObject({ owner: true, role: 'owner' })
     expect((await passCall(env, ada, 'DELETE', `/vaults/${vault}`)).status).toBe(403)
-    expect(
-      (await passCall(env, bob, 'DELETE', `/vaults/${vault}/members/${ada.email}`)).status,
-    ).toBe(200)
+    expect((await passCall(env, bob, 'DELETE', `/vaults/${vault}/members/${ada.email}`)).status).toBe(200)
   })
 
   test('not to somebody who has not accepted', async () => {
     await api.invite(ada, vault, bob.email)
-    expect(
-      (await passCall(env, ada, 'PUT', `/vaults/${vault}/owner`, { email: bob.email })).status,
-    ).toBe(404)
+    expect((await passCall(env, ada, 'PUT', `/vaults/${vault}/owner`, { email: bob.email })).status).toBe(404)
   })
 })
 
@@ -402,10 +359,7 @@ describe('a new vault key', () => {
       'a new key is wrapped to the owner and to whoever renews it',
     )
     expect((await rotate(ada, { ...body, members: { [bob.email]: sealed() } })).status).toBe(409)
-    expect(
-      (await rotate(bob, { ...body, members: { [ada.email]: sealed(), [bob.email]: sealed() } }))
-        .status,
-    ).toBe(200)
+    expect((await rotate(bob, { ...body, members: { [ada.email]: sealed(), [bob.email]: sealed() } })).status).toBe(200)
   })
 
   test('puts a member it leaves out back to be confirmed, without a key', async () => {

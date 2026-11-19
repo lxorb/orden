@@ -23,8 +23,7 @@ const MOST_EDITS = 500
 
 function doingOf(edit: Record<string, unknown>): Doing {
   const said: Doing[] = []
-  if (typeof edit.replace === 'string')
-    said.push({ kind: 'replace', words: oneEnding(edit.replace) })
+  if (typeof edit.replace === 'string') said.push({ kind: 'replace', words: oneEnding(edit.replace) })
   if (typeof edit.insert_before === 'string') {
     said.push({ kind: 'before', words: oneEnding(edit.insert_before) })
   }
@@ -89,15 +88,9 @@ function withKept(words: string, keep: string): string {
   if (keep.startsWith('\n')) return trimmed + keep
   const lines = trimmed.split('\n')
   const lead = /^[ \t]*/.exec(lines[0] ?? '')?.[0].length ?? 0
-  const child = lines.findIndex(
-    (line, at) => at > 0 && (CHILD_ITEM.exec(line)?.[1]?.length ?? 0) > lead,
-  )
+  const child = lines.findIndex((line, at) => at > 0 && (CHILD_ITEM.exec(line)?.[1]?.length ?? 0) > lead)
   if (child < 1) return trimmed + keep
-  return [
-    ...lines.slice(0, child - 1),
-    `${lines[child - 1] ?? ''}${keep}`,
-    ...lines.slice(child),
-  ].join('\n')
+  return [...lines.slice(0, child - 1), `${lines[child - 1] ?? ''}${keep}`, ...lines.slice(child)].join('\n')
 }
 
 const ITEM_LINE = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]/
@@ -132,14 +125,8 @@ function placed(text: string, place: Place, doing: Doing): Replacement {
       const at = doing.kind === 'before' ? place.from : (place.after ?? place.to)
       const edge = place.shape === 'edge'
       const atEnd = edge ? at === text.length : doing.kind === 'after'
-      const apart = atEnd
-        ? apartFromBefore(asked, gap, text, at)
-        : apartFromAfter(asked, gap, text, at)
-      const words = edge
-        ? apart
-        : atEnd
-          ? apartFromAfter(apart, gap, text, at)
-          : apartFromBefore(apart, gap, text, at)
+      const apart = atEnd ? apartFromBefore(asked, gap, text, at) : apartFromAfter(asked, gap, text, at)
+      const words = edge ? apart : atEnd ? apartFromAfter(apart, gap, text, at) : apartFromBefore(apart, gap, text, at)
       const ending = at === text.length && text.endsWith('\n') && !words.endsWith('\n')
       return { from: at, to: at, insert: ending ? `${words}\n` : words }
     }
@@ -167,11 +154,7 @@ export interface Planned {
   places: Place[]
 }
 
-export function plan(
-  asked: readonly AgentEdit[],
-  text: string,
-  selected: Selected | null = null,
-): Planned {
+export function plan(asked: readonly AgentEdit[], text: string, selected: Selected | null = null): Planned {
   const places = asked.map((edit) => resolve(edit.at, text, selected))
   const edits = asked
     .map((edit, index) => {
@@ -179,10 +162,7 @@ export function plan(
       return { index, change: placed(text, place, edit.doing) }
     })
     .sort(
-      (one, other) =>
-        one.change.from - other.change.from ||
-        one.change.to - other.change.to ||
-        one.index - other.index,
+      (one, other) => one.change.from - other.change.from || one.change.to - other.change.to || one.index - other.index,
     )
 
   for (let at = 1; at < edits.length; at++) {

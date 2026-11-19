@@ -1,11 +1,4 @@
-import {
-  isLocal,
-  modelsUrl,
-  NOT_CHAT,
-  type Provider,
-  talkable,
-  sseJson,
-} from '../../../ai-providers/src/api'
+import { isLocal, modelsUrl, NOT_CHAT, type Provider, talkable, sseJson } from '../../../ai-providers/src/api'
 import { ordered, SCALE } from './effort'
 import { learnt } from './learned'
 import { request } from './request'
@@ -16,9 +9,7 @@ export const ANTHROPIC_COMPACT_BETA = 'compact-2026-09-04'
 type Json = Record<string, unknown>
 
 function record(value: unknown): Json | null {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as Json)
-    : null
+  return typeof value === 'object' && value !== null && !Array.isArray(value) ? (value as Json) : null
 }
 
 function text(value: unknown): string {
@@ -74,8 +65,7 @@ export function openaiModels(body: unknown): ModelInfo[] {
 }
 
 function planEfforts(row: Json): Effort[] {
-  const listed =
-    row.supported_reasoning_levels ?? row.supported_reasoning_efforts ?? row.reasoning_efforts
+  const listed = row.supported_reasoning_levels ?? row.supported_reasoning_efforts ?? row.reasoning_efforts
   if (!Array.isArray(listed)) return [...SCALE]
   const words = listed.map((one) => text(record(one)?.effort) || text(one))
   return ordered(
@@ -161,8 +151,7 @@ export function compatibleModels(body: unknown): ModelInfo[] {
 export function withLearnt(provider: string, model: ModelInfo): ModelInfo {
   const known = learnt(provider, model.id)
   const refused = new Set(known.refused ?? [])
-  const efforts =
-    known.reasons === false ? ['auto' as const] : model.efforts.filter((one) => !refused.has(one))
+  const efforts = known.reasons === false ? ['auto' as const] : model.efforts.filter((one) => !refused.has(one))
   return { ...model, efforts: ordered(efforts), window: model.window ?? known.window ?? null }
 }
 

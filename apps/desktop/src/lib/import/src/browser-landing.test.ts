@@ -24,8 +24,7 @@ const spaces: { id: string; name: string; root: string }[] = []
 const said: string[] = []
 const marks: { path: string }[] = []
 
-const packed = (value: unknown) =>
-  toBase64(mozLz4Of(new TextEncoder().encode(JSON.stringify(value))))
+const packed = (value: unknown) => toBase64(mozLz4Of(new TextEncoder().encode(JSON.stringify(value))))
 
 vi.mock('../../platform/src/tauri', () => ({
   invoke: (command: string, args: Record<string, unknown> = {}) => {
@@ -35,30 +34,20 @@ vi.mock('../../platform/src/tauri', () => ({
       return held === undefined ? Promise.reject(new Error('no such file')) : Promise.resolve(held)
     }
     if (command === 'read_firefox_places') {
-      return places === null
-        ? Promise.reject(new Error('locked'))
-        : Promise.resolve(JSON.stringify(places))
+      return places === null ? Promise.reject(new Error('locked')) : Promise.resolve(JSON.stringify(places))
     }
     if (command === 'read_safari') {
-      return typeof safari === 'string'
-        ? Promise.reject(new Error(safari))
-        : Promise.resolve(JSON.stringify(safari))
+      return typeof safari === 'string' ? Promise.reject(new Error(safari)) : Promise.resolve(JSON.stringify(safari))
     }
     if (command === 'read_browser_icons') {
       const pages = args.pages as string[]
       return Promise.resolve(
-        JSON.stringify(
-          Object.fromEntries(
-            pages.flatMap((page) => (marksOf[page] ? [[page, marksOf[page]]] : [])),
-          ),
-        ),
+        JSON.stringify(Object.fromEntries(pages.flatMap((page) => (marksOf[page] ? [[page, marksOf[page]]] : [])))),
       )
     }
     if (command === 'read_browser_history') return Promise.resolve(JSON.stringify(history))
     if (command === 'read_arc_sidebar') {
-      return arc === null
-        ? Promise.reject(new Error('no sidebar'))
-        : Promise.resolve(JSON.stringify(arc))
+      return arc === null ? Promise.reject(new Error('no sidebar')) : Promise.resolve(JSON.stringify(arc))
     }
     if (command === 'open_full_disk_access') return Promise.resolve()
     if (command === 'read_note') return Promise.reject(new Error('not found'))
@@ -85,10 +74,7 @@ providePort('web.pages', {
   ...webPages(),
   bringHistory: (rows) => Promise.resolve(void brought.push({ rows })),
   takeEngine: (offered) => {
-    const same =
-      'id' in offered
-        ? engine.id === offered.id
-        : engine.id === 'custom' && engine.custom === offered.custom
+    const same = 'id' in offered ? engine.id === offered.id : engine.id === 'custom' && engine.custom === offered.custom
     if (same) return Promise.resolve('same')
     if (engine.chosen) return Promise.resolve('kept')
     if ('id' in offered) engine.id = offered.id
@@ -189,15 +175,10 @@ describe('a Firefox profile brought into Orden', () => {
     marksOf = { 'https://mail.example.com/': 'data:image/png;base64,iVBORw0KGgo=' }
     history = [{ url: 'https://mail.example.com/', title: 'Mail', visits: 3, typed: 1, last: 9 }]
 
-    await landBrowser(
-      { ...FIREFOX, files: [...FIREFOX.files, 'favicons.sqlite', 'search.json.mozlz4'] },
-      false,
-    )
+    await landBrowser({ ...FIREFOX, files: [...FIREFOX.files, 'favicons.sqlite', 'search.json.mozlz4'] }, false)
 
     const mail = written[0]?.files.find((one) => one.path === 'Mail.url')
-    expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe(
-      'data:image/png;base64,iVBORw0KGgo=',
-    )
+    expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe('data:image/png;base64,iVBORw0KGgo=')
     expect(brought).toEqual([{ rows: history }])
     expect(engine).toMatchObject({ id: 'duckduckgo', chosen: true })
   })
@@ -210,9 +191,7 @@ describe('a Firefox profile brought into Orden', () => {
     await landBrowser({ ...FIREFOX, files: [...FIREFOX.files, 'search.json.mozlz4'] }, false)
 
     expect(engine.id).toBe('bing')
-    expect(said[0]).toContain(
-      'Firefox searches with DuckDuckGo: choose it in Settings to search with it here',
-    )
+    expect(said[0]).toContain('Firefox searches with DuckDuckGo: choose it in Settings to search with it here')
   })
 
   test("takes the day's copy of the bookmarks where the database cannot be read", async () => {
@@ -222,16 +201,12 @@ describe('a Firefox profile brought into Orden', () => {
     await landBrowser(FIREFOX, true)
 
     expect(spaces.map((one) => one.name)).toEqual(['Firefox (default-release)'])
-    expect(written[0]?.files.map((one) => one.path)).toContain(
-      'Bookmarks/Bookmarks menu/Recipes.url',
-    )
+    expect(written[0]?.files.map((one) => one.path)).toContain('Bookmarks/Bookmarks menu/Recipes.url')
   })
 
   test('says so when nothing of the profile can be read', async () => {
     places = null
-    await expect(landBrowser(FIREFOX, false)).rejects.toThrow(
-      'Nothing could be read out of Firefox.',
-    )
+    await expect(landBrowser(FIREFOX, false)).rejects.toThrow('Nothing could be read out of Firefox.')
     expect(spaces).toEqual([])
   })
 })
@@ -258,9 +233,7 @@ describe('a Chrome profile brought into Orden', () => {
     expect(paths).toContain('Docs/docs.example.com guide.url')
     expect(paths).toContain('Bookmarks/Bookmarks bar/Work/Board.url')
     expect(marks).toEqual([{ kind: 'note', path: 'mail.example.com.url', text: '' }])
-    expect(said).toEqual([
-      '1 page not on the web stays behind Saved tab groups and the reading list stay in Chrome',
-    ])
+    expect(said).toEqual(['1 page not on the web stays behind Saved tab groups and the reading list stay in Chrome'])
   })
 
   test("brings the Google account's bookmarks a signed-in profile keeps apart", async () => {

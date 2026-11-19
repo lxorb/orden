@@ -173,9 +173,7 @@ describe('a note an agent edited, moved', () => {
   test('is still the agent’s to take back, at its new name', async () => {
     const { desk, disk, fileOf } = deskWith({ 'Heron.md': 'A heron strikes' })
     const agent = anAgent()
-    await editNote(desk, agent, { path: 'Heron.md' }, [
-      { at: { quote: 'strikes' }, replace: 'STRIKES' },
-    ])
+    await editNote(desk, agent, { path: 'Heron.md' }, [{ at: { quote: 'strikes' }, replace: 'STRIKES' }])
 
     disk.set('/space/Bird.md', disk.get('/space/Heron.md') ?? '')
     disk.delete('/space/Heron.md')

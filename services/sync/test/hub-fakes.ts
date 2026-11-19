@@ -162,10 +162,7 @@ export function hubs(env: Env): {
   return { HUB: namespace as unknown as DurableObjectNamespace, of, asked }
 }
 
-export function connect(
-  made: AccountHub,
-  joining: Partial<Joining> & { device: string; who: string },
-): HubSocket {
+export function connect(made: AccountHub, joining: Partial<Joining> & { device: string; who: string }): HubSocket {
   const socket = new HubSocket()
   made.enter(socket as unknown as WebSocket, {
     session: '',
@@ -176,10 +173,7 @@ export function connect(
 }
 
 export async function send(made: AccountHub, socket: HubSocket, frame: unknown): Promise<void> {
-  await made.webSocketMessage(
-    socket as unknown as WebSocket,
-    typeof frame === 'string' ? frame : JSON.stringify(frame),
-  )
+  await made.webSocketMessage(socket as unknown as WebSocket, typeof frame === 'string' ? frame : JSON.stringify(frame))
 }
 
 export async function hangUp(made: AccountHub, state: HubState, socket: HubSocket) {
@@ -198,15 +192,9 @@ export interface Computer {
   socket: HubSocket
 }
 
-export async function computer(
-  env: TestEnv,
-  running: Hubs,
-  email: string,
-  name: string,
-): Promise<Computer> {
+export async function computer(env: TestEnv, running: Hubs, email: string, name: string): Promise<Computer> {
   const token = await signIn(env, email)
-  const user = (env.db.prepare('select id from users where email = ?').get(email) as { id: string })
-    .id
+  const user = (env.db.prepare('select id from users where email = ?').get(email) as { id: string }).id
   const session = (
     env.db.prepare('select id from sessions where token_hash = ?').get(await sha256(token)) as {
       id: string

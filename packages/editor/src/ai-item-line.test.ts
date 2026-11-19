@@ -12,10 +12,7 @@ class Fake {
     this.state = parsed(
       EditorState.create({
         doc,
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          aiExtension,
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), aiExtension],
       }),
     )
   }
@@ -69,10 +66,7 @@ describe('the run output of a js fence written on the list item line itself', ()
     let state = parsed(
       EditorState.create({
         doc,
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          runPanels,
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), runPanels],
       }),
     )
     const from = doc.indexOf('- ```js')

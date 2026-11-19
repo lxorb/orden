@@ -49,10 +49,7 @@ export interface InternalWorld {
   foldsCase: boolean
   exclusive?<T>(name: string, then: () => Promise<T>): Promise<T>
   newest?: { read(): number; write(gen: number): void }
-  channel?(
-    name: string,
-    heard: (message: unknown) => void,
-  ): { post(message: unknown): void; close(): void }
+  channel?(name: string, heard: (message: unknown) => void): { post(message: unknown): void; close(): void }
 }
 
 interface Written {
@@ -146,11 +143,7 @@ export class InternalFolder {
       }) ?? null
   }
 
-  static async open(
-    name: string,
-    bytes: InternalBytes,
-    world: InternalWorld,
-  ): Promise<InternalFolder> {
+  static async open(name: string, bytes: InternalBytes, world: InternalWorld): Promise<InternalFolder> {
     const folder = new InternalFolder(name, bytes, world)
     await folder.load()
     return folder
@@ -466,8 +459,7 @@ export class InternalFolder {
         const self = this.keyOf(from)
         const target = this.keyOf(to)
         const caseOnly = self === target
-        if (!caseOnly && target.startsWith(`${self}/`))
-          throw new Error(`${from} cannot go into itself`)
+        if (!caseOnly && target.startsWith(`${self}/`)) throw new Error(`${from} cannot go into itself`)
         if (!caseOnly && this.atNow(to)) throw new Error(`something is at ${to} already`)
         const at = this.world.now()
         const changes: InternalChange[] = []

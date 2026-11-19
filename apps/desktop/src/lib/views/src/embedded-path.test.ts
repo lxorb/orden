@@ -11,11 +11,7 @@ vi.mock('../../rows/src/rows.svelte', () => ({ rows: { of: () => [] } }))
 vi.mock('../../link-index/src/api', () => ({
   links: {
     targetOf: (from: string | null, link: { target: string }) =>
-      link.target === 'Clients.base'
-        ? from?.startsWith('/s/Work/')
-          ? 'Bases/Clients.base'
-          : null
-        : null,
+      link.target === 'Clients.base' ? (from?.startsWith('/s/Work/') ? 'Bases/Clients.base' : null) : null,
   },
 }))
 

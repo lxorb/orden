@@ -69,9 +69,7 @@ function markerOf(state: EditorState, item: SyntaxNode): { number: number | null
   const text = mark ? state.doc.sliceString(mark.from, mark.to) : '-'
   const ordered = /^(\d+)([.)])$/.exec(text)
 
-  return ordered
-    ? { number: Number(ordered[1]), tail: ordered[2] ?? '.' }
-    : { number: null, tail: text }
+  return ordered ? { number: Number(ordered[1]), tail: ordered[2] ?? '.' } : { number: null, tail: text }
 }
 
 function joins(state: EditorState, upper: Side, lower: Side): lower is Side & { item: SyntaxNode } {
@@ -116,13 +114,7 @@ export function holderQuote(text: string, quoted: boolean): string {
   return quoted ? marks.slice(0, marks.slice(0, -1).lastIndexOf('>') + 1) : marks
 }
 
-export function gap(
-  state: EditorState,
-  upper: Side,
-  lower: Side,
-  existing: string | null,
-  holder: string,
-): string {
+export function gap(state: EditorState, upper: Side, lower: Side, existing: string | null, holder: string): string {
   const quote = sharedQuote(sharedQuote(upper.quote, lower.quote), holder)
   if (!joins(state, upper, lower)) return blank(existing, quote)
 

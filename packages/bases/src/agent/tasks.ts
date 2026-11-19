@@ -161,20 +161,14 @@ export function taskChange(args: Args): TaskChange {
     const rule = args.recurrence
     if (rule === null || rule === '') change.recurrence = null
     else if (typeof rule === 'string' && parseRule(rule)) change.recurrence = rule.trim()
-    else
-      throw new AgentError('bad_arguments', 'recurrence is a rule such as "every week on Monday"')
+    else throw new AgentError('bad_arguments', 'recurrence is a rule such as "every week on Monday"')
   }
   if (has(args, 'remind')) {
     const said = args.remind
     const remind =
-      said === null || said === ''
-        ? []
-        : readRemind(Array.isArray(said) ? said.map(words).join(',') : words(said))
+      said === null || said === '' ? [] : readRemind(Array.isArray(said) ? said.map(words).join(',') : words(said))
     if (remind === null) {
-      throw new AgentError(
-        'bad_arguments',
-        'remind is "15m", "09:00" or "2026-10-06 09:00", or several',
-      )
+      throw new AgentError('bad_arguments', 'remind is "15m", "09:00" or "2026-10-06 09:00", or several')
     }
     change.remind = remind
   }
@@ -187,8 +181,7 @@ export function taskChange(args: Args): TaskChange {
     change.duration = minutes
   }
   if (has(args, 'assignee')) {
-    change.assignee =
-      args.assignee === null || args.assignee === '' ? null : textArg(args.assignee, 'assignee')
+    change.assignee = args.assignee === null || args.assignee === '' ? null : textArg(args.assignee, 'assignee')
   }
   if (has(args, 'tags')) change.tags = tagsArg(args.tags)
   return change
@@ -217,17 +210,14 @@ export const writtenFields: ReadWords = (text) => ({
 })
 
 export function newTask(args: Args, read: ReadWords = writtenFields): Read {
-  const fields =
-    args.fields !== null && typeof args.fields === 'object' ? (args.fields as Args) : {}
+  const fields = args.fields !== null && typeof args.fields === 'object' ? (args.fields as Args) : {}
   const said = { ...fields, ...args }
   const text = textArg(said.text, 'text')
   const words = read(text)
   const task: TaskFields = { ...words.fields }
   if (!task.text) throw new AgentError('bad_arguments', 'text needs words besides its fields')
 
-  const change = taskChange(
-    Object.fromEntries(Object.entries(said).filter(([key]) => key !== 'text')),
-  )
+  const change = taskChange(Object.fromEntries(Object.entries(said).filter(([key]) => key !== 'text')))
   for (const [key, value] of Object.entries(change)) {
     if (value === null) Reflect.deleteProperty(task, key)
     else Object.assign(task, { [key]: value })
@@ -235,10 +225,7 @@ export function newTask(args: Args, read: ReadWords = writtenFields): Read {
   return { ...words, fields: task }
 }
 
-export function taskBlock(
-  text: string,
-  line: number,
-): { from: number; to: number; lines: string[] } {
+export function taskBlock(text: string, line: number): { from: number; to: number; lines: string[] } {
   const all = text.split('\n')
   const first = all[line] ?? ''
   const indent = first.length - first.trimStart().length

@@ -9,9 +9,7 @@ function overlong(source: HasJson): boolean {
   return Number.isFinite(said) && said > MOST_BODY_BYTES
 }
 
-export async function objectBody(
-  source: HasJson,
-): Promise<Record<string, unknown> | null | undefined> {
+export async function objectBody(source: HasJson): Promise<Record<string, unknown> | null | undefined> {
   if (overlong(source)) return null
 
   const parsed = await source.req.json<unknown>().catch(() => undefined)

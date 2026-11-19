@@ -5,9 +5,7 @@ const ROTATES = [
   [6, 10, 15, 21],
 ]
 
-const SINES = Uint32Array.from({ length: 64 }, (_one, step) =>
-  Math.floor(Math.abs(Math.sin(step + 1)) * 2 ** 32),
-)
+const SINES = Uint32Array.from({ length: 64 }, (_one, step) => Math.floor(Math.abs(Math.sin(step + 1)) * 2 ** 32))
 
 const rotated = (value: number, by: number): number => ((value << by) | (value >>> (32 - by))) >>> 0
 

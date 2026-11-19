@@ -17,9 +17,7 @@ function readPlace(value: unknown): Place | null {
   const { url, x, y, trail, at } = value
   if (typeof url !== 'string' || typeof x !== 'number' || typeof y !== 'number') return null
 
-  const walked = Array.isArray(trail)
-    ? trail.filter((one): one is string => typeof one === 'string')
-    : []
+  const walked = Array.isArray(trail) ? trail.filter((one): one is string => typeof one === 'string') : []
 
   return {
     url,
@@ -60,8 +58,7 @@ export function placeKept(path: string | null, place: Place) {
 export function placesForgotten(urls: ReadonlySet<string> | null) {
   const held = all()
   const left = Object.entries(held).filter(
-    ([, place]) =>
-      urls !== null && !urls.has(place.url) && !(place.trail ?? []).some((one) => urls.has(one)),
+    ([, place]) => urls !== null && !urls.has(place.url) && !(place.trail ?? []).some((one) => urls.has(one)),
   )
   if (left.length !== Object.keys(held).length) keepJson(STORAGE_KEY, Object.fromEntries(left))
 }

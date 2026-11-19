@@ -1,13 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  controlOf,
-  imageKey,
-  imageKeyTyped,
-  type Keystroke,
-  routeKey,
-  shellReads,
-  typedBy,
-} from './keys'
+import { controlOf, imageKey, imageKeyTyped, type Keystroke, routeKey, shellReads, typedBy } from './keys'
 
 function press(key: string, held: Partial<Omit<Keystroke, 'key'>> = {}): Keystroke {
   return { key, ctrlKey: false, metaKey: false, altKey: false, shiftKey: false, ...held }
@@ -145,9 +137,7 @@ describe('on Windows and Linux', () => {
   })
 
   test('AltGr typing a character is never a chord', () => {
-    expect(routeKey(press('{', { ctrlKey: true, altKey: true }), 'win', 'app.note-7', false)).toBe(
-      'shell',
-    )
+    expect(routeKey(press('{', { ctrlKey: true, altKey: true }), 'win', 'app.note-7', false)).toBe('shell')
     expect(routeKey(press('@', { ctrlKey: true, altKey: true }), 'win', null, false)).toBe('shell')
   })
 })

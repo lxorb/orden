@@ -131,9 +131,7 @@ test('a bar opened again after a redraw it was open for searches the new page', 
   await vi.waitFor(() => expect(tally(target)).toBe('1 of 1'))
   await redrawn(target, 'beta\nbeta')
 
-  target
-    .querySelector('input')
-    ?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+  target.querySelector('input')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
   flushSync()
   await vi.waitFor(() => {
     flushSync()

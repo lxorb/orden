@@ -24,12 +24,7 @@
   let link = $state('')
   let bubble = $state<HTMLElement>()
 
-  $effect(() =>
-    overlays.show(onclose, () => [
-      bubble,
-      ...document.querySelectorAll('[data-opens="extensions"]'),
-    ]),
-  )
+  $effect(() => overlays.show(onclose, () => [bubble, ...document.querySelectorAll('[data-opens="extensions"]')]))
 
   async function add(event: SubmitEvent) {
     event.preventDefault()

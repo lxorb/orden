@@ -26,9 +26,7 @@ function exchange(): void {
   }
   going = sync
     .exchange(owner, accountPad(token))
-    .catch((error: unknown) =>
-      log('info', `scratchpad: not traded with the account: ${String(error)}`),
-    )
+    .catch((error: unknown) => log('info', `scratchpad: not traded with the account: ${String(error)}`))
     .finally(() => {
       going = null
       if (!again) return

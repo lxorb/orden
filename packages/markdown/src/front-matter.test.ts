@@ -22,9 +22,7 @@ describe('what counts as front matter', () => {
   test.each(TABLE)('%j is a block: %s', (note, block) => {
     expect(frontMatterBlock(note) !== null).toBe(block)
     expect(opensFrontMatter(note)).toBe(block)
-    expect(stripFrontMatter(note)).toBe(
-      frontMatterBlock(note) ? note.slice(frontMatterBlock(note)?.to ?? 0) : note,
-    )
+    expect(stripFrontMatter(note)).toBe(frontMatterBlock(note) ? note.slice(frontMatterBlock(note)?.to ?? 0) : note)
   })
 
   test('an indented fence inside a block scalar does not close the block', () => {
@@ -87,10 +85,7 @@ describe('what a writer makes is what a reader takes', () => {
     expect(fences(note), note).toBe(2)
     const second = apply('---\ntitle: x\n---\n', addProperty('---\ntitle: x\n---\n', name))
     expect(frontMatterKeys(second)).toEqual(['title', name])
-    const renamed = apply(
-      '---\ntitle: x\nb: 2\n---\n',
-      renameProperty('---\ntitle: x\nb: 2\n---\n', 'title', name),
-    )
+    const renamed = apply('---\ntitle: x\nb: 2\n---\n', renameProperty('---\ntitle: x\nb: 2\n---\n', 'title', name))
     expect(frontMatterKeys(renamed)).toEqual([name, 'b'])
     const left = `---\ntitle: x\n${name}: 2\n---\nbody\n`
     expect(frontMatterBlock(apply(left, frontMatterEdit(left, 'title', null)))).not.toBeNull()
@@ -143,18 +138,16 @@ describe('reading the front matter', () => {
     expect(frontMatterList('---\ntags: [a, "b #c"] # mine\n---\n', 'tags')).toEqual(['a', 'b #c'])
     const source = '---\ntitle: a # note\n---\n'
     const edit = frontMatterEdit(source, 'title', 'b')
-    expect(edit && source.slice(0, edit.from) + edit.insert + source.slice(edit.to)).toBe(
-      '---\ntitle: b # note\n---\n',
-    )
+    expect(edit && source.slice(0, edit.from) + edit.insert + source.slice(edit.to)).toBe('---\ntitle: b # note\n---\n')
   })
 })
 
 test('the keys a block holds: are its top-level ones, as written, and none where there is no block', () => {
-  expect(
-    frontMatterKeys(
-      '---\ntitle: Trip\naliases:\n  - One\n# a note\nDue date: soon\n---\nWords: no\n',
-    ),
-  ).toEqual(['title', 'aliases', 'Due date'])
+  expect(frontMatterKeys('---\ntitle: Trip\naliases:\n  - One\n# a note\nDue date: soon\n---\nWords: no\n')).toEqual([
+    'title',
+    'aliases',
+    'Due date',
+  ])
   expect(frontMatterKeys('Words: no\n')).toEqual([])
 })
 
@@ -174,9 +167,7 @@ describe('reading a key as a list', () => {
     expect(frontMatterList(front('aliases: ["One", \'Two\']'), 'aliases')).toEqual(['One', 'Two'])
     expect(frontMatterList(front('aliases:\n  - "One two"'), 'aliases')).toEqual(['One two'])
     expect(frontMatterList(front('aliases:\n  - Foo # old name'), 'aliases')).toEqual(['Foo'])
-    expect(frontMatterList(front('aliases:\n  - "Foo # bar" # old'), 'aliases')).toEqual([
-      'Foo # bar',
-    ])
+    expect(frontMatterList(front('aliases:\n  - "Foo # bar" # old'), 'aliases')).toEqual(['Foo # bar'])
     const body = 'aliases:\n  - One\ntitle: Not an alias\n'
     expect(frontMatterList(front(body), 'aliases')).toEqual(['One'])
   })
@@ -198,9 +189,7 @@ describe('setting a key', () => {
   }
 
   test('opens a block on a note that has none; and on an empty note; goes in as the last line of a block that has other keys', () => {
-    expect(applied('# Plan\n\nwords\n', 'icon', 'rocket')).toBe(
-      '---\nicon: rocket\n---\n# Plan\n\nwords\n',
-    )
+    expect(applied('# Plan\n\nwords\n', 'icon', 'rocket')).toBe('---\nicon: rocket\n---\n# Plan\n\nwords\n')
     expect(applied('', 'icon', 'rocket')).toBe('---\nicon: rocket\n---\n')
     expect(applied('---\ntitle: Plan\ntags: [work]\n---\n\nwords', 'icon', 'rocket')).toBe(
       '---\ntitle: Plan\ntags: [work]\nicon: rocket\n---\n\nwords',
@@ -241,12 +230,8 @@ describe('setting a key', () => {
     expect(twice).toBe('---\n日期: c\n---\nbody\n')
     expect(frontMatterValue(twice, '日期')).toBe('c')
     for (const key of ['due date', 'Größe', '1st', 'a.b']) {
-      expect(applied(`---\n${key}: a\n# note\n---\n`, key, 'b')).toBe(
-        `---\n${key}: b\n# note\n---\n`,
-      )
-      expect(applied(`---\n${key}: a\n# note\nz: 1\n---\n`, key, null)).toBe(
-        '---\n# note\nz: 1\n---\n',
-      )
+      expect(applied(`---\n${key}: a\n# note\n---\n`, key, 'b')).toBe(`---\n${key}: b\n# note\n---\n`)
+      expect(applied(`---\n${key}: a\n# note\nz: 1\n---\n`, key, null)).toBe('---\n# note\nz: 1\n---\n')
     }
   })
 
@@ -279,12 +264,8 @@ describe('taking a key away', () => {
       '---\r\ntitle: Plan\r\n---\r\nwords',
     )
     expect(applied('---\r\nicon: rocket\r\n---\r\n\r\n# Plan\r\n', 'icon')).toBe('# Plan\r\n')
-    expect(applied('---\ntitle: a\ntags:\n  - x\n  - y\n---\nbody\n', 'tags')).toBe(
-      '---\ntitle: a\n---\nbody\n',
-    )
-    expect(applied('---\ntags:\n- x\n- y\ntitle: a\n---\nbody\n', 'tags')).toBe(
-      '---\ntitle: a\n---\nbody\n',
-    )
+    expect(applied('---\ntitle: a\ntags:\n  - x\n  - y\n---\nbody\n', 'tags')).toBe('---\ntitle: a\n---\nbody\n')
+    expect(applied('---\ntags:\n- x\n- y\ntitle: a\n---\nbody\n', 'tags')).toBe('---\ntitle: a\n---\nbody\n')
   })
 
   test('takes a value of paragraphs whole, blank lines and all; and stops at a blank line the next key follows', () => {
@@ -294,9 +275,7 @@ describe('taking a key away', () => {
     expect(edit && source.slice(0, edit.from) + edit.insert + source.slice(edit.to)).toBe(
       '---\nsummary: short\nnotes: x\nstatus: done\n---\nbody',
     )
-    expect(applied('---\nnotes: |\n  first\n\nstatus: done\n---\nbody', 'notes')).toBe(
-      '---\n\nstatus: done\n---\nbody',
-    )
+    expect(applied('---\nnotes: |\n  first\n\nstatus: done\n---\nbody', 'notes')).toBe('---\n\nstatus: done\n---\nbody')
   })
 })
 
@@ -407,10 +386,7 @@ describe('a value across lines', () => {
     const note = '---\ntags: [\n  work,\n  "b, c",\n]\nz: 1\n---\nrest\n'
     expect(frontMatterList(note, 'tags')).toEqual(['work', 'b, c'])
     expect(frontMatterList(note, 'z')).toEqual(['1'])
-    expect(frontMatterList('---\ntags: [ # mine\n  a, # one\n  b\n]\n---\n', 'tags')).toEqual([
-      'a',
-      'b',
-    ])
+    expect(frontMatterList('---\ntags: [ # mine\n  a, # one\n  b\n]\n---\n', 'tags')).toEqual(['a', 'b'])
   })
 
   test('setting or taking away a value takes all its lines', () => {
@@ -456,9 +432,7 @@ describe('a value across lines', () => {
     expect(apply('---\ntitle: x\n---\nrest\n', 'title', null)).toBe('rest\n')
     expect(apply('---\ntitle: x\nz: 1\n---\nrest\n', 'title', null)).toBe('---\nz: 1\n---\nrest\n')
     expect(apply('---\nz: 1\ntitle: x\n---\nrest\n', 'title', null)).toBe('---\nz: 1\n---\nrest\n')
-    expect(apply('---\ntitle: x\n# about\nz: 1\n---\nrest\n', 'title', null)).toBe(
-      '---\n# about\nz: 1\n---\nrest\n',
-    )
+    expect(apply('---\ntitle: x\n# about\nz: 1\n---\nrest\n', 'title', null)).toBe('---\n# about\nz: 1\n---\nrest\n')
     for (const [note, after] of [
       ['---\ntitle: x\n# keep me\n---\nrest\n', '---\ntitle:\n# keep me\n---\nrest\n'],
       ['---\ntitle: x\nsome words\n---\nrest\n', '---\ntitle:\nsome words\n---\nrest\n'],

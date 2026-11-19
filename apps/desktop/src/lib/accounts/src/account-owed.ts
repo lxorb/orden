@@ -75,11 +75,7 @@ export class AccountOwed {
     else forget(this.key)
   }
 
-  private async delivered(
-    token: string,
-    patch: AccountSettings,
-    session: number,
-  ): Promise<boolean> {
+  private async delivered(token: string, patch: AccountSettings, session: number): Promise<boolean> {
     try {
       await api.saveSettings(token, patch)
       return true

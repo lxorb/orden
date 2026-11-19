@@ -122,16 +122,12 @@
   const atLeft = $derived(!paneToward(workspace.panes.frame, pane.id, 'left'))
   const atRight = $derived(!paneToward(workspace.panes.frame, pane.id, 'right'))
   const atFoot = $derived(!paneToward(workspace.panes.frame, pane.id, 'down'))
-  const ownSurface = $derived(
-    !!tab && (TAB_KINDS[tab.kind].takesDrops || (isDesktop && tab.kind === 'web')),
-  )
+  const ownSurface = $derived(!!tab && (TAB_KINDS[tab.kind].takesDrops || (isDesktop && tab.kind === 'web')))
   const writing = $derived(!!tab && TAB_KINDS[tab.kind].editor && !tab.reading && !locked)
 
   const columns = $derived(
     pane.stacked && !viewport.touch
-      ? workspace
-          .tabsIn(pane.id)
-          .filter((one) => one.kind === 'note' && !one.reading && !protection.locked(one.path))
+      ? workspace.tabsIn(pane.id).filter((one) => one.kind === 'note' && !one.reading && !protection.locked(one.path))
       : [],
   )
 
@@ -139,9 +135,7 @@
 
   let view = $state<EditorView>()
 
-  const keepsMiddle = $derived(
-    ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)),
-  )
+  const keepsMiddle = $derived(ownSurface || (writing && !tab?.coming && !modes.readOnly && canWriteIn(tab?.note)))
 
   const edged = $derived(keepsMiddle ? '' : undefined)
 
@@ -167,9 +161,7 @@
   let spec = $state<FindSpec>(NO_FIND)
   let tally = $state<FindTally>(NO_TALLY)
 
-  const canReplace = $derived(
-    !!tab && !tab.reading && !modes.readOnly && canWriteIn(tab.note) && !!view,
-  )
+  const canReplace = $derived(!!tab && !tab.reading && !modes.readOnly && canWriteIn(tab.note) && !!view)
 
   async function look(next: FindSpec) {
     spec = next
@@ -328,9 +320,7 @@
     const box = event.currentTarget.getBoundingClientRect()
     const moving = workspace.panes.dragging?.tabId ?? null
 
-    return zoneAt(box, event.clientX, event.clientY, (side) =>
-      workspace.canLand(side, pane.id, moving),
-    )
+    return zoneAt(box, event.clientX, event.clientY, (side) => workspace.canLand(side, pane.id, moving))
   }
 
   function answers(event: DragEvent, zone: Zone): boolean {
@@ -365,9 +355,7 @@
   }
 
   const landing = $derived(workspace.panes.landing)
-  const zone = $derived(
-    landing?.kind === 'pane' && landing.paneId === pane.id ? landing.zone : undefined,
-  )
+  const zone = $derived(landing?.kind === 'pane' && landing.paneId === pane.id ? landing.zone : undefined)
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -514,11 +502,7 @@
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="stack" data-region="editor">
         {#each columns as one (one.id)}
-          <section
-            class="column"
-            class:is-active={one.id === pane.activeTabId}
-            onfocusin={() => takeColumn(one.id)}
-          >
+          <section class="column" class:is-active={one.id === pane.activeTabId} onfocusin={() => takeColumn(one.id)}>
             <button
               class="spine"
               title={one.shown}
@@ -528,10 +512,7 @@
             >
               <span class="orden-row-label" dir="auto">{one.shown}</span>
             </button>
-            <div
-              class="sheet"
-              oncontextmenu={(event: MouseEvent) => showMenu(event, columnViews[one.id], one.path)}
-            >
+            <div class="sheet" oncontextmenu={(event: MouseEvent) => showMenu(event, columnViews[one.id], one.path)}>
               <Editor
                 bind:view={columnViews[one.id]}
                 tab={one}
@@ -557,11 +538,7 @@
       </div>
     {:else if tab}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div
-        class="editor"
-        data-region="editor"
-        oncontextmenu={(event: MouseEvent) => showMenu(event, view, tab.path)}
-      >
+      <div class="editor" data-region="editor" oncontextmenu={(event: MouseEvent) => showMenu(event, view, tab.path)}>
         <Editor
           bind:view
           {tab}
@@ -705,10 +682,7 @@
   }
 
   .pane.stripped:global([data-underlay])::before {
-    background: linear-gradient(
-      transparent var(--titlebar-height),
-      var(--content-ground, var(--bg)) 0
-    );
+    background: linear-gradient(transparent var(--titlebar-height), var(--content-ground, var(--bg)) 0);
   }
 
   .pane.stripped:global([data-underlay]) > .card {

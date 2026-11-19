@@ -95,9 +95,9 @@ export async function rollOn(env: Env, user: string): Promise<boolean> {
 
 export async function everyoneBack(env: Env, dry: boolean): Promise<number> {
   if (dry) {
-    const counted = await env.DB.prepare(
-      'select count(*) as n from users where sync_version = 2',
-    ).first<{ n: number }>()
+    const counted = await env.DB.prepare('select count(*) as n from users where sync_version = 2').first<{
+      n: number
+    }>()
     return counted?.n ?? 0
   }
 
@@ -121,8 +121,7 @@ export async function rolloutView(env: Env) {
   const { results: counts } = await env.DB.prepare(
     'select sync_version as version, count(*) as n from users group by sync_version',
   ).all<{ version: number; n: number }>()
-  const on = (two: boolean) =>
-    counts.filter((one) => (one.version === 2) === two).reduce((sum, one) => sum + one.n, 0)
+  const on = (two: boolean) => counts.filter((one) => (one.version === 2) === two).reduce((sum, one) => sum + one.n, 0)
   const { results: moves } = await env.DB.prepare(
     `select u.email as email, f.at as at, f.from_version as "from", f.to_version as "to",
             f.why as why, f.min as min

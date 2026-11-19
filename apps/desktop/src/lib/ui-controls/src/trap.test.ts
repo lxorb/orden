@@ -58,8 +58,7 @@ function page(rootSays?: string) {
     documentElement: root,
   })
   vi.stubGlobal('HTMLElement', {
-    [Symbol.hasInstance]: (value: unknown) =>
-      typeof value === 'object' && value !== null && 'focus' in value,
+    [Symbol.hasInstance]: (value: unknown) => typeof value === 'object' && value !== null && 'focus' in value,
   })
   return body
 }

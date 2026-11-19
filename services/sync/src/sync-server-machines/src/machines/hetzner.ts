@@ -92,10 +92,7 @@ function typeOf(value: unknown): ServerType | null {
     return monthly === null ? [] : [{ location: one.location, monthly, hourly: hourly ?? 0 }]
   })
   const available = listed(value, 'locations').flatMap((one) =>
-    isRecord(one) &&
-    typeof one.name === 'string' &&
-    one.available !== false &&
-    !isRecord(one.deprecation)
+    isRecord(one) && typeof one.name === 'string' && one.available !== false && !isRecord(one.deprecation)
       ? [one.name]
       : [],
   )
@@ -144,9 +141,7 @@ export class Hetzner {
       throw new HetznerError(
         answer.status,
         typeof error.code === 'string' ? error.code : 'http',
-        typeof error.message === 'string'
-          ? error.message
-          : `Hetzner answered ${String(answer.status)}`,
+        typeof error.message === 'string' ? error.message : `Hetzner answered ${String(answer.status)}`,
       )
     }
     return said

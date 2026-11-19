@@ -31,10 +31,7 @@
   const MODE_NAMES = { random: 'Random', memorable: 'Memorable', username: 'Username' }
 
   const separators = $derived(SEPARATORS.map((one) => ({ value: one, label: separatorLabel(one) })))
-  const usernameSeparators = $derived([
-    { value: 'none', label: separatorLabel('none') },
-    ...separators,
-  ])
+  const usernameSeparators = $derived([{ value: 'none', label: separatorLabel('none') }, ...separators])
 
   const close = () => (ui.sheet = null)
 
@@ -50,12 +47,7 @@
   }
 </script>
 
-{#snippet slider(
-  label: string,
-  value: number,
-  range: { min: number; max: number },
-  set: (next: number) => void,
-)}
+{#snippet slider(label: string, value: number, range: { min: number; max: number }, set: (next: number) => void)}
   <div class="dial">
     <span class="name">{label}</span>
     <input
@@ -96,13 +88,7 @@
 
     <div class="result">
       <GeneratedText text={result} />
-      <button
-        type="button"
-        class="orden-glyph"
-        aria-label="Regenerate"
-        title="Regenerate"
-        onclick={() => turn++}
-      >
+      <button type="button" class="orden-glyph" aria-label="Regenerate" title="Regenerate" onclick={() => turn++}>
         <Glyph icon={RefreshCw} />
       </button>
     </div>
@@ -110,34 +96,16 @@
 
     <div class="card">
       {#if prefs.mode === 'random'}
-        {@render slider(
-          'Characters',
-          prefs.random.length,
-          RANDOM_LENGTH,
-          (next) => (prefs.random.length = next),
-        )}
+        {@render slider('Characters', prefs.random.length, RANDOM_LENGTH, (next) => (prefs.random.length = next))}
         <SwitchRow
           label="Capital letters"
           on={prefs.random.upper}
           onchange={(on: boolean) => (prefs.random.upper = on)}
         />
-        <SwitchRow
-          label="Numbers"
-          on={prefs.random.digits}
-          onchange={(on: boolean) => (prefs.random.digits = on)}
-        />
-        <SwitchRow
-          label="Symbols"
-          on={prefs.random.symbols}
-          onchange={(on: boolean) => (prefs.random.symbols = on)}
-        />
+        <SwitchRow label="Numbers" on={prefs.random.digits} onchange={(on: boolean) => (prefs.random.digits = on)} />
+        <SwitchRow label="Symbols" on={prefs.random.symbols} onchange={(on: boolean) => (prefs.random.symbols = on)} />
       {:else if prefs.mode === 'memorable'}
-        {@render slider(
-          'Words',
-          prefs.memorable.words,
-          MEMORABLE_WORDS,
-          (next) => (prefs.memorable.words = next),
-        )}
+        {@render slider('Words', prefs.memorable.words, MEMORABLE_WORDS, (next) => (prefs.memorable.words = next))}
         <div class="choice">
           <span class="name">Separator</span>
           <Select
@@ -145,8 +113,7 @@
             value={prefs.memorable.separator}
             options={separators}
             onchange={(next: string) => {
-              prefs.memorable.separator =
-                SEPARATORS.find((one) => one === next) ?? prefs.memorable.separator
+              prefs.memorable.separator = SEPARATORS.find((one) => one === next) ?? prefs.memorable.separator
             }}
           />
         </div>
@@ -161,12 +128,7 @@
           onchange={(on: boolean) => (prefs.memorable.numbers = on)}
         />
       {:else}
-        {@render slider(
-          'Words',
-          prefs.username.words,
-          MEMORABLE_WORDS,
-          (next) => (prefs.username.words = next),
-        )}
+        {@render slider('Words', prefs.username.words, MEMORABLE_WORDS, (next) => (prefs.username.words = next))}
         <div class="choice">
           <span class="name">Separator</span>
           <Select
@@ -175,9 +137,7 @@
             options={usernameSeparators}
             onchange={(next: string) => {
               prefs.username.separator =
-                next === 'none'
-                  ? 'none'
-                  : (SEPARATORS.find((one) => one === next) ?? prefs.username.separator)
+                next === 'none' ? 'none' : (SEPARATORS.find((one) => one === next) ?? prefs.username.separator)
             }}
           />
         </div>

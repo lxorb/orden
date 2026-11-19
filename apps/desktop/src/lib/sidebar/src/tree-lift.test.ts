@@ -23,9 +23,7 @@ describe('which part of a row the pointer is in', () => {
 
   test('half the row is still the row, at either scale the list is drawn at', () => {
     for (const height of [28, 56]) {
-      const middle = [...Array(height).keys()].filter(
-        (along) => bandOf(TOP + along, TOP, height) === 'on',
-      )
+      const middle = [...Array(height).keys()].filter((along) => bandOf(TOP + along, TOP, height) === 'on')
       expect(middle.length / height, `${height}`).toBeGreaterThanOrEqual(0.5)
     }
   })

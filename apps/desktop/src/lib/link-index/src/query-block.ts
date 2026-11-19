@@ -56,11 +56,7 @@ function row(hit: Hit, hashOf: (words: string) => string): string {
   return `<button type="button" class="orden-row is-short" ${where}>${box}${marked(task.text, task.ranges)}</button>`
 }
 
-export async function queryRowsHtml(
-  code: string,
-  nothing: string,
-  root: string | null = null,
-): Promise<string | null> {
+export async function queryRowsHtml(code: string, nothing: string, root: string | null = null): Promise<string | null> {
   const said = queryIn(code)
   if (!said) return null
 
@@ -70,18 +66,10 @@ export async function queryRowsHtml(
   const query = parseQuery(said)
   const hits: Hit[] = []
   await services()
-    .search(
-      root,
-      query,
-      [],
-      MOST,
-      (batch) => hits.push(...batch.hits),
-      workspaceNotes().leftOut(root),
-    )
+    .search(root, query, [], MOST, (batch) => hits.push(...batch.hits), workspaceNotes().leftOut(root))
     .catch(() => undefined)
 
-  if (!hits.length)
-    return `<div class="orden-query"><p class="orden-query-none">${escapeAll(nothing)}</p></div>`
+  if (!hits.length) return `<div class="orden-query"><p class="orden-query-none">${escapeAll(nothing)}</p></div>`
 
   const { taskHash } = await import('@orden/bases')
   const groups = grouped(hits)

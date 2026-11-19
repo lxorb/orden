@@ -1,10 +1,4 @@
-export {
-  carryIntoEditors,
-  createEditor,
-  type EditorOptions,
-  editorState,
-  type StateOptions,
-} from './editor'
+export { carryIntoEditors, createEditor, type EditorOptions, editorState, type StateOptions } from './editor'
 export { HeldState, type StateView } from './held'
 export { parsedOnScreen } from './parse-ahead'
 export { agentsOf, type Peer, peersOf, remoteCarets, setAgents, setPeers } from './carets'
@@ -104,13 +98,7 @@ export { mermaidSvg } from './live-preview/mermaid-turns'
 export { ordenHighlightStyle, ordenEditorTheme } from './theme'
 export { livePreview } from './live-preview'
 export { selectedImage } from './live-preview/image'
-export {
-  type CarriedFiles,
-  imageResolver,
-  type ImageResolver,
-  type ImageSink,
-  wordsBesidePicture,
-} from './images'
+export { type CarriedFiles, imageResolver, type ImageResolver, type ImageSink, wordsBesidePicture } from './images'
 export { hrefOf, type LinkPress, linkOpener, modifier as linkModifier } from './links'
 export { type TagOpener } from './tag-press'
 export {

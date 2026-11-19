@@ -111,9 +111,7 @@ export function movedBy(canvas: Canvas, picked: readonly string[], dx: number, d
 
   return {
     ...canvas,
-    nodes: canvas.nodes.map((node) =>
-      moving.has(node.id) ? { ...node, x: node.x + across, y: node.y + down } : node,
-    ),
+    nodes: canvas.nodes.map((node) => (moving.has(node.id) ? { ...node, x: node.x + across, y: node.y + down } : node)),
     ink: canvas.ink.map((stroke) =>
       moving.has(stroke.id)
         ? transformed(stroke, {
@@ -190,9 +188,7 @@ export function turnedInk(
   return {
     ...canvas,
     ink: canvas.ink.map((stroke) =>
-      wanted.has(stroke.id)
-        ? transformed(stroke, { dx: 0, dy: 0, sx: 1, sy: 1, turn, about })
-        : stroke,
+      wanted.has(stroke.id) ? transformed(stroke, { dx: 0, dy: 0, sx: 1, sy: 1, turn, about }) : stroke,
     ),
   }
 }
@@ -251,10 +247,7 @@ export function grouped(canvas: Canvas, picked: readonly string[]): { canvas: Ca
   return { canvas: withGroup(canvas, group), id }
 }
 
-export function ungrouped(
-  canvas: Canvas,
-  picked: readonly string[],
-): { canvas: Canvas; ids: string[] } {
+export function ungrouped(canvas: Canvas, picked: readonly string[]): { canvas: Canvas; ids: string[] } {
   const wanted = new Set(picked)
   const going = canvas.nodes.filter((node) => node.type === 'group' && wanted.has(node.id))
   if (!going.length) return { canvas, ids: [] }
@@ -311,12 +304,7 @@ function cutInk(canvas: Canvas, cut: (stroke: InkStroke) => InkStroke[]): Canvas
   return changed ? { ...canvas, ink } : canvas
 }
 
-export function rubbedOut(
-  canvas: Canvas,
-  ats: readonly Point[],
-  reach: number,
-  whole: boolean,
-): Canvas {
+export function rubbedOut(canvas: Canvas, ats: readonly Point[], reach: number, whole: boolean): Canvas {
   const way = bounds(ats.map((at) => ({ ...at, width: 0, height: 0 })))
   if (!way) return canvas
 
@@ -362,18 +350,11 @@ export function withLabel(canvas: Canvas, id: string, label: string): Canvas {
 
   return {
     ...canvas,
-    edges: canvas.edges.map((edge) =>
-      edge.id === id ? put(edge, 'label', label.trim() || null) : edge,
-    ),
+    edges: canvas.edges.map((edge) => (edge.id === id ? put(edge, 'label', label.trim() || null) : edge)),
   }
 }
 
-export function withEnds(
-  canvas: Canvas,
-  picked: readonly string[],
-  from: boolean,
-  to: boolean,
-): Canvas {
+export function withEnds(canvas: Canvas, picked: readonly string[], from: boolean, to: boolean): Canvas {
   const chosen = new Set(picked)
 
   return {
@@ -432,9 +413,7 @@ export function removed(canvas: Canvas, picked: readonly string[]): Canvas {
   return {
     ...canvas,
     nodes: canvas.nodes.filter((node) => !going.has(node.id)),
-    edges: canvas.edges.filter(
-      (edge) => !going.has(edge.fromNode) && !going.has(edge.toNode) && !going.has(edge.id),
-    ),
+    edges: canvas.edges.filter((edge) => !going.has(edge.fromNode) && !going.has(edge.toNode) && !going.has(edge.id)),
     ink: canvas.ink.filter((stroke) => !going.has(stroke.id)),
   }
 }
@@ -452,10 +431,7 @@ export function connected(
 
   const already = canvas.edges.find(
     (edge) =>
-      edge.fromNode === fromNode &&
-      edge.toNode === toNode &&
-      edge.fromSide === fromSide &&
-      edge.toSide === toSide,
+      edge.fromNode === fromNode && edge.toNode === toNode && edge.fromSide === fromSide && edge.toSide === toSide,
   )
   if (already) return { canvas, id: already.id }
 
@@ -484,12 +460,7 @@ export function subset(canvas: Canvas, picked: readonly string[]): Canvas {
   }
 }
 
-export function pasted(
-  canvas: Canvas,
-  incoming: Canvas,
-  dx = 0,
-  dy = 0,
-): { canvas: Canvas; ids: string[] } {
+export function pasted(canvas: Canvas, incoming: Canvas, dx = 0, dy = 0): { canvas: Canvas; ids: string[] } {
   if (!incoming.nodes.length && !incoming.ink.length) return { canvas, ids: [] }
 
   const renamed = new Map(incoming.nodes.map((node) => [node.id, freshId()]))

@@ -33,9 +33,7 @@ let target: HTMLElement
 beforeEach(() => {
   target = document.createElement('div')
   document.body.append(target)
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
-    this: HTMLElement,
-  ) {
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
     const box = this.classList.contains('tabs') ? STRIP : { ...STRIP, right: 0, bottom: 0 }
     return { ...box, toJSON: () => box }
   })

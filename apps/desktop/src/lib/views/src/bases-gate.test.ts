@@ -31,8 +31,7 @@ beforeEach(() => {
   written.length = 0
   store.set(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD]))
   hiddenKinds.restore()
-  for (const tab of workspace.tabs.filter((one) => one.kind === 'view'))
-    workspace.close(tab.id, false)
+  for (const tab of workspace.tabs.filter((one) => one.kind === 'view')) workspace.close(tab.id, false)
 })
 
 function field() {

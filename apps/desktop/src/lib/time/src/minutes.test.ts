@@ -25,11 +25,7 @@ function fold(samples: Sample[]) {
 
 describe('a minute of what the computer did', () => {
   test('counts the seconds with input, and averages the processor', () => {
-    const [minute] = fold([
-      sample(0, { cpu: 0.2 }),
-      sample(5, { cpu: 0.4, idleMs: 9000 }),
-      sample(10, { cpu: 0.6 }),
-    ])
+    const [minute] = fold([sample(0, { cpu: 0.2 }), sample(5, { cpu: 0.4, idleMs: 9000 }), sample(10, { cpu: 0.6 })])
     expect(minute?.active).toBe(10)
     expect(minute?.samples).toBe(3)
     expect(minute?.cpu).toBeCloseTo(0.4)

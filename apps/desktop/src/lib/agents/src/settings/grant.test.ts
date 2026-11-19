@@ -70,14 +70,10 @@ describe('the defaults', () => {
 
   it('are the crate’s own, as grants.rs writes them', () => {
     const crate = readFileSync(
-      fileURLToPath(
-        new URL('../../../../../src-tauri/crates/agents/src/grants.rs', import.meta.url),
-      ),
+      fileURLToPath(new URL('../../../../../src-tauri/crates/agents/src/grants.rs', import.meta.url)),
       'utf8',
     )
-    expect(crate).toMatch(
-      /Scope::BrowserScript\s*\|\s*Scope::BrowserStorage\s*\|\s*Scope::Settings\s*\)/,
-    )
+    expect(crate).toMatch(/Scope::BrowserScript\s*\|\s*Scope::BrowserStorage\s*\|\s*Scope::Settings\s*\)/)
     expect(crate).toMatch(/Scope::Context\s*\|\s*Scope::BrowserReader/)
     expect(crate).toMatch(/tabs: 4,\s*calls: 600,\s*navigations: 60,\s*memory: 0,/)
   })
@@ -86,14 +82,8 @@ describe('the defaults', () => {
 describe('a switch means what it says', () => {
   it('brings what a scope needs when it is turned on', () => {
     expect(withScope(only(), 'notes.write', true).scopes).toEqual(['notes.read', 'notes.write'])
-    expect(withScope(only(), 'workspace.focus', true).scopes).toEqual([
-      'workspace',
-      'workspace.focus',
-    ])
-    expect(withScope(only(), 'browser.storage', true).scopes).toEqual([
-      'browser.reader',
-      'browser.storage',
-    ])
+    expect(withScope(only(), 'workspace.focus', true).scopes).toEqual(['workspace', 'workspace.focus'])
+    expect(withScope(only(), 'browser.storage', true).scopes).toEqual(['browser.reader', 'browser.storage'])
     expect(withScope(only(), 'browser.script', true).scopes).toEqual(['browser', 'browser.script'])
     expect(withScope(only('browser.reader'), 'browser.script', true).scopes).toEqual([
       'browser.reader',
@@ -103,15 +93,12 @@ describe('a switch means what it says', () => {
 
   it('takes what needed a scope when it is turned off', () => {
     expect(withScope(only('notes.read', 'notes.write'), 'notes.read', false).scopes).toEqual([])
+    expect(withScope(only('browser', 'browser.reader', 'browser.script'), 'browser', false).scopes).toEqual([
+      'browser.reader',
+      'browser.script',
+    ])
     expect(
-      withScope(only('browser', 'browser.reader', 'browser.script'), 'browser', false).scopes,
-    ).toEqual(['browser.reader', 'browser.script'])
-    expect(
-      withScope(
-        only('browser', 'browser.reader', 'browser.script', 'browser.storage'),
-        'browser.reader',
-        false,
-      ).scopes,
+      withScope(only('browser', 'browser.reader', 'browser.script', 'browser.storage'), 'browser.reader', false).scopes,
     ).toEqual(['browser', 'browser.script'])
     expect(withScope(only('browser', 'browser.network'), 'browser', false).scopes).toEqual([])
   })
@@ -154,9 +141,7 @@ describe('the rest of a grant', () => {
     expect(readGrant({ ...own(), limits: before })?.limits.memory).toBe(0)
     expect(readGrant(set)?.limits.memory).toBe(4096)
     const crate = readFileSync(
-      fileURLToPath(
-        new URL('../../../../../src-tauri/crates/agent-web/src/memory.rs', import.meta.url),
-      ),
+      fileURLToPath(new URL('../../../../../src-tauri/crates/agent-web/src/memory.rs', import.meta.url)),
       'utf8',
     )
     expect(crate).not.toMatch(/const CEILING/)

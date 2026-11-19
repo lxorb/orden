@@ -110,9 +110,9 @@ test('the prompt after a program that left the mouse reported reports nothing', 
   expect(session.term.modes.mouseTrackingMode, 'at the prompt').toBe('none')
   expect(session.term.modes.sendFocusMode).toBe(false)
   expect(session.term.modes.applicationCursorKeysMode).toBe(false)
-  expect(
-    session.term.buffer.active.getLine(session.term.buffer.active.cursorY)?.translateToString(true),
-  ).toBe('PS C:\\work> ')
+  expect(session.term.buffer.active.getLine(session.term.buffer.active.cursorY)?.translateToString(true)).toBe(
+    'PS C:\\work> ',
+  )
 })
 
 test('a program still running keeps what it asked for', async () => {

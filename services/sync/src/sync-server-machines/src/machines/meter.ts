@@ -33,9 +33,7 @@ export async function meter(
 }
 
 export async function usedOf(env: Env, userId: string, at: number): Promise<Allowance> {
-  const usage = await env.DB.prepare(
-    `select ${USAGE} from machine_usage where user_id = ? and month = ?`,
-  )
+  const usage = await env.DB.prepare(`select ${USAGE} from machine_usage where user_id = ? and month = ?`)
     .bind(userId, monthOf(at))
     .first<Usage>()
   const home = await env.DB.prepare('select home_bytes from machines where user_id = ?')
@@ -44,10 +42,7 @@ export async function usedOf(env: Env, userId: string, at: number): Promise<Allo
   return asAllowance(usage ?? NONE, home?.home_bytes ?? 0)
 }
 
-export async function serviceMonth(
-  env: Env,
-  at: number,
-): Promise<{ usage: Usage; storedBytes: number }> {
+export async function serviceMonth(env: Env, at: number): Promise<{ usage: Usage; storedBytes: number }> {
   const usage = await env.DB.prepare(
     `select coalesce(sum(awake_s), 0) as awakeS, coalesce(sum(cpu_s), 0) as cpuS,
             coalesce(sum(mem_gib_s), 0) as memGibS, coalesce(sum(disk_gb_s), 0) as diskGbS,

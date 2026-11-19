@@ -30,8 +30,7 @@ vi.mock('../../link-index/src/api', () => ({
   links: {
     takesOver: (path: string) => taking.has(path),
     noteSaved: (path: string) => void told.push(`saved ${path}`),
-    rebased: (text: string) =>
-      text.includes('[[x/Plan]]') ? text.replace('[[x/Plan]]', '[[a/x/Plan]]') : null,
+    rebased: (text: string) => (text.includes('[[x/Plan]]') ? text.replace('[[x/Plan]]', '[[a/x/Plan]]') : null),
   },
 }))
 
@@ -75,8 +74,7 @@ function space(notes: Record<string, string>, openAt?: string) {
       Promise.resolve(freePath(wanted, (candidate) => disk.has(`${dir}/${candidate}`))),
     loadTree: () => Promise.resolve(),
     persist: () => undefined,
-    rootHolding: (path: string | null) =>
-      [SPACE, OTHER].find((root) => path?.startsWith(`${root}/`)) ?? null,
+    rootHolding: (path: string | null) => [SPACE, OTHER].find((root) => path?.startsWith(`${root}/`)) ?? null,
     protection: {
       copied: (from: string, to: string, root: string | null, into: string | null) =>
         void kept.push(`${from} -> ${to} in ${String(root)} -> ${String(into)}`),
@@ -112,13 +110,7 @@ describe('a note merged into another', () => {
       `snapshot_note ${A}`,
       `delete_note ${A}`,
     ])
-    expect(told).toEqual([
-      `saved ${B}`,
-      `reloaded ${B}`,
-      `retargeted ${A} -> ${B}`,
-      `gone ${A}`,
-      `opened ${B}`,
-    ])
+    expect(told).toEqual([`saved ${B}`, `reloaded ${B}`, `retargeted ${A} -> ${B}`, `gone ${A}`, `opened ${B}`])
   })
 
   test('takes the words of an open note as they stand, typing not yet written included', async () => {
@@ -340,9 +332,7 @@ describe('a file that is not a note of the open space', () => {
     const note = `${OTHER}/plan.md`
     const ws = space({ [note]: '# Plan\n\nfirst\n\n## Later\n\nsecond\n' }, note)
     await splitAtCaret(ws, 10)
-    expect([...disk.keys()].some((path) => path.startsWith(`${OTHER}/`) && path !== note)).toBe(
-      true,
-    )
+    expect([...disk.keys()].some((path) => path.startsWith(`${OTHER}/`) && path !== note)).toBe(true)
   })
 
   test('nor a note of a space shared to be read', async () => {

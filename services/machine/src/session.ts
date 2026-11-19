@@ -362,9 +362,7 @@ export class Session {
 }
 
 function firstScreen(saved: Saved): Promise<string> {
-  return saved.v === 2
-    ? Screen.firstOf(saved.screen, saved.cols, saved.rows)
-    : Promise.resolve(saved.screen)
+  return saved.v === 2 ? Screen.firstOf(saved.screen, saved.cols, saved.rows) : Promise.resolve(saved.screen)
 }
 
 function restoredLine(at: number): string {

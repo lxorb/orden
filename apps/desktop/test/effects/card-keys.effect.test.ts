@@ -70,9 +70,7 @@ function card() {
 
 function press(box: Element, key: string, held: { ctrlKey?: boolean } = {}) {
   const inside = box.querySelector('.cm-content') ?? box
-  inside.dispatchEvent(
-    new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...held }),
-  )
+  inside.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...held }))
 }
 
 test('a press that is not Escape reaches what is above the card', () => {
@@ -125,9 +123,7 @@ test('two cards written in at once both hand their words, and the first still do
     void unmount(first, { outro: false })
     void unmount(second, { outro: false })
   }
-  const [one, two] = [...target.querySelectorAll('.editor')].map((box) =>
-    EditorView.findFromDOM(box as HTMLElement),
-  )
+  const [one, two] = [...target.querySelectorAll('.editor')].map((box) => EditorView.findFromDOM(box as HTMLElement))
   if (!one || !two) throw new Error('the cards put no editors up')
 
   one.dispatch({ changes: { from: one.state.doc.length, insert: ' more' } })

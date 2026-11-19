@@ -2,9 +2,7 @@ import { linearly } from '../../../../../../scripts/growth'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf } from '../../automation/src/api'
 
-const tabs: { id: string; kind: string; path: null }[] = [
-  { id: 'e1', kind: 'explorer', path: null },
-]
+const tabs: { id: string; kind: string; path: null }[] = [{ id: 'e1', kind: 'explorer', path: null }]
 const recorded: unknown[] = []
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
@@ -181,9 +179,7 @@ describe("an agent's file explorer", () => {
 
   test('moves and copies outside the spaces only, and sends a space’s files to the note tools', async () => {
     await call({ op: 'copy', tab: 'e1', paths: ['b.pdf'], to: '~/Documents' })
-    expect(carried).toEqual([
-      { paths: ['/home/me/Downloads/b.pdf'], to: '/home/me/Documents', how: 'copy' },
-    ])
+    expect(carried).toEqual([{ paths: ['/home/me/Downloads/b.pdf'], to: '/home/me/Documents', how: 'copy' }])
     const refused = await call({
       op: 'move',
       tab: 'e1',
@@ -196,9 +192,7 @@ describe("an agent's file explorer", () => {
 
   test('makes a folder that one undo takes away again', async () => {
     await call({ op: 'mkdir', tab: 'e1', name: 'Scans' }, 'unsupervised')
-    expect(recorded).toEqual([
-      { kind: 'outside', steps: [{ op: 'made', path: '/home/me/Downloads/Scans' }] },
-    ])
+    expect(recorded).toEqual([{ kind: 'outside', steps: [{ op: 'made', path: '/home/me/Downloads/Scans' }] }])
   })
 })
 

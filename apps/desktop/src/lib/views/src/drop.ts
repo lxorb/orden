@@ -1,13 +1,5 @@
 import { deadlineField, deadlineOf, startField, startOf } from '@orden/markdown/task-dates'
-import {
-  addDays,
-  groupName,
-  isWhen,
-  type Row,
-  type TaskChange,
-  todayOf,
-  type Value,
-} from '@orden/bases'
+import { addDays, groupName, isWhen, type Row, type TaskChange, todayOf, type Value } from '@orden/bases'
 import type { RowChange } from '../../rows/src/api'
 import { bare, isNoteProperty } from './columns'
 import { dayIn } from './values'
@@ -59,8 +51,7 @@ function taskDrop(field: string, key: Value, row: Row, today: string, from?: Val
     return JSON.stringify(tags) === JSON.stringify(task.tags) ? null : taskChange({ tags })
   }
   if (field === 'status' || field === 'done') {
-    const status =
-      field === 'done' ? (key === true ? 'x' : ' ') : typeof key === 'string' && key ? key : ' '
+    const status = field === 'done' ? (key === true ? 'x' : ' ') : typeof key === 'string' && key ? key : ' '
     if (status === task.status) return null
     if (status.toLowerCase() === 'x') return task.done ? null : taskChange({ done: true })
     if (status === '-') return taskChange({ cancelled: true, completed: null })
@@ -78,13 +69,7 @@ function taskDrop(field: string, key: Value, row: Row, today: string, from?: Val
   return null
 }
 
-export function dropInto(
-  property: string,
-  key: Value,
-  row: Row,
-  from?: Value,
-  today = todayOf(),
-): Drop | null {
+export function dropInto(property: string, key: Value, row: Row, from?: Value, today = todayOf()): Drop | null {
   if (property.startsWith('task.')) return taskDrop(property.slice(5), key, row, today, from)
   if (isWhen(property)) {
     if (!row.task || row.task.done || row.task.cancelled) return null

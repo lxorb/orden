@@ -289,10 +289,7 @@ describe('items', () => {
     const again = await reopened()
     expect(again.items).toHaveLength(1)
     expect(again.items[0]).toMatchObject({ vault: work.id, content: { title: 'Wiki 3' } })
-    expect((await again.history(made.id)).map((item) => item.content.title)).toEqual([
-      'Wiki 2',
-      'Wiki',
-    ])
+    expect((await again.history(made.id)).map((item) => item.content.title)).toEqual(['Wiki 2', 'Wiki'])
   })
 
   test('move all from one vault, and a deleted vault takes its items', async () => {
@@ -358,11 +355,7 @@ describe('items', () => {
     const back = await store.restoreVersion(made.id, 1)
     expect(back.content.title).toBe('One')
     expect(back.rev).toBe(4)
-    expect((await store.history(made.id)).map((item) => item.content.title)).toEqual([
-      'Three',
-      'Two',
-      'One',
-    ])
+    expect((await store.history(made.id)).map((item) => item.content.title)).toEqual(['Three', 'Two', 'One'])
     await store.clearHistory(made.id)
     expect(await store.history(made.id)).toEqual([])
   })
@@ -384,10 +377,7 @@ describe('matching a page', () => {
     const vault = personal(store)
     const domain = await store.create(vault, login('Domain', { websites: [site('example.com')] }))
     const recent = await store.create(vault, login('Recent', { websites: [site('example.com')] }))
-    const host = await store.create(
-      vault,
-      login('Host', { websites: [site('https://login.example.com', 'host')] }),
-    )
+    const host = await store.create(vault, login('Host', { websites: [site('https://login.example.com', 'host')] }))
     const exact = await store.create(
       vault,
       login('Exact', { websites: [site('https://login.example.com/signin', 'exact')] }),

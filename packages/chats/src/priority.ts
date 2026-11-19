@@ -46,10 +46,7 @@ export function priorityAsk(
   const levels = LEVELS.map((level) => `- ${level}: ${MEANING[level]}`).join('\n')
   const taught = lessons
     .slice(-12)
-    .map(
-      (one) =>
-        `- "${clip(one.title, 80)}" from ${clip(one.from, 60)}: "${clip(one.words, 160)}" -> ${one.level}`,
-    )
+    .map((one) => `- "${clip(one.title, 80)}" from ${clip(one.from, 60)}: "${clip(one.words, 160)}" -> ${one.level}`)
     .join('\n')
   const lines = said
     .slice(-8)
@@ -132,9 +129,7 @@ export function suggestionIn(reply: string): Suggestion | null {
         task.priority = Math.round(one.priority)
       }
       if (Array.isArray(one.tags)) {
-        const tags = one.tags.filter(
-          (tag): tag is string => typeof tag === 'string' && /^[\p{L}\p{N}_/-]+$/u.test(tag),
-        )
+        const tags = one.tags.filter((tag): tag is string => typeof tag === 'string' && /^[\p{L}\p{N}_/-]+$/u.test(tag))
         if (tags.length) task.tags = tags
       }
       if (typeof one.due === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(one.due)) task.due = one.due

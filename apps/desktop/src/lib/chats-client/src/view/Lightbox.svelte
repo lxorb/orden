@@ -8,12 +8,8 @@
   import { isVideo } from './media'
   import { fileUrl } from './urls.svelte'
 
-  const {
-    chat,
-    files,
-    start,
-    onclose,
-  }: { chat: string; files: FileRef[]; start: number; onclose: () => void } = $props()
+  const { chat, files, start, onclose }: { chat: string; files: FileRef[]; start: number; onclose: () => void } =
+    $props()
 
   // svelte-ignore state_referenced_locally
   let index = $state(start)
@@ -49,13 +45,7 @@
 
 <svelte:window onkeydown={onKey} />
 
-<div
-  class="lightbox"
-  data-covers="all"
-  role="dialog"
-  aria-modal="true"
-  aria-label={file?.name ?? ''}
->
+<div class="lightbox" data-covers="all" role="dialog" aria-modal="true" aria-label={file?.name ?? ''}>
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
   <div class="scrim" transition:fade={{ duration: LAYER.fade }} onclick={onclose}></div>
   {#if file}
@@ -72,19 +62,12 @@
           <!-- svelte-ignore a11y_media_has_caption -->
           <video src={fileUrl(chat, file.hash)} controls autoplay></video>
         {:else}
-          <button
-            type="button"
-            class="picture"
-            aria-label={file.name}
-            onclick={() => (zoomed = !zoomed)}
-          >
+          <button type="button" class="picture" aria-label={file.name} onclick={() => (zoomed = !zoomed)}>
             <img
               src={fileUrl(chat, file.hash)}
               alt=""
               draggable="false"
-              style:background-image={file.preview
-                ? `url("${fileUrl(chat, file.preview)}")`
-                : undefined}
+              style:background-image={file.preview ? `url("${fileUrl(chat, file.preview)}")` : undefined}
             />
           </button>
         {/if}
@@ -106,9 +89,7 @@
         title="Save"><Glyph name="save" /></a
       >
     {/if}
-    <button type="button" class="orden-glyph" aria-label="Close" onclick={onclose}
-      ><Glyph name="close" /></button
-    >
+    <button type="button" class="orden-glyph" aria-label="Close" onclick={onclose}><Glyph name="close" /></button>
   </div>
   {#if index > 0}
     <button type="button" class="orden-glyph side left" aria-label="Previous" onclick={() => go(-1)}

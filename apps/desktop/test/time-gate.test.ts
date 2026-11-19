@@ -7,8 +7,7 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void store.delete(key),
 })
 
-const { hiddenKinds, KINDS_KEY, TIME_WORD, EXPERIMENTAL_WORD, timeOn } =
-  await import('../src/lib/gates/src/api')
+const { hiddenKinds, KINDS_KEY, TIME_WORD, EXPERIMENTAL_WORD, timeOn } = await import('../src/lib/gates/src/api')
 const { receive } = await import('../src/lib/gates/src/api')
 const { runnable } = await import('../src/lib/shortcuts/src/registry')
 const { experimentalPane } = await import('../src/lib/settings/src/experimental-pane')

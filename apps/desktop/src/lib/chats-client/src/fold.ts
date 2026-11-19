@@ -35,26 +35,19 @@ export function keepsRow(message: Message): boolean {
   return !message.deleted || message.replies > 0
 }
 
-export async function foldAll(
-  events: readonly Logged[],
-  lookup: Lookup,
-  since: number,
-): Promise<Folded> {
+export async function foldAll(events: readonly Logged[], lookup: Lookup, since: number): Promise<Folded> {
   const kept = new Map<string, Kept>()
   const gone = new Set<string>()
   let seq = since
   const read: Lookup = {
     get: async (id) => (gone.has(id) ? undefined : (kept.get(id) ?? (await lookup.get(id)))),
     newestReply: async (parent, except) => {
-      const here = [...kept.values()]
-        .map((one) => one.message)
-        .filter((one) => one.parent === parent)
+      const here = [...kept.values()].map((one) => one.message).filter((one) => one.parent === parent)
       const passed = new Set([...except, ...gone, ...here.map((one) => one.id)])
       const there = await lookup.newestReply(parent, passed)
-      return [
-        ...here.filter((one) => !one.deleted && !except.has(one.id)),
-        ...(there ? [there] : []),
-      ].sort((a, b) => b.seq - a.seq)[0]
+      return [...here.filter((one) => !one.deleted && !except.has(one.id)), ...(there ? [there] : [])].sort(
+        (a, b) => b.seq - a.seq,
+      )[0]
     },
   }
   for (const event of events) {
@@ -99,8 +92,7 @@ export async function fold(event: Logged, lookup: Lookup): Promise<Kept[]> {
       if (event.poll) message.poll = { ...event.poll, votes: {} }
       const out: Kept[] = [{ message, upto: event.seq, marks: { r: [], v: [] } }]
 
-      const parent =
-        event.parent === undefined ? undefined : await fresh(lookup, event.parent, event)
+      const parent = event.parent === undefined ? undefined : await fresh(lookup, event.parent, event)
       if (parent) {
         const was = parent.message
         out.push({
@@ -120,8 +112,7 @@ export async function fold(event: Logged, lookup: Lookup): Promise<Kept[]> {
       const kept = await fresh(lookup, event.target, event)
       if (!kept) return []
       const was = kept.message
-      if (was.deleted || was.author !== event.author || event.seq <= was.seq)
-        return [touched(kept, event)]
+      if (was.deleted || was.author !== event.author || event.seq <= was.seq) return [touched(kept, event)]
       const message: Message = {
         ...was,
         body: event.body,
@@ -177,9 +168,7 @@ export async function fold(event: Logged, lookup: Lookup): Promise<Kept[]> {
       const byEmoji = new Map<string, Who[]>()
       for (const [emoji, who] of r) byEmoji.set(emoji, [...(byEmoji.get(emoji) ?? []), who])
       const reactions = Object.fromEntries(byEmoji)
-      return [
-        { upto: event.seq, marks: { ...kept.marks, r }, message: { ...kept.message, reactions } },
-      ]
+      return [{ upto: event.seq, marks: { ...kept.marks, r }, message: { ...kept.message, reactions } }]
     }
 
     case 'pin': {

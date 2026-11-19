@@ -68,11 +68,7 @@ export interface GraphOptions {
   attachments?: boolean
 }
 
-export function buildGraph(
-  notes: readonly ScannedNote[],
-  resolve: Resolve,
-  options: GraphOptions = {},
-): NoteGraph {
+export function buildGraph(notes: readonly ScannedNote[], resolve: Resolve, options: GraphOptions = {}): NoteGraph {
   const shown = notes.filter((note) => !note.path.split('/').some((part) => part.startsWith('.')))
   const nodes: GraphNode[] = shown.map((note) => ({
     id: note.path,

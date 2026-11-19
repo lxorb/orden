@@ -45,10 +45,7 @@ export interface FoundBrowser {
 export async function foundBrowsers(): Promise<FoundBrowser[]> {
   if (!isDesktop) return []
   try {
-    const found =
-      await invoke<{ id: BrowserId; profiles: Omit<BrowserProfile, 'browser'>[] }[]>(
-        'browser_profiles',
-      )
+    const found = await invoke<{ id: BrowserId; profiles: Omit<BrowserProfile, 'browser'>[] }[]>('browser_profiles')
     return found
       .filter((one) => one.id in BROWSER_NAMES)
       .map((one) => ({
@@ -61,10 +58,7 @@ export async function foundBrowsers(): Promise<FoundBrowser[]> {
   }
 }
 
-export const browserFile = async (
-  profile: BrowserProfile,
-  file: string,
-): Promise<Uint8Array | null> =>
+export const browserFile = async (profile: BrowserProfile, file: string): Promise<Uint8Array | null> =>
   invoke<string>('read_browser_file', {
     browser: profile.browser,
     profile: profile.path,

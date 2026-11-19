@@ -48,10 +48,7 @@ describe('a CSV as one table', () => {
   })
 
   test('a tag typed into a cell or a column name opens no markup', () => {
-    const table = tableOf(
-      ['<b>Name</b>'],
-      [{ '<b>Name</b>': '<img src="https://x.example/p.png">' }],
-    )
+    const table = tableOf(['<b>Name</b>'], [{ '<b>Name</b>': '<img src="https://x.example/p.png">' }])
 
     expect(table).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
     expect(table).toContain('\\<b>Name\\</b>')
@@ -62,11 +59,7 @@ describe('a CSV as one note per row', () => {
   test('is a folder of notes with the columns as properties', async () => {
     const plan = await readTable([file('Books.csv', CSV)], 'notes')
 
-    expect(plan.files.map((one) => one.path)).toEqual([
-      'Books/Dune.md',
-      'Books/Ubik.md',
-      'Books.base',
-    ])
+    expect(plan.files.map((one) => one.path)).toEqual(['Books/Dune.md', 'Books/Ubik.md', 'Books.base'])
 
     const text = noteAt(plan, 'Books/Dune.md')
     expect(text).toContain('# Dune')
@@ -83,13 +76,7 @@ describe('a CSV as one note per row', () => {
     expect(base.filters).toEqual({
       or: ['file.folder == "Books"', 'file.folder.endsWith("/Books")'],
     })
-    expect(base.views[0]?.order).toEqual([
-      'file.name',
-      'note.status',
-      'note.pages',
-      'note.date',
-      'note.notes',
-    ])
+    expect(base.views[0]?.order).toEqual(['file.name', 'note.status', 'note.pages', 'note.date', 'note.notes'])
   })
 
   test('a column holding a paragraph becomes words rather than a property', () => {

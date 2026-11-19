@@ -26,9 +26,7 @@ describe('what somebody typed', () => {
   })
 
   test('on the engine the reader chose', () => {
-    expect(webAddress('a & b', 'https://duckduckgo.com/?q=%s')).toBe(
-      'https://duckduckgo.com/?q=a%20%26%20b',
-    )
+    expect(webAddress('a & b', 'https://duckduckgo.com/?q=%s')).toBe('https://duckduckgo.com/?q=a%20%26%20b')
     expect(webAddress('svelte.dev', 'https://duckduckgo.com/?q=%s')).toBe('https://svelte.dev')
     expect(webAddress('javascript:alert(1)', 'https://duckduckgo.com/?q=%s')).toBeNull()
   })
@@ -38,20 +36,12 @@ describe('a name with a dot whose last part is no top-level domain', () => {
   const search = (words: string) => `https://www.google.com/search?q=${encodeURIComponent(words)}`
 
   test('is a file name, searched for, not a site', () => {
-    for (const name of [
-      'node.js',
-      'vue.config.ts',
-      'index.html',
-      'file.txt',
-      'report.docx',
-      'a.json',
-    ])
+    for (const name of ['node.js', 'vue.config.ts', 'index.html', 'file.txt', 'report.docx', 'a.json'])
       expect(webAddress(name)).toBe(search(name))
   })
 
   test('is no website the palette offers to open', () => {
-    for (const name of ['node.js', 'vite.config.ts', 'notes.txt'])
-      expect(typedAddress(name)).toBeNull()
+    for (const name of ['node.js', 'vite.config.ts', 'notes.txt']) expect(typedAddress(name)).toBeNull()
   })
 
   test('a real top-level domain, in any case or script, still opens', () => {
@@ -75,9 +65,7 @@ describe('a word with a colon after it', () => {
     ['std::vector'],
     ['C: drive is full'],
   ])('%s is words', (typed) => {
-    expect(webAddress(typed)).toBe(
-      `https://www.google.com/search?q=${encodeURIComponent(typed.trim())}`,
-    )
+    expect(webAddress(typed)).toBe(`https://www.google.com/search?q=${encodeURIComponent(typed.trim())}`)
     expect(typedAddress(typed)).toBeNull()
     expect(mayBeSecret(typed)).toBe(false)
   })
@@ -104,14 +92,12 @@ describe('a word with a colon after it', () => {
     expect(typedAddress(typed)).toBeNull()
   })
 
-  test.each([
-    ['admin:secret@'],
-    ['root:hunter2'],
-    ['password: hunter2'],
-    ['admin:pass word@router.lan'],
-  ])('%s is told it went nowhere', (typed) => {
-    expect(mayBeSecret(typed)).toBe(true)
-  })
+  test.each([['admin:secret@'], ['root:hunter2'], ['password: hunter2'], ['admin:pass word@router.lan']])(
+    '%s is told it went nowhere',
+    (typed) => {
+      expect(mayBeSecret(typed)).toBe(true)
+    },
+  )
 
   test.each([
     ['javascript:alert(1)'],
@@ -194,18 +180,12 @@ describe('a time of day', () => {
     expect(webAddress(typed)).toBe(`https://www.google.com/search?q=${encodeURIComponent(typed)}`)
   })
 
-  test.each([
-    '8080:80',
-    '0:8080',
-    '123:456',
-    '2130706433:80',
-    '10:30/path',
-    '99:99',
-    '24:00',
-    '9:5',
-  ])('%s is a number with a port, and opens', (typed) => {
-    expect(webAddress(typed)).toBe(`http://${typed}`)
-  })
+  test.each(['8080:80', '0:8080', '123:456', '2130706433:80', '10:30/path', '99:99', '24:00', '9:5'])(
+    '%s is a number with a port, and opens',
+    (typed) => {
+      expect(webAddress(typed)).toBe(`http://${typed}`)
+    },
+  )
 })
 
 describe('a path from where one stands, on Windows', () => {

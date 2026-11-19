@@ -122,21 +122,19 @@
     paperEdition({ file, note: notePath, root, shared })
     const leaving = new AbortController()
     const timer = setTimeout(() => {
-      void closeUpOf({ file, note: notePath, root, shared }, at, want, across, leaving.signal).then(
-        (image) => {
-          if (!image?.width) return
-          if (leaving.signal.aborted || !close) {
-            image.close()
-            return
-          }
-
-          close.width = image.width
-          close.height = image.height
-          close.getContext('2d')?.drawImage(image, 0, 0)
+      void closeUpOf({ file, note: notePath, root, shared }, at, want, across, leaving.signal).then((image) => {
+        if (!image?.width) return
+        if (leaving.signal.aborted || !close) {
           image.close()
-          closeUp = want
-        },
-      )
+          return
+        }
+
+        close.width = image.width
+        close.height = image.height
+        close.getContext('2d')?.drawImage(image, 0, 0)
+        image.close()
+        closeUp = want
+      })
     }, CLOSE_UP)
 
     return () => {
@@ -155,15 +153,13 @@
     const asking = tries
     paperEdition({ file, note: notePath, root, shared })
     const leaving = new AbortController()
-    void paperOf({ file, note: notePath, root, shared }, at, leaving.signal, false, density).then(
-      (drawn) => {
-        if (leaving.signal.aborted || asking !== tries) return
+    void paperOf({ file, note: notePath, root, shared }, at, leaving.signal, false, density).then((drawn) => {
+      if (leaving.signal.aborted || asking !== tries) return
 
-        if (drawn?.image.width) paper = drawn.image
-        else if (!drawn) paper = null
-        lost = !drawn
-      },
-    )
+      if (drawn?.image.width) paper = drawn.image
+      else if (!drawn) paper = null
+      lost = !drawn
+    })
 
     return () => leaving.abort()
   })
@@ -232,11 +228,9 @@
 
     const leaving = new AbortController()
     const timer = setTimeout(() => {
-      void wordsInto({ file, note: notePath, root, shared }, at, wide, layer, leaving.signal).then(
-        (found) => {
-          if (!leaving.signal.aborted) read = found
-        },
-      )
+      void wordsInto({ file, note: notePath, root, shared }, at, wide, layer, leaving.signal).then((found) => {
+        if (!leaving.signal.aborted) read = found
+      })
     }, WORDS_AFTER)
 
     return () => {

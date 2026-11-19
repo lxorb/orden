@@ -247,9 +247,7 @@ describe('a note, loosely', () => {
       expect(range.from).toBeGreaterThanOrEqual(0)
       expect(range.to).toBeLessThanOrEqual(found?.text.length ?? 0)
     }
-    expect(found?.ranges.map((range) => found.text.slice(range.from, range.to)).join('')).toBe(
-      'Meting',
-    )
+    expect(found?.ranges.map((range) => found.text.slice(range.from, range.to)).join('')).toBe('Meting')
   })
 })
 
@@ -277,8 +275,6 @@ describe('ranking notes against each other', () => {
   })
 
   test('and a note that answers nothing is not in the list', () => {
-    expect(
-      ranked('quater', { '/yes.md': 'the quarter', '/no.md': 'nothing of the kind here' }),
-    ).toEqual(['/yes.md'])
+    expect(ranked('quater', { '/yes.md': 'the quarter', '/no.md': 'nothing of the kind here' })).toEqual(['/yes.md'])
   })
 })

@@ -8,11 +8,7 @@ const PLACES: readonly (readonly [string, number | 'last'])[] = [
   ['app.note-9.alt', 'last'],
 ]
 
-export function numerals(
-  count: number,
-  keyFor: (id: string) => string | null,
-  platform: Platform,
-): (string | null)[] {
+export function numerals(count: number, keyFor: (id: string) => string | null, platform: Platform): (string | null)[] {
   const worn: (string | null)[] = Array.from({ length: count }, () => null)
 
   for (const [id, place] of PLACES) {
@@ -36,9 +32,7 @@ export interface Stroke {
 }
 
 function isDigit(stroke: Stroke): boolean {
-  return (
-    /^Digit\d$/.test(stroke.code) || (/^\d$/.test(stroke.key) && !stroke.code.startsWith('Numpad'))
-  )
+  return /^Digit\d$/.test(stroke.code) || (/^\d$/.test(stroke.key) && !stroke.code.startsWith('Numpad'))
 }
 
 export class AltHold {

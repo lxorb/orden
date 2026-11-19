@@ -190,9 +190,7 @@ class Joining {
     await account.loadSpaces().catch(() => undefined)
     await syncStore()?.pass()
 
-    const here = workspaceView().spaces.find(
-      (one) => syncStore()?.remoteIdFor(one.root) === space.id,
-    )
+    const here = workspaceView().spaces.find((one) => syncStore()?.remoteIdFor(one.root) === space.id)
     if (here) await workspaceView().showSpace(here.id)
   }
 
@@ -219,10 +217,7 @@ class Joining {
     const page = typeof document === 'undefined' ? null : document
     if (page && !this.watching) page.addEventListener('visibilitychange', this.seen)
     this.watching = page
-    this.asking = setTimeout(
-      () => this.askNow(),
-      askDelay(this.asks, page?.visibilityState === 'hidden'),
-    )
+    this.asking = setTimeout(() => this.askNow(), askDelay(this.asks, page?.visibilityState === 'hidden'))
   }
 
   private askNow() {

@@ -141,8 +141,7 @@
   const CURRENT =
     /\b(current|old|existing|aktuell|bisherig|alt(es)?|actuel|ancien|actual|anterior|attuale|vecchia|atual|antiga|huidig|oud)(?![a-z0-9])|текущ|старый|当前|旧|現在/
   const SHORT_CODE = /\b(code|pin)(?![a-z0-9])|код|码|コード/
-  const NOT_A_CODE =
-    /\b(zip|postal|post|promo|coupon|voucher|gift|discount|country|area|referral)(?![a-z0-9])/
+  const NOT_A_CODE = /\b(zip|postal|post|promo|coupon|voucher|gift|discount|country|area|referral)(?![a-z0-9])/
   const SIGN_IN =
     /\b(sign ?in|log ?in|log ?on|anmelden|einloggen|connexion|se connecter|iniciar sesi[oó]n|acceder|ingresar|accedi|entrar|inloggen|next|weiter|continue|suivant|siguiente|avanti|continuar|pr[oó]ximo|volgende)(?![a-z0-9])|войти|вход|далее|登录|登入|ログイン|サインイン|次へ/
   const SIGN_UP =
@@ -525,10 +524,7 @@
     const at = seen.indexOf(password)
     for (let back = at - 1; back >= 0; back--) {
       const one = seen[back]
-      if (
-        textish(one) &&
-        (one.role === 'unknown' || one.role === 'username' || one.role === 'email')
-      ) {
+      if (textish(one) && (one.role === 'unknown' || one.role === 'username' || one.role === 'email')) {
         return one
       }
     }
@@ -568,10 +564,7 @@
     }
 
     for (const old of current) {
-      if (
-        !forms.some((one) => one.form === old.form) ||
-        old.fields.some((one) => !one.el.isConnected)
-      ) {
+      if (!forms.some((one) => one.form === old.form) || old.fields.some((one) => !one.el.isConnected)) {
         sent(old)
       }
     }
@@ -794,16 +787,10 @@
     }
     if (button instanceof HTMLInputElement && (type === 'submit' || type === 'image')) return true
     const words = normal(
-      [button.textContent, button.value, button.getAttribute('aria-label')]
-        .filter(Boolean)
-        .join(' '),
+      [button.textContent, button.value, button.getAttribute('aria-label')].filter(Boolean).join(' '),
       200,
     )
-    return (
-      SIGN_IN.test(words) ||
-      SIGN_UP.test(words) ||
-      /\b(submit|save|update|change)(?![a-z0-9])/.test(words)
-    )
+    return SIGN_IN.test(words) || SIGN_UP.test(words) || /\b(submit|save|update|change)(?![a-z0-9])/.test(words)
   }
 
   function leaving() {
@@ -952,9 +939,7 @@
     return (
       buttons.find((one) => {
         const type = String(one.getAttribute('type') || '').toLowerCase()
-        return (
-          type === 'submit' || type === 'image' || (one instanceof HTMLButtonElement && type === '')
-        )
+        return type === 'submit' || type === 'image' || (one instanceof HTMLButtonElement && type === '')
       }) ||
       buttons.find(submits) ||
       null

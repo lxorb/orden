@@ -11,9 +11,7 @@ function svelte(text: string): string {
     /\bmodule\b/.test(how) ? code : code.replace(OWN, '$1'),
   )
   const markup = text.replace(SCRIPT, '').replace(STYLE, '').replace(NOTE, '')
-  const loaded = [...markup.matchAll(LOADED)].map(
-    ([, , path = '']) => `void import('${path}').then(Object.keys)`,
-  )
+  const loaded = [...markup.matchAll(LOADED)].map(([, , path = '']) => `void import('${path}').then(Object.keys)`)
   return [...scripts, ...loaded].join(';\n')
 }
 

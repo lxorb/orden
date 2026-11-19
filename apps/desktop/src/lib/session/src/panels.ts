@@ -27,14 +27,8 @@ function uncovered(sides: Sides): Sides {
   return sides.covered ? { ...sides, covered: false } : sides
 }
 
-export function panelsOn(
-  right: readonly Panel[],
-  side: PanelSide,
-  every: readonly Panel[],
-): Panel[] {
-  return side === 'right'
-    ? right.filter((one) => every.includes(one))
-    : every.filter((one) => !right.includes(one))
+export function panelsOn(right: readonly Panel[], side: PanelSide, every: readonly Panel[]): Panel[] {
+  return side === 'right' ? right.filter((one) => every.includes(one)) : every.filter((one) => !right.includes(one))
 }
 
 export function showing(sides: Sides, next: Panel): Sides {
@@ -81,36 +75,18 @@ export function mayLiveOn(panel: Panel, side: PanelSide): boolean {
   return side === 'right' || !RIGHT_ONLY.includes(panel)
 }
 
-export function leftPanelFrom(
-  saved: Panel | null | undefined,
-  right: readonly Panel[] = [],
-): Panel | null {
+export function leftPanelFrom(saved: Panel | null | undefined, right: readonly Panel[] = []): Panel | null {
   return saved && mayLiveOn(saved, 'left') && sideOf(right, saved) === 'left' ? saved : null
 }
 
-export const PANELS: readonly Panel[] = [
-  'tree',
-  'outline',
-  'search',
-  'tasks',
-  'chats',
-  'time',
-  'links',
-  'ask',
-]
+export const PANELS: readonly Panel[] = ['tree', 'outline', 'search', 'tasks', 'chats', 'time', 'links', 'ask']
 
 const ARRANGED_BEFORE: readonly Panel[] = ['tree', 'outline', 'search', 'links']
 
-export function rightFrom(
-  saved: readonly Panel[] | undefined,
-  known: readonly Panel[] = ARRANGED_BEFORE,
-): Panel[] {
+export function rightFrom(saved: readonly Panel[] | undefined, known: readonly Panel[] = ARRANGED_BEFORE): Panel[] {
   if (!saved) return [...STARTS_RIGHT]
 
-  const right = [
-    ...saved,
-    ...STARTS_RIGHT.filter((one) => !saved.includes(one) && !known.includes(one)),
-  ]
+  const right = [...saved, ...STARTS_RIGHT.filter((one) => !saved.includes(one) && !known.includes(one))]
   return [...right, ...RIGHT_ONLY.filter((one) => !right.includes(one))]
 }
 

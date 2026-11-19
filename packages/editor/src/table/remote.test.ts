@@ -36,9 +36,7 @@ function note(shared?: SharedDoc): EditorView {
 }
 
 function cellHolding(view: EditorView, text: string): HTMLElement {
-  const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
-    (one) => one.textContent === text,
-  )
+  const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === text)
   if (!cell) throw new Error(`the table drew no cell holding ${text}`)
   return cell
 }
@@ -112,9 +110,7 @@ describe('a cell being typed in, while the note is edited elsewhere', () => {
 
     expect(firstCell(view)?.textContent).toBe('1x')
     flushTableEdits()
-    expect(shared.text.toString()).toBe(
-      'more words\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2y  |\n\nend',
-    )
+    expect(shared.text.toString()).toBe('more words\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2y  |\n\nend')
   })
 
   test('keeps its words and its row when another pane puts a row above it', async () => {
@@ -126,9 +122,7 @@ describe('a cell being typed in, while the note is edited elsewhere', () => {
     await settled()
 
     flushTableEdits()
-    expect(shared.text.toString()).toBe(
-      'words\n\n| a   | b   |\n| --- | --- |\n| 0   | 0   |\n| 1x  | 2   |\n\nend',
-    )
+    expect(shared.text.toString()).toBe('words\n\n| a   | b   |\n| --- | --- |\n| 0   | 0   |\n| 1x  | 2   |\n\nend')
   })
 
   test('never puts its words into another table that took its place', async () => {
@@ -160,9 +154,7 @@ describe('a cell being typed in, while the note is edited elsewhere', () => {
 
     expect(firstCell(view)?.textContent).toBe('1x')
     flushTableEdits()
-    expect(shared.text.toString()).toBe(
-      'words\n\n| a   | b    |\n| --- | ---- |\n| 1x  | 2yyy |\n\nend',
-    )
+    expect(shared.text.toString()).toBe('words\n\n| a   | b    |\n| --- | ---- |\n| 1x  | 2yyy |\n\nend')
   })
 
   test('keeps its words when the note is rewritten from above the table into it', async () => {
@@ -174,9 +166,7 @@ describe('a cell being typed in, while the note is edited elsewhere', () => {
     await settled()
 
     flushTableEdits()
-    expect(shared.text.toString()).toBe(
-      'more words\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2y  |\n\nend',
-    )
+    expect(shared.text.toString()).toBe('more words\n\n| a   | b   |\n| --- | --- |\n| 1x  | 2y  |\n\nend')
   })
 
   test('never moves its words to a row above that only shares the cell it was typed in', async () => {
@@ -230,10 +220,7 @@ describe('a cell being typed in, while the note is edited elsewhere', () => {
     forceParsing(view, view.state.doc.length, 10_000)
     typeInCell(view)
 
-    const [head = '', rule = '', first = '', second = ''] = shared.text
-      .toString()
-      .split('\n')
-      .slice(2)
+    const [head = '', rule = '', first = '', second = ''] = shared.text.toString().split('\n').slice(2)
     shared.replace(`words\n\n${[head, rule, second, first].join('\n')}\n\nend`)
     await settled()
 

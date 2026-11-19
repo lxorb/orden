@@ -107,13 +107,8 @@ export function openNote(desk: Desk, note: Located): NoteDoc | null {
 }
 
 export async function wordsOf(desk: Desk, note: Located): Promise<string> {
-  const text = note.draft
-    ? note.draft.latest
-    : note.pad
-      ? await desk.padText()
-      : await desk.noteText(note.path)
-  if (text === null)
-    throw new DocError('no_such_note', note.relative, `there is no note at ${note.relative}`)
+  const text = note.draft ? note.draft.latest : note.pad ? await desk.padText() : await desk.noteText(note.path)
+  if (text === null) throw new DocError('no_such_note', note.relative, `there is no note at ${note.relative}`)
 
   return text.replace(/\r\n?/g, '\n')
 }

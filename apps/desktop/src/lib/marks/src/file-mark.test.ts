@@ -22,18 +22,7 @@ describe('the mark a file wears', () => {
   })
 
   test('every extension a picture is written in', () => {
-    for (const name of [
-      'a.png',
-      'a.apng',
-      'a.jpg',
-      'a.jpeg',
-      'a.gif',
-      'a.webp',
-      'a.avif',
-      'a.bmp',
-      'a.ico',
-      'a.svg',
-    ]) {
+    for (const name of ['a.png', 'a.apng', 'a.jpg', 'a.jpeg', 'a.gif', 'a.webp', 'a.avif', 'a.bmp', 'a.ico', 'a.svg']) {
       expect(fileMark(name), name).toBe('picture')
     }
   })
@@ -166,9 +155,7 @@ describe('the marks a row wears', () => {
 
     expect(corner).toEqual(fold)
     expect(outline?.[1].d).toContain('2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8')
-    expect(String(page?.[1].d)).toContain(
-      '2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8',
-    )
+    expect(String(page?.[1].d)).toContain('2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8')
     expect(letters).toHaveLength(4)
     for (const [tag] of letters) expect(tag).toBe('path')
   })

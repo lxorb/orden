@@ -76,9 +76,7 @@ describe('the module stands on its own', () => {
 describe('a theme sheet', () => {
   test('puts the chosen font first in every stack it declares', () => {
     expect(chosenFirst('--font-ui: Inter;')).toBe('--font-ui: var(--font-ui-chosen,) Inter;')
-    expect(chosenFirst('code { font-family: Menlo }')).toBe(
-      'code { font-family: var(--font-mono-chosen,) Menlo }',
-    )
+    expect(chosenFirst('code { font-family: Menlo }')).toBe('code { font-family: var(--font-mono-chosen,) Menlo }')
     expect(chosenFirst('--font-ui: var(--font-system);')).toBe('--font-ui: var(--font-system);')
   })
 

@@ -11,8 +11,7 @@ function stored(entries: Record<string, string>): Storage {
 }
 
 const locks = {
-  request: (_name: string, _options: unknown, run: (lock: unknown) => unknown) =>
-    Promise.resolve(run({})),
+  request: (_name: string, _options: unknown, run: (lock: unknown) => unknown) => Promise.resolve(run({})),
 } as unknown as LockManager
 
 const tab = (fields: object) => ({ name: 'n.md', doc: '', dirty: false, ...fields })
@@ -57,8 +56,7 @@ interface Left {
   active: number
   recent: number[]
 }
-const paneLeft = (kept: string) =>
-  (JSON.parse(kept) as { layout: { frame: { pane: Left } } }).layout.frame.pane
+const paneLeft = (kept: string) => (JSON.parse(kept) as { layout: { frame: { pane: Left } } }).layout.frame.pane
 
 const draftWords = 'DRAFT WORDS'
 const unsaved = tab({ path: null, doc: draftWords })
@@ -137,10 +135,7 @@ describe('wherever the session held them', () => {
       id: 'x',
       along: 'row',
       fraction: 0.5,
-      sides: [
-        frame([tab({ path: null, doc: 'LEFT' })]),
-        frame([tab({ path: null, doc: 'RIGHT' })]),
-      ],
+      sides: [frame([tab({ path: null, doc: 'LEFT' })]), frame([tab({ path: null, doc: 'RIGHT' })])],
     }
     const { taken, kept } = await leave('orden:workspace', whole({ layout: laid(split) }), 1)
 
@@ -192,20 +187,14 @@ describe('wherever the session held them', () => {
       tab({ path: '/s/b.md' }),
       tab({ path: '/s/c.md' }),
     ]
-    const pane = paneLeft(
-      (await leave('orden:workspace', session(tabs, 3, [3, 0, 4, 2, 1]), 1)).kept,
-    )
+    const pane = paneLeft((await leave('orden:workspace', session(tabs, 3, [3, 0, 4, 2, 1]), 1)).kept)
     expect(pane.tabs.map((one) => one.path)).toEqual(['/s/a.md', '/s/b.md', '/s/c.md'])
     expect(pane.tabs[pane.active]?.path).toBe('/s/b.md')
     expect(pane.recent.map((at) => pane.tabs[at]?.path)).toEqual(['/s/b.md', '/s/c.md', '/s/a.md'])
   })
 
   test('where the tab in front was the one taken, what is left shows the next', async () => {
-    const tabs = [
-      tab({ path: '/s/a.md' }),
-      tab({ path: null, doc: 'WORDS' }),
-      tab({ path: '/s/b.md' }),
-    ]
+    const tabs = [tab({ path: '/s/a.md' }), tab({ path: null, doc: 'WORDS' }), tab({ path: '/s/b.md' })]
     const pane = paneLeft((await leave('orden:workspace', session(tabs, 1), 1)).kept)
     expect(pane.tabs[pane.active]?.path).toBe('/s/b.md')
   })
@@ -242,11 +231,7 @@ describe('words on a file that went on without them', () => {
 
   test('come once, for a note open in two panes', async () => {
     const out = await drafted(
-      [
-        note({ share: 'k' }),
-        note({ share: 'k' }),
-        note({ path: '/s/b.md', doc: 'other', share: 'j' }),
-      ],
+      [note({ share: 'k' }), note({ share: 'k' }), note({ path: '/s/b.md', doc: 'other', share: 'j' })],
       'what the file says',
     )
     expect(out.map((one) => one.doc)).toEqual(['unwritten', 'other'])
@@ -290,10 +275,7 @@ describe('one document in two places of a left session', () => {
   })
 
   test('words that went two ways are both kept', async () => {
-    expect(await kept('base\none way\n', 'base\nanother\n')).toEqual([
-      'base\none way\n',
-      'base\nanother\n',
-    ])
+    expect(await kept('base\none way\n', 'base\nanother\n')).toEqual(['base\none way\n', 'base\nanother\n'])
   })
 
   test('two panes on one note are one set of words', async () => {

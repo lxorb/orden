@@ -126,9 +126,7 @@ test('and one to a note that is not there yet is made in that space', async () =
 test('a picture named bare in a note of another space is found in that space', async () => {
   links.index('/home/me/A/Note.md')
   await vi.waitFor(() =>
-    expect(notePicture('photo.png', '/home/me/A/Note.md', 'Note.md')).toBe(
-      assetUrl('/home/me/A/pics/photo.png'),
-    ),
+    expect(notePicture('photo.png', '/home/me/A/Note.md', 'Note.md')).toBe(assetUrl('/home/me/A/pics/photo.png')),
   )
 })
 
@@ -160,8 +158,7 @@ test("the blocks a note of another space is offered are that space's", async () 
 test('a link drawn in the reading view of another space resolves in that space', async () => {
   disk.set('/home/me/B/Sub/Thing.md', '# Thing of B\n')
   await links.build('/home/me/B')
-  const link = (target: string) =>
-    links.targetOf('/home/me/A/Note.md', { kind: 'wikilink', target })
+  const link = (target: string) => links.targetOf('/home/me/A/Note.md', { kind: 'wikilink', target })
 
   links.index('/home/me/A/Note.md')
   await vi.waitFor(() => expect(link('Only A')).toBe('Only A.md'))

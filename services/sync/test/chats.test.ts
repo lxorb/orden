@@ -95,12 +95,7 @@ describe('chats', () => {
     return page
   }
 
-  async function socketOf(
-    who: keyof People,
-    chat: string,
-    since?: number,
-    login?: string,
-  ): Promise<ChatSocket> {
+  async function socketOf(who: keyof People, chat: string, since?: number, login?: string): Promise<ChatSocket> {
     const guestly = who === 'guestWriter' || who === 'guestReader'
     const person = { id: ids[who], guest: guestly }
     const reached = await reachAs(env, person, chat)
@@ -138,8 +133,7 @@ describe('chats', () => {
     env.HUB = running.HUB
 
     const owner = await signIn(env, 'owner@example.com')
-    spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Thesis' } })).json.space
-      .id
+    spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Thesis' } })).json.space.id
     const tokens: Partial<People> = { owner }
     for (const [role, key, step] of [
       ['write', 'writer', 1],
@@ -208,18 +202,14 @@ describe('chats', () => {
         ).toEqual([[chat, role, 5]])
       }
       expect(await list(people.stranger)).toEqual([])
-      expect((await call(env, `/v2/chats/${chat}/events`, { token: people.stranger })).status).toBe(
-        404,
-      )
+      expect((await call(env, `/v2/chats/${chat}/events`, { token: people.stranger })).status).toBe(404)
     })
 
     test('its members are everybody the space reaches, by name and role, with no address', async () => {
       const chat = await chatOfOwner()
-      const { json } = await call<{ members: { who: string; role: string }[] }>(
-        env,
-        `/v2/chats/${chat}/members`,
-        { token: people.guestReader },
-      )
+      const { json } = await call<{ members: { who: string; role: string }[] }>(env, `/v2/chats/${chat}/members`, {
+        token: people.guestReader,
+      })
       expect(json.members.map((one) => one.who).sort()).toEqual(
         [
           `user:${ids.owner}`,
@@ -423,12 +413,12 @@ describe('chats', () => {
       const chat = await chatOfOwner()
       const top = postOf('top')
       await send(people.owner, chat, top)
-      expect(
-        (await send(people.writer, chat, postOf('under', { parent: top.message }))).results[0],
-      ).toMatchObject({ seq: 2 })
-      expect(
-        (await send(people.writer, chat, postOf('nowhere', { parent: 'msg-missing' }))).results[0],
-      ).toMatchObject({ refused: 'gone' })
+      expect((await send(people.writer, chat, postOf('under', { parent: top.message }))).results[0]).toMatchObject({
+        seq: 2,
+      })
+      expect((await send(people.writer, chat, postOf('nowhere', { parent: 'msg-missing' }))).results[0]).toMatchObject({
+        refused: 'gone',
+      })
       const page = await state(people.owner, chat)
       expect(page.messages.find((one) => one.id === top.message)?.replies).toBe(1)
     })
@@ -439,9 +429,9 @@ describe('chats', () => {
       await send(people.owner, chat, top)
       await send(people.owner, chat, { kind: 'delete', id: id(), target: top.message })
       for (const extra of [{ parent: top.message }, { quote: top.message }]) {
-        expect(
-          (await send(people.writer, chat, postOf('too late', extra))).results[0],
-        ).toMatchObject({ refused: 'gone' })
+        expect((await send(people.writer, chat, postOf('too late', extra))).results[0]).toMatchObject({
+          refused: 'gone',
+        })
       }
     })
   })
@@ -502,9 +492,7 @@ describe('chats', () => {
       expect(owner.take()).toEqual([{ t: 'typing', who: `user:${ids.writer}` }])
       at(203_100)
       await say(logs.of(chat), writer, { t: 'typing', parent: 'msg00000001' })
-      expect(owner.take()).toEqual([
-        { t: 'typing', who: `user:${ids.writer}`, parent: 'msg00000001' },
-      ])
+      expect(owner.take()).toEqual([{ t: 'typing', who: `user:${ids.writer}`, parent: 'msg00000001' }])
     })
 
     test('who is here is said as people come and go', async () => {
@@ -512,9 +500,7 @@ describe('chats', () => {
       const owner = await socketOf('owner', chat)
       await socketOf('writer', chat)
       const writer = logs.of(chat).state.getWebSockets(`user:${ids.writer}`)[0]
-      expect(owner.takeOf('here').at(-1)?.who.sort()).toEqual(
-        [`user:${ids.owner}`, `user:${ids.writer}`].sort(),
-      )
+      expect(owner.takeOf('here').at(-1)?.who.sort()).toEqual([`user:${ids.owner}`, `user:${ids.writer}`].sort())
       if (writer) await hangUp(logs.of(chat), writer)
       expect(owner.takeOf('here').at(-1)?.who).toEqual([`user:${ids.owner}`])
     })
@@ -592,9 +578,7 @@ describe('chats', () => {
     })
 
     test('taking somebody out reaches every chat they have open, past two hundred', async () => {
-      const chatRow = env.db.prepare(
-        'insert into chats (id, space_id, created_at) values (?, ?, 0)',
-      )
+      const chatRow = env.db.prepare('insert into chats (id, space_id, created_at) values (?, ?, 0)')
       const socketRow = env.db.prepare(
         'insert into chat_sockets (chat_id, space_id, who, opened_at) values (?, ?, ?, ?)',
       )
@@ -638,18 +622,14 @@ describe('chats', () => {
       const phone = await socketOf('writer', chat)
       env.DB.prepare = prepare
       expect(phone.closed).toBe(false)
-      expect(env.db.prepare('select who from chat_sockets where chat_id = ?').all(chat)).toEqual([
-        { who: ids.writer },
-      ])
+      expect(env.db.prepare('select who from chat_sockets where chat_id = ?').all(chat)).toEqual([{ who: ids.writer }])
     })
 
     test('somebody taken out where no revocation reached is closed within a minute', async () => {
       const chat = await chatOfOwner()
       const writer = await socketOf('writer', chat, undefined, await sha256(people.writer))
       const owner = await socketOf('owner', chat, undefined, await sha256(people.owner))
-      env.db
-        .prepare("delete from space_members where space_id = ? and email = 'writer@example.com'")
-        .run(spaceId)
+      env.db.prepare("delete from space_members where space_id = ? and email = 'writer@example.com'").run(spaceId)
       at(400_000)
       await say(logs.of(chat), owner, { t: 'send', event: postOf('still there?') })
       expect(writer.closed).toBe(true)
@@ -661,9 +641,7 @@ describe('chats', () => {
       const chat = await chatOfOwner()
       const writer = await socketOf('writer', chat, undefined, await sha256(people.writer))
       env.db
-        .prepare(
-          "update space_members set role = 'read' where space_id = ? and email = 'writer@example.com'",
-        )
+        .prepare("update space_members set role = 'read' where space_id = ? and email = 'writer@example.com'")
         .run(spaceId)
       at(400_000)
       writer.take()
@@ -825,20 +803,16 @@ describe('chats', () => {
         seq: 0,
         at: T0 + 260_000,
       })
-      const listed = await call<{ scheduled: { id: string }[] }>(
-        env,
-        `/v2/chats/${chat}/scheduled`,
-        { token: people.writer },
-      )
+      const listed = await call<{ scheduled: { id: string }[] }>(env, `/v2/chats/${chat}/scheduled`, {
+        token: people.writer,
+      })
       expect(listed.json.scheduled.map((one) => one.id)).toEqual([kept.id])
       expect((await events(people.owner, chat)).events).toEqual([])
       expect(logs.of(chat).state.alarm).toBe(T0 + 260_000)
 
       at(260_000)
       await fire(logs.of(chat))
-      expect((await events(people.owner, chat)).events).toMatchObject([
-        { id: later.id, author: `user:${ids.writer}` },
-      ])
+      expect((await events(people.owner, chat)).events).toMatchObject([{ id: later.id, author: `user:${ids.writer}` }])
 
       const another = postOf('never mind')
       await send(people.writer, chat, {
@@ -884,9 +858,7 @@ describe('chats', () => {
       const chat = await chatOfOwner()
       const hash = 'a'.repeat(64)
       env.db
-        .prepare(
-          "insert into blobs (hash, user_id, size, type, created_at) values (?, ?, 4, 'image/png', 1)",
-        )
+        .prepare("insert into blobs (hash, user_id, size, type, created_at) values (?, ?, 4, 'image/png', 1)")
         .run(hash, ids.writer)
       const later = postOf('the figure', {
         files: [{ hash, name: 'figure.png', size: 4, type: 'image/png' }],
@@ -914,9 +886,7 @@ describe('chats', () => {
       const chat = await chatOfOwner()
       const hash = 'a'.repeat(64)
       env.db
-        .prepare(
-          "insert into blobs (hash, user_id, size, type, created_at) values (?, ?, 4, 'image/png', 1)",
-        )
+        .prepare("insert into blobs (hash, user_id, size, type, created_at) values (?, ?, 4, 'image/png', 1)")
         .run(hash, ids.writer)
       const stuck = postOf('the figure', {
         files: [{ hash, name: 'figure.png', size: 4, type: 'image/png' }],
@@ -954,10 +924,7 @@ describe('chats', () => {
       down = false
       at(262_000 + 3_600_000)
       await fire(logs.of(chat))
-      expect((await events(people.owner, chat)).events).toMatchObject([
-        { id: fine.id },
-        { id: stuck.id },
-      ])
+      expect((await events(people.owner, chat)).events).toMatchObject([{ id: fine.id }, { id: stuck.id }])
       expect(logs.of(chat).state.db.prepare('select * from scheduled_tries').all()).toEqual([])
     })
   })
@@ -974,11 +941,9 @@ describe('chats', () => {
 
       const find = async (chat: string, q: string, token = people.reader) =>
         (
-          await call<{ hits: { body: string }[] }>(
-            env,
-            `/v2/chats/${chat}/search?q=${encodeURIComponent(q)}`,
-            { token },
-          )
+          await call<{ hits: { body: string }[] }>(env, `/v2/chats/${chat}/search?q=${encodeURIComponent(q)}`, {
+            token,
+          })
         ).json.hits.map((hit) => hit.body)
 
       expect(await find(thesis, 'fig')).toEqual(['the figures look off on page four'])
@@ -1022,9 +987,7 @@ describe('chats', () => {
   describe('files', () => {
     async function upload(token: string, bytes: Uint8Array): Promise<string> {
       const digest = await crypto.subtle.digest('SHA-256', bytes)
-      const hash = [...new Uint8Array(digest)]
-        .map((one) => one.toString(16).padStart(2, '0'))
-        .join('')
+      const hash = [...new Uint8Array(digest)].map((one) => one.toString(16).padStart(2, '0')).join('')
       const put = await call(env, `/v2/blobs/${hash}`, {
         method: 'PUT',
         token,
@@ -1039,11 +1002,7 @@ describe('chats', () => {
 
     test('are named only once their bytes are there, and fetched by members alone', async () => {
       const chat = await chatOfOwner()
-      const refused = await send(
-        people.writer,
-        chat,
-        postOf('look', { files: [file('f'.repeat(64))] }),
-      )
+      const refused = await send(people.writer, chat, postOf('look', { files: [file('f'.repeat(64))] }))
       expect(refused.results[0]).toMatchObject({ refused: 'invalid' })
 
       const hash = await upload(people.writer, new Uint8Array([1, 2, 3, 4]))
@@ -1085,9 +1044,7 @@ describe('chats', () => {
 
       await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
       expect([await fetched(b), await fetched(c)]).toEqual([404, 200])
-      expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([
-        { hash: c },
-      ])
+      expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([{ hash: c }])
     })
 
     test('a link preview’s picture is fetched by the members, and goes with its message', async () => {
@@ -1097,13 +1054,10 @@ describe('chats', () => {
         preview: { url: 'https://example.com', title: 'Example', picture },
       })
       expect((await send(people.writer, chat, post)).results[0]).toMatchObject({ seq: 1 })
-      const fetched = async (token: string) =>
-        (await call(env, `/v2/chats/${chat}/files/${picture}`, { token })).status
+      const fetched = async (token: string) => (await call(env, `/v2/chats/${chat}/files/${picture}`, { token })).status
       expect([await fetched(people.writer), await fetched(people.reader)]).toEqual([200, 200])
       expect(await fetched(people.stranger)).toBe(404)
-      expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([
-        { hash: picture },
-      ])
+      expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([{ hash: picture }])
 
       await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
       expect(await fetched(people.reader)).toBe(404)
@@ -1125,8 +1079,7 @@ describe('chats', () => {
 
     describe('that nothing names any more', () => {
       const BYTES = new Uint8Array([3, 1, 4, 1])
-      const unused = () =>
-        env.db.prepare('select user_id, hash from unused_blobs order by user_id').all()
+      const unused = () => env.db.prepare('select user_id, hash from unused_blobs order by user_id').all()
       const holders = (hash: string) =>
         env.db.prepare('select user_id from blobs where hash = ? order by user_id').all(hash)
       const served = async (hash: string) => (await call(env, `/i/${hash}.png`)).status
@@ -1249,9 +1202,9 @@ describe('chats', () => {
           token: people.owner,
           body: { content: 'no picture now\n', baseVersion: note.version },
         })
-        expect(
-          env.db.prepare('select count(*) as n from note_versions where note_id = ?').get(note.id),
-        ).toEqual({ n: 2 })
+        expect(env.db.prepare('select count(*) as n from note_versions where note_id = ?').get(note.id)).toEqual({
+          n: 2,
+        })
         const post = await posted(chat, hash, people.owner)
 
         await deleted(people.owner, chat, post.message)
@@ -1267,9 +1220,7 @@ describe('chats', () => {
           token: people.owner,
           body: { path: 'Long.md', content: 'words\n' },
         })
-        const insert = env.db.prepare(
-          "insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, 1, '')",
-        )
+        const insert = env.db.prepare("insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, 1, '')")
         for (let one = 0; one < 300; one++) {
           insert.run(made.json.note.id, one + 1, `version-${one}`)
         }
@@ -1290,9 +1241,7 @@ describe('chats', () => {
 
         await deleted(people.writer, chat, post.message)
         await sweepUnused(env, NIGHTLY, Date.now() + GRACE)
-        expect(
-          (await call(env, `/v2/chats/${other}/files/${hash}`, { token: people.reader })).status,
-        ).toBe(200)
+        expect((await call(env, `/v2/chats/${other}/files/${hash}`, { token: people.reader })).status).toBe(200)
         expect(holders(hash)).toEqual([{ user_id: ids.writer }])
 
         const edited = await send(people.writer, other, {
@@ -1422,17 +1371,14 @@ describe('chats', () => {
     test('a pointer copied into another space reaches nothing for its people', async () => {
       const chat = await chatOfOwner()
       await chatFile('Thesis.chat', chatText({ v: 1, chat }))
-      const elsewhere = (
-        await call(env, '/v1/spaces', { token: people.stranger, body: { name: 'Mine' } })
-      ).json.space.id
+      const elsewhere = (await call(env, '/v1/spaces', { token: people.stranger, body: { name: 'Mine' } })).json.space
+        .id
       const copy = await call(env, `/v1/spaces/${elsewhere}/notes`, {
         token: people.stranger,
         body: { path: 'Copied.chat', content: chatText({ v: 1, chat }) },
       })
       expect(copy.status).toBe(201)
-      expect((await call(env, `/v2/chats/${chat}/events`, { token: people.stranger })).status).toBe(
-        404,
-      )
+      expect((await call(env, `/v2/chats/${chat}/events`, { token: people.stranger })).status).toBe(404)
       expect(await list(people.stranger)).toEqual([])
       expect(env.db.prepare('select file_id from chats where id = ?').get(chat)).not.toEqual({
         file_id: copy.json.note.id,
@@ -1447,9 +1393,7 @@ describe('chats', () => {
         token: people.owner,
         body: { email: 'stranger@example.com', role: 'write' },
       })
-      expect((await list(people.stranger)).map((one) => [one.id, one.role])).toEqual([
-        [secret, 'write'],
-      ])
+      expect((await list(people.stranger)).map((one) => [one.id, one.role])).toEqual([[secret, 'write']])
       expect((await send(people.stranger, secret, postOf('hi'))).results[0]).toMatchObject({
         seq: 1,
       })
@@ -1512,9 +1456,8 @@ describe('chats', () => {
       const chat = await chatOfOwner()
       await send(people.writer, chat, postOf('before the move'))
       const writer = await socketOf('writer', chat)
-      const elsewhere = (
-        await call(env, '/v1/spaces', { token: people.owner, body: { name: 'Private' } })
-      ).json.space.id
+      const elsewhere = (await call(env, '/v1/spaces', { token: people.owner, body: { name: 'Private' } })).json.space
+        .id
 
       const refused = await call(env, `/v2/chats/${chat}`, {
         method: 'PATCH',
@@ -1530,9 +1473,7 @@ describe('chats', () => {
       })
       expect(moved.status).toBe(200)
       expect(writer.closed).toBe(true)
-      expect((await call(env, `/v2/chats/${chat}/events`, { token: people.writer })).status).toBe(
-        404,
-      )
+      expect((await call(env, `/v2/chats/${chat}/events`, { token: people.writer })).status).toBe(404)
       expect((await events(people.owner, chat)).events).toHaveLength(1)
       expect((await list(people.owner)).map((one) => one.space)).toEqual([elsewhere])
     })
@@ -1545,9 +1486,7 @@ describe('chats', () => {
         body: { email: 'stranger@example.com', role: 'write' },
       })
       await send(people.owner, chat, postOf('between us'))
-      const theirs = (
-        await call(env, '/v1/spaces', { token: people.stranger, body: { name: 'Mine' } })
-      ).json.space.id
+      const theirs = (await call(env, '/v1/spaces', { token: people.stranger, body: { name: 'Mine' } })).json.space.id
 
       const moved = await call(env, `/v2/chats/${chat}`, {
         method: 'PATCH',
@@ -1563,9 +1502,7 @@ describe('chats', () => {
 
     test('a writer moves it between the owner’s spaces, never out of them', async () => {
       const chat = await chatOfOwner()
-      const theirs = (
-        await call(env, '/v1/spaces', { token: people.writer, body: { name: 'Mine' } })
-      ).json.space.id
+      const theirs = (await call(env, '/v1/spaces', { token: people.writer, body: { name: 'Mine' } })).json.space.id
       const refused = await call(env, `/v2/chats/${chat}`, {
         method: 'PATCH',
         token: people.writer,
@@ -1574,8 +1511,7 @@ describe('chats', () => {
       expect(refused.status).toBe(403)
       expect((await list(people.owner)).map((one) => one.space)).toEqual([spaceId])
 
-      const next = (await call(env, '/v1/spaces', { token: people.owner, body: { name: 'Next' } }))
-        .json.space.id
+      const next = (await call(env, '/v1/spaces', { token: people.owner, body: { name: 'Next' } })).json.space.id
       await call(env, `/v1/spaces/${next}/share/invite`, {
         token: people.owner,
         body: { email: 'writer@example.com', role: 'write' },

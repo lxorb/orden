@@ -21,9 +21,7 @@ function ranOver(command: StateCommand, doc: string, from: string, to: string): 
 function valuesOf(doc: string): Record<string, string[] | string> | null {
   const rows = readProperties(doc)
   if (!rows) return null
-  return Object.fromEntries(
-    rows.map((row) => [row.key, row.kind === 'list' ? [...row.items].sort() : row.value]),
-  )
+  return Object.fromEntries(rows.map((row) => [row.key, row.kind === 'list' ? [...row.items].sort() : row.value]))
 }
 
 describe('edit76 sorting picked front matter lines that hold block lists', () => {
@@ -55,7 +53,5 @@ describe('edit76 sorting picked front matter lines that hold block lists', () =>
 
 test('a selection from a list item down to the next key moves whole keys', () => {
   const doc = '---\ntags:\n  - b\n  - a\nalpha: 1\n---\n\npara'
-  expect(ranOver(sortLines, doc, '- a', 'alpha')).toBe(
-    '---\nalpha: 1\ntags:\n  - b\n  - a\n---\n\npara',
-  )
+  expect(ranOver(sortLines, doc, '- a', 'alpha')).toBe('---\nalpha: 1\ntags:\n  - b\n  - a\n---\n\npara')
 })

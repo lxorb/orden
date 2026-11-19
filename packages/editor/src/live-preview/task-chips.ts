@@ -1,17 +1,10 @@
-import {
-  type FieldToken,
-  type ParsedTask,
-  parseTask,
-  type Priority,
-  type TaskFields,
-} from '@orden/markdown/task-line'
+import { type FieldToken, type ParsedTask, parseTask, type Priority, type TaskFields } from '@orden/markdown/task-line'
 import { dayWords, timeWords, todayHere } from '../task-days'
 import { deadlineOf, type DueReads, startOf } from '@orden/markdown/task-dates'
 import { OrdenWidget } from './widget'
 
 export interface TaskChip {
-  field:
-    'date' | 'recurrence' | 'priority' | 'remind' | 'duration' | 'deadline' | 'assignee' | 'done'
+  field: 'date' | 'recurrence' | 'priority' | 'remind' | 'duration' | 'deadline' | 'assignee' | 'done'
   text: string
   tone?: 'overdue' | 'p1' | 'p2' | 'p3'
 }
@@ -72,8 +65,7 @@ export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'star
   const flag = PRIORITY[fields.priority]
   if (flag) out.push({ field: 'priority', ...flag })
   if (fields.remind.length) out.push({ field: 'remind', text: '🔔' })
-  if (fields.duration !== undefined)
-    out.push({ field: 'duration', text: `⏱ ${minutes(fields.duration)}` })
+  if (fields.duration !== undefined) out.push({ field: 'duration', text: `⏱ ${minutes(fields.duration)}` })
   const deadline = deadlineOf(fields, due)
   if (deadline !== undefined) {
     const late = open && deadline < today
@@ -84,8 +76,7 @@ export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'star
     })
   }
   if (fields.assignee) out.push({ field: 'assignee', text: `+${fields.assignee}` })
-  if (fields.completed !== undefined)
-    out.push({ field: 'done', text: `done ${day(fields.completed)}` })
+  if (fields.completed !== undefined) out.push({ field: 'done', text: `done ${day(fields.completed)}` })
   return out
 }
 

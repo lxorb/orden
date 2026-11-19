@@ -41,24 +41,18 @@ export function wheelClicks(
   return { x: whole(x), y: whole(y), left: { x: x - whole(x), y: y - whole(y) } }
 }
 
-export function keyEvent(
-  event: Pick<KeyboardEvent, 'key' | 'code' | 'isComposing'>,
-  down: boolean,
-): InputEvent | null {
+export function keyEvent(event: Pick<KeyboardEvent, 'key' | 'code' | 'isComposing'>, down: boolean): InputEvent | null {
   const unsent = event.isComposing || ['Dead', 'Process', 'Unidentified'].includes(event.key)
   if (down && unsent) return null
   return { t: 'key', key: event.key, code: event.code, down }
 }
 
-export function isPaste(
-  event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'shiftKey'>,
-): boolean {
+export function isPaste(event: Pick<KeyboardEvent, 'key' | 'ctrlKey' | 'metaKey' | 'shiftKey'>): boolean {
   const v = event.key.toLowerCase() === 'v'
   return ((event.ctrlKey || event.metaKey) && v) || (event.shiftKey && event.key === 'Insert')
 }
 
-export const textEvent = (text: string | null | undefined): InputEvent | null =>
-  text ? { t: 'text', text } : null
+export const textEvent = (text: string | null | undefined): InputEvent | null => (text ? { t: 'text', text } : null)
 
 export const drivesPointer = (event: Pick<PointerEvent, 'isPrimary'>): boolean => event.isPrimary
 

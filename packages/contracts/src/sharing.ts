@@ -3,11 +3,7 @@ export interface SharingSpacesPort {
 }
 
 interface PublishingPort {
-  readonly show: (space: {
-    readonly id: string
-    readonly name: string
-    readonly root: string
-  }) => Promise<void>
+  readonly show: (space: { readonly id: string; readonly name: string; readonly root: string }) => Promise<void>
 }
 
 interface SpacesArchivedPort {

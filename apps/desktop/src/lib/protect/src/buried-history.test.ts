@@ -28,9 +28,7 @@ describe('the versions of a locked note that is deleted', () => {
     protection.set('/s', '/s/Diary.md', 'password')
     await protection.gone('/s/Diary.md', '/s', 'trash-1')
     await settled()
-    expect(rehomed).toEqual([
-      expect.stringMatching(/^\/s\/Diary\.md -> \/\.orden-locked-history\//),
-    ])
+    expect(rehomed).toEqual([expect.stringMatching(/^\/s\/Diary\.md -> \/\.orden-locked-history\//)])
   })
 
   test('come back with it, where it is put back', async () => {

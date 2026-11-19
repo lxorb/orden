@@ -12,9 +12,7 @@
   const here = $derived(workspace.activeSpace)
   const name = $derived(here?.name ?? 'Spaces')
 
-  const otherSpaces = $derived(
-    workspace.spaces.filter((space) => space.id !== here?.id).map((space) => space.name),
-  )
+  const otherSpaces = $derived(workspace.spaces.filter((space) => space.id !== here?.id).map((space) => space.name))
 
   let wrong = $state(false)
 

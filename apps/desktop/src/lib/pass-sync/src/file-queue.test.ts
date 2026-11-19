@@ -1,12 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { QueueRows } from './file-queue'
-import {
-  droppedWaiting,
-  queuedRemoval,
-  queuedUpload,
-  settledWaiting,
-  waitingFiles,
-} from './file-queue'
+import { droppedWaiting, queuedRemoval, queuedUpload, settledWaiting, waitingFiles } from './file-queue'
 
 function rows(): QueueRows & { kept: Map<string, unknown> } {
   const kept = new Map<string, unknown>()

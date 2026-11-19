@@ -86,13 +86,7 @@ describe('drafts and actions', () => {
     const key = 'c'
     expect(await priorities.suggest(key, 'Lunch', [said('noon?', 3)], [], '2026-11-06')).toBeNull()
     priorities.setDrafting(true)
-    const found = await priorities.suggest(
-      key,
-      'Lunch',
-      [said('noon?', 3)],
-      ['jo passt'],
-      '2026-11-06',
-    )
+    const found = await priorities.suggest(key, 'Lunch', [said('noon?', 3)], ['jo passt'], '2026-11-06')
     expect(found).toEqual({ reply: 'jo, 12i', todo: { title: 'Book a table', priority: 2 } })
     await priorities.suggest(key, 'Lunch', [said('noon?', 3)], [], '2026-11-06')
     expect(asked).toBe(1)

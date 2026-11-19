@@ -2,8 +2,7 @@ import { escape } from './html'
 
 export const DIAGRAM_LANGUAGES: ReadonlySet<string> = new Set(['mermaid', 'flow', 'sequence'])
 
-export const isDiagram = (language: string): boolean =>
-  DIAGRAM_LANGUAGES.has(language.toLowerCase())
+export const isDiagram = (language: string): boolean => DIAGRAM_LANGUAGES.has(language.toLowerCase())
 
 export type DiagramScheme = 'light' | 'dark'
 
@@ -30,18 +29,12 @@ export function diagramAlt(code: string): string {
   return said === undefined || said === '' ? 'Diagram' : said
 }
 
-export function diagramFigure(
-  language: string,
-  alt: string,
-  sources: { light: string; dark: string | null },
-): string {
+export function diagramFigure(language: string, alt: string, sources: { light: string; dark: string | null }): string {
   const picture = (src: string, scheme?: DiagramScheme) =>
     `<img src="${escape(src)}" alt="${escape(alt)}"${scheme ? ` data-scheme="${scheme}"` : ''}>`
 
   const images =
-    sources.dark === null
-      ? picture(sources.light)
-      : picture(sources.light, 'light') + picture(sources.dark, 'dark')
+    sources.dark === null ? picture(sources.light) : picture(sources.light, 'light') + picture(sources.dark, 'dark')
 
   return `<figure class="diagram" data-language="${escape(language)}">${images}</figure>\n`
 }

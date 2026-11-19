@@ -205,17 +205,16 @@ describe('a browser that keeps only the words it uses', () => {
     await browser.disk.write(`${ROOT}/Work/Idea.md`, '# Idea\n')
     await browser.engine.created(`${ROOT}/Work`, true)
     await browser.engine.created(`${ROOT}/Work/Idea.md`, false, '# Idea\n')
-    const ops = (space?.outbox ?? []).flatMap((one) =>
-      one.record.t === 'op' ? [one.record.op] : [],
-    )
+    const ops = (space?.outbox ?? []).flatMap((one) => (one.record.t === 'op' ? [one.record.op] : []))
     expect(ops.map((one) => one.t)).toEqual(['create'])
     expect(ops[0] && 'parent' in ops[0] ? ops[0].parent : null).toBe(work?.id)
 
     await browser.engine.pass(SPACE)
     await other.engine.pass(SPACE)
-    expect(
-      [...other.disk.files.keys()].filter((one) => one.startsWith(`${ROOT}/Work`)).sort(),
-    ).toEqual([`${ROOT}/Work/Idea.md`, `${ROOT}/Work/Plan.md`])
+    expect([...other.disk.files.keys()].filter((one) => one.startsWith(`${ROOT}/Work`)).sort()).toEqual([
+      `${ROOT}/Work/Idea.md`,
+      `${ROOT}/Work/Plan.md`,
+    ])
   })
 
   test('pass after pass leaves away what it was never asked for, so another window open fetches nothing', async () => {
@@ -332,8 +331,7 @@ describe('a browser that keeps only the words it uses', () => {
     const write = browser.disk.write.bind(browser.disk)
     browser.disk.write = () => Promise.reject(new Error('the storage is full'))
     const there = { exists: browser.disk.exists.bind(browser.disk) }
-    browser.disk.exists = (path) =>
-      path === `${ROOT}/Ideas.md` ? Promise.resolve(true) : there.exists(path)
+    browser.disk.exists = (path) => (path === `${ROOT}/Ideas.md` ? Promise.resolve(true) : there.exists(path))
 
     expect(await browser.engine.fetch(`${ROOT}/Plan.md`)).toBe(false)
     expect(await browser.engine.fetch(`${ROOT}/Ideas.md`)).toBe(false)
@@ -747,9 +745,7 @@ function readingOf(account: ReferenceAccount, how: { missing?: boolean; skipless
       const one = notes[0]
       if (!one) return { hits: [], loose: [], after: null }
       const note = { path: one.name, relative: one.name, name: one.name, body: texts[one.id] ?? '' }
-      const hits = new Matcher(request.query)
-        .hits(note, request.limit)
-        .map((hit) => ({ ...hit, id: one.id }))
+      const hits = new Matcher(request.query).hits(note, request.limit).map((hit) => ({ ...hit, id: one.id }))
       return { hits, loose: [], after: notes.length > 1 ? one.id : null }
     },
   }

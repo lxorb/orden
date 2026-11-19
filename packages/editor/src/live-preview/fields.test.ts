@@ -14,8 +14,7 @@ const leaveNow = StateEffect.define()
 
 const leavesMidUpdate = ViewPlugin.define(() => ({
   update(update) {
-    if (!update.transactions.some((one) => one.effects.some((effect) => effect.is(leaveNow))))
-      return
+    if (!update.transactions.some((one) => one.effects.some((effect) => effect.is(leaveNow)))) return
     const focused = document.activeElement
     if (focused instanceof HTMLElement) focused.blur()
   },
@@ -104,14 +103,10 @@ describe('a language typed for a code block', () => {
   }
 
   test('never holds a backtick that would end a backtick fence', async () => {
-    expect(await typedLanguage('```js\nconst a = 1\n```\n', 'py`thon')).toBe(
-      '```python\nconst a = 1\n```\n',
-    )
+    expect(await typedLanguage('```js\nconst a = 1\n```\n', 'py`thon')).toBe('```python\nconst a = 1\n```\n')
   })
 
   test('keeps a backtick in a tilde fence', async () => {
-    expect(await typedLanguage('~~~js\nconst a = 1\n~~~\n', 'py`')).toBe(
-      '~~~py`\nconst a = 1\n~~~\n',
-    )
+    expect(await typedLanguage('~~~js\nconst a = 1\n~~~\n', 'py`')).toBe('~~~py`\nconst a = 1\n~~~\n')
   })
 })

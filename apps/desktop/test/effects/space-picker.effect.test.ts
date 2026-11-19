@@ -65,9 +65,7 @@ async function opened() {
 
 async function press(key: string, code = '', held: KeyboardEventInit = {}) {
   const at = dialog()?.contains(document.activeElement) ? document.activeElement : dialog()
-  at?.dispatchEvent(
-    new KeyboardEvent('keydown', { key, code, bubbles: true, cancelable: true, ...held }),
-  )
+  at?.dispatchEvent(new KeyboardEvent('keydown', { key, code, bubbles: true, cancelable: true, ...held }))
   flushSync()
   await tick()
   flushSync()
@@ -162,12 +160,7 @@ test('with ten or more, a digit another could extend waits, and a second one goe
   await press('1', 'Digit1')
   expect(shown).not.toHaveBeenCalled()
   expect(numbers()).toEqual(['1', '10', '11', '12'])
-  expect(rows().map((one) => one.querySelector('.place b')?.textContent)).toEqual([
-    '1',
-    '1',
-    '1',
-    '1',
-  ])
+  expect(rows().map((one) => one.querySelector('.place b')?.textContent)).toEqual(['1', '1', '1', '1'])
   await press('2', 'Digit2')
   expect(shown).toHaveBeenCalledWith('space-12')
 

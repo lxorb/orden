@@ -12,9 +12,7 @@ function landing(source: string, link: { heading: string | null; block: string |
 describe('the hover card of a link into a note', () => {
   test('opens at the named fence, not an earlier fence of the same language', () => {
     const source = '# Code\n\n```js\nfirst()\n```\n\n```js\nsecond()\n```\n\n^second\n'
-    expect(landing(source, { heading: null, block: 'second' })).toBe(
-      source.indexOf('```js\nsecond'),
-    )
+    expect(landing(source, { heading: null, block: 'second' })).toBe(source.indexOf('```js\nsecond'))
   })
 
   test('opens at the named table, not an earlier table with the same header', () => {

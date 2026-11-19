@@ -53,10 +53,9 @@ export function rest(
   if (saving && away >= saving.after && mayPark(page, now)) return { act: 'park', again: null }
 
   const freezing = away >= FROZEN_AFTER && mayFreeze(page, now)
-  const waits = [
-    page.frozen || freezing ? null : FROZEN_AFTER - away,
-    saving ? saving.after - away : null,
-  ].filter((wait) => wait !== null)
+  const waits = [page.frozen || freezing ? null : FROZEN_AFTER - away, saving ? saving.after - away : null].filter(
+    (wait) => wait !== null,
+  )
 
   const soonest = waits.length ? waits.reduce((low, one) => Math.min(low, one), Infinity) : null
   return {

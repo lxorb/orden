@@ -153,9 +153,7 @@ describe('a rubber band', () => {
   })
 
   test('touching along an edge alone is not touching', () => {
-    expect(
-      overlaps({ x: 0, y: 0, width: 10, height: 10 }, { x: 10, y: 0, width: 10, height: 10 }),
-    ).toBe(false)
+    expect(overlaps({ x: 0, y: 0, width: 10, height: 10 }, { x: 10, y: 0, width: 10, height: 10 })).toBe(false)
   })
 })
 
@@ -178,11 +176,7 @@ describe('what a drag carries', () => {
 
   test('reaches through a group inside a group', () => {
     const nested: Canvas = {
-      nodes: [
-        group('outer', 0, 0, 800, 800),
-        group('inner', 100, 100, 300, 300),
-        card('deep', 150, 150),
-      ],
+      nodes: [group('outer', 0, 0, 800, 800), group('inner', 100, 100, 300, 300), card('deep', 150, 150)],
       edges: [],
       ink: [],
       at: {},
@@ -201,12 +195,8 @@ describe('what a drag carries', () => {
   })
 
   test('counts a card as inside only when the whole of it is', () => {
-    expect(
-      insideGroup({ x: 0, y: 0, width: 100, height: 100 }, { x: 10, y: 10, width: 50, height: 50 }),
-    ).toBe(true)
-    expect(
-      insideGroup({ x: 0, y: 0, width: 100, height: 100 }, { x: 80, y: 10, width: 50, height: 50 }),
-    ).toBe(false)
+    expect(insideGroup({ x: 0, y: 0, width: 100, height: 100 }, { x: 10, y: 10, width: 50, height: 50 })).toBe(true)
+    expect(insideGroup({ x: 0, y: 0, width: 100, height: 100 }, { x: 80, y: 10, width: 50, height: 50 })).toBe(false)
   })
 })
 

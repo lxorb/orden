@@ -20,10 +20,7 @@ describe('a block of raw HTML', () => {
     expect(said('<div>w1</div>\n')).toEqual(['w1'])
     expect(said('<p align="center">w1</p>\n')).toEqual(['w1'])
     expect(said('<details><summary>w1</summary>w2</details>\n')).toEqual(['w1', 'w2'])
-    expect(said('<table><tr><td>w1</td><td>w2</td></tr><tr><td>w3</td></tr></table>\n')).toEqual([
-      'w1 w2',
-      'w3',
-    ])
+    expect(said('<table><tr><td>w1</td><td>w2</td></tr><tr><td>w3</td></tr></table>\n')).toEqual(['w1 w2', 'w3'])
     expect(said('<ul><li>w1</li><li>w2</li></ul>\n')).toEqual(['w1', 'w2'])
     expect(said('<center>w1</center>\n')).toEqual(['w1'])
     expect(said('<h2>w1</h2>\n')).toEqual(['w1'])
@@ -104,9 +101,7 @@ describe('a block of raw HTML', () => {
     expect(said('w1<br>w2\n')).toEqual(['w1\nw2'])
     expect(said('w1<br/>w2 <b>w3</b>\n')).toEqual(['w1\nw2 w3'])
     const table = documentOf('| a |\n| --- |\n| w1<br>w2 |\n', 'Note.md').blocks[0]
-    expect(table?.kind === 'table' && table.rows[0]?.[0]?.map((one) => one.text).join('')).toBe(
-      'w1\nw2',
-    )
+    expect(table?.kind === 'table' && table.rows[0]?.[0]?.map((one) => one.text).join('')).toBe('w1\nw2')
   })
 })
 
@@ -135,9 +130,7 @@ describe('the document a note comes to', () => {
 
   test('keeps a comment that is inside a code fence, which the fence is showing', () => {
     const fenced = documentOf('```html\n<!-- kept -->\n```\n', 'Note.md')
-    expect(
-      fenced.blocks.some((block) => 'code' in block && block.code.includes('<!-- kept -->')),
-    ).toBe(true)
+    expect(fenced.blocks.some((block) => 'code' in block && block.code.includes('<!-- kept -->'))).toBe(true)
   })
 
   test('keeps the headings with their levels', () => {
@@ -155,8 +148,7 @@ describe('the document a note comes to', () => {
 
 describe('the marks on a run', () => {
   const spans = kind('paragraph')[0]?.spans ?? []
-  const marked = (mark: keyof Span) =>
-    spans.filter((span) => span[mark] === true).map((s) => s.text)
+  const marked = (mark: keyof Span) => spans.filter((span) => span[mark] === true).map((s) => s.text)
 
   test('finds bold, italic, struck and marked text', () => {
     expect(marked('bold')).toEqual(['bold'])
@@ -322,9 +314,9 @@ describe('a quote', () => {
 
 describe('the rest of the constructs', () => {
   test('a definition list keeps its term and every meaning under it', () => {
-    expect(
-      kind('terms')[0]?.entries.map((entry) => [words(entry.term), entry.details.map(words)]),
-    ).toEqual([['Markdown', ['A way of writing formatted text.', 'Also the format itself.']]])
+    expect(kind('terms')[0]?.entries.map((entry) => [words(entry.term), entry.details.map(words)])).toEqual([
+      ['Markdown', ['A way of writing formatted text.', 'Also the format itself.']],
+    ])
   })
 
   test('a rule and a page break are each their own block', () => {
@@ -346,9 +338,7 @@ describe('an embed on a line of its own', () => {
   const blocks = (source: string) => documentOf(source, 'Note').blocks
 
   test('an embedded picture is a picture, the way one written `![](…)` is', () => {
-    expect(blocks('![[shot.png]]\n')).toEqual([
-      { kind: 'paragraph', spans: [{ text: '', picture: 'shot.png' }] },
-    ])
+    expect(blocks('![[shot.png]]\n')).toEqual([{ kind: 'paragraph', spans: [{ text: '', picture: 'shot.png' }] }])
     expect(picturesIn(documentOf('![[shot.png]]\n', 'Note'))).toEqual(['shot.png'])
   })
 
@@ -417,9 +407,7 @@ describe('the cover a note names', () => {
     const first = documentOf(NOTED, 'Wide.md').blocks[0]
 
     expect(first?.kind).toBe('paragraph')
-    expect(first && 'spans' in first ? first.spans : []).toEqual([
-      { text: '', picture: 'assets/wide.jpg' },
-    ])
+    expect(first && 'spans' in first ? first.spans : []).toEqual([{ text: '', picture: 'assets/wide.jpg' }])
   })
 
   test('is one of the pictures the document names, so it travels with it', () => {

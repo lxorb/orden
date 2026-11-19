@@ -108,11 +108,7 @@ export function spaceSource(space: Space): string | null {
   return space.shared || space.items ? `shared space ${space.name}` : null
 }
 
-function noteSource(
-  space: Space,
-  items: ReadonlySet<string>,
-  note: { id: string; path: string },
-): string | null {
+function noteSource(space: Space, items: ReadonlySet<string>, note: { id: string; path: string }): string | null {
   if (space.shared) return `shared space ${space.name}`
   return items.has(note.id) ? `shared note ${space.name}/${note.path}` : null
 }
@@ -172,11 +168,7 @@ export async function noteBody(env: Env, spaceId: string, noteId: string): Promi
   return object ? object.text() : ''
 }
 
-export async function askedSpace(
-  env: Env,
-  userId: string,
-  args: Record<string, unknown>,
-): Promise<Space | string> {
+export async function askedSpace(env: Env, userId: string, args: Record<string, unknown>): Promise<Space | string> {
   const wanted = text(args, 'space')
   if (wanted === null) return 'The space has to be a name or an id.'
   if (!wanted?.trim()) return 'Which space?'
@@ -207,12 +199,7 @@ function stoppedAt(count: number): string {
   return `I stopped after ${count} notes, so the others are not listed.`
 }
 
-async function readNote(
-  env: Env,
-  space: Space,
-  args: Record<string, unknown>,
-  shut: Shut,
-): Promise<string> {
+async function readNote(env: Env, space: Space, args: Record<string, unknown>, shut: Shut): Promise<string> {
   const path = readablePath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
   if (shut(space.id, path)) return PROTECTED(path)
@@ -228,12 +215,7 @@ async function readNote(
   return marked(source, await noteBody(env, space.id, note.id))
 }
 
-async function searchNotes(
-  env: Env,
-  scope: Space[],
-  args: Record<string, unknown>,
-  shut: Shut,
-): Promise<string> {
+async function searchNotes(env: Env, scope: Space[], args: Record<string, unknown>, shut: Shut): Promise<string> {
   const asked = text(args, 'query')
   if (asked === null) return 'The query has to be text.'
 
@@ -283,9 +265,7 @@ async function searchNotes(
     }
   }
 
-  const stopped = unread
-    ? [`I stopped after reading ${read} notes, so the others were not searched.`]
-    : []
+  const stopped = unread ? [`I stopped after reading ${read} notes, so the others were not searched.`] : []
   const most = count >= MOST_MATCHES ? [`These are the first ${MOST_MATCHES} matches.`] : []
   if (!count) return ['Nothing found.', ...stopped].join(' ')
   const blocks = [...theirs].map(([source, lines]) => untrusted(source, lines.join('\n')))
@@ -341,12 +321,7 @@ function markdownTarget(from: string, target: string, held: readonly string[]): 
   return nearestNamed(held, parts, from) ?? nearestNamed(held, top, from)
 }
 
-async function listBacklinks(
-  env: Env,
-  space: Space,
-  args: Record<string, unknown>,
-  shut: Shut,
-): Promise<string> {
+async function listBacklinks(env: Env, space: Space, args: Record<string, unknown>, shut: Shut): Promise<string> {
   const path = readablePath(text(args, 'path') ?? '')
   if (!path) return 'That is not a note path.'
 
@@ -382,8 +357,7 @@ async function listBacklinks(
   return [marked(spaceSource(space), found.join('\n')), ...stopped].join('\n')
 }
 
-export const hiddenPath = (path: string): boolean =>
-  path.split('/').some((part) => part.startsWith('.'))
+export const hiddenPath = (path: string): boolean => path.split('/').some((part) => part.startsWith('.'))
 
 export const HIDDEN = (path: string): string =>
   `${path} is hidden: Orden does not write notes whose names or folders start with a dot.`
@@ -505,23 +479,18 @@ export async function callTool(
     case 'search_notes': {
       if (args.space !== undefined && args.space !== null) {
         const space = await askedSpace(env, userId, args)
-        return typeof space === 'string'
-          ? space
-          : searchNotes(env, [space], args, await shutFor(env, userId))
+        return typeof space === 'string' ? space : searchNotes(env, [space], args, await shutFor(env, userId))
       }
       return searchNotes(env, await spacesFor(env, userId), args, await shutFor(env, userId))
     }
 
     case 'list_backlinks': {
       const space = await askedSpace(env, userId, args)
-      return typeof space === 'string'
-        ? space
-        : listBacklinks(env, space, args, await shutFor(env, userId))
+      return typeof space === 'string' ? space : listBacklinks(env, space, args, await shutFor(env, userId))
     }
 
     case 'write_note': {
-      if (token.read_only)
-        return 'This token may only read. Allow writing in Orden’s settings first.'
+      if (token.read_only) return 'This token may only read. Allow writing in Orden’s settings first.'
 
       const space = await askedSpace(env, userId, args)
       if (typeof space === 'string') return space

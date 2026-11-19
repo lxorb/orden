@@ -58,16 +58,7 @@ button {
   cursor: pointer;
 }
 
-:where(
-  button,
-  a[href],
-  input,
-  select,
-  textarea,
-  summary,
-  [tabindex],
-  [contenteditable]
-):focus-visible {
+:where(button, a[href], input, select, textarea, summary, [tabindex], [contenteditable]):focus-visible {
   outline: var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
 }
@@ -426,16 +417,7 @@ select option {
   height: min(var(--screen-height, var(--screen-tall)), calc(100dvh - 2 * var(--screen-gutter)));
 }
 
-:where(
-  button,
-  [role='button'],
-  [role='menuitem'],
-  [role='tab'],
-  a[href],
-  input,
-  select,
-  textarea
-):disabled,
+:where(button, [role='button'], [role='menuitem'], [role='tab'], a[href], input, select, textarea):disabled,
 :where(button, [role='button'], [role='menuitem'], [role='tab'], a[href])[aria-disabled='true'],
 :where(fieldset):disabled {
   opacity: 0.4;
@@ -648,8 +630,7 @@ select option {
 }
 
 .orden-tile.is-on {
-  background:
-    linear-gradient(var(--surface-selected), var(--surface-selected)), var(--surface-hover);
+  background: linear-gradient(var(--surface-selected), var(--surface-selected)), var(--surface-hover);
   box-shadow: var(--shadow-sm);
   color: var(--accent);
 }
@@ -1265,13 +1246,7 @@ input:is(:not([type]), [type='text'], [type='search']) {
   unicode-bidi: plaintext;
 }
 
-input:is(
-  [type='email'],
-  [type='url'],
-  [type='tel'],
-  [inputmode='numeric'],
-  [autocomplete='one-time-code']
-) {
+input:is([type='email'], [type='url'], [type='tel'], [inputmode='numeric'], [autocomplete='one-time-code']) {
   direction: ltr;
 }
 
@@ -1427,10 +1402,10 @@ textarea.orden-field.is-value {
 }
 
 select:focus-visible,
-:is(
-    textarea,
-    input:not([type='range'], [type='checkbox'], [type='radio'], [type='color'], [type='file'])
-  ):not(.orden-field *, .orden-edit-row *):focus,
+:is(textarea, input:not([type='range'], [type='checkbox'], [type='radio'], [type='color'], [type='file'])):not(
+    .orden-field *,
+    .orden-edit-row *
+  ):focus,
 .orden-field:has(:is(input, textarea, [contenteditable]):focus) {
   outline: none;
   border-color: var(--accent);
@@ -2322,10 +2297,10 @@ figure.query {
     outline-offset: -2px;
   }
 
-  :is(
-      textarea,
-      input:not([type='range'], [type='checkbox'], [type='radio'], [type='color'], [type='file'])
-    ):not(.orden-field *, .orden-edit-row *):focus,
+  :is(textarea, input:not([type='range'], [type='checkbox'], [type='radio'], [type='color'], [type='file'])):not(
+      .orden-field *,
+      .orden-edit-row *
+    ):focus,
   .orden-field:has(:is(input, textarea, [contenteditable]):focus),
   .orden-edit-row:focus-within {
     outline: 2px solid Highlight;

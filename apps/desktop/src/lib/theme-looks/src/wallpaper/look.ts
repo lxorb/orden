@@ -96,10 +96,7 @@ function middle(span: Span): Rgb {
   return [0, 1, 2].map((at) => ((span.least[at] ?? 0) + (span.most[at] ?? 0)) / 2) as unknown as Rgb
 }
 
-export function placement(
-  held: Held | null,
-  fit: Fit,
-): { size: string; position: string; repeat: string } {
+export function placement(held: Held | null, fit: Fit): { size: string; position: string; repeat: string } {
   const [x, y] = held?.focus ?? [0.5, 0.5]
   const at = `${percentOf(x)} ${percentOf(y)}`
   const size = held?.size
@@ -157,10 +154,7 @@ export function picturesRule(pictures: { light: Held | null; dark: Held | null }
     const held = scheme === 'dark' ? (pictures.dark ?? pictures.light) : pictures.light
     const side = held?.[scheme]
     return side
-      ? [
-          `--wallpaper-floor-${scheme}: ${percent(side.floor)};`,
-          `--wallpaper-ground-${scheme}: ${side.ground};`,
-        ]
+      ? [`--wallpaper-floor-${scheme}: ${percent(side.floor)};`, `--wallpaper-ground-${scheme}: ${side.ground};`]
       : []
   })
   return block(':root', [...pictureLines(pictures.light, 'fill'), ...floors])
@@ -197,8 +191,6 @@ export function wallpaperRule(
     )
   }
 
-  const dark = pictures.dark
-    ? block(":root[data-theme='dark']", pictureLines(pictures.dark, dials.fit))
-    : ''
+  const dark = pictures.dark ? block(":root[data-theme='dark']", pictureLines(pictures.dark, dials.fit)) : ''
   return `${block(':root', root)}${dark}`
 }

@@ -4,10 +4,7 @@ import type { Entry } from './entry'
 
 let adding: Promise<unknown> = Promise.resolve()
 
-export async function addTask(
-  entry: Entry,
-  options: { open?: boolean } = {},
-): Promise<Todo | null> {
+export async function addTask(entry: Entry, options: { open?: boolean } = {}): Promise<Todo | null> {
   const added = adding.then(() => addEntry(entry))
   adding = added.catch(() => undefined)
   const landed = await added

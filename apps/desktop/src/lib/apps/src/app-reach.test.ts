@@ -66,17 +66,17 @@ describe('an agent given the Work space', () => {
 
   test('neither sees nor drives an application of another space', async () => {
     expect(await run({ op: 'picture', tab: 'b1' })).toMatchObject({ code: 'no_such_tab' })
-    expect(
-      await run({ op: 'input', tab: 'b1', events: [{ type: 'text', text: 'hi' }] }),
-    ).toMatchObject({ code: 'no_such_tab' })
+    expect(await run({ op: 'input', tab: 'b1', events: [{ type: 'text', text: 'hi' }] })).toMatchObject({
+      code: 'no_such_tab',
+    })
     expect(sent).toEqual([])
   })
 
   test('neither sees nor drives an application behind a lock shut to agents', async () => {
     expect(await run({ op: 'picture', tab: 'l1' })).toMatchObject({ code: 'protected' })
-    expect(
-      await run({ op: 'input', tab: 'l1', events: [{ type: 'key', key: 'Enter' }] }),
-    ).toMatchObject({ code: 'protected' })
+    expect(await run({ op: 'input', tab: 'l1', events: [{ type: 'key', key: 'Enter' }] })).toMatchObject({
+      code: 'protected',
+    })
     expect(sent).toEqual([])
   })
 })

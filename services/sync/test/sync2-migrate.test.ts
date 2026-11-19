@@ -93,15 +93,11 @@ interface Engine {
   Engine: {
     start(world: unknown, store: unknown, how: { freshens: boolean }): Promise<Device['engine']>
   }
-  mirrorsFrom(
-    core: Core,
-    listings: ReadonlyMap<string, Listing> | null,
-  ): Promise<Record<string, Mirror>>
+  mirrorsFrom(core: Core, listings: ReadonlyMap<string, Listing> | null): Promise<Record<string, Mirror>>
 }
 
 async function engine(): Promise<Engine> {
-  const at = (file: string) =>
-    new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
+  const at = (file: string) => new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
   const [device, migrate, running] = await Promise.all([
     import(/* @vite-ignore */ at('test/test-device.ts')),
     import(/* @vite-ignore */ at('src/migrate.ts')),
@@ -147,9 +143,9 @@ async function textOnAccount(id: string): Promise<string> {
 }
 
 async function liveNames(): Promise<string[]> {
-  const rows = env.db
-    .prepare('select path from notes where space_id = ? and deleted = 0 order by path')
-    .all(space) as { path: string }[]
+  const rows = env.db.prepare('select path from notes where space_id = ? and deleted = 0 order by path').all(space) as {
+    path: string
+  }[]
   return rows.map((row) => row.path)
 }
 
@@ -186,12 +182,7 @@ async function migrated(
   const state = core.spaces.get(space)
   if (!state) throw new Error('the space was not added')
 
-  const first = await kit.firstPass(
-    core,
-    state,
-    { cursor, notes, ...(untold ? { untold } : {}) },
-    carried,
-  )
+  const first = await kit.firstPass(core, state, { cursor, notes, ...(untold ? { untold } : {}) }, carried)
   expect(first).toBe(true)
   const asked = [...device.asked]
   await rooms.settle()
@@ -253,12 +244,7 @@ describe('a device moving to v2', () => {
     const base = 'First line.\n\nSecond line.\n'
     const note = await v1Note('Plan.md', base)
     await keepVersionNow(env, note.id, base, 'one')
-    await v1Write(
-      note.id,
-      'Plan.md',
-      'First line, edited elsewhere.\n\nSecond line.\n',
-      note.version,
-    )
+    await v1Write(note.id, 'Plan.md', 'First line, edited elsewhere.\n\nSecond line.\n', note.version)
     let emptied = 0
     const kit = await engine()
     const device = await kit.testDevice({
@@ -304,12 +290,7 @@ describe('a device moving to v2', () => {
   test('both moved: merged against the version v1 last agreed on', async () => {
     const note = await v1Note('Plan.md', 'First line.\n\nSecond line.\n')
     await keepVersionNow(env, note.id, 'First line.\n\nSecond line.\n', 'one')
-    await v1Write(
-      note.id,
-      'Plan.md',
-      'First line, edited elsewhere.\n\nSecond line.\n',
-      note.version,
-    )
+    await v1Write(note.id, 'Plan.md', 'First line, edited elsewhere.\n\nSecond line.\n', note.version)
     const { file } = await migrated(
       { 'Plan.md': 'First line.\n\nSecond line, edited here.\n' },
       { 'Plan.md': { ...note, hash: await sha256('First line.\n\nSecond line.\n') } },
@@ -335,12 +316,7 @@ describe('a device moving to v2', () => {
 
   test('both rewrote it with no ancestor: held for the question, nothing written over', async () => {
     const note = await v1Note('Plan.md', 'The release goes out on Monday morning.\n')
-    await v1Write(
-      note.id,
-      'Plan.md',
-      'The release waits until every reviewer has signed off on it.\n',
-      note.version,
-    )
+    await v1Write(note.id, 'Plan.md', 'The release waits until every reviewer has signed off on it.\n', note.version)
     const { device, file } = await migrated(
       { 'Plan.md': 'We hold the release until Friday, whatever the review says.\n' },
       { 'Plan.md': { ...note, hash: 'a hash no version has' } },
@@ -348,9 +324,7 @@ describe('a device moving to v2', () => {
 
     expect(device.engine.core.held.has(note.id)).toBe(true)
     expect(file('Plan.md')).toBe('We hold the release until Friday, whatever the review says.\n')
-    expect(await textOnAccount(note.id)).toBe(
-      'The release waits until every reviewer has signed off on it.\n',
-    )
+    expect(await textOnAccount(note.id)).toBe('The release waits until every reviewer has signed off on it.\n')
     expect(await liveNames()).toEqual(['Plan.md'])
   })
 
@@ -404,9 +378,9 @@ describe('a device moving to v2', () => {
       { id: idea, path: 'Ideas/New.md' },
       { id: note.id, path: 'Plan.md' },
     ])
-    const folders = env.db
-      .prepare('select id from folders where space_id = ? and name = ?')
-      .all(space, 'Ideas') as { id: string }[]
+    const folders = env.db.prepare('select id from folders where space_id = ? and name = ?').all(space, 'Ideas') as {
+      id: string
+    }[]
     expect(folders).toEqual([{ id: folder }])
   })
 
@@ -512,8 +486,7 @@ describe('a first pass that does not get through', () => {
     const commit = core.commit.bind(core)
     core.commit = async (changes) => {
       await commit(changes)
-      if ((changes as readonly unknown[]).includes(done))
-        (core as unknown as { life: number }).life += 1
+      if ((changes as readonly unknown[]).includes(done)) (core as unknown as { life: number }).life += 1
     }
 
     expect(await kit.firstPass(core, state, null, undefined, [done as never])).toBe(true)
@@ -609,9 +582,7 @@ describe('a first pass over what v1 left unsaid', () => {
   test('a note deleted elsewhere that v1 never heard of stays deleted', async () => {
     const note = await v1Note('Gone.md', 'Deleted on the other device.\n')
     const seen = await v1Cursor()
-    expect(
-      (await call(env, `/v1/notes/${note.id}`, { token: other, method: 'DELETE' })).status,
-    ).toBe(200)
+    expect((await call(env, `/v1/notes/${note.id}`, { token: other, method: 'DELETE' })).status).toBe(200)
     const { file } = await migrated(
       { 'Gone.md': 'Deleted on the other device.\n' },
       { 'Gone.md': { ...note, hash: await sha256('Deleted on the other device.\n') } },
@@ -683,9 +654,7 @@ describe('the way back to v1', () => {
     const now = noteRow(theirs.id)
     await v1Write(theirs.id, 'Theirs.md', 'Theirs, written on a v1 device.\n', now.version)
 
-    const mirror = (await kit.mirrorsFrom(engine.core, new Map([[space, await v1Listing()]])))[
-      device.root
-    ]
+    const mirror = (await kit.mirrorsFrom(engine.core, new Map([[space, await v1Listing()]])))[device.root]
     if (!mirror) throw new Error('no mirror for the space')
 
     const first = await v1Pass(device, mirror)
@@ -696,13 +665,7 @@ describe('the way back to v1', () => {
     const second = await v1Pass(device, mirror)
     expect(second).toEqual({ copies: [], refused: [], deleted: [], created: [] })
 
-    expect(await liveNames()).toEqual([
-      'Notes/Ideas.md',
-      'Notes/Inner.md',
-      'Plan.md',
-      'Renamed.md',
-      'Theirs.md',
-    ])
+    expect(await liveNames()).toEqual(['Notes/Ideas.md', 'Notes/Inner.md', 'Plan.md', 'Renamed.md', 'Theirs.md'])
     expect(idAt('Renamed.md')).toBe(old.id)
     expect(idAt('Notes/Inner.md')).toBe(inner.id)
     expect(await textOnAccount(ideas.id)).toBe('Ideas.\n\nTyped and never sent.\n\nOn v1.\n')
@@ -753,9 +716,9 @@ function noteRow(id: string): { version: number; hash: string } {
 }
 
 function deletedNames(): string[] {
-  const rows = env.db
-    .prepare('select path from notes where space_id = ? and deleted = 1 order by path')
-    .all(space) as { path: string }[]
+  const rows = env.db.prepare('select path from notes where space_id = ? and deleted = 1 order by path').all(space) as {
+    path: string
+  }[]
   return rows.map((row) => row.path)
 }
 
@@ -779,8 +742,11 @@ async function v1Listing(): Promise<Listing> {
   const notes: Listing['notes'] = []
   let cursor = 0
   for (;;) {
-    const page = (await call(env, `/v1/spaces/${space}/changes?since=${String(cursor)}`, { token }))
-      .json as { notes: Listing['notes']; cursor: number; more: boolean }
+    const page = (await call(env, `/v1/spaces/${space}/changes?since=${String(cursor)}`, { token })).json as {
+      notes: Listing['notes']
+      cursor: number
+      more: boolean
+    }
     notes.push(...page.notes)
     cursor = page.cursor
     if (!page.more) return { cursor, notes }

@@ -28,11 +28,7 @@ function turnedToText(doc: string, words: string): EditorView {
 
 function inNumberedList(view: EditorView, words: string): boolean {
   const at = view.state.doc.toString().indexOf(words)
-  for (
-    let node = syntaxTree(view.state).resolveInner(at, 1).node;
-    node.parent;
-    node = node.parent
-  ) {
+  for (let node = syntaxTree(view.state).resolveInner(at, 1).node; node.parent; node = node.parent) {
     if (node.name === 'OrderedList') return true
   }
   return false

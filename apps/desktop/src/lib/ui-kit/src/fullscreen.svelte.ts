@@ -10,10 +10,7 @@ export const IDLE = 2600
 
 const FIELDS = new Set(['INPUT', 'TEXTAREA', 'SELECT'])
 
-export function escapeLeaves(
-  spent: boolean,
-  holder: { readonly tagName?: string } | null,
-): boolean {
+export function escapeLeaves(spent: boolean, holder: { readonly tagName?: string } | null): boolean {
   return !spent && !FIELDS.has(holder?.tagName ?? '')
 }
 

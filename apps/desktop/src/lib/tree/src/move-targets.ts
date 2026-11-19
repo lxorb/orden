@@ -66,9 +66,7 @@ export function moveTargets(input: {
   const inside: MoveTarget[] = !tree
     ? []
     : placesIn(tree)
-        .filter(
-          (place) => moving === null || (place.note !== moving && movesInto([moving], place.path)),
-        )
+        .filter((place) => moving === null || (place.note !== moving && movesInto([moving], place.path)))
         .map((place) =>
           place.path === tree.path
             ? {

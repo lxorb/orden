@@ -34,9 +34,7 @@ beforeEach(() => {
 describe('pictures carried to another machine', () => {
   test('are their paths there, a space apart, quoted where a shell would split one', async () => {
     const source = machine((at) => (at === 1 ? '/home/me/a.png' : '/home/me/my shots/b.png'))
-    expect(await carried(source, [picture(3), picture(5)], '/bin/sh')).toBe(
-      "/home/me/a.png '/home/me/my shots/b.png'",
-    )
+    expect(await carried(source, [picture(3), picture(5)], '/bin/sh')).toBe("/home/me/a.png '/home/me/my shots/b.png'")
     expect(source.sizes).toEqual([3, 5])
   })
 

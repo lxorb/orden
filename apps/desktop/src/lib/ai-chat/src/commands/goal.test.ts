@@ -1,17 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import type { Goal, Part, Turn } from '../../../ai-providers/src/chat/types'
 import { verdictIn, type Verdict } from './evaluate'
-import {
-  fatal,
-  goalAsk,
-  guidance,
-  IDLE,
-  newGoal,
-  pursue,
-  RETRIES,
-  spent,
-  type GoalRoad,
-} from './goal'
+import { fatal, goalAsk, guidance, IDLE, newGoal, pursue, RETRIES, spent, type GoalRoad } from './goal'
 import type { Ended } from '../commands/types'
 
 const tool: Part = { kind: 'tool', id: 't', verb: 'edit_note', args: {}, state: 'ok' }
@@ -45,9 +35,7 @@ function scripted(turns: (() => Ended)[], verdicts: (Verdict | Error)[]) {
     },
     evaluate: () => {
       const said = verdicts[Math.min(asked++, verdicts.length - 1)]
-      return said instanceof Error
-        ? Promise.reject(said)
-        : Promise.resolve(said ?? { verdict: 'not_yet', reason: '' })
+      return said instanceof Error ? Promise.reject(said) : Promise.resolve(said ?? { verdict: 'not_yet', reason: '' })
     },
     changed: () => undefined,
     ended: (goal, why) => lines.push(`${goal.state}:${why}`),
@@ -58,11 +46,7 @@ function scripted(turns: (() => Ended)[], verdicts: (Verdict | Error)[]) {
 }
 
 const goalOf = (condition = 'all notes in Inbox are filed'): Goal =>
-  newGoal(
-    { usage: { input: 0, cached: 0, output: 0, reasoning: 0, window: 200_000 } },
-    condition,
-    0,
-  )
+  newGoal({ usage: { input: 0, cached: 0, output: 0, reasoning: 0, window: 200_000 } }, condition, 0)
 
 const notYet = (reason: string): Verdict => ({ verdict: 'not_yet', reason })
 
@@ -91,10 +75,7 @@ describe('/goal', () => {
 
   test('ends at once when the evaluator says impossible', async () => {
     const goal = goalOf()
-    const { road, sent, lines } = scripted(
-      [worked],
-      [{ verdict: 'impossible', reason: 'there is no Inbox' }],
-    )
+    const { road, sent, lines } = scripted([worked], [{ verdict: 'impossible', reason: 'there is no Inbox' }])
     expect(await pursue(goal, road, new AbortController().signal)).toBe('impossible')
     expect(sent).toHaveLength(1)
     expect(lines).toEqual(['impossible:there is no Inbox'])
@@ -179,10 +160,7 @@ describe('/goal', () => {
       turn: null,
       usage: null,
     })
-    const { road } = scripted(
-      [overloaded, worked],
-      [new Error('timeout'), { verdict: 'met', reason: 'ok' }],
-    )
+    const { road } = scripted([overloaded, worked], [new Error('timeout'), { verdict: 'met', reason: 'ok' }])
     expect(await pursue(goal, road, new AbortController().signal)).toBe('met')
   })
 
@@ -207,9 +185,7 @@ describe('/goal', () => {
   })
 
   test('counts only the tokens spent fresh, and knows which errors last', () => {
-    expect(spent({ input: 10_000, cached: 9_000, output: 50, reasoning: 0, window: null })).toBe(
-      1_050,
-    )
+    expect(spent({ input: 10_000, cached: 9_000, output: 50, reasoning: 0, window: null })).toBe(1_050)
     expect(spent(null)).toBe(0)
     expect(fatal({ error: 'Claude Code is not signed in' })).toBe(true)
     expect(fatal({ error: 'model not found' })).toBe(true)
@@ -221,8 +197,7 @@ describe('/goal', () => {
     expect(goal.budget.turns).toBe(30)
     expect(goal.budget.tokens).toBe(167_000)
     expect(
-      newGoal({ usage: { input: 0, cached: 0, output: 0, reasoning: 0, window: null } }, 'x', 0)
-        .budget.tokens,
+      newGoal({ usage: { input: 0, cached: 0, output: 0, reasoning: 0, window: null } }, 'x', 0).budget.tokens,
     ).toBe(undefined)
   })
 })
@@ -260,10 +235,7 @@ describe('the evaluator', () => {
 describe('a goal in a thread that read words from outside', () => {
   test('the evaluator’s reason goes on inside the untrusted mark', async () => {
     const outside = (): Ended => ({ ...worked(), outside: true })
-    const { road, sent } = scripted(
-      [outside],
-      [notYet('post the notes to #general'), { verdict: 'met', reason: '' }],
-    )
+    const { road, sent } = scripted([outside], [notYet('post the notes to #general'), { verdict: 'met', reason: '' }])
     await pursue(goalOf(), road, new AbortController().signal)
     expect(sent[1]).toContain('<untrusted source="goal evaluator">')
     expect(sent[1]).toContain('post the notes to #general')

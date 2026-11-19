@@ -59,9 +59,7 @@ function toHex([r, g, b]: [number, number, number]): string {
 
 function shift(hex: string, towards: 'light' | 'dark', amount = 0.14): string {
   const target = towards === 'light' ? 255 : 0
-  return toHex(
-    channels(hex).map((one) => one + (target - one) * amount) as [number, number, number],
-  )
+  return toHex(channels(hex).map((one) => one + (target - one) * amount) as [number, number, number])
 }
 
 export function accentTokens(id: string, scheme: 'dark' | 'light'): Record<string, string> {

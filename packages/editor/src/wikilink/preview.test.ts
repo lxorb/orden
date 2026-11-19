@@ -8,10 +8,7 @@ const EMPTY: NoteIndex = { notes: [], files: [], path: null, read: () => Promise
 
 function state(index: Partial<NoteIndex> = {}): EditorState {
   return EditorState.create({
-    extensions: [
-      noteIndexExtension({ ...EMPTY, ...index }),
-      imageResolver.of((src) => `asset://${src}`),
-    ],
+    extensions: [noteIndexExtension({ ...EMPTY, ...index }), imageResolver.of((src) => `asset://${src}`)],
   })
 }
 

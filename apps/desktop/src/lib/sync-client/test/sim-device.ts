@@ -117,10 +117,7 @@ export class EngineDevice implements DeviceAdapter {
           pending: null,
           pending_at: null,
         }),
-        put(
-          'meta',
-          numbersRow(note.id, { seq: 1, pulled: index + 1, pending: false, flight: null }),
-        ),
+        put('meta', numbersRow(note.id, { seq: 1, pulled: index + 1, pending: false, flight: null })),
         put('written', { id: note.id, text: note.text }),
       )
       this.disk.files.set(`${this.root}/${note.name}`, note.text)
@@ -139,12 +136,7 @@ export class EngineDevice implements DeviceAdapter {
           const reply = await link(route, frame(body))
           if (reply === null) return null
           const value = unframe(reply)
-          if (
-            typeof value === 'object' &&
-            value !== null &&
-            'refused' in value &&
-            typeof value.refused === 'number'
-          ) {
+          if (typeof value === 'object' && value !== null && 'refused' in value && typeof value.refused === 'number') {
             const error = (value as { error?: unknown }).error
             throw new Refused(value.refused, typeof error === 'string' ? error : '')
           }
@@ -154,8 +146,7 @@ export class EngineDevice implements DeviceAdapter {
       name: this.id,
       now: () => this.clock.now + this.skew,
       random: () => this.random.next(),
-      digest: (text) =>
-        Promise.resolve(`${hash32('a', text).toString(16)}${hash32('b', text).toString(16)}`),
+      digest: (text) => Promise.resolve(`${hash32('a', text).toString(16)}${hash32('b', text).toString(16)}`),
       join: (root, path) => `${root}/${path}`,
       foldsCase: true,
       platform: 'other',
@@ -210,9 +201,7 @@ export class EngineDevice implements DeviceAdapter {
   private live(engine: Engine) {
     const space = engine.core.spaces.get(SPACE)
     if (!space) return []
-    return [...space.shown().entries.values()]
-      .filter((entry) => !entry.deleted)
-      .sort((a, b) => (a.id < b.id ? -1 : 1))
+    return [...space.shown().entries.values()].filter((entry) => !entry.deleted).sort((a, b) => (a.id < b.id ? -1 : 1))
   }
 
   private chosen<T>(list: readonly T[], pick: Pick): T | undefined {
@@ -247,8 +236,7 @@ export class EngineDevice implements DeviceAdapter {
       const key = nameKey(path)
       for (const one of space.paths().values()) if (nameKey(one) === key) return true
       const full = nameKey(this.full(path))
-      for (const one of [...this.disk.files.keys(), ...this.disk.folders])
-        if (nameKey(one) === full) return true
+      for (const one of [...this.disk.files.keys(), ...this.disk.folders]) if (nameKey(one) === full) return true
       return false
     }
   }
@@ -297,8 +285,7 @@ export class EngineDevice implements DeviceAdapter {
       case 'create':
       case 'mkdir': {
         const folders = this.live(engine).filter((entry) => entry.kind === 'folder')
-        const folder =
-          action.folder === null ? null : (this.chosen(folders, action.folder)?.id ?? null)
+        const folder = action.folder === null ? null : (this.chosen(folders, action.folder)?.id ?? null)
         const at = this.pathOf(engine, folder)
         if (at === null) return
         const path = freeIn(this.taken(engine), at, action.name)
@@ -317,29 +304,23 @@ export class EngineDevice implements DeviceAdapter {
         if (!target || !from) return
         const taken = this.taken(engine)
         const wanted = joined(folderOf(from), action.name)
-        const to =
-          nameKey(wanted) === nameKey(from) ? wanted : freeIn(taken, folderOf(from), action.name)
+        const to = nameKey(wanted) === nameKey(from) ? wanted : freeIn(taken, folderOf(from), action.name)
         if (to === from) return
-        await engine.moving(this.full(from), this.full(to), () =>
-          this.disk.move(this.full(from), this.full(to)),
-        )
+        await engine.moving(this.full(from), this.full(to), () => this.disk.move(this.full(from), this.full(to)))
         return
       }
       case 'move': {
         const entries = this.live(engine)
         const target = this.chosen(entries, action.target)
         const folders = entries.filter((entry) => entry.kind === 'folder')
-        const parent =
-          action.folder === null ? null : (this.chosen(folders, action.folder)?.id ?? null)
+        const parent = action.folder === null ? null : (this.chosen(folders, action.folder)?.id ?? null)
         const from = target ? this.pathOf(engine, target.id) : null
         const into = this.pathOf(engine, parent)
         if (!target || !from || into === null || parent === target.id) return
         if (into === from || into.startsWith(`${from}/`)) return
         if (folderOf(from) === into) return
         const to = freeIn(this.taken(engine), into, nameOf(from))
-        await engine.moving(this.full(from), this.full(to), () =>
-          this.disk.move(this.full(from), this.full(to)),
-        )
+        await engine.moving(this.full(from), this.full(to), () => this.disk.move(this.full(from), this.full(to)))
         return
       }
       case 'delete': {
@@ -385,16 +366,11 @@ export class EngineDevice implements DeviceAdapter {
       }
       case 'append-day': {
         const day = this.live(engine).find(
-          (entry) =>
-            entry.parent === null &&
-            nameKey(entry.name) === nameKey(action.name) &&
-            holdsDocument(entry.kind),
+          (entry) => entry.parent === null && nameKey(entry.name) === nameKey(action.name) && holdsDocument(entry.kind),
         )
         if (day) {
           if (engine.core.hasDoc(day.id) && !engine.core.isHeld(day.id)) {
-            await this.type(engine, day.id, (text) =>
-              text ? `${text}\n${action.words}` : action.words,
-            )
+            await this.type(engine, day.id, (text) => (text ? `${text}\n${action.words}` : action.words))
           }
           return
         }
@@ -411,11 +387,7 @@ export class EngineDevice implements DeviceAdapter {
         if (!doc) return
         const { writtenOf } = await import('../src/ingest')
         const ancestor = (await writtenOf(engine.core, id)) ?? doc.text()
-        const file = withoutWords(
-          withWords(ancestor, action.at, action.words),
-          1 - action.at,
-          action.cut,
-        )
+        const file = withoutWords(withWords(ancestor, action.at, action.words), 1 - action.at, action.cut)
         await this.disk.write(this.full(path), file)
         await engine.foreign(this.full(path))
 
@@ -577,16 +549,14 @@ export async function freshDevice(
     name: id,
     now: () => 1000,
     random: Math.random,
-    digest: (text) =>
-      Promise.resolve(`${hash32('a', text).toString(16)}${hash32('b', text).toString(16)}`),
+    digest: (text) => Promise.resolve(`${hash32('a', text).toString(16)}${hash32('b', text).toString(16)}`),
     join: (base, path) => `${base}/${path}`,
     foldsCase: true,
     platform: 'other',
     list: (at) => {
       const listed: { path: string; dir: boolean }[] = []
       for (const folder of disk.folders) {
-        if (folder.startsWith(`${at}/`))
-          listed.push({ path: folder.slice(at.length + 1), dir: true })
+        if (folder.startsWith(`${at}/`)) listed.push({ path: folder.slice(at.length + 1), dir: true })
       }
       for (const file of disk.files.keys()) {
         if (file.startsWith(`${at}/`)) listed.push({ path: file.slice(at.length + 1), dir: false })

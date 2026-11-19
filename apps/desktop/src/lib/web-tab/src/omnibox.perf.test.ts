@@ -26,8 +26,6 @@ test('a keystroke with the history full is a frame at most', () => {
 
   const each = (performance.now() - started) / address.length
 
-  expect(completion(full, address, NOW)?.url).toBe(
-    'https://site499.example.com/section/499/page?id=499',
-  )
+  expect(completion(full, address, NOW)?.url).toBe('https://site499.example.com/section/499/page?id=499')
   if (CLOCKED) expect(each).toBeLessThan(16)
 })

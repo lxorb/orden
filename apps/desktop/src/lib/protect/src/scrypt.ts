@@ -10,11 +10,7 @@ async function pbkdf2(
   bytes: number,
 ): Promise<Uint8Array<ArrayBuffer>> {
   const key = await crypto.subtle.importKey('raw', password, 'PBKDF2', false, ['deriveBits'])
-  const bits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 1 },
-    key,
-    bytes * 8,
-  )
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: 1 }, key, bytes * 8)
   return new Uint8Array(bits)
 }
 

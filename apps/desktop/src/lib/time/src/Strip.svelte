@@ -30,9 +30,7 @@
   const buckets = $derived(bucketsOf(minutes, from, to, 15 * MINUTE))
   let width = $state(0)
   const marks = $derived.by(() => {
-    const step =
-      [1, 2, 3, 4, 6, 12].map((one) => one * HOUR).find((one) => (one / whole) * width >= 48) ??
-      12 * HOUR
+    const step = [1, 2, 3, 4, 6, 12].map((one) => one * HOUR).find((one) => (one / whole) * width >= 48) ?? 12 * HOUR
     const out: number[] = []
     for (let one = Math.ceil(from / step) * step; one <= to; one += step) out.push(one)
     return out
@@ -48,9 +46,7 @@
           style:left={at(piece.from)}
           style:width={wide(piece.to - piece.from)}
           style:background={tintOf(piece.span.activity)}
-          title="{nameOf(piece.span.activity, 'No activity')}, {clock(piece.from)}–{clock(
-            piece.to,
-          )}"
+          title="{nameOf(piece.span.activity, 'No activity')}, {clock(piece.from)}–{clock(piece.to)}"
         ></span>
       {/each}
     </div>
@@ -61,10 +57,7 @@
             class:away={bucket.away > bucket.active}
             style:left={at(bucket.from)}
             style:width={wide(15 * MINUTE)}
-            style:height="{Math.max(
-              12,
-              Math.min(1, bucket.active / Math.max(bucket.seen, 0.01)) * 100,
-            )}%"
+            style:height="{Math.max(12, Math.min(1, bucket.active / Math.max(bucket.seen, 0.01)) * 100)}%"
           ></span>
         {/if}
       {/each}
@@ -78,11 +71,8 @@
       {#each marks as mark (mark)}
         <span
           style:left={at(mark)}
-          style:translate={(mark - from) / whole < 0.08
-            ? '0 0'
-            : (mark - from) / whole > 0.92
-              ? '-100% 0'
-              : '-50% 0'}>{localDate(mark, { hour: 'numeric' })}</span
+          style:translate={(mark - from) / whole < 0.08 ? '0 0' : (mark - from) / whole > 0.92 ? '-100% 0' : '-50% 0'}
+          >{localDate(mark, { hour: 'numeric' })}</span
         >
       {/each}
     </div>

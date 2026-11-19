@@ -13,10 +13,7 @@ const decorated = (doc: string, cursor: number, quiet: boolean) =>
       EditorState.create({
         doc,
         selection: EditorSelection.cursor(cursor),
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          quietMarks.of(quiet),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), quietMarks.of(quiet)],
       }),
     ),
   )
@@ -35,10 +32,7 @@ function concealed(doc: string, cursor: number, quiet: boolean): string[] {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(cursor),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        quietMarks.of(quiet),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), quietMarks.of(quiet)],
     }),
   )
   const out: string[] = []

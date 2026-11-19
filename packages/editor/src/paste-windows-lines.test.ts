@@ -28,10 +28,7 @@ function stateOf(doc: string, at: number): EditorState {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(at),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        richPaste(),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), richPaste()],
     }),
   )
 }

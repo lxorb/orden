@@ -26,9 +26,7 @@ export async function linked(url: string, secret: string): Promise<Link> {
     },
     text: (session) =>
       Buffer.concat(
-        frames.flatMap((frame) =>
-          frame.t === 'out' && frame.session === session ? [frame.data] : [],
-        ),
+        frames.flatMap((frame) => (frame.t === 'out' && frame.session === session ? [frame.data] : [])),
       ).toString(),
     close: () => {
       socket.close()
@@ -36,10 +34,7 @@ export async function linked(url: string, secret: string): Promise<Link> {
   }
 }
 
-export async function until(
-  what: () => boolean | Promise<boolean>,
-  timeout = 20_000,
-): Promise<void> {
+export async function until(what: () => boolean | Promise<boolean>, timeout = 20_000): Promise<void> {
   const end = Date.now() + timeout
   while (!(await what())) {
     if (Date.now() > end) throw new Error('timed out')

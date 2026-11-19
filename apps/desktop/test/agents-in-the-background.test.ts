@@ -15,10 +15,7 @@ const DOORS: Record<string, RegExp[]> = {
   ],
   'agent-host/src/reader-view.ts': [/asksFront\(call/, /needScope\(call, 'workspace\.focus'/],
   'terminal/src/agent/verbs.ts': [/asksFront\(call/, /activate: front/],
-  'terminal/src/agent/online.ts': [
-    /asksFront\(call/,
-    /madeOnline\(front \? null : workspace\.activeTabId, front\)/,
-  ],
+  'terminal/src/agent/online.ts': [/asksFront\(call/, /madeOnline\(front \? null : workspace\.activeTabId, front\)/],
 }
 
 const TAKES = [
@@ -37,17 +34,13 @@ const TAKES = [
 
 const named = (path: string) => relative(LIB, path).split(sep).join('/')
 
-const sources = walk(LIB, (path) => path.endsWith('.ts') && !path.endsWith('.test.ts'), [
-  'node_modules',
-]).filter((path) => {
-  const name = named(path)
-  if (name in DOORS) return false
-  return (
-    name.startsWith('agent-host/') ||
-    name.startsWith('agent-verbs/') ||
-    KIT.test(readFileSync(path, 'utf8'))
-  )
-})
+const sources = walk(LIB, (path) => path.endsWith('.ts') && !path.endsWith('.test.ts'), ['node_modules']).filter(
+  (path) => {
+    const name = named(path)
+    if (name in DOORS) return false
+    return name.startsWith('agent-host/') || name.startsWith('agent-verbs/') || KIT.test(readFileSync(path, 'utf8'))
+  },
+)
 
 describe('an agent at work, in the background', () => {
   test('the agents’ verbs are all here to be read', () => {
@@ -69,10 +62,7 @@ describe('an agent at work, in the background', () => {
   })
 
   test('a tab an agent shows of itself lands behind; only the reader’s press brings it forward', () => {
-    const activity = readFileSync(
-      join(import.meta.dirname, '../src/lib/agents/src/ui/activity.svelte.ts'),
-      'utf8',
-    )
+    const activity = readFileSync(join(import.meta.dirname, '../src/lib/agents/src/ui/activity.svelte.ts'), 'utf8')
     expect(activity).toMatch(/void this\.show\(said\.tab, false\)/)
     expect(activity).toMatch(/front \? 'front' : 'behind'/)
   })

@@ -1,14 +1,6 @@
 import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
-import {
-  byName,
-  isSortMode,
-  ordered,
-  orderedTree,
-  renamedIn,
-  SORT_MODES,
-  withoutName,
-} from './tree-order'
+import { byName, isSortMode, ordered, orderedTree, renamedIn, SORT_MODES, withoutName } from './tree-order'
 
 function file(name: string, times: { modified?: number; created?: number } = {}): Entry {
   return {
@@ -29,11 +21,7 @@ const names = (entries: readonly Entry[]) => entries.map((one) => one.name)
 
 describe('comparing two names the way a reader reads them', () => {
   test('counts the digits in a name rather than spelling them', () => {
-    expect([...['Note 10', 'Note 2', 'Note 1'].sort(byName)]).toEqual([
-      'Note 1',
-      'Note 2',
-      'Note 10',
-    ])
+    expect([...['Note 10', 'Note 2', 'Note 1'].sort(byName)]).toEqual(['Note 1', 'Note 2', 'Note 10'])
   })
 
   test('ignores the case of the first letter', () => {
@@ -75,43 +63,19 @@ describe('the order a folder is drawn in', () => {
   })
 
   test('by the time it was last written in, newest first', () => {
-    expect(names(ordered(tree, 'modified-desc', []))).toEqual([
-      'Alpha',
-      'Zed',
-      'b.md',
-      'c.md',
-      'a.md',
-    ])
+    expect(names(ordered(tree, 'modified-desc', []))).toEqual(['Alpha', 'Zed', 'b.md', 'c.md', 'a.md'])
   })
 
   test('and oldest first', () => {
-    expect(names(ordered(tree, 'modified-asc', []))).toEqual([
-      'Alpha',
-      'Zed',
-      'a.md',
-      'c.md',
-      'b.md',
-    ])
+    expect(names(ordered(tree, 'modified-asc', []))).toEqual(['Alpha', 'Zed', 'a.md', 'c.md', 'b.md'])
   })
 
   test('by the time it was made, newest first', () => {
-    expect(names(ordered(tree, 'created-desc', []))).toEqual([
-      'Alpha',
-      'Zed',
-      'a.md',
-      'c.md',
-      'b.md',
-    ])
+    expect(names(ordered(tree, 'created-desc', []))).toEqual(['Alpha', 'Zed', 'a.md', 'c.md', 'b.md'])
   })
 
   test('and oldest first', () => {
-    expect(names(ordered(tree, 'created-asc', []))).toEqual([
-      'Alpha',
-      'Zed',
-      'b.md',
-      'c.md',
-      'a.md',
-    ])
+    expect(names(ordered(tree, 'created-asc', []))).toEqual(['Alpha', 'Zed', 'b.md', 'c.md', 'a.md'])
   })
 
   test('two files written in the same second fall back to their names', () => {
@@ -181,11 +145,7 @@ describe('a name the tree no longer knows by that name', () => {
 
 describe('the whole tree in the order it is read in', () => {
   test('every folder of it, however deep', () => {
-    const tree = folder('s', [
-      folder('Work', [file('b.md'), file('a.md')]),
-      file('z.md'),
-      file('c.md'),
-    ])
+    const tree = folder('s', [folder('Work', [file('b.md'), file('a.md')]), file('z.md'), file('c.md')])
     const out = orderedTree(tree, 'name', () => [])
     expect(names(out.children)).toEqual(['Work', 'c.md', 'z.md'])
     expect(names(out.children[0]?.children ?? [])).toEqual(['a.md', 'b.md'])

@@ -21,8 +21,7 @@ export function selectionHere(): { text: string; picked: Picked | null } {
   return { text, picked: holder ? { path: holder.path, shared: holder.note.shared } : null }
 }
 
-export const SHUT_TO_AGENTS =
-  'This note is protected: unlock it and choose Let agents read in its menu.'
+export const SHUT_TO_AGENTS = 'This note is protected: unlock it and choose Let agents read in its menu.'
 
 export function agentsMayRead(shows: SharedDoc | null, place: string | null = null): boolean {
   if (place !== null) return protection.agentsMay(place)

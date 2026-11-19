@@ -1,10 +1,5 @@
 import { syntaxTree } from '@codemirror/language'
-import {
-  EditorSelection,
-  type EditorState,
-  type StateCommand,
-  type Transaction,
-} from '@codemirror/state'
+import { EditorSelection, type EditorState, type StateCommand, type Transaction } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { renderMarkdown } from '@orden/markdown'
 import { describe, expect, test } from 'vitest'

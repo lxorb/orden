@@ -15,13 +15,7 @@ export interface Sender {
 }
 
 async function hmac(key: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
-  const imported = await crypto.subtle.importKey(
-    'raw',
-    key,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  )
+  const imported = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
   return new Uint8Array(await crypto.subtle.sign('HMAC', imported, data))
 }
 
@@ -35,9 +29,7 @@ async function freshSender(): Promise<Sender> {
   const pair = (await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, [
     'deriveBits',
   ])) as CryptoKeyPair
-  const publicRaw = new Uint8Array(
-    (await crypto.subtle.exportKey('raw', pair.publicKey)) as ArrayBuffer,
-  )
+  const publicRaw = new Uint8Array((await crypto.subtle.exportKey('raw', pair.publicKey)) as ArrayBuffer)
   return {
     publicRaw,
     privateKey: pair.privateKey,
@@ -45,20 +37,10 @@ async function freshSender(): Promise<Sender> {
   }
 }
 
-export async function encrypted(
-  plaintext: Uint8Array,
-  keys: SubscriptionKeys,
-  sender: Sender,
-): Promise<Uint8Array> {
+export async function encrypted(plaintext: Uint8Array, keys: SubscriptionKeys, sender: Sender): Promise<Uint8Array> {
   const uaPublic = fromBase64url(keys.p256dh)
   const authSecret = fromBase64url(keys.auth)
-  const uaKey = await crypto.subtle.importKey(
-    'raw',
-    uaPublic,
-    { name: 'ECDH', namedCurve: 'P-256' },
-    false,
-    [],
-  )
+  const uaKey = await crypto.subtle.importKey('raw', uaPublic, { name: 'ECDH', namedCurve: 'P-256' }, false, [])
   const ecdh = { name: 'ECDH', public: uaKey } as unknown as SubtleCryptoDeriveKeyAlgorithm
   const shared = new Uint8Array(await crypto.subtle.deriveBits(ecdh, sender.privateKey, 256))
 
@@ -69,11 +51,7 @@ export async function encrypted(
 
   const key = await crypto.subtle.importKey('raw', cek, 'AES-GCM', false, ['encrypt'])
   const sealed = new Uint8Array(
-    await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv: nonce },
-      key,
-      concat(plaintext, new Uint8Array([2])),
-    ),
+    await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, key, concat(plaintext, new Uint8Array([2]))),
   )
 
   const header = new Uint8Array(21)

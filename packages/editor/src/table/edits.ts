@@ -45,12 +45,7 @@ function afterMove(index: number, from: number, to: number): number {
   return index
 }
 
-export function movedColumn(
-  base: TableModel,
-  column: number,
-  step: number,
-  focused: Focus | undefined,
-): Edit {
+export function movedColumn(base: TableModel, column: number, step: number, focused: Focus | undefined): Edit {
   const next = moveColumn(base, column, column + step)
   if (next === base || !focused) return { next, focus: focused }
 
@@ -85,12 +80,7 @@ export function removedColumn(base: TableModel, column: number, focused: Focus |
   }
 }
 
-export function sortedColumn(
-  base: TableModel,
-  column: number,
-  order: Order,
-  focused: Focus | undefined,
-): Edit {
+export function sortedColumn(base: TableModel, column: number, order: Order, focused: Focus | undefined): Edit {
   const next = sortRows(base, column, order)
   if (next === base || !focused || focused.at.row < 0) return { next, focus: focused }
 
@@ -106,12 +96,7 @@ export function sortedColumn(
   }
 }
 
-export function movedRow(
-  base: TableModel,
-  row: number,
-  step: number,
-  focused: Focus | undefined,
-): Edit {
+export function movedRow(base: TableModel, row: number, step: number, focused: Focus | undefined): Edit {
   const next = moveRow(base, row, row + step)
   if (next === base || !focused) return { next, focus: focused }
 

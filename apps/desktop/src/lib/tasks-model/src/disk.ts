@@ -5,8 +5,7 @@ const ITEMS = 'items'
 const META = 'meta'
 const CURSOR = 'cursor'
 
-const nameFor = (owner: string | null): string =>
-  owner === null ? 'orden-todos' : `orden-todos:${owner}`
+const nameFor = (owner: string | null): string => (owner === null ? 'orden-todos' : `orden-todos:${owner}`)
 
 const settled = <T>(request: IDBRequest<T>): Promise<T> =>
   new Promise((resolve, reject) => {
@@ -30,9 +29,7 @@ const keptOf = (value: unknown): Kept | null => {
     id,
     fields: fields as Kept['fields'],
     stamps: stamps as Kept['stamps'],
-    dirty: Array.isArray(dirty)
-      ? dirty.filter((one): one is string => typeof one === 'string')
-      : [],
+    dirty: Array.isArray(dirty) ? dirty.filter((one): one is string => typeof one === 'string') : [],
   }
 }
 
@@ -70,9 +67,7 @@ export async function openTodoDisk(owner: string | null): Promise<ClosingDisk> {
       return out
     },
     cursor: async () => {
-      const read = await settled<unknown>(
-        (await held.transaction(META)).objectStore(META).get(CURSOR),
-      )
+      const read = await settled<unknown>((await held.transaction(META)).objectStore(META).get(CURSOR))
       return typeof read === 'number' ? read : 0
     },
     keepCursor: async (cursor) => {

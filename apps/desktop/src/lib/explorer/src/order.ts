@@ -4,14 +4,7 @@ import type { Entry } from './commands'
 
 export type SortKey = 'name' | 'modified' | 'created' | 'size' | 'kind' | 'folder'
 
-export const SORT_KEYS: readonly SortKey[] = [
-  'name',
-  'modified',
-  'created',
-  'size',
-  'kind',
-  'folder',
-]
+export const SORT_KEYS: readonly SortKey[] = ['name', 'modified', 'created', 'size', 'kind', 'folder']
 
 export interface Sort {
   key: SortKey
@@ -23,8 +16,7 @@ export function endingOf(name: string): string {
   return dot > 0 ? name.slice(dot + 1).toLowerCase() : ''
 }
 
-export const firstDown = (key: SortKey): boolean =>
-  key === 'modified' || key === 'created' || key === 'size'
+export const firstDown = (key: SortKey): boolean => key === 'modified' || key === 'created' || key === 'size'
 
 export const sortShown = (sort: Sort, searching: boolean): Sort =>
   !searching && sort.key === 'folder' ? { key: 'name', down: sort.down } : sort

@@ -27,12 +27,7 @@ function liveToken(at: string): string {
             where s.token_hash = mcp_tokens.session_hash and s.expires_at > ${at}))`
 }
 
-async function issueToken(
-  env: Env,
-  userId: string,
-  readOnly: boolean,
-  sessionHash: string,
-): Promise<string> {
+async function issueToken(env: Env, userId: string, readOnly: boolean, sessionHash: string): Promise<string> {
   const token = mint()
 
   await env.DB.batch([
@@ -125,9 +120,7 @@ mcpAdmin.post('/token', async (context) => {
 })
 
 mcpAdmin.delete('/token', async (context) => {
-  await context.env.DB.prepare('delete from mcp_tokens where user_id = ?')
-    .bind(context.get('user').id)
-    .run()
+  await context.env.DB.prepare('delete from mcp_tokens where user_id = ?').bind(context.get('user').id).run()
 
   return context.json({ ok: true })
 })

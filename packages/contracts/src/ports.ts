@@ -82,10 +82,7 @@ export function needPort<Name extends PortName>(name: Name): PortMap[Name] {
 
 export const portProvided = (name: PortName): boolean => provided.has(name)
 
-export function whenPortProvided<Name extends PortName>(
-  name: Name,
-  use: (port: PortMap[Name]) => void,
-): void {
+export function whenPortProvided<Name extends PortName>(name: Name, use: (port: PortMap[Name]) => void): void {
   const port = provided.get(name) as PortMap[Name] | undefined
   if (port !== undefined) {
     use(port)
@@ -115,14 +112,11 @@ export function mayStop(why: StopReason): Promise<boolean> {
   return port ? port.mayStop(why) : Promise.resolve(true)
 }
 
-export const syncStore = (): SyncStorePort | null =>
-  (provided.get('sync.store') as SyncStorePort | undefined) ?? null
+export const syncStore = (): SyncStorePort | null => (provided.get('sync.store') as SyncStorePort | undefined) ?? null
 
-export const searching = (): SearchPort | null =>
-  (provided.get('search') as SearchPort | undefined) ?? null
+export const searching = (): SearchPort | null => (provided.get('search') as SearchPort | undefined) ?? null
 
-export const webPages = (): WebPagesPort =>
-  (provided.get('web.pages') as WebPagesPort | undefined) ?? NO_WEB_PAGES
+export const webPages = (): WebPagesPort => (provided.get('web.pages') as WebPagesPort | undefined) ?? NO_WEB_PAGES
 
 export const workspaceNotes = (): WorkspaceNotesPort =>
   (provided.get('workspace.notes') as WorkspaceNotesPort | undefined) ?? NO_WORKSPACE_NOTES

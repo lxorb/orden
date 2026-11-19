@@ -47,9 +47,7 @@ function draw(component: typeof JoinSheet, step: string) {
 }
 
 function button(name: string): HTMLButtonElement {
-  const found = [...target.querySelectorAll('button')].find(
-    (one) => one.textContent.trim() === name,
-  )
+  const found = [...target.querySelectorAll('button')].find((one) => one.textContent.trim() === name)
   if (!found) throw new Error(`no ${name} button`)
   return found
 }

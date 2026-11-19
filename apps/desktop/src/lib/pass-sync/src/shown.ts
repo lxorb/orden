@@ -13,13 +13,7 @@ export function nothingShown(): Shown {
 }
 
 export function isShown(update: Shown): boolean {
-  return (
-    update.vaults.length +
-      update.goneVaults.length +
-      update.items.length +
-      update.goneItems.length >
-    0
-  )
+  return update.vaults.length + update.goneVaults.length + update.items.length + update.goneItems.length > 0
 }
 
 export function shownAfter(
@@ -31,19 +25,14 @@ export function shownAfter(
   const goneItems = new Set(update.goneItems.map((one) => `${one.vault}\n${one.id}`))
   const newVaults = new Map(update.vaults.map((one) => [one.id, one]))
   const newItems = new Map(update.items.map((one) => [one.id, one]))
-  const keptVaults = vaults
-    .filter((one) => !goneVaults.has(one.id))
-    .map((one) => newVaults.get(one.id) ?? one)
+  const keptVaults = vaults.filter((one) => !goneVaults.has(one.id)).map((one) => newVaults.get(one.id) ?? one)
   const knownVaults = new Set(keptVaults.map((one) => one.id))
   const keptItems = items
     .filter((one) => !goneVaults.has(one.vault) && !goneItems.has(`${one.vault}\n${one.id}`))
     .map((one) => newItems.get(one.id) ?? one)
   const knownItems = new Set(keptItems.map((one) => one.id))
   return {
-    vaults: [
-      ...keptVaults,
-      ...update.vaults.filter((one) => !knownVaults.has(one.id) && !goneVaults.has(one.id)),
-    ],
+    vaults: [...keptVaults, ...update.vaults.filter((one) => !knownVaults.has(one.id) && !goneVaults.has(one.id))],
     items: [...keptItems, ...update.items.filter((one) => !knownItems.has(one.id))],
   }
 }

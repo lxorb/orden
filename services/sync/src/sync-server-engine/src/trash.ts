@@ -79,11 +79,7 @@ async function deletedSpace(env: Env, userId: string, id: string): Promise<Space
   )
 }
 
-async function deletedNote(
-  env: Env,
-  userId: string,
-  id: string,
-): Promise<(Note & { space_deleted: number }) | null> {
+async function deletedNote(env: Env, userId: string, id: string): Promise<(Note & { space_deleted: number }) | null> {
   return (
     (await env.DB.prepare(
       `select n.*, s.deleted as space_deleted from notes n
@@ -96,9 +92,7 @@ async function deletedNote(
 }
 
 async function usedBy(env: Env, note: Pick<Note, 'id' | 'space_id'>): Promise<Set<string>> {
-  const row = await env.DB.prepare(
-    'select kind, hash, paper, front_rev, size from notes where id = ?',
-  )
+  const row = await env.DB.prepare('select kind, hash, paper, front_rev, size from notes where id = ?')
     .bind(note.id)
     .first<{ kind: string; hash: string; paper: string | null; front_rev: number; size: number }>()
   const used = new Set<string>()
@@ -119,11 +113,7 @@ async function usedBy(env: Env, note: Pick<Note, 'id' | 'space_id'>): Promise<Se
   return used
 }
 
-async function purgeNote(
-  env: Env,
-  note: Pick<Note, 'id' | 'space_id'>,
-  who: string | null,
-): Promise<boolean> {
+async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>, who: string | null): Promise<boolean> {
   const used = await usedBy(env, note)
   const guests = await guestsOf(env, note.space_id, note.id)
 
@@ -151,38 +141,18 @@ async function purgeNote(
     leftover(wordsLeftover(note.id)),
     forgetReminders(env, note.id),
     forgetPictures(env, note.id),
-    env.DB.prepare(
-      "update notes set size = 0, hash = '', paper = null, deleted_at = null where id = ?",
-    ).bind(note.id),
+    env.DB.prepare("update notes set size = 0, hash = '', paper = null, deleted_at = null where id = ?").bind(note.id),
     ...noteUnused(env, note.space_id, used, at),
     leftover(`rooms/${note.id}`),
-    env.DB.prepare('update chats set ended_at = ? where file_id = ? and ended_at is null').bind(
-      at,
-      note.id,
-    ),
+    env.DB.prepare('update chats set ended_at = ? where file_id = ? and ended_at is null').bind(at, note.id),
     env.DB.prepare('delete from form_answers where note_id = ?').bind(note.id),
     env.DB.prepare('delete from blog_paths where note_id = ?').bind(note.id),
     terms,
-    env.DB.prepare('delete from space_members where space_id = ? and item = ?').bind(
-      note.space_id,
-      note.id,
-    ),
-    env.DB.prepare('delete from space_links where space_id = ? and item = ?').bind(
-      note.space_id,
-      note.id,
-    ),
-    env.DB.prepare('delete from space_requests where space_id = ? and item = ?').bind(
-      note.space_id,
-      note.id,
-    ),
-    env.DB.prepare('delete from guest_members where space_id = ? and item = ?').bind(
-      note.space_id,
-      note.id,
-    ),
-    env.DB.prepare('delete from once_shared where space_id = ? and item = ?').bind(
-      note.space_id,
-      note.id,
-    ),
+    env.DB.prepare('delete from space_members where space_id = ? and item = ?').bind(note.space_id, note.id),
+    env.DB.prepare('delete from space_links where space_id = ? and item = ?').bind(note.space_id, note.id),
+    env.DB.prepare('delete from space_requests where space_id = ? and item = ?').bind(note.space_id, note.id),
+    env.DB.prepare('delete from guest_members where space_id = ? and item = ?').bind(note.space_id, note.id),
+    env.DB.prepare('delete from once_shared where space_id = ? and item = ?').bind(note.space_id, note.id),
     env.DB.prepare(
       `delete from guests where id in (select value from json_each(?))
           and not exists (select 1 from guest_members where guest_id = guests.id)`,
@@ -208,8 +178,7 @@ async function purgeNote(
     noted(`purge ${note.id}`, error, null)
   }
   await env.NOTES.delete(objects).catch(later)
-  const answerOf = <T>(statement: D1PreparedStatement) =>
-    (answers[statements.indexOf(statement)]?.results ?? []) as T[]
+  const answerOf = <T>(statement: D1PreparedStatement) => (answers[statements.indexOf(statement)]?.results ?? []) as T[]
   await forgetBodies(
     env,
     answerOf<{ hash: string }>(versions).map((one) => one.hash),
@@ -233,12 +202,7 @@ async function guestsOf(env: Env, spaceId: string, item: string | null): Promise
   return results.map((one) => one.guest_id)
 }
 
-async function purgeSpace(
-  env: Env,
-  space: Pick<Space, 'id'>,
-  who: string | null,
-  budget = AT_ONCE,
-): Promise<number> {
+async function purgeSpace(env: Env, space: Pick<Space, 'id'>, who: string | null, budget = AT_ONCE): Promise<number> {
   const take = Math.max(0, Math.min(budget, AT_ONCE))
   if (!take) return 0
 
@@ -246,9 +210,7 @@ async function purgeSpace(
     .bind(space.id, take)
     .all<{ id: string }>()
 
-  await Promise.all(
-    results.map((note) => env.NOTES.delete([noteKey(space.id, note.id), snapshotKey(note.id)])),
-  )
+  await Promise.all(results.map((note) => env.NOTES.delete([noteKey(space.id, note.id), snapshotKey(note.id)])))
 
   const at = now()
   for (const chunk of chunks(results.map((note) => note.id))) {
@@ -303,13 +265,8 @@ async function purgeSpace(
       env.DB.prepare('delete from space_links where space_id = ?').bind(space.id),
       env.DB.prepare('delete from space_requests where space_id = ?').bind(space.id),
       env.DB.prepare('delete from guest_members where space_id = ?').bind(space.id),
-      env.DB.prepare('update chats set ended_at = ? where space_id = ? and ended_at is null').bind(
-        at,
-        space.id,
-      ),
-      env.DB.prepare("update spaces set files = '[]', deleted_at = null where id = ?").bind(
-        space.id,
-      ),
+      env.DB.prepare('update chats set ended_at = ? where space_id = ? and ended_at is null').bind(at, space.id),
+      env.DB.prepare("update spaces set files = '[]', deleted_at = null where id = ?").bind(space.id),
     ])
     for (const guest of guests) await forgetEmptyGuest(env, guest)
   }
@@ -317,10 +274,7 @@ async function purgeSpace(
   return results.length
 }
 
-export async function purgeExpired(
-  env: Env,
-  at: number,
-): Promise<{ notes: number; spaces: number }> {
+export async function purgeExpired(env: Env, at: number): Promise<{ notes: number; spaces: number }> {
   const cutoff = at - KEEP_FOR
 
   const notes = await env.DB.prepare(
@@ -364,9 +318,7 @@ trash.get('/', async (context) => {
   const spaces = await deletedSpaces(env, user.id)
   const counted = await Promise.all(
     spaces.map(async (space) => {
-      const count = await env.DB.prepare(
-        'select count(*) as notes from notes where space_id = ? and deleted = 0',
-      )
+      const count = await env.DB.prepare('select count(*) as notes from notes where space_id = ? and deleted = 0')
         .bind(space.id)
         .first<{ notes: number }>()
       return {
@@ -400,9 +352,7 @@ trash.post('/spaces/:id/restore', async (context) => {
   const space = await deletedSpace(env, user.id, context.req.param('id'))
   if (!space) return context.json({ error: 'nothing to restore' }, 404)
 
-  const live = await env.DB.prepare(
-    'select name, position from spaces where user_id = ? and deleted = 0',
-  )
+  const live = await env.DB.prepare('select name, position from spaces where user_id = ? and deleted = 0')
     .bind(user.id)
     .all<{ name: string; position: number }>()
   const name = freeName(new Set(live.results.map((one) => one.name)), space.name)
@@ -419,10 +369,7 @@ trash.post('/spaces/:id/restore', async (context) => {
   if (!back.meta.changes) return context.json({ error: TOO_MANY_SPACES }, 409)
 
   return context.json({
-    space: presentSpace(
-      { ...space, deleted: 0, deleted_at: null, name, position, updated_at: at },
-      env,
-    ),
+    space: presentSpace({ ...space, deleted: 0, deleted_at: null, name, position, updated_at: at }, env),
   })
 })
 
@@ -447,11 +394,9 @@ trash.delete('/notes/:id', async (context) => {
   if (!(await purgeNote(context.env, note, user.id))) {
     return context.json({ error: 'nothing to delete' }, 404)
   }
-  await sweepUnused(context.env, RIGHT_AFTER, now(), { user: user.id, since: started }).catch(
-    (error: unknown) => {
-      noted('purge sweep', error, null)
-    },
-  )
+  await sweepUnused(context.env, RIGHT_AFTER, now(), { user: user.id, since: started }).catch((error: unknown) => {
+    noted('purge sweep', error, null)
+  })
   return context.json({ ok: true })
 })
 

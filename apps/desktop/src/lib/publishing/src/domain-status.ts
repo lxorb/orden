@@ -1,14 +1,7 @@
 import type { DomainStatus } from '../../accounts/src/api'
 import { isRecord, isString } from '../../platform/src/api'
 
-const STATES: DomainStatus['state'][] = [
-  'none',
-  'unproved',
-  'pending',
-  'active',
-  'error',
-  'unconfigured',
-]
+const STATES: DomainStatus['state'][] = ['none', 'unproved', 'pending', 'active', 'error', 'unconfigured']
 
 export const isDomainStatus = (value: unknown): value is DomainStatus =>
   isRecord(value) &&

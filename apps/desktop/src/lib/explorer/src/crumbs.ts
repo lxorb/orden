@@ -60,8 +60,7 @@ export function typedFolder(typed: string, here: string, home: string | null): s
     else steps.push(step)
   }
   return steps.reduce(
-    (path, step) =>
-      path.endsWith(at.separator) ? `${path}${step}` : `${path}${at.separator}${step}`,
+    (path, step) => (path.endsWith(at.separator) ? `${path}${step}` : `${path}${at.separator}${step}`),
     at.top,
   )
 }

@@ -24,7 +24,5 @@ test('threads written at once in one space are all in its list', async () => {
   const [gone, ...rest] = made
   if (!gone) throw new Error('no thread')
   await Promise.all([deleteThread('space-1', gone.id), ...rest.map((one) => writeThread(one))])
-  expect((await listThreads('space-1')).map((one) => one.id).sort()).toEqual(
-    rest.map((one) => one.id).sort(),
-  )
+  expect((await listThreads('space-1')).map((one) => one.id).sort()).toEqual(rest.map((one) => one.id).sort())
 })

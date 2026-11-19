@@ -150,10 +150,7 @@
   .divider {
     position: relative;
     background: var(--chrome-seam) center / 2px 100% no-repeat;
-    background-image: linear-gradient(
-      var(--divider-lit, transparent),
-      var(--divider-lit, transparent)
-    );
+    background-image: linear-gradient(var(--divider-lit, transparent), var(--divider-lit, transparent));
     transition: background-color var(--dur-fast) var(--ease-out);
   }
 

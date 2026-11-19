@@ -41,8 +41,7 @@ test('the first goes on the middle, and no outline comes nearer another than the
   expect(out.a?.y).toBeCloseTo(-300)
   const all = placedOf(out)
   for (const one of all)
-    for (const other of all)
-      if (one !== other) expect(gapOf(one, other)).toBeGreaterThan(GAP - 0.05)
+    for (const other of all) if (one !== other) expect(gapOf(one, other)).toBeGreaterThan(GAP - 0.05)
 })
 
 test('they pack round the middle, not in a row: a squarish heap, mostly filled', () => {
@@ -87,8 +86,7 @@ test('a bubble carried through others pushes them aside, smoothly, and none ever
       })
       for (const shape of shapes) expect(meets(held, shape, GAP - 0.5)).toBe(false)
       for (let i = 0; i < shapes.length; i++)
-        for (let j = i + 1; j < shapes.length; j++)
-          expect(meets(shapes[i]!, shapes[j]!, GAP - 0.5)).toBe(false)
+        for (let j = i + 1; j < shapes.length; j++) expect(meets(shapes[i]!, shapes[j]!, GAP - 0.5)).toBe(false)
       for (const { key } of rest) {
         const before = was[key] ?? { x: 0, y: 0 }
         const after = now[key] ?? { x: 0, y: 0 }
@@ -110,11 +108,7 @@ test('two bubbles touch only where their outlines meet: nothing is pushed until 
     [0.7071, 0.7071],
     [-0.6, 0.8],
   ] as const) {
-    const start = moved(
-      shapeOf({ x: 0, y: 0, w: 300, h: 240 }),
-      -150 + 200 - dx * 900,
-      -120 + 150 - dy * 900,
-    )
+    const start = moved(shapeOf({ x: 0, y: 0, w: 300, h: 240 }), -150 + 200 - dx * 900, -120 + 150 - dy * 900)
     let first: number | null = null
     for (let step = 0; step < 400 && first === null; step++) {
       const held = moved(start, dx * step * 3, dy * step * 3)

@@ -9,10 +9,7 @@ export function taskHash(text: string): string {
   return (hash >>> 0).toString(36)
 }
 
-export function lineOfTask(
-  text: string,
-  anchor: { line: number; hash: string },
-): { from: number; to: number } | null {
+export function lineOfTask(text: string, anchor: { line: number; hash: string }): { from: number; to: number } | null {
   const lines: { from: number; to: number }[] = []
   for (let from = 0; from <= text.length;) {
     const end = text.indexOf('\n', from)

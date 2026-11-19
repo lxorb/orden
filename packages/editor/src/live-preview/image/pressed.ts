@@ -16,8 +16,7 @@ export interface Picture {
 
 export function pictureAt(state: EditorState, pos: number): Picture | null {
   const image = imageAt(state, pos)
-  if (image)
-    return { from: image.from, to: image.to, src: image.src, alt: image.alt, wikilink: false }
+  if (image) return { from: image.from, to: image.to, src: image.src, alt: image.alt, wikilink: false }
 
   const link = linkAt(state, pos)
   if (!link?.embed || link.from !== pos || embedKind(link.target) !== 'image') return null
@@ -27,8 +26,7 @@ export function pictureAt(state: EditorState, pos: number): Picture | null {
 }
 
 export function pressedPicture(view: EditorView, target: EventTarget | null): Picture | null {
-  const drawn =
-    target instanceof Element ? target.closest('.orden-image-frame, .orden-embed-image') : null
+  const drawn = target instanceof Element ? target.closest('.orden-image-frame, .orden-embed-image') : null
   if (!drawn || !view.contentDOM.contains(drawn)) return null
 
   return pictureAt(view.state, view.posAtDOM(drawn))

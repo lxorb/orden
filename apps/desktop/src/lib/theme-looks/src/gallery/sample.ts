@@ -107,10 +107,7 @@ export function paletteCss(themes: StoreTheme[]): string {
   }
 
   return themes
-    .flatMap((theme) => [
-      block(theme.id, 'light', theme.palettes.light),
-      block(theme.id, 'dark', theme.palettes.dark),
-    ])
+    .flatMap((theme) => [block(theme.id, 'light', theme.palettes.light), block(theme.id, 'dark', theme.palettes.dark)])
     .filter(Boolean)
     .join('\n')
 }

@@ -20,9 +20,7 @@ function listed(over: Partial<Listed> = {}): Listed {
 
 describe('a session as a row', () => {
   test('is called by the title its program set, then the program, then its file', () => {
-    expect(rowOf(listed({ program: 'claude', title: '✳ Fix the build' })).name).toBe(
-      'Fix the build',
-    )
+    expect(rowOf(listed({ program: 'claude', title: '✳ Fix the build' })).name).toBe('Fix the build')
     expect(rowOf(listed({ program: 'vim' })).name).toBe('vim')
     expect(rowOf(listed({ title: 'nib@machine: ~' })).name).toBe('Terminal 2')
     expect(rowOf(listed({ term: null, path: null })).name).toBeNull()
@@ -56,11 +54,7 @@ describe('a session as a row', () => {
 test('the account’s list is read, and a row that does not read is left out', () => {
   expect(
     listOf({
-      terms: [
-        { ...listed(), typing: 'owner' },
-        { term: null, session: 's_2', alive: null },
-        { term: 'note-3' },
-      ],
+      terms: [{ ...listed(), typing: 'owner' }, { term: null, session: 's_2', alive: null }, { term: 'note-3' }],
     }),
   ).toEqual([
     listed(),

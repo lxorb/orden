@@ -4,10 +4,7 @@ import { invoke } from '../../platform/src/api'
 import { isUnsaved, type Tab } from '../../documents/src/api'
 import { ptyOf, sessionEnded } from './running'
 
-export async function mayEnd(
-  closing: readonly Tab[],
-  every: readonly Tab[] = closing,
-): Promise<boolean> {
+export async function mayEnd(closing: readonly Tab[], every: readonly Tab[] = closing): Promise<boolean> {
   if (!(await mayStop(closing))) return false
   if (__EVEN_PLUGIN__) return true
 
@@ -64,10 +61,7 @@ async function mayStop(closing: readonly Tab[]): Promise<boolean> {
 
   const { prompt } = await import('../../ui-kit/src/api')
   return prompt.confirm({
-    title:
-      asking.length === 1
-        ? `Stop what is running in ${only.shown}?`
-        : 'Stop what is running in these terminals?',
+    title: asking.length === 1 ? `Stop what is running in ${only.shown}?` : 'Stop what is running in these terminals?',
     confirmLabel: 'Stop',
     danger: true,
   })

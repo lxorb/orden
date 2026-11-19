@@ -54,8 +54,7 @@ class Recorder {
       this.path = path
 
       this.held = await record({
-        full: () =>
-          void this.stop().then(() => busy.failed('That is as much as one recording may hold.')),
+        full: () => void this.stop().then(() => busy.failed('That is as much as one recording may hold.')),
       })
       this.at = performance.now()
 

@@ -23,9 +23,7 @@ export interface HoldsSpaces {
   persist(): void
 }
 
-async function withKept(
-  ahead: { name: string; path: string }[],
-): Promise<{ name: string; path: string }[]> {
+async function withKept(ahead: { name: string; path: string }[]): Promise<{ name: string; path: string }[]> {
   if (!isDesktop) return ahead
   return await listedWith(ahead).catch(() => ahead)
 }
@@ -67,10 +65,7 @@ export async function loadSpaces(ws: HoldsSpaces) {
   ws.spaces = found
     .map((entry, index) => ({ entry, index }))
     .sort((a, b) => at(a.entry.path) - at(b.entry.path) || a.index - b.index)
-    .map(
-      ({ entry }) =>
-        byRoot.get(entry.path) ?? { id: identifier(), name: entry.name, root: entry.path },
-    )
+    .map(({ entry }) => byRoot.get(entry.path) ?? { id: identifier(), name: entry.name, root: entry.path })
 
   const gone = ws.activeSpaceId
   if (ws.spaces.some((space) => space.id === gone)) return

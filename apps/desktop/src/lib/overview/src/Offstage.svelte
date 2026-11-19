@@ -33,9 +33,7 @@
   const LONGEST = 2500
   const tried = new SvelteSet<string>()
   const next = $derived(
-    tabs.find(
-      (tab) => TAB_KINDS[tab.kind].preview === 'drawn' && !tried.has(tab.id) && !faces.of(tab.id),
-    ) ?? null,
+    tabs.find((tab) => TAB_KINDS[tab.kind].preview === 'drawn' && !tried.has(tab.id) && !faces.of(tab.id)) ?? null,
   )
   let current = $state<Tab | null>(null)
   let stage = $state<HTMLElement>()
@@ -85,21 +83,11 @@
 </script>
 
 {#if current}
-  <div
-    class="offstage"
-    style:width="{width}px"
-    style:height="{height}px"
-    inert
-    aria-hidden="true"
-    bind:this={stage}
-  >
+  <div class="offstage" style:width="{width}px" style:height="{height}px" inert aria-hidden="true" bind:this={stage}>
     {#key current.id}
       {#if current.kind === 'graph'}
         {#await graphSurface() then Graph}<Graph
-            graph={without(
-              links.pictureOf(workspace.graphSettings.here.attachments),
-              workspace.leftOut,
-            )}
+            graph={without(links.pictureOf(workspace.graphSettings.here.attachments), workspace.leftOut)}
             whole
             current={workspace.relativeNote}
             onopen={() => undefined}
@@ -116,10 +104,7 @@
       {:else if current.kind === 'chat'}
         {#await askPanel() then ChatPanel}<ChatPanel wide tab={current} />{/await}
       {:else if current.kind === 'explorer'}
-        {#await explorerSurface() then ExplorerTab}<ExplorerTab
-            tab={current}
-            focused={false}
-          />{/await}
+        {#await explorerSurface() then ExplorerTab}<ExplorerTab tab={current} focused={false} />{/await}
       {:else if current.kind === 'time'}
         {#await timeSurface() then TimeTab}<TimeTab tab={current} />{/await}
       {/if}

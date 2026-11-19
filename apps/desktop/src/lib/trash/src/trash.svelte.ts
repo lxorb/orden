@@ -61,9 +61,7 @@ class Trash {
     ])
     if (asked !== this.asked) return
     const device =
-      remote.length && found.length
-        ? await (await import('./doubles')).withoutDoubles(found, this.remoteNotes)
-        : found
+      remote.length && found.length ? await (await import('./doubles')).withoutDoubles(found, this.remoteNotes) : found
     if (asked !== this.asked) return
     this.items = [...remote, ...device].sort((a, b) => b.deletedAt - a.deletedAt)
     this.loaded = true
@@ -147,12 +145,7 @@ class Trash {
         await workspace.loadTree()
         if (item.kind === 'space') await protection.unbury(item.ref, at, '')
         else {
-          await workspace.fileCame(
-            at,
-            item.kind === 'folder' ? 'folder' : 'file',
-            undefined,
-            item.ref,
-          )
+          await workspace.fileCame(at, item.kind === 'folder' ? 'folder' : 'file', undefined, item.ref)
         }
         return
       }

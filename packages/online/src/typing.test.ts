@@ -31,7 +31,6 @@ describe('mayType, by the table of 4.6', () => {
   )
 
   it('a guest never types even where the flags say they own the machine', () => {
-    for (const role of ROLES)
-      for (const typing of TYPINGS) expect(mayType(role, true, true, typing)).toBe(false)
+    for (const role of ROLES) for (const typing of TYPINGS) expect(mayType(role, true, true, typing)).toBe(false)
   })
 })

@@ -26,10 +26,7 @@ export const REMEMBERED = 30 * 24 * 60 * 60 * 1000
 export function trimmed(map: ArchiveMap, now: number): ArchiveMap {
   const entries = Object.entries(map).filter(([, when]) => when > 0 || now + when < REMEMBERED)
   if (entries.length > MOST_ARCHIVED) {
-    entries.sort(
-      ([, one], [, other]) =>
-        Number(one > 0) - Number(other > 0) || Math.abs(one) - Math.abs(other),
-    )
+    entries.sort(([, one], [, other]) => Number(one > 0) - Number(other > 0) || Math.abs(one) - Math.abs(other))
     entries.splice(0, entries.length - MOST_ARCHIVED)
   }
 
@@ -65,7 +62,5 @@ export function fold(store: Archive, root: string, theirs: unknown, accountId: s
 
 export async function send(store: Archive, root: string) {
   const { push } = await import('./pushing')
-  await push(root, (api, token, spaceId) =>
-    api.saveArchived(token, spaceId, trimmed(store.of(root), Date.now())),
-  )
+  await push(root, (api, token, spaceId) => api.saveArchived(token, spaceId, trimmed(store.of(root), Date.now())))
 }

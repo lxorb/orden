@@ -27,9 +27,7 @@ describe('a wikilink on a page', () => {
     expect(renderMarkdown('see [[Plan]] now', { resolveLink })).toContain(
       '<a class="wikilink" href="/notes/plan">Plan</a>',
     )
-    expect(renderMarkdown('[[Intro#Start]]', { resolveLink })).toContain(
-      'href="C%23/Intro.md#start"',
-    )
+    expect(renderMarkdown('[[Intro#Start]]', { resolveLink })).toContain('href="C%23/Intro.md#start"')
     expect(renderMarkdown('[[Re: lunch]]', { resolveLink })).toContain(
       '<a class="wikilink" href="Re%3a%20lunch.md">Re: lunch</a>',
     )
@@ -39,9 +37,7 @@ describe('a wikilink on a page', () => {
     expect(renderMarkdown('[[Plan|the plan]]', { resolveLink })).toContain(
       '<a class="wikilink" href="/notes/plan">the plan</a>',
     )
-    expect(renderMarkdown('[[Plan#Some Heading]]', { resolveLink })).toContain(
-      'href="/notes/plan#some-heading"',
-    )
+    expect(renderMarkdown('[[Plan#Some Heading]]', { resolveLink })).toContain('href="/notes/plan#some-heading"')
     expect(renderMarkdown('[[paper.pdf#page=3]]', { resolveLink })).toContain(
       '<a class="wikilink" href="/i/abc.pdf#page=3">paper.pdf#page=3</a>',
     )
@@ -283,9 +279,7 @@ describe('a file embedded in a note', () => {
     expect(renderMarkdown('![[paper.pdf]]\n')).not.toContain('<p><figure')
     const every = () => '# Something else'
     for (const name of ['a.png', 'a.mp3', 'a.mp4', 'a.pdf', 'a.canvas']) {
-      expect(renderMarkdown(`![[${name}]]\n`, { resolveEmbed: every }), name).not.toContain(
-        'Something else',
-      )
+      expect(renderMarkdown(`![[${name}]]\n`, { resolveEmbed: every }), name).not.toContain('Something else')
     }
   })
 

@@ -16,10 +16,7 @@ export const PAGING: Paging = {
 }
 
 export const typed = (round: number, mark = ''): string =>
-  NOTE.replace(
-    'Prose about section 7,',
-    `Prose about section ${mark}${String(round).padStart(4, '0')},`,
-  )
+  NOTE.replace('Prose about section 7,', `Prose about section ${mark}${String(round).padStart(4, '0')},`)
 
 export function costOf(work: () => unknown): {
   set: ReturnType<typeof firmwareWork>

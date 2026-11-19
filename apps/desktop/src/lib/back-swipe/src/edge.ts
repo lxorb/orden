@@ -27,9 +27,7 @@ export function chainOf(from: Element | null, root: Element): Scroller[] {
     const style = at.ownerDocument.defaultView?.getComputedStyle(at)
     if (style) {
       const container = style.overflowX !== 'visible' && style.overflowX !== 'clip'
-      const keeps =
-        container &&
-        (style.overscrollBehaviorX === 'contain' || style.overscrollBehaviorX === 'none')
+      const keeps = container && (style.overscrollBehaviorX === 'contain' || style.overscrollBehaviorX === 'none')
       const sideways = /auto|scroll|overlay/.test(style.overflowX)
       const range = at.scrollWidth - at.clientWidth
       if ((sideways && range > SLACK) || keeps) {

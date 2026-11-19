@@ -28,8 +28,7 @@ function nativeNames(text: string): string[] {
   }
   for (const one of text.matchAll(/(\w+)\s*=\s*await\s+import\('(?:\.\.?\/)+native'\)/g))
     names.push(`${one[1] ?? ''}.invoke`)
-  if (/import\('(?:\.\.?\/)+native'\)/.test(text) && /\bnative\.invoke\b/.test(text))
-    names.push('native.invoke')
+  if (/import\('(?:\.\.?\/)+native'\)/.test(text) && /\bnative\.invoke\b/.test(text)) names.push('native.invoke')
   return [...new Set(names)]
 }
 
@@ -38,11 +37,9 @@ describe('a file in a space', () => {
     const commands = fileCommands()
     expect(commands).toContain('read_note')
     const wrong: string[] = []
-    for (const path of walk(
-      LIB,
-      (path) => /\.(ts|svelte)$/.test(path) && !/\.test\.ts$|\.fixture\.ts$/.test(path),
-      ['internal'],
-    )) {
+    for (const path of walk(LIB, (path) => /\.(ts|svelte)$/.test(path) && !/\.test\.ts$|\.fixture\.ts$/.test(path), [
+      'internal',
+    ])) {
       const at = relative(LIB, path).replace(/\\/g, '/')
       if (ROUTERS.has(at) || ON_DISK_ON_PURPOSE.has(at)) continue
       const text = readFileSync(path, 'utf8')

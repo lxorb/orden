@@ -76,9 +76,7 @@ function answer(message: Answer) {
     return
   }
 
-  const hits = message.hits
-    .filter((hit) => !one.shown.has(hit.path))
-    .slice(0, Math.max(0, one.ask.limit - one.given))
+  const hits = message.hits.filter((hit) => !one.shown.has(hit.path)).slice(0, Math.max(0, one.ask.limit - one.given))
   for (const hit of message.hits) one.shown.add(hit.path)
   one.given += hits.length
   one.onFound({ hits, loose: message.loose })

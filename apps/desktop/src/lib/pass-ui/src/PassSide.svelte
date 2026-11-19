@@ -28,45 +28,34 @@
   import { folderEntries, vaultEntries } from '../../pass-sync/src/api'
   import VaultMark from './VaultMark.svelte'
 
-  const {
-    ui,
-    onchosen,
-    corner,
-  }: { ui: PassUi; onchosen?: () => void; corner?: Snippet<[PassUi]> | undefined } = $props()
+  const { ui, onchosen, corner }: { ui: PassUi; onchosen?: () => void; corner?: Snippet<[PassUi]> | undefined } =
+    $props()
 
   const view = $derived(ui.view)
   const live = $derived(pass.items.filter((one) => one.trashed === null))
   const trashed = $derived(pass.items.length - live.length)
   const invited = $derived(passSync.invites.length)
   const shared = $derived(
-    account.user !== null ||
-      invited > 0 ||
-      pass.vaults.some((one) => one.shared || one.role !== 'owner'),
+    account.user !== null || invited > 0 || pass.vaults.some((one) => one.shared || one.role !== 'owner'),
   )
   const issues = $derived.by(() => {
     const found = report(pass.items, ui.compromised)
-    return (
-      found.weak.length + found.reused.size + found.inactive2fa.length + found.compromised.length
-    )
+    return found.weak.length + found.reused.size + found.inactive2fa.length + found.compromised.length
   })
 
   function countIn(vault: string, folder: string | null = null): number {
-    return live.filter((one) => one.vault === vault && (folder === null || one.folder === folder))
-      .length
+    return live.filter((one) => one.vault === vault && (folder === null || one.folder === folder)).length
   }
 
   function childrenOf(vault: Vault, parent: string | null): Folder[] {
-    return vault.folders
-      .filter((one) => one.parent === parent)
-      .sort((a, b) => a.name.localeCompare(b.name))
+    return vault.folders.filter((one) => one.parent === parent).sort((a, b) => a.name.localeCompare(b.name))
   }
 
   function isOn(scope: Scope): boolean {
     if (view.page !== 'items') return false
     const now = view.scope
     if (now.kind !== scope.kind) return false
-    if (now.kind === 'vault' && scope.kind === 'vault')
-      return now.vault === scope.vault && now.folder === scope.folder
+    if (now.kind === 'vault' && scope.kind === 'vault') return now.vault === scope.vault && now.folder === scope.folder
     return true
   }
 
@@ -89,13 +78,10 @@
       type="button"
       style:padding-inline-start="calc(var(--row-pad) + {depth} * var(--row-indent))"
       onclick={() => chosen(scope)}
-      oncontextmenu={(event) =>
-        menu.show(event, folderEntries(ui, vault, folder), { until: pass.opened })}
+      oncontextmenu={(event) => menu.show(event, folderEntries(ui, vault, folder), { until: pass.opened })}
     >
       {#if folder.mark}
-        <span class="orden-row-mark folder-mark"
-          ><Icon icon={readIcon(folder.mark)} fallback={FolderMark} /></span
-        >
+        <span class="orden-row-mark folder-mark"><Icon icon={readIcon(folder.mark)} fallback={FolderMark} /></span>
       {:else}
         <Glyph icon={FolderMark} class="orden-row-mark" />
       {/if}
@@ -122,9 +108,7 @@
     <Glyph {icon} class="orden-row-mark" />
     <span class="orden-row-label">{label}</span>
     {#if meta !== null}
-      <span class={['orden-row-meta', kind]} data-invites={kind === 'invited' ? '' : null}
-        >{meta}</span
-      >
+      <span class={['orden-row-meta', kind]} data-invites={kind === 'invited' ? '' : null}>{meta}</span>
     {/if}
   </button>
 {/snippet}
@@ -150,8 +134,7 @@
           type="button"
           data-vault={vault.id}
           onclick={() => chosen(scope)}
-          oncontextmenu={(event) =>
-            menu.show(event, vaultEntries(ui, vault), { until: pass.opened })}
+          oncontextmenu={(event) => menu.show(event, vaultEntries(ui, vault), { until: pass.opened })}
         >
           <VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} />
           <span class="orden-row-label" dir="auto">{vault.name}</span>
@@ -170,11 +153,7 @@
       </div>
       {@render folders(vault, null, 1)}
     {/each}
-    <button
-      class="orden-row is-quiet"
-      type="button"
-      onclick={() => (ui.sheet = { kind: 'vault', vault: null })}
-    >
+    <button class="orden-row is-quiet" type="button" onclick={() => (ui.sheet = { kind: 'vault', vault: null })}>
       <Glyph icon={Plus} class="orden-row-mark" />
       <span class="orden-row-label">New vault</span>
     </button>
@@ -185,13 +164,7 @@
 
     {#if shared}
       <h3 class="orden-section">Shared</h3>
-      {@render row(
-        UsersRound,
-        'Shared with me',
-        { kind: 'shared-with-me' },
-        invited || null,
-        'invited',
-      )}
+      {@render row(UsersRound, 'Shared with me', { kind: 'shared-with-me' }, invited || null, 'invited')}
       {@render row(Share, 'Shared by me', { kind: 'shared-by-me' })}
       {@render row(Link, 'Secure links', 'links')}
     {/if}

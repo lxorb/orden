@@ -79,11 +79,7 @@ function word(out: SearchQuery, token: string, today: string) {
     return
   }
   const colon = token.indexOf(':')
-  if (
-    colon > 0 &&
-    modifier(out, token.slice(0, colon).toLowerCase(), token.slice(colon + 1), today)
-  )
-    return
+  if (colon > 0 && modifier(out, token.slice(0, colon).toLowerCase(), token.slice(colon + 1), today)) return
   out.words.push(token)
 }
 
@@ -111,10 +107,8 @@ function modifier(out: SearchQuery, key: string, value: string, today: string): 
     case 'during': {
       const range = rangeOf(key, value.toLowerCase(), today)
       if (!range) return false
-      if (range.since !== undefined && (out.since === undefined || range.since > out.since))
-        out.since = range.since
-      if (range.until !== undefined && (out.until === undefined || range.until < out.until))
-        out.until = range.until
+      if (range.since !== undefined && (out.since === undefined || range.since > out.since)) out.since = range.since
+      if (range.until !== undefined && (out.until === undefined || range.until < out.until)) out.until = range.until
       return true
     }
     default:
@@ -129,11 +123,7 @@ function named(list: string[], value: string, mark: string): boolean {
   return true
 }
 
-function rangeOf(
-  key: string,
-  value: string,
-  today: string,
-): { since?: string; until?: string } | null {
+function rangeOf(key: string, value: string, today: string): { since?: string; until?: string } | null {
   if (key === 'during') {
     const span = spanOf(value, today)
     return span && { since: span[0], until: span[1] }
@@ -179,9 +169,7 @@ function isDay(value: string): boolean {
   if (!parts) return false
   const [year, month, day] = [Number(parts[1]), Number(parts[2]), Number(parts[3])]
   const date = new Date(Date.UTC(year, month - 1, day))
-  return (
-    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
-  )
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
 }
 
 function plusDays(day: string, days: number): string {
@@ -236,17 +224,11 @@ export function matches(query: SearchQuery, hit: Hit): boolean {
   if (query.without.some((one) => (one.includes(' ') ? says(one) : has(one)))) return false
 
   const isPerson = (name: string, who: Who) =>
-    name.toLowerCase() === 'me'
-      ? who === hit.me
-      : hit.namesOf(who).some((one) => folded(one) === folded(name))
-  if (query.from.length > 0 && !query.from.some((name) => isPerson(name, message.author)))
-    return false
-  if (query.in.length > 0 && !query.in.some((name) => folded(name) === folded(hit.chat)))
-    return false
+    name.toLowerCase() === 'me' ? who === hit.me : hit.namesOf(who).some((one) => folded(one) === folded(name))
+  if (query.from.length > 0 && !query.from.some((name) => isPerson(name, message.author))) return false
+  if (query.in.length > 0 && !query.in.some((name) => folded(name) === folded(hit.chat))) return false
   if (query.mentions.length > 0) {
-    const people = message.mentions.filter(
-      (one): one is Who => one !== 'here' && one !== 'everyone',
-    )
+    const people = message.mentions.filter((one): one is Who => one !== 'here' && one !== 'everyone')
     if (!query.mentions.some((name) => people.some((who) => isPerson(name, who)))) return false
   }
 

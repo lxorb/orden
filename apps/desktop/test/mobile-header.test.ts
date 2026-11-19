@@ -38,9 +38,7 @@ describe('the button that opens the file list', () => {
       ['lib/sidebar/src/Sidebar.svelte', sidebar],
     ] as const) {
       expect(text, `${name} draws the glyph again`).not.toContain(PANEL)
-      expect(text, `${name} uses the component`).toMatch(
-        /<SidebarToggle unseen=\{(swiped|swipeOpens\(\))\} \/>/,
-      )
+      expect(text, `${name} uses the component`).toMatch(/<SidebarToggle unseen=\{(swiped|swipeOpens\(\))\} \/>/)
     }
   })
 
@@ -50,17 +48,13 @@ describe('the button that opens the file list', () => {
   })
 
   test('is said and not shown in the drawer head on the same condition as the bar', () => {
-    expect(sidebar).toMatch(
-      /import \{[^}]*\bswipeOpens\b[^}]*\} from '\.\.\/\.\.\/workspace\/src\/api'/,
-    )
+    expect(sidebar).toMatch(/import \{[^}]*\bswipeOpens\b[^}]*\} from '\.\.\/\.\.\/workspace\/src\/api'/)
     expect(sidebar.replace(/\s+/g, ' ')).toContain('<SidebarToggle unseen={swipeOpens()} />')
   })
 
   test("the bar's start steps in by a glyph's margin while its button is not seen", () => {
     const style = titlebar.slice(titlebar.indexOf('<style>')).replace(/\s+/g, ' ')
-    expect(style).toContain(
-      'padding-inline-start: calc(var(--inset-left) + (var(--row-height) - var(--icon-lg)) / 2);',
-    )
+    expect(style).toContain('padding-inline-start: calc(var(--inset-left) + (var(--row-height) - var(--icon-lg)) / 2);')
     expect(style).toContain(
       ":global([data-touch]) header:has(> :global([data-side-toggle='left']:not(.orden-said))) { padding-inline-start: var(--inset-left); }",
     )
@@ -75,9 +69,7 @@ describe('the button that opens the file list', () => {
   })
 
   test('and nothing else anywhere draws one', () => {
-    const others = componentsWith(PANEL).filter(
-      (name) => name !== 'lib/titlebar/src/SidebarToggle.svelte',
-    )
+    const others = componentsWith(PANEL).filter((name) => name !== 'lib/titlebar/src/SidebarToggle.svelte')
     expect(others, `these draw the sidebar glyph again: ${others.join(', ')}`).toEqual([])
   })
 
@@ -89,11 +81,7 @@ describe('the button that opens the file list', () => {
     expect(toggle).toContain("'Show right sidebar'")
 
     const style = toggle.slice(toggle.indexOf('<style>'))
-    for (const shifting of [
-      /\.edge[^}]*transform:/,
-      /\.edge[^}]*opacity:/,
-      /\.edge[^}]*display:/,
-    ]) {
+    for (const shifting of [/\.edge[^}]*transform:/, /\.edge[^}]*opacity:/, /\.edge[^}]*display:/]) {
       expect(style, `the edge is drawn one way: ${shifting.source}`).not.toMatch(shifting)
     }
   })
@@ -101,9 +89,7 @@ describe('the button that opens the file list', () => {
   test('is in the drawer head exactly where the sidebar is a drawer', () => {
     const squeezed = sidebar.replace(/\s+/g, ' ')
 
-    expect(squeezed).toContain(
-      '{#if viewport.drawer} <SidebarToggle unseen={swipeOpens()} /> {/if}',
-    )
+    expect(squeezed).toContain('{#if viewport.drawer} <SidebarToggle unseen={swipeOpens()} /> {/if}')
     expect(squeezed).toContain('{#if side === \'left\'} <div class="head"')
   })
 })
@@ -114,9 +100,7 @@ describe("the sides' buttons on a desktop", () => {
     expect(squeezed).toContain(
       '{:else if workspace.right.length || !__EVEN_PLUGIN__} <SidebarToggle side="right" /> {/if}',
     )
-    expect(squeezed).toContain(
-      '{#if viewport.touch} {#if workspace.right.length} <SidebarToggle side="right" /> {/if}',
-    )
+    expect(squeezed).toContain('{#if viewport.touch} {#if workspace.right.length} <SidebarToggle side="right" /> {/if}')
     expect(sidebar).not.toContain('<SidebarToggle side="right"')
     expect(sidebar).toContain("if (viewport.touch || side === 'right') return")
   })

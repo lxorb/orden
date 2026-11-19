@@ -36,11 +36,7 @@ const { serveWorkspace } = await import('../../workspace/src/services')
 serveWorkspace({ mayEnd: (await import('./closing')).mayEnd })
 
 function online(session: string, name = 'Terminal') {
-  return workspace.openUnsaved(
-    'terminal',
-    JSON.stringify({ v: 1, machine: 'machine-1', session }),
-    name,
-  )
+  return workspace.openUnsaved('terminal', JSON.stringify({ v: 1, machine: 'machine-1', session }), name)
 }
 
 const open = (id: string) => workspace.tabs.some((one) => one.id === id)
@@ -131,9 +127,7 @@ describe('an online terminal whose session has ended, closed', () => {
 
   test('is marked ended when its shell exits or the machine says it is gone', () => {
     const sessions = readFileSync(join(import.meta.dirname, 'sessions.svelte.ts'), 'utf8')
-    expect(sessions).toMatch(
-      /exitedWith\(code: number\) \{\s*if \(this\.online\) \{\s*setEnded\(this\.tab\.id, true\)/,
-    )
+    expect(sessions).toMatch(/exitedWith\(code: number\) \{\s*if \(this\.online\) \{\s*setEnded\(this\.tab\.id, true\)/)
     expect(sessions).toMatch(/if \(what\.gone === true\) setEnded\(this\.tab\.id, true\)/)
   })
 })

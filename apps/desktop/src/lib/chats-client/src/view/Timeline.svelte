@@ -116,9 +116,7 @@
       if (at !== undefined) {
         const rowTop = heights.top(at)
         const y =
-          target.where === 'centre'
-            ? rowTop - room / 2 + heights.heightOf(at) / 2
-            : rowTop - Math.min(120, room * 0.25)
+          target.where === 'centre' ? rowTop - room / 2 + heights.heightOf(at) / 2 : rowTop - Math.min(120, room * 0.25)
         box.scrollTop = Math.max(0, y)
         stuck = box.scrollTop + box.clientHeight >= box.scrollHeight - 4
         anchor = { key: target.key, offset: rowTop - box.scrollTop }
@@ -239,15 +237,12 @@
     scroller?.focus()
   }
 
-  const messages = $derived(
-    layout.items.flatMap((item) => (item.kind === 'message' ? [item.message] : [])),
-  )
+  const messages = $derived(layout.items.flatMap((item) => (item.kind === 'message' ? [item.message] : [])))
   const litMessage = $derived(messages.find((one) => one.id === lit) ?? null)
 
   function step(by: number) {
     const at = messages.findIndex((one) => one.id === lit)
-    const next =
-      messages[Math.min(messages.length - 1, Math.max(0, (at === -1 ? messages.length : at) + by))]
+    const next = messages[Math.min(messages.length - 1, Math.max(0, (at === -1 ? messages.length : at) + by))]
     if (!next) return
     lit = next.id
     target = { key: next.id, where: 'centre' }

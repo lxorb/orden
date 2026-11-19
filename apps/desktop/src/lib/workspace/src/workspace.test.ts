@@ -144,12 +144,7 @@ const { Tab } = await import('../../documents/src/api')
 const { isDraft } = await import('../../documents/src/api')
 const { apartOf, readShortcut, readWebloc, writeShortcut } = await import('@orden/scan/shortcut')
 const { STARTS_RIGHT } = (await import('../../session/src/api')).panels
-const {
-  shown: pad,
-  toggleScratchpad,
-  closeScratchpad,
-  scratchFromDrawer,
-} = await import('../../scratchpad/src/api')
+const { shown: pad, toggleScratchpad, closeScratchpad, scratchFromDrawer } = await import('../../scratchpad/src/api')
 type Entry = import('./workspace.svelte').Entry
 
 const note = (path: string): Entry => ({
@@ -166,9 +161,7 @@ const folder = (path: string, children: Entry[]): Entry => ({
   children,
 })
 const shown = (entry: Entry | null): string[] =>
-  !entry
-    ? []
-    : entry.children.flatMap((child) => [child.path, ...shown(child.is_dir ? child : null)])
+  !entry ? [] : entry.children.flatMap((child) => [child.path, ...shown(child.is_dir ? child : null)])
 
 type Draft = import('../../session/src/api').Draft
 const draft = (path: string, more: Partial<Draft> = {}): Draft => ({
@@ -690,12 +683,7 @@ describe('selecting several rows', () => {
   test('shift takes everything shown between the anchor and the row', () => {
     workspace.select('/space/f')
     workspace.selectRange('/space/a.md')
-    expect(workspace.selection).toEqual([
-      '/space/f',
-      '/space/f/b.md',
-      '/space/f/c.md',
-      '/space/a.md',
-    ])
+    expect(workspace.selection).toEqual(['/space/f', '/space/f/b.md', '/space/f/c.md', '/space/a.md'])
     workspace.selectRange('/space/f/b.md')
     expect(workspace.selection).toEqual(['/space/f', '/space/f/b.md'])
   })
@@ -721,9 +709,7 @@ describe('selecting several rows', () => {
 
   test('moving several skips what a moving folder already takes along', async () => {
     const moved: string[] = []
-    const spy = vi
-      .spyOn(workspace, 'move')
-      .mockImplementation(async (from: string) => void moved.push(from))
+    const spy = vi.spyOn(workspace, 'move').mockImplementation(async (from: string) => void moved.push(from))
     await workspace.moveMany(['/space/f', '/space/f/b.md', '/space/a.md'], '/space/elsewhere')
     expect(moved).toEqual(['/space/f', '/space/a.md'])
     expect(workspace.selection).toEqual([])
@@ -732,12 +718,10 @@ describe('selecting several rows', () => {
 
   test('deleting several knows which are folders', async () => {
     const removed: [string, boolean][] = []
-    const spy = vi
-      .spyOn(workspace, 'bin')
-      .mockImplementation(async (path: string, isFolder: boolean) => {
-        removed.push([path, isFolder])
-        return null
-      })
+    const spy = vi.spyOn(workspace, 'bin').mockImplementation(async (path: string, isFolder: boolean) => {
+      removed.push([path, isFolder])
+      return null
+    })
     await workspace.removeMany(['/space/f', '/space/f/c.md', '/space/d.md'])
     expect(removed).toEqual([
       ['/space/f', true],
@@ -843,9 +827,7 @@ describe('nesting a note in a note', () => {
     await workspace.moveMany(['/space/d.md'], '/space/a')
     sent.length = 0
     await workspace.moveMany(['/space/a/d.md'], '/space')
-    expect(
-      sent.filter((one) => one.command === 'remove_empty_folder').map((one) => one.path),
-    ).toEqual(['/space/a'])
+    expect(sent.filter((one) => one.command === 'remove_empty_folder').map((one) => one.path)).toEqual(['/space/a'])
   })
 
   test('a drop that nests is one step, and undoing it takes the folder away', async () => {
@@ -880,10 +862,7 @@ describe('nesting a note in a note', () => {
   })
 
   test('a note dropped on a folder that is a folder is the plain move it always was', async () => {
-    workspace.tree = folder('/space', [
-      folder('/space/f', [note('/space/f/b.md')]),
-      note('/space/d.md'),
-    ])
+    workspace.tree = folder('/space', [folder('/space/f', [note('/space/f/b.md')]), note('/space/d.md')])
     await workspace.moveMany(['/space/d.md'], '/space/f')
     expect(shown(workspace.tree)).toEqual(['/space/f', '/space/f/b.md', '/space/f/d.md'])
   })
@@ -1048,9 +1027,7 @@ describe('whether the file list has anything to fold', () => {
       kind: 'folder',
       root: '/space',
     })
-    disk.tree = folder('/space', [
-      folder('/space/job', [note('/space/job/job.md'), note('/space/job/a.md')]),
-    ])
+    disk.tree = folder('/space', [folder('/space/job', [note('/space/job/job.md'), note('/space/job/a.md')])])
     await workspace.loadTree()
     expect(workspace.device.expanded).toEqual({ '/space/job': true })
     expect(workspace.unfolded).toBe(true)
@@ -1507,11 +1484,7 @@ describe('closing what is in a pane', () => {
     await workspace.closePane(paneId)
     expect(writes).toHaveBeenCalledTimes(1)
     await workspace.reopenClosed()
-    expect(workspace.tabs.map((tab) => tab.path).sort()).toEqual([
-      '/space/a.md',
-      '/space/b.md',
-      '/space/c.md',
-    ])
+    expect(workspace.tabs.map((tab) => tab.path).sort()).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
     writes.mockRestore()
   })
 
@@ -1536,10 +1509,7 @@ describe('closing what is in a pane', () => {
     if (!moving || !first) throw new Error('the split did not happen')
     workspace.dropTab(moving.id, { kind: 'pane', paneId: first.id, zone: 'middle' })
     expect(workspace.panes.count).toBe(1)
-    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual([
-      '/space/a.md',
-      '/space/b.md',
-    ])
+    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual(['/space/a.md', '/space/b.md'])
   })
 })
 
@@ -1549,11 +1519,7 @@ describe('a tab a session wrote as pinned', () => {
   test('comes back where it was, with the tab that was showing still showing', async () => {
     const pinned = Object.assign(draft('/space/b.md'), { pinned: true })
     await workspace.applyLayout(laidOut([draft('/space/a.md'), pinned, draft('/space/c.md')], 2))
-    expect(workspace.tabs.map((tab) => tab.path)).toEqual([
-      '/space/a.md',
-      '/space/b.md',
-      '/space/c.md',
-    ])
+    expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
     expect(workspace.active?.path).toBe('/space/c.md')
     const written = JSON.stringify(workspace.layout())
     expect(written).not.toContain('pinned')
@@ -1619,22 +1585,14 @@ describe('a tab dropped on another pane', () => {
     workspace.openBlank()
     workspace.dropTab(moving.id, { kind: 'strip', paneId: first.id, at: 1 })
     expect(workspace.panes.count).toBe(2)
-    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual([
-      '/space/a.md',
-      '/space/b.md',
-      '/space/c.md',
-    ])
+    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
   })
 
   test('lands last when it was dropped past the end of the strip', async () => {
     const { first, moving } = await twoPanes()
     workspace.openBlank()
     workspace.dropTab(moving.id, { kind: 'strip', paneId: first.id, at: 2 })
-    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual([
-      '/space/a.md',
-      '/space/c.md',
-      '/space/b.md',
-    ])
+    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual(['/space/a.md', '/space/c.md', '/space/b.md'])
   })
 
   test('is the tab showing where it lands, and gives the pane the focus', async () => {
@@ -1652,11 +1610,7 @@ describe('a tab dropped on another pane', () => {
     expect(workspace.panes.count).toBe(1)
     expect(workspace.panes.at(second.id)).toBeNull()
     expect(workspace.panes.focusedId).toBe(first.id)
-    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual([
-      '/space/a.md',
-      '/space/b.md',
-      '/space/c.md',
-    ])
+    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
   })
 
   test('moves along its own strip when it is dropped back into it', async () => {
@@ -1741,10 +1695,7 @@ describe('a note dragged out of the file list onto a pane', () => {
     if (!first) throw new Error('the split did not happen')
     await workspace.dropNotes(['/space/c.md'], { kind: 'strip', paneId: first.id, at: 0 })
     expect(workspace.panes.count).toBe(2)
-    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual([
-      '/space/c.md',
-      '/space/a.md',
-    ])
+    expect(workspace.tabsIn(first.id).map((tab) => tab.path)).toEqual(['/space/c.md', '/space/a.md'])
   })
 
   test('opens in a pane of its own against a side', async () => {
@@ -1920,10 +1871,7 @@ describe('a replacement across the space', () => {
   })
 
   test('takes a snapshot of every note it touches', async () => {
-    await workspace.replaceInNotes([
-      change('/space/a.md', '# a', '# alpha'),
-      change('/space/b.md', '# b', '# beta'),
-    ])
+    await workspace.replaceInNotes([change('/space/a.md', '# a', '# alpha'), change('/space/b.md', '# b', '# beta')])
     expect(sent.filter((one) => one.command === 'snapshot_note').map((one) => one.path)).toEqual([
       '/space/a.md',
       '/space/b.md',
@@ -1939,10 +1887,7 @@ describe('a replacement across the space', () => {
   })
 
   test('is one thing to undo, however many notes it touched', async () => {
-    await workspace.replaceInNotes([
-      change('/space/a.md', '# a', '# alpha'),
-      change('/space/b.md', '# b', '# beta'),
-    ])
+    await workspace.replaceInNotes([change('/space/a.md', '# a', '# alpha'), change('/space/b.md', '# b', '# beta')])
     expect(workspace.undone.stack).toHaveLength(1)
     expect(workspace.undoLabel).toBe('Undo the replacement')
   })
@@ -1955,10 +1900,7 @@ describe('a replacement across the space', () => {
 
   test('undoing gives every note its old words back', async () => {
     await workspace.open('/space/a.md')
-    await workspace.replaceInNotes([
-      change('/space/a.md', '# a', '# alpha'),
-      change('/space/b.md', '# b', '# beta'),
-    ])
+    await workspace.replaceInNotes([change('/space/a.md', '# a', '# alpha'), change('/space/b.md', '# b', '# beta')])
     sent.length = 0
     await workspace.undoFileAction()
     const written = sent.filter((one) => one.command === 'write_note')
@@ -1989,8 +1931,7 @@ describe('closing, which never asks anything', () => {
     return tab
   }
 
-  const written = () =>
-    sent.filter((one) => one.command === 'write_note').map((one) => [one.path, one.content])
+  const written = () => sent.filter((one) => one.command === 'write_note').map((one) => [one.path, one.content])
 
   test('writes what a tab was typing as it closes, and asks nothing', async () => {
     const tab = await dirty('/space/a.md')
@@ -2293,9 +2234,7 @@ describe('a new tab', () => {
     expect(saved).toBe('/space/Review.md')
     expect(workspace.active).toBe(tab)
     expect(tab.path).toBe('/space/Review.md')
-    expect(written().map((one) => [one.path, one.content])).toEqual([
-      ['/space/Review.md', '# Weekly review\n\nwords'],
-    ])
+    expect(written().map((one) => [one.path, one.content])).toEqual([['/space/Review.md', '# Weekly review\n\nwords']])
   })
 
   test('saved with nothing said, goes to the root of the space it was opened in', async () => {
@@ -2324,9 +2263,7 @@ describe('a new tab', () => {
       is_dir: true,
       modified: 0,
       created: 0,
-      children: [
-        { name: 'W.md', path: '/space/W.md', is_dir: false, modified: 0, created: 0, children: [] },
-      ],
+      children: [{ name: 'W.md', path: '/space/W.md', is_dir: false, modified: 0, created: 0, children: [] }],
     }
     const tab = blank('W')
     await workspace.save(tab)
@@ -2454,9 +2391,7 @@ describe('a new tab', () => {
     expect(wrote).not.toContain('Orden-Data=0123456789abcdef')
     const own = /Orden-Data=([0-9a-f]{16})/.exec(wrote)![1]!
     const copy = sent.findIndex((one) => one.command === 'web_copy')
-    const write = sent.findIndex(
-      (one) => one.command === 'write_note' && one.path === '/space/Apart.url',
-    )
+    const write = sent.findIndex((one) => one.command === 'write_note' && one.path === '/space/Apart.url')
     expect(copy).toBeGreaterThanOrEqual(0)
     expect(copy).toBeLessThan(write)
     expect(given.find((one) => one.command === 'web_copy')?.args).toEqual({
@@ -2470,8 +2405,7 @@ describe('a new tab', () => {
   })
 
   test('a tab with web data of its own saved over a Global note leaves it Global', async () => {
-    notes['/space/Global.url'] =
-      '[InternetShortcut]\r\nURL=https://example.org/\r\nTitle=Global\r\n'
+    notes['/space/Global.url'] = '[InternetShortcut]\r\nURL=https://example.org/\r\nTitle=Global\r\n'
     const tab = website()
     tab.address = 'https://example.org/b'
     tab.apart = '0123456789abcdef'
@@ -2728,11 +2662,7 @@ describe('reopening the tab that was closed last', () => {
     const middle = workspace.tabs[1]!
     workspace.close(middle.id)
     await workspace.reopenClosed()
-    expect(workspace.tabs.map((one) => one.path)).toEqual([
-      '/space/a.md',
-      '/space/b.md',
-      '/space/c.md',
-    ])
+    expect(workspace.tabs.map((one) => one.path)).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
   })
 
   test('brings back what was typed a moment before it closed', async () => {
@@ -2855,9 +2785,7 @@ describe('a canvas that comes back after a restart', () => {
 
   test('keeps a plane that was drawn on and never saved', async () => {
     const doc = '{ "nodes": [], "edges": [] }\n'
-    await workspace.applyLayout(
-      laidOut([draft('/space/plan.canvas', { kind: 'canvas', doc, dirty: true })]),
-    )
+    await workspace.applyLayout(laidOut([draft('/space/plan.canvas', { kind: 'canvas', doc, dirty: true })]))
     const tab = workspace.tabs.find((one) => one.path === '/space/plan.canvas')
     expect(tab?.note.text).toBe('{ "nodes": [], "edges": [] }\n')
     expect(tab?.note.dirty).toBe(true)
@@ -3166,9 +3094,7 @@ describe('a new file stepping aside from a name the folder already has', () => {
     workspace.tree = row('/space', [row(`/space/${taken}`)])
     sent.length = 0
     await workspace.createUniqueNote('YYYY', '/space')
-    expect(sent.find((one) => one.command === 'write_note')?.path).toBe(
-      `/space/${noteId('YYYY')} 2.md`,
-    )
+    expect(sent.find((one) => one.command === 'write_note')?.path).toBe(`/space/${noteId('YYYY')} 2.md`)
   })
 })
 
@@ -3214,9 +3140,7 @@ describe('following a link to a note the space has not got', () => {
     await workspace.followLink({ ...asked('spec.docx'), path: 'files/spec.docx' })
     await workspace.followLink({ ...asked('spec.docx'), path: 'files/spec.docx' }, 'aside')
     stop()
-    expect(
-      sent.filter((one) => one.command === 'write_note' || one.command === 'read_note'),
-    ).toEqual([])
+    expect(sent.filter((one) => one.command === 'write_note' || one.command === 'read_note')).toEqual([])
     expect(workspace.tabs).toEqual([])
     expect(shown).toEqual(['/space/files/spec.docx', '/space/files/spec.docx'])
   })
@@ -3331,10 +3255,7 @@ describe('two opens of one path', () => {
   test('the same for a website, which is the tab Emil was switching away from', async () => {
     notes['/space/site.url'] = '[InternetShortcut]\r\nURL=https://example.com/\r\n'
     const release = hold('/space/site.url')
-    const both = Promise.all([
-      workspace.openWeb('/space/site.url'),
-      workspace.openWeb('/space/site.url'),
-    ])
+    const both = Promise.all([workspace.openWeb('/space/site.url'), workspace.openWeb('/space/site.url')])
     release()
     await both
     expect(over('/space/site.url')).toHaveLength(1)
@@ -3342,10 +3263,7 @@ describe('two opens of one path', () => {
 
   test('and for a plane', async () => {
     const release = hold('/space/plan.canvas')
-    const both = Promise.all([
-      workspace.openCanvas('/space/plan.canvas'),
-      workspace.openCanvas('/space/plan.canvas'),
-    ])
+    const both = Promise.all([workspace.openCanvas('/space/plan.canvas'), workspace.openCanvas('/space/plan.canvas')])
     release()
     await both
     expect(over('/space/plan.canvas')).toHaveLength(1)
@@ -3480,11 +3398,7 @@ describe('an address typed into a website bar', () => {
       '<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0">\n<dict>\n' +
       `\t<key>Name</key>\n\t<string>Docs</string>\n\t<key>URL</key>\n\t<string>${url}</string>\n` +
       '</dict>\n</plist>\n'
-    const written = await aimedAt(
-      '/space/Docs.webloc',
-      plist('https://svelte.dev/'),
-      'https://a.example/?a=1&b=2',
-    )
+    const written = await aimedAt('/space/Docs.webloc', plist('https://svelte.dev/'), 'https://a.example/?a=1&b=2')
     expect(written).toBe(plist('https://a.example/?a=1&amp;b=2'))
     expect(readWebloc(written)).toBe('https://a.example/?a=1&b=2')
   })
@@ -3655,17 +3569,14 @@ describe('what a tab s own menu does to the strip', () => {
     expect(workspace.tabs.filter((tab) => tab.kind === 'chat')).toHaveLength(1)
   })
 
-  test.each(['settings', 'pass', 'time'] as const)(
-    'splitting the %s tab leaves it the only one',
-    (kind) => {
-      workspace.openUnsaved(kind, '', kind)
-      const one = workspace.active!
+  test.each(['settings', 'pass', 'time'] as const)('splitting the %s tab leaves it the only one', (kind) => {
+    workspace.openUnsaved(kind, '', kind)
+    const one = workspace.active!
 
-      workspace.split('row', one.id)
+    workspace.split('row', one.id)
 
-      expect(workspace.tabs.filter((tab) => tab.kind === kind)).toHaveLength(1)
-    },
-  )
+    expect(workspace.tabs.filter((tab) => tab.kind === kind)).toHaveLength(1)
+  })
 
   test('reopening a closed AI chat brings back its own thread beside the other', async () => {
     await workspace.open('/space/a.md')
@@ -3718,10 +3629,7 @@ describe('what a tab s own menu does to the strip', () => {
   })
 
   test('renames on the file s own row, with the file list out and its folder open', async () => {
-    workspace.tree = folder('/space', [
-      note('/space/a.md'),
-      folder('/space/f', [note('/space/f/b.md')]),
-    ])
+    workspace.tree = folder('/space', [note('/space/a.md'), folder('/space/f', [note('/space/f/b.md')])])
     workspace.closePanel('left')
     notes['/space/f/b.md'] = '# b'
     const id = await opened('/space/f/b.md')
@@ -3733,9 +3641,7 @@ describe('what a tab s own menu does to the strip', () => {
   })
 
   test('renames a folder s own note on the folder s row', async () => {
-    workspace.tree = folder('/space', [
-      folder('/space/f', [note('/space/f/f.md'), note('/space/f/c.md')]),
-    ])
+    workspace.tree = folder('/space', [folder('/space/f', [note('/space/f/f.md'), note('/space/f/c.md')])])
     notes['/space/f/f.md'] = '# f'
     const id = await opened('/space/f/f.md')
     ops.renameFromTab(id('/space/f/f.md'))
@@ -3866,12 +3772,7 @@ describe('a tab asked for with a modifier', () => {
     await workspace.open('/space/c.md')
     const reading = workspace.active
     workspace.openPage('https://example.org/', 'behind', asking ?? undefined)
-    expect(strip()).toEqual([
-      '/space/a.md',
-      'https://example.com/',
-      'https://example.org/',
-      '/space/c.md',
-    ])
+    expect(strip()).toEqual(['/space/a.md', 'https://example.com/', 'https://example.org/', '/space/c.md'])
     expect(workspace.active).toBe(reading)
   })
 
@@ -4034,8 +3935,7 @@ describe('an essential', () => {
   })
 
   const strip = () => workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.path)
-  const keep = (path: string) =>
-    workspace.bookmarks.toggle(workspace.bookmarks.forEntry({ path, is_dir: false }))
+  const keep = (path: string) => workspace.bookmarks.toggle(workspace.bookmarks.forEntry({ path, is_dir: false }))
 
   test('takes no place in the strip a tab is dragged to or reopened into', async () => {
     keep('/space/a.md')
@@ -4145,8 +4045,7 @@ describe('an essential of a web note with web data of its own', () => {
   const SITE = '/space/site.url'
   const OWN = '3f9a0c17e2b4d685'
   const strip = () => workspace.tabsIn(workspace.panes.focusedId).map((tab) => tab.path)
-  const keep = (path: string) =>
-    workspace.bookmarks.toggle(workspace.bookmarks.forEntry({ path, is_dir: false }))
+  const keep = (path: string) => workspace.bookmarks.toggle(workspace.bookmarks.forEntry({ path, is_dir: false }))
   const essentials = () => import('./essentials.svelte')
 
   beforeEach(() => {
@@ -4297,9 +4196,7 @@ describe('Settings', () => {
     settings.show('shortcuts')
     settings.show()
     settings.show('account')
-    expect(workspace.tabs.filter((one) => one.kind === 'settings').map((one) => one.id)).toEqual([
-      first,
-    ])
+    expect(workspace.tabs.filter((one) => one.kind === 'settings').map((one) => one.id)).toEqual([first])
     expect(workspace.active?.id).toBe(first)
     expect(settings.open).toBe(true)
   })
@@ -4369,11 +4266,7 @@ describe('a space and its AGENTS.md', () => {
     workspace.closed.stack = []
     notes[AGENTS] = '# Rules'
     notes[NESTED] = '# Nested'
-    workspace.tree = entry('/space', [
-      entry(AGENTS),
-      entry('/space/a.md'),
-      entry('/space/sub', [entry(NESTED)]),
-    ])
+    workspace.tree = entry('/space', [entry(AGENTS), entry('/space/a.md'), entry('/space/sub', [entry(NESTED)])])
     const { settings } = await import('../../settings/src/api')
     workspace.restored = true
     settings.open = false
@@ -4390,10 +4283,7 @@ describe('a space and its AGENTS.md', () => {
     if (!only) throw new Error('nothing opened')
     await workspace.dropNotes([AGENTS], { kind: 'pane', paneId: only.id, zone: 'right' })
     expect(workspace.panes.count).toBe(1)
-    expect(workspace.tabsIn(only.id).map((tab) => tab.path ?? tab.kind)).toEqual([
-      '/space/a.md',
-      'settings',
-    ])
+    expect(workspace.tabsIn(only.id).map((tab) => tab.path ?? tab.kind)).toEqual(['/space/a.md', 'settings'])
   })
 
   test('is on the disk still, and in the listing that says so', () => {
@@ -4481,10 +4371,7 @@ describe('a space and its AGENTS.md', () => {
   })
 
   test('between two folders it is the note it was', async () => {
-    workspace.tree = entry('/space', [
-      entry('/space/sub', [entry(NESTED)]),
-      entry('/space/other', []),
-    ])
+    workspace.tree = entry('/space', [entry('/space/sub', [entry(NESTED)]), entry('/space/other', [])])
     await workspace.moveMany([NESTED], '/space/other')
     expect(sent.filter((one) => one.command === 'rename_note')).toHaveLength(1)
   })
@@ -4559,8 +4446,7 @@ describe('the tab a pane comes back to', () => {
     return { id, pane: only.id }
   }
 
-  const shown = (pane: string) =>
-    workspace.tabs.find((tab) => tab.id === workspace.panes.at(pane)?.activeTabId)?.name
+  const shown = (pane: string) => workspace.tabs.find((tab) => tab.id === workspace.panes.at(pane)?.activeTabId)?.name
 
   test('a tab dragged out to split leaves the one used before it, not the first', async () => {
     const { id, pane } = await strip('b')
@@ -4625,11 +4511,9 @@ describe('a closed tab brought back while its pane goes', () => {
     const asked = given.length
     const back = workspace.reopenClosed()
     await vi.waitFor(() => {
-      expect(
-        given
-          .slice(asked)
-          .some((one) => one.command === 'read_note' && pathOf(one.args) === '/space/c.md'),
-      ).toBe(true)
+      expect(given.slice(asked).some((one) => one.command === 'read_note' && pathOf(one.args) === '/space/c.md')).toBe(
+        true,
+      )
     })
     await workspace.closePane()
     release()

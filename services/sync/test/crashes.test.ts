@@ -1,9 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import {
-  scriptFrames,
-  titleOf,
-  type CrashReport,
-} from '../src/sync-server-feedback/src/crash-shape'
+import { scriptFrames, titleOf, type CrashReport } from '../src/sync-server-feedback/src/crash-shape'
 import { sweepCrashes } from '../src/sync-server-feedback/src/crashes'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 
@@ -73,15 +69,11 @@ function read<T>(path: string, token: string | null = READER, body?: unknown) {
 }
 
 function stored(): { id: string; signature: string; kind: string; body: string | null }[] {
-  return env.db
-    .prepare('select id, signature, kind, body from crash_reports order by created_at, id')
-    .all() as never
+  return env.db.prepare('select id, signature, kind, body from crash_reports order by created_at, id').all() as never
 }
 
 function groups(): { signature: string; count: number; title: string }[] {
-  return env.db
-    .prepare('select signature, count, title from crash_groups order by signature')
-    .all() as never
+  return env.db.prepare('select signature, count, title from crash_groups order by signature').all() as never
 }
 
 describe('a crash report', () => {
@@ -95,9 +87,7 @@ describe('a crash report', () => {
     const [row] = stored()
     expect(row?.kind).toBe('freeze')
     expect(row?.signature).toMatch(/^[0-9a-f]{16}$/)
-    expect(groups()).toEqual([
-      { signature: row?.signature, count: 1, title: '41 s in web_open < web_place, killed' },
-    ])
+    expect(groups()).toEqual([{ signature: row?.signature, count: 1, title: '41 s in web_open < web_place, killed' }])
   })
 
   test('sent again is kept once and still answered', async () => {
@@ -123,9 +113,7 @@ describe('a crash report', () => {
     const body = stored()[0]?.body ?? ''
     expect(body).not.toContain('reader@example.com')
     expect(body).not.toContain('203.0.113.9')
-    expect(JSON.stringify(env.db.prepare('select * from limits').all())).not.toContain(
-      '203.0.113.9',
-    )
+    expect(JSON.stringify(env.db.prepare('select * from limits').all())).not.toContain('203.0.113.9')
   })
 
   test('drops what it does not know and cuts what is too long', async () => {
@@ -160,9 +148,7 @@ describe('a crash report', () => {
   ])('with %s is refused', async (_, change) => {
     const body = typeof change === 'string' ? undefined : freeze(change)
     const answer = await call<{ error?: string }>(env, '/v1/crashes', {
-      ...(body
-        ? { body }
-        : { raw: change as string, headers: { 'content-type': 'application/json' } }),
+      ...(body ? { body } : { raw: change as string, headers: { 'content-type': 'application/json' } }),
     })
 
     expect(answer.status).toBe(400)
@@ -203,9 +189,9 @@ describe('a crash report', () => {
 describe('grouping', () => {
   async function signatureOf(report: Record<string, unknown>): Promise<string> {
     expect((await send(report)).status).toBe(200)
-    const row = env.db
-      .prepare('select signature from crash_reports where id = ?')
-      .get(report.id as string) as { signature: string }
+    const row = env.db.prepare('select signature from crash_reports where id = ?').get(report.id as string) as {
+      signature: string
+    }
     return row.signature
   }
 
@@ -271,8 +257,7 @@ describe('grouping', () => {
   })
 
   test('groups engine troubles by process and reason', async () => {
-    const engine = (process: string, reason: string) =>
-      freeze({ kind: 'engine', threads: undefined, process, reason })
+    const engine = (process: string, reason: string) => freeze({ kind: 'engine', threads: undefined, process, reason })
 
     const one = await signatureOf(engine('renderer', 'unresponsive'))
     expect(await signatureOf(engine('renderer', 'unresponsive'))).toBe(one)
@@ -284,12 +269,8 @@ describe('the titles', () => {
   test('say what happened in a line', () => {
     const base = freeze() as unknown as CrashReport
     expect(titleOf(base)).toBe('41 s in web_open < web_place, killed')
-    expect(titleOf({ ...base, kind: 'panic', where: 'src/a.rs:1:2', summary: 'boom' })).toBe(
-      'boom at src/a.rs',
-    )
-    expect(titleOf({ ...base, kind: 'engine', process: 'renderer', reason: 'crashed' })).toBe(
-      'renderer crashed',
-    )
+    expect(titleOf({ ...base, kind: 'panic', where: 'src/a.rs:1:2', summary: 'boom' })).toBe('boom at src/a.rs')
+    expect(titleOf({ ...base, kind: 'engine', process: 'renderer', reason: 'crashed' })).toBe('renderer crashed')
   })
 
   test('read frames of both engines', () => {
@@ -337,9 +318,7 @@ describe('reading the reports', () => {
     expect(frozen?.versions).toEqual(['0.20.1', '0.20.2'])
     expect(listed.json.groups).toHaveLength(2)
 
-    const reports = await read<{ reports: { id: string }[] }>(
-      `/v1/crashes?group=${frozen?.signature ?? ''}`,
-    )
+    const reports = await read<{ reports: { id: string }[] }>(`/v1/crashes?group=${frozen?.signature ?? ''}`)
     expect(reports.json.reports).toHaveLength(2)
 
     const whole = await read<{ report: CrashReport; group: { count: number } }>(
@@ -364,15 +343,9 @@ describe('reading the reports', () => {
     const listed = await read<{ groups: { issue: unknown }[] }>('/v1/crashes/groups')
     expect(listed.json.groups[0]?.issue).toEqual({ number: 9, url })
 
-    expect(
-      (await read(`/v1/crashes/groups/${signature}/issue`, null, { number: 9, url })).status,
-    ).toBe(404)
-    expect(
-      (await read('/v1/crashes/groups/0000000000000000/issue', READER, { number: 9, url })).status,
-    ).toBe(404)
-    expect(
-      (await read(`/v1/crashes/groups/${signature}/issue`, READER, { number: 'x', url })).status,
-    ).toBe(400)
+    expect((await read(`/v1/crashes/groups/${signature}/issue`, null, { number: 9, url })).status).toBe(404)
+    expect((await read('/v1/crashes/groups/0000000000000000/issue', READER, { number: 9, url })).status).toBe(404)
+    expect((await read(`/v1/crashes/groups/${signature}/issue`, READER, { number: 'x', url })).status).toBe(400)
   })
 })
 

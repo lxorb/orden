@@ -22,9 +22,7 @@ vi.mock('./store', async (importOriginal) => {
         if (crate.held) await crate.held.session.close()
         let mem = crate.mems.get(id) as InstanceType<typeof MemoryStore> | undefined
         if (!mem) {
-          const device = Array.from(new TextEncoder().encode(id), (byte) => byte.toString(16)).join(
-            '',
-          )
+          const device = Array.from(new TextEncoder().encode(id), (byte) => byte.toString(16)).join('')
           mem = new MemoryStore(made ?? device.padEnd(32, '0'))
           crate.mems.set(id, mem)
         }

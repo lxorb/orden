@@ -18,9 +18,7 @@
   const file = $derived(page && tab.path !== null ? readWebFile(tab.path, tab.doc) : null)
 
   const found = $derived(
-    page && !wearsChosen(tab.path)
-      ? siteMark(page.icon, page.url ?? tab.address ?? file?.url, file?.icon)
-      : null,
+    page && !wearsChosen(tab.path) ? siteMark(page.icon, page.url ?? tab.address ?? file?.url, file?.icon) : null,
   )
 
   const worn = $derived(agentMarks.on[tab.id] ?? null)
@@ -28,9 +26,7 @@
   const front = $derived(workspace.showing(tab.paneId)?.id === tab.id)
   $effect(() => {
     if (!opened || !front) return
-    agentMarks.opened = Object.fromEntries(
-      Object.entries(agentMarks.opened).filter(([id]) => id !== tab.id),
-    )
+    agentMarks.opened = Object.fromEntries(Object.entries(agentMarks.opened).filter(([id]) => id !== tab.id))
   })
 
   let broken = $state(false)
@@ -82,9 +78,7 @@
   />
 {:else}
   <span class="mark quiet" aria-hidden="true">
-    <svg class="graph" viewBox="0 0 13 13"
-      ><path d={traits.glyph === 'ask' ? ASK_MARK : GRAPH_MARK} /></svg
-    >
+    <svg class="graph" viewBox="0 0 13 13"><path d={traits.glyph === 'ask' ? ASK_MARK : GRAPH_MARK} /></svg>
   </span>
 {/if}
 

@@ -3,19 +3,12 @@ import { isRecord, isString, stored } from './stored'
 export const without = <T>(record: Record<string, T>, key: string): Record<string, T> =>
   Object.fromEntries(Object.entries(record).filter(([one]) => one !== key))
 
-export function filledIn<T>(
-  record: Record<string, T>,
-  from: Record<string, T>,
-): Record<string, T> | null {
+export function filledIn<T>(record: Record<string, T>, from: Record<string, T>): Record<string, T> | null {
   const missing = Object.entries(from).filter(([key]) => record[key] === undefined)
   return missing.length ? { ...record, ...Object.fromEntries(missing) } : null
 }
 
-export function withOrWithout<T>(
-  record: Record<string, T>,
-  key: string,
-  value: T | null,
-): Record<string, T> {
+export function withOrWithout<T>(record: Record<string, T>, key: string, value: T | null): Record<string, T> {
   return value === null ? without(record, key) : { ...record, [key]: value }
 }
 
@@ -23,10 +16,7 @@ export interface Folded {
   account: string | null
 }
 
-export function readSpaces<T>(
-  key: string,
-  own: (one: Record<string, unknown>) => T,
-): Record<string, T & Folded> {
+export function readSpaces<T>(key: string, own: (one: Record<string, unknown>) => T): Record<string, T & Folded> {
   const saved = stored(key)
   if (!isRecord(saved)) return {}
 

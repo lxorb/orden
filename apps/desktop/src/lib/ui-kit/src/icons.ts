@@ -19,17 +19,12 @@ export async function loadIcons(): Promise<Record<string, IconNode>> {
   return found
 }
 
-export function shapeFor(
-  library: Record<string, IconNode>,
-  chosen: string | null,
-): IconNode | null {
+export function shapeFor(library: Record<string, IconNode>, chosen: string | null): IconNode | null {
   return chosen && Object.hasOwn(library, chosen) ? (library[chosen] ?? null) : null
 }
 
 export type WrittenIcon =
-  | { kind: 'lucide'; name: string }
-  | { kind: 'emoji'; text: string }
-  | { kind: 'set'; set: string; name: string }
+  { kind: 'lucide'; name: string } | { kind: 'emoji'; text: string } | { kind: 'set'; set: string; name: string }
 
 const EMOJI = /^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|\p{Regional_Indicator})+$/u
 

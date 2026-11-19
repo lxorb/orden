@@ -46,19 +46,11 @@
 </script>
 
 {#if is === true}
-  <svg
-    class="tick"
-    viewBox="0 0 16 16"
-    role="img"
-    aria-label="Default"
-    in:fade={{ duration: dur(120) }}
-  >
+  <svg class="tick" viewBox="0 0 16 16" role="img" aria-label="Default" in:fade={{ duration: dur(120) }}>
     <path d="M3 8.5l3.2 3.2L13 5" />
   </svg>
 {:else if is === false}
-  <button class="orden-chip" in:fade={{ duration: dur(120) }} onclick={() => void make()}>
-    Make default
-  </button>
+  <button class="orden-chip" in:fade={{ duration: dur(120) }} onclick={() => void make()}> Make default </button>
 {/if}
 
 <style>

@@ -1,18 +1,5 @@
-export {
-  links,
-  type Outgoing,
-  readsWords,
-  type Reference,
-  type Retargeting,
-  spaceLinks,
-} from './links.svelte'
-export {
-  notePicture,
-  pictureBeside,
-  picturePath,
-  picturesOf,
-  picturesWrittenOut,
-} from './note-images'
+export { links, type Outgoing, readsWords, type Reference, type Retargeting, spaceLinks } from './links.svelte'
+export { notePicture, pictureBeside, picturePath, picturesOf, picturesWrittenOut } from './note-images'
 export { elsewhere } from './marks-elsewhere.svelte'
 export { serveLinks } from './services'
 export { pressQueryRow, queryRowsHtml } from './query-door'

@@ -1,14 +1,11 @@
 import type { Row, Value } from './types'
 
-export const idText = (prefix: string, number: number): string =>
-  prefix ? `${prefix}-${number}` : String(number)
+export const idText = (prefix: string, number: number): string => (prefix ? `${prefix}-${number}` : String(number))
 
 export function idNumber(value: Value | undefined, prefix: string): number | null {
   if (typeof value === 'number') return !prefix && Number.isInteger(value) ? value : null
   if (typeof value !== 'string') return null
-  const pattern = prefix
-    ? new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+)$`, 'i')
-    : /^(\d+)$/
+  const pattern = prefix ? new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}-(\\d+)$`, 'i') : /^(\d+)$/
   const found = pattern.exec(value.trim())
   return found?.[1] ? Number(found[1]) : null
 }

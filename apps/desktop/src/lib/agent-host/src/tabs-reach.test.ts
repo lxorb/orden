@@ -85,8 +85,7 @@ const caller = () =>
     mode: 'unsupervised',
   })
 
-const run = (args: Record<string, unknown>) =>
-  workspaceTabs({ verb: 'workspace_tabs', caller: caller(), args })
+const run = (args: Record<string, unknown>) => workspaceTabs({ verb: 'workspace_tabs', caller: caller(), args })
 
 describe('an agent given space A only', () => {
   test('list shows its own space’s tabs alone', async () => {

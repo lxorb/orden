@@ -1,11 +1,5 @@
 import { frontMatterValue } from '@orden/markdown/front-matter'
-import {
-  isCanvasTarget,
-  isChatTarget,
-  isPagesTarget,
-  isTermTarget,
-  isWebTarget,
-} from '@orden/markdown/links'
+import { isCanvasTarget, isChatTarget, isPagesTarget, isTermTarget, isWebTarget } from '@orden/markdown/links'
 import { SvelteMap } from 'svelte/reactivity'
 import { saysNothing } from '@orden/scan/note'
 import { ICON_COLOUR_KEY, ICON_KEY } from '../../ui-kit/src/api'

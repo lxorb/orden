@@ -23,8 +23,7 @@ const shortcutKeys = Facet.define<KeyOverrides, KeyOverrides>({
 
 const chosen = new Compartment()
 
-export const shortcutExtensions = (overrides: KeyOverrides = {}): Extension =>
-  chosen.of(shortcutKeys.of(overrides))
+export const shortcutExtensions = (overrides: KeyOverrides = {}): Extension => chosen.of(shortcutKeys.of(overrides))
 
 export const shortcutEffect = (overrides: KeyOverrides): StateEffect<unknown> =>
   chosen.reconfigure(shortcutKeys.of(overrides))

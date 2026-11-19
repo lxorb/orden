@@ -44,11 +44,7 @@ export function wordsHash(text: string): string {
 }
 
 const box = (value: unknown): value is Kept['box'] =>
-  isRecord(value) &&
-  isNumber(value.left) &&
-  isNumber(value.top) &&
-  isNumber(value.width) &&
-  isNumber(value.height)
+  isRecord(value) && isNumber(value.left) && isNumber(value.top) && isNumber(value.width) && isNumber(value.height)
 
 const level = (value: unknown): value is Level =>
   isRecord(value) && isString(value.tag) && isString(value.className) && isString(value.style)

@@ -24,8 +24,7 @@ const B = '/space/B'
 
 let list: ReturnType<typeof mount> | null = null
 
-const order = () =>
-  [...document.querySelectorAll<HTMLElement>('.row[data-path]')].map((row) => row.dataset.path)
+const order = () => [...document.querySelectorAll<HTMLElement>('.row[data-path]')].map((row) => row.dataset.path)
 
 afterEach(() => {
   if (list) void unmount(list)

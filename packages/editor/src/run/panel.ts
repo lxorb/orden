@@ -1,10 +1,4 @@
-import {
-  type Transaction,
-  type EditorState,
-  type Range,
-  StateEffect,
-  StateField,
-} from '@codemirror/state'
+import { type Transaction, type EditorState, type Range, StateEffect, StateField } from '@codemirror/state'
 import { Decoration, type DecorationSet, EditorView } from '@codemirror/view'
 import { opensFence } from '../fence'
 import { pressedByKey } from '../press'
@@ -63,10 +57,7 @@ function applyEffect(panels: readonly RunPanel[], effect: StateEffect<unknown>):
   if (effect.is(openRun)) {
     const { run, from, to, startedAt } = effect.value
     const others = panels.filter((panel) => panel.from !== from)
-    return [
-      ...others,
-      { run, from, to, status: 'running', lines: [], startedAt, elapsed: 0, truncated: false },
-    ]
+    return [...others, { run, from, to, status: 'running', lines: [], startedAt, elapsed: 0, truncated: false }]
   }
 
   if (effect.is(addRunLines)) {
@@ -102,9 +93,7 @@ export const runPanels = StateField.define<readonly RunPanel[]>({
     let panels = value
 
     if (transaction.docChanged) {
-      panels = mapPanels(panels, transaction).filter((panel) =>
-        stillFenced(transaction.state, panel),
-      )
+      panels = mapPanels(panels, transaction).filter((panel) => stillFenced(transaction.state, panel))
     }
 
     for (const effect of transaction.effects) {
@@ -115,8 +104,7 @@ export const runPanels = StateField.define<readonly RunPanel[]>({
     return panels
   },
 
-  provide: (field) =>
-    EditorView.decorations.compute([field], (state) => runDecorations(state, state.field(field))),
+  provide: (field) => EditorView.decorations.compute([field], (state) => runDecorations(state, state.field(field))),
 })
 
 function runDecorations(state: EditorState, panels: readonly RunPanel[]): DecorationSet {
@@ -124,9 +112,7 @@ function runDecorations(state: EditorState, panels: readonly RunPanel[]): Decora
 
   for (const panel of panels) {
     const line = state.doc.lineAt(Math.min(panel.to, state.doc.length))
-    ranges.push(
-      Decoration.widget({ widget: new RunPanelWidget(panel), block: true, side: 1 }).range(line.to),
-    )
+    ranges.push(Decoration.widget({ widget: new RunPanelWidget(panel), block: true, side: 1 }).range(line.to))
   }
 
   return Decoration.set(ranges, true)
@@ -175,9 +161,7 @@ class RunPanelWidget extends OrdenWidget {
     bar.append(time)
 
     const tick = () => {
-      time.textContent = formatElapsed(
-        panel.status === 'running' ? Date.now() - panel.startedAt : panel.elapsed,
-      )
+      time.textContent = formatElapsed(panel.status === 'running' ? Date.now() - panel.startedAt : panel.elapsed)
     }
     tick()
 

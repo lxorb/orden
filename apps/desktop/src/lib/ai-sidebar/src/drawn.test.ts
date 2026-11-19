@@ -7,9 +7,7 @@ import { answerHtml, inLineGroups, LINES_A_GROUP, withCodeBars } from './drawn'
 describe('withCodeBars', () => {
   it('puts a bar with the language and a copy button over a fenced block', () => {
     const html = answerHtml('```ts\nlet a = 1\n```', { copy: 'Copy code' })
-    expect(html).toContain(
-      '<div class="code" style="--lines: 1"><div class="code-bar"><span>ts</span>',
-    )
+    expect(html).toContain('<div class="code" style="--lines: 1"><div class="code-bar"><span>ts</span>')
     expect(html).toContain('aria-label="Copy code"')
     expect(html).toMatch(/<pre><code class="language-ts">[\s\S]*let[\s\S]*<\/code><\/pre><\/div>/)
   })
@@ -29,8 +27,7 @@ describe('withCodeBars', () => {
   })
 
   it('tells a finished block its lines, so it can be laid out only once it is in sight', () => {
-    const lines = (n: number) =>
-      Array.from({ length: n }, (_, at) => `line ${String(at)}`).join('\n')
+    const lines = (n: number) => Array.from({ length: n }, (_, at) => `line ${String(at)}`).join('\n')
     const html = answerHtml(`\`\`\`\n${lines(3)}\n\`\`\`\n\n\`\`\`js\n${lines(40)}\n\`\`\``, {
       copy: 'Copy code',
     })
@@ -67,11 +64,7 @@ describe('an answer, drawn as a note is', () => {
     ['a heading', '## Part', /<h2>Part<\/h2>/],
     ['a list', '- one\n- two', /<ul>\n<li>one<\/li>\n<li>two<\/li>/],
     ['a numbered list', '1. one\n2. two', /<ol>\n<li>one<\/li>/],
-    [
-      'a task list',
-      '- [x] done\n- [ ] open',
-      /<li class="task-list-item is-done"><input[^>]*checked/,
-    ],
+    ['a task list', '- [x] done\n- [ ] open', /<li class="task-list-item is-done"><input[^>]*checked/],
     ['a table', '| a | b |\n|---|---|\n| 1 | 2 |', /<table>[\s\S]*<td>1<\/td>/],
     ['a quote', '> quoted', /<blockquote>\n<p>quoted<\/p>/],
     ['a link', '[it](https://example.com)', /<a href="https:\/\/example.com">it<\/a>/],
@@ -89,9 +82,7 @@ describe('an answer, drawn as a note is', () => {
     for (const one of markdown) {
       arrived += spelling.push(one)
       const html = answerHtml(arrived, { live: true })
-      expect(html.replace(/<code[\s\S]*?<\/code>|data-tex="[^"]*"/g, '')).not.toMatch(
-        /\$\$|\\\[|\\\(/,
-      )
+      expect(html.replace(/<code[\s\S]*?<\/code>|data-tex="[^"]*"/g, '')).not.toMatch(/\$\$|\\\[|\\\(/)
     }
     arrived += spelling.end()
     expect(answerHtml(arrived, { live: true })).toMatch(drawn)
@@ -169,21 +160,16 @@ describe('an answer, drawn as a note is', () => {
 })
 
 describe('a long block of code while it arrives', () => {
-  const lines = (count: number) =>
-    Array.from({ length: count }, (_, at) => `line ${at} & more`).join('\n')
+  const lines = (count: number) => Array.from({ length: count }, (_, at) => `line ${at} & more`).join('\n')
 
   test('is drawn in groups of lines, so a line more touches only the last group', () => {
     const html = answerHtml(`\`\`\`\n${lines(LINES_A_GROUP * 2 + 3)}`, { live: true })
     expect(html.match(/<span class="code-lines">/g)).toHaveLength(3)
-    expect(html.replace(/<\/?span[^>]*>/g, '')).toBe(
-      answerHtml(`\`\`\`\n${lines(LINES_A_GROUP * 2 + 3)}\n\`\`\``),
-    )
+    expect(html.replace(/<\/?span[^>]*>/g, '')).toBe(answerHtml(`\`\`\`\n${lines(LINES_A_GROUP * 2 + 3)}\n\`\`\``))
   })
 
   test('is one piece while it is short, and once it has arrived', () => {
-    expect(answerHtml(`\`\`\`\n${lines(LINES_A_GROUP - 1)}`, { live: true })).not.toContain(
-      'code-lines',
-    )
+    expect(answerHtml(`\`\`\`\n${lines(LINES_A_GROUP - 1)}`, { live: true })).not.toContain('code-lines')
     expect(answerHtml(`\`\`\`\n${lines(LINES_A_GROUP * 3)}\n\`\`\``)).not.toContain('code-lines')
   })
 
@@ -200,9 +186,7 @@ describe('a long block of code while it arrives', () => {
 
 describe('subscript and superscript in an answer (#2088)', () => {
   test('come out as sub and sup whichever way the model writes them', () => {
-    const tagged = answerHtml(
-      'MAD ≈ P<sub>diast</sub> + ⅓ × (P<sub>syst</sub> − P<sub>diast</sub>)',
-    )
+    const tagged = answerHtml('MAD ≈ P<sub>diast</sub> + ⅓ × (P<sub>syst</sub> − P<sub>diast</sub>)')
     expect(tagged).toContain('P<sub>diast</sub> + ⅓ × (P<sub>syst</sub> − P<sub>diast</sub>)')
     const marked = answerHtml('P~diast~ and x^2^')
     expect(marked).toContain('P<sub>diast</sub> and x<sup>2</sup>')

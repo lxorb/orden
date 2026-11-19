@@ -1,11 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import * as Y from 'yjs'
 import { MAX_NOTE_BYTES } from '../src/sync-server-engine/src/notes'
-import {
-  MOST_DOCUMENT_BYTES,
-  RoomState,
-  TOO_LARGE_IN_A_ROOM,
-} from '../src/sync-server-engine/src/rooms/state'
+import { MOST_DOCUMENT_BYTES, RoomState, TOO_LARGE_IN_A_ROOM } from '../src/sync-server-engine/src/rooms/state'
 import { TEXT } from '@orden/rooms'
 
 class Kept {
@@ -91,9 +87,7 @@ describe('how large a room’s document may get', () => {
 describe('the pieces a room is stored in', () => {
   test('go back together in the order they were written, not in the order they sort', async () => {
     const doc = new Y.Doc()
-    doc
-      .getText(TEXT)
-      .insert(0, 'a note long enough to be written down in a dozen pieces '.repeat(40))
+    doc.getText(TEXT).insert(0, 'a note long enough to be written down in a dozen pieces '.repeat(40))
     const whole = Y.encodeStateAsUpdateV2(doc)
 
     const kept = new Kept()

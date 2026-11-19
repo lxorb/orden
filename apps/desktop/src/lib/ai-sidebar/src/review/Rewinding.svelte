@@ -14,9 +14,7 @@
   <Rewind {sheet} />
 {:else if redo}
   <div class="redo" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
-    <button class="orden-chip is-quiet" onclick={() => void review.putBack(thread, panel)}
-      >Redo</button
-    >
+    <button class="orden-chip is-quiet" onclick={() => void review.putBack(thread, panel)}>Redo</button>
   </div>
 {/if}
 

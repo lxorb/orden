@@ -206,9 +206,7 @@ describe('the form', () => {
 
   test('offers no Send where the note would land in a space shared to be read', () => {
     const base = readBase('views:\n  - type: form\n')
-    const kit = Object.create(kitOf(base, NOTES), { adds: { value: false } }) as ReturnType<
-      typeof kitOf
-    >
+    const kit = Object.create(kitOf(base, NOTES), { adds: { value: false } }) as ReturnType<typeof kitOf>
     const html = render(FormLayout, { props: { kit } }).body
     expect(html).toMatch(/<button type="submit"[^>]*disabled/)
   })
@@ -222,9 +220,7 @@ test('the cards are a card per row with its other properties under it', () => {
 
 test('the board keeps a column for every option, in the options’ order, empty ones too', () => {
   const html = render(BoardLayout, { props: { kit: kitOf(BUGS, NOTES) } }).body
-  const heads = [
-    ...html.matchAll(/class="tag[^"]*"[^>]*>\s*<span class="name[^"]*">([^<]+)</g),
-  ].map(([, name]) => name)
+  const heads = [...html.matchAll(/class="tag[^"]*"[^>]*>\s*<span class="name[^"]*">([^<]+)</g)].map(([, name]) => name)
   expect(heads).toEqual(['To do', 'Doing', 'Done'])
   expect(html).toContain('Sync')
 })
@@ -237,9 +233,7 @@ test('the timeline is a bar per dated row beside its name', () => {
 })
 
 test('the chart is a bar per group', () => {
-  const base = readBase(
-    'views:\n  - type: chart\n    groupBy: { property: note.status, direction: ASC }\n',
-  )
+  const base = readBase('views:\n  - type: chart\n    groupBy: { property: note.status, direction: ASC }\n')
   const html = render(ChartLayout, { props: { kit: kitOf(base, NOTES) } }).body
   expect(html.match(/<rect/g)).toHaveLength(2)
 })

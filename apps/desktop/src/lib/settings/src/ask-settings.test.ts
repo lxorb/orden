@@ -51,9 +51,7 @@ function world() {
       set: (on) => (held.locked = on),
     },
   ]
-  const panes: Pane[] = [
-    { id: 'general', label: 'General', groups: [{ title: 'Writing', fields }] },
-  ]
+  const panes: Pane[] = [{ id: 'general', label: 'General', groups: [{ title: 'Writing', fields }] }]
   const places = [{ section: 'account' as const, label: 'Email', text: ['me@example.com'] }]
   const all = offers(panes, places, (section) => (section === 'account' ? 'Account' : ''))
   return { held, all }
@@ -64,9 +62,7 @@ describe('the settings an agent is told about', () => {
     const { all } = world()
     const told = brief(all)
     expect(told).toContain('s1 | General > Writing > Check spelling | switch | On | true, false')
-    expect(told).toContain(
-      's2 | General > Writing > Theme | choice | Light | light (Light), dark (Dark)',
-    )
+    expect(told).toContain('s2 | General > Writing > Theme | choice | Light | light (Light), dark (Dark)')
     expect(told).toContain('s3 | General > Writing > Text size | slider | 16px | 12 to 24 by 2')
     expect(told).toContain('s4 | General > Writing > Device name | where only')
     expect(told).toContain('s5 | General > Writing > Held by the school | where only')

@@ -6,14 +6,7 @@ import { readChart } from '@orden/markdown/chart'
 import { captionIn, languageIn } from '@orden/markdown/code'
 import { blockIdsBlanked, embedKind, type Wikilink } from '@orden/markdown/links'
 import type { Token, Tokens } from 'marked'
-import {
-  type Compaction,
-  COMPACTIONS,
-  DEFAULT_COMPACTION,
-  isCompaction,
-  MARKS,
-  type Marks,
-} from './choices'
+import { type Compaction, COMPACTIONS, DEFAULT_COMPACTION, isCompaction, MARKS, type Marks } from './choices'
 import { fit, fold, ruleOf, SPACE, width } from './firmware'
 
 useEmoji(emoji)
@@ -175,13 +168,11 @@ const textOf = (token: Token): string => field(token, 'text')
 
 const rawOf = (token: Token): string => field(token, 'raw')
 
-const childrenOf = (token: Token): Token[] =>
-  'tokens' in token && Array.isArray(token.tokens) ? token.tokens : []
+const childrenOf = (token: Token): Token[] => ('tokens' in token && Array.isArray(token.tokens) ? token.tokens : [])
 
 const HTML_TAG = /<[^>]*>/g
 
-const flowing = (text: string, flow: boolean): string =>
-  text.replace(/[ \t]*\n[ \t]*/gu, flow ? ' ' : '\n')
+const flowing = (text: string, flow: boolean): string => text.replace(/[ \t]*\n[ \t]*/gu, flow ? ' ' : '\n')
 
 const AROUND: Readonly<Record<string, [string, keyof Marks]>> = {
   strong: ['**', 'bold'],
@@ -305,13 +296,10 @@ function tableLines(
   align: readonly Align[],
   inner: number,
 ): string[] {
-  const columns = rows
-    .map((row) => row.length)
-    .reduce((high, one) => Math.max(high, one), Math.max(head.length, 1))
+  const columns = rows.map((row) => row.length).reduce((high, one) => Math.max(high, one), Math.max(head.length, 1))
   const gap = width(GUTTER)
   const at = (row: readonly string[], column: number) => row[column] ?? ''
-  const spread = (row: readonly string[]) =>
-    Array.from({ length: columns }, (_one, column) => at(row, column))
+  const spread = (row: readonly string[]) => Array.from({ length: columns }, (_one, column) => at(row, column))
 
   const natural = Array.from({ length: columns }, (_one, column) =>
     rows
@@ -372,8 +360,7 @@ class Sheet {
     nest: Nest,
     options: { glued?: boolean; level?: number; under?: boolean } = {},
   ): void {
-    const lead =
-      QUOTE.repeat(nest.quote) + STEP.repeat(this.stepsAt(nest.depth, nest.listed === true))
+    const lead = QUOTE.repeat(nest.quote) + STEP.repeat(this.stepsAt(nest.depth, nest.listed === true))
     let hang = ''
     let above = this.lines.at(-1)?.from ?? 0
     const first = this.where.at(Math.max(from, above))
@@ -419,8 +406,7 @@ class Sheet {
   }
 
   addAll(texts: readonly string[], from: number, nest: Nest): void {
-    for (const [at, text] of texts.entries())
-      this.add(text, from, nest, at === 0 ? {} : { glued: true })
+    for (const [at, text] of texts.entries()) this.add(text, from, nest, at === 0 ? {} : { glued: true })
   }
 
   get width(): number {
@@ -511,11 +497,7 @@ function block(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
     }
 
     case 'text':
-      sheet.add(
-        kids.length ? inlineWords(kids, sheet.marks, sheet.flow) : textOf(token),
-        where.take(raw),
-        nest,
-      )
+      sheet.add(kids.length ? inlineWords(kids, sheet.marks, sheet.flow) : textOf(token), where.take(raw), nest)
       break
 
     case 'html':
@@ -552,8 +534,7 @@ function fence(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
   const marked = sheet.marks.fence
   if (marked) sheet.add(`${FENCE}${language}`, from, nest, { glued: caption !== '' })
-  for (const [at, line] of lines.entries())
-    sheet.add(line, rowAt(at), nest, { glued: marked || at > 0 })
+  for (const [at, line] of lines.entries()) sheet.add(line, rowAt(at), nest, { glued: marked || at > 0 })
   if (marked) {
     const closed = !indented && raw.trimEnd().split('\n').length >= lines.length + 2
     sheet.add(FENCE, rowAt(closed ? lines.length : lines.length - 1), nest, { glued: true })
@@ -622,9 +603,7 @@ function list(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
 
     const lead = kids[0]
     const leads = lead !== undefined && isLeading(lead)
-    const words = leads
-      ? inlineWords(childrenOf(lead).length ? childrenOf(lead) : [lead], sheet.marks, sheet.flow)
-      : ''
+    const words = leads ? inlineWords(childrenOf(lead).length ? childrenOf(lead) : [lead], sheet.marks, sheet.flow) : ''
     sheet.add(`${marker} ${words}`.trimEnd(), from, {
       depth: nest.depth,
       quote: nest.quote,

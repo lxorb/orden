@@ -11,9 +11,7 @@ export function folderOptions(folders: readonly Folder[]): FolderOption[] {
   const known = new Set(folders.map((one) => one.id))
   const walk = (parent: string | null, depth: number, seen: Set<string>) => {
     const children = folders
-      .filter((one) =>
-        parent === null ? one.parent === null || !known.has(one.parent) : one.parent === parent,
-      )
+      .filter((one) => (parent === null ? one.parent === null || !known.has(one.parent) : one.parent === parent))
       .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
     for (const folder of children) {
       if (seen.has(folder.id)) continue

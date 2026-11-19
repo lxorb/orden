@@ -3,8 +3,7 @@
   import { overlays } from '../../ui-kit/src/api'
   import { toneColour } from './chips'
 
-  const { tone, ontone }: { tone: string | undefined; ontone: (tone: string | null) => void } =
-    $props()
+  const { tone, ontone }: { tone: string | undefined; ontone: (tone: string | null) => void } = $props()
 
   let open = $state(false)
   let host = $state<HTMLElement>()

@@ -91,8 +91,7 @@ describe('wikilinks turned into real links', () => {
   })
 
   test('a link in a quoted front matter value keeps the quotes it sits in apart', () => {
-    const source =
-      '---\na: "[[Plan|say \\"hi\\"]]"\nb: \'[[Plan|it\'\'s]]\'\nc: [[Plan|it\'s "x"]]\n---\n'
+    const source = '---\na: "[[Plan|say \\"hi\\"]]"\nb: \'[[Plan|it\'\'s]]\'\nc: [[Plan|it\'s "x"]]\n---\n'
     expect(toMarkdown(source, { link: () => 'Plan.md' })).toBe(
       "---\na: \"[say \\\"hi\\\"](Plan.md)\"\nb: '[it''s](Plan.md)'\nc: '[it''s \"x\"](Plan.md)'\n---\n",
     )
@@ -146,9 +145,7 @@ describe('pictures pointed somewhere else', () => {
   })
 
   test('a remote picture is left where it is when the caller says so', () => {
-    expect(toMarkdown(CORPUS, { picture: beside })).toContain(
-      '![Remote picture](https://orden.so/remote.jpg)',
-    )
+    expect(toMarkdown(CORPUS, { picture: beside })).toContain('![Remote picture](https://orden.so/remote.jpg)')
   })
 
   test('an angled source keeps its angles', () => {
@@ -183,8 +180,7 @@ describe('both rewrites at once', () => {
     })
 
     expect(text).toBe(
-      'See [Another note](Another%20note.md) and ![A](assets/one.png) and ' +
-        '[again](Another%20note.md).\n',
+      'See [Another note](Another%20note.md) and ![A](assets/one.png) and ' + '[again](Another%20note.md).\n',
     )
   })
 
@@ -224,8 +220,6 @@ describe('a picture’s source moved', () => {
   })
 
   test('and not one written as inline code', () => {
-    expect(toMarkdown('see `![a](c.png)` and ![a](c.png)', moved)).toBe(
-      'see `![a](c.png)` and ![a](assets/c.png)',
-    )
+    expect(toMarkdown('see `![a](c.png)` and ![a](c.png)', moved)).toBe('see `![a](c.png)` and ![a](assets/c.png)')
   })
 })

@@ -10,8 +10,7 @@ import { repeatAt } from './repeat'
 import { type Clock, clockOf, dayAt, timeAt, whenAt } from './when'
 import { bare, type Word, wordsOf } from './words'
 
-export type ChipKind =
-  'when' | 'repeat' | 'priority' | 'tag' | 'assignee' | 'remind' | 'deadline' | 'duration'
+export type ChipKind = 'when' | 'repeat' | 'priority' | 'tag' | 'assignee' | 'remind' | 'deadline' | 'duration'
 
 export interface Chip {
   kind: ChipKind
@@ -72,8 +71,7 @@ function remindAt(words: readonly Word[], at: number, g: Grammar, clock: Clock):
 
   const before = /^!(?:(\d+)d)?(?:(\d+)h)?(?:(\d+)(?:m|min))?$/.exec(first.key)
   if (before && (before[1] ?? before[2] ?? before[3]) !== undefined) {
-    const minutes =
-      Number(before[1] ?? 0) * 1440 + Number(before[2] ?? 0) * 60 + Number(before[3] ?? 0)
+    const minutes = Number(before[1] ?? 0) * 1440 + Number(before[2] ?? 0) * 60 + Number(before[3] ?? 0)
     return {
       kind: 'remind',
       at,
@@ -82,10 +80,7 @@ function remindAt(words: readonly Word[], at: number, g: Grammar, clock: Clock):
     }
   }
 
-  const shown = [
-    { ...first, raw: first.raw.slice(1), key: first.key.slice(1) },
-    ...words.slice(at + 1),
-  ]
+  const shown = [{ ...first, raw: first.raw.slice(1), key: first.key.slice(1) }, ...words.slice(at + 1)]
   const when = whenAt(shown, 0, g, clock, true) ?? timeAt(shown, 0, g, true)
   if (!when) return null
   const end = at + when.end
@@ -131,8 +126,7 @@ function durationAt(words: readonly Word[], at: number, g: Grammar): Found | nul
     const key = words[index]?.key ?? ''
     const glued = /^(?:(\d+(?:[.,]\d+)?)h)?(?:(\d+)(?:m|min)?)?$/.exec(key)
     if (glued && key !== '' && (glued[1] !== undefined || /m(?:in)?$/.test(key))) {
-      minutes +=
-        Math.round(Number((glued[1] ?? '0').replace(',', '.')) * 60) + Number(glued[2] ?? 0)
+      minutes += Math.round(Number((glued[1] ?? '0').replace(',', '.')) * 60) + Number(glued[2] ?? 0)
       read = true
       index++
       continue
@@ -179,8 +173,7 @@ function wordAt(words: readonly Word[], at: number): Found | null {
 }
 
 function foundAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): Found | null {
-  const marked =
-    wordAt(words, at) ?? remindAt(words, at, g, clock) ?? deadlineAt(words, at, g, clock)
+  const marked = wordAt(words, at) ?? remindAt(words, at, g, clock) ?? deadlineAt(words, at, g, clock)
   if (marked) return marked
 
   const repeat = repeatAt(words, at, g, clock)
@@ -245,9 +238,7 @@ const MANY = new Set<string>(['tag', 'remind'])
 function standing(found: readonly Found[]): Found[] {
   const last = new Map<string, Found>()
   for (const one of found) for (const slot of slotsOf(one)) last.set(slot, one)
-  return found.filter(
-    (one) => MANY.has(one.kind) || slotsOf(one).some((slot) => last.get(slot) === one),
-  )
+  return found.filter((one) => MANY.has(one.kind) || slotsOf(one).some((slot) => last.get(slot) === one))
 }
 
 export function parseQuickAdd(

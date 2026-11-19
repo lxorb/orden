@@ -1,14 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  Contacts,
-  hovering,
-  leanOf,
-  penKind,
-  penProfile,
-  penShape,
-  Stylus,
-  type Said,
-} from './contacts'
+import { Contacts, hovering, leanOf, penKind, penProfile, penShape, Stylus, type Said } from './contacts'
 
 describe('what kind of pointer an event really is', () => {
   const desktop = { penSeen: true, touch: false }
@@ -43,9 +34,10 @@ describe('what kind of pointer an event really is', () => {
   })
 
   test('is a mouse on glass that has never had a pen on it', () => {
-    expect(
-      penKind({ pointerType: 'mouse', button: 2, buttons: 2 }, { penSeen: false, touch: true }),
-    ).toEqual({ kind: 'mouse', eraser: false })
+    expect(penKind({ pointerType: 'mouse', button: 2, buttons: 2 }, { penSeen: false, touch: true })).toEqual({
+      kind: 'mouse',
+      eraser: false,
+    })
   })
 
   test('is a pen with nothing held when nothing is held', () => {
@@ -301,16 +293,12 @@ describe('how a pen says it leans', () => {
   })
 
   test('is spherical when the altitude is, which is what Safari reports', () => {
-    expect(
-      leanOf({ pressure: 0.5, tiltX: 0, tiltY: 0, altitudeAngle: 0.7, azimuthAngle: 1.2 }),
-    ).toBe('spherical')
+    expect(leanOf({ pressure: 0.5, tiltX: 0, tiltY: 0, altitudeAngle: 0.7, azimuthAngle: 1.2 })).toBe('spherical')
   })
 
   test('is nothing for a pen standing straight up, in either language', () => {
     expect(leanOf({ pressure: 0.5, tiltX: 0, tiltY: 0 })).toBe('none')
-    expect(
-      leanOf({ pressure: 0.5, tiltX: 0, tiltY: 0, altitudeAngle: Math.PI / 2, azimuthAngle: 0 }),
-    ).toBe('none')
+    expect(leanOf({ pressure: 0.5, tiltX: 0, tiltY: 0, altitudeAngle: Math.PI / 2, azimuthAngle: 0 })).toBe('none')
   })
 })
 

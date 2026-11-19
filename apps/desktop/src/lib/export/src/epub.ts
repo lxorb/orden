@@ -111,8 +111,7 @@ type Piece =
   | { kind: 'open'; name: string; attributes: string; empty: boolean; at: number }
   | { kind: 'close'; name: string }
 
-const OPEN =
-  /<([A-Za-z][A-Za-z0-9:._-]*)((?:\s+[^\s/>=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>/]*))?)*)\s*(\/?)>/y
+const OPEN = /<([A-Za-z][A-Za-z0-9:._-]*)((?:\s+[^\s/>=]+(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s"'>/]*))?)*)\s*(\/?)>/y
 const CLOSE = /<\/([A-Za-z][A-Za-z0-9:._-]*)\s*>/y
 
 function piecesOf(html: string): Piece[] {
@@ -394,9 +393,7 @@ function imagesOf(pictures: readonly Picture[]): Image[] {
   const taken = new Set<string>()
 
   return pictures.map((picture, index) => {
-    const wanted = /\.[A-Za-z0-9]+$/.test(picture.name)
-      ? picture.name
-      : `${picture.name}.${suffixFor(picture.mime)}`
+    const wanted = /\.[A-Za-z0-9]+$/.test(picture.name) ? picture.name : `${picture.name}.${suffixFor(picture.mime)}`
     const name = claimName(wanted, taken)
 
     return {
@@ -459,10 +456,7 @@ const CONTAINER = `<?xml version="1.0" encoding="utf-8"?>
 function navDocument(options: EpubOptions, parts: readonly Part[]): string {
   const items = parts.map((part) => {
     const marks = part.marks
-      .map(
-        (mark) =>
-          `<li><a href="text/${part.file}#${mark.id}">${escaped(mark.title, false)}</a></li>`,
-      )
+      .map((mark) => `<li><a href="text/${part.file}#${mark.id}">${escaped(mark.title, false)}</a></li>`)
       .join('\n')
     const nested = marks ? `\n<ol>\n${marks}\n</ol>\n` : ''
 
@@ -487,9 +481,7 @@ function ncxDocument(options: EpubOptions, parts: readonly Part[]): string {
 
   const points = parts.map((part) => {
     const own = ++order
-    const marks = part.marks.map((mark) =>
-      point(++order, mark.title, `text/${part.file}#${mark.id}`, ''),
-    )
+    const marks = part.marks.map((mark) => point(++order, mark.title, `text/${part.file}#${mark.id}`, ''))
 
     return point(own, part.title, `text/${part.file}`, marks.join(''))
   })
@@ -542,11 +534,7 @@ interface ManifestItem {
   svg?: boolean
 }
 
-function packageDocument(
-  options: EpubOptions,
-  items: readonly ManifestItem[],
-  spine: readonly string[],
-): string {
+function packageDocument(options: EpubOptions, items: readonly ManifestItem[], spine: readonly string[]): string {
   const manifest = items
     .map((item) => {
       const properties = [item.nav ? 'nav' : '', item.svg ? 'svg' : ''].filter(Boolean).join(' ')
@@ -556,9 +544,7 @@ function packageDocument(
     })
     .join('\n')
 
-  const creator = options.author
-    ? `\n<dc:creator>${escaped(options.author, false)}</dc:creator>`
-    : ''
+  const creator = options.author ? `\n<dc:creator>${escaped(options.author, false)}</dc:creator>` : ''
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <package version="3.0" unique-identifier="pub-id" xmlns="http://www.idpf.org/2007/opf">
@@ -585,9 +571,7 @@ export async function toEpub(options: EpubOptions): Promise<Uint8Array> {
   const { body, footnotes } = withoutFootnotes(toXhtml(withRewrittenSources(options.body, images)))
   const split = sectionsOf(body, level)
   const last = split.length - 1
-  const sections = withCrossLinks(
-    split.map((section, index) => (index === last ? section + footnotes : section)),
-  )
+  const sections = withCrossLinks(split.map((section, index) => (index === last ? section + footnotes : section)))
 
   const parts = sections.map((section, index) => partOf(section, index, level, options.title))
 
@@ -620,12 +604,7 @@ export async function toEpub(options: EpubOptions): Promise<Uint8Array> {
     { path: `OEBPS/${STYLESHEET}`, body: forReading(options.css) },
     ...sections.map((section, index) => ({
       path: `OEBPS/text/${sectionFile(index)}`,
-      body: xhtmlDocument(
-        parts[index]?.title ?? options.title,
-        options.lang,
-        `../${STYLESHEET}`,
-        section,
-      ),
+      body: xhtmlDocument(parts[index]?.title ?? options.title, options.lang, `../${STYLESHEET}`, section),
     })),
     ...images.map((image) => ({ path: `OEBPS/${image.path}`, body: image.bytes })),
   ]

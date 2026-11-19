@@ -20,11 +20,7 @@ describe("an Essential's letter", () => {
   test('is never one Alt is already, nor a pane key (#1033)', () => {
     const taken = takenUnderAlt(['Alt-d', 'Mod-Alt-n', 'Alt-Shift-e', null], 'win')
     expect([...taken].sort()).toEqual([...PANE_LETTERS, 'D'].sort())
-    const given = lettersFor(
-      [essential('Daily'), essential('Help'), essential('Journal')],
-      {},
-      taken,
-    )
+    const given = lettersFor([essential('Daily'), essential('Help'), essential('Journal')], {}, taken)
     expect(given).toEqual({
       '/space/Daily.md': 'A',
       '/space/Help.md': 'E',

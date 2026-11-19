@@ -2,12 +2,7 @@ import { sha256, invoke } from '../../platform/src/api'
 import { type HoldCheck, spend } from '@orden/sync-core'
 import type { Mirror } from './mirror'
 
-export async function mirrorHolds(
-  mirror: Mirror,
-  relative: string,
-  path: string,
-  how: HoldCheck,
-): Promise<boolean> {
+export async function mirrorHolds(mirror: Mirror, relative: string, path: string, how: HoldCheck): Promise<boolean> {
   const note = mirror.notes[relative]
   if (note) {
     if (mirror.offered[relative] !== undefined) return false

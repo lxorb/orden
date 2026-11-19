@@ -30,11 +30,7 @@ export function howFor(ask: TabAsk, plain: OpenHow = {}): OpenHow {
   return ask === 'behind' ? { activate: false, beside: true } : { beside: true }
 }
 
-export function besideAt(
-  strip: readonly { id: string }[],
-  opener: string,
-  previous: string | null,
-): number | null {
+export function besideAt(strip: readonly { id: string }[], opener: string, previous: string | null): number | null {
   const from = strip.findIndex((one) => one.id === opener)
   if (from < 0) return null
 

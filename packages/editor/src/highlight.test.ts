@@ -1,10 +1,5 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import {
-  EditorSelection,
-  EditorState,
-  type StateCommand,
-  type Transaction,
-} from '@codemirror/state'
+import { EditorSelection, EditorState, type StateCommand, type Transaction } from '@codemirror/state'
 import { highlightTone } from '@orden/markdown/highlights'
 import { describe, expect, test } from 'vitest'
 import { highlightSelection, setHighlightColour, toggleHighlight } from './highlight'

@@ -7,11 +7,7 @@
   import { explorerPrefs } from './prefs.svelte'
   import { type ExplorerView, watchHeard } from './view.svelte'
 
-  const {
-    view,
-    folder,
-    lit = null,
-  }: { view: ExplorerView; folder: string; lit?: string | null } = $props()
+  const { view, folder, lit = null }: { view: ExplorerView; folder: string; lit?: string | null } = $props()
 
   let entries = $state.raw<Entry[]>([])
   let listed = $state<string | null>(null)
@@ -52,9 +48,7 @@
     }
   })
 
-  const rows = $derived(
-    ordered(entries, sortShown(explorerPrefs.sort, false), explorerPrefs.hidden),
-  )
+  const rows = $derived(ordered(entries, sortShown(explorerPrefs.sort, false), explorerPrefs.hidden))
 
   const SPARE = 8
   let scrollTop = $state(0)

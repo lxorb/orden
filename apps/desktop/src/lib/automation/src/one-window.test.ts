@@ -121,9 +121,7 @@ describe('with two windows open', () => {
       await vi.advanceTimersByTimeAsync(24_900)
       expect(world.results).toEqual([])
       await vi.advanceTimersByTimeAsync(200)
-      expect(world.results).toEqual([
-        { id: 7, result: expect.objectContaining({ ok: false, code: 'timeout' }) },
-      ])
+      expect(world.results).toEqual([{ id: 7, result: expect.objectContaining({ ok: false, code: 'timeout' }) }])
     })
   })
 
@@ -187,10 +185,7 @@ describe('the audit of every event a window hears', () => {
   test('what a window acts on is never sent to every window', () => {
     const all = [crate, crates].flatMap((dir) => filesUnder(dir, /\.rs$/))
     const bare = (file: string) =>
-      readFileSync(
-        all.find((path) => path.split(/[\\/]/).at(-1) === file) ?? join(crate, file),
-        'utf8',
-      )
+      readFileSync(all.find((path) => path.split(/[\\/]/).at(-1) === file) ?? join(crate, file), 'utf8')
     expect(bare('uris.rs')).not.toMatch(/\.emit\(OPENED/)
     expect(bare('reminders.rs')).not.toMatch(/\.emit\(PRESSED/)
     expect(bare('search.rs')).not.toMatch(/\.emit\(\s*HITS/)

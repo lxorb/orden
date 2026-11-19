@@ -15,8 +15,7 @@ describe('keepPictures', () => {
       stored.push({ name, bytes: [...bytes] })
       return Promise.resolve(`../assets/${name}`)
     }
-    const markdown =
-      'Text\n\n![a dot](media/rId20.png)\n\n<img src="media/rId21.PNG" width="20" />\n'
+    const markdown = 'Text\n\n![a dot](media/rId20.png)\n\n<img src="media/rId21.PNG" width="20" />\n'
 
     const kept = await keepPictures(
       markdown,
@@ -76,9 +75,7 @@ describe('relinked', () => {
   test('only the whole name, and not words that mention it', () => {
     expect(relinked('![](media/x.png2)', 'media/x.png', 'y.png')).toBe('![](media/x.png2)')
     expect(relinked('see media/x.png here', 'media/x.png', 'y.png')).toBe('see media/x.png here')
-    expect(relinked('![](other/media/x.png)', 'media/x.png', 'y.png')).toBe(
-      '![](other/media/x.png)',
-    )
+    expect(relinked('![](other/media/x.png)', 'media/x.png', 'y.png')).toBe('![](other/media/x.png)')
   })
 
   test('a replacement with a dollar sign is taken as it is', () => {

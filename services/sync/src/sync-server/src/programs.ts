@@ -15,9 +15,6 @@ const WRITES = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
 export function programMayReach(method: string, path: string, readOnly: boolean): boolean {
   return OPEN_TO_PROGRAMS.some(
-    (one) =>
-      one.method === method &&
-      one.path.test(path) &&
-      !(readOnly && WRITES.has(method) && !one.reads),
+    (one) => one.method === method && one.path.test(path) && !(readOnly && WRITES.has(method) && !one.reads),
   )
 }

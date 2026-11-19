@@ -1,14 +1,6 @@
 import { mayStop } from '@orden/contracts'
 import { startup } from '../../launch/src/api'
-import {
-  anythingRuns,
-  GIVE_UP,
-  settleUp,
-  stillWriting,
-  trayKeeper,
-  writeOwed,
-  written,
-} from '../../parting/src/api'
+import { anythingRuns, GIVE_UP, settleUp, stillWriting, trayKeeper, writeOwed, written } from '../../parting/src/api'
 import { currentWindow, internal, isDesktop, isMobile, waited } from '../../platform/src/api'
 import { installStaged, ready, settledForInstaller } from '../../updates/src/api'
 import { agentMarks } from './agent-marks.svelte'
@@ -41,10 +33,7 @@ export async function guardClose(quitting: () => Promise<Quitting>): Promise<voi
       void settledForInstaller(owed)
     })
     await own.listen('orden://quit-ask', () => void (async () => (await quitting()).quitAsked())())
-    await own.listen(
-      'orden://quit-hold',
-      () => void (async () => (await quitting()).holdToQuit())(),
-    )
+    await own.listen('orden://quit-hold', () => void (async () => (await quitting()).holdToQuit())())
     void startup.turn('right').then(async () => (await quitting()).answerQuitting(own.label))
   }
 }

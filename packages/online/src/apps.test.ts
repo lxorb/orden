@@ -68,9 +68,7 @@ describe('an application’s socket', () => {
     expect(hostFrameOf('{"t":"host"}')).toEqual({ t: 'host' })
     expect(hostFrameOf('{"t":"state","state":"melting"}')).toBeNull()
     expect(viewerFrameOf('{"t":"run","what":"format c:"}')).toBeNull()
-    expect(
-      viewerFrameOf(JSON.stringify({ t: 'signal', data: 'x'.repeat(MOST_SIGNAL + 1) })),
-    ).toBeNull()
+    expect(viewerFrameOf(JSON.stringify({ t: 'signal', data: 'x'.repeat(MOST_SIGNAL + 1) }))).toBeNull()
     expect(viewerFrameOf('{"t":"hello","view":{"width":0,"height":1,"dpr":1,"hz":60}}')).toBeNull()
     expect(viewerFrameOf('not json')).toBeNull()
   })
@@ -175,12 +173,7 @@ describe('a host’s catalogue', () => {
     expect(fitCatalogue(apps, whole)).toEqual(apps)
     const fitted = fitCatalogue(apps, whole - 2500)
     expect(fitted.map((one) => one.id)).toEqual(apps.map((one) => one.id))
-    expect(fitted.map((one) => 'icon' in one)).toEqual([
-      ...Array(7).fill(true),
-      false,
-      false,
-      false,
-    ])
+    expect(fitted.map((one) => 'icon' in one)).toEqual([...Array(7).fill(true), false, false, false])
     expect(JSON.stringify({ apps: fitted }).length).toBeLessThanOrEqual(whole - 2500)
   })
 
@@ -226,11 +219,7 @@ describe('the holder’s input', () => {
 
 describe('what the host says on the picture’s channel', () => {
   it('reads the host’s pong, its encoder dropped where it is no name', () => {
-    expect(
-      fromPictureOf(
-        '{"t":"pong","at":5,"began":1000,"now":1250.5,"encoder":"libvpx","hardware":false}',
-      ),
-    ).toEqual({
+    expect(fromPictureOf('{"t":"pong","at":5,"began":1000,"now":1250.5,"encoder":"libvpx","hardware":false}')).toEqual({
       t: 'pong',
       at: 5,
       began: 1000,
@@ -267,9 +256,7 @@ describe('what the host says on the picture’s channel', () => {
       t: 'clipboard',
       text: 'copied',
     })
-    expect(
-      fromPictureOf(JSON.stringify({ t: 'clipboard', text: 'x'.repeat(MOST_CLIPBOARD + 1) })),
-    ).toBeNull()
+    expect(fromPictureOf(JSON.stringify({ t: 'clipboard', text: 'x'.repeat(MOST_CLIPBOARD + 1) }))).toBeNull()
     expect(fromPictureOf('{"t":"clipboard","text":3}')).toBeNull()
   })
 
@@ -287,9 +274,7 @@ describe('what the host says on the picture’s channel', () => {
   it('drops what does not check: another picture, a spot off it, too large, not text', () => {
     const png = 'data:image/png;base64,iVBORw0KGgo='
     expect(
-      fromPictureOf(
-        JSON.stringify({ t: 'pointer', png: 'data:image/svg+xml;base64,AA==', x: 0, y: 0 }),
-      ),
+      fromPictureOf(JSON.stringify({ t: 'pointer', png: 'data:image/svg+xml;base64,AA==', x: 0, y: 0 })),
     ).toBeNull()
     expect(fromPictureOf(JSON.stringify({ t: 'pointer', png, x: -1, y: 0 }))).toBeNull()
     expect(fromPictureOf(JSON.stringify({ t: 'pointer', png, x: 1.5, y: 0 }))).toBeNull()
@@ -318,9 +303,7 @@ describe('the servers a viewer is handed', () => {
       { urls: ['stun:stun.cloudflare.com:3478'] },
       { urls: ['turn:turn.example:3478?transport=udp'], username: 'u', credential: 'c' },
     ])
-    expect(iceServersOf({ urls: 'turns:turn.example:443' })).toEqual([
-      { urls: ['turns:turn.example:443'] },
-    ])
+    expect(iceServersOf({ urls: 'turns:turn.example:443' })).toEqual([{ urls: ['turns:turn.example:443'] }])
     expect(iceServersOf(null)).toEqual([])
   })
 })

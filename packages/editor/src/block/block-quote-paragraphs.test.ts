@@ -45,10 +45,7 @@ describe('the block menu on a paragraph of two lines inside a quote', () => {
   })
 
   test('Move up on a paragraph under a callout title with body words keeps the title first', () => {
-    const { view, at } = clickedIn(
-      '> [!note] Tips\n> Body text\n>\n> Second para\n\nafter',
-      'Second',
-    )
+    const { view, at } = clickedIn('> [!note] Tips\n> Body text\n>\n> Second para\n\nafter', 'Second')
     moveBlocks(view, at, -1)
     expect(view.state.doc.toString().split('\n')[0]).toBe('> [!note] Tips')
   })

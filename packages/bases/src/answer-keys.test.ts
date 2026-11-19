@@ -21,9 +21,7 @@ describe('a property whose name reads like an expression', () => {
   })
 
   test('groups by its values', () => {
-    const base = readBase(
-      'views:\n  - type: table\n    name: T\n    groupBy:\n      property: note.e-mail\n',
-    )
+    const base = readBase('views:\n  - type: table\n    name: T\n    groupBy:\n      property: note.e-mail\n')
     const rows = [noteRow('a.md', 'e-mail: x'), noteRow('b.md', 'e-mail: y')]
     expect(answer(base, 'T', rows, context).groups.map((one) => one.key)).toEqual(['x', 'y'])
   })
@@ -40,9 +38,7 @@ describe('a view that reads this', () => {
     const base = readBase('filters: status == this.status\nviews:\n  - type: table\n    name: T\n')
     const rows = [noteRow('a.md', 'status: open'), noteRow('b.md', 'status: closed')]
     const paths = (host: string) =>
-      answer(base, 'T', rows, { ...context, this: noteRow('host.md', host) }).groups[0]?.rows.map(
-        (one) => one.path,
-      )
+      answer(base, 'T', rows, { ...context, this: noteRow('host.md', host) }).groups[0]?.rows.map((one) => one.path)
     expect(paths('status: open')).toEqual(['a.md'])
     expect(paths('status: closed')).toEqual(['b.md'])
   })

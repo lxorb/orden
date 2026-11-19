@@ -1,7 +1,6 @@
 import type { Base, Filter, View } from './types'
 
-export type BuiltinName =
-  'todos' | 'inbox' | 'today' | 'upcoming' | 'logbook' | 'label' | 'assigned'
+export type BuiltinName = 'todos' | 'inbox' | 'today' | 'upcoming' | 'logbook' | 'label' | 'assigned'
 
 export interface BuiltinParams {
   inboxes?: { space: string; path: string }[]
@@ -29,8 +28,7 @@ export const SMART_SORT: View['sort'] = [
   { property: 'task.time', direction: 'ASC' },
 ]
 
-const inNote = (space: string, path: string) =>
-  `file.space == ${quote(space)} && file.path == ${quote(path)}`
+const inNote = (space: string, path: string) => `file.space == ${quote(space)} && file.path == ${quote(path)}`
 
 function base(
   view: Omit<View, 'orden' | 'options' | 'order' | 'summaries'> & Partial<View>,
@@ -126,10 +124,7 @@ export function builtinView(name: BuiltinName, params: BuiltinParams = {}): Base
       return base({
         type: 'list',
         name: `#${params.tag ?? ''}`,
-        filters:
-          params.space === undefined
-            ? tagged
-            : { and: [`file.space == ${quote(params.space)}`, tagged] },
+        filters: params.space === undefined ? tagged : { and: [`file.space == ${quote(params.space)}`, tagged] },
         sort: [],
         groupBy: { property: 'file.path', direction: 'ASC' },
         orden: { rows: 'both', kept: {} },

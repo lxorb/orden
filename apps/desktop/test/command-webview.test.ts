@@ -6,9 +6,7 @@ import { walk } from './files'
 
 const CRATE = fileURLToPath(new URL('../src-tauri', import.meta.url))
 
-const RUST = ['src', 'crates'].flatMap((dir) =>
-  walk(join(CRATE, dir), (path) => path.endsWith('.rs')),
-)
+const RUST = ['src', 'crates'].flatMap((dir) => walk(join(CRATE, dir), (path) => path.endsWith('.rs')))
 
 function commandSignatures(text: string): string[] {
   const out: string[] = []

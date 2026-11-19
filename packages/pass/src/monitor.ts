@@ -69,10 +69,7 @@ function reusedOf(logins: readonly LoginItem[]): Map<string, string[]> {
   return reused
 }
 
-export function report(
-  items: readonly Item[],
-  compromised: ReadonlySet<string> = new Set(),
-): Report {
+export function report(items: readonly Item[], compromised: ReadonlySet<string> = new Set()): Report {
   const active = activeLogins(items)
   const watched = active.filter((item) => item.monitored)
   return {

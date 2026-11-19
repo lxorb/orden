@@ -29,15 +29,7 @@ import { standsAlone, tableWrite } from '../table/navigation'
 import { TableWidget } from '../table/widget'
 import { dragging } from './dragging'
 import { noReveal, overlaps } from './reveal'
-import {
-  BaseWidget,
-  ChartWidget,
-  DiagramWidget,
-  labelOf,
-  MathWidget,
-  QueryWidget,
-  RENDERED_LANGUAGES,
-} from './render'
+import { BaseWidget, ChartWidget, DiagramWidget, labelOf, MathWidget, QueryWidget, RENDERED_LANGUAGES } from './render'
 import { headings, TocWidget } from './toc'
 import { WebEmbedWidget } from './web'
 
@@ -111,13 +103,7 @@ interface Scanned {
   toc: boolean
 }
 
-function scan(
-  state: EditorState,
-  reveals: boolean,
-  region: Span,
-  equations: Equations,
-  out: Scanned,
-) {
+function scan(state: EditorState, reveals: boolean, region: Span, equations: Equations, out: Scanned) {
   const { ranges, spans } = out
   const doc = state.doc
   const kept = keptCover(state)
@@ -214,10 +200,7 @@ function scan(
               const span = found(line.from, line.to)
               if (!span.revealed) {
                 ranges.push(
-                  Decoration.replace({ widget: embedWidget(state, embed), block: true }).range(
-                    span.from,
-                    span.to,
-                  ),
+                  Decoration.replace({ widget: embedWidget(state, embed), block: true }).range(span.from, span.to),
                 )
               }
               continue
@@ -232,10 +215,7 @@ function scan(
             if (span.revealed) continue
 
             ranges.push(
-              Decoration.replace({ widget: new TocWidget(headings(state)), block: true }).range(
-                span.from,
-                span.to,
-              ),
+              Decoration.replace({ widget: new TocWidget(headings(state)), block: true }).range(span.from, span.to),
             )
           }
           return false
@@ -251,12 +231,7 @@ function scan(
           const span = found(node.from, node.to)
           if (span.revealed) return false
 
-          ranges.push(
-            Decoration.replace({ widget: new WebEmbedWidget(card), block: true }).range(
-              span.from,
-              span.to,
-            ),
-          )
+          ranges.push(Decoration.replace({ widget: new WebEmbedWidget(card), block: true }).range(span.from, span.to))
           return false
         }
 
@@ -268,12 +243,7 @@ function scan(
 
           ranges.push(
             Decoration.replace({
-              widget: new TableWidget(
-                doc.sliceString(span.from, span.to),
-                span.from,
-                span.to,
-                !state.readOnly,
-              ),
+              widget: new TableWidget(doc.sliceString(span.from, span.to), span.from, span.to, !state.readOnly),
               block: true,
             }).range(span.from, span.to),
           )
@@ -361,10 +331,7 @@ function settle(transaction: Transaction, region: Span): Span {
     const old = runIn(oldParent, back.mapPos(fresh.from, -1), back.mapPos(fresh.to, 1))
     let nextFrom = Math.min(fresh.from, changes.mapPos(old.from, -1))
     let nextTo = Math.max(fresh.to, changes.mapPos(old.to, 1))
-    if (
-      topLevel &&
-      (nextTo + 1 >= newTree.length || back.mapPos(nextTo, 1) + 1 >= oldTree.length)
-    ) {
+    if (topLevel && (nextTo + 1 >= newTree.length || back.mapPos(nextTo, 1) + 1 >= oldTree.length)) {
       nextTo = newEnd
     }
     nextFrom = Math.max(0, Math.min(nextFrom, newTree.length, changes.mapPos(oldTree.length, -1)))
@@ -431,9 +398,7 @@ function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean)
   if (!transaction.docChanged && oldTree !== newTree && oldEnd === newTree.length) return null
 
   const wanted: Span[] = []
-  changes.iterChangedRanges((_fromA, _toA, fromB, toB) =>
-    wanted.push(withNeighbourLines(state.doc, fromB, toB)),
-  )
+  changes.iterChangedRanges((_fromA, _toA, fromB, toB) => wanted.push(withNeighbourLines(state.doc, fromB, toB)))
   if (oldEnd !== newTree.length) {
     const from = Math.min(oldEnd, newTree.length)
     wanted.push({ from, to: state.doc.length })
@@ -478,8 +443,7 @@ function rebuiltAround(value: Blocks, transaction: Transaction, chosen: boolean)
   }
 }
 
-export const buildBlockDecorations = (state: EditorState): DecorationSet =>
-  buildBlocks(state).decorations
+export const buildBlockDecorations = (state: EditorState): DecorationSet => buildBlocks(state).decorations
 
 const ANSWERED = new Set(['query', 'tasks'])
 
@@ -551,8 +515,7 @@ function onlyProse(transaction: Transaction, value: Blocks): boolean {
     if (PROSE.test(added) && (removed === '' || PROSE.test(removed))) {
       ordinary = removed === '' || insideALine(after, fromB)
     } else {
-      ordinary =
-        PUNCTUATION.test(written) && !BLOCK_MARKS.test(written) && insideALine(after, fromB)
+      ordinary = PUNCTUATION.test(written) && !BLOCK_MARKS.test(written) && insideALine(after, fromB)
     }
     ordinary =
       ordinary &&
@@ -599,8 +562,7 @@ export const blockDecorations = StateField.define<Blocks>({
 
   update(value, transaction) {
     const moved =
-      transaction.selection !== undefined &&
-      !transaction.startState.selection.eq(transaction.state.selection)
+      transaction.selection !== undefined && !transaction.startState.selection.eq(transaction.state.selection)
     const outside = isExternal(transaction)
     const typed = transaction.docChanged && !outside && !transaction.annotation(tableWrite)
     const chosen = value.chosen || typed || moved
@@ -616,13 +578,11 @@ export const blockDecorations = StateField.define<Blocks>({
     const reparsed = syntaxTree(transaction.state) !== syntaxTree(transaction.startState)
 
     const held = transaction.state.field(dragging, false) === true
-    if (transaction.startState.field(dragging, false) === true && !held)
-      return buildBlocks(transaction.state, chosen)
+    if (transaction.startState.field(dragging, false) === true && !held) return buildBlocks(transaction.state, chosen)
 
     if (!transaction.docChanged && !transaction.selection && !reparsed) return value
 
-    if (held && !transaction.docChanged && !reparsed)
-      return chosen === value.chosen ? value : { ...value, chosen }
+    if (held && !transaction.docChanged && !reparsed) return chosen === value.chosen ? value : { ...value, chosen }
 
     const was = transaction.startState.selection.ranges
     const now = transaction.state.selection.ranges
@@ -635,12 +595,7 @@ export const blockDecorations = StateField.define<Blocks>({
     const parsedOn =
       syntaxTree(transaction.state).length - syntaxTree(transaction.startState).length ===
       transaction.state.doc.length - transaction.startState.doc.length
-    if (
-      transaction.docChanged &&
-      parsedOn &&
-      !crosses(value.spans, was) &&
-      onlyProse(transaction, value)
-    ) {
+    if (transaction.docChanged && parsedOn && !crosses(value.spans, was) && onlyProse(transaction, value)) {
       const spans = mapSpans(value.spans, transaction.changes)
       if (!crosses(spans, now)) {
         return {

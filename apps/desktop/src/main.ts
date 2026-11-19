@@ -1,13 +1,5 @@
 import './lib/backend-ports'
-import {
-  isDesktop,
-  isMobile,
-  platform,
-  serveAssets,
-  mark,
-  markPainted,
-  watchFirstInput,
-} from './lib/platform/src/api'
+import { isDesktop, isMobile, platform, serveAssets, mark, markPainted, watchFirstInput } from './lib/platform/src/api'
 import './lib/launch/src/renamed.svelte'
 import './lib/sync-base-ports'
 import './lib/sync-ports'
@@ -32,10 +24,7 @@ Object.assign(window, { nibBuild: __EVEN_BUILD__ })
 
 if (isMobile) {
   const meta = document.querySelector('meta[name="viewport"]')
-  meta?.setAttribute(
-    'content',
-    `${meta.getAttribute('content')}, maximum-scale=1, user-scalable=no`,
-  )
+  meta?.setAttribute('content', `${meta.getAttribute('content')}, maximum-scale=1, user-scalable=no`)
 }
 
 document.documentElement.toggleAttribute('data-engine-bars', isDesktop && platform() === 'linux')
@@ -54,11 +43,7 @@ if ((window as { ordenOldDatabases?: boolean }).ordenOldDatabases) {
 }
 
 const outside: unknown = await (window as { ordenOutside?: Promise<unknown> }).ordenOutside
-if (
-  isDesktop &&
-  typeof outside === 'string' &&
-  (await (await import('./lib/workspace/src/outside')).takeIn())
-) {
+if (isDesktop && typeof outside === 'string' && (await (await import('./lib/workspace/src/outside')).takeIn())) {
   location.reload()
   await new Promise<never>(() => undefined)
 }

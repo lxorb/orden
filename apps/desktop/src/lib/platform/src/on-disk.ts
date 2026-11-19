@@ -20,9 +20,7 @@ export function isVault(root: string): Promise<boolean> {
   if (!found) {
     found = Promise.all(
       SETTINGS.map((name) =>
-        invoke<unknown>('file_stamp', { path: joinPath(root, `.obsidian/${name}`) }).catch(
-          () => null,
-        ),
+        invoke<unknown>('file_stamp', { path: joinPath(root, `.obsidian/${name}`) }).catch(() => null),
       ),
     ).then((stamps) => stamps.some((stamp) => stamp !== null && stamp !== undefined))
     asked.set(root, found)

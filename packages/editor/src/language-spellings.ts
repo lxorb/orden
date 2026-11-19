@@ -52,17 +52,7 @@ export const SPELLINGS: Record<string, string[]> = {
 
   JSON: ['jsonc', 'jsonl', 'ndjson', 'geojson'],
   YAML: ['helm', 'compose', 'docker-compose', 'ansible', 'k8s', 'kubernetes'],
-  'Properties files': [
-    'env',
-    'dotenv',
-    'conf',
-    'config',
-    'cfg',
-    'editorconfig',
-    'systemd',
-    'gitconfig',
-    'npmrc',
-  ],
+  'Properties files': ['env', 'dotenv', 'conf', 'config', 'cfg', 'editorconfig', 'systemd', 'gitconfig', 'npmrc'],
   Dockerfile: ['docker', 'containerfile'],
   ProtoBuf: ['proto', 'proto3'],
   diff: ['patch', 'udiff'],

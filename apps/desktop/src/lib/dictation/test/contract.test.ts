@@ -37,9 +37,7 @@ describe('what a recording is called and how it is shown', () => {
 
 describe('what dictation sends to be heard', () => {
   test('the words it should know come first, each once, before what was written last', () => {
-    expect(promptOf('Earlier words', ['Orden', 'Orden', ' Zürich '])).toBe(
-      'Orden, Zürich. Earlier words',
-    )
+    expect(promptOf('Earlier words', ['Orden', 'Orden', ' Zürich '])).toBe('Orden, Zürich. Earlier words')
     expect(promptOf('', [])).toBe('')
   })
 

@@ -29,13 +29,10 @@ function fixture(bytes: string, role = 'owner') {
   const encoded = new TextEncoder().encode(bytes)
   void disk.writeBytes(`${ROOT}/App.application`, encoded)
   const entry = row('a', 'App.application', '', `hash:${bytes}`)
-  const space = new SpaceState(
-    { space_id: 's', root: ROOT, cursor: 9, role, store: null },
-    [entry],
-    [],
-    'd',
-    { platform: 'linux', foldsCase: false } as never,
-  )
+  const space = new SpaceState({ space_id: 's', root: ROOT, cursor: 9, role, store: null }, [entry], [], 'd', {
+    platform: 'linux',
+    foldsCase: false,
+  } as never)
   const committed: Change[] = []
   const downs: string[] = []
   const sent: string[] = []
@@ -172,9 +169,7 @@ describe('a file changed here in a space this account can only read', () => {
   const text = async (disk: MemoryDisk, path: string) =>
     new TextDecoder().decode((await disk.readBytes(path)) ?? new Uint8Array())
   const said = (committed: Change[]) =>
-    committed.flatMap((one) =>
-      one.t === 'put' && one.table === 'log' ? [one.row.failed ?? ''] : [],
-    )
+    committed.flatMap((one) => (one.t === 'put' && one.table === 'log' ? [one.row.failed ?? ''] : []))
 
   test('sends nothing, goes to the trash, says so, and the account’s file comes back', async () => {
     const { disk, space, core, downs, sent, committed, trashed } = changed('read')

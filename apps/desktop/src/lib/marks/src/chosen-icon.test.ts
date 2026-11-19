@@ -4,8 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 const FILES: Record<string, string> = {
   '/Work/Plan.md': '---\nicon: rocket\nicon-color: violet\n---\n# Plan\n',
   '/Home/Plan.md': '---\nicon: house\n---\n# Plan\n',
-  '/Work/Team.chat':
-    '{"v":1,"chat":"c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e","icon":"rocket","iconColor":"violet"}\n',
+  '/Work/Team.chat': '{"v":1,"chat":"c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e","icon":"rocket","iconColor":"violet"}\n',
   '/Home/Plain.chat': '{"v":1,"chat":"c_0f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e"}\n',
   '/Home/Docs.url':
     '[InternetShortcut]\r\nURL=https://docs.dev/\r\nTitle=Docs\r\nOrden-Icon=data:image/png;base64,AA\r\n',
@@ -34,8 +33,7 @@ const index: {
 }
 const reads: string[] = []
 
-const relative = (path: string) =>
-  path.startsWith(`${index.root}/`) ? path.slice(index.root.length + 1) : path
+const relative = (path: string) => (path.startsWith(`${index.root}/`) ? path.slice(index.root.length + 1) : path)
 
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
@@ -116,10 +114,7 @@ const { elsewhere } = await import('../../link-index/src/api')
 const { NoteDoc, Tab } = await import('../../documents/src/api')
 
 function tabAt(path: string) {
-  const doc = new NoteDoc(
-    { kind: 'note', path, name: 'Plan.md', text: '', dirty: false },
-    () => undefined,
-  )
+  const doc = new NoteDoc({ kind: 'note', path, name: 'Plan.md', text: '', dirty: false }, () => undefined)
   return new Tab(doc, 'pane')
 }
 

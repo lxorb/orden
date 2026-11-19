@@ -35,8 +35,7 @@ const ID = /^[\w-]{1,64}$/
 const NAME = /^[\w.-]{1,80}$/
 const parts = (url: URL): string[] => url.pathname.split('/').filter(Boolean)
 
-const id = (piece: string | undefined): string | null =>
-  piece !== undefined && ID.test(piece) ? piece : null
+const id = (piece: string | undefined): string | null => (piece !== undefined && ID.test(piece) ? piece : null)
 
 const quoted = (url: URL): string => encodeURIComponent(url.toString())
 const YOUTUBE = 'allow-scripts allow-same-origin allow-presentation'
@@ -53,9 +52,7 @@ const ROWS: readonly Row[] = [
     allow: PLAYER,
     frame: (url) => {
       const path = parts(url)
-      const named = url.hostname.endsWith('youtu.be')
-        ? path[0]
-        : (url.searchParams.get('v') ?? undefined)
+      const named = url.hostname.endsWith('youtu.be') ? path[0] : (url.searchParams.get('v') ?? undefined)
       const shorts = path[0] === 'shorts' || path[0] === 'embed' || path[0] === 'live'
       const video = id(shorts ? path[1] : named)
       if (video === null) return null
@@ -75,9 +72,7 @@ const ROWS: readonly Row[] = [
     frame: (url) => {
       const path = parts(url)
       const video = id(path[0] === 'video' ? path[1] : path[0])
-      return video === null || !/^\d+$/.test(video)
-        ? null
-        : `https://player.vimeo.com/video/${video}`
+      return video === null || !/^\d+$/.test(video) ? null : `https://player.vimeo.com/video/${video}`
     },
   },
   {
@@ -90,9 +85,7 @@ const ROWS: readonly Row[] = [
     frame: (url) => {
       const path = parts(url)
       const post = path[1] === 'status' || path[1] === 'statuses' ? id(path[2]) : null
-      return post === null || !/^\d+$/.test(post)
-        ? null
-        : `https://platform.twitter.com/embed/Tweet.html?id=${post}`
+      return post === null || !/^\d+$/.test(post) ? null : `https://platform.twitter.com/embed/Tweet.html?id=${post}`
     },
   },
   {
@@ -121,8 +114,7 @@ const ROWS: readonly Row[] = [
     hosts: ['soundcloud.com'],
     shape: 166,
     sandbox: YOUTUBE,
-    frame: (url) =>
-      parts(url).length < 2 ? null : `https://w.soundcloud.com/player/?url=${quoted(url)}`,
+    frame: (url) => (parts(url).length < 2 ? null : `https://w.soundcloud.com/player/?url=${quoted(url)}`),
   },
   {
     id: 'figma',
@@ -151,9 +143,7 @@ const ROWS: readonly Row[] = [
       const path = parts(url)
       const who = path[0] !== undefined && NAME.test(path[0]) ? path[0] : null
       const pen = path[1] === 'pen' || path[1] === 'details' ? id(path[2]) : null
-      return who === null || pen === null
-        ? null
-        : `https://codepen.io/${who}/embed/${pen}?default-tab=result`
+      return who === null || pen === null ? null : `https://codepen.io/${who}/embed/${pen}?default-tab=result`
     },
   },
   {
@@ -184,9 +174,7 @@ const ROWS: readonly Row[] = [
       if (path[0] !== 'maps' && url.pathname !== '/maps') return null
 
       const asked = url.searchParams.get('q') ?? placeOf(path) ?? pointOf(url.pathname)
-      return asked === null
-        ? null
-        : `https://www.google.com/maps?q=${encodeURIComponent(asked)}&output=embed`
+      return asked === null ? null : `https://www.google.com/maps?q=${encodeURIComponent(asked)}&output=embed`
     },
   },
 ]

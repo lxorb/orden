@@ -57,9 +57,7 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
 
   const patience = count(call, 'timeout_ms', WAIT, MOST_WAIT)
   const halting = await stopSignal(call)
-  const ran = await session(shell.id, folder, command, patience, halting.signal).finally(
-    halting.end,
-  )
+  const ran = await session(shell.id, folder, command, patience, halting.signal).finally(halting.end)
   if (halting.signal.aborted) throw stopRefused(`${command} was ended`)
   const output = plainOf(ran.printed)
   const cut = ran.dropped || output.length > MOST_OUTPUT

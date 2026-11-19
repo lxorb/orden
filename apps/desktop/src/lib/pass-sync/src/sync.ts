@@ -1,13 +1,5 @@
 import type { Keyring } from '@orden/pass/keys'
-import type {
-  Accepted,
-  Changes,
-  ItemPage,
-  ItemRow,
-  KeyProof,
-  KeyringRow,
-  VaultRow,
-} from '@orden/pass/wire'
+import type { Accepted, Changes, ItemPage, ItemRow, KeyProof, KeyringRow, VaultRow } from '@orden/pass/wire'
 import { changesIn, itemPageIn, itemRowIn, keyringRowIn, vaultRowIn } from '@orden/pass/wire'
 
 export type Method = 'GET' | 'PUT' | 'POST' | 'DELETE'
@@ -46,8 +38,7 @@ export interface Landed {
 }
 
 export type Answer<T> =
-  | { ok: true; value: T }
-  | { ok: false; status: number; error: string; current: unknown; keyVersion: number | null }
+  { ok: true; value: T } | { ok: false; status: number; error: string; current: unknown; keyVersion: number | null }
 
 interface Said {
   status: number

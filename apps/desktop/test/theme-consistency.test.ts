@@ -34,13 +34,9 @@ describe('the look of things the browser also has an opinion about', () => {
   })
 
   test('nothing opts out of the themed scrollbar', () => {
-    const offenders = components
-      .filter((one) => /scrollbar-width:\s*(thin|auto)/.test(one.text))
-      .map((one) => one.name)
+    const offenders = components.filter((one) => /scrollbar-width:\s*(thin|auto)/.test(one.text)).map((one) => one.name)
 
-    expect(offenders, `these would show the browser's scrollbar: ${offenders.join(', ')}`).toEqual(
-      [],
-    )
+    expect(offenders, `these would show the browser's scrollbar: ${offenders.join(', ')}`).toEqual([])
   })
 
   test('every scroller that hides the engine bar hides it in every engine', () => {
@@ -63,9 +59,7 @@ describe('the look of things the browser also has an opinion about', () => {
         .map((selector) => `${one.name}: ${selector}`),
     )
 
-    expect(offenders, `these show the bar in WebKit before 18.2: ${offenders.join(', ')}`).toEqual(
-      [],
-    )
+    expect(offenders, `these show the bar in WebKit before 18.2: ${offenders.join(', ')}`).toEqual([])
   })
 
   test("the theme's bar never outranks a scroller that hides its own", () => {
@@ -87,9 +81,7 @@ describe('the look of things the browser also has an opinion about', () => {
       .flatMap(([, selector = '']) => selector.split(',').map((part) => part.trim()))
       .filter((selector) => selector.includes('::-webkit-scrollbar'))
       .filter((selector) => !/^\.[\w-]+::/.test(selector))
-    const loud = themed.filter((selector) =>
-      /[.:[#]/.test(unwrapped(selector).split('::')[0] ?? ''),
-    )
+    const loud = themed.filter((selector) => /[.:[#]/.test(unwrapped(selector).split('::')[0] ?? ''))
 
     expect(themed.length).toBeGreaterThan(4)
     expect(loud, `these beat .orden-scrolls::-webkit-scrollbar: ${loud.join(', ')}`).toEqual([])
@@ -98,16 +90,13 @@ describe('the look of things the browser also has an opinion about', () => {
   test('no component restyles a dropdown on its own', () => {
     const offenders = components
       .filter((one) =>
-        [...one.text.matchAll(/(?<![\w-])select(?![\w-])[^{;]*\{([^}]*)\}/g)].some(
-          ([, body = '']) => /(appearance|background|border|font-family)\s*:/.test(body),
+        [...one.text.matchAll(/(?<![\w-])select(?![\w-])[^{;]*\{([^}]*)\}/g)].some(([, body = '']) =>
+          /(appearance|background|border|font-family)\s*:/.test(body),
         ),
       )
       .map((one) => one.name)
 
-    expect(
-      offenders,
-      `these would diverge from the themed dropdown: ${offenders.join(', ')}`,
-    ).toEqual([])
+    expect(offenders, `these would diverge from the themed dropdown: ${offenders.join(', ')}`).toEqual([])
   })
 
   test('no component states a custom property in terms of itself', () => {
@@ -178,17 +167,12 @@ describe('the paper a note is written on', () => {
   })
 
   test('is the page itself, whole, under the scratchpad', () => {
-    expect(ruleOf('lib/scratchpad/src/ScratchpadCard.svelte', 'card')).toContain(
-      'background: var(--bg);',
-    )
+    expect(ruleOf('lib/scratchpad/src/ScratchpadCard.svelte', 'card')).toContain('background: var(--bg);')
   })
 
   test('is see-through under a pane alone', () => {
     const offenders = components
-      .filter(
-        (one) =>
-          one.name !== 'lib/pane-tree/src/Pane.svelte' && /var\(--content-ground\b/.test(one.text),
-      )
+      .filter((one) => one.name !== 'lib/pane-tree/src/Pane.svelte' && /var\(--content-ground\b/.test(one.text))
       .map((one) => one.name)
 
     expect(offenders, `these lay the see-through paper: ${offenders.join(', ')}`).toEqual([])
@@ -219,17 +203,13 @@ describe('what a side shows', () => {
           `export const ${door} = held\\(\\s*(?:from\\('([\\w-]+)'\\)|\\(\\) => import\\('\\.\\./\\.\\./([^']+)'\\))`,
         ).exec(surfaces) ?? []
       if (root) return `lib/${root}`
-      const body =
-        new RegExp(`\\n\\s*'?${id ?? ''}'?: (?!waits)([^\\n]*),\\n`).exec(features)?.[1] ?? ''
+      const body = new RegExp(`\\n\\s*'?${id ?? ''}'?: (?!waits)([^\\n]*),\\n`).exec(features)?.[1] ?? ''
       const lazy =
         /import\('\.\/([^']+)'\)\.then\(\((?:api|one)\) => (?:\(\{ default: (?:api|one)\.(\w+) \}\)|(?:api|one)\.(\w+)\(\))\)/.exec(
           body,
         )
-      if (lazy)
-        return lazy[2] ? named(lazy[1] ?? '', lazy[2]) : loaded(lazy[1] ?? '', lazy[3] ?? '')
-      const from = new RegExp(
-        `import \\{[^}]*\\b${body.trim()}\\b[^}]*\\} from '\\./([^']+)'`,
-      ).exec(features)?.[1]
+      if (lazy) return lazy[2] ? named(lazy[1] ?? '', lazy[2]) : loaded(lazy[1] ?? '', lazy[3] ?? '')
+      const from = new RegExp(`import \\{[^}]*\\b${body.trim()}\\b[^}]*\\} from '\\./([^']+)'`).exec(features)?.[1]
       return loaded(from ?? '', body.trim())
     })
 
@@ -257,8 +237,7 @@ describe('what a side shows', () => {
     for (const one of (node.attributes ?? []) as Node[]) {
       if (one.type === 'ClassDirective') words.push(String(one.name))
       if (one.type !== 'Attribute' || one.name !== 'class' || !Array.isArray(one.value)) continue
-      for (const part of one.value as Node[])
-        if (part.type === 'Text') words.push(...String(part.data).split(/\s+/))
+      for (const part of one.value as Node[]) if (part.type === 'Text') words.push(...String(part.data).split(/\s+/))
     }
     return words.filter(Boolean)
   }
@@ -299,9 +278,7 @@ describe('what runs out under something', () => {
 
   test('and nothing fades to a ground colour over the end of a scroller', () => {
     const offenders = components
-      .filter((one) =>
-        /linear-gradient\(\s*to (?:top|bottom),\s*var\(--[a-z-]+\),\s*transparent\)/.test(one.text),
-      )
+      .filter((one) => /linear-gradient\(\s*to (?:top|bottom),\s*var\(--[a-z-]+\),\s*transparent\)/.test(one.text))
       .map((one) => one.name)
     expect(offenders, `these fade to a guessed ground: ${offenders.join(', ')}`).toEqual([])
   })
@@ -328,9 +305,7 @@ describe('what the AI chat is filled with', () => {
 
   test('and nothing in it is filled with the ground the side stands on', () => {
     const offenders = chat
-      .filter((one) =>
-        /background(?:-color)?:\s*var\(--(?:surface-2|tab-frame|chrome-ground)\)/.test(one.text),
-      )
+      .filter((one) => /background(?:-color)?:\s*var\(--(?:surface-2|tab-frame|chrome-ground)\)/.test(one.text))
       .map((one) => one.name)
     expect(offenders, `these vanish into the chrome's ground: ${offenders.join(', ')}`).toEqual([])
   })

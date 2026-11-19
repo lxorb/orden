@@ -419,9 +419,7 @@ describe('parseOnePassword 1PIF', () => {
     })
     expect(find(result, 'Plain').content.note).toBe('π')
     expect(as(find(result, 'Gym').content, 'custom').template).toBe('Membership')
-    expect(
-      result.vaults.flatMap((vault) => vault.items).map((one) => one.content.title),
-    ).not.toContain('gone')
+    expect(result.vaults.flatMap((vault) => vault.items).map((one) => one.content.title)).not.toContain('gone')
   })
 })
 

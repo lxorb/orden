@@ -16,13 +16,7 @@ function from(box: Box, x: number, y: number): number {
   return Math.hypot(Math.max(dx, 0), Math.max(dy, 0))
 }
 
-export function cellAt(
-  cells: readonly Cell[],
-  now: string,
-  x: number,
-  y: number,
-  zoom = 1,
-): string {
+export function cellAt(cells: readonly Cell[], now: string, x: number, y: number, zoom = 1): string {
   const reach = REACH / zoom
   const hold = HOLD / zoom
   let best = now
@@ -30,8 +24,7 @@ export function cellAt(
   for (const cell of cells) {
     if (from(grownOf(cell.box), x, y) > reach) continue
     const far = from(cell.box, x, y)
-    const counted =
-      far <= 0 ? (cell.key === now ? -Infinity : far - 1e9) : far - (cell.key === now ? hold : 0)
+    const counted = far <= 0 ? (cell.key === now ? -Infinity : far - 1e9) : far - (cell.key === now ? hold : 0)
     if (counted < nearest) {
       best = cell.key
       nearest = counted

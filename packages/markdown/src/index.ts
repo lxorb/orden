@@ -4,12 +4,7 @@ import { hardBreaks } from './breaks'
 import type { Token, Tokens } from 'marked'
 import { chartFigure } from './chart'
 import { captionIn, languageIn } from './code'
-import {
-  type PropertiesMode,
-  propertiesSource,
-  propertiesTable,
-  readProperties,
-} from './properties'
+import { type PropertiesMode, propertiesSource, propertiesTable, readProperties } from './properties'
 import { withoutComments } from './comments'
 import { type Cover, coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
@@ -167,11 +162,7 @@ function mailAhead(src: string, tokens: Token[] | undefined): boolean {
   return src.charCodeAt(end) === 64
 }
 
-function addressToken(
-  this: Tokenizer,
-  src: string,
-  tokens: Token[] | undefined,
-): Tokens.Link | undefined {
+function addressToken(this: Tokenizer, src: string, tokens: Token[] | undefined): Tokens.Link | undefined {
   if (!SCHEME.test(src) && !mailAhead(src, tokens)) return undefined
   const found = this.rules.inline.url.exec(src)
   if (!found) return undefined
@@ -246,8 +237,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         const body = this.parser.parseInline(token.tokens)
         const from = options.from
         const nested = from && options.resolveNoteFrom ? localLink(token.href) : null
-        const there =
-          nested && from ? (options.resolveNoteFrom?.(nested.target, from) ?? null) : null
+        const there = nested && from ? (options.resolveNoteFrom?.(nested.target, from) ?? null) : null
         const nestedHref = nested && there !== null ? pathHref(there) : null
         if (nested && nestedHref !== null) {
           const title = token.title ? ` title="${escape(token.title)}"` : ''
@@ -266,8 +256,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         const href = safeHref(token.href) ? attributeUrl(token.href) : ''
         if (!href) return body
 
-        const bare =
-          !token.raw.startsWith('[') || token.text.replace(AN_ESCAPE, '$1') === token.href
+        const bare = !token.raw.startsWith('[') || token.text.replace(AN_ESCAPE, '$1') === token.href
         const attributes = [bare ? ' class="url"' : '', ` href="${href}"`]
         if (token.title) attributes.push(` title="${escape(token.title)}"`)
         return `<a${attributes.join('')}>${body}</a>`
@@ -277,9 +266,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         const card = webCard(token.href)
         if (card) return card
 
-        const { alt, size } = sizedAlt(
-          this.parser.parseInline(token.tokens, this.parser.textRenderer),
-        )
+        const { alt, size } = sizedAlt(this.parser.parseInline(token.tokens, this.parser.textRenderer))
         const found = options.resolvePicture?.(token.href, false, null) ?? token.href
         const src = safeSrc(token.href) ? attributeUrl(found) : ''
         if (!src) return escape(alt)
@@ -468,11 +455,7 @@ function parsedOrPlain(marked: Marked, body: string, breaks: boolean): string {
 export function renderMarkdown(source: string, options: RenderOptions = {}): string {
   const headings: Heading[] = options.headings ?? []
   const embeds = embedSink()
-  const marked = needsOwn(options)
-    ? renderer(options, headings, embeds)
-    : options.escapeHtml
-      ? publishing
-      : trusting
+  const marked = needsOwn(options) ? renderer(options, headings, embeds) : options.escapeHtml ? publishing : trusting
 
   const words = stripFrontMatter(source)
   const body = withoutComments(options.blockAnchors ? anchored(words) : withoutBlockIds(words))
@@ -530,10 +513,7 @@ function notesApart(html: string, at: number): string {
   return html
     .replace(/<li id="fn-/g, `<li id="${own}fn-`)
     .replace(/(<a class="footnote-back" href="#)fnref-/g, `$1${own}fnref-`)
-    .replace(
-      /(<sup class="footnote-ref" id=")fnref-([^"]*"><a href="#)fn-/g,
-      `$1${own}fnref-$2${own}fn-`,
-    )
+    .replace(/(<sup class="footnote-ref" id=")fnref-([^"]*"><a href="#)fn-/g, `$1${own}fnref-$2${own}fn-`)
 }
 
 export function tableOfContents(headings: Heading[]): string {
@@ -545,12 +525,7 @@ export function tableOfContents(headings: Heading[]): string {
   let last = top
 
   for (const heading of headings) {
-    const wanted =
-      heading.level > last
-        ? depth + 1
-        : heading.level < last
-          ? Math.max(0, heading.level - top)
-          : depth
+    const wanted = heading.level > last ? depth + 1 : heading.level < last ? Math.max(0, heading.level - top) : depth
 
     while (depth < wanted) {
       out.push('<ul>')
@@ -597,10 +572,7 @@ function markAbbreviations(html: string, terms: Map<string, string>): string {
   return out + text(html.slice(last))
 
   function text(chunk: string): string {
-    return chunk.replace(
-      word,
-      (term) => `<abbr title="${escape(terms.get(term) ?? '')}">${term}</abbr>`,
-    )
+    return chunk.replace(word, (term) => `<abbr title="${escape(terms.get(term) ?? '')}">${term}</abbr>`)
   }
 }
 

@@ -26,13 +26,7 @@ describe('where Save offers to put a tab', () => {
   test('is everywhere a note could be moved to, the space first', () => {
     const places = placesFor(tree, spaces, '/space')
 
-    expect(places.map((one) => one.id)).toEqual([
-      '/space',
-      '/space/Plan',
-      '/space/Trips',
-      '/space/Trips/a',
-      '/work',
-    ])
+    expect(places.map((one) => one.id)).toEqual(['/space', '/space/Plan', '/space/Trips', '/space/Trips/a', '/work'])
   })
 
   test('but none in a space shared to be read, and starts where it can be saved', () => {

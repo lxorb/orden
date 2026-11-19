@@ -43,8 +43,7 @@ export async function peek(
   const left = showing === null ? undefined : workspace.tabs.find((one) => one.id === showing)
   if (left?.paneId === from) workspace.panes.activate(from, left.id)
   peeks.set(from, { tab: now.id, walk: [...walk], back })
-  if (!workspace.tabs.some((one) => one.id !== now.id && one.note === now.note))
-    workspace.previewTabId = now.id
+  if (!workspace.tabs.some((one) => one.id !== now.id && one.note === now.note)) workspace.previewTabId = now.id
   if (!listening) {
     listening = true
     window.addEventListener('keydown', key)

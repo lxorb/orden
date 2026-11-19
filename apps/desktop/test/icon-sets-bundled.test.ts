@@ -18,12 +18,10 @@ const DATA = [
   'emojilib/emojis.json',
 ]
 
-const files = walk(SOURCE, (path) => /\.(ts|svelte)$/.test(path) && !path.endsWith('.d.ts')).map(
-  (path) => ({
-    name: path.slice(SOURCE.length).replace(/\\/g, '/'),
-    text: readFileSync(path, 'utf8'),
-  }),
-)
+const files = walk(SOURCE, (path) => /\.(ts|svelte)$/.test(path) && !path.endsWith('.d.ts')).map((path) => ({
+  name: path.slice(SOURCE.length).replace(/\\/g, '/'),
+  text: readFileSync(path, 'utf8'),
+}))
 
 describe('the icon sets that are data rather than drawing', () => {
   test('are asked for, so somewhere in the app knows their names', () => {

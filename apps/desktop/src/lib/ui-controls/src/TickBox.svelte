@@ -1,18 +1,9 @@
 <script lang="ts">
-  const {
-    label,
-    checked,
-    onchange,
-  }: { label: string; checked: boolean; onchange: (on: boolean) => void } = $props()
+  const { label, checked, onchange }: { label: string; checked: boolean; onchange: (on: boolean) => void } = $props()
 </script>
 
 <label class="tick">
-  <input
-    type="checkbox"
-    class="orden-checkbox"
-    {checked}
-    onchange={(event) => onchange(event.currentTarget.checked)}
-  />
+  <input type="checkbox" class="orden-checkbox" {checked} onchange={(event) => onchange(event.currentTarget.checked)} />
   <span>{label}</span>
 </label>
 

@@ -169,15 +169,11 @@
   const built = { left: false, right: false }
   const keptLeft = $derived((built.left ||= workspace.panel !== null || startup.reached('left')))
   const padDocked = $derived(!viewport.touch && !__EVEN_PLUGIN__)
-  const rightOpen = $derived(
-    padDocked ? workspace.rightShows !== null : workspace.openOn('right') !== null,
-  )
+  const rightOpen = $derived(padDocked ? workspace.rightShows !== null : workspace.openOn('right') !== null)
   const leftShut = $derived(viewport.drawer || workspace.openOn('left') === null)
   const rightShut = $derived(viewport.drawer || !rightOpen)
   const docked = $derived(
-    viewport.drawer || bare || filled
-      ? 0
-      : (workspace.panel !== null ? 1 : 0) + (rightOpen ? 1 : 0),
+    viewport.drawer || bare || filled ? 0 : (workspace.panel !== null ? 1 : 0) + (rightOpen ? 1 : 0),
   )
   const keptRight = $derived(
     (built.right ||=
@@ -341,13 +337,9 @@
     }
   })
 
-  $effect(() =>
-    viewport.drawer && workspace.panel ? overlays.show(() => workspace.closePanel()) : undefined,
-  )
+  $effect(() => (viewport.drawer && workspace.panel ? overlays.show(() => workspace.closePanel()) : undefined))
 
-  $effect(() =>
-    viewport.drawer && rightOpen ? overlays.show(() => workspace.closeRight()) : undefined,
-  )
+  $effect(() => (viewport.drawer && rightOpen ? overlays.show(() => workspace.closeRight()) : undefined))
 
   const covered = $derived(!!workspace.panel)
   const coveredRight = $derived(rightOpen)
@@ -381,9 +373,7 @@
     }
   })
 
-  const syncing = $derived(
-    account.syncable ? `${account.user?.id ?? ''}:${account.user?.syncVersion === 2}` : null,
-  )
+  const syncing = $derived(account.syncable ? `${account.user?.id ?? ''}:${account.user?.syncVersion === 2}` : null)
   $effect(() => {
     if (syncing !== null) {
       untrack(() => {
@@ -450,65 +440,55 @@
       import('./lib/sync-client/test/fake-engine.svelte'),
       import('./lib/agents/src/api').then((one) => one.agentStandIn()),
       import('./lib/theme-looks/src/api'),
-    ]).then(
-      ([
-        { importing },
-        { publish },
-        { ai },
-        { rewriting },
+    ]).then(([{ importing }, { publish }, { ai }, { rewriting }, sync2, { standIn }, { wallpaper, store }]) => {
+      Object.assign((window as unknown as { ordenApp: object }).ordenApp, {
+        tasks: () =>
+          Promise.all([
+            import('./lib/tasks-model/src/api'),
+            import('./lib/views/src/api').then((one) => one.baseOpening()),
+            import('./lib/rows/src/api'),
+            import('./lib/file-writes/src/api'),
+          ]).then(([{ todos }, { openTodos, openBaseFile }, { rows }, { writeFile }]) => ({
+            todos,
+            openTodos,
+            openBaseFile,
+            rows,
+            writeFile,
+          })),
+        chats: () =>
+          __EVEN_PLUGIN__
+            ? Promise.reject(new Error('no chats in the Even Realities plugin'))
+            : Promise.all([
+                import('./lib/chats-client/src/api').then((one) => one.chatStore()),
+                import('./lib/chats-client/src/api').then((one) => one.chatOpening()),
+              ]).then(([{ chats }, open]) => ({ chats, ...open })),
+        time: () =>
+          __EVEN_PLUGIN__
+            ? Promise.reject(new Error('no time tracker in the Even Realities plugin'))
+            : import('./lib/time/src/api').then(({ time }) => time),
+        agents: { standIn },
+        ai,
+        aiChats: () =>
+          __EVEN_PLUGIN__
+            ? Promise.reject(new Error('no AI panel in the Even Realities plugin'))
+            : chatStore().then(({ chat }) => chat),
+        aiVault: () =>
+          __EVEN_PLUGIN__
+            ? Promise.reject(new Error('no AI vault in the Even Realities plugin'))
+            : import('./lib/ai-providers/src/api').then(({ vault, writeKey, readSecret }) => ({
+                vault,
+                writeKey,
+                readSecret,
+              })),
+        importing,
+        publish,
+        rewriting,
         sync2,
-        { standIn },
-        { wallpaper, store },
-      ]) => {
-        Object.assign((window as unknown as { ordenApp: object }).ordenApp, {
-          tasks: () =>
-            Promise.all([
-              import('./lib/tasks-model/src/api'),
-              import('./lib/views/src/api').then((one) => one.baseOpening()),
-              import('./lib/rows/src/api'),
-              import('./lib/file-writes/src/api'),
-            ]).then(([{ todos }, { openTodos, openBaseFile }, { rows }, { writeFile }]) => ({
-              todos,
-              openTodos,
-              openBaseFile,
-              rows,
-              writeFile,
-            })),
-          chats: () =>
-            __EVEN_PLUGIN__
-              ? Promise.reject(new Error('no chats in the Even Realities plugin'))
-              : Promise.all([
-                  import('./lib/chats-client/src/api').then((one) => one.chatStore()),
-                  import('./lib/chats-client/src/api').then((one) => one.chatOpening()),
-                ]).then(([{ chats }, open]) => ({ chats, ...open })),
-          time: () =>
-            __EVEN_PLUGIN__
-              ? Promise.reject(new Error('no time tracker in the Even Realities plugin'))
-              : import('./lib/time/src/api').then(({ time }) => time),
-          agents: { standIn },
-          ai,
-          aiChats: () =>
-            __EVEN_PLUGIN__
-              ? Promise.reject(new Error('no AI panel in the Even Realities plugin'))
-              : chatStore().then(({ chat }) => chat),
-          aiVault: () =>
-            __EVEN_PLUGIN__
-              ? Promise.reject(new Error('no AI vault in the Even Realities plugin'))
-              : import('./lib/ai-providers/src/api').then(({ vault, writeKey, readSecret }) => ({
-                  vault,
-                  writeKey,
-                  readSecret,
-                })),
-          importing,
-          publish,
-          rewriting,
-          sync2,
-          wallpaper,
-          themeStore: store,
-          downloads: () => webDownloads().then((one) => one.downloads),
-        })
-      },
-    )
+        wallpaper,
+        themeStore: store,
+        downloads: () => webDownloads().then((one) => one.downloads),
+      })
+    })
   }
 
   const ownBar = (kind: TabKind | undefined) => kind !== undefined && TAB_KINDS[kind].ownBar
@@ -745,9 +725,7 @@
   class:tabbed={viewport.device === 'phone' && !!workspace.panel && !bare && !__EVEN_PLUGIN__}
   inert={workspace.nothingToShow}
   style:height={pageHeight()}
-  style:--panel-room={docked
-    ? `max(var(--panel-narrowest), (100vw - var(--panes-floor)) / ${docked})`
-    : undefined}
+  style:--panel-room={docked ? `max(var(--panel-narrowest), (100vw - var(--panes-floor)) / ${docked})` : undefined}
 >
   <h1 class="orden-said">{workspace.active?.shown ?? 'Orden'}</h1>
 
@@ -783,9 +761,7 @@
       class:held={drawer.held}
       class:dragging={drawer.at !== null}
       class:settling={drawer.settle !== null}
-      style:transform={drawer.at === null || !viewport.narrow
-        ? undefined
-        : `translateX(${drawer.at}px)`}
+      style:transform={drawer.at === null || !viewport.narrow ? undefined : `translateX(${drawer.at}px)`}
       style:--settle={drawer.settle === null ? undefined : `${drawer.settle}ms`}
       style:--shade={drawer.progress === null ? undefined : 1 - drawer.progress}
       ontransitionend={(event) => drawer.arrived(event)}
@@ -816,13 +792,7 @@
       {/if}
 
       <div class="body">
-        <div
-          class="panes"
-          data-panes
-          class:under-pad={padOver}
-          inert={padOver}
-          bind:clientWidth={panesWide}
-        >
+        <div class="panes" data-panes class:under-pad={padOver} inert={padOver} bind:clientWidth={panesWide}>
           <Progress />
           {#if !noticesOver}
             {@render notices()}
@@ -894,13 +864,7 @@
 {/snippet}
 
 {#snippet notices()}
-  <div
-    class="notices"
-    data-notices
-    data-region="notices"
-    class:over={noticesOver}
-    class:above={tabOverview.open}
-  >
+  <div class="notices" data-notices data-region="notices" class:over={noticesOver} class:above={tabOverview.open}>
     <StorageWarning />
     {#if undoToastNotice.asked}
       {#await undoToastNotice.asked then UndoToast}
@@ -1188,8 +1152,8 @@
   }
 
   .notices:has(> :global(*)) {
-    padding: var(--space-2) max(var(--space-4), var(--inset-right))
-      calc(var(--space-3) + var(--inset-bottom)) max(var(--space-4), var(--inset-left));
+    padding: var(--space-2) max(var(--space-4), var(--inset-right)) calc(var(--space-3) + var(--inset-bottom))
+      max(var(--space-4), var(--inset-left));
   }
 
   main.tabbed .notices:has(> :global(*)) {
@@ -1197,9 +1161,7 @@
   }
 
   main:has(:global(.fab)) .notices:has(> :global(*)) {
-    padding-inline-end: calc(
-      max(var(--space-4), var(--inset-right)) + var(--touch-row) + var(--space-2)
-    );
+    padding-inline-end: calc(max(var(--space-4), var(--inset-right)) + var(--touch-row) + var(--space-2));
   }
 
   main.full .panes {

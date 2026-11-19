@@ -46,9 +46,7 @@ const vaults = [
     items: [
       login,
       envelope(noteOf('Note', '日本語')),
-      envelope(
-        cardOf({ title: 'Visa', number: '4111 1111 1111 1111', expiry: '04/29', code: '123' }),
-      ),
+      envelope(cardOf({ title: 'Visa', number: '4111 1111 1111 1111', expiry: '04/29', code: '123' })),
       envelope(identityOf({ values: { firstName: 'Ada', lastName: 'Lovelace' } }), { trashed: 5 }),
       envelope({ ...blank('wifi'), title: 'Home', ssid: 'home', password: 'pw' }),
     ],

@@ -60,9 +60,7 @@ function seenAfter(words: string, from: number): string {
 }
 
 const inert = (words: string, tags: RegExp): string =>
-  words.replace(/[<\uFF1C\uFE64]/g, (one, at: number) =>
-    tags.test(seenAfter(words, at + 1)) ? '&lt;' : one,
-  )
+  words.replace(/[<\uFF1C\uFE64]/g, (one, at: number) => (tags.test(seenAfter(words, at + 1)) ? '&lt;' : one))
 
 const attribute = (source: string): string =>
   Array.from(source)
@@ -104,11 +102,7 @@ export function chatsText(chats: readonly Listed[]): string {
         one.id,
         oneLine(one.space),
         `${String(one.members)} people`,
-        ...(one.unread === 'some'
-          ? ['unread']
-          : one.unread
-            ? [`${String(one.unread)} unread`]
-            : []),
+        ...(one.unread === 'some' ? ['unread'] : one.unread ? [`${String(one.unread)} unread`] : []),
         ...(one.mentions ? [`${String(one.mentions)} mentions`] : []),
         ...(one.lastAt ? [`last ${momentOf(one.lastAt)}`] : []),
       ].join(' · '),
@@ -139,23 +133,15 @@ function messageText(chat: string, message: Message, reading: Reading): string {
 
   const words = [
     message.body,
-    ...(message.files.length
-      ? [`[files: ${message.files.map((one) => one.name).join(', ')}]`]
-      : []),
-    ...(message.poll
-      ? [`[poll: ${message.poll.question} | ${message.poll.answers.join(' | ')}]`]
-      : []),
-    ...(message.preview && !mine
-      ? [`[link: ${message.preview.title} ${message.preview.url}]`]
-      : []),
+    ...(message.files.length ? [`[files: ${message.files.map((one) => one.name).join(', ')}]`] : []),
+    ...(message.poll ? [`[poll: ${message.poll.question} | ${message.poll.answers.join(' | ')}]`] : []),
+    ...(message.preview && !mine ? [`[link: ${message.preview.title} ${message.preview.url}]`] : []),
   ]
     .filter(Boolean)
     .join('\n')
   if (mine) {
     const preview = message.preview
-    const link = preview
-      ? [untrusted(`link preview ${preview.url}`, `[link: ${preview.title} ${preview.url}]`)]
-      : []
+    const link = preview ? [untrusted(`link preview ${preview.url}`, `[link: ${preview.title} ${preview.url}]`)] : []
     return [`- ${head}`, words, ...link].filter(Boolean).join('\n')
   }
   return `- ${head}\n${untrusted(`chat:${chat} from:${name}`, words)}`
@@ -166,14 +152,9 @@ export function messagesText(chat: string, messages: readonly Message[], reading
   return [`#${oneLine(chat)}`, ...messages.map((one) => messageText(chat, one, reading))].join('\n')
 }
 
-export function hitsText(
-  hits: readonly { chat: string; message: Message }[],
-  reading: Reading,
-): string {
+export function hitsText(hits: readonly { chat: string; message: Message }[], reading: Reading): string {
   if (!hits.length) return 'Nothing found.'
   return hits
-    .map(
-      (one) => `- #${oneLine(one.chat)} · ${messageText(one.chat, one.message, reading).slice(2)}`,
-    )
+    .map((one) => `- #${oneLine(one.chat)} · ${messageText(one.chat, one.message, reading).slice(2)}`)
     .join('\n')
 }

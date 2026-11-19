@@ -57,20 +57,12 @@ describe('a vault key’s proof', () => {
     const manager = await newSigner()
     const key = newKey()
     const vouch = await vouchFor(owner, 'v1', manager.pub)
-    expect(
-      await isProven('v1', 2, key, await keyProofOf(manager, 'v1', 2, key, vouch), [owner.pub]),
-    ).toBe(true)
-    expect(
-      await isProven('v1', 2, key, await keyProofOf(manager, 'v1', 2, key, null), [owner.pub]),
-    ).toBe(false)
+    expect(await isProven('v1', 2, key, await keyProofOf(manager, 'v1', 2, key, vouch), [owner.pub])).toBe(true)
+    expect(await isProven('v1', 2, key, await keyProofOf(manager, 'v1', 2, key, null), [owner.pub])).toBe(false)
     const elsewhere = await vouchFor(owner, 'v9', manager.pub)
-    expect(
-      await isProven('v1', 2, key, await keyProofOf(manager, 'v1', 2, key, elsewhere), [owner.pub]),
-    ).toBe(false)
+    expect(await isProven('v1', 2, key, await keyProofOf(manager, 'v1', 2, key, elsewhere), [owner.pub])).toBe(false)
     const self = await vouchFor(manager, 'v1', manager.pub)
-    expect(
-      await isProven('v1', 2, key, await keyProofOf(manager, 'v1', 2, key, self), [owner.pub]),
-    ).toBe(false)
+    expect(await isProven('v1', 2, key, await keyProofOf(manager, 'v1', 2, key, self), [owner.pub])).toBe(false)
   })
 })
 

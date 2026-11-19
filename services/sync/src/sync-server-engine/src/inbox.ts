@@ -117,11 +117,7 @@ async function written(
   const many = plans.length
   const sent = JSON.stringify(plans)
   const results = await env.DB.batch([
-    env.DB.prepare(`select ${roomFor('?1', '?2', '?3')} as room`).bind(
-      userId,
-      sent,
-      MOST_INBOX_ITEMS,
-    ),
+    env.DB.prepare(`select ${roomFor('?1', '?2', '?3')} as room`).bind(userId, sent, MOST_INBOX_ITEMS),
     env.DB.prepare(
       `insert into inbox_cursor (user_id, next) select ?1, ?2 + 1
         where ${roomFor('?1', '?3', '?4')}

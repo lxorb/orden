@@ -1,14 +1,7 @@
 import { foldName } from '@orden/markdown/links'
 import type { Command } from '../../commands/src/api'
 import { fileMark } from '../../marks/src/api'
-import {
-  shownName,
-  rowName,
-  folderOf,
-  insideSpace,
-  relativeTo,
-  withinSpace,
-} from '../../platform/src/api'
+import { shownName, rowName, folderOf, insideSpace, relativeTo, withinSpace } from '../../platform/src/api'
 import { frecency as visitWeight, shownAddress } from '@orden/scan/visits'
 import type { Visit } from '@orden/scan/visits'
 import type { Bookmark, PaletteHost, Entry } from '@orden/contracts'
@@ -168,9 +161,7 @@ export function candidates(world: World): Candidate<Row>[] {
   }
 
   const marked = new Set(
-    world.bookmarks
-      .filter((one) => one.kind === 'note')
-      .map((one) => insideSpace(world.root, one.path)),
+    world.bookmarks.filter((one) => one.kind === 'note').map((one) => insideSpace(world.root, one.path)),
   )
   const lifted = (path: string) => recency(path) + (marked.has(path) ? LIFT.bookmarked : 0)
 
@@ -256,9 +247,7 @@ export function candidates(world: World): Candidate<Row>[] {
     )
   }
 
-  const groups = __EVEN_PLUGIN__
-    ? []
-    : [...new Set(world.hosts.flatMap((host) => (host.group ? [host.group] : [])))]
+  const groups = __EVEN_PLUGIN__ ? [] : [...new Set(world.hosts.flatMap((host) => (host.group ? [host.group] : [])))]
   for (const group of groups) {
     const hosts = world.hosts.filter((host) => host.group === group)
     out.push(

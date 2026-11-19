@@ -70,9 +70,7 @@
     {#if oncancel}
       <button class="orden-button is-quiet" type="button" onclick={oncancel}>Cancel</button>
     {/if}
-    <button class="orden-button" type="submit" disabled={busy || !ready} aria-busy={busy}>
-      Change password
-    </button>
+    <button class="orden-button" type="submit" disabled={busy || !ready} aria-busy={busy}> Change password </button>
   </div>
 </form>
 

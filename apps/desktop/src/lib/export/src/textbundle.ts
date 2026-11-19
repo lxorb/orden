@@ -22,14 +22,8 @@ export interface BundleOptions {
   link?: (link: FoundLink) => string | null
 }
 
-export function bundleFiles(
-  source: string,
-  pictures: readonly Picture[],
-  options: BundleOptions = {},
-): Entry[] {
-  const inside = new Map(
-    pictures.map((picture) => [picture.src, `${ASSETS}/${addressOf(picture.name)}`]),
-  )
+export function bundleFiles(source: string, pictures: readonly Picture[], options: BundleOptions = {}): Entry[] {
+  const inside = new Map(pictures.map((picture) => [picture.src, `${ASSETS}/${addressOf(picture.name)}`]))
 
   const text = toMarkdown(source, {
     ...(options.link ? { link: options.link } : {}),

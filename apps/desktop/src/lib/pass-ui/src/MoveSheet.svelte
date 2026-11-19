@@ -12,9 +12,7 @@
   const close = () => (ui.sheet = null)
 
   function childrenOf(vault: Vault, parent: string | null): Folder[] {
-    return vault.folders
-      .filter((one) => one.parent === parent)
-      .sort((a, b) => a.name.localeCompare(b.name))
+    return vault.folders.filter((one) => one.parent === parent).sort((a, b) => a.name.localeCompare(b.name))
   }
 
   async function moved(vault: string, folder: string | null) {

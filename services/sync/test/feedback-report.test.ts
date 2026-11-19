@@ -35,12 +35,7 @@ function bytes(...parts: (number[] | Uint8Array | string)[]): Uint8Array {
 function chunk(type: string, data: string | number[]): Uint8Array {
   const body = typeof data === 'string' ? bytes(data) : Uint8Array.from(data)
   const length = body.length
-  return bytes(
-    [length >>> 24, (length >>> 16) & 255, (length >>> 8) & 255, length & 255],
-    type,
-    body,
-    [0, 0, 0, 0],
-  )
+  return bytes([length >>> 24, (length >>> 16) & 255, (length >>> 8) & 255, length & 255], type, body, [0, 0, 0, 0])
 }
 
 const SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
@@ -159,9 +154,7 @@ describe('the pictures of a report', () => {
     expect(pictureOf(dataUrl('image/png', JPEG))).toBe('an image is not what it says it is')
     expect(pictureOf(dataUrl('image/gif', PNG))).toBe('an image must be a PNG or a JPEG')
     expect(pictureOf(dataUrl('image/png', PNG.subarray(0, 40)))).toBe('an image could not be read')
-    expect(pictureOf(dataUrl('image/png', new Uint8Array(1_000_001)))).toBe(
-      'an image may be at most 1 MB',
-    )
+    expect(pictureOf(dataUrl('image/png', new Uint8Array(1_000_001)))).toBe('an image may be at most 1 MB')
   })
 
   test('are served by their names, stripped, and drawn in the issue and on the page', async () => {
@@ -169,9 +162,11 @@ describe('the pictures of a report', () => {
       body: { ...REPORT, images: [dataUrl('image/png', PNG), dataUrl('image/jpeg', JPEG)] },
     })
     expect(answer.status).toBe(200)
-    const rows = env.db
-      .prepare('select name, position, type from feedback_images order by position')
-      .all() as { name: string; position: number; type: string }[]
+    const rows = env.db.prepare('select name, position, type from feedback_images order by position').all() as {
+      name: string
+      position: number
+      type: string
+    }[]
     expect(rows.map((one) => one.type)).toEqual(['image/png', 'image/jpeg'])
 
     const served = await call(env, `/v1/feedback/images/${rows[0]?.name ?? ''}`)
@@ -208,8 +203,7 @@ describe('the pictures of a report', () => {
 
   test('go with the account they came from', async () => {
     const token = await signIn(env, 'reader@example.com')
-    const me = (await call<{ user: { id: string; email: string } }>(env, '/v1/me', { token })).json
-      .user
+    const me = (await call<{ user: { id: string; email: string } }>(env, '/v1/me', { token })).json.user
     await call(env, '/v1/feedback', {
       token,
       body: { ...REPORT, images: [dataUrl('image/png', PNG)] },

@@ -144,8 +144,7 @@ describe('a window with no engine and nobody who has one', () => {
   test('while its own engine is starting, too', async () => {
     signedInAs('a')
     let refuse: () => void = () => undefined
-    opening.open = () =>
-      new Promise((_, reject) => (refuse = () => reject(new Error('the store refused'))))
+    opening.open = () => new Promise((_, reject) => (refuse = () => reject(new Error('the store refused'))))
     const starting = runner.start().catch(() => undefined)
     await flush()
     let answer: boolean | undefined

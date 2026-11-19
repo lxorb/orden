@@ -39,9 +39,8 @@ function userId(): string {
 }
 
 function asked(): number {
-  const row = env.db
-    .prepare('select count from limits where scope = ? and key = ?')
-    .get('ask', userId()) as { count: number } | undefined
+  const row = env.db.prepare('select count from limits where scope = ? and key = ?').get('ask', userId()) as
+    { count: number } | undefined
 
   return row?.count ?? 0
 }
@@ -73,9 +72,7 @@ describe('a key at rest', () => {
   test('will not open when somebody has edited the bytes', async () => {
     const box = await sealed(SECRET, 'u1', KEY)
     const [version, nonce, body] = box.split('.')
-    expect(await opened(SECRET, 'u1', `${version}.${nonce}.${(body ?? '').slice(0, -4)}AAAA`)).toBe(
-      null,
-    )
+    expect(await opened(SECRET, 'u1', `${version}.${nonce}.${(body ?? '').slice(0, -4)}AAAA`)).toBe(null)
     expect(await opened(SECRET, 'u1', `2.${nonce}.${body}`)).toBeNull()
     expect(await opened(SECRET, 'u1', 'nonsense')).toBeNull()
   })
@@ -106,9 +103,7 @@ describe('setting the key', () => {
     await put(KEY)
     const again = await put('sk-proj-something-completely-else-9999')
     expect(again.json).toEqual({ set: true, tail: '9999' })
-    expect(await opened(SECRET, userId(), stored().openai_key ?? '')).toBe(
-      'sk-proj-something-completely-else-9999',
-    )
+    expect(await opened(SECRET, userId(), stored().openai_key ?? '')).toBe('sk-proj-something-completely-else-9999')
   })
 
   test('trims what was pasted, because a key off a web page brings a newline', async () => {
@@ -343,10 +338,7 @@ describe('a question', () => {
   })
 
   test('searches the account’s own notes when the model asks', async () => {
-    const sent = fakeAsking([
-      wants('search_notes', { query: 'bitmaps' }),
-      said('The firmware font.'),
-    ])
+    const sent = fakeAsking([wants('search_notes', { query: 'bitmaps' }), said('The firmware font.')])
     const space = await firstSpace(token)
     await noteIn(token, space, 'fonts.md', 'one\nThe firmware font only, no bitmaps.\n')
 
@@ -391,8 +383,7 @@ describe('a question', () => {
     const sent = fakeAsking([wants('search_notes', { query: 'shared' }), said('found it')])
 
     const other = await signIn(env, 'y@y.dev')
-    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json
-      .space.id
+    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space.id
     await noteIn(other, theirs, 'plan.md', 'a shared line\n')
     await call(env, `/v1/spaces/${theirs}/share/invite`, {
       token: other,
@@ -431,9 +422,7 @@ describe('a question', () => {
     expect((await question({ question: 'again', model: 'gpt-6-astra' })).status).toBe(200)
     expect(asked()).toBe(1)
 
-    env.db
-      .prepare('update limits set count = ? where scope = ? and key = ?')
-      .run(59, 'ask', userId())
+    env.db.prepare('update limits set count = ? where scope = ? and key = ?').run(59, 'ask', userId())
 
     expect((await question({ question: 'again', model: 'gpt-6-astra' })).status).toBe(200)
     expect(asked()).toBe(60)
@@ -482,9 +471,7 @@ describe('what the microphone heard', () => {
     vi.stubGlobal('fetch', async (_url: string, options: { body: FormData }) => {
       const model = modelIn(options.body)
       tried.push(model)
-      return Promise.resolve(
-        model === 'whisper-1' ? new Response('next') : new Response('no', { status: 404 }),
-      )
+      return Promise.resolve(model === 'whisper-1' ? new Response('next') : new Response('no', { status: 404 }))
     })
 
     expect((await heard(new Uint8Array([1]))).json.said).toBe('next')
@@ -660,10 +647,7 @@ describe('what the microphone heard with no key', () => {
     env.AI = AI
 
     expect((await heard(wav(1))).json.said).toBe('next one')
-    expect(asked.map((one) => one.model)).toEqual([
-      '@cf/openai/whisper-large-v3-turbo',
-      '@cf/openai/whisper',
-    ])
+    expect(asked.map((one) => one.model)).toEqual(['@cf/openai/whisper-large-v3-turbo', '@cf/openai/whisper'])
     expect(Array.isArray((asked[1]?.input as { audio: unknown }).audio)).toBe(true)
   })
 

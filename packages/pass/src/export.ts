@@ -70,11 +70,7 @@ async function exportKey(
   return await subkey(await stretch(passphrase, salt, params), EXPORT_INFO)
 }
 
-export async function sealExport(
-  text: string,
-  passphrase: string,
-  params: KdfParams = PASSWORD_KDF,
-): Promise<string> {
+export async function sealExport(text: string, passphrase: string, params: KdfParams = PASSWORD_KDF): Promise<string> {
   const salt = randomBytes(SALT)
   const key = await exportKey(passphrase, salt, params)
   const sealed: SealedExport = {
@@ -101,16 +97,14 @@ function sealedIn(text: string): {
   } catch {
     throw new NotSealedExport('pass: not a sealed export')
   }
-  if (typeof value !== 'object' || value === null)
-    throw new NotSealedExport('pass: not a sealed export')
+  if (typeof value !== 'object' || value === null) throw new NotSealedExport('pass: not a sealed export')
   const { format, version, kdf, sealed } = value as Record<string, unknown>
   if (format !== SEALED_FORMAT || typeof sealed !== 'string') {
     throw new NotSealedExport('pass: not a sealed export')
   }
   if (version !== 1) throw new NotSealedExport('pass: a sealed export from a newer Orden')
   const params = kdfParamsIn(kdf)
-  const salt =
-    typeof kdf === 'object' && kdf !== null ? (kdf as Record<string, unknown>).salt : null
+  const salt = typeof kdf === 'object' && kdf !== null ? (kdf as Record<string, unknown>).salt : null
   if (params === null || typeof salt !== 'string') {
     throw new NotSealedExport('pass: the sealed export names no usable key stretching')
   }

@@ -1,15 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import {
-  conflictRule,
-  DEFAULT_RULE,
-  mirrorsFor,
-  newMirror,
-  readMirror,
-  returning,
-  savedRecord,
-} from '../src/api'
+import { conflictRule, DEFAULT_RULE, mirrorsFor, newMirror, readMirror, returning, savedRecord } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -17,9 +9,7 @@ const SRC = join(HERE, 'src')
 describe('the module stands on its own', () => {
   test('the api names what the shell reads at startup and leaves the passes behind doors', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
-    const statics = [...api.matchAll(/^export \{[^}]*\} from '\.\/([a-z.-]+)'/gm)].map(
-      (found) => found[1],
-    )
+    const statics = [...api.matchAll(/^export \{[^}]*\} from '\.\/([a-z.-]+)'/gm)].map((found) => found[1])
     expect(statics).not.toContain('pass')
     expect(statics).not.toContain('meeting')
     expect(statics).not.toContain('holding')

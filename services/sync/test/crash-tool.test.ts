@@ -57,9 +57,7 @@ const REPORT = {
 describe('the issue a group becomes', () => {
   test('is named by its kind and title', () => {
     expect(tool.issueTitle(GROUP)).toBe('Freeze: 41 s in web_open, killed')
-    expect(tool.issueTitle({ ...GROUP, kind: 'js', title: 'TypeError: x' })).toBe(
-      'JS error: TypeError: x',
-    )
+    expect(tool.issueTitle({ ...GROUP, kind: 'js', title: 'TypeError: x' })).toBe('JS error: TypeError: x')
   })
 
   test('carries no link, mention or terminal escape a report wrote into its version or platform', () => {
@@ -97,10 +95,7 @@ describe('the issue a group becomes', () => {
 
   test('shows what the symbols say for our frames', () => {
     const symbols = new Map([
-      [
-        'orden.exe+0x1a2b3c',
-        { symbol: 'orden_lib::web_tabs::open', location: 'src/web_tabs.rs:120:9' },
-      ],
+      ['orden.exe+0x1a2b3c', { symbol: 'orden_lib::web_tabs::open', location: 'src/web_tabs.rs:120:9' }],
     ])
     expect(tool.issueBody(GROUP, REPORT.id, REPORT, symbols)).toContain(
       '#01 orden.exe+0x1a2b3c  orden_lib::web_tabs::open (src/web_tabs.rs:120:9)',

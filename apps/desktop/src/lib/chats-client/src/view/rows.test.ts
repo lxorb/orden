@@ -51,14 +51,7 @@ describe('rows', () => {
           message(5, LUCILE, 10),
         ]),
       ),
-    ).toEqual([
-      'day 2026-10-02',
-      'head emil m1',
-      'more m2',
-      'head emil m3',
-      'head lucile m4',
-      'more m5',
-    ])
+    ).toEqual(['day 2026-10-02', 'head emil m1', 'more m2', 'head emil m3', 'head lucile m4', 'more m5'])
   })
 
   test('a new day starts a group, and says the day', () => {
@@ -89,12 +82,7 @@ describe('rows', () => {
       message(3, EMIL, 2, { deleted: true, replies: 2 }),
       message(4, EMIL, 3),
     ]
-    expect(said(rows(list))).toEqual([
-      'day 2026-10-02',
-      'head emil m1',
-      'head emil m3',
-      'head emil m4',
-    ])
+    expect(said(rows(list))).toEqual(['day 2026-10-02', 'head emil m1', 'head emil m3', 'head emil m4'])
   })
 
   test('an agent writing for a person starts a group of its own', () => {
@@ -105,11 +93,7 @@ describe('rows', () => {
   test('posts in the outbox come last and group with the reader’s own', () => {
     const list = [message(1, EMIL, 0)]
     const outbox = [message(0, EMIL, 1, { id: 'out1' })]
-    expect(said(rows(list, { outbox, readAtOpen: 0 }))).toEqual([
-      'day 2026-10-02',
-      'head emil m1',
-      'more out1 pending',
-    ])
+    expect(said(rows(list, { outbox, readAtOpen: 0 }))).toEqual(['day 2026-10-02', 'head emil m1', 'more out1 pending'])
   })
 
   test('receipts sit under the newest message each person has read', () => {
@@ -138,8 +122,8 @@ describe('rows', () => {
       message(at + 1, people[at % 3] ?? EMIL, at * 7, { deleted: at % 50 === 0 }),
     )
     const reads = new Map<Who, number>(people.map((who, at) => [who, 4_000 * (at + 1)]))
-    expect(
-      growth((size) => rows(many.slice(0, size), { reads, readAtOpen: size / 2 }), 4_000),
-    ).toBeLessThan(GROWS_AT_MOST)
+    expect(growth((size) => rows(many.slice(0, size), { reads, readAtOpen: size / 2 }), 4_000)).toBeLessThan(
+      GROWS_AT_MOST,
+    )
   })
 })

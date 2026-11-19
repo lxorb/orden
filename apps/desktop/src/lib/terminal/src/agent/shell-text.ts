@@ -101,14 +101,7 @@ const GIT: Record<string, Free> = {
   reflog: { valued: 'n', long: ['--oneline', '--all'] },
   describe: { long: ['--tags', '--always', '--abbrev', '--dirty', '--long', '--exact-match'] },
   'rev-parse': {
-    long: [
-      '--abbrev-ref',
-      '--short',
-      '--verify',
-      '--show-toplevel',
-      '--git-dir',
-      '--is-inside-work-tree',
-    ],
+    long: ['--abbrev-ref', '--short', '--verify', '--show-toplevel', '--git-dir', '--is-inside-work-tree'],
   },
   'ls-files': {
     flags: 'cdmost',
@@ -206,8 +199,7 @@ function reachesOut(word: string): boolean {
   return OUTSIDE.test(word) || word.split(/[\\/=@:]/).includes('..')
 }
 
-const anyReachesOut = (words: readonly string[]) =>
-  words.some((word) => !word.startsWith('-') && reachesOut(word))
+const anyReachesOut = (words: readonly string[]) => words.some((word) => !word.startsWith('-') && reachesOut(word))
 
 function gitStays(plain: readonly string[]): boolean {
   const at = plain.findIndex((word) => !word.startsWith('-'))
@@ -239,8 +231,7 @@ function wordsOf(line: string): string[] | null {
       else word = (word ?? '') + one
     } else if (quote === '"') {
       if (one === '"') quote = null
-      else if (one === '\\' && /["\\$`]/.test(line.charAt(at + 1)))
-        word = (word ?? '') + line.charAt(++at)
+      else if (one === '\\' && /["\\$`]/.test(line.charAt(at + 1))) word = (word ?? '') + line.charAt(++at)
       else word = (word ?? '') + one
     } else if (one === '"' || one === "'") {
       quote = one
@@ -350,12 +341,7 @@ function asCommandPromptReads(command: string): string[] {
   return words.slice(1).map((one) => one.replace(/"/g, ''))
 }
 
-export function runsOnTheList(
-  program: string,
-  args: readonly string[],
-  programs: readonly string[],
-  os: Os,
-): boolean {
+export function runsOnTheList(program: string, args: readonly string[], programs: readonly string[], os: Os): boolean {
   const name = programOf(program, os)
   if (name === '' || !programs.some((one) => programOf(one, os) === name)) return false
   if (args.some((one) => /[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u.test(one))) return false

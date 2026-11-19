@@ -1,8 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { renderMarkdown } from './index'
 
-const RESIZED =
-  'Before\n\n<img src="https://example.com/cat.png" alt="Cat" style="zoom:50%;" />\n\nAfter\n'
+const RESIZED = 'Before\n\n<img src="https://example.com/cat.png" alt="Cat" style="zoom:50%;" />\n\nAfter\n'
 
 describe('a picture resized in the editor, read where HTML is not trusted', () => {
   test('a published page or shared space draws it as a picture', () => {

@@ -24,9 +24,7 @@ describe('a change to a time record', () => {
   test('refuses a value that is not an object, or too large', () => {
     expect(timeChangeOf({ kind: 'span', id: 'a', value: [1] })).toBeNull()
     expect(timeChangeOf({ kind: 'span', id: 'a', value: 'x' })).toBeNull()
-    expect(
-      timeChangeOf({ kind: 'span', id: 'a', value: { note: 'x'.repeat(MOST_TIME_BYTES) } }),
-    ).toBeNull()
+    expect(timeChangeOf({ kind: 'span', id: 'a', value: { note: 'x'.repeat(MOST_TIME_BYTES) } })).toBeNull()
   })
 
   test('comes in a list no longer than the limit, every one of them sound', () => {

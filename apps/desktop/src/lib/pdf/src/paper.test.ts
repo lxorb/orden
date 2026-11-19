@@ -85,16 +85,8 @@ class Sheet {
   }
 }
 
-const {
-  closeUpOf,
-  densityFor,
-  forgetPaper,
-  holdPaper,
-  PapersHeld,
-  paperEdition,
-  paperOf,
-  paperRewritten,
-} = await import('./paper')
+const { closeUpOf, densityFor, forgetPaper, holdPaper, PapersHeld, paperEdition, paperOf, paperRewritten } =
+  await import('./paper')
 
 const AT = { file: 'Thick.pages.pdf', note: '/s/Thick.pages', root: '/s' }
 
@@ -214,8 +206,7 @@ describe('the pages of a paper', () => {
 
   test('the paper is read once for all its pages', async () => {
     const before = held.opened
-    for (let number = 1; number <= 5; number++)
-      void paperOf(AT, number, new AbortController().signal)
+    for (let number = 1; number <= 5; number++) void paperOf(AT, number, new AbortController().signal)
     for (let number = 1; number <= 5; number++) await drawNext()
 
     expect(held.opened - before).toBe(1)
@@ -235,13 +226,7 @@ describe('a close-up of a page', () => {
   })
 
   test('is never larger than the largest screen needs', async () => {
-    const asked = closeUpOf(
-      AT,
-      3,
-      { x: 0, y: 0, width: 1, height: 1 },
-      60_000,
-      new AbortController().signal,
-    )
+    const asked = closeUpOf(AT, 3, { x: 0, y: 0, width: 1, height: 1 }, 60_000, new AbortController().signal)
     await drawNext()
 
     const image = await asked
@@ -249,13 +234,7 @@ describe('a close-up of a page', () => {
   })
 
   test('of a long strip of a page stays within what a canvas can hold', async () => {
-    const asked = closeUpOf(
-      AT,
-      999,
-      { x: 0, y: 0, width: 1, height: 1 },
-      400,
-      new AbortController().signal,
-    )
+    const asked = closeUpOf(AT, 999, { x: 0, y: 0, width: 1, height: 1 }, 400, new AbortController().signal)
     await drawNext()
 
     const image = await asked

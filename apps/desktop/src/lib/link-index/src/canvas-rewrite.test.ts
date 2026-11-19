@@ -59,9 +59,7 @@ describe('a canvas linking a renamed note', () => {
   test('changes the paths to it and not one other character', () => {
     const out = rewriteCanvasLinks(obsidian, 'Board.canvas', move, namesOld)
 
-    const expected = obsidian
-      .replace('"file": "Old.md"', '"file": "New.md"')
-      .replace('[[Old]]', '[[New]]')
+    const expected = obsidian.replace('"file": "Old.md"', '"file": "New.md"').replace('[[Old]]', '[[New]]')
     expect(out).toBe(expected)
   })
 

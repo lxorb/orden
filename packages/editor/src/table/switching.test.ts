@@ -21,9 +21,7 @@ afterEach(() => {
 
 function typeInCell(view: EditorView) {
   forceParsing(view, view.state.doc.length, 10_000)
-  const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
-    (one) => one.textContent === '1',
-  )
+  const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '1')
   if (!cell) throw new Error('the table drew no cell holding 1')
   cell.tabIndex = 0
   cell.focus()

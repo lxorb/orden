@@ -15,10 +15,7 @@ function stateOf(doc: string): EditorState {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(0),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        trustedMarkup(false),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), trustedMarkup(false)],
     }),
   )
 }

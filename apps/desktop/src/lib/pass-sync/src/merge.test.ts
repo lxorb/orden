@@ -54,11 +54,7 @@ describe('merging two edits of one item', () => {
     const mine = envelope(login({ fields: [field('a', '1'), field('b', '2')] }), 20)
     const theirs = envelope(login({ fields: [field('a', 'changed'), field('c', '3')] }), 30)
     const merged = mergedEnvelope(was, mine, theirs)
-    expect((merged.envelope.content as Login).fields).toEqual([
-      field('a', 'changed'),
-      field('b', '2'),
-      field('c', '3'),
-    ])
+    expect((merged.envelope.content as Login).fields).toEqual([field('a', 'changed'), field('b', '2'), field('c', '3')])
     expect(merged.lost).toBeNull()
   })
 

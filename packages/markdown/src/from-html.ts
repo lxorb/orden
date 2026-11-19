@@ -58,11 +58,7 @@ const MEDIA: Record<string, string> = {
 
 function mediaLink(node: Element, options: FromHtmlOptions): string {
   const attribute = MEDIA[node.nodeName.toLowerCase()] ?? 'src'
-  const source = (
-    node.getAttribute(attribute) ??
-    node.querySelector('source[src]')?.getAttribute('src') ??
-    ''
-  ).trim()
+  const source = (node.getAttribute(attribute) ?? node.querySelector('source[src]')?.getAttribute('src') ?? '').trim()
   if (!source || !mayPointAt(source, options)) return ''
 
   const name = source.split(/[?#]/)[0]?.split('/').pop() ?? ''
@@ -87,8 +83,7 @@ function texOf(maths: Element): string {
   return angled(said.replace(/\s+/g, ' ').trim())
 }
 
-const saysAFormula = (node: Element): boolean =>
-  node.nodeName.toLowerCase() === 'math' || node.hasAttribute('data-tex')
+const saysAFormula = (node: Element): boolean => node.nodeName.toLowerCase() === 'math' || node.hasAttribute('data-tex')
 
 function drawnBeside(node: Element): boolean {
   if (node.getAttribute('aria-hidden') !== 'true') return false
@@ -121,11 +116,7 @@ const BESIDE_ROWS = new Set(['CAPTION', 'COLGROUP', 'COL'])
 function firstBody(element: Element | null): boolean {
   if (element?.nodeName !== 'TBODY') return false
 
-  for (
-    let before = element.previousElementSibling;
-    before;
-    before = before.previousElementSibling
-  ) {
+  for (let before = element.previousElementSibling; before; before = before.previousElementSibling) {
     if (BESIDE_ROWS.has(before.nodeName)) continue
     if (before.nodeName !== 'THEAD' || before.textContent.trim()) return false
   }
@@ -140,11 +131,7 @@ function headed(table: HTMLTableElement): boolean {
   if (parent?.nodeName === 'THEAD') return true
 
   const looked = parent?.nodeName === 'TABLE' || firstBody(parent)
-  return (
-    looked &&
-    first.previousElementSibling === null &&
-    [...first.cells].every((one) => one.nodeName === 'TH')
-  )
+  return looked && first.previousElementSibling === null && [...first.cells].every((one) => one.nodeName === 'TH')
 }
 
 function alone(table: HTMLTableElement): boolean {
@@ -399,11 +386,7 @@ function sameRun(node: Element, next: Node | null): Element | null {
 function marksHold(node: Element): boolean {
   let first = node
   let last = node
-  for (
-    let one = sameRun(first, first.previousSibling);
-    one;
-    one = sameRun(first, one.previousSibling)
-  ) {
+  for (let one = sameRun(first, first.previousSibling); one; one = sameRun(first, one.previousSibling)) {
     first = one
   }
   for (let one = sameRun(last, last.nextSibling); one; one = sameRun(last, one.nextSibling)) {
@@ -471,9 +454,7 @@ function calloutType(node: Element): string | null {
 }
 
 const calloutHead = (node: Element): Element | null =>
-  Array.from(node.children).find((one) =>
-    CALLOUT_HEAD.some((name) => one.classList.contains(name)),
-  ) ?? null
+  Array.from(node.children).find((one) => CALLOUT_HEAD.some((name) => one.classList.contains(name))) ?? null
 
 const FOOTNOTE_LABEL = /^[^\]\s]+$/
 
@@ -506,8 +487,7 @@ function footnoteRefLabel(node: Element): string | null {
 }
 
 const isBackLink = (node: Element): boolean =>
-  node.nodeName === 'A' &&
-  (node.classList.contains('footnote-back') || node.hasAttribute('data-footnote-backref'))
+  node.nodeName === 'A' && (node.classList.contains('footnote-back') || node.hasAttribute('data-footnote-backref'))
 
 function footnoteDefLabel(node: Element): string | null {
   if (node.nodeName !== 'LI') return null
@@ -519,11 +499,9 @@ function footnoteDefLabel(node: Element): string | null {
   return fromFragment(`#${node.id}`, /^#(?:user-content-)?fn-/)
 }
 
-const quoted = (lines: readonly string[]): string =>
-  lines.map((line) => (line ? `> ${line}` : '>')).join('\n')
+const quoted = (lines: readonly string[]): string => lines.map((line) => (line ? `> ${line}` : '>')).join('\n')
 
-const FROM_A_SHEET =
-  /<google-sheets-html-origin|\bdata-sheets-root\b|urn:schemas-microsoft-com:office:excel/i
+const FROM_A_SHEET = /<google-sheets-html-origin|\bdata-sheets-root\b|urn:schemas-microsoft-com:office:excel/i
 
 const FROM_LIBREOFFICE = /<meta\b[^>]*\bcontent=["']?LibreOffice/i
 
@@ -596,10 +574,7 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
 
   service.addRule('styled', {
     filter: (node) =>
-      node.nodeName === 'SPAN' &&
-      marksFor(node) === null &&
-      styledAs(node) !== null &&
-      !node.closest('code,pre'),
+      node.nodeName === 'SPAN' && marksFor(node) === null && styledAs(node) !== null && !node.closest('code,pre'),
     replacement: (content, node) => {
       const words = /^(\s*)([\s\S]*?)(\s*)$/u.exec(content)
       const core = words?.[2] ?? ''
@@ -608,9 +583,7 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       if (styled && markedAbove(node, styled)) return content
       const marker = styled === 'sup' ? '^' : styled === 'sub' ? '~' : '~~'
       const marked = styled === 'del' || (!core.includes(marker) && !/\s/u.test(core))
-      const written = marked
-        ? `${marker}${core}${marker}`
-        : `<${styled ?? ''}>${core}</${styled ?? ''}>`
+      const written = marked ? `${marker}${core}${marker}` : `<${styled ?? ''}>${core}</${styled ?? ''}>`
       return `${words?.[1] ?? ''}${written}${words?.[3] ?? ''}`
     },
   })
@@ -667,8 +640,7 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
         .replace(/^(\[[ x]\])\s*/, '$1 ')
         .replace(
           /^(\[[ x]\] )([^\n]*)/,
-          (_, box: string, words: string) =>
-            box + (options.plainTasks === true ? taskWords(words) : withFields(words)),
+          (_, box: string, words: string) => box + (options.plainTasks === true ? taskWords(words) : withFields(words)),
         )
 
       const ended = body.replace(/\n[ \t]*$/, '\n')
@@ -686,10 +658,7 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
       if (!item) return `\n\n${content}\n\n`
 
       const from = Number(parent.getAttribute('start') ?? 1) || 1
-      const marker =
-        parent.nodeName === 'OL'
-          ? `${from + indexIn(parent, item)}.`
-          : (settings.bulletListMarker ?? '-')
+      const marker = parent.nodeName === 'OL' ? `${from + indexIn(parent, item)}.` : (settings.bulletListMarker ?? '-')
       const indent = ' '.repeat(marker.length + 1)
       const lines = content.replace(/^\n+|\n+$/g, '').replace(/\n/g, `\n${indent}`)
       return `${indent}${lines}\n`
@@ -905,8 +874,7 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
   })
 
   service.addRule('footnoteHeading', {
-    filter: (node) =>
-      node.id === 'footnote-label' && node.closest('section[data-footnotes]') !== null,
+    filter: (node) => node.id === 'footnote-label' && node.closest('section[data-footnotes]') !== null,
     replacement: () => '',
   })
 
@@ -924,14 +892,12 @@ function converter(options: FromHtmlOptions, sheet: boolean): TurndownService {
   })
 
   service.addRule('wordListMark', {
-    filter: (node) =>
-      node.nodeType === 1 && WORD_LIST_MARK.test((node as Element).getAttribute('style') ?? ''),
+    filter: (node) => node.nodeType === 1 && WORD_LIST_MARK.test((node as Element).getAttribute('style') ?? ''),
     replacement: () => '',
   })
 
   service.addRule('wordListItem', {
-    filter: (node) =>
-      node.nodeName === 'P' && WORD_LIST.test((node as Element).getAttribute('style') ?? ''),
+    filter: (node) => node.nodeName === 'P' && WORD_LIST.test((node as Element).getAttribute('style') ?? ''),
     replacement: (content, node) => {
       const words = content.trim()
       if (!words) return ''

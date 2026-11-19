@@ -8,10 +8,7 @@ import { describe, expect, test } from 'vitest'
 
 const read = (name: string) =>
   readFileSync(
-    new URL(
-      `../../../../src-tauri/crates/extensions/src/extensions/firefox/${name}`,
-      import.meta.url,
-    ),
+    new URL(`../../../../src-tauri/crates/extensions/src/extensions/firefox/${name}`, import.meta.url),
     'utf8',
   )
 const FIREFOX = read('firefox.js')
@@ -83,8 +80,7 @@ function engine() {
       runtime: {
         id: 'abcdefghijklmnopabcdefghijklmnop',
         lastError: undefined,
-        getURL: (path: string) =>
-          `chrome-extension://abcdefghijklmnopabcdefghijklmnop/${path.replace(/^\//, '')}`,
+        getURL: (path: string) => `chrome-extension://abcdefghijklmnopabcdefghijklmnop/${path.replace(/^\//, '')}`,
         getManifest: () => ({ manifest_version: 3 }),
         onMessage: event(),
         onInstalled: event(),
@@ -192,12 +188,7 @@ describe('a page of the add-on', () => {
   test('has containers of its own, and tabs only in the one store', async () => {
     const { browser } = page()
     const all = await browser.contextualIdentities.query({})
-    expect(all.map((one: { name: string }) => one.name)).toEqual([
-      'Personal',
-      'Work',
-      'Banking',
-      'Shopping',
-    ])
+    expect(all.map((one: { name: string }) => one.name)).toEqual(['Personal', 'Work', 'Banking', 'Shopping'])
     const created: unknown[] = []
     browser.contextualIdentities.onCreated.addListener((said: unknown) => created.push(said))
     const made = await browser.contextualIdentities.create({
@@ -214,9 +205,7 @@ describe('a page of the add-on', () => {
   test('hides tabs for itself, and keeps what Firefox keeps beside a tab', async () => {
     const { browser } = page()
     expect(await browser.tabs.hide([2])).toEqual([2])
-    expect(
-      (await browser.tabs.query({ hidden: true })).map((tab: { id: number }) => tab.id),
-    ).toEqual([2])
+    expect((await browser.tabs.query({ hidden: true })).map((tab: { id: number }) => tab.id)).toEqual([2])
     await browser.tabs.show(2)
     expect(await browser.tabs.query({ hidden: true })).toEqual([])
   })
@@ -246,9 +235,7 @@ describe('a page of the add-on', () => {
   test('opens its sidebar as a tab, and puts a Manifest V2 script in a tab with `browser`', async () => {
     const { browser, created, executed } = page()
     await browser.sidebarAction.open()
-    expect(created).toEqual([
-      { url: 'chrome-extension://abcdefghijklmnopabcdefghijklmnop/sidebar.html' },
-    ])
+    expect(created).toEqual([{ url: 'chrome-extension://abcdefghijklmnopabcdefghijklmnop/sidebar.html' }])
     expect(await browser.tabs.executeScript(1, { file: '/content.js' })).toEqual(['done'])
     expect(executed[0]).toMatchObject({
       target: { tabId: 1 },
@@ -281,9 +268,7 @@ describe('a page of the add-on', () => {
         ['blocking'],
       ),
     ).not.toThrow()
-    expect(filters).toEqual([
-      { urls: ['<all_urls>'], types: ['main_frame', 'image', 'ping', 'object'] },
-    ])
+    expect(filters).toEqual([{ urls: ['<all_urls>'], types: ['main_frame', 'image', 'ping', 'object'] }])
   })
 
   test('puts a file in a tab by a path from its own page, as Firefox does', async () => {

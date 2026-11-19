@@ -13,10 +13,7 @@ afterEach(() => {
   }
 })
 
-function machine(
-  call: (url: string) => Promise<number> = () => Promise.resolve(200),
-  restart?: () => void,
-) {
+function machine(call: (url: string) => Promise<number> = () => Promise.resolve(200), restart?: () => void) {
   const state = mkdtempSync(join(tmpdir(), 'ordend-state-'))
   const ordend = new Ordend({
     state,
@@ -102,9 +99,7 @@ test('a pasted picture is answered with where it was written, once its last part
       t: 'image',
       session: 's_1',
       id,
-      path: expect.stringMatching(
-        /\.cache[\\/]orden[\\/]images[\\/]0123456789abcdef0123\.png$/,
-      ) as string,
+      path: expect.stringMatching(/\.cache[\\/]orden[\\/]images[\\/]0123456789abcdef0123\.png$/) as string,
     },
   ])
 })
@@ -180,9 +175,9 @@ test('a want behind an open that finds nothing is nothing, and frames after it g
     opening: Map<string, unknown>
   }
   inner.holderOf = () => Promise.reject(new Error('no socket'))
-  await expect(
-    ordend.receive({ t: 'open', session: 's_none', cols: 80, rows: 24, watching: true }),
-  ).rejects.toThrow('no socket')
+  await expect(ordend.receive({ t: 'open', session: 's_none', cols: 80, rows: 24, watching: true })).rejects.toThrow(
+    'no socket',
+  )
   await ordend.receive({ t: 'want', session: 's_none', since: 0 })
   expect(inner.opening.size).toBe(0)
 })

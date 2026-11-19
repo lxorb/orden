@@ -5,8 +5,7 @@ interface Space {
   root: string
 }
 
-export type Arrival =
-  { kind: 'open'; spaceId: string; path: string } | { kind: 'bring'; spaceId: string; root: string }
+export type Arrival = { kind: 'open'; spaceId: string; path: string } | { kind: 'bring'; spaceId: string; root: string }
 
 export function arrivalOf(
   path: string,

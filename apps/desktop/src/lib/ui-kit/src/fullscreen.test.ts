@@ -22,9 +22,7 @@ vi.mock('../../platform/src/api', async (actual) => ({
 
 const { escapeLeaves, fullscreen, IDLE } = await import('./fullscreen.svelte')
 
-function twoPanes(
-  showing: { left: string | null; right: string | null } = { left: 'tab-1', right: 'tab-2' },
-) {
+function twoPanes(showing: { left: string | null; right: string | null } = { left: 'tab-1', right: 'tab-2' }) {
   const shown = { ...showing }
   return {
     fills: null as string | null,

@@ -284,8 +284,7 @@ export class FenceHeaderWidget extends OrdenWidget {
   }
 
   private askButton(view: EditorView): HTMLElement {
-    if (this.asking)
-      return this.glyphButton('Stop', 'Stop', 'M4 4h6v6H4z', () => stopAskAt(view, this.blockFrom))
+    if (this.asking) return this.glyphButton('Stop', 'Stop', 'M4 4h6v6H4z', () => stopAskAt(view, this.blockFrom))
 
     return this.glyphButton('Ask', 'Ask the model', 'M4 2.6l7 4.4-7 4.4z', () => {
       const fence = aiFenceAt(view.state, this.blockFrom)

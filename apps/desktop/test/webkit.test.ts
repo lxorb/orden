@@ -15,11 +15,7 @@ const SOURCES = [
 ]
 
 const files = SOURCES.flatMap((one) =>
-  walk(
-    join(ROOT, one),
-    (path) => /\.(ts|svelte|css|js)$/.test(path) && !path.endsWith('.test.ts'),
-    ['node_modules'],
-  ),
+  walk(join(ROOT, one), (path) => /\.(ts|svelte|css|js)$/.test(path) && !path.endsWith('.test.ts'), ['node_modules']),
 ).map((path) => ({
   name: relative(ROOT, path).replaceAll('\\', '/'),
   text: readFileSync(path, 'utf8'),
@@ -41,13 +37,7 @@ interface Tag {
   attributes?: { type: string; name?: string }[]
 }
 
-const DOM_TAGS = new Set([
-  'RegularElement',
-  'SvelteElement',
-  'SvelteWindow',
-  'SvelteDocument',
-  'SvelteBody',
-])
+const DOM_TAGS = new Set(['RegularElement', 'SvelteElement', 'SvelteWindow', 'SvelteDocument', 'SvelteBody'])
 
 function* tags(node: unknown): Generator<Tag> {
   if (!node || typeof node !== 'object') return
@@ -63,8 +53,7 @@ function* tags(node: unknown): Generator<Tag> {
 function hears(tag: Tag, kind: 'dragover' | 'dragenter'): boolean {
   return (tag.attributes ?? []).some(
     (one) =>
-      (one.type === 'Attribute' && one.name === `on${kind}`) ||
-      (one.type === 'OnDirective' && one.name === kind),
+      (one.type === 'Attribute' && one.name === `on${kind}`) || (one.type === 'OnDirective' && one.name === kind),
   )
 }
 
@@ -80,8 +69,7 @@ function overWithoutEnter(one: { name: string; text: string }): string[] {
   if (one.name.endsWith('.svelte')) {
     const ast = parse(one.text, { modern: true })
     for (const tag of tags(ast.fragment))
-      if (hears(tag, 'dragover') && !hears(tag, 'dragenter'))
-        lone.push(`${one.name}: <${tag.name}>`)
+      if (hears(tag, 'dragover') && !hears(tag, 'dragenter')) lone.push(`${one.name}: <${tag.name}>`)
   }
   const body = code(one.text)
   for (const [what, pattern] of [
@@ -99,11 +87,7 @@ const MISSING: [string, RegExp, RegExp][] = [
   ['requestIdleCallback', /\brequestIdleCallback\s*\(/, /typeof requestIdleCallback/],
   ['cancelIdleCallback', /\bcancelIdleCallback\s*\(/, /typeof requestIdleCallback|hasIdle/],
   ['scheduler', /(^|[^.\w])scheduler\.(yield|postTask)/m, /globalThis/],
-  [
-    'showOpenFilePicker',
-    /\bshow(Open|Save)FilePicker\s*\(|\bshowDirectoryPicker\s*\(/,
-    /in window/,
-  ],
+  ['showOpenFilePicker', /\bshow(Open|Save)FilePicker\s*\(|\bshowDirectoryPicker\s*\(/, /in window/],
   ['navigator.locks', /navigator\.locks\s*\.request/, /navigator\.locks\s*\?|typeof navigator/],
 ]
 
@@ -142,12 +126,8 @@ describe('WebKit on iOS', () => {
   }
 
   test('takes a drop where it hears dragover from dragenter on, as WebKit decides there', () => {
-    expect(files.reduce((sum, one) => sum + count(one.text, /use:dropOver=/g), 0)).toBeGreaterThan(
-      20,
-    )
-    expect(
-      files.filter((one) => /\.(ts|js|svelte)$/.test(one.name)).flatMap(overWithoutEnter),
-    ).toEqual([])
+    expect(files.reduce((sum, one) => sum + count(one.text, /use:dropOver=/g), 0)).toBeGreaterThan(20)
+    expect(files.filter((one) => /\.(ts|js|svelte)$/.test(one.name)).flatMap(overWithoutEnter)).toEqual([])
   })
 
   test('sizes a field to its words only through grow where it cannot itself', () => {

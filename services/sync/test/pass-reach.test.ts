@@ -6,16 +6,7 @@ import { sweepPassLinks } from '../src/sync-server-pass/src'
 import { programMayReach } from '../src/sync-server/src/programs'
 import { call, type TestEnv, testEnv } from './harness'
 import { connect, hubs } from './hub-fakes'
-import {
-  aKeyring,
-  anId,
-  pass,
-  passCall,
-  type Person,
-  person,
-  sealed,
-  sharedVault,
-} from './pass-fakes'
+import { aKeyring, anId, pass, passCall, type Person, person, sealed, sharedVault } from './pass-fakes'
 
 let env: TestEnv
 let ada: Person
@@ -69,13 +60,14 @@ describe('the Pass routes', () => {
   })
 
   test('refuse a guest', async () => {
-    const space = (await call(env, '/v1/spaces', { token: ada.token, body: { name: 'Plans' } }))
-      .json.space as { id: string }
-    const shared = await call<{ link?: { url: string } }>(
-      env,
-      `/v1/spaces/${space.id}/share/link`,
-      { method: 'PUT', token: ada.token, body: { role: 'write', mode: 'open' } },
-    )
+    const space = (await call(env, '/v1/spaces', { token: ada.token, body: { name: 'Plans' } })).json.space as {
+      id: string
+    }
+    const shared = await call<{ link?: { url: string } }>(env, `/v1/spaces/${space.id}/share/link`, {
+      method: 'PUT',
+      token: ada.token,
+      body: { role: 'write', mode: 'open' },
+    })
     const link = /\/join\/([a-f0-9]+)/.exec(shared.json.link?.url ?? '')?.[1] ?? ''
     const joined = await call<{ token: string }>(env, `/v1/join/${link}`, {
       method: 'POST',
@@ -126,9 +118,9 @@ describe('the hub', () => {
 
 function rowsNaming(database: DatabaseSync, marks: readonly string[]): string[] {
   const tables = (
-    database
-      .prepare("select name from sqlite_master where type = 'table' and name like 'pass_%'")
-      .all() as { name: string }[]
+    database.prepare("select name from sqlite_master where type = 'table' and name like 'pass_%'").all() as {
+      name: string
+    }[]
   ).map((one) => one.name)
   return tables.flatMap((table) =>
     database
@@ -169,14 +161,10 @@ describe('deleting an account', () => {
         expect.objectContaining({ id: theirs, deleted: false, members: 2 }),
       ]),
     )
-    expect(
-      env.db.prepare('select count(*) as n from pass_items where vault_id = ?').get(owned),
-    ).toEqual({
+    expect(env.db.prepare('select count(*) as n from pass_items where vault_id = ?').get(owned)).toEqual({
       n: 0,
     })
-    expect(
-      env.db.prepare('select count(*) as n from pass_items where vault_id = ?').get(theirs),
-    ).toEqual({
+    expect(env.db.prepare('select count(*) as n from pass_items where vault_id = ?').get(theirs)).toEqual({
       n: 1,
     })
     expect(env.db.prepare('select count(*) as n from pass_links').get()).toEqual({ n: 0 })
@@ -186,9 +174,7 @@ describe('deleting an account', () => {
     const theirs = await sharedVault(env, bob, ada, 'editor')
     await eraseAccount(env, { id: ada.id, email: ada.email, name: null, created_at: 1 })
     const rows = env.db
-      .prepare(
-        'select email, user_id, state, key, key_version from pass_members where vault_id = ?',
-      )
+      .prepare('select email, user_id, state, key, key_version from pass_members where vault_id = ?')
       .all(theirs) as { email: string; user_id: string | null; state: string; key: string | null }[]
     expect(rows).toHaveLength(2)
     const gone = rows.find((one) => one.email !== bob.email)

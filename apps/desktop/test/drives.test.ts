@@ -51,16 +51,14 @@ for (const path of sources) {
   const text = read(path)
   classesIn(path, text, classes)
 
-  for (const found of text.matchAll(/\bid\s*[=:]\s*["'`]([^"'`${}]*)["'`]/g))
-    split(caught(found), ids)
+  for (const found of text.matchAll(/\bid\s*[=:]\s*["'`]([^"'`${}]*)["'`]/g)) split(caught(found), ids)
   for (const found of text.matchAll(/#(-?[A-Za-z_][\w-]*)/g)) ids.add(caught(found))
 
   for (const found of text.matchAll(/\bdata-([a-z][\w-]*)/g)) data.add(caught(found))
   for (const found of text.matchAll(/\bdataset\.([A-Za-z]\w*)/g))
     data.add(caught(found).replace(/[A-Z]/g, (one) => `-${one.toLowerCase()}`))
 
-  for (const found of text.matchAll(/\btitle\s*[=:]\s*(["'`])([^"'`${}]*)\1/g))
-    titles.add(caught(found, 2))
+  for (const found of text.matchAll(/\btitle\s*[=:]\s*(["'`])([^"'`${}]*)\1/g)) titles.add(caught(found, 2))
   for (const found of text.matchAll(/<title>([^<]*)<\/title>/g)) titles.add(caught(found))
 }
 
@@ -73,9 +71,7 @@ const NOT_OURS = /^(?:cm-|ytp-|vp-)/
 
 function strangers(selector: string): string[] {
   const gone: string[] = []
-  for (const found of selector
-    .replace(/\\(["'])/g, '$1')
-    .matchAll(/\[title\s*=\s*(["'])((?:(?!\1).)*)\1\s*\]/g))
+  for (const found of selector.replace(/\\(["'])/g, '$1').matchAll(/\[title\s*=\s*(["'])((?:(?!\1).)*)\1\s*\]/g))
     if (!titles.has(caught(found, 2))) gone.push(`[title="${caught(found, 2)}"]`)
   const part = selector.replace(/(["'])(?:\\.|(?!\1).)*\1/g, '""')
 
@@ -114,8 +110,7 @@ describe('the names a drive points at', () => {
   test.each(drives)('%s points at names the app still writes', (name) => {
     const text = read(E2E, name)
     const selectors = new Set<string>()
-    for (const found of text.matchAll(ASKED))
-      if (!caught(found, 2).includes('://')) selectors.add(caught(found, 2))
+    for (const found of text.matchAll(ASKED)) if (!caught(found, 2).includes('://')) selectors.add(caught(found, 2))
     for (const found of text.matchAll(HELD)) selectors.add(`.${caught(found, 2)}`)
 
     const stale = [...selectors]
@@ -133,9 +128,7 @@ function drawnBy(path: string, found = new Set<string>()): Set<string> {
   found.add(path)
   for (const one of read(path).matchAll(/from\s+'(\.{1,2}\/[^']+\.svelte)'/g))
     drawnBy(join(path, '..', caught(one)), found)
-  for (const one of read(path).matchAll(
-    /import\s+\{([^}]*)\}\s+from\s+'(\.{1,2}\/[^']+\/src\/api)'/g,
-  )) {
+  for (const one of read(path).matchAll(/import\s+\{([^}]*)\}\s+from\s+'(\.{1,2}\/[^']+\/src\/api)'/g)) {
     const api = join(path, '..', `${caught(one, 2)}.ts`)
     if (!existsSync(api)) continue
     const names = new Set(
@@ -143,18 +136,14 @@ function drawnBy(path: string, found = new Set<string>()): Set<string> {
         .split(',')
         .map((name) => name.trim()),
     )
-    for (const part of read(api).matchAll(
-      /export \{ default as (\w+) \} from '(\.\/[^']+\.svelte)'/g,
-    ))
+    for (const part of read(api).matchAll(/export \{ default as (\w+) \} from '(\.\/[^']+\.svelte)'/g))
       if (names.has(caught(part))) drawnBy(join(api, '..', caught(part, 2)), found)
   }
   return found
 }
 
 const bar = new Set<string>()
-for (const path of drawnBy(
-  join(ROOT, 'apps', 'desktop', 'src', 'lib', 'titlebar', 'src', 'Titlebar.svelte'),
-))
+for (const path of drawnBy(join(ROOT, 'apps', 'desktop', 'src', 'lib', 'titlebar', 'src', 'Titlebar.svelte')))
   classesIn(path, read(path), bar)
 
 describe('the names a drive looks for in the top bar', () => {
@@ -258,13 +247,10 @@ describe('the activity a drive stands in for', () => {
 })
 
 describe('the Worker a drive asks', () => {
-  const helper = (source: string): string =>
-    /^def request\([\s\S]*?(?=^[^\s)])/m.exec(source)?.[0] ?? ''
+  const helper = (source: string): string => /^def request\([\s\S]*?(?=^[^\s)])/m.exec(source)?.[0] ?? ''
 
   test('every drive asks it through harness.request, not a urlopen of its own', () => {
-    const own = drives.filter(
-      (name) => name !== 'harness.py' && /\burlopen\(/.test(helper(read(E2E, name))),
-    )
+    const own = drives.filter((name) => name !== 'harness.py' && /\burlopen\(/.test(helper(read(E2E, name))))
     expect(own).toEqual([])
   })
 
@@ -314,9 +300,7 @@ describe('the requests a drive holds or refuses', () => {
 
 describe('a panel the sidebar offers only to an account', () => {
   const sidebar = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'sidebar', 'src', 'Sidebar.svelte')
-  const owed = [...sidebar.matchAll(/id !== '(\w+)' \|\| \(!!account\.accountToken\b/g)].map(
-    (found) => caught(found),
-  )
+  const owed = [...sidebar.matchAll(/id !== '(\w+)' \|\| \(!!account\.accountToken\b/g)].map((found) => caught(found))
 
   test('is read from the rule that offers it', () => {
     expect(owed).toContain('chats')

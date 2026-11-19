@@ -46,9 +46,7 @@
   let standing = $state<number | null>(null)
   let reaching = $state<number | null>(null)
 
-  const pinned = $derived(
-    [standing, reaching].filter((one): one is number => one !== null && one < all.length),
-  )
+  const pinned = $derived([standing, reaching].filter((one): one is number => one !== null && one < all.length))
 
   const rows = $derived<Rows>({
     count: all.length,
@@ -135,11 +133,7 @@
 
   {#each drawn as one (`${one.row.path}:${one.row.line}:${one.at}`)}
     {@const place = placeOf(one.row)}
-    <li
-      data-row={one.at}
-      class:away={one.away}
-      style:top={one.away ? `${offsetOf(one.at, rows)}px` : undefined}
-    >
+    <li data-row={one.at} class:away={one.away} style:top={one.away ? `${offsetOf(one.at, rows)}px` : undefined}>
       <button
         class="orden-row hit"
         class:missing={noteOf(one.row) === null}
@@ -153,8 +147,7 @@
             {#if place.folder}<span class="orden-row-meta">{place.folder}</span>{/if}
           </span>
           <span class="hit-line"
-            >{#each linkPieces(one.row.text) as piece, at (at)}{#if piece.link}<span class="link"
-                  >{piece.text}</span
+            >{#each linkPieces(one.row.text) as piece, at (at)}{#if piece.link}<span class="link">{piece.text}</span
                 >{:else}{piece.text}{/if}{/each}</span
           >
         </span>

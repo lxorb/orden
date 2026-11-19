@@ -16,9 +16,7 @@ afterEach(() => {
   for (const view of open.splice(0)) view.destroy()
 })
 
-const paragraph = 'Some words about the plan for the week, written out as a note would be. '.repeat(
-  4,
-)
+const paragraph = 'Some words about the plan for the week, written out as a note would be. '.repeat(4)
 
 function noteWith(before: number): string {
   const lead = Array.from({ length: before }, () => paragraph).join('\n\n')

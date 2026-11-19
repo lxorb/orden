@@ -34,9 +34,7 @@
   }
   const { turn, sources, last, live, ongoto }: Props = $props()
 
-  const words = $derived(
-    turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join(''),
-  )
+  const words = $derived(turn.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join(''))
 
   type Notice = Extract<Part, { kind: 'notice' }>
 
@@ -53,9 +51,7 @@
     const from = untrack(() => workspace.panelTab?.path ?? null)
     return answerHtml(source, {
       resolveLink: (link) => {
-        const found = link.target
-          ? links.targetOf(from, { kind: 'wikilink', target: link.target })
-          : null
+        const found = link.target ? links.targetOf(from, { kind: 'wikilink', target: link.target }) : null
         return found === null ? null : { href: found }
       },
       copy: 'Copy code',
@@ -174,9 +170,7 @@
     return NOTICE_WORDS[code] ?? text
   }
 
-  const failed = $derived(
-    turn.parts.some((part) => part.kind === 'notice' && part.code === 'error'),
-  )
+  const failed = $derived(turn.parts.some((part) => part.kind === 'notice' && part.code === 'error'))
   const answered = $derived(!!words.trim())
   const reset = $derived(chat.head ? chat.resets[chat.head.id] : undefined)
 </script>
@@ -185,12 +179,7 @@
   {#if block.kind === 'words'}
     {@const still = live && block.at === blocks.at(-1)?.at}
     {#if still}
-      <LiveAnswer
-        text={block.text}
-        draw={(text: string) => drawn(text, true)}
-        onfollow={follow}
-        onpicture={show}
-      />
+      <LiveAnswer text={block.text} draw={(text: string) => drawn(text, true)} onfollow={follow} onpicture={show} />
     {:else}
       <Answer html={drawn(block.text, false)} onfollow={follow} onpicture={show} />
     {/if}
@@ -211,9 +200,7 @@
           Continues at {when(reset.until, 'medium')}
           <button class="link" onclick={() => chat.waitForReset(false)}>Cancel</button>
         {:else if reset}
-          <button class="link" onclick={() => chat.waitForReset(true)}>
-            Continue when the limit resets
-          </button>
+          <button class="link" onclick={() => chat.waitForReset(true)}> Continue when the limit resets </button>
         {/if}
       {/if}
     </p>
@@ -231,13 +218,7 @@
   {/if}
 {/snippet}
 
-{#snippet act(
-  label: string,
-  run: (event: MouseEvent) => void,
-  path: string,
-  menu = false,
-  disabled = false,
-)}
+{#snippet act(label: string, run: (event: MouseEvent) => void, path: string, menu = false, disabled = false)}
   <button
     class="orden-glyph act"
     title={label}
@@ -272,9 +253,7 @@
   {#if cited.length}
     <div class="sources">
       {#each cited as one (one.path)}
-        <button class="source" title={one.path} onclick={(event) => void openAt(one, event)}
-          >{one.name}</button
-        >
+        <button class="source" title={one.path} onclick={(event) => void openAt(one, event)}>{one.name}</button>
       {/each}
     </div>
   {/if}

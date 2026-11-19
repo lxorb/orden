@@ -53,9 +53,7 @@ describe('escape', () => {
   })
   test('unwinds a deep stack one press at a time, newest first', () => {
     const closed: string[] = []
-    const offs = ['deck', 'sheet', 'settings', 'dropdown'].map((name) =>
-      overlays.show(() => closed.push(name)),
-    )
+    const offs = ['deck', 'sheet', 'settings', 'dropdown'].map((name) => overlays.show(() => closed.push(name)))
     while (overlays.escape());
     expect(closed).toEqual(['dropdown', 'settings', 'sheet', 'deck'])
     for (const off of offs) off()
@@ -305,10 +303,7 @@ describe('what hides a web page', () => {
 
   test('what comes out under a resting pointer is a peek, and nothing opened by a press is', () => {
     const peeks = sources().filter((path) => read(path).includes('overlays.peek('))
-    expect(peeks.sort()).toEqual([
-      'lib/sidebar/src/Sidebar.svelte',
-      'lib/tab-strip/src/hover-card.svelte.ts',
-    ])
+    expect(peeks.sort()).toEqual(['lib/sidebar/src/Sidebar.svelte', 'lib/tab-strip/src/hover-card.svelte.ts'])
     for (const path of peeks) expect(read(path), path).not.toContain('overlays.show(')
   })
 
@@ -329,13 +324,7 @@ describe('what hides a web page', () => {
     const row = app.slice(app.indexOf('class="notices"'))
     const end = row.indexOf('{/snippet}')
     expect(end).toBeGreaterThan(0)
-    for (const name of [
-      'StorageWarning',
-      'RecordingPill',
-      'UpdateNotice',
-      'RenameNotice',
-      'UndoToast',
-    ]) {
+    for (const name of ['StorageWarning', 'RecordingPill', 'UpdateNotice', 'RenameNotice', 'UndoToast']) {
       expect(row.slice(0, end), name).toContain(`<${name}`)
       expect(app.split(`<${name}`).length - 1, name).toBe(1)
     }

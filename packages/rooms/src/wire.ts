@@ -1,11 +1,7 @@
 import * as decoding from 'lib0/decoding'
 import * as encoding from 'lib0/encoding'
 import type { Awareness } from 'y-protocols/awareness'
-import {
-  applyAwarenessUpdate,
-  encodeAwarenessUpdate,
-  removeAwarenessStates,
-} from 'y-protocols/awareness'
+import { applyAwarenessUpdate, encodeAwarenessUpdate, removeAwarenessStates } from 'y-protocols/awareness'
 import { readSyncMessage, writeSyncStep1, writeUpdate } from 'y-protocols/sync'
 import type * as Y from 'yjs'
 
@@ -42,8 +38,7 @@ function framed(kind: number, write: (encoder: encoding.Encoder) => void): Uint8
   return encoding.toUint8Array(encoder)
 }
 
-export const syncStep1 = (doc: Y.Doc): Uint8Array =>
-  framed(SYNC, (encoder) => writeSyncStep1(encoder, doc))
+export const syncStep1 = (doc: Y.Doc): Uint8Array => framed(SYNC, (encoder) => writeSyncStep1(encoder, doc))
 
 export const syncStep1Of = (sv: Uint8Array): Uint8Array =>
   framed(SYNC, (encoder) => {
@@ -58,9 +53,7 @@ export const syncStep2Of = (update: Uint8Array): Uint8Array =>
   })
 
 export type SyncMessage =
-  | { kind: 'step1'; sv: Uint8Array }
-  | { kind: 'step2'; update: Uint8Array }
-  | { kind: 'update'; update: Uint8Array }
+  { kind: 'step1'; sv: Uint8Array } | { kind: 'step2'; update: Uint8Array } | { kind: 'update'; update: Uint8Array }
 
 export function readSync(message: Uint8Array): SyncMessage | null {
   try {
@@ -77,13 +70,10 @@ export function readSync(message: Uint8Array): SyncMessage | null {
   }
 }
 
-export const syncUpdate = (update: Uint8Array): Uint8Array =>
-  framed(SYNC, (encoder) => writeUpdate(encoder, update))
+export const syncUpdate = (update: Uint8Array): Uint8Array => framed(SYNC, (encoder) => writeUpdate(encoder, update))
 
 export const awarenessUpdate = (awareness: Awareness, clients: readonly number[]): Uint8Array =>
-  framed(AWARENESS, (encoder) =>
-    encoding.writeVarUint8Array(encoder, encodeAwarenessUpdate(awareness, [...clients])),
-  )
+  framed(AWARENESS, (encoder) => encoding.writeVarUint8Array(encoder, encodeAwarenessUpdate(awareness, [...clients])))
 
 export function awarenessState(awareness: Awareness): Uint8Array | null {
   const clients = [...awareness.getStates().keys()]

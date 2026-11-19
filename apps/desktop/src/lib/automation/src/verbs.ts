@@ -107,9 +107,7 @@ const VERBS: Record<string, Verb> = {
 
   eval: { takes: ['code'], confirms: true, run: runEval },
 
-  ...Object.fromEntries(
-    SCOPED.flatMap(([scope, names]) => names.split(' ').map((name) => [name, { agent: scope }])),
-  ),
+  ...Object.fromEntries(SCOPED.flatMap(([scope, names]) => names.split(' ').map((name) => [name, { agent: scope }]))),
 
   'agent.reader_tabs': { run: (args) => fromTheCrate('agent.reader_tabs', args) },
   'agent.lend': { run: (args) => fromTheCrate('agent.lend', args) },
@@ -145,12 +143,7 @@ export type Plain = { ok: true; value: unknown } | { ok: false; error: string }
 
 export type Answered = Plain | AgentAnswer
 
-export async function dispatch(
-  verb: string,
-  args: Said,
-  rest?: readonly string[],
-  road?: Road,
-): Promise<Plain>
+export async function dispatch(verb: string, args: Said, rest?: readonly string[], road?: Road): Promise<Plain>
 export async function dispatch(
   verb: string,
   args: Said,

@@ -93,8 +93,6 @@ describe('entities', () => {
   })
 
   test('what is inside CDATA is taken as written, entities and all', () => {
-    expect(plainText('<![CDATA[<div>a &lt; b &amp;&amp; c</div>]]> &amp;')).toBe(
-      '<div>a &lt; b &amp;&amp; c</div> &',
-    )
+    expect(plainText('<![CDATA[<div>a &lt; b &amp;&amp; c</div>]]> &amp;')).toBe('<div>a &lt; b &amp;&amp; c</div> &')
   })
 })

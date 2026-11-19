@@ -145,10 +145,7 @@ function started(db: IDBDatabase, made?: string): Promise<Opened> {
   }))
 }
 
-async function answered<const Q extends readonly Query[]>(
-  db: IDBDatabase,
-  queries: Q,
-): Promise<Answers<Q>> {
+async function answered<const Q extends readonly Query[]>(db: IDBDatabase, queries: Q): Promise<Answers<Q>> {
   for (const query of queries) queryOf(query)
   if (queries.length === 0) return [] as Answers<Q>
 
@@ -246,11 +243,7 @@ function unsent(change: Change): boolean {
   return change.t === 'patch' && change.set.pending != null
 }
 
-function spaceKeys(
-  store: IDBObjectStore,
-  table: TableName,
-  space: string,
-): IDBRequest<IDBValidKey[]> {
+function spaceKeys(store: IDBObjectStore, table: TableName, space: string): IDBRequest<IDBValidKey[]> {
   const index = store.index(BY_SPACE)
   if (table !== 'outbox') return index.getAllKeys(space)
   return index.getAllKeys(IDBKeyRange.bound([space, -Infinity], [space, Infinity]))

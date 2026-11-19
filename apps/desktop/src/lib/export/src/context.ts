@@ -1,13 +1,7 @@
 import { attributeText } from '@orden/markdown/html'
 import { protection } from '../../protect/src/api'
 import type { HtmlOptions } from './render'
-import {
-  links,
-  pictureBeside,
-  picturePath,
-  picturesOf,
-  picturesWrittenOut,
-} from '../../link-index/src/api'
+import { links, pictureBeside, picturePath, picturesOf, picturesWrittenOut } from '../../link-index/src/api'
 import { modes, choices } from '../../modes/src/api'
 import { trustsHtmlIn } from '../../sharing/src/api'
 import { theme, carriedCss } from '../../theme/src/api'
@@ -74,8 +68,7 @@ export async function renderOptions(target: Target): Promise<RunOptions> {
   await links.spaceRead(target.path)
   return {
     page: choices.page,
-    resolveImage: (src: string) =>
-      picturePath(attributeText(src), target.path, target.source) ?? src,
+    resolveImage: (src: string) => picturePath(attributeText(src), target.path, target.source) ?? src,
     pictures: picturesOf(target.path, target.source, pictureBeside(target.path), true),
     picturesWritten: (source: string) => picturesWrittenOut(source, target.path),
     readNote: (name: string) => links.embedNote(name, target.path),

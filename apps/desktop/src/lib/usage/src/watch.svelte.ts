@@ -1,22 +1,7 @@
 import type { Entry } from '@orden/contracts'
-import {
-  dayOf,
-  sizeOf,
-  startupOfMs,
-  usageEventOf,
-  type UsageDay,
-  type UsageEvent,
-} from '@orden/sync-core'
+import { dayOf, sizeOf, startupOfMs, usageEventOf, type UsageDay, type UsageEvent } from '@orden/sync-core'
 import { account, request } from '../../accounts/src/api'
-import {
-  heardElsewhere,
-  systemLocale,
-  log,
-  keepJson,
-  stored,
-  isMobile,
-  isNative,
-} from '../../platform/src/api'
+import { heardElsewhere, systemLocale, log, keepJson, stored, isMobile, isNative } from '../../platform/src/api'
 import { updates } from '../../updates/src/api'
 import { workspace } from '../../workspace/src/api'
 import { HELP_IMPROVE, USAGE_PINGED, USAGE_QUEUE, usageChoice } from './choice.svelte'
@@ -39,8 +24,7 @@ function queuedEvents(): UsageEvent[] {
 }
 
 function metered(): boolean {
-  const connection = (navigator as { connection?: { saveData?: boolean; type?: string } })
-    .connection
+  const connection = (navigator as { connection?: { saveData?: boolean; type?: string } }).connection
   return !navigator.onLine || connection?.saveData === true || connection?.type === 'cellular'
 }
 
@@ -50,8 +34,7 @@ function keepQueue(events: UsageEvent[]): void {
 
 function common() {
   const native = isNative
-    ? ((window as { __TAURI_OS_PLUGIN_INTERNALS__?: Record<string, string> })
-        .__TAURI_OS_PLUGIN_INTERNALS__ ?? {})
+    ? ((window as { __TAURI_OS_PLUGIN_INTERNALS__?: Record<string, string> }).__TAURI_OS_PLUGIN_INTERNALS__ ?? {})
     : null
   return commonOf({
     version: __APP_VERSION__,

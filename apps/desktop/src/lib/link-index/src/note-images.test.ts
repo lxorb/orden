@@ -30,8 +30,7 @@ vi.mock('./links.svelte', () => ({
   },
 }))
 
-const { notePicture, pictureBeside, picturePath, picturesOf, picturesWrittenOut } =
-  await import('./note-images')
+const { notePicture, pictureBeside, picturePath, picturesOf, picturesWrittenOut } = await import('./note-images')
 
 describe('a picture a note names', () => {
   test('a bare name is looked for anywhere in the space, the way Obsidian looks', () => {
@@ -44,22 +43,16 @@ describe('a picture a note names', () => {
     expect(notePicture('Pasted%20image%202024.png', '/Work/notes/Q1.md', '')).toBe(
       '/asset/Work/attachments/Pasted%20image%202024.png',
     )
-    expect(notePicture('Caf%C3%A9.png', '/Work/Q1.md', '')).toBe(
-      '/asset/Work/attachments/Caf%C3%A9.png',
-    )
+    expect(notePicture('Caf%C3%A9.png', '/Work/Q1.md', '')).toBe('/asset/Work/attachments/Caf%C3%A9.png')
   })
 
   test('a path is a path beside the note, index or no index', () => {
     expect(notePicture('assets/shot.png', '/Work/Q1.md', '')).toBe('/asset/Work/assets/shot.png')
-    expect(notePicture('../assets/shot.png', '/Work/notes/Q1.md', '')).toBe(
-      '/asset/Work/assets/shot.png',
-    )
+    expect(notePicture('../assets/shot.png', '/Work/notes/Q1.md', '')).toBe('/asset/Work/assets/shot.png')
   })
 
   test('a path nothing beside the note holds is looked for the way a link to it is', () => {
-    expect(notePicture('pictures/deep.png', '/Work/journal/Today.md', '')).toBe(
-      '/asset/Work/notes/pictures/deep.png',
-    )
+    expect(notePicture('pictures/deep.png', '/Work/journal/Today.md', '')).toBe('/asset/Work/notes/pictures/deep.png')
     expect(notePicture('assets/shot.png', '/Work/Q1.md', '')).toBe('/asset/Work/assets/shot.png')
   })
 
@@ -94,9 +87,7 @@ describe('a picture a note names', () => {
   })
 
   test('one off the network is left exactly where it points', () => {
-    expect(notePicture('https://example.com/pic.png', '/Work/Q1.md', '')).toBe(
-      'https://example.com/pic.png',
-    )
+    expect(notePicture('https://example.com/pic.png', '/Work/Q1.md', '')).toBe('https://example.com/pic.png')
   })
 
   test('a note with no home yet still finds a picture the space holds', () => {
@@ -116,9 +107,7 @@ describe('a picture a note names', () => {
 
   test('a typora-root-url still decides where a path from the top starts', () => {
     const source = '---\ntypora-root-url: /Work/notes\n---\n'
-    expect(picturePath('/pictures/deep.png', '/Work/b/n.md', source)).toBe(
-      '/Work/notes/pictures/deep.png',
-    )
+    expect(picturePath('/pictures/deep.png', '/Work/b/n.md', source)).toBe('/Work/notes/pictures/deep.png')
   })
 
   test('inside an embedded note is the one that note names, ready to draw', () => {
@@ -140,16 +129,13 @@ describe('a picture a note names', () => {
 
   test('a path already found is found again as itself', () => {
     expect(picturePath('/Work/assets/shot.png', '/Work/b/n.md', '')).toBe('/Work/assets/shot.png')
-    expect(picturePath('/Work/notes/pictures/deep.png', null, '')).toBe(
-      '/Work/notes/pictures/deep.png',
-    )
+    expect(picturePath('/Work/notes/pictures/deep.png', null, '')).toBe('/Work/notes/pictures/deep.png')
   })
 })
 
 describe('a note sent to pandoc', () => {
   test('names each picture by the path pandoc can read beside the note', () => {
-    const source =
-      '---\ncover: "[[shot.png]]"\n---\n\nSee ![[shot.png|the shot]] and ![](shot.png).\n'
+    const source = '---\ncover: "[[shot.png]]"\n---\n\nSee ![[shot.png|the shot]] and ![](shot.png).\n'
 
     expect(picturesWrittenOut(source, '/Work/notes/Q1.md')).toBe(
       '---\ncover: "[[shot.png]]"\n---\n\nSee ![the shot](../assets/shot.png) and ![](../assets/shot.png).\n',

@@ -13,8 +13,7 @@ export const blockMath: TokenizerExtension = {
   level: 'block',
   start: (src: string) => firstStart(src, ['$$'], mathBlock),
   tokenizer(src: string) {
-    const match =
-      /^\$\$(?:\r?\n([\s\S]+?)\r?\n|(?![\s$])([^\n]*?)(?<![\s$]))\$\$[ \t]*(?:\r?\n|$)/.exec(src)
+    const match = /^\$\$(?:\r?\n([\s\S]+?)\r?\n|(?![\s$])([^\n]*?)(?<![\s$]))\$\$[ \t]*(?:\r?\n|$)/.exec(src)
     if (!match) return undefined
 
     return { type: 'blockMath', raw: match[0], text: match[1] ?? match[2] }

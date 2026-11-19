@@ -13,8 +13,7 @@ export function padTab(): { id: string } | null {
 }
 
 const inCard = () =>
-  typeof document !== 'undefined' &&
-  !!document.activeElement?.closest('[data-scratchpad], [data-scratchpad-card]')
+  typeof document !== 'undefined' && !!document.activeElement?.closest('[data-scratchpad], [data-scratchpad-card]')
 
 class Shown {
   on = $state(false)

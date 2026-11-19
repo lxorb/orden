@@ -85,9 +85,7 @@
     }
   })
 
-  const words = $derived(
-    node.type === 'text' ? node.text : node.type === 'shape' ? (node.text ?? '') : source?.text,
-  )
+  const words = $derived(node.type === 'text' ? node.text : node.type === 'shape' ? (node.text ?? '') : source?.text)
   const markup = $derived(trusted && !(node.type === 'file' && source?.escapeHtml !== false))
 
   const drawnFrom = $derived(node.type === 'file' ? (source?.path ?? canvasPath) : canvasPath)
@@ -175,9 +173,7 @@
       writeLink: pickedLink,
       trustedMarkup: trusted,
       ...(canvasPath ? { place: canvasPath } : {}),
-      ...(onfollow
-        ? { openNote: (jump: NoteJump, press?: LinkPress) => onfollow(jump, press, canvasPath) }
-        : {}),
+      ...(onfollow ? { openNote: (jump: NoteJump, press?: LinkPress) => onfollow(jump, press, canvasPath) } : {}),
       openLink: followHref,
       shortcuts: shortcuts.forEditor,
     })
@@ -286,23 +282,14 @@
       {/if}
     {:else if shown === 'film'}
       <!-- svelte-ignore a11y_media_has_caption -->
-      <video class="picture film" src={fileUrl(node.file, root)} controls preload="metadata"
-      ></video>
+      <video class="picture film" src={fileUrl(node.file, root)} controls preload="metadata"></video>
     {:else if shown === 'sound'}
       <div class="card sound">
         <span class="url">{node.file}</span>
         <audio src={fileUrl(node.file, root)} controls preload="metadata"></audio>
       </div>
     {:else if shown === 'pdf'}
-      <CanvasPdf
-        file={node.file}
-        page={pageOfFile(node)}
-        note={canvasPath}
-        {root}
-        box={node}
-        {scale}
-        {seen}
-      />
+      <CanvasPdf file={node.file} page={pageOfFile(node)} note={canvasPath} {root} box={node} {scale} {seen} />
     {:else if shown === 'file'}
       <div class="card link">
         <span class="url">{node.file}</span>
@@ -328,13 +315,7 @@
       aria-hidden="true"
     >
       {#if node.shape === 'rect'}
-        <rect
-          x="1"
-          y="1"
-          width={Math.max(0, node.width - 2)}
-          height={Math.max(0, node.height - 2)}
-          rx="4"
-        />
+        <rect x="1" y="1" width={Math.max(0, node.width - 2)} height={Math.max(0, node.height - 2)} rx="4" />
       {:else if node.shape === 'ellipse'}
         <ellipse
           cx={node.width / 2}

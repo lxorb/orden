@@ -171,9 +171,7 @@ test('deleting an account of many spaces, notes and pictures', async () => {
       .run(id, space, `${at}.md`, at + 100, Date.now())
     await env.NOTES.put(`spaces/${space}/${id}`, 'x')
     env.db
-      .prepare(
-        `insert into blobs (hash, user_id, size, type, created_at) values (?, ?, 1, 'image/png', 1)`,
-      )
+      .prepare(`insert into blobs (hash, user_id, size, type, created_at) values (?, ?, 1, 'image/png', 1)`)
       .run(at.toString(16).padStart(64, '0'), user)
   }
 

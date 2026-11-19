@@ -135,10 +135,7 @@ describe('the list out over the note', () => {
 })
 
 describe('the left side', () => {
-  const sidebar = readFileSync(
-    join(import.meta.dirname, '../../sidebar/src/Sidebar.svelte'),
-    'utf8',
-  )
+  const sidebar = readFileSync(join(import.meta.dirname, '../../sidebar/src/Sidebar.svelte'), 'utf8')
 
   test('lets it out only shut, as a column, outside full screen and under nothing', () => {
     for (const rule of [
@@ -150,17 +147,13 @@ describe('the left side', () => {
       'overlays.depth === 0',
     ])
       expect(sidebar, rule).toContain(rule)
-    expect(sidebar).toMatch(
-      /if \(viewport\.touch \|\| side === 'right'\) return\s+const stop = edgePeek\.watch\(/,
-    )
+    expect(sidebar).toMatch(/if \(viewport\.touch \|\| side === 'right'\) return\s+const stop = edgePeek\.watch\(/)
     expect(sidebar).toContain("const peek = $derived(side === 'left' && shut && edgePeek.out)")
     expect(sidebar).not.toContain('endPeek')
   })
 
   test('and out, it is a layer on the stack: Escape, a press past it, a web page stepping aside', () => {
-    expect(sidebar).toMatch(
-      /peek\s*\?\s*overlays\.peek\(\s*\(\) => edgePeek\.hide\(\),\s*\(\) => \[aside\],?\s*\)/,
-    )
+    expect(sidebar).toMatch(/peek\s*\?\s*overlays\.peek\(\s*\(\) => edgePeek\.hide\(\),\s*\(\) => \[aside\],?\s*\)/)
   })
 
   test('over the note, keeping no room, so nothing beside it moves', () => {
@@ -175,14 +168,10 @@ describe('the left side', () => {
 
   test('slides in on the style change that floats it: shut, it already stands past the edge', () => {
     expect(
-      rule(
-        ':global(:root:not([data-touch], [data-drawer])) .column.shut:not(.moving, .right, .peek) aside',
-      ),
+      rule(':global(:root:not([data-touch], [data-drawer])) .column.shut:not(.moving, .right, .peek) aside'),
     ).toMatch(/transform: translateX\(calc\(-100%/)
     expect(
-      rule(
-        ':global(:root:not([data-touch], [data-drawer])) .column.right.shut:not(.moving, .peek) aside',
-      ),
+      rule(':global(:root:not([data-touch], [data-drawer])) .column.right.shut:not(.moving, .peek) aside'),
     ).toMatch(/transform: translateX\(calc\(100%/)
     expect(rule('.column.shut.floating.peek aside')).toMatch(/transform: none;/)
     const effect = sidebar.slice(sidebar.indexOf('let floating = $state(false)'))

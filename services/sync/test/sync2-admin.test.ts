@@ -39,9 +39,9 @@ function idOf(email: string): string {
 
 function sessionsOf(email: string): string[] {
   return (
-    env.db
-      .prepare('select id from sessions where user_id = ? order by created_at, rowid')
-      .all(idOf(email)) as { id: string }[]
+    env.db.prepare('select id from sessions where user_id = ? order by created_at, rowid').all(idOf(email)) as {
+      id: string
+    }[]
   ).map((one) => one.id)
 }
 
@@ -88,9 +88,7 @@ describe('the version order', () => {
 describe('the door', () => {
   test('is a 404 for anybody but the admin', async () => {
     expect((await flip({ email: MOVER, to: 2, min: '0.14.0' }, mover)).status).toBe(404)
-    expect(
-      (await call(env, `/v2/admin/sync-version?email=${MOVER}`, { token: mover })).status,
-    ).toBe(404)
+    expect((await call(env, `/v2/admin/sync-version?email=${MOVER}`, { token: mover })).status).toBe(404)
     expect(versionOf(MOVER)).toBe(1)
   })
 
@@ -138,9 +136,7 @@ describe('forward', () => {
 
     const refused = await flip({ email: MOVER, to: 2, min: '0.14.0' })
     expect(refused.status).toBe(409)
-    expect(refused.json.blockers).toEqual([
-      expect.objectContaining({ kind: 'session', id: session, why: 'no device' }),
-    ])
+    expect(refused.json.blockers).toEqual([expect.objectContaining({ kind: 'session', id: session, why: 'no device' })])
 
     const allowed = await flip({ email: MOVER, to: 2, min: '0.14.0', allow: [session] })
     expect(allowed.status).toBe(200)
@@ -219,11 +215,9 @@ describe('reading', () => {
     const [session] = sessionsOf(MOVER)
     device('phone', MOVER, session ?? null, '0.13.1-57')
 
-    const answer = await call<Flip & { min: string }>(
-      env,
-      `/v2/admin/sync-version?email=${MOVER}&min=0.13.1-60`,
-      { token: admin },
-    )
+    const answer = await call<Flip & { min: string }>(env, `/v2/admin/sync-version?email=${MOVER}&min=0.13.1-60`, {
+      token: admin,
+    })
 
     expect(answer.status).toBe(200)
     expect(answer.json).toMatchObject({ version: 1, min: '0.13.1-60' })

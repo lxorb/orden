@@ -14,10 +14,7 @@ function state(doc: string, cursor: number) {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(cursor),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        pointerSnap,
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), pointerSnap],
     }),
   )
 }
@@ -25,8 +22,8 @@ function state(doc: string, cursor: number) {
 function click(doc: string, pos: number): number {
   const full = doc + PARK
   const before = state(full, full.length)
-  return before.update({ selection: EditorSelection.cursor(pos), userEvent: 'select.pointer' })
-    .state.selection.main.head
+  return before.update({ selection: EditorSelection.cursor(pos), userEvent: 'select.pointer' }).state.selection.main
+    .head
 }
 
 function hidden(doc: string): string[] {

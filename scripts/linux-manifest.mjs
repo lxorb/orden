@@ -23,9 +23,7 @@ function pinsOf(app) {
 const listed = (features) => features.map((one) => `"${one}"`).join(', ')
 
 const featuresOf = (line) =>
-  [...(/features = \[([^\]]*)\]/.exec(line)?.[1] ?? '').matchAll(/"([^"]+)"/g)].map(
-    (one) => one[1] ?? '',
-  )
+  [...(/features = \[([^\]]*)\]/.exec(line)?.[1] ?? '').matchAll(/"([^"]+)"/g)].map((one) => one[1] ?? '')
 
 function moved(line, pins, table) {
   const pin = (name) => {
@@ -54,22 +52,14 @@ function moved(line, pins, table) {
     const kept = features.filter((one) => one !== 'devtools' && one !== 'protocol-asset')
     return [
       ...(features.includes('devtools')
-        ? [
-            `tauri-runtime-cef = { version = "=${pin('tauri-runtime-cef')}", features = ["devtools"] }`,
-          ]
+        ? [`tauri-runtime-cef = { version = "=${pin('tauri-runtime-cef')}", features = ["devtools"] }`]
         : []),
-      ...(kept.length > 0
-        ? [`tauri = { version = "=${pin('tauri')}", features = [${listed(kept)}] }`]
-        : []),
+      ...(kept.length > 0 ? [`tauri = { version = "=${pin('tauri')}", features = [${listed(kept)}] }`] : []),
     ]
   }
   if (name.startsWith('tauri-plugin-')) {
     const rest = /^[a-z-]+ = \{ version = "[^"]*"(.*)$/.exec(line)?.[1]
-    return [
-      rest === undefined
-        ? `${name} = "=${pin(name)}"`
-        : `${name} = { version = "=${pin(name)}"${rest}`,
-    ]
+    return [rest === undefined ? `${name} = "=${pin(name)}"` : `${name} = { version = "=${pin(name)}"${rest}`]
   }
   if (name.startsWith('tauri')) {
     throw new Error(`the app depends on ${line}, which Linux's build has no pin for`)
@@ -118,11 +108,7 @@ export function linuxManifest(app) {
     const inDependencies = /dependencies\]$/.test(table)
     out.push(...(inDependencies ? moved(line, pins, table) : [line]))
   }
-  out.push(
-    '',
-    '[patch.crates-io]',
-    ...PATCHED.map(([name, path]) => `${name} = { path = "${path}" }`),
-  )
+  out.push('', '[patch.crates-io]', ...PATCHED.map(([name, path]) => `${name} = { path = "${path}" }`))
   return `${HEADER}${out.join('\n')}\n`
 }
 

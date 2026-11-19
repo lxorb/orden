@@ -80,9 +80,9 @@ describe('deleting keeps what was deleted', () => {
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
 
     const changes = await call(env, `/v1/spaces/${space}/changes`, { token })
-    expect(
-      changes.json.notes.map((note: { id: string; deleted: boolean }) => [note.id, note.deleted]),
-    ).toEqual([[id, true]])
+    expect(changes.json.notes.map((note: { id: string; deleted: boolean }) => [note.id, note.deleted])).toEqual([
+      [id, true],
+    ])
   })
 
   test('a space keeps its notes and is stamped', async () => {
@@ -155,9 +155,9 @@ describe('restoring a note', () => {
     expect(await stored(id)).toBe('# Idea')
 
     const changes = await call(env, `/v1/spaces/${space}/changes?since=${gone.seq}`, { token })
-    expect(
-      changes.json.notes.map((note: { id: string; deleted: boolean }) => [note.id, note.deleted]),
-    ).toEqual([[id, false]])
+    expect(changes.json.notes.map((note: { id: string; deleted: boolean }) => [note.id, note.deleted])).toEqual([
+      [id, false],
+    ])
     expect((await call<TrashView>(env, '/v1/trash', { token })).json.notes).toEqual([])
   })
 
@@ -243,9 +243,9 @@ describe('how many spaces one account keeps', () => {
        values (?1, ?2, ?1, 0, 0, 0)`,
     )
     const held = (
-      env.db
-        .prepare('select count(*) as n from spaces where user_id = ? and deleted = 0')
-        .get(owner.user_id) as { n: number }
+      env.db.prepare('select count(*) as n from spaces where user_id = ? and deleted = 0').get(owner.user_id) as {
+        n: number
+      }
     ).n
     for (let at = held; at < upTo; at++) insert.run(`filler-${at}`, owner.user_id)
   }
@@ -293,9 +293,7 @@ describe('purging', () => {
     expect(await stored(id)).toBeNull()
     expect(row(id)).toMatchObject({ deleted: 1, deleted_at: null, size: 0, hash: '' })
     expect((await call<TrashView>(env, '/v1/trash', { token })).json.notes).toEqual([])
-    expect(
-      (await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })).status,
-    ).toBe(404)
+    expect((await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })).status).toBe(404)
   })
 
   test('a space now: notes gone, marker kept', async () => {
@@ -370,8 +368,7 @@ describe('purging', () => {
     await call(env, `/v1/notes/${mine}`, { method: 'DELETE', token })
 
     const other = await signIn(env, 'other@b.dev')
-    const theirSpace = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } }))
-      .json.space.id
+    const theirSpace = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space.id
     const theirs = (
       await call(env, `/v1/spaces/${theirSpace}/notes`, {
         token: other,

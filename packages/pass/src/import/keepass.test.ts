@@ -11,9 +11,7 @@ const entry = (strings: Record<string, string>, extra = '', times = '') =>
       ([key, value]) =>
         `<String><Key>${key}</Key><Value${key === 'Password' || key === 'Secret' ? ' ProtectInMemory="True"' : ''}>${value}</Value></String>`,
     )
-    .join(
-      '',
-    )}${extra}<History><Entry><String><Key>Title</Key><Value>old</Value></String></Entry></History></Entry>`
+    .join('')}${extra}<History><Entry><String><Key>Title</Key><Value>old</Value></String></Entry></History></Entry>`
 
 const XML = `<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <KeePassFile>

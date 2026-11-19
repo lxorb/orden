@@ -78,9 +78,7 @@ async function exchange(fields: Record<string, string>) {
   })
 }
 
-async function connect(
-  options: { write?: boolean; email?: string; clientId?: string; redirect?: string } = {},
-) {
+async function connect(options: { write?: boolean; email?: string; clientId?: string; redirect?: string } = {}) {
   const email = options.email ?? 'a@b.dev'
   const clientId = options.clientId ?? (await register()).json.client_id
   const redirect = options.redirect ?? CHATGPT
@@ -138,10 +136,7 @@ describe('what a client can find out on its own', () => {
   })
 
   test('the connector says which server signs people in, at both well-known paths', async () => {
-    for (const path of [
-      '/.well-known/oauth-protected-resource',
-      '/.well-known/oauth-protected-resource/mcp',
-    ]) {
+    for (const path of ['/.well-known/oauth-protected-resource', '/.well-known/oauth-protected-resource/mcp']) {
       const response = await call(env, path)
 
       expect(response.status, path).toBe(200)
@@ -263,10 +258,7 @@ describe('asking for consent', () => {
 
   test('refuses an unknown client on a page rather than by redirecting', async () => {
     const { challenge } = await pkce()
-    const response = await call(
-      env,
-      authorizeUrl({ client_id: 'nobody', code_challenge: challenge }),
-    )
+    const response = await call(env, authorizeUrl({ client_id: 'nobody', code_challenge: challenge }))
 
     expect(response.status).toBe(400)
     expect(response.headers.get('location')).toBeNull()
@@ -308,9 +300,7 @@ describe('asking for consent', () => {
       authorizeUrl({ client_id, code_challenge: challenge, resource: 'https://other.example/mcp' }),
     )
 
-    expect(new URL(response.headers.get('location')!).searchParams.get('error')).toBe(
-      'invalid_target',
-    )
+    expect(new URL(response.headers.get('location')!).searchParams.get('error')).toBe('invalid_target')
   })
 
   test('lets a local app answer on whichever port it has', async () => {
@@ -334,9 +324,7 @@ describe('asking for consent', () => {
     const { challenge } = await pkce()
     const ask = { client_id, redirect_uri: CHATGPT, code_challenge: challenge }
 
-    await codeSentTo(() =>
-      submit({ ...ask, scope: 'notes:read', action: 'send', email: 'a@b.dev' }),
-    )
+    await codeSentTo(() => submit({ ...ask, scope: 'notes:read', action: 'send', email: 'a@b.dev' }))
     const readOnly = await submit({ ...ask, scope: 'notes:read', action: 'send', email: 'a@b.dev' })
     expect(readOnly.text).not.toContain('change my notes')
 
@@ -396,10 +384,7 @@ describe('what an authorization request may carry', () => {
     const { client_id } = (await register()).json
     const { challenge } = await pkce()
 
-    const response = await call(
-      env,
-      authorizeUrl({ client_id, code_challenge: challenge, state: 'x'.repeat(2000) }),
-    )
+    const response = await call(env, authorizeUrl({ client_id, code_challenge: challenge, state: 'x'.repeat(2000) }))
 
     expect(response.status).toBe(400)
     expect(response.headers.get('location')).toBeNull()
@@ -570,9 +555,7 @@ describe('connecting', () => {
     const grant = new URL(allowed.headers.get('location')!).searchParams.get('code')!
 
     expect((await exchange({ code: grant, code_verifier: verifier, client_id })).status).toBe(200)
-    expect((await exchange({ code: grant, code_verifier: verifier, client_id })).json.error).toBe(
-      'invalid_grant',
-    )
+    expect((await exchange({ code: grant, code_verifier: verifier, client_id })).json.error).toBe('invalid_grant')
   })
 
   test('spends a code once when it is presented twice at the same moment', async () => {
@@ -732,11 +715,7 @@ describe('refreshing', () => {
   test('treats a token another request rotated meanwhile as spent', async () => {
     const { tokens, clientId } = await connect()
     env.justBefore(/update oauth_grants\s+set access_hash/, () =>
-      env.db
-        .prepare(
-          "update oauth_grants set previous_refresh_hash = refresh_hash, refresh_hash = 'won'",
-        )
-        .run(),
+      env.db.prepare("update oauth_grants set previous_refresh_hash = refresh_hash, refresh_hash = 'won'").run(),
     )
 
     const refreshed = await refresh(clientId, tokens.json.refresh_token)
@@ -792,10 +771,7 @@ describe('a client that describes itself at a URL', () => {
     })
 
     const { challenge } = await pkce()
-    const response = await call(
-      env,
-      authorizeUrl({ client_id: CLAUDE_CODE, code_challenge: challenge }),
-    )
+    const response = await call(env, authorizeUrl({ client_id: CLAUDE_CODE, code_challenge: challenge }))
     expect(response.status).toBe(400)
   })
 
@@ -824,10 +800,7 @@ describe('a client that describes itself at a URL', () => {
     vi.stubGlobal('fetch', asked)
 
     const { challenge } = await pkce()
-    const response = await call(
-      env,
-      authorizeUrl({ client_id: CLAUDE_CODE, code_challenge: challenge }),
-    )
+    const response = await call(env, authorizeUrl({ client_id: CLAUDE_CODE, code_challenge: challenge }))
 
     expect(response.status).toBe(400)
     expect(asked).toHaveBeenCalledOnce()
@@ -857,10 +830,7 @@ describe('a client that describes itself at a URL', () => {
     )
 
     const { challenge } = await pkce()
-    const response = await call(
-      env,
-      authorizeUrl({ client_id: CLAUDE_CODE, code_challenge: challenge }),
-    )
+    const response = await call(env, authorizeUrl({ client_id: CLAUDE_CODE, code_challenge: challenge }))
     expect(response.status).toBe(400)
   })
 })
@@ -1000,9 +970,7 @@ describe('how many apps one account connects', () => {
   const ACCOUNT = 'a@b.dev'
 
   beforeEach(() => {
-    env.db
-      .prepare('insert into users (id, email, created_at) values (?, ?, ?)')
-      .run('one', ACCOUNT, Date.now())
+    env.db.prepare('insert into users (id, email, created_at) values (?, ?, ?)').run('one', ACCOUNT, Date.now())
   })
 
   function connected(clients: string[]) {
@@ -1108,10 +1076,7 @@ describe('a client that registered and never came back', () => {
 
     expect(await expireClients(env, Date.now())).toBe(1)
 
-    const asked = await call(
-      env,
-      authorizeUrl({ client_id: clientId, code_challenge: 'c'.repeat(43) }),
-    )
+    const asked = await call(env, authorizeUrl({ client_id: clientId, code_challenge: 'c'.repeat(43) }))
     expect(asked.text).toContain('not known here')
   })
 
@@ -1131,9 +1096,7 @@ describe('a client that registered and never came back', () => {
     const clientId = (await register()).json.client_id
     longAgo()
 
-    env.db
-      .prepare('insert into users (id, email, created_at) values (?, ?, ?)')
-      .run('one', 'a@b.dev', Date.now())
+    env.db.prepare('insert into users (id, email, created_at) values (?, ?, ?)').run('one', 'a@b.dev', Date.now())
     env.db
       .prepare(
         `insert into oauth_codes (code_hash, client_id, user_id, redirect_uri, challenge, expires_at)

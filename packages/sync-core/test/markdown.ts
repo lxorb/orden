@@ -29,17 +29,12 @@ const word = fc.constantFrom(...WORDS)
 
 const line = fc.array(word, { minLength: 1, maxLength: 12 }).map((words) => words.join(' '))
 
-const heading = fc
-  .tuple(fc.integer({ min: 1, max: 3 }), line)
-  .map(([level, text]) => `${'#'.repeat(level)} ${text}`)
+const heading = fc.tuple(fc.integer({ min: 1, max: 3 }), line).map(([level, text]) => `${'#'.repeat(level)} ${text}`)
 
 const paragraph = fc.array(line, { minLength: 1, maxLength: 3 }).map((lines) => lines.join('\n'))
 
 const list = fc
-  .tuple(
-    fc.constantFrom('- ', '* ', '1. ', '- [ ] '),
-    fc.array(line, { minLength: 1, maxLength: 4 }),
-  )
+  .tuple(fc.constantFrom('- ', '* ', '1. ', '- [ ] '), fc.array(line, { minLength: 1, maxLength: 4 }))
   .map(([mark, items]) => items.map((item) => `${mark}${item}`).join('\n'))
 
 const fence = fc
@@ -48,9 +43,7 @@ const fence = fc
 
 const table = fc
   .array(fc.tuple(word, word), { minLength: 1, maxLength: 3 })
-  .map((rows) =>
-    ['| a | b |', '| --- | --- |', ...rows.map(([a, b]) => `| ${a} | ${b} |`)].join('\n'),
-  )
+  .map((rows) => ['| a | b |', '| --- | --- |', ...rows.map(([a, b]) => `| ${a} | ${b} |`)].join('\n'))
 
 const long = fc.array(word, { minLength: 30, maxLength: 60 }).map((words) => words.join(' '))
 
@@ -71,11 +64,7 @@ const frontMatter = fc
   .map(([title, tags]) => `---\ntitle: ${title}\ntags: [${tags.join(', ')}]\n---\n`)
 
 export const note = fc
-  .tuple(
-    fc.option(frontMatter, { nil: '' }),
-    fc.array(block, { minLength: 0, maxLength: 8 }),
-    fc.boolean(),
-  )
+  .tuple(fc.option(frontMatter, { nil: '' }), fc.array(block, { minLength: 0, maxLength: 8 }), fc.boolean())
   .map(([front, blocks, ends]) => `${front}${blocks.join('\n\n')}${ends ? '\n' : ''}`)
 
 function between(text: string, at: number): boolean {

@@ -22,17 +22,14 @@ vi.mock('../../sharing/src/api', () => ({ trustsHtmlIn: () => world.trusted }))
 
 const { openOut } = await import('./context')
 
-test.each([true, false])(
-  'the open document goes out saying whether it is trusted: %s',
-  (trusted) => {
-    world.trusted = trusted
-    expect(openOut()).toEqual({
-      text: '{}',
-      name: 'Board.canvas',
-      path: '/space/Board.canvas',
-      root: '/space',
-      shared: null,
-      trusted,
-    })
-  },
-)
+test.each([true, false])('the open document goes out saying whether it is trusted: %s', (trusted) => {
+  world.trusted = trusted
+  expect(openOut()).toEqual({
+    text: '{}',
+    name: 'Board.canvas',
+    path: '/space/Board.canvas',
+    root: '/space',
+    shared: null,
+    trusted,
+  })
+})

@@ -34,8 +34,7 @@ describe('a hint', () => {
 })
 
 describe('the labels it follows', () => {
-  const read = (path: string) =>
-    readFileSync(fileURLToPath(new URL(path, import.meta.url)), { encoding: 'utf8' })
+  const read = (path: string) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), { encoding: 'utf8' })
   const rule = (css: string, selector: string) => {
     const at = css.lastIndexOf(`${selector} {`)
     expect(at).toBeGreaterThan(-1)
@@ -45,10 +44,7 @@ describe('the labels it follows', () => {
   test('are a run of text, not a flex row', () => {
     const panel = read('../../settings/src/SettingsPanel.svelte')
     const base = read('../../../../../../packages/themes/src/base.css')
-    for (const one of [
-      rule(panel, '.setting .name .what'),
-      rule(base, '.orden-setting .name .orden-named'),
-    ]) {
+    for (const one of [rule(panel, '.setting .name .what'), rule(base, '.orden-setting .name .orden-named')]) {
       expect(one).toContain('display: block')
       expect(one).not.toMatch(/display: (inline-)?flex|align-items|gap:/)
     }
@@ -65,9 +61,7 @@ describe('where the panel draws it', () => {
     expect(drawn.filter((one) => one === '<Hint text={field.hint} />')).toHaveLength(1)
     expect(panel).toContain('{#if field.hint}<Hint text={field.hint} />{/if}')
     expect(drawn.filter((one) => one === '<Hint text={entry.why()} />')).toHaveLength(1)
-    const written = drawn.filter(
-      (one) => one !== '<Hint text={field.hint} />' && one !== '<Hint text={entry.why()} />',
-    )
+    const written = drawn.filter((one) => one !== '<Hint text={field.hint} />' && one !== '<Hint text={entry.why()} />')
     expect(written.length).toBeGreaterThan(2)
     for (const one of written) expect(one).toMatch(/^<Hint text="[^"]+\." \/>$/)
   })

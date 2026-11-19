@@ -1,11 +1,4 @@
-import {
-  type ClientFrame,
-  outOf,
-  type Refusal,
-  type ServerFrame,
-  serverFrameOf,
-  socketPath,
-} from '@orden/online/wire'
+import { type ClientFrame, outOf, type Refusal, type ServerFrame, serverFrameOf, socketPath } from '@orden/online/wire'
 import { BEAT, DEVICE_PROTOCOL, TOKEN_PROTOCOL } from '@orden/sync-core'
 import { BEAT_EVERY, linkDelay } from '../../platform/src/api'
 
@@ -121,11 +114,7 @@ export abstract class Channel<In extends { t: string }, Out extends { t: string 
         const url = `${this.world.base.replace(/^http/, 'ws')}${this.path(this.name)}`
         let socket: LinkSocket | null = null
         try {
-          const protocols = [
-            `${TOKEN_PROTOCOL}${token}`,
-            `${DEVICE_PROTOCOL}${device}`,
-            ...this.role(),
-          ]
+          const protocols = [`${TOKEN_PROTOCOL}${token}`, `${DEVICE_PROTOCOL}${device}`, ...this.role()]
           socket = this.world.socket(url, protocols, {
             opened: () => {
               if (this.socket !== socket || !socket) return
@@ -298,13 +287,7 @@ export class Link extends Channel<Exclude<Heard, Opened>, ClientFrame> {
   private since: number | null = null
   private size: { cols: number; rows: number }
 
-  constructor(
-    term: string,
-    world: LinkWorld,
-    heard: (what: Heard) => void,
-    cols: number,
-    rows: number,
-  ) {
+  constructor(term: string, world: LinkWorld, heard: (what: Heard) => void, cols: number, rows: number) {
     super(term, world, heard)
     this.size = { cols, rows }
   }
@@ -356,11 +339,7 @@ export class Link extends Channel<Exclude<Heard, Opened>, ClientFrame> {
   }
 }
 
-export function pageWorld(
-  base: string,
-  token: () => string | null,
-  device: () => Promise<string>,
-): LinkWorld {
+export function pageWorld(base: string, token: () => string | null, device: () => Promise<string>): LinkWorld {
   return {
     base,
     token,

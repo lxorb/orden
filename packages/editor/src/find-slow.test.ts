@@ -3,16 +3,7 @@ import { getSearchQuery } from '@codemirror/search'
 import { EditorState, type TransactionSpec } from '@codemirror/state'
 import { EditorView, type ViewUpdate } from '@codemirror/view'
 import { afterAll, beforeAll, describe, expect, test, vi } from 'vitest'
-import {
-  findExtensions,
-  findNext,
-  findReady,
-  findTally,
-  loadFind,
-  NO_FIND,
-  replaceEverywhere,
-  setFind,
-} from './find'
+import { findExtensions, findNext, findReady, findTally, loadFind, NO_FIND, replaceEverywhere, setFind } from './find'
 import { quickEnough, scanPattern, TRIAL_SCRIPT } from './find-trial'
 
 let posted: ((asked: { text: string }) => void) | null = null
@@ -172,9 +163,7 @@ describe('finding in a note that is being written into', () => {
 
   test('sets a pattern before the writing stops', async () => {
     const view = viewOf(LONG)
-    const answered = await whileWriting(view, () =>
-      setFind(view, { ...NO_FIND, query: 'no+te', regexp: true }),
-    )
+    const answered = await whileWriting(view, () => setFind(view, { ...NO_FIND, query: 'no+te', regexp: true }))
 
     expect(answered).toBe(true)
     expect(getSearchQuery(view.state).search).toBe('no+te')
@@ -203,9 +192,7 @@ describe('finding in a note that is being written into', () => {
   for (const across of ['note\\s+that', 'long[^x]enough', 'while\\na line']) {
     test(`sets a pattern that may cross lines, ${across}, before the writing stops`, async () => {
       const view = viewOf(LONG.slice(0, LONG.length >> 2))
-      const answered = await whileWriting(view, () =>
-        setFind(view, { ...NO_FIND, query: across, regexp: true }),
-      )
+      const answered = await whileWriting(view, () => setFind(view, { ...NO_FIND, query: across, regexp: true }))
 
       expect(answered).toBe(true)
       expect(getSearchQuery(view.state).search).toBe(across)

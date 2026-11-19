@@ -39,10 +39,7 @@ export interface Front {
   text: string
 }
 
-async function markedFrom(
-  one: Attachment | null,
-  paths: readonly string[],
-): Promise<Attachment | null> {
+async function markedFrom(one: Attachment | null, paths: readonly string[]): Promise<Attachment | null> {
   if (!one) return null
   const theirs = await Promise.all(paths.map((path) => fromOthers(path)))
   return theirs.includes(true) ? { ...one, untrusted: true } : one
@@ -98,11 +95,7 @@ async function pageAttachment(tabId: string, label: string): Promise<Attachment 
   }
 }
 
-async function threadAttachment(
-  space: string,
-  id: string,
-  label: string,
-): Promise<Attachment | null> {
+async function threadAttachment(space: string, id: string, label: string): Promise<Attachment | null> {
   const thread = await readThread(space, id).catch(() => null)
   if (!thread) return null
   const words = [
@@ -137,10 +130,7 @@ async function attachmentOf(
         .map((one) => one.path)
         .filter((one) => within(chip.id, one, root))
         .slice(0, LISTED)
-      return await markedFrom(
-        { label: `${relativeTo(root, chip.id)}/`, text: listed(root, paths) },
-        paths,
-      )
+      return await markedFrom({ label: `${relativeTo(root, chip.id)}/`, text: listed(root, paths) }, paths)
     }
     case 'tag': {
       const paths = (await tagged(root, chip.id)).slice(0, LISTED)
@@ -159,9 +149,7 @@ async function attachmentOf(
         .then((scratchpad) => scratchpad.where())
         .catch(() => '')
       const text = path ? await workspace.noteText(path) : null
-      return text
-        ? await markedFrom({ label: 'scratchpad', text: fitted(text, NOTE) }, [path])
-        : null
+      return text ? await markedFrom({ label: 'scratchpad', text: fitted(text, NOTE) }, [path]) : null
     }
     case 'thread':
       return await threadAttachment(chip.space ?? space.id, chip.id, chip.label)
@@ -170,10 +158,7 @@ async function attachmentOf(
     case 'words':
       if (!chip.text || !protection.agentsMay(chip.from)) return null
       if (chip.theirs) return { label: chip.label, text: fitted(chip.text, NOTE), untrusted: true }
-      return await markedFrom(
-        { label: chip.label, text: fitted(chip.text, NOTE) },
-        chip.from ? [chip.from] : [],
-      )
+      return await markedFrom({ label: chip.label, text: fitted(chip.text, NOTE) }, chip.from ? [chip.from] : [])
     case 'web':
       return null
   }
@@ -204,17 +189,13 @@ export async function draftOf(
         front,
       ).catch(() => [])
       const cited = passageAttachments(passages)
-      const theirs = await Promise.all(
-        cited.map((one) => fromOthers(insideSpace(root, one.cite.path))),
-      )
+      const theirs = await Promise.all(cited.map((one) => fromOthers(insideSpace(root, one.cite.path))))
       attachments.push(...cited.map((one, at) => (theirs[at] ? { ...one, untrusted: true } : one)))
     } else if (front) {
       const one = { label: front.path, text: fitted(front.text, NOTE) }
       attachments.push((await markedFrom(one, [insideSpace(space.root, front.path)])) ?? one)
     }
-    const read = await Promise.all(
-      chips.map((chip) => attachmentOf(chip, space, selection, picked)),
-    )
+    const read = await Promise.all(chips.map((chip) => attachmentOf(chip, space, selection, picked)))
     attachments.push(...read.filter((one): one is Attachment => one !== null))
   }
   return { text, attachments, ...(chips.some((one) => one.kind === 'web') ? { web: true } : {}) }

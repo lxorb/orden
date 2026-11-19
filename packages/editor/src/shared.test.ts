@@ -59,12 +59,7 @@ class Pane implements DocView {
     })
 
     this.held = made.state
-    documentOf(this)?.local(
-      made.changes,
-      made.state.selection,
-      this,
-      made.annotation(Transaction.userEvent),
-    )
+    documentOf(this)?.local(made.changes, made.state.selection, this, made.annotation(Transaction.userEvent))
   }
 
   select(anchor: number, head: number) {
@@ -448,9 +443,7 @@ describe('an undo that arrives as input rather than as a key', () => {
     expect(redoEdit(view)).toBe(false)
   })
 
-  test.each([['insertText'], ['deleteContentBackward']])('%j', (input) =>
-    expect(fromInput(input)).toBeNull(),
-  )
+  test.each([['insertText'], ['deleteContentBackward']])('%j', (input) => expect(fromInput(input)).toBeNull())
 })
 
 describe('edits carried onto the words as they are now', () => {
@@ -491,9 +484,7 @@ describe('edits carried onto the words as they are now', () => {
   test('come back unchanged where nothing moved', () => {
     const note = new SharedDoc('same')
 
-    expect(note.carried([{ from: 0, to: 4, insert: 'new' }], 'same')).toEqual([
-      { from: 0, to: 4, insert: 'new' },
-    ])
+    expect(note.carried([{ from: 0, to: 4, insert: 'new' }], 'same')).toEqual([{ from: 0, to: 4, insert: 'new' }])
   })
 
   test('are refused for words the document never held, unless it may guess', () => {

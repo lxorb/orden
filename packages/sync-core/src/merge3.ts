@@ -80,17 +80,12 @@ function lineEnd(base: string, at: number): number {
 
 function wholeLines(base: string, edit: Edit): boolean {
   const ends = edit.to === edit.from || edit.to === base.length || base.charAt(edit.to - 1) === '\n'
-  return (
-    lineStart(base, edit.from) === edit.from &&
-    ends &&
-    (edit.insert === '' || edit.insert.endsWith('\n'))
-  )
+  return lineStart(base, edit.from) === edit.from && ends && (edit.insert === '' || edit.insert.endsWith('\n'))
 }
 
 function reach(base: string, edit: Edit): Span {
   if (wholeLines(base, edit)) return { from: edit.from, to: edit.to }
-  const keepsEnd =
-    edit.to > edit.from && base.charAt(edit.to - 1) === '\n' && edit.insert.endsWith('\n')
+  const keepsEnd = edit.to > edit.from && base.charAt(edit.to - 1) === '\n' && edit.insert.endsWith('\n')
   return {
     from: lineStart(base, edit.from),
     to: lineEnd(base, keepsEnd ? edit.to - 1 : edit.to),
@@ -123,8 +118,7 @@ function rewrittenLines(base: string, side: readonly Edit[]): boolean[] {
       at = Math.max(at, one.to)
     }
     if (WORDY.test(base.slice(at, lines.to))) wordy = true
-    for (const [offset, one] of mine.entries())
-      out[first + offset] = !wordy && !wholeLines(base, one)
+    for (const [offset, one] of mine.entries()) out[first + offset] = !wordy && !wholeLines(base, one)
     first = last + 1
   }
   return out
@@ -183,8 +177,7 @@ function sameLine(
   }
   if (breaks(base, one) || breaks(base, other)) {
     if (one.from <= other.to && other.from <= one.to) return true
-    const between =
-      one.to <= other.from ? base.slice(one.to, other.from) : base.slice(other.to, one.from)
+    const between = one.to <= other.from ? base.slice(one.to, other.from) : base.slice(other.to, one.from)
     return reached() && !WORDY.test(between)
   }
   return false
@@ -205,10 +198,7 @@ function paired(mine: readonly Edit[], theirs: readonly Edit[]) {
       identical.push(left)
       one++
       other++
-    } else if (
-      left &&
-      (!right || left.from < right.from || (left.from === right.from && left.to <= right.to))
-    ) {
+    } else if (left && (!right || left.from < right.from || (left.from === right.from && left.to <= right.to))) {
       local.push(left)
       one++
     } else if (right) {
@@ -339,21 +329,11 @@ function cost(side: readonly Edit[]): number {
 
 function besideACopy(base: string, edit: Edit): boolean {
   const copied = (piece: string, at: number, after: number) =>
-    piece !== '' &&
-    (base.slice(at - piece.length, at) === piece ||
-      base.slice(after, after + piece.length) === piece)
-  return (
-    copied(base.slice(edit.from, edit.to), edit.from, edit.to) ||
-    copied(edit.insert, edit.from, edit.from)
-  )
+    piece !== '' && (base.slice(at - piece.length, at) === piece || base.slice(after, after + piece.length) === piece)
+  return copied(base.slice(edit.from, edit.to), edit.from, edit.to) || copied(edit.insert, edit.from, edit.from)
 }
 
-function heldBy(
-  base: string,
-  side: readonly Edit[],
-  others: readonly Edit[],
-  other: string,
-): Edit[] {
+function heldBy(base: string, side: readonly Edit[], others: readonly Edit[], other: string): Edit[] {
   const whole = cost(edits(base, other, 'semantic'))
   return side.filter((edit) => {
     if (!besideACopy(base, edit) || others.some((one) => sameEdit(one, edit))) return true
@@ -423,10 +403,7 @@ export interface Writing {
 }
 
 export function sharedPoints(analysis: Analysis): number[] {
-  const side = (whose: Whose) => [
-    ...analysis.alone[whose],
-    ...analysis.meetings.flatMap((meeting) => meeting[whose]),
-  ]
+  const side = (whose: Whose) => [...analysis.alone[whose], ...analysis.meetings.flatMap((meeting) => meeting[whose])]
   const mine = new Set(side('local').map((edit) => edit.from))
   const points = new Set<number>()
   for (const edit of side('remote')) if (mine.has(edit.from)) points.add(edit.from)
@@ -438,10 +415,8 @@ export function written(base: string, analysis: Analysis, writing: Writing): str
   const rankOf = (whose: Whose, at: number) => (whose === first(at) ? 0 : 1)
   const pieces: Piece[] = []
 
-  for (const edit of analysis.alone.local)
-    pieces.push({ ...edit, rank: rankOf('local', edit.from) })
-  for (const edit of analysis.alone.remote)
-    pieces.push({ ...edit, rank: rankOf('remote', edit.from) })
+  for (const edit of analysis.alone.local) pieces.push({ ...edit, rank: rankOf('local', edit.from) })
+  for (const edit of analysis.alone.remote) pieces.push({ ...edit, rank: rankOf('remote', edit.from) })
   for (const edit of analysis.identical) pieces.push({ ...edit, rank: 0 })
 
   for (const meeting of analysis.meetings) {

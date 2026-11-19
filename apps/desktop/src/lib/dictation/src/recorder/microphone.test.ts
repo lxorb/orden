@@ -37,8 +37,7 @@ function stubbed() {
   vi.stubGlobal('MediaRecorder', FakeRecorder)
   vi.stubGlobal('navigator', {
     mediaDevices: {
-      getUserMedia: () =>
-        Promise.resolve({ getTracks: () => [{ stop: () => (tracks.stopped += 1) }] }),
+      getUserMedia: () => Promise.resolve({ getTracks: () => [{ stop: () => (tracks.stopped += 1) }] }),
     },
   })
 }

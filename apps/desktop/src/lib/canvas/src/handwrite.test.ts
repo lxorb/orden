@@ -14,9 +14,7 @@ function viewOf(doc: string, from: number, to = from): EditorView {
 
 describe('a handwriting', () => {
   test('is named for the moment it was started, to the second', () => {
-    expect(handwritingName(new Date(2026, 10, 17, 9, 5, 7))).toBe(
-      'handwriting-2026-11-17-090507.canvas',
-    )
+    expect(handwritingName(new Date(2026, 10, 17, 9, 5, 7))).toBe('handwriting-2026-11-17-090507.canvas')
   })
 
   test('stands as a paragraph of its own after the words before the caret', () => {

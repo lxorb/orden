@@ -54,8 +54,7 @@ describe('which model a helper runs on', () => {
   test('a word nobody has is refused with the models there are', () => {
     const said = routed('gemini', OFFERED, CLAUDE)
     expect(said).toEqual({
-      refused:
-        'no model called "gemini" is offered. Models: opus, sonnet, haiku, gpt-6-astra, gpt-6.1-sol, gpt-6-luna',
+      refused: 'no model called "gemini" is offered. Models: opus, sonnet, haiku, gpt-6-astra, gpt-6.1-sol, gpt-6-luna',
     })
     expect(routed('x', [], null)).toEqual({ refused: 'no model called "x" is offered' })
     expect(routed('', [], null)).toEqual({ refused: 'there is no AI provider set up' })

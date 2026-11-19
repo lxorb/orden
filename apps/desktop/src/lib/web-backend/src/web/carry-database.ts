@@ -38,11 +38,7 @@ function askedFormer(channel: string, from: string): Promise<Heard> {
   })
 }
 
-export async function databaseName(
-  from: string,
-  to: string,
-  former = FORMER_NAME,
-): Promise<string> {
+export async function databaseName(from: string, to: string, former = FORMER_NAME): Promise<string> {
   if (from === to || typeof indexedDB === 'undefined') return to
   if (!(await existing(from).then(closed))) return to
   if (staying.has(from)) return from
@@ -130,9 +126,7 @@ async function merged(old: DatabaseDump, to: string): Promise<void> {
   })
 
   try {
-    const names = old.stores
-      .map((store) => store.name)
-      .filter((name) => db.objectStoreNames.contains(name))
+    const names = old.stores.map((store) => store.name).filter((name) => db.objectStoreNames.contains(name))
     if (names.length === 0) return
     const writing = db.transaction(names, 'readwrite')
     for (const shape of old.stores) {
@@ -175,9 +169,7 @@ function keptBeside(
 
   const asked = store.index(by.name).getAll(near as IDBValidKey)
   asked.onsuccess = () => {
-    const already = (asked.result as unknown[]).some((one) =>
-      sameRow(withoutKey(one, keyPath), row),
-    )
+    const already = (asked.result as unknown[]).some((one) => sameRow(withoutKey(one, keyPath), row))
     if (!already) store.put(row)
   }
 }

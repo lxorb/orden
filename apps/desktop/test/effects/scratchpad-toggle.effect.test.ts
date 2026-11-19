@@ -24,8 +24,7 @@ const { Disk } = await import('../disk')
 const { Titlebar } = await import('../../src/lib/titlebar/src/api')
 const { default: Sidebar } = await import('../../src/lib/sidebar/src/Sidebar.svelte')
 await (await import('../sidebar-parts')).registerSidebarParts()
-const { loadScratchpadCard, pad, shown, toggleScratchpad } =
-  await import('../../src/lib/scratchpad/src/api')
+const { loadScratchpadCard, pad, shown, toggleScratchpad } = await import('../../src/lib/scratchpad/src/api')
 const { default: ScratchpadCard } = await loadScratchpadCard()
 const scratchpad = await pad()
 const { workspace } = await import('../../src/lib/workspace/src/api')
@@ -179,9 +178,7 @@ test('the card takes the keyboard when asked, and Escape gives it back', async (
   expect(document.activeElement).toBe(editor)
   expect(scratchpad.live?.state.doc.toString()).toBe('First thought\n')
 
-  editor?.dispatchEvent(
-    new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
-  )
+  editor?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))
   expect(shown.on).toBe(false)
   expect(document.activeElement).toBe(outside)
 })
@@ -210,9 +207,7 @@ test('what is typed is written as the card goes, and an append lands in the card
   for (const one of undo) one()
   undo = []
   await vi.waitFor(() =>
-    expect(disk.current?.files.get(PAD)).toBe(
-      '# First thought\nSecond\n\nFrom the quick question\n',
-    ),
+    expect(disk.current?.files.get(PAD)).toBe('# First thought\nSecond\n\nFrom the quick question\n'),
   )
   expect(scratchpad.live).toBe(null)
 })
@@ -233,9 +228,7 @@ test("an agent's edit lands in the card around the caret, and a stale one is ref
 })
 
 test("with the card away, an agent's edit is written to the file", async () => {
-  expect(
-    await scratchpad.replace('First thought\n', [{ from: 14, to: 14, insert: 'More\n' }]),
-  ).toBe(true)
+  expect(await scratchpad.replace('First thought\n', [{ from: 14, to: 14, insert: 'More\n' }])).toBe(true)
   expect(disk.current?.files.get(PAD)).toBe('First thought\nMore\n')
 })
 

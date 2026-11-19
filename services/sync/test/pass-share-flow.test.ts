@@ -1,18 +1,7 @@
 import type { Login, Role } from '@orden/pass/types'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { call, type TestEnv, testEnv } from './harness'
-import {
-  content,
-  type Device,
-  FAST,
-  Flow,
-  kit,
-  type Kit,
-  login,
-  names,
-  ORIGIN,
-  PASSWORD,
-} from './pass-flow'
+import { content, type Device, FAST, Flow, kit, type Kit, login, names, ORIGIN, PASSWORD } from './pass-flow'
 import { type Person, person } from './pass-fakes'
 
 const HOUR = 3600e3
@@ -44,11 +33,9 @@ const sharing = (device: Device, who: Person) => flow.sharing(device, who)
 const deviceOf = (who: Person) => flow.deviceOf(who)
 const family = () => flow.family()
 const checked = (device: Device, who: Person, email: string) => flow.checked(device, who, email)
-const invited = (a: Device, vault: string, email: string, role: Role) =>
-  flow.invited(a, vault, email, role)
+const invited = (a: Device, vault: string, email: string, role: Role) => flow.invited(a, vault, email, role)
 const accepted = (device: Device, who: Person, vault: string) => flow.accepted(device, who, vault)
-const joined = (a: Device, vault: string, who: Person, role: Role) =>
-  flow.joined(a, vault, who, role)
+const joined = (a: Device, vault: string, who: Person, role: Role) => flow.joined(a, vault, who, role)
 
 describe('sharing a vault', () => {
   test('with somebody who has Pass: invited, accepted, and the items open for them', async () => {
@@ -79,8 +66,7 @@ describe('sharing a vault', () => {
   test('with somebody who has no Pass yet: pending, confirmed once they make one, then accepted', async () => {
     const { a, vault, id } = await family()
     expect(await invited(a, vault, cy.email, 'viewer')).toBe('pending')
-    const waiting = async () =>
-      (await apiOf(ada).members(vault)).find((one) => one.email === cy.email)
+    const waiting = async () => (await apiOf(ada).members(vault)).find((one) => one.email === cy.email)
     expect(await waiting()).toMatchObject({ state: 'pending', pub: null })
     const nobody = await k.personFor(sharing(a, ada), cy.email)
     await expect(k.confirmedMember(sharing(a, ada), vault, nobody)).rejects.toThrow()
@@ -179,9 +165,7 @@ describe('removing a member', () => {
     const rows = await apiOf(ada).allVaultItems(vault)
     expect(rows.every((one) => one.keyVersion === 2)).toBe(true)
     const after = rows.find((one) => one.id === fresh)!
-    await expect(
-      k.openItem(old, vault, fresh, after.key, after.body, after.keyVersion),
-    ).rejects.toThrow()
+    await expect(k.openItem(old, vault, fresh, after.key, after.body, after.keyVersion)).rejects.toThrow()
 
     expect(await synced(b, bob)).toBe('synced')
     expect(names(b)).not.toContain('Family')
@@ -260,9 +244,7 @@ describe('a member’s history after the key is renewed', () => {
   async function historyOf(device: Device, vault: string, id: string): Promise<string[]> {
     const box = device.held!.vaults.get(vault)!
     const passwords: string[] = []
-    for (const version of device.rows.versionRows.filter(
-      (one) => one.vault === vault && one.id === id,
-    )) {
+    for (const version of device.rows.versionRows.filter((one) => one.vault === vault && one.id === id)) {
       const opened = await k.openVersion(box.key, vault, id, version.rev, version.key, version.body)
       passwords.push((opened.envelope.content as Login).password)
     }
@@ -358,10 +340,7 @@ describe('a secure link', () => {
   }
 
   const opened = (id: string) =>
-    call<{ body?: string; expires?: number; left?: number | null; error?: string }>(
-      env,
-      `/v1/pass-link/${id}`,
-    )
+    call<{ body?: string; expires?: number; left?: number | null; error?: string }>(env, `/v1/pass-link/${id}`)
 
   test('opens to anybody with the whole address, without its passkeys’ private keys', async () => {
     const { a, id, made } = await linked(null)
@@ -473,9 +452,7 @@ describe('the page a secure link opens', () => {
     for (const host of ['ada.orden.so', 'blog.example.com']) {
       const elsewhere = await call(page, path, { host })
       expect(elsewhere.text, host).not.toBe('/pass-link.html')
-      expect(elsewhere.headers.get('content-security-policy') ?? '', host).not.toContain(
-        "default-src 'none'",
-      )
+      expect(elsewhere.headers.get('content-security-policy') ?? '', host).not.toContain("default-src 'none'")
     }
     page.close()
   })

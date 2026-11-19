@@ -4,25 +4,11 @@ import { isLoginItem, type LoginItem } from '@orden/pass/monitor'
 import { code, totpIn } from '@orden/pass/totp'
 import type { Content, Item, Login } from '@orden/pass/types'
 import { hostOf, isSecurePage, normalizeUrl, rank, siteOf } from '@orden/pass/urls'
-import type {
-  FillTarget,
-  FormKind,
-  PassForm,
-  PassForms,
-  PassFrame,
-  PassMark,
-  PassSubmitted,
-} from './channel'
+import type { FillTarget, FormKind, PassForm, PassForms, PassFrame, PassMark, PassSubmitted } from './channel'
 import { fill, onForms, onMark, onSubmitted } from './channel'
 import type { FillChoice } from './fill-bubble'
 import { passBubbles } from './fill-bubbles.svelte'
-import {
-  aliasValues,
-  cardValues,
-  generatedValues,
-  identityValues,
-  loginValues,
-} from './fill-values'
+import { aliasValues, cardValues, generatedValues, identityValues, loginValues } from './fill-values'
 import { subtitleOf } from './list'
 import { newAlias } from './new-alias'
 import { PAUSES, type Pause, type Paused } from './settings'
@@ -35,14 +21,7 @@ const STEP_PAUSE = 700
 const SIGNING_SHOWN = 4000
 const TYPED_KEPT = FLOW_WINDOW
 
-const LOGIN_FORMS: ReadonlySet<FormKind> = new Set([
-  'login',
-  'username',
-  'password',
-  'totp',
-  'signup',
-  'change',
-])
+const LOGIN_FORMS: ReadonlySet<FormKind> = new Set(['login', 'username', 'password', 'totp', 'signup', 'change'])
 
 interface Held {
   frame: PassFrame
@@ -288,8 +267,7 @@ export class Autofill {
     if (!password) return
     await this.ready()
     const settings = this.store.settings
-    if (this.store.state !== 'open' || !settings.autosave || this.paused(said.origin, 'save'))
-      return
+    if (this.store.state !== 'open' || !settings.autosave || this.paused(said.origin, 'save')) return
     const username = said.username ?? this.typedOn(said.tab, said.origin, now)
     const old = said.newPassword === null ? null : said.password
     const saving = savingOf(this.loginsFor(said), username, password, old)
@@ -374,9 +352,7 @@ export class Autofill {
       alias: suggests && kind === 'signup',
       fields:
         kind === 'card' || kind === 'identity'
-          ? form.fields
-              .filter((one) => one.visible && one.role !== 'unknown')
-              .map((one) => one.role)
+          ? form.fields.filter((one) => one.visible && one.role !== 'unknown').map((one) => one.role)
           : [],
     })
   }
@@ -392,15 +368,10 @@ export class Autofill {
     return totp ? (await code(totp, this.now())).code : null
   }
 
-  private async valuesOf(
-    form: PassForm,
-    content: Content,
-    origin: string,
-  ): Promise<Record<string, string>> {
+  private async valuesOf(form: PassForm, content: Content, origin: string): Promise<Record<string, string>> {
     switch (content.kind) {
       case 'login': {
-        const wantsCode =
-          form.fields.some((one) => one.role === 'totp') && this.fillsOn(origin, 'totp')
+        const wantsCode = form.fields.some((one) => one.role === 'totp') && this.fillsOn(origin, 'totp')
         const now = wantsCode ? await this.totpOf(content) : null
         return loginValues(form, { login: content, code: now, fresh: null })
       }
@@ -435,11 +406,7 @@ export class Autofill {
   }
 
   private signInForm(frame: PassForms): PassForm | null {
-    return (
-      frame.forms.find(
-        (one) => isSignInKind(one.kind) && one.fields.some((field) => field.visible),
-      ) ?? null
-    )
+    return frame.forms.find((one) => isSignInKind(one.kind) && one.fields.some((field) => field.visible)) ?? null
   }
 
   private ended(tab: string, flow: Flow | undefined): void {
@@ -467,9 +434,9 @@ export class Autofill {
       if (flow) this.ended(tab, flow)
       return
     }
-    const usable = (
-      go === 'continue' && flow ? logins.filter((one) => one.id === flow.item) : logins
-    ).filter((one) => form.kind !== 'totp' || one.content.totp !== '')
+    const usable = (go === 'continue' && flow ? logins.filter((one) => one.id === flow.item) : logins).filter(
+      (one) => form.kind !== 'totp' || one.content.totp !== '',
+    )
     const only = usable.length === 1 ? usable[0] : undefined
     if (usable.length > 1 || (only && !namesHost(only, frame.url))) {
       if (passBubbles.of(tab) === null) this.offer(frame, form)

@@ -34,9 +34,7 @@ function shortcutFields(): Field[] {
         const holder = shortcuts.conflicts(one.id, key)[0]
         return (
           shortcuts.refuse(key, one.id) ??
-          (holder
-            ? `${showCombination(key, shortcuts.platform)} already runs ${holder.label()}.`
-            : null)
+          (holder ? `${showCombination(key, shortcuts.platform)} already runs ${holder.label()}.` : null)
         )
       },
       get: () => shortcuts.keyFor(one.id) ?? '',

@@ -28,8 +28,7 @@ function parsed(text: unknown): unknown {
 }
 
 function marksOf(value: unknown): Marks {
-  if (!isRecord(value) || !Array.isArray(value.r) || !Array.isArray(value.v))
-    return { r: [], v: [] }
+  if (!isRecord(value) || !Array.isArray(value.r) || !Array.isArray(value.v)) return { r: [], v: [] }
   return value as unknown as Marks
 }
 

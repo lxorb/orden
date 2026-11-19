@@ -3,17 +3,7 @@ import { wireEffort } from './effort'
 import { learnt } from './learned'
 import { outputText, type Call, type Step } from './transcript'
 import { completionsUsage } from './usage'
-import {
-  type Answer,
-  argsOf,
-  type Ask,
-  type Heard,
-  PartsReader,
-  type Reader,
-  record,
-  text,
-  type Wire,
-} from './wire'
+import { type Answer, argsOf, type Ask, type Heard, PartsReader, type Reader, record, text, type Wire } from './wire'
 
 type Message = Record<string, unknown>
 

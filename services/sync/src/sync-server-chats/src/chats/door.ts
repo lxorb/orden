@@ -46,10 +46,7 @@ chatDoor.get('/:chat/socket', async (context) => {
   }
 
   const headers = new Headers(answer.headers)
-  headers.set(
-    'sec-websocket-protocol',
-    named?.protocol ?? tokenProtocolOf(offered) ?? subprotocol(token),
-  )
+  headers.set('sec-websocket-protocol', named?.protocol ?? tokenProtocolOf(offered) ?? subprotocol(token))
   return new Response(answer.body, {
     status: answer.status,
     statusText: answer.statusText,

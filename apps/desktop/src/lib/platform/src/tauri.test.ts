@@ -94,8 +94,7 @@ describe('a link out of the app', () => {
   test('in a browser is a new tab', async () => {
     const tabs: unknown[][] = []
     const { openExternal } = await inBrowser()
-    ;(window as unknown as { open: (...args: unknown[]) => void }).open = (...args) =>
-      void tabs.push(args)
+    ;(window as unknown as { open: (...args: unknown[]) => void }).open = (...args) => void tabs.push(args)
 
     await openExternal('https://example.com/site')
 

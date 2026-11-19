@@ -115,9 +115,7 @@ describe('a note’s editor', () => {
         { op: 'reveal', line: 2 },
         { op: 'mark', marks: [{ from: { line: 1 }, to: { line: 1 }, message: 'x' }] },
       ]) {
-        expect(() =>
-          noteEditor(call({ tab: 'n1', ...args }, ['editor', 'workspace.focus'])),
-        ).toThrow(/protected/)
+        expect(() => noteEditor(call({ tab: 'n1', ...args }, ['editor', 'workspace.focus']))).toThrow(/protected/)
       }
     } finally {
       locked.clear()
@@ -175,9 +173,9 @@ describe('a note’s editor', () => {
     const place = (line: number) => ({ line, ch: 0 })
     const many = (count: number) =>
       Array.from({ length: count }, (_, at) => ({ anchor: place(at + 2), head: place(at + 2) }))
-    expect(() =>
-      noteEditor(call({ tab: 'n1', op: 'select', selections: many(501) }, focus)),
-    ).toThrow(/at most 500 selections/)
+    expect(() => noteEditor(call({ tab: 'n1', op: 'select', selections: many(501) }, focus))).toThrow(
+      /at most 500 selections/,
+    )
     expect(view.state.selection.ranges).toHaveLength(1)
 
     select(view, [{ anchor: place(1), head: { line: 1, ch: 30_000 } }, ...many(599)])
@@ -197,13 +195,11 @@ describe('a note’s editor', () => {
       message,
     })
     expect(() =>
-      noteEditor(
-        call({ tab: 'n1', op: 'mark', marks: Array.from({ length: 501 }, () => mark('x')) }),
-      ),
+      noteEditor(call({ tab: 'n1', op: 'mark', marks: Array.from({ length: 501 }, () => mark('x')) })),
     ).toThrow(/at most 500 marks/)
-    expect(() =>
-      noteEditor(call({ tab: 'n1', op: 'mark', marks: [mark('x'.repeat(2001))] })),
-    ).toThrow(/at most 2000 characters/)
+    expect(() => noteEditor(call({ tab: 'n1', op: 'mark', marks: [mark('x'.repeat(2001))] }))).toThrow(
+      /at most 2000 characters/,
+    )
     expect(document.querySelector('.cm-agent-mark')).toBeNull()
   })
 
@@ -259,9 +255,7 @@ describe('a note’s editor', () => {
 
   test('a line is revealed only by an agent that may move the reader', () => {
     expect(() => noteEditor(call({ tab: 'n1', op: 'reveal', line: 2 }))).toThrow(/workspace.focus/)
-    expect(
-      noteEditor(call({ tab: 'n1', op: 'reveal', line: 2 }, ['editor', 'workspace.focus'])),
-    ).toMatchObject({
+    expect(noteEditor(call({ tab: 'n1', op: 'reveal', line: 2 }, ['editor', 'workspace.focus']))).toMatchObject({
       result: { line: 2 },
     })
   })

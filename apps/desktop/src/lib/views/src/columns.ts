@@ -38,8 +38,7 @@ export type Editor =
   | 'button'
   | 'none'
 
-export const bare = (property: string): string =>
-  property.startsWith('note.') ? property.slice(5) : property
+export const bare = (property: string): string => (property.startsWith('note.') ? property.slice(5) : property)
 
 export function isNoteProperty(property: string): boolean {
   return !/^(file|formula|task|this)\./.test(property)
@@ -117,19 +116,7 @@ const TASK_OTHER = [
   'recurrence',
   'completed',
 ]
-const FILE_OTHER = [
-  'name',
-  'basename',
-  'path',
-  'folder',
-  'ext',
-  'tags',
-  'links',
-  'embeds',
-  'mtime',
-  'ctime',
-  'space',
-]
+const FILE_OTHER = ['name', 'basename', 'path', 'folder', 'ext', 'tags', 'links', 'embeds', 'mtime', 'ctime', 'space']
 
 const FIELD_HOLDS: Partial<Record<string, Holds>> = Object.fromEntries([
   ...TASK_OTHER.map((one): [string, Holds] => [`task.${one}`, 'other']),
@@ -174,8 +161,7 @@ export function holdsOf(base: Base, rows: readonly Row[]): HoldsOf {
   }
 }
 
-export const holdsLists = (property: string, rows: readonly Row[]): boolean =>
-  noteKind(bare(property), rows) === 'list'
+export const holdsLists = (property: string, rows: readonly Row[]): boolean => noteKind(bare(property), rows) === 'list'
 
 const readsAsNumber = (words: string) => words !== '' && String(Number(words)) === words
 
@@ -193,18 +179,10 @@ export const optionWritten = (
   value: Value,
   rows: readonly Row[],
   words: string,
-): Value =>
-  readsAsNumber(words) && holdsNumbers(base, property, value, rows) ? Number(words) : words
+): Value => (readsAsNumber(words) && holdsNumbers(base, property, value, rows) ? Number(words) : words)
 
-export const keyWritten = (
-  base: Base,
-  property: string,
-  key: Value,
-  rows: readonly Row[],
-): Value =>
-  typeof key === 'string' && isNoteProperty(property)
-    ? optionWritten(base, property, null, rows, key)
-    : key
+export const keyWritten = (base: Base, property: string, key: Value, rows: readonly Row[]): Value =>
+  typeof key === 'string' && isNoteProperty(property) ? optionWritten(base, property, null, rows, key) : key
 
 export function editorOf(base: Base, property: string, rows: readonly Row[]): Editor {
   if (property.startsWith('task.')) return TASK_EDITORS[property.slice(5)] ?? 'none'
@@ -244,8 +222,7 @@ const STATUS_BY_NAME: Partial<Record<string, string>> = {
 }
 
 function priorityOf(value: Value): Priority | undefined {
-  const said =
-    typeof value === 'number' ? String(value) : typeof value === 'string' ? value.trim() : ''
+  const said = typeof value === 'number' ? String(value) : typeof value === 'string' ? value.trim() : ''
   return PRIORITY_BY_WORD.get(said.toLowerCase().replace(/^p(?=\d$)/, ''))
 }
 
@@ -320,11 +297,7 @@ function taskChange(task: TaskRow, field: string, value: Value | null): TaskChan
     case 'text':
       return typeof value === 'string' && value.trim() !== '' ? { text: value } : null
     case 'assignee':
-      return value === null
-        ? { assignee: null }
-        : typeof value === 'string'
-          ? { assignee: value }
-          : null
+      return value === null ? { assignee: null } : typeof value === 'string' ? { assignee: value } : null
     default:
       return null
   }
@@ -412,9 +385,7 @@ export function reverseOffers(
     if (row.kind !== 'note') continue
     for (const [key, value] of Object.entries(row.note)) {
       if (found.has(key) || taken.has(key) || !holdsLink(value)) continue
-      const targets = (Array.isArray(value) ? value : [value]).flatMap((one) =>
-        isLinkValue(one) ? [one.target] : [],
-      )
+      const targets = (Array.isArray(value) ? value : [value]).flatMap((one) => (isLinkValue(one) ? [one.target] : []))
       const points = targets.some((target) => {
         const path = context.resolve?.(target, row)
         return path != null && here.has(keyOf(row.space, path))

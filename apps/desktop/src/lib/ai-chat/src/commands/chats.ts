@@ -84,13 +84,9 @@ export async function catchup(host: Host, thread: Thread, args: string): Promise
   if (!chats) return
   const named = args.trim().replace(/^#/, '').toLowerCase()
   const wanted = (await chats.list())
-    .filter((one) =>
-      named ? one.name?.toLowerCase() === named : one.unread > 0 || one.mentions > 0,
-    )
+    .filter((one) => (named ? one.name?.toLowerCase() === named : one.unread > 0 || one.mentions > 0))
     .slice(0, MOST_CHATS)
-  const parts = (await Promise.all(wanted.map((one) => chats.part(one.id, 'unread')))).filter(
-    (one) => one !== null,
-  )
+  const parts = (await Promise.all(wanted.map((one) => chats.part(one.id, 'unread')))).filter((one) => one !== null)
   if (!parts.length) {
     host.line(thread, 'Nothing unread')
     return

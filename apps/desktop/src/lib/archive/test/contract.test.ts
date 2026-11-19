@@ -16,27 +16,16 @@ function sources(folder: string): string[] {
 describe('the module stands on its own', () => {
   test('reaches no app module but the marks, the platform, the undo record, the tree, the ui kit and the workspace', () => {
     const reached = sources(SRC).flatMap((file) =>
-      [...readFileSync(file, 'utf8').matchAll(/from '\.\.\/\.\.\/([a-z-]+)\/src\/api'/g)].map(
-        (found) => found[1],
-      ),
+      [...readFileSync(file, 'utf8').matchAll(/from '\.\.\/\.\.\/([a-z-]+)\/src\/api'/g)].map((found) => found[1]),
     )
-    expect([...new Set(reached)].sort()).toEqual([
-      'file-undo',
-      'marks',
-      'platform',
-      'tree',
-      'ui-kit',
-      'workspace',
-    ])
+    expect([...new Set(reached)].sort()).toEqual(['file-undo', 'marks', 'platform', 'tree', 'ui-kit', 'workspace'])
   })
 })
 
 describe('the archive of a space', () => {
   test('the api holds nothing statically and leaves the list and the archiving behind doors', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
-    const statics = [...api.matchAll(/^export \{[^}]*\} from '\.\/([A-Za-z.-]+)'/gm)].map(
-      (found) => found[1],
-    )
+    const statics = [...api.matchAll(/^export \{[^}]*\} from '\.\/([A-Za-z.-]+)'/gm)].map((found) => found[1])
     expect(statics).toEqual([])
     expect(api).toMatch(/import\('\.\/Archive\.svelte'\)/)
     expect(api).toMatch(/import\('\.\/ArchivedStrip\.svelte'\)/)

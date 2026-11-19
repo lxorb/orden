@@ -1,14 +1,6 @@
 <script lang="ts">
   import type { Box } from '../../plane/src/api'
-  import {
-    closeUpOf,
-    densityFor,
-    holdPaper,
-    type Paper,
-    paperEdition,
-    paperOf,
-    type Part,
-  } from '../../pdf/src/api'
+  import { closeUpOf, densityFor, holdPaper, type Paper, paperEdition, paperOf, type Part } from '../../pdf/src/api'
   import { FileMark } from '../../marks/src/api'
   import { pixelRatio } from '../../ui-controls/src/api'
 
@@ -44,9 +36,7 @@
   let lost = $state(false)
   let tries = $state(0)
 
-  const fit = $derived(
-    paper && wide && tall ? Math.min(wide / paper.width, tall / paper.height) : 0,
-  )
+  const fit = $derived(paper && wide && tall ? Math.min(wide / paper.width, tall / paper.height) : 0)
 
   const wanted = $derived(fit * scale * pixelRatio.now)
   const density = $derived(wanted ? densityFor(wanted) : FIRST)

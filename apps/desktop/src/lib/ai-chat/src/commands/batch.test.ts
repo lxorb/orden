@@ -39,10 +39,7 @@ vi.mock('../../../search/src/api', async (importOriginal) => ({
     const matcher = new Matcher(query)
     const hits = Object.entries(NOTES)
       .flatMap(([relative, body]) =>
-        matcher.hits(
-          { path: `${ROOT}/${relative}`, relative, name: relative.replace(/^.*\//, ''), body },
-          most,
-        ),
+        matcher.hits({ path: `${ROOT}/${relative}`, relative, name: relative.replace(/^.*\//, ''), body }, most),
       )
       .slice(0, most)
     onFound({ hits, loose: [] })
@@ -69,18 +66,11 @@ async function batched(instruction: string): Promise<string[]> {
 }
 
 test('/batch over Inbox/ takes only the notes in the folder Inbox', async () => {
-  expect(await batched('tag every note in Inbox/ with done')).toEqual([
-    'Inbox/Deep/e',
-    'Inbox/a',
-    'inbox/f',
-  ])
+  expect(await batched('tag every note in Inbox/ with done')).toEqual(['Inbox/Deep/e', 'Inbox/a', 'inbox/f'])
 })
 
 test('/batch over a folder and a tag takes both, and only those', async () => {
-  expect(await batched('tag every note in Projects/Inbox/ and #todo')).toEqual([
-    'Elsewhere/g',
-    'Projects/Inbox/c',
-  ])
+  expect(await batched('tag every note in Projects/Inbox/ and #todo')).toEqual(['Elsewhere/g', 'Projects/Inbox/c'])
 })
 
 test('/batch over a short folder still finds it behind many paths that only contain it', async () => {

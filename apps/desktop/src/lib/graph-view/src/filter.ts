@@ -25,9 +25,7 @@ export function graphFilter(query: Query): Keeps | null {
 
     case 'text': {
       const wanted = folded(query.text, query.fold)
-      return (node) =>
-        folded(node.name, query.fold).includes(wanted) ||
-        folded(node.id, query.fold).includes(wanted)
+      return (node) => folded(node.name, query.fold).includes(wanted) || folded(node.id, query.fold).includes(wanted)
     }
 
     case 'path': {
@@ -63,8 +61,7 @@ export function graphFilter(query: Query): Keeps | null {
   }
 }
 
-const known = (parts: readonly (Keeps | null)[]): Keeps[] =>
-  parts.filter((one): one is Keeps => one !== null)
+const known = (parts: readonly (Keeps | null)[]): Keeps[] => parts.filter((one): one is Keeps => one !== null)
 
 const folded = (text: string, fold: boolean): string => (fold ? text.toLowerCase() : text)
 

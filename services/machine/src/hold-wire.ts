@@ -45,13 +45,10 @@ export interface Hello {
   exited: Exit | null
 }
 
-export type FromHolder =
-  Hello | { t: 'out'; seq: number; data: Uint8Array } | ({ t: 'exit' } & Exit)
+export type FromHolder = Hello | { t: 'out'; seq: number; data: Uint8Array } | ({ t: 'exit' } & Exit)
 
 export type ToHolder =
-  | { t: 'attach'; since: number }
-  | { t: 'in'; data: Uint8Array }
-  | { t: 'size'; cols: number; rows: number }
+  { t: 'attach'; since: number } | { t: 'in'; data: Uint8Array } | { t: 'size'; cols: number; rows: number }
 
 const HELLO = 1
 const OUT = 2
@@ -170,8 +167,7 @@ export function fromHolderOf(raw: Raw): FromHolder | null {
   if (raw.kind !== HELLO) return null
   const { v, holder, shell, base, from, end, cols, rows } = value
   if (typeof v !== 'number' || v < 1) return null
-  if (!isCount(holder) || !isCount(shell) || !isCount(base) || !isCount(from) || !isCount(end))
-    return null
+  if (!isCount(holder) || !isCount(shell) || !isCount(base) || !isCount(from) || !isCount(end)) return null
   if (!isSize(cols) || !isSize(rows) || from < base || end < from) return null
   const exited = value.exited === null ? null : exitOf(value.exited)
   if (exited === null && value.exited !== null) return null

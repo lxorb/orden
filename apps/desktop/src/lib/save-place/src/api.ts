@@ -2,9 +2,7 @@ import { workspace } from '../../workspace/src/api'
 import { isUnsaved } from '../../documents/src/api'
 
 export function askPlace(tabId?: string | null, saved?: () => void): void {
-  void import('./ask').then((one) =>
-    saved ? one.askPlace(tabId ?? null, saved) : one.askPlace(tabId ?? null),
-  )
+  void import('./ask').then((one) => (saved ? one.askPlace(tabId ?? null, saved) : one.askPlace(tabId ?? null)))
 }
 
 export function saveFront(): void {

@@ -175,8 +175,7 @@ export function draggable(node: HTMLElement, start: Carry) {
     if (!was) return
     window.addEventListener('click', swallow, { capture: true, once: true })
     setTimeout(() => window.removeEventListener('click', swallow, true), 0)
-    if (event && target && row)
-      takers.get(target)?.(row, { x: event.clientX, y: event.clientY }, target, carry.from)
+    if (event && target && row) takers.get(target)?.(row, { x: event.clientX, y: event.clientY }, target, carry.from)
   }
 
   const up = (event: PointerEvent) => finish(event)
@@ -190,11 +189,7 @@ export function draggable(node: HTMLElement, start: Carry) {
 
   const down = (event: PointerEvent) => {
     if (carry.disabled || event.button !== 0) return
-    if (
-      event.target instanceof Element &&
-      event.target.closest('input, textarea, select, [contenteditable]')
-    )
-      return
+    if (event.target instanceof Element && event.target.closest('input, textarea, select, [contenteditable]')) return
     from = { x: event.clientX, y: event.clientY }
     dragging.x = from.x
     dragging.y = from.y

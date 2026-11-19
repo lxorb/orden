@@ -16,8 +16,7 @@ const SpaceMark = (await import('./SpaceMark.svelte')).default
 
 iconLibrary.set = await loadIcons()
 
-const drawn = (id: string | null, name: string): string =>
-  render(SpaceMark, { props: { id, name } }).body
+const drawn = (id: string | null, name: string): string => render(SpaceMark, { props: { id, name } }).body
 
 describe('a space whose icon can be drawn', () => {
   test('wears it, and not its letter', () => {

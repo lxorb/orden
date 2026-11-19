@@ -43,9 +43,7 @@ const TOO_MUCH: {
     path: 'icons',
     method: 'PUT',
     body: () => ({
-      icons: Object.fromEntries(
-        Array.from({ length: 400 }, (_, at) => [`${'p'.repeat(280)}${at}`, '📦']),
-      ),
+      icons: Object.fromEntries(Array.from({ length: 400 }, (_, at) => [`${'p'.repeat(280)}${at}`, '📦'])),
     }),
     says: 'that is more folder icons than a space holds',
   },

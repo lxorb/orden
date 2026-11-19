@@ -64,9 +64,7 @@ export function fakeCloudflare() {
   }
 
   function answer(input: RequestInfo | URL, init?: RequestInit): Response {
-    const url = new URL(
-      typeof input === 'string' ? input : input instanceof URL ? input : input.url,
-    )
+    const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input : input.url)
     const method = init?.method ?? 'GET'
     const headers = new Headers(init?.headers)
 
@@ -121,9 +119,7 @@ export function fakeCloudflare() {
     throw new Error(`unexpected request ${method} ${url.href}`)
   }
 
-  const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
-    Promise.resolve(answer(input, init)),
-  )
+  const fetch = vi.fn((input: RequestInfo | URL, init?: RequestInit) => Promise.resolve(answer(input, init)))
 
   return {
     hostnames,

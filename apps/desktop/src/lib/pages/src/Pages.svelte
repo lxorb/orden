@@ -1,13 +1,5 @@
 <script lang="ts">
-  import {
-    keyElsewhere,
-    longPress,
-    said,
-    viewport,
-    DIVIDER,
-    menu,
-    type MenuEntry,
-  } from '../../ui-kit/src/api'
+  import { keyElsewhere, longPress, said, viewport, DIVIDER, menu, type MenuEntry } from '../../ui-kit/src/api'
   import { untrack } from 'svelte'
   import {
     CanvasBar,
@@ -36,15 +28,7 @@
   import PagesPage from './PagesPage.svelte'
   import PagesSlot from './PagesSlot.svelte'
   import PagesZoom from './PagesZoom.svelte'
-  import {
-    type Camera,
-    ctrlWheelZoom,
-    graphPoint,
-    heldGestures,
-    NOTCH,
-    pinching,
-    turnOf,
-  } from '../../camera/src/api'
+  import { type Camera, ctrlWheelZoom, graphPoint, heldGestures, NOTCH, pinching, turnOf } from '../../camera/src/api'
   import {
     cardsInLasso,
     Contacts,
@@ -82,17 +66,7 @@
     textsOf,
   } from '../../pdf/src/api'
   import { caretAt, type Chosen, chooseTo, chosenIn, wordAround } from './choose'
-  import {
-    began,
-    dragged,
-    lifted,
-    noPull,
-    type Pulling,
-    reachFor,
-    riseOf,
-    startedNearEnd,
-    wheeled,
-  } from './pull'
+  import { began, dragged, lifted, noPull, type Pulling, reachFor, riseOf, startedNearEnd, wheeled } from './pull'
   import { inSight } from './sight'
   import { PagesStore } from './store.svelte'
   import { rooms } from '../../collab/src/api'
@@ -117,14 +91,7 @@
   const A_PAUSE = 220
   const INKING: ReadonlySet<Tool> = new Set<Tool>(['draw', 'erase', 'lasso'])
 
-  const PAPER_TOOLS: ReadonlySet<Tool> = new Set<Tool>([
-    'select',
-    'hand',
-    'draw',
-    'erase',
-    'lasso',
-    'words',
-  ])
+  const PAPER_TOOLS: ReadonlySet<Tool> = new Set<Tool>(['select', 'hand', 'draw', 'erase', 'lasso', 'words'])
 
   const GRACE = 160
   const follows = (_value: unknown) => undefined
@@ -316,9 +283,7 @@
   const shownHit = $derived.by(() => {
     const was = looking
     if (!was) return null
-    const kept = paperHits.some(
-      (hit) => hit.paper === was.paper && hit.at === was.at && hit.length === was.length,
-    )
+    const kept = paperHits.some((hit) => hit.paper === was.paper && hit.at === was.at && hit.length === was.length)
     return kept ? was : null
   })
 
@@ -338,10 +303,7 @@
 
   const found = $derived<Found[]>(
     finding
-      ? [
-          ...paperHits.map(around),
-          ...matches(canvas, term).filter((one) => cards.some((card) => card.id === one.id)),
-        ]
+      ? [...paperHits.map(around), ...matches(canvas, term).filter((one) => cards.some((card) => card.id === one.id))]
       : [],
   )
 
@@ -479,16 +441,13 @@
 
   $effect(() => holdFreeScroll())
 
-  const kindOf = (event: PointerEvent) =>
-    penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
+  const kindOf = (event: PointerEvent) => penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
 
   const stylus = new Stylus({
     agent: typeof navigator === 'undefined' ? '' : navigator.userAgent,
     touch: viewport.touch,
-    coalesced:
-      typeof PointerEvent !== 'undefined' && 'getCoalescedEvents' in PointerEvent.prototype,
-    predicted:
-      typeof PointerEvent !== 'undefined' && 'getPredictedEvents' in PointerEvent.prototype,
+    coalesced: typeof PointerEvent !== 'undefined' && 'getCoalescedEvents' in PointerEvent.prototype,
+    predicted: typeof PointerEvent !== 'undefined' && 'getPredictedEvents' in PointerEvent.prototype,
   })
 
   type Gesture =
@@ -529,9 +488,7 @@
   const dragging = $derived(gesture?.kind === 'drag' ? gesture.offset : { x: 0, y: 0 })
 
   const shownInk = $derived(
-    dragging.x || dragging.y
-      ? movedBy(canvas, store.picked, dragging.x, dragging.y).ink
-      : canvas.ink,
+    dragging.x || dragging.y ? movedBy(canvas, store.picked, dragging.x, dragging.y).ink : canvas.ink,
   )
 
   const caught = $derived.by(() => {
@@ -558,14 +515,8 @@
     }
   }
 
-  const inside = (
-    point: Point,
-    box: { x: number; y: number; width: number; height: number },
-  ): boolean =>
-    point.x >= box.x &&
-    point.x <= box.x + box.width &&
-    point.y >= box.y &&
-    point.y <= box.y + box.height
+  const inside = (point: Point, box: { x: number; y: number; width: number; height: number }): boolean =>
+    point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height
 
   let doubting: { id: number; timer: number; event: PointerEvent } | null = null
 
@@ -833,9 +784,7 @@
       ],
       [command('export-pdf', 'Export as PDF'), command('print', 'Print')],
     ]
-    return groups
-      .filter((one) => one.length)
-      .flatMap((one, index) => (index ? [DIVIDER, ...one] : one))
+    return groups.filter((one) => one.length).flatMap((one, index) => (index ? [DIVIDER, ...one] : one))
   }
 
   function showMenu(event: MouseEvent) {
@@ -939,8 +888,7 @@
       const which = one.ids.indexOf(event.pointerId)
       if (which < 0) return
 
-      const screens: [Point, Point] =
-        which === 0 ? [screen, one.screens[1]] : [one.screens[0], screen]
+      const screens: [Point, Point] = which === 0 ? [screen, one.screens[1]] : [one.screens[0], screen]
       const apart = Math.hypot(screens[1].x - screens[0].x, screens[1].y - screens[0].y)
       const middle = { x: (screens[0].x + screens[1].x) / 2, y: (screens[0].y + screens[1].y) / 2 }
       const was = {
@@ -1011,8 +959,7 @@
       rise = riseOf(pull, reach, Date.now(), stillness())
       if (answer.makes) madePage()
 
-      const moved =
-        one.moved || Math.hypot(screen.x - one.screen.x, screen.y - one.screen.y) > A_TWITCH
+      const moved = one.moved || Math.hypot(screen.x - one.screen.x, screen.y - one.screen.y) > A_TWITCH
       if (moved !== one.moved) gesture = { ...one, moved }
       return
     }
@@ -1034,9 +981,7 @@
         'getPredictedEvents' in event
           ? event
               .getPredictedEvents()
-              .map((one) =>
-                sampleOf(one, gesture?.kind === 'draw' ? gesture.began : event.timeStamp),
-              )
+              .map((one) => sampleOf(one, gesture?.kind === 'draw' ? gesture.began : event.timeStamp))
           : []
       predicted = leadPoint(points[points.length - 2], points[points.length - 1], guessed)
       return
@@ -1121,8 +1066,7 @@
     right.cancel(event.pointerId)
 
     const one = gesture
-    const mine =
-      one?.kind === 'pinch' ? one.ids.includes(event.pointerId) : one?.id === event.pointerId
+    const mine = one?.kind === 'pinch' ? one.ids.includes(event.pointerId) : one?.id === event.pointerId
     if (!mine) return
 
     const by = driver
@@ -1270,9 +1214,7 @@
 
   const typing = (target: EventTarget | null): boolean =>
     target instanceof HTMLElement &&
-    (target.isContentEditable ||
-      target instanceof HTMLInputElement ||
-      target instanceof HTMLTextAreaElement)
+    (target.isContentEditable || target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement)
 
   function onkeydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     if (store.editing !== null || typing(event.target)) return
@@ -1404,8 +1346,7 @@
 >
   <div
     class="column"
-    style:transform="translate({width / 2 - view.x * view.scale}px, {height / 2 -
-      view.y * view.scale}px) scale({view.scale})"
+    style:transform="translate({width / 2 - view.x * view.scale}px, {height / 2 - view.y * view.scale}px) scale({view.scale})"
   >
     {#each near as page, at (page.id)}
       <PagesPage
@@ -1419,9 +1360,7 @@
         {still}
         selectable={tools.which === 'select'}
         sought={page.file === backing && page.page ? (soughtOn.get(page.page) ?? NO_HITS) : NO_HITS}
-        current={shownHit && shownHit.paper === page.page && page.file === backing
-          ? shownHit.at
-          : null}
+        current={shownHit && shownHit.paper === page.page && page.file === backing ? shownHit.at : null}
         onfound={foundAt}
         marks={page.file === backing && page.page ? (marksOn.get(page.page) ?? NO_MARKS) : NO_MARKS}
       />
@@ -1461,15 +1400,7 @@
     {/if}
   </div>
 
-  <CanvasInk
-    ink={shownInk}
-    {live}
-    camera={view}
-    {width}
-    {height}
-    picked={new Set(store.picked)}
-    {palette}
-  />
+  <CanvasInk ink={shownInk} {live} camera={view} {width} {height} picked={new Set(store.picked)} {palette} />
 
   <PagesZoom zoom={camera.scale} />
 

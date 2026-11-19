@@ -47,11 +47,7 @@ function firstLine(text: string): string {
   return text.slice(start)
 }
 
-function rows(
-  text: string,
-  delimiter: string,
-  literal: ReadonlySet<number> = new Set(),
-): string[][] {
+function rows(text: string, delimiter: string, literal: ReadonlySet<number> = new Set()): string[][] {
   const out: string[][] = []
   let row: string[] = []
   let cell = ''

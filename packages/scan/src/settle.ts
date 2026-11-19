@@ -1,11 +1,6 @@
 import { readWebFile, rewriteShortcut, type Shortcut } from './shortcut'
 
-export function settleShortcuts(
-  path: string,
-  ours: string,
-  theirs: string,
-  theirsNewer: boolean,
-): string {
+export function settleShortcuts(path: string, ours: string, theirs: string, theirsNewer: boolean): string {
   if (ours === theirs) return ours
 
   const [newer, older] = theirsNewer ? [theirs, ours] : [ours, theirs]
@@ -40,9 +35,7 @@ function firstAdded(one: Shortcut, other: Shortcut): Date {
     .map((said) => (said ? new Date(said).getTime() : Number.NaN))
     .filter((time) => !Number.isNaN(time))
 
-  return new Date(
-    times.length ? times.reduce((low, one) => Math.min(low, one), Infinity) : Date.now(),
-  )
+  return new Date(times.length ? times.reduce((low, one) => Math.min(low, one), Infinity) : Date.now())
 }
 
 const sameShortcut = (one: Shortcut | null, other: Shortcut): boolean =>

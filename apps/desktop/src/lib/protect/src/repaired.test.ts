@@ -9,9 +9,7 @@ const server = vi.hoisted(() => {
 })
 
 const merged = (held: Ways, base: Ways, sent: Ways) => {
-  const out = Object.fromEntries(
-    Object.entries(held).filter(([key]) => !(key in base) || key in sent),
-  )
+  const out = Object.fromEntries(Object.entries(held).filter(([key]) => !(key in base) || key in sent))
   for (const [key, way] of Object.entries(sent)) if (base[key] !== way) out[key] = way
   return out
 }

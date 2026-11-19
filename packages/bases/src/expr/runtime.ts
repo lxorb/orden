@@ -1,16 +1,7 @@
 import { addMonths, dateAt, dayNumber, msOf, readDate, wallMs } from '../dates'
 import { BasesError } from '../errors'
 import { spend, stepsOfText } from './pattern'
-import type {
-  Context,
-  DateValue,
-  DurationValue,
-  LinkValue,
-  RenderedValue,
-  Row,
-  Value,
-  ValueRecord,
-} from '../types'
+import type { Context, DateValue, DurationValue, LinkValue, RenderedValue, Row, Value, ValueRecord } from '../types'
 
 export class FileRef {
   constructor(readonly row: Row) {}
@@ -65,9 +56,7 @@ export function fileOf(value: Val, scope: Scope): Row | null {
     const from = scope.row ?? scope.context.this
     if (!from) return null
     const path =
-      typeof value === 'string'
-        ? reachedFrom(value, from, scope.context)
-        : linkPath(value, from, scope.context)
+      typeof value === 'string' ? reachedFrom(value, from, scope.context) : linkPath(value, from, scope.context)
     return path ? (scope.context.row?.(path, from.space) ?? null) : null
   }
   return null
@@ -87,12 +76,7 @@ export const plainTarget = (target: string): string =>
     .trim()
     .toLowerCase()
 
-export function pointsAt(
-  target: string,
-  path: string,
-  from: Row | null,
-  context: Context,
-): boolean {
+export function pointsAt(target: string, path: string, from: Row | null, context: Context): boolean {
   if (from && context.resolve) {
     const resolved = context.resolve(target, from)
     if (resolved !== null) return resolved === path
@@ -154,13 +138,9 @@ export function equal(a: Val, b: Val, scope: Scope): boolean {
   if (isObject(a) && isObject(b)) {
     const keys = Object.keys(a)
     spend(keys.length)
-    return (
-      keys.length === Object.keys(b).length &&
-      keys.every((key) => equal(fieldOf(a, key), fieldOf(b, key), scope))
-    )
+    return keys.length === Object.keys(b).length && keys.every((key) => equal(fieldOf(a, key), fieldOf(b, key), scope))
   }
-  if (a instanceof RegExp && b instanceof RegExp)
-    return a.source === b.source && a.flags === b.flags
+  if (a instanceof RegExp && b instanceof RegExp) return a.source === b.source && a.flags === b.flags
   return false
 }
 
@@ -273,8 +253,7 @@ export function text(value: Val): string {
 
 function durationText(value: DurationValue): string {
   const parts: string[] = []
-  if (value.months)
-    parts.push(value.months % 12 === 0 ? `${value.months / 12}y` : `${value.months}M`)
+  if (value.months) parts.push(value.months % 12 === 0 ? `${value.months / 12}y` : `${value.months}M`)
   let rest = Math.abs(value.ms)
   const sign = value.ms < 0 ? '-' : ''
   for (const [unit, size] of [
@@ -369,8 +348,7 @@ export function add(a: Val, b: Val): Val {
     if (by) return shifted(a, by, 1)
   }
   if (isDate(b) && isDuration(a)) return shifted(b, a, 1)
-  if (isDuration(a) && isDuration(b))
-    return { kind: 'duration', ms: a.ms + b.ms, months: a.months + b.months }
+  if (isDuration(a) && isDuration(b)) return { kind: 'duration', ms: a.ms + b.ms, months: a.months + b.months }
   if (typeof a === 'string' || typeof b === 'string') {
     const [left, right] = [text(a), text(b)]
     spend(stepsOfText(left.length + right.length))
@@ -395,8 +373,7 @@ export function subtract(a: Val, b: Val, zone?: string): Val {
     if (by) return shifted(a, by, -1)
     if (typeof b === 'number') return dateAt(msOf(a, zone) - b)
   }
-  if (isDuration(a) && isDuration(b))
-    return { kind: 'duration', ms: a.ms - b.ms, months: a.months - b.months }
+  if (isDuration(a) && isDuration(b)) return { kind: 'duration', ms: a.ms - b.ms, months: a.months - b.months }
   if (a === null || b === null) return null
   throw new BasesError(`Cannot subtract ${kindName(b)} from ${kindName(a)}`)
 }
@@ -439,8 +416,7 @@ export function settled(value: Val): Value {
     return value.map(settled)
   }
   if (value instanceof RegExp) return `/${value.source}/${value.flags}`
-  if (value instanceof FileRef || value instanceof ThisRef)
-    return { kind: 'link', target: value.row.path, exact: true }
+  if (value instanceof FileRef || value instanceof ThisRef) return { kind: 'link', target: value.row.path, exact: true }
   if (value instanceof NoteRef) return value.row.note
   if (value instanceof TaskRef) return value.row.task ? { text: value.row.task.text } : null
   if (value instanceof Rendered) return value.value

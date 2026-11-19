@@ -90,8 +90,7 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
 const readOnly = vi.hoisted(() => new Set<string>())
 vi.mock('../../sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../sharing/src/api')>()),
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 const remote = {
@@ -440,9 +439,7 @@ describe('signed in', () => {
 
   test('a note this device keeps none of goes from the account, though its words would not come', async () => {
     unreadable.add('/space/Idea.md')
-    keptAway.keep([{ id: 'n1', path: '/space/Idea.md', size: 4, modified: 1 }], () =>
-      Promise.resolve(false),
-    )
+    keptAway.keep([{ id: 'n1', path: '/space/Idea.md', size: 4, modified: 1 }], () => Promise.resolve(false))
 
     await workspace.remove('/space/Idea.md', false)
     keptAway.clear()
@@ -453,12 +450,8 @@ describe('signed in', () => {
 
   test('signing out leaves only the device’s, and a list asked before writes nothing back', async () => {
     const at = Date.now() - 2 * DAY
-    remote.spaces = [
-      { id: 's2', name: 'Old', deletedAt: at - DAY, purgeAt: at + 13 * DAY, notes: 3 },
-    ]
-    deviceTrash = [
-      { id: 'd1', kind: 'note', name: 'Local.md', from: '/space/Local.md', trashedAt: at },
-    ]
+    remote.spaces = [{ id: 's2', name: 'Old', deletedAt: at - DAY, purgeAt: at + 13 * DAY, notes: 3 }]
+    deviceTrash = [{ id: 'd1', kind: 'note', name: 'Local.md', from: '/space/Local.md', trashedAt: at }]
     await trash.load()
     expect(trash.items.map((item) => item.id)).toEqual(['device:d1', 'space:s2'])
 
@@ -481,9 +474,7 @@ describe('signed in', () => {
         purgeAt: at + 14 * DAY,
       },
     ]
-    remote.spaces = [
-      { id: 's2', name: 'Old', deletedAt: at - DAY, purgeAt: at + 13 * DAY, notes: 3 },
-    ]
+    remote.spaces = [{ id: 's2', name: 'Old', deletedAt: at - DAY, purgeAt: at + 13 * DAY, notes: 3 }]
     deviceTrash = [
       {
         id: 'd1',
@@ -594,9 +585,7 @@ describe('signed in', () => {
 
   test('purging a note asks the account to forget it', async () => {
     const at = Date.now()
-    remote.notes = [
-      { id: 'n1', spaceId: 's', spaceName: 'Work', path: 'Idea.md', deletedAt: at, purgeAt: at },
-    ]
+    remote.notes = [{ id: 'n1', spaceId: 's', spaceName: 'Work', path: 'Idea.md', deletedAt: at, purgeAt: at }]
     await trash.load()
 
     const asked = vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
@@ -610,12 +599,8 @@ describe('signed in', () => {
   describe('emptying', () => {
     beforeEach(async () => {
       const at = Date.now()
-      remote.notes = [
-        { id: 'n1', spaceId: 's', spaceName: 'Work', path: 'Idea.md', deletedAt: at, purgeAt: at },
-      ]
-      deviceTrash = [
-        { id: 'd1', kind: 'note', name: 'Local.md', from: '/space/Local.md', trashedAt: at },
-      ]
+      remote.notes = [{ id: 'n1', spaceId: 's', spaceName: 'Work', path: 'Idea.md', deletedAt: at, purgeAt: at }]
+      deviceTrash = [{ id: 'd1', kind: 'note', name: 'Local.md', from: '/space/Local.md', trashedAt: at }]
       await trash.load()
       calls.length = 0
     })

@@ -10,8 +10,7 @@ import { settings } from '../../src/lib/settings/src/api'
 
 providePort('settings.window', settings)
 
-Element.prototype.animate = () =>
-  ({ finished: Promise.resolve(), cancel: () => undefined }) as unknown as Animation
+Element.prototype.animate = () => ({ finished: Promise.resolve(), cancel: () => undefined }) as unknown as Animation
 let shown: ReturnType<typeof mount> | undefined
 
 afterEach(() => {

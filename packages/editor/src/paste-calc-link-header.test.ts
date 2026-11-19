@@ -17,10 +17,7 @@ const CALC_HTML = [
 
 const CALC_TEXT = 'Name\tSite\nApple\thttps://apple.com/\n'
 
-const CALC_PLAIN_HTML = CALC_HTML.replace(
-  '<a href="https://apple.com/">https://apple.com/</a>',
-  'https://apple.com/',
-)
+const CALC_PLAIN_HTML = CALC_HTML.replace('<a href="https://apple.com/">https://apple.com/</a>', 'https://apple.com/')
 
 describe('a LibreOffice Calc range pasted into a note', () => {
   test('without a link cell, its first row is the header', async () => {

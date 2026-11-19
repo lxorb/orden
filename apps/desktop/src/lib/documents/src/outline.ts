@@ -20,9 +20,7 @@ export function lineOfHeading(headings: readonly Heading[], name: string): numbe
   const anchor = slugify(name)
 
   return (
-    headings.find(
-      (heading) => heading.text.toLowerCase() === wanted || slugify(heading.text) === anchor,
-    )?.line ?? null
+    headings.find((heading) => heading.text.toLowerCase() === wanted || slugify(heading.text) === anchor)?.line ?? null
   )
 }
 

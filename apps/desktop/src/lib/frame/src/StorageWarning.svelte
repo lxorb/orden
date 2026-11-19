@@ -9,11 +9,7 @@
 </script>
 
 {#if usage.warning}
-  <div
-    class="toast"
-    transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-    {@attach told(words)}
-  >
+  <div class="toast" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }} {@attach told(words)}>
     <p>{words}</p>
 
     <div class="actions">

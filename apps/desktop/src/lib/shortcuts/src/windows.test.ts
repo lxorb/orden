@@ -18,10 +18,7 @@ async function aWindow() {
     },
   })
   vi.resetModules()
-  const [{ shortcuts }, { toolbar }] = await Promise.all([
-    import('./shortcuts.svelte'),
-    import('./toolbar.svelte'),
-  ])
+  const [{ shortcuts }, { toolbar }] = await Promise.all([import('./shortcuts.svelte'), import('./toolbar.svelte')])
   shortcuts.restore()
   toolbar.restore()
   return { shortcuts, toolbar }

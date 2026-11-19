@@ -137,8 +137,7 @@ function inside(path: string, folder: string): boolean {
 
 function longest(path: string, rules: readonly string[]): number {
   let found = -1
-  for (const folder of rules)
-    if (inside(path, folder) && folder.length > found) found = folder.length
+  for (const folder of rules) if (inside(path, folder) && folder.length > found) found = folder.length
   return found
 }
 

@@ -1,16 +1,5 @@
-import {
-  addCursorAbove,
-  addCursorBelow,
-  defaultKeymap,
-  historyKeymap,
-  selectLine,
-} from '@codemirror/commands'
-import {
-  EditorSelection,
-  type EditorState,
-  type SelectionRange,
-  type StateCommand,
-} from '@codemirror/state'
+import { addCursorAbove, addCursorBelow, defaultKeymap, historyKeymap, selectLine } from '@codemirror/commands'
+import { EditorSelection, type EditorState, type SelectionRange, type StateCommand } from '@codemirror/state'
 import type { KeyBinding } from '@codemirror/view'
 import {
   insertCallout,
@@ -89,8 +78,7 @@ function isWord(state: EditorState, range: SelectionRange): boolean {
 
 export const selectWord: StateCommand = (target) => {
   const { state, dispatch } = target
-  if (state.selection.ranges.every((range) => isWord(state, range)))
-    return selectNextOccurrence(target)
+  if (state.selection.ranges.every((range) => isWord(state, range))) return selectNextOccurrence(target)
 
   const update = state.changeByRange((range) => {
     const line = state.doc.lineAt(range.head)
@@ -258,12 +246,7 @@ export const ordenBindings: BindingSpec[] = [
   { id: 'edit.follow-link', key: null, run: followNoteAtCaret, preventDefault: true },
 ]
 
-function adopt(
-  id: string,
-  from: readonly KeyBinding[],
-  key: string,
-  extra: Extra = {},
-): BindingSpec {
+function adopt(id: string, from: readonly KeyBinding[], key: string, extra: Extra = {}): BindingSpec {
   const original = claim(from, (binding) => binding.key === key, `${key} to adopt as ${id}`)
 
   const spec: BindingSpec = { id, key: original.key ?? null, run: original.run, ...extra }
@@ -291,11 +274,7 @@ function claim(
 
 const adopted = new Set<KeyBinding>()
 
-const linuxRedo = claim(
-  historyKeymap,
-  (binding) => binding.linux === 'Ctrl-Shift-z',
-  'the Linux redo',
-)
+const linuxRedo = claim(historyKeymap, (binding) => binding.linux === 'Ctrl-Shift-z', 'the Linux redo')
 
 claim(defaultKeymap, (binding) => binding.key === 'Mod-/', 'the library comment toggle')
 

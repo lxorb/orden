@@ -18,10 +18,7 @@ function withView(base: Base, at: number, change: (view: View) => View): Base {
   return { ...base, views }
 }
 
-function withOrden(
-  view: View,
-  change: { [K in keyof OrdenView]?: OrdenView[K] | undefined },
-): View {
+function withOrden(view: View, change: { [K in keyof OrdenView]?: OrdenView[K] | undefined }): View {
   const orden: OrdenView = { ...view.orden }
   for (const [key, value] of Object.entries(change) as [keyof OrdenView, unknown][]) {
     if (value === undefined) Reflect.deleteProperty(orden, key)
@@ -33,8 +30,7 @@ function withOrden(
 export const setLayout = (base: Base, at: number, type: string): Base =>
   withView(base, at, (view) => ({ ...view, type }))
 
-export const setSort = (base: Base, at: number, sort: Sort[]): Base =>
-  withView(base, at, (view) => ({ ...view, sort }))
+export const setSort = (base: Base, at: number, sort: Sort[]): Base => withView(base, at, (view) => ({ ...view, sort }))
 
 function lacking(view: View, key: 'groupBy' | 'filters'): View {
   const out = { ...view }
@@ -212,8 +208,7 @@ export function setProperty(
 export function freeFormulaName(base: Base, wanted: string): string {
   const name = wanted.trim() || 'Formula'
   if (!(name in base.formulas)) return name
-  for (let count = 2; ; count++)
-    if (!(`${name} ${count}` in base.formulas)) return `${name} ${count}`
+  for (let count = 2; ; count++) if (!(`${name} ${count}` in base.formulas)) return `${name} ${count}`
 }
 
 export function setDisplayName(base: Base, column: string, words: string): Base {
@@ -224,24 +219,15 @@ export function setDisplayName(base: Base, column: string, words: string): Base 
   else Reflect.deleteProperty(next, 'displayName')
   const properties = { ...base.properties }
   Reflect.deleteProperty(properties, column)
-  if (next.displayName === undefined && !Object.keys(next.kept).length)
-    Reflect.deleteProperty(properties, key)
+  if (next.displayName === undefined && !Object.keys(next.kept).length) Reflect.deleteProperty(properties, key)
   else properties[key] = next
   return { ...base, properties }
 }
 
-export function renamedGroup(
-  base: Base,
-  property: string,
-  from: string,
-  to: string,
-  merge = false,
-): Base {
+export function renamedGroup(base: Base, property: string, from: string, to: string, merge = false): Base {
   if (from === to) return base
   const name = property.replace(/^note\./, '')
-  const swap = (list: readonly string[]) => [
-    ...new Set(list.map((one) => (one === from ? to : one))),
-  ]
+  const swap = (list: readonly string[]) => [...new Set(list.map((one) => (one === from ? to : one)))]
   const literal = (filter: Filter): Filter => {
     if (typeof filter === 'string') return renamedLiteral(filter, name, from, to)
     if ('and' in filter) return { and: filter.and.map(literal) }
@@ -309,12 +295,7 @@ export function placeColumn(
   return setViewOrden(base, at, 'groups', rest)
 }
 
-export const prunedOrder = (
-  base: Base,
-  at: number,
-  group: string,
-  alive: (id: string) => boolean,
-) =>
+export const prunedOrder = (base: Base, at: number, group: string, alive: (id: string) => boolean) =>
   withView(base, at, (view) => {
     const was = view.orden.order?.[group]
     if (!was) return view

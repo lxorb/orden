@@ -1,10 +1,5 @@
 import { getSearchQuery, SearchQuery, setSearchQuery } from '@codemirror/search'
-import {
-  EditorSelection,
-  EditorState,
-  type StateEffect,
-  type TransactionSpec,
-} from '@codemirror/state'
+import { EditorSelection, EditorState, type StateEffect, type TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { beforeAll, describe, expect, test } from 'vitest'
 import {
@@ -214,9 +209,7 @@ describe('the term the bar opens on finds just what was selected', () => {
   test('a pattern seeded from a selection replaces only that selection', () => {
     const at = FORMULA.indexOf('a.b(c)')
     const state = stateOf(FORMULA, { anchor: at, head: at + 6 })
-    const { view } = viewOn(
-      asking(state, { query: termAt(state, true), regexp: true, replace: 'y' }),
-    )
+    const { view } = viewOn(asking(state, { query: termAt(state, true), regexp: true, replace: 'y' }))
 
     expect(replaceEverywhere(view)).toBe(true)
     expect(view.state.doc.toString()).toBe('y and axbc')
@@ -228,9 +221,7 @@ describe('the term the bar opens on finds just what was selected', () => {
 
     expect(openFind(view)).toBe(true)
     const effects = sent.flatMap((spec) => spec.effects ?? []) as StateEffect<FindAsk>[]
-    expect(effects.map((effect) => effect.value)).toEqual([
-      { replace: false, seed: 'a.b(c)', pattern: 'a\\.b\\(c\\)' },
-    ])
+    expect(effects.map((effect) => effect.value)).toEqual([{ replace: false, seed: 'a.b(c)', pattern: 'a\\.b\\(c\\)' }])
   })
 })
 
@@ -241,9 +232,7 @@ describe('a typed query and replacement', () => {
   })
 
   test('write a plain replacement exactly as it was typed', () => {
-    const { view } = viewOn(
-      asking(stateOf('the wind'), { query: 'wind', replace: 'C:\\new\\table' }),
-    )
+    const { view } = viewOn(asking(stateOf('the wind'), { query: 'wind', replace: 'C:\\new\\table' }))
 
     expect(replaceEverywhere(view)).toBe(true)
     expect(view.state.doc.toString()).toBe('the C:\\new\\table')
@@ -257,9 +246,7 @@ describe('a typed query and replacement', () => {
   })
 
   test('while a pattern replacement still writes \\n as a new line', () => {
-    const { view } = viewOn(
-      asking(stateOf('the wind'), { query: 'w(i)nd', regexp: true, replace: '$1\\n' }),
-    )
+    const { view } = viewOn(asking(stateOf('the wind'), { query: 'w(i)nd', regexp: true, replace: '$1\\n' }))
 
     expect(replaceEverywhere(view)).toBe(true)
     expect(view.state.doc.toString()).toBe('the i\n')

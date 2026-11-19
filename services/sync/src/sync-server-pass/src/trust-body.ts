@@ -8,10 +8,7 @@ export async function fieldsSent(source: HasJson): Promise<Record<string, unknow
   return (await objectBody(source)) ?? {}
 }
 
-export function optionalIn<T>(
-  value: unknown,
-  read: (one: unknown) => T | null,
-): T | null | undefined {
+export function optionalIn<T>(value: unknown, read: (one: unknown) => T | null): T | null | undefined {
   if (value === undefined || value === null) return null
   return read(value) ?? undefined
 }

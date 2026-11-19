@@ -88,14 +88,12 @@ spaceFiles.put('/:id/files', atLeast('write'), async (context) => {
     hash: hash.toLowerCase(),
   }))
 
-  const asked =
-    space.role === 'owner' ? stated : stated.filter((one) => !DRESSING.has(one.path.toLowerCase()))
+  const asked = space.role === 'owner' ? stated : stated.filter((one) => !DRESSING.has(one.path.toLowerCase()))
 
   const already = readSpaceFiles(space.files)
   const serving = new Set(already.map((one) => one.hash))
   const hashes = [...new Set([...asked, ...already].map((one) => one.hash))]
-  const held =
-    who.kind === 'user' ? await heldBy(context.env, who.user.id, hashes) : new Set<string>()
+  const held = who.kind === 'user' ? await heldBy(context.env, who.user.id, hashes) : new Set<string>()
 
   const there = (one: SpaceFile) => held.has(one.hash) || serving.has(one.hash)
   const kept = asked.filter(there)

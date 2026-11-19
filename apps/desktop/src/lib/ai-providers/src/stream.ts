@@ -24,10 +24,7 @@ export function sseJson(payload: string): unknown {
   }
 }
 
-export async function* sseEvents(
-  body: ReadableStream<Uint8Array>,
-  done?: () => void,
-): AsyncGenerator {
+export async function* sseEvents(body: ReadableStream<Uint8Array>, done?: () => void): AsyncGenerator {
   const reader = body.getReader()
   const decoder = new TextDecoder()
   let held = ''

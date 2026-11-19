@@ -54,10 +54,7 @@
         }
         signed = true
         setup.signedIn = true
-        whenLoaded(
-          settling,
-          ({ settleLocalNotes }) => void settleLocalNotes().then(() => joining.walkThrough()),
-        )
+        whenLoaded(settling, ({ settleLocalNotes }) => void settleLocalNotes().then(() => joining.walkThrough()))
         moving = setTimeout(() => setup.next('account'), 900)
       })
       .catch(again)

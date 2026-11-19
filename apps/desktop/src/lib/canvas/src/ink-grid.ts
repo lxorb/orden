@@ -16,10 +16,7 @@ const cellsUnder = (box: Box): number =>
   (cellOf(box.x + box.width) - cellOf(box.x) + 1) * (cellOf(box.y + box.height) - cellOf(box.y) + 1)
 
 const meets = (its: Box, box: Box): boolean =>
-  its.x < box.x + box.width &&
-  box.x < its.x + its.width &&
-  its.y < box.y + box.height &&
-  box.y < its.y + its.height
+  its.x < box.x + box.width && box.x < its.x + its.width && its.y < box.y + box.height && box.y < its.y + its.height
 
 export class InkGrid {
   #cells = new Map<number, Set<InkStroke>>()

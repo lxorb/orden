@@ -53,8 +53,7 @@ describe('the same over a page read once', () => {
   })
 })
 
-const pieces = (...offsets: number[]): Piece[] =>
-  offsets.map((at) => ({ node: { at } as unknown as Text, at }))
+const pieces = (...offsets: number[]): Piece[] => offsets.map((at) => ({ node: { at } as unknown as Text, at }))
 
 describe('which piece of the page an offset falls in', () => {
   const parts = pieces(0, 10, 25, 40)

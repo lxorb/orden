@@ -106,12 +106,7 @@ function posted(state: ChatState, event: LoggedPost): Message[] {
   return rebuilt(state, [event.message, event.parent, before?.parent])
 }
 
-function metaSet<K extends keyof Meta>(
-  state: ChatState,
-  seq: number,
-  key: K,
-  value: Meta[K] | undefined,
-) {
+function metaSet<K extends keyof Meta>(state: ChatState, seq: number, key: K, value: Meta[K] | undefined) {
   if (value === undefined || state.metaSeqs[key] >= seq) return
   state.metaSeqs[key] = seq
   state.meta[key] = value
@@ -220,12 +215,7 @@ function votesOf(post: LoggedPost, marks: Marks): Record<Who, number[]> {
     const answers = [...new Set(vote.value)].sort((a, b) => a - b)
     if (answers.length === 0 || answers.length !== vote.value.length) continue
     if (!poll.several && answers.length > 1) continue
-    if (
-      answers.some(
-        (answer) => !Number.isInteger(answer) || answer < 0 || answer >= poll.answers.length,
-      )
-    )
-      continue
+    if (answers.some((answer) => !Number.isInteger(answer) || answer < 0 || answer >= poll.answers.length)) continue
     if (poll.ends !== undefined && vote.at > poll.ends) continue
     votes[who] = answers
   }

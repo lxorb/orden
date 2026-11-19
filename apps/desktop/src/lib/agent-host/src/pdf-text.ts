@@ -145,14 +145,5 @@ export function quadsOver(runs: readonly Run[], from: number, to: number): Quad[
     )
   }
 
-  return [...lines.values()].map(({ left, right, top, bottom }) => [
-    left,
-    top,
-    right,
-    top,
-    right,
-    bottom,
-    left,
-    bottom,
-  ])
+  return [...lines.values()].map(({ left, right, top, bottom }) => [left, top, right, top, right, bottom, left, bottom])
 }

@@ -56,8 +56,7 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
   let spelling: Spelling = { typed: '', typedAt: 0 }
 
   const rowsSelector = () => settings.rows ?? '.orden-row'
-  const currentSelector = () =>
-    settings.current ?? '.is-on, .is-picked, .active, [aria-current=true]'
+  const currentSelector = () => settings.current ?? '.is-on, .is-picked, .active, [aria-current=true]'
 
   const rowsOf = (): HTMLElement[] => [...node.querySelectorAll<HTMLElement>(rowsSelector())]
 
@@ -71,8 +70,7 @@ export function roving(node: HTMLElement, options: RovingOptions = {}) {
 
     const standing = rows.filter((row) => !naming(row))
     const holding = standing.find((row) => row.contains(document.activeElement))
-    const stop =
-      holding ?? standing.find((row) => row.matches(currentSelector())) ?? standing[0] ?? null
+    const stop = holding ?? standing.find((row) => row.matches(currentSelector())) ?? standing[0] ?? null
 
     for (const row of rows) {
       if (naming(row)) row.removeAttribute('tabindex')

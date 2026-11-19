@@ -34,8 +34,7 @@ const CREDITS = [
   /\s*Copyright\b[^.!?]*(?:WDR|ZDF|SWR|NDR|BR|MDR)\b[^.!?]*[.!?]?/gi,
 ]
 
-const FILLERS =
-  /^(?:obrigad[oa]|thank you|thanks|you|bye|danke|vielen dank|tschüss|e aí|merci|gracias)[.!]?$/i
+const FILLERS = /^(?:obrigad[oa]|thank you|thanks|you|bye|danke|vielen dank|tschüss|e aí|merci|gracias)[.!]?$/i
 
 const SURE_SECONDS = 1
 

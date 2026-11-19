@@ -11,8 +11,7 @@ vi.mock('../../platform/src/tauri', () => ({
   isMobile: false,
   platform: () => machine.os,
   invoke: (command: string, args: { name?: string }) => {
-    if (command === 'secret_read')
-      return Promise.resolve(machine.keys.has(args.name ?? '') ? 'k' : null)
+    if (command === 'secret_read') return Promise.resolve(machine.keys.has(args.name ?? '') ? 'k' : null)
     if (command === 'chatgpt_account') return Promise.resolve(machine.signedIn ? {} : null)
     return Promise.resolve(null)
   },

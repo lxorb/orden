@@ -10,8 +10,7 @@
 
   const site = $derived(
     content.kind === 'login'
-      ? (content.websites.map((one) => webPages().faviconOf(one.url)).find((one) => one !== null) ??
-          null)
+      ? (content.websites.map((one) => webPages().faviconOf(one.url)).find((one) => one !== null) ?? null)
       : null,
   )
   let broken = $state(false)

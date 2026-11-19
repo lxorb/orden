@@ -93,8 +93,7 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
         return Promise.resolve()
       },
       signOut: () => Promise.resolve(),
-      verifyCode: (email: string) =>
-        Promise.resolve({ token: 'session', user: { id: 'u1', email, name: null } }),
+      verifyCode: (email: string) => Promise.resolve({ token: 'session', user: { id: 'u1', email, name: null } }),
       me: () => Promise.resolve({ guest: { id: 'g1', name: 'Windows wren' } }),
       listSpaces: () => Promise.resolve({ spaces: [], deleted: [] }),
       shared: () => Promise.resolve({ shared: world.shared }),
@@ -118,8 +117,7 @@ const shown = vi.hoisted(() => ({
 vi.mock('../../workspace/src/api', () => ({ workspace: shown }))
 
 vi.mock('../../ui-kit/src/message', () => ({
-  message: (error: unknown, fallback: string) =>
-    error instanceof Error ? error.message : fallback,
+  message: (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback),
 }))
 
 vi.mock('../../collab/src/api', () => ({ deviceName: () => 'Windows' }))
@@ -708,22 +706,19 @@ describe('a link followed while the network is down', () => {
     expect(joining.error).toBe('the network is not there')
   })
 
-  test.each([429, 408])(
-    'may be tried again when the link answers %i for a moment',
-    async (status) => {
-      world.busy = status
-      await joining.start()
+  test.each([429, 408])('may be tried again when the link answers %i for a moment', async (status) => {
+    world.busy = status
+    await joining.start()
 
-      expect(joining.step).toBe('unreached')
-      expect(joining.error).toBe('that link is busy, try again in a minute')
+    expect(joining.step).toBe('unreached')
+    expect(joining.error).toBe('that link is busy, try again in a minute')
 
-      world.busy = null
-      await joining.retry()
+    world.busy = null
+    await joining.retry()
 
-      expect(joining.step).toBeNull()
-      expect(world.shown).toBe('here')
-    },
-  )
+    expect(joining.step).toBeNull()
+    expect(world.shown).toBe('here')
+  })
 
   test('keeps the ask open when the link is busy for a moment', async () => {
     world.about = approval
@@ -737,21 +732,18 @@ describe('a link followed while the network is down', () => {
     expect(joining.error).toBe('that link is busy, try again in a minute')
   })
 
-  test.each([403, 404])(
-    'may be tried again when something in the way answers %i',
-    async (status) => {
-      world.blocked = status
-      await joining.start()
+  test.each([403, 404])('may be tried again when something in the way answers %i', async (status) => {
+    world.blocked = status
+    await joining.start()
 
-      expect(joining.step).toBe('unreached')
+    expect(joining.step).toBe('unreached')
 
-      world.blocked = null
-      await joining.retry()
+    world.blocked = null
+    await joining.retry()
 
-      expect(joining.step).toBeNull()
-      expect(world.shown).toBe('here')
-    },
-  )
+    expect(joining.step).toBeNull()
+    expect(world.shown).toBe('here')
+  })
 
   test('still says a refused link opens nothing', async () => {
     world.refuse = 'that link has expired'

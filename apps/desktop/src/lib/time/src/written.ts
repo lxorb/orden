@@ -9,11 +9,7 @@ function cell(value: string): string {
   return /[",\n\r]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe
 }
 
-export function csvOf(
-  spans: readonly Span[],
-  activities: readonly Activity[],
-  now: number,
-): string {
+export function csvOf(spans: readonly Span[], activities: readonly Activity[], now: number): string {
   const named = new Map(activities.map((one) => [one.id, one.name]))
   const rows = spans.map((span) => {
     const end = span.end ?? now

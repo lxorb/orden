@@ -311,10 +311,7 @@ describe("a tab's cross as it opens out under the pointer", () => {
   })
 
   test("waits as long as the strip's own width transition", () => {
-    const tokens = readFileSync(
-      new URL('../../../../../../packages/themes/src/tokens.css', import.meta.url),
-      'utf8',
-    )
+    const tokens = readFileSync(new URL('../../../../../../packages/themes/src/tokens.css', import.meta.url), 'utf8')
     expect(tokens).toContain(`--dur-base: ${OPENING}ms;`)
   })
 })
@@ -347,9 +344,7 @@ describe('tabs as wide as their contents', () => {
   })
 
   test('never grows past the standard width, and off is the standard width again', () => {
-    expect(widthsFor([{ icon: false, active: true, fit: fitted(900) }], 2000)).toEqual([
-      WIDTH.standard,
-    ])
+    expect(widthsFor([{ icon: false, active: true, fit: fitted(900) }], 2000)).toEqual([WIDTH.standard])
     expect(widthsFor([{ icon: false, active: true }], 2000)).toEqual([WIDTH.standard])
   })
 

@@ -24,10 +24,7 @@ serveWorkspace({
 const { NoteDoc, Tab } = await import('../src/lib/documents/src/api')
 
 function terminal() {
-  const note = new NoteDoc(
-    { kind: 'terminal', path: null, name: 'Terminal', text: '', dirty: false },
-    () => undefined,
-  )
+  const note = new NoteDoc({ kind: 'terminal', path: null, name: 'Terminal', text: '', dirty: false }, () => undefined)
   const tab = new Tab(note, workspace.panes.focusedId)
   workspace.tabs = [...workspace.tabs, tab]
   return tab

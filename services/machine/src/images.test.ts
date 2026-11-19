@@ -116,17 +116,14 @@ describe('where ordend is root', () => {
   test('the write is a process of the user’s, and root touches nothing in the home', async () => {
     const home = aHome()
     const user = { ...NIB, home }
-    const asked: { file: string; args: string[]; env: Record<string, string>; input: number[] }[] =
-      []
+    const asked: { file: string; args: string[]; env: Record<string, string>; input: number[] }[] = []
     const run: Run = (file, args, env, input) => {
       asked.push({ file, args, env, input: [...input] })
       return Promise.resolve({ code: 0, out: join(folderIn(home), `${ID}.png`) })
     }
     const pictures = new Images(home, user, { run, has: () => true })
 
-    expect(await pictures.part(ID, 'png', bytes(1, 2), true)).toBe(
-      join(folderIn(home), `${ID}.png`),
-    )
+    expect(await pictures.part(ID, 'png', bytes(1, 2), true)).toBe(join(folderIn(home), `${ID}.png`))
     expect(asked).toEqual([
       {
         file: '/usr/bin/setpriv',
@@ -178,16 +175,10 @@ describe('where ordend is root', () => {
     const asThisUser = (home: string): Run => {
       return (_file, args, _env, input) => {
         const after = args.indexOf('--') + 1
-        return runChild(
-          args[after] ?? '',
-          args.slice(after + 1),
-          { HOME: home, PATH: '/usr/bin:/bin' },
-          input,
-        )
+        return runChild(args[after] ?? '', args.slice(after + 1), { HOME: home, PATH: '/usr/bin:/bin' }, input)
       }
     }
-    const pictures = (home: string) =>
-      new Images(home, { ...NIB, home }, { run: asThisUser(home), has: () => true })
+    const pictures = (home: string) => new Images(home, { ...NIB, home }, { run: asThisUser(home), has: () => true })
 
     test('writes the picture, private, and says where', async () => {
       const home = aHome()

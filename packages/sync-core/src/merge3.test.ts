@@ -11,11 +11,7 @@ describe('merge3', () => {
   })
 
   test('edits in different places are both kept', () => {
-    const merged = merge3(
-      'The cat sat on the mat.',
-      'The dog sat on the mat.',
-      'The cat sat on the rug.',
-    )
+    const merged = merge3('The cat sat on the mat.', 'The dog sat on the mat.', 'The cat sat on the rug.')
     expect(merged.text).toBe('The dog sat on the rug.')
     expect(merged.meetings).toEqual([])
   })
@@ -141,9 +137,7 @@ describe('merge3', () => {
         const other = merge3(base, remote, local)
 
         expect(one.meetings.length).toBe(other.meetings.length)
-        expect(one.meetings.map((meeting) => meeting.size)).toEqual(
-          other.meetings.map((meeting) => meeting.size),
-        )
+        expect(one.meetings.map((meeting) => meeting.size)).toEqual(other.meetings.map((meeting) => meeting.size))
         expect(one.text.length).toBe(other.text.length)
       }),
       { numRuns: 1000 },
@@ -154,21 +148,13 @@ describe('merge3', () => {
 describe('merge3 with one change made on both sides beside a copy of what it changed', () => {
   const cases: [string, string, string][] = [
     ['a\nb\nb\nc\n', 'A\nb\nc\n', 'a\nb\nc\n'],
-    [
-      'I went to the the shop today.\n',
-      'Yesterday I went to the shop today.\n',
-      'I went to the shop today.\n',
-    ],
+    ['I went to the the shop today.\n', 'Yesterday I went to the shop today.\n', 'I went to the shop today.\n'],
     [
       '# Shop\n- [ ] milk\n- [ ] milk\n- [ ] eggs\n',
       '# Shopping\n- [ ] milk\n- [ ] eggs\n',
       '# Shop\n- [ ] milk\n- [ ] eggs\n',
     ],
-    [
-      'Intro.\n\nSame line.\nSame line.\n\nEnd.\n',
-      'Intro!\n\nSame line.\n\nEnd.\n',
-      'Intro.\n\nSame line.\n\nEnd.\n',
-    ],
+    ['Intro.\n\nSame line.\nSame line.\n\nEnd.\n', 'Intro!\n\nSame line.\n\nEnd.\n', 'Intro.\n\nSame line.\n\nEnd.\n'],
     [
       '- [ ] milk\n- [ ] eggs\n',
       '- [ ] bread\n- [ ] milk\n- [ ] milk\n- [ ] eggs\n',
@@ -185,27 +171,9 @@ describe('merge3 with one change made on both sides beside a copy of what it cha
 
 describe('mergedOn', () => {
   test.each([
-    [
-      'a line, and then more',
-      'base\n',
-      'base\ntyped\n',
-      'base\ntyped\nmore\n',
-      'base\ntyped\nmore\n',
-    ],
-    [
-      'the same read the other way',
-      'base\n',
-      'base\ntyped\nmore\n',
-      'base\ntyped\n',
-      'base\ntyped\nmore\n',
-    ],
-    [
-      'in a line',
-      '# T\n\nalpha\n',
-      '# T\n\nalpha typed\n',
-      '# T\n\nalpha typed more\n',
-      '# T\n\nalpha typed more\n',
-    ],
+    ['a line, and then more', 'base\n', 'base\ntyped\n', 'base\ntyped\nmore\n', 'base\ntyped\nmore\n'],
+    ['the same read the other way', 'base\n', 'base\ntyped\nmore\n', 'base\ntyped\n', 'base\ntyped\nmore\n'],
+    ['in a line', '# T\n\nalpha\n', '# T\n\nalpha typed\n', '# T\n\nalpha typed more\n', '# T\n\nalpha typed more\n'],
     [
       'a passage',
       'b\n',
@@ -213,13 +181,7 @@ describe('mergedOn', () => {
       'b\nsome long words here and more\n',
       'b\nsome long words here and more\n',
     ],
-    [
-      'a line in common, then each its own',
-      'b\n',
-      'b\none\nmine\n',
-      'b\none\ntheirs\n',
-      'b\none\nmine\ntheirs\n',
-    ],
+    ['a line in common, then each its own', 'b\n', 'b\none\nmine\n', 'b\none\ntheirs\n', 'b\none\nmine\ntheirs\n'],
     ['more written before', 'b\n', 'b\ntyped\n', 'b\nmore\ntyped\n', 'b\nmore\ntyped\n'],
     [
       'in the middle of what the other wrote',

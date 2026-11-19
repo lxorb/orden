@@ -187,9 +187,7 @@ async function main() {
 
   if (!TOKEN) throw new Error('ORDEN_TOKEN is not set')
   if (!what || !name || !third) {
-    throw new Error(
-      'usage: orden-sync.mjs pull|push <space> <folder> | back <space> <days> [--dry]',
-    )
+    throw new Error('usage: orden-sync.mjs pull|push <space> <folder> | back <space> <days> [--dry]')
   }
 
   if (what === 'pull') await pull(name, third)

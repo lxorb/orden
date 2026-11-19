@@ -71,9 +71,7 @@ function rekeep(from: string, to: string | null): void {
 }
 
 whenPortProvided('workspace.view', (view) =>
-  view.follow(
-    keeping({ spaceMoved: (from, to) => rekeep(from, to), forget: (root) => rekeep(root, null) }),
-  ),
+  view.follow(keeping({ spaceMoved: (from, to) => rekeep(from, to), forget: (root) => rekeep(root, null) })),
 )
 
 function remembered(root: string): SpaceRole | null {
@@ -175,9 +173,7 @@ function canWrite(root: string): boolean {
 }
 
 export function canWriteAt(path: string): boolean {
-  const space = workspaceView().spaces.find(
-    (one) => samePath(one.root, path) || within(one.root, path) !== null,
-  )
+  const space = workspaceView().spaces.find((one) => samePath(one.root, path) || within(one.root, path) !== null)
   return !space || canWrite(space.root)
 }
 
@@ -441,10 +437,7 @@ class Share {
   }
 
   setLink(role: GivenRole, mode: 'open' | 'approval') {
-    return this.change(
-      ({ token, id, item }) => api.setShareLink(token, id, role, mode, item),
-      'link',
-    )
+    return this.change(({ token, id, item }) => api.setShareLink(token, id, role, mode, item), 'link')
   }
 
   revoke() {
@@ -478,21 +471,13 @@ class Share {
     )
   }
 
-  private async change(
-    work: (asking: Asking) => Promise<Sharing>,
-    about: string,
-    goneIsDone = true,
-  ): Promise<boolean> {
+  private async change(work: (asking: Asking) => Promise<Sharing>, about: string, goneIsDone = true): Promise<boolean> {
     const done = await this.run(work, about, goneIsDone)
     if (done) await account.loadSpaces().catch(() => undefined)
     return done
   }
 
-  private async run(
-    work: (asking: Asking) => Promise<Sharing>,
-    about: string,
-    goneIsDone = true,
-  ): Promise<boolean> {
+  private async run(work: (asking: Asking) => Promise<Sharing>, about: string, goneIsDone = true): Promise<boolean> {
     const token = account.accountToken
     const id = this.spaceId
     if (!token || !id) return false

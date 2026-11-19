@@ -4,9 +4,7 @@ import { describe, expect, test } from 'vitest'
 import { mathCss } from './math-fonts'
 
 function faces(css: string): string[] {
-  return [...css.matchAll(/@font-face\{[^}]*?font-family:(KaTeX_[\w-]+)/g)].map(
-    ([, family = '']) => family,
-  )
+  return [...css.matchAll(/@font-face\{[^}]*?font-family:(KaTeX_[\w-]+)/g)].map(([, family = '']) => family)
 }
 
 describe('maths in an export', () => {

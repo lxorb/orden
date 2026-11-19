@@ -9,9 +9,7 @@ test('the module stands on its own reaches no app module but the platform', () =
   const reached = readdirSync(SRC)
     .filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
     .flatMap((name) =>
-      [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.[^']*)'/g)].map(
-        (found) => found[1],
-      ),
+      [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.[^']*)'/g)].map((found) => found[1]),
     )
     .filter((specifier) => specifier?.startsWith('../'))
   expect([...new Set(reached)]).toEqual(['../../platform/src/api'])
@@ -35,8 +33,6 @@ describe('the way a link is written', () => {
       '[Plan](../Work/Plan.md)',
       '[Plan](Work/Plan.md)',
     ])
-    expect(formatLink({ name: 'Plan', embed: true, fragment: 'Goals' }, 'wikilink')).toBe(
-      '![[Plan#Goals]]',
-    )
+    expect(formatLink({ name: 'Plan', embed: true, fragment: 'Goals' }, 'wikilink')).toBe('![[Plan#Goals]]')
   })
 })

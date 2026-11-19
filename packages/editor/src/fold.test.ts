@@ -23,10 +23,7 @@ function state(doc: string, cursor = 0): EditorState {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(cursor),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        folding(),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), folding()],
     }),
   )
 }
@@ -355,8 +352,7 @@ describe('two sets of folds', () => {
 })
 
 describe('an indented block', () => {
-  const INDENTED =
-    '# Notes\n\nPlain.\n\n  an indented block\n  a second line\n  a third\n\nAfter.\n'
+  const INDENTED = '# Notes\n\nPlain.\n\n  an indented block\n  a second line\n  a third\n\nAfter.\n'
   const TABBED = '# Notes\n\n\tcode one\n\tcode two\n\nAfter.\n'
 
   test('owns a fold, so the chevron in the margin has one to draw', () => {
@@ -431,9 +427,7 @@ describe('an indented block', () => {
 describe('folding a note of thousands of headings', () => {
   test('folds one level more or less in time that grows with the headings', () => {
     const note = (count: number) =>
-      Array.from({ length: count }, (_, at) => `${'#'.repeat((at % 3) + 1)} H${at}\n\ntext\n`).join(
-        '\n',
-      )
+      Array.from({ length: count }, (_, at) => `${'#'.repeat((at % 3) + 1)} H${at}\n\ntext\n`).join('\n')
     const step = (count: number) => {
       let folded = ran(foldHeadings, state(note(count))).state
       folded = ran(foldMore, folded).state

@@ -78,9 +78,7 @@ const run = (script: NonNullable<Parameters<typeof simulate>[0]['script']>) => {
     script,
     device: (id, clock, random, seeded) => {
       made += 1
-      return made === 1
-        ? new TwoWindows(id, clock, random, seeded)
-        : new EngineDevice(id, clock, random, seeded)
+      return made === 1 ? new TwoWindows(id, clock, random, seeded) : new EngineDevice(id, clock, random, seeded)
     },
   })
 }
@@ -164,9 +162,7 @@ describe('what a window with no engine owes', () => {
     owed.done('0')
     owed.resend()
     expect(said).toEqual(['0', '1', '1'])
-    expect(owed.drain().map((one) => one.what)).toEqual([
-      { kind: 'wrote', path: '/b', text: 'two' },
-    ])
+    expect(owed.drain().map((one) => one.what)).toEqual([{ kind: 'wrote', path: '/b', text: 'two' }])
     expect(owed.size).toBe(0)
   })
 })

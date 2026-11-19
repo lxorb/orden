@@ -48,10 +48,7 @@ test('a session’s scratchpad tab comes back, and is the scratchpad while it is
           kind: 'pane',
           pane: {
             id: 'p1',
-            tabs: [
-              draft(PLAN, '# Plan\n', false),
-              draft(PAD, 'Old words\nNot yet written\n', true),
-            ],
+            tabs: [draft(PLAN, '# Plan\n', false), draft(PAD, 'Old words\nNot yet written\n', true)],
             active: 1,
             linked: false,
           },

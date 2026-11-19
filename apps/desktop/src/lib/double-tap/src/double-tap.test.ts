@@ -118,23 +118,9 @@ describe('Shift doing its usual job', () => {
 
 describe('five presses, which Windows reads as Sticky Keys', () => {
   test('are heard once, and a pause starts the count again', () => {
-    const five = [
-      '+Shift',
-      '-Shift',
-      '+Shift',
-      '-Shift',
-      '+Shift',
-      '-Shift',
-      '+Shift',
-      '-Shift',
-      '+Shift',
-      '-Shift',
-    ]
+    const five = ['+Shift', '-Shift', '+Shift', '-Shift', '+Shift', '-Shift', '+Shift', '-Shift', '+Shift', '-Shift']
     expect(play(...five)).toEqual(['Shift'])
-    expect(play(...five, WITHIN + 50, '+Shift', '-Shift', '+Shift', '-Shift')).toEqual([
-      'Shift',
-      'Shift',
-    ])
+    expect(play(...five, WITHIN + 50, '+Shift', '-Shift', '+Shift', '-Shift')).toEqual(['Shift', 'Shift'])
   })
 })
 
@@ -154,10 +140,7 @@ describe('the other modifiers', () => {
 
 describe('a web page', () => {
   test('waits as long for the second tap', () => {
-    const script = readFileSync(
-      new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url),
-      'utf8',
-    )
+    const script = readFileSync(new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url), 'utf8')
     expect(script).toContain(`var within = ${WITHIN}`)
   })
 })

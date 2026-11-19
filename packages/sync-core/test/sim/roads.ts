@@ -53,9 +53,7 @@ export function roads(run: (script: readonly Step[]) => Promise<Report>, every =
     )
     expect(report.failures).toEqual([])
     expect(report.held).toBe(0)
-    expect(markersIn(textOf(report, 'Plan.md'))).toEqual(
-      expect.arrayContaining(['mk101z', 'mk102z']),
-    )
+    expect(markersIn(textOf(report, 'Plan.md'))).toEqual(expect.arrayContaining(['mk101z', 'mk102z']))
     expect(report.account.entries.filter((one) => one.name.includes('from another'))).toEqual([])
   })
 
@@ -70,10 +68,7 @@ export function roads(run: (script: readonly Step[]) => Promise<Report>, every =
 
   test('road 5: a delete landing first is undone by the edit that was written meanwhile', async () => {
     const report = await run(
-      apart(
-        [act(0, { t: 'type', note: PLAN, at: 0.5, words: 'mk301z' })],
-        [act(1, { t: 'delete', target: PLAN })],
-      ),
+      apart([act(0, { t: 'type', note: PLAN, at: 0.5, words: 'mk301z' })], [act(1, { t: 'delete', target: PLAN })]),
     )
     expect(report.failures).toEqual([])
     expect(textOf(report, 'Plan.md')).toContain('mk301z')
@@ -107,15 +102,12 @@ export function roads(run: (script: readonly Step[]) => Promise<Report>, every =
   if (!every) return
 
   test("the day's note made on two devices is one note with both lines", async () => {
-    const append = (device: number, words: string) =>
-      act(device, { t: 'append-day', name: '2026-09-30.md', words })
+    const append = (device: number, words: string) => act(device, { t: 'append-day', name: '2026-09-30.md', words })
     const report = await run(apart([append(0, 'mk501z')], [append(1, 'mk502z')], pass(0), settle))
     expect(report.failures).toEqual([])
     const days = report.account.entries.filter((one) => one.name.startsWith('2026-09-30'))
     expect(days).toHaveLength(1)
-    expect(markersIn(textOf(report, '2026-09-30.md'))).toEqual(
-      expect.arrayContaining(['mk501z', 'mk502z']),
-    )
+    expect(markersIn(textOf(report, '2026-09-30.md'))).toEqual(expect.arrayContaining(['mk501z', 'mk502z']))
   })
 
   test('a sentence rewritten on both sides is held and asked, and Keep both keeps both', async () => {

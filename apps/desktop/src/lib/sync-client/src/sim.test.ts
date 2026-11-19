@@ -37,9 +37,7 @@ describe('scripted roads, the engine as every device', () => {
         name: '.Inbox.md',
         words: `- [ ] Call the bank\n- [ ] Buy milk\n- [ ] ${marker}\n`,
       })
-    const report = await run(
-      apart([made(0, 'mk701z')], [made(1, 'mk702z')], pass(0), pass(1), settle),
-    )
+    const report = await run(apart([made(0, 'mk701z')], [made(1, 'mk702z')], pass(0), pass(1), settle))
     expect(report.failures).toEqual([])
     expect(report.held).toBe(0)
     const inboxes = report.account.entries.filter((one) => one.name.includes('Inbox'))

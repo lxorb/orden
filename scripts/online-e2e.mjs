@@ -95,12 +95,9 @@ async function socket(session, since) {
       first('open')
       opened()
     }
-    ws.onerror = () =>
-      void refusal(url).then((why) => failed(new Error(`socket to ${url} failed: ${why}`)))
+    ws.onerror = () => void refusal(url).then((why) => failed(new Error(`socket to ${url} failed: ${why}`)))
   })
-  ws.send(
-    JSON.stringify({ t: 'hello', cols: 100, rows: 30, ...(since === undefined ? {} : { since }) }),
-  )
+  ws.send(JSON.stringify({ t: 'hello', cols: 100, rows: 30, ...(since === undefined ? {} : { since }) }))
   return {
     heard,
     text: () =>
@@ -108,8 +105,7 @@ async function socket(session, since) {
         .filter((one) => one.t === 'screen')
         .map((one) => one.data)
         .join('') + heard.out.map((one) => one.data).join(''),
-    end: () =>
-      heard.out.map((one) => one.seq + one.length).reduce((high, one) => Math.max(high, one), 0),
+    end: () => heard.out.map((one) => one.seq + one.length).reduce((high, one) => Math.max(high, one), 0),
     type: (data) => ws.send(JSON.stringify({ t: 'in', data })),
     send: (frame) => ws.send(JSON.stringify(frame)),
     typeBytes: (data) => ws.send(new TextEncoder().encode(data)),
@@ -247,9 +243,7 @@ async function main() {
   log('reconnect, ms from the socket made:', JSON.stringify(back.heard.at))
   const resent = back.heard.out.filter((one) => one.seq < since && one.seq + one.length <= since)
   if (back.text().includes('hi-42') || resent.length > 0) {
-    throw new Error(
-      `a reconnect from ${since} was sent what it drew: ${JSON.stringify(back.heard)}`,
-    )
+    throw new Error(`a reconnect from ${since} was sent what it drew: ${JSON.stringify(back.heard)}`)
   }
   log('reconnected from', since, 'and got the rest')
 
@@ -273,10 +267,7 @@ async function main() {
   back.type("xdg-open 'https://example.com/?from=e2e'; echo opened-$?\r")
   await until(
     'the address opened on the owner’s computer',
-    () =>
-      back.heard.frames.some(
-        (one) => one.t === 'browse' && one.url === 'https://example.com/?from=e2e',
-      ),
+    () => back.heard.frames.some((one) => one.t === 'browse' && one.url === 'https://example.com/?from=e2e'),
     30_000,
   )
   log('xdg-open reached the owner’s socket')

@@ -32,8 +32,7 @@ interface Item {
 
 function columnsOf(lead: string): number {
   let columns = 0
-  for (const one of lead)
-    columns = one === '\t' ? columns + TAB_STOP - (columns % TAB_STOP) : columns + 1
+  for (const one of lead) columns = one === '\t' ? columns + TAB_STOP - (columns % TAB_STOP) : columns + 1
   return columns
 }
 
@@ -156,8 +155,7 @@ function placeLines(
     if (item.number !== null && landing !== item.indent) {
       const above = itemAbove(state, line.number, landing)
       const number =
-        counted.get(landing) ??
-        (above?.indent === landing && above.number !== null ? above.number : above ? 0 : null)
+        counted.get(landing) ?? (above?.indent === landing && above.number !== null ? above.number : above ? 0 : null)
       if (number !== null || counted.has(landing)) {
         const next = String((number ?? 0) + 1)
         counted.set(landing, Number(next))
@@ -216,11 +214,7 @@ export const outdentItems: StateCommand = placing(
   'delete.dedent',
 )
 
-function tableBeside(
-  state: EditorState,
-  line: Line,
-  delta: -1 | 1,
-): { from: number; to: number } | null {
+function tableBeside(state: EditorState, line: Line, delta: -1 | 1): { from: number; to: number } | null {
   const doc = state.doc
   const inDoc = (number: number) => number >= 1 && number <= doc.lines
   let near = line.number + delta
@@ -286,9 +280,7 @@ function movedWithFolds(
       ? { from: heldAbove(state, nearLine).from, to: nearLine.to }
       : { from: nearLine.from, to: withHidden(state, nearLine).to }
   const moving = { from: first.from, to: last.to }
-  if (
-    !foldsBetween(state, Math.min(moving.from, other.from), Math.max(moving.to, other.to)).length
-  ) {
+  if (!foldsBetween(state, Math.min(moving.from, other.from), Math.max(moving.to, other.to)).length) {
     return false
   }
 
@@ -297,8 +289,7 @@ function movedWithFolds(
   const lower = doc.sliceString(under.from, under.to)
   const rises = under.from - top.from
   const sinks = lower.length + 1
-  const shifted = (span: Span, by: number) =>
-    foldEffect.of({ from: span.from + by, to: span.to + by })
+  const shifted = (span: Span, by: number) => foldEffect.of({ from: span.from + by, to: span.to + by })
   const range = state.selection.main
   const shift = delta < 0 ? -rises : sinks
 

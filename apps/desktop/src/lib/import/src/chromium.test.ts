@@ -14,10 +14,7 @@ function session() {
   return read
 }
 
-function space(
-  bookmarks: unknown = BOOKMARKS,
-  tabs: ReturnType<typeof session> | null = session(),
-) {
+function space(bookmarks: unknown = BOOKMARKS, tabs: ReturnType<typeof session> | null = session()) {
   const sidebar = chromiumSidebar(tabs, bookmarks, 'Chrome')
   return sidebarImport(sidebar, NOW, 'none').spaces[0]
 }
@@ -72,11 +69,7 @@ describe("Chrome's tabs and bookmarks as Orden's", () => {
     }
     const sidebar = chromiumSidebar(null, BOOKMARKS, 'Chrome', account)
     const chrome = sidebarImport(sidebar, NOW, 'none').spaces[0]
-    expect(chrome?.order.Bookmarks).toEqual([
-      'Bookmarks bar',
-      'Other bookmarks',
-      'Mobile bookmarks',
-    ])
+    expect(chrome?.order.Bookmarks).toEqual(['Bookmarks bar', 'Other bookmarks', 'Mobile bookmarks'])
     expect(chrome?.order['Bookmarks/Bookmarks bar']).toEqual(['Work', 'Work 2', 'News.url'])
     expect(chrome?.order['Bookmarks/Bookmarks bar/Work']).toEqual(['Wiki.url'])
     expect(chrome?.order['Bookmarks/Bookmarks bar/Work 2']).toEqual(['Board.url'])

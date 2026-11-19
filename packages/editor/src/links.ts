@@ -35,9 +35,7 @@ const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
 
 export function linkDestination(written: string): string {
   const trimmed = written.trim()
-  return trimmed.startsWith('<') && trimmed.endsWith('>')
-    ? trimmed.slice(1, -1)
-    : trimmed.replace(AN_ESCAPE, '$1')
+  return trimmed.startsWith('<') && trimmed.endsWith('>') ? trimmed.slice(1, -1) : trimmed.replace(AN_ESCAPE, '$1')
 }
 
 const PUNCTUATION = /^[!-/:-@[-`{-~]$/
@@ -101,8 +99,7 @@ const MIDDLE = 1
 
 export const linkClicks = EditorView.domEventHandlers({
   mousedown(event, view) {
-    const asked =
-      event.button === MIDDLE || (event.button === MAIN && (modifier(event) || view.state.readOnly))
+    const asked = event.button === MIDDLE || (event.button === MAIN && (modifier(event) || view.state.readOnly))
     if (!asked) return false
 
     const target = event.target
@@ -142,8 +139,7 @@ export function followAnchors(element: HTMLElement, editor: () => EditorView, pl
   element.addEventListener('mousedown', (event) => {
     const view = editor()
     const asked =
-      event.button === MIDDLE ||
-      (event.button === MAIN && (plain || modifier(event) || view.state.readOnly))
+      event.button === MIDDLE || (event.button === MAIN && (plain || modifier(event) || view.state.readOnly))
     const anchor = asked && !event.defaultPrevented ? anchorOf(event) : null
     const href = anchor?.getAttribute('href')
     if (!anchor || !href || !followed(view, anchor, href, event)) return

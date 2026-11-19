@@ -4,9 +4,7 @@ import { columnRoute } from './space'
 const MOST = 200
 
 function inside(path: unknown): path is string {
-  return (
-    typeof path === 'string' && path.length > 0 && path.length <= LONGEST_PATH && staysInside(path)
-  )
+  return typeof path === 'string' && path.length > 0 && path.length <= LONGEST_PATH && staysInside(path)
 }
 
 function wrong(value: unknown): string | null {
@@ -31,9 +29,4 @@ export function readExcluded(raw: string): string[] {
   return held ? pathsOf(held) : []
 }
 
-export const spaceExcluded = columnRoute(
-  'excluded',
-  wrong,
-  pathsOf,
-  'that is more paths than a space leaves out',
-)
+export const spaceExcluded = columnRoute('excluded', wrong, pathsOf, 'that is more paths than a space leaves out')

@@ -7,8 +7,7 @@ import { AgentError } from './tasks'
 
 type Args = Record<string, unknown>
 
-const isRecord = (value: unknown): value is Args =>
-  value !== null && typeof value === 'object' && !Array.isArray(value)
+const isRecord = (value: unknown): value is Args => value !== null && typeof value === 'object' && !Array.isArray(value)
 
 function keyOf(name: string): string | null {
   const key = name.startsWith('note.') ? name.slice(5) : name
@@ -51,10 +50,7 @@ export function withProperties(text: string, properties: Args): string {
               ? writeProperty(after, key, value)
               : undefined
     if (edit === undefined)
-      throw new AgentError(
-        'bad_arguments',
-        `${key} is words, a number, true or false, a list, or null`,
-      )
+      throw new AgentError('bad_arguments', `${key} is words, a number, true or false, a list, or null`)
     if (edit) after = after.slice(0, edit.from) + edit.insert + after.slice(edit.to)
   }
   return after
@@ -87,20 +83,11 @@ function linkName(link: string | undefined): string | undefined {
   return name === '' ? undefined : name
 }
 
-export function filledTemplate(
-  text: string,
-  title: string,
-  clock: Pick<Context, 'today' | 'now'>,
-): string {
-  return withoutTemplateKeys(
-    fillTemplate(text, { title, today: clock.today, time: clock.now.slice(11, 16) }),
-  )
+export function filledTemplate(text: string, title: string, clock: Pick<Context, 'today' | 'now'>): string {
+  return withoutTemplateKeys(fillTemplate(text, { title, today: clock.today, time: clock.now.slice(11, 16) }))
 }
 
-export function rowPlace(
-  base: Base,
-  view?: string,
-): { folder?: string; properties: Args; template?: string } {
+export function rowPlace(base: Base, view?: string): { folder?: string; properties: Args; template?: string } {
   const chosen = view === undefined ? base.views[0] : base.views.find((one) => one.name === view)
   const template = linkName(chosen?.orden.template ?? base.orden.template)
   const properties: Args = {}
@@ -148,8 +135,7 @@ export function noteName(title: string): string {
 }
 
 function words(value: unknown, name: string): string {
-  if (typeof value !== 'string' || !value.trim())
-    throw new AgentError('bad_arguments', `say ${name}`)
+  if (typeof value !== 'string' || !value.trim()) throw new AgentError('bad_arguments', `say ${name}`)
   return value.trim()
 }
 
@@ -169,8 +155,7 @@ function sortsOf(value: unknown): Sort[] {
 
 function filterOf(value: unknown): Filter {
   const filter = readFilter(value)
-  if (filter === null)
-    throw new AgentError('bad_arguments', 'a filter is an expression, or {and|or|not: [filters]}')
+  if (filter === null) throw new AgentError('bad_arguments', 'a filter is an expression, or {and|or|not: [filters]}')
   return filter
 }
 
@@ -223,8 +208,7 @@ function named(base: Base, said: Args): number {
 const MOST_OPS = 500
 
 export function editedBase(base: Base, ops: unknown): Base {
-  if (!Array.isArray(ops) || !ops.length)
-    throw new AgentError('bad_arguments', 'ops is a list of edits')
+  if (!Array.isArray(ops) || !ops.length) throw new AgentError('bad_arguments', 'ops is a list of edits')
   if (ops.length > MOST_OPS) throw new AgentError('bad_arguments', `at most ${MOST_OPS} ops a call`)
   let next: Base = {
     ...base,

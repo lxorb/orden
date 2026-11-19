@@ -21,9 +21,7 @@ describe('every file the app hands out', () => {
     const through = sources.filter((one) => pattern.test(one.text))
     expect(through.length).toBeGreaterThan(0)
 
-    const silent = through
-      .filter((one) => !/\bdownloadStarted\(/.test(one.text))
-      .map((one) => one.name)
+    const silent = through.filter((one) => !/\bdownloadStarted\(/.test(one.text)).map((one) => one.name)
     expect(silent).toEqual([])
   })
 

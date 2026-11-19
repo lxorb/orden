@@ -61,8 +61,7 @@ vi.mock('../../windows/src/api', async (importOriginal) => ({
   },
 }))
 
-const { cardCorner, OUT_OF_THE_WAY, pages, readChosen, readOpening } =
-  await import('./pages.svelte')
+const { cardCorner, OUT_OF_THE_WAY, pages, readChosen, readOpening } = await import('./pages.svelte')
 
 await Promise.all([
   import('./web-data.svelte').then((one) => one.webData.merged()),
@@ -277,9 +276,7 @@ describe('a page asked for while something is over the pane', () => {
     await vi.waitFor(() => expect(last('web_place')).toMatchObject({ visible: true }))
 
     expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, cut: over.cut })
-    expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(
-      false,
-    )
+    expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(false)
   })
 
   test('and is shown the moment nothing is over it any more', async () => {
@@ -312,9 +309,7 @@ describe('a page whose engine cuts only what floats over it', () => {
 
     expect(pages.cuts).toBe(true)
     expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true, cut: over.cut })
-    expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(
-      false,
-    )
+    expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(false)
   })
 
   test('arrives under such a layer cut round it', async () => {
@@ -358,9 +353,7 @@ describe('a page drawn under the app', () => {
     expect(pages.under).toBe(true)
     expect(pages.cuts).toBe(true)
     expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true, cut: over.cut })
-    expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(
-      false,
-    )
+    expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(false)
     expect(commands()).not.toContain('web_shot')
   })
 
@@ -688,9 +681,7 @@ describe('where a page keeps what the site stores', () => {
     await rebuilt
     await settle()
 
-    expect(calls.filter((one) => one.command === 'web_close').map((one) => one.args.tab)).toEqual([
-      'a',
-    ])
+    expect(calls.filter((one) => one.command === 'web_close').map((one) => one.args.tab)).toEqual(['a'])
     expect(last('web_open')).toMatchObject({
       tab: 'a',
       profile: { store: 'note_3f9a0c17e2b4d685' },
@@ -761,10 +752,7 @@ describe('where a page keeps what the site stores', () => {
     await settle()
 
     const opened = calls.filter((one) => one.command === 'web_open')
-    expect(opened.map((one) => (one.args.profile as { store: unknown }).store)).toEqual([
-      null,
-      'note_3f9a0c17e2b4d685',
-    ])
+    expect(opened.map((one) => (one.args.profile as { store: unknown }).store)).toEqual([null, 'note_3f9a0c17e2b4d685'])
     expect(pages.of('a').live).toBe(true)
   })
 
@@ -802,9 +790,7 @@ describe('a page out of sight', () => {
   }
 
   function lulls(tab: string): unknown[] {
-    return calls
-      .filter((one) => one.command === 'web_pause' && one.args.tab === tab)
-      .map((one) => one.args.paused)
+    return calls.filter((one) => one.command === 'web_pause' && one.args.tab === tab).map((one) => one.args.paused)
   }
 
   async function memorySaver(mode: 'off' | 'moderate' | 'balanced' | 'maximum'): Promise<void> {
@@ -1107,9 +1093,7 @@ describe('what a page asking for a window says', () => {
 
   test('is in front when it does not say, as a crate from before this said nothing', () => {
     expect(readOpening({ tab: 't', url: 'https://example.com/' })?.behind).toBe(false)
-    expect(readOpening({ tab: 't', url: 'https://example.com/', behind: 'yes' })?.behind).toBe(
-      false,
-    )
+    expect(readOpening({ tab: 't', url: 'https://example.com/', behind: 'yes' })?.behind).toBe(false)
   })
 
   test('names nothing a tab may not hold', () => {
@@ -1130,8 +1114,7 @@ describe("the card's corner a page is placed with", () => {
     Object.assign(globalThis, {
       document: { querySelector: (selector: string) => (selector === 'main' ? panes : null) },
       getComputedStyle: (of: object) => ({
-        getPropertyValue: (token: string) =>
-          of === panes && token === '--card-radius' ? radius : '',
+        getPropertyValue: (token: string) => (of === panes && token === '--card-radius' ? radius : ''),
       }),
     })
   }
@@ -1153,9 +1136,7 @@ describe("the card's corner a page is placed with", () => {
   test('goes with every placement, nothing where there is no frame to read', async () => {
     await built('round')
     void pages.place('round', MOVED, true)
-    await vi.waitFor(() =>
-      expect(last('web_place')).toMatchObject({ tab: 'round', pane: MOVED, corner: [0, 0] }),
-    )
+    await vi.waitFor(() => expect(last('web_place')).toMatchObject({ tab: 'round', pane: MOVED, corner: [0, 0] }))
   })
 
   test("is its own pane's foot, square where that card's foot is square", () => {
@@ -1183,13 +1164,9 @@ describe("the card's corner a page is placed with", () => {
     frame('10px')
     await built('foot')
     void pages.place('foot', MOVED, true, false, { cut: null, frame: null, corner: [0, 10] })
-    await vi.waitFor(() =>
-      expect(last('web_place')).toMatchObject({ tab: 'foot', pane: MOVED, corner: [0, 10] }),
-    )
+    await vi.waitFor(() => expect(last('web_place')).toMatchObject({ tab: 'foot', pane: MOVED, corner: [0, 10] }))
     void pages.place('foot', PANE, true)
-    await vi.waitFor(() =>
-      expect(last('web_place')).toMatchObject({ tab: 'foot', pane: PANE, corner: [10, 10] }),
-    )
+    await vi.waitFor(() => expect(last('web_place')).toMatchObject({ tab: 'foot', pane: PANE, corner: [10, 10] }))
   })
 })
 
@@ -1533,9 +1510,7 @@ describe('a page something comes over', () => {
       const landed = await covered()
       landed()
       await vi.waitFor(() => expect(moved()).toBe(true))
-      expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(
-        false,
-      )
+      expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(false)
       expect(last('web_place')).toMatchObject({ cut: { all: true, hollows: [] } })
 
       await pages.show('a', SITE, PANE, true)
@@ -1564,9 +1539,7 @@ describe('a page something comes over', () => {
 
       await pages.holdStill()
       expect(moved()).toBe(true)
-      expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(
-        false,
-      )
+      expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(false)
 
       await pages.letGo()
       expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true })

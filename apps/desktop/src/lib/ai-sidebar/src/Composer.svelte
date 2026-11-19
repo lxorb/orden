@@ -61,8 +61,7 @@
   function around() {
     const on = front && !chat.dropped.includes(front.key) ? front : null
     const picked = selectionHere()
-    const pickedOn =
-      !!picked.text && !chat.dropped.includes(`selection:${picked.text.slice(0, 60)}`)
+    const pickedOn = !!picked.text && !chat.dropped.includes(`selection:${picked.text.slice(0, 60)}`)
     return {
       front: on ? { path: on.path, name: on.name, text: on.text } : null,
       selection: pickedOn ? picked.text : '',
@@ -75,9 +74,7 @@
 
   function sentChips(): Mention[] {
     const chips = chat.chips.filter((one) => one.kind !== 'picture' || chat.model?.images !== false)
-    return selectionOn && !chips.some((one) => one.kind === 'selection')
-      ? [...chips, SELECTION_CHIP]
-      : chips
+    return selectionOn && !chips.some((one) => one.kind === 'selection') ? [...chips, SELECTION_CHIP] : chips
   }
 
   const attached = $derived.by(() => {
@@ -111,8 +108,7 @@
 
   function candidates(): Mention[] {
     const out: Mention[] = []
-    if (views.chosen > 0)
-      out.push({ kind: 'selection', id: 'selection', label: 'Selection', word: 'selection' })
+    if (views.chosen > 0) out.push({ kind: 'selection', id: 'selection', label: 'Selection', word: 'selection' })
     for (const tab of workspace.tabs) {
       if (tab.kind === 'web') out.push({ kind: 'tab', id: tab.id, label: tab.shown, word: 'tab' })
     }
@@ -124,8 +120,7 @@
       for (const { tag } of links.spaceTags) out.push({ kind: 'tag', id: tag, label: `#${tag}` })
     }
     for (const one of chat.heads) {
-      if (one.id !== head?.id && one.title)
-        out.push({ kind: 'thread', id: one.id, label: one.title, space: one.space })
+      if (one.id !== head?.id && one.title) out.push({ kind: 'thread', id: one.id, label: one.title, space: one.space })
     }
     return out
   }
@@ -137,9 +132,7 @@
     if (slashing) void commandsFor(chat).then((rows) => (commands = rows))
   })
 
-  const commandRows = $derived(
-    slash !== null && hushed !== chat.text ? matching(commands, slash) : [],
-  )
+  const commandRows = $derived(slash !== null && hushed !== chat.text ? matching(commands, slash) : [])
 
   const rows = $derived.by((): Row[] => {
     if (commandRows.length) {
@@ -149,9 +142,7 @@
         return {
           key: one.name,
           label: `/${one.name}`,
-          hint:
-            one.description ??
-            [one.args, ...one.synonyms.map((word) => `/${word}`)].filter(Boolean).join('  '),
+          hint: one.description ?? [one.args, ...one.synonyms.map((word) => `/${word}`)].filter(Boolean).join('  '),
           ...(why === true ? {} : { dim: why }),
         }
       })
@@ -283,8 +274,7 @@
     if (shortcuts.pressed('ai.model', event))
       return run(() => (chat.popover = chat.popover === 'model' ? null : 'model'))
     if (shortcuts.pressed('ai.effort', event)) return run(() => chat.setEffort('next'))
-    if (shortcuts.pressed('ai.steer', event))
-      return run(() => (chat.canSteer ? chat.steer() : void submit()))
+    if (shortcuts.pressed('ai.steer', event)) return run(() => (chat.canSteer ? chat.steer() : void submit()))
     if (shortcuts.pressed('ai.unfold', event)) return run(() => chat.toggleFolded())
     if (shortcuts.pressed('ai.new', event)) return run(() => chat.newThread())
     if (shortcuts.pressed('ai.stop', event) && (busy || chat.popover)) {
@@ -332,8 +322,7 @@
     const unread = () => (chat.trouble = `${name} could not be read.`)
     if (file.type.startsWith('image/')) {
       const held = chat.chips.filter((one) => one.kind === 'picture').length
-      if (held + drawing >= MOST_CHAT_PICTURES)
-        return notTaken(name, 'a message takes up to 20 pictures')
+      if (held + drawing >= MOST_CHAT_PICTURES) return notTaken(name, 'a message takes up to 20 pictures')
       drawing++
       void chatPicture(file)
         .then((image) => {
@@ -438,9 +427,7 @@
   let escaped = 0
 
   const goal = $derived(
-    head?.goal && (head.goal.state === 'pursuing' || head.goal.state === 'paused')
-      ? head.goal
-      : null,
+    head?.goal && (head.goal.state === 'pursuing' || head.goal.state === 'paused') ? head.goal : null,
   )
   let reasoning = $state(false)
   let now = $state(Date.now())
@@ -470,9 +457,7 @@
   {#if chat.changing}
     <div class="editing" transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}>
       <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M8.7 2.3l2 2-6 6-2.6.6.6-2.6z" /></svg>
-      <button class="drop" aria-label="Cancel" title="Cancel" onclick={() => chat.cancelEdit()}
-        ><Cross small /></button
-      >
+      <button class="drop" aria-label="Cancel" title="Cancel" onclick={() => chat.cancelEdit()}><Cross small /></button>
     </div>
   {/if}
   {#if goal}
@@ -481,12 +466,7 @@
       class:paused={goal.state === 'paused'}
       transition:fly={{ y: 6, duration: dur(150), easing: cubicOut }}
     >
-      <button
-        class="what"
-        title={goal.condition}
-        aria-expanded={reasoning}
-        onclick={() => (reasoning = !reasoning)}
-      >
+      <button class="what" title={goal.condition} aria-expanded={reasoning} onclick={() => (reasoning = !reasoning)}>
         <span class="mark">◎</span>
         <span class="condition">{goal.condition}</span>
         <span class="meta"
@@ -508,12 +488,7 @@
   {/if}
   <div class="box-wrap">
     {#if rows.length}
-      <Suggest
-        {rows}
-        active={lit}
-        onpick={(index: number) => pick(index)}
-        onlight={(index: number) => (lit = index)}
-      />
+      <Suggest {rows} active={lit} onpick={(index: number) => pick(index)} onlight={(index: number) => (lit = index)} />
     {/if}
     <!-- svelte-ignore a11y_click_events_have_key_events -->
     <div
@@ -548,19 +523,12 @@
               transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}
             >
               {#if chip.image}
-                <img
-                  class="thumb"
-                  alt=""
-                  draggable="false"
-                  src={`data:${chip.image.mime};base64,${chip.image.data}`}
-                />
+                <img class="thumb" alt="" draggable="false" src={`data:${chip.image.mime};base64,${chip.image.data}`} />
               {:else}
                 <MentionMark kind={chip.kind} />
               {/if}
               <span class="name" dir="auto">{chip.label}</span>
-              {@render remove(
-                () => (chat.chips = chat.chips.filter((one) => !sameMention(one, chip))),
-              )}
+              {@render remove(() => (chat.chips = chat.chips.filter((one) => !sameMention(one, chip))))}
             </span>
           {/each}
         </div>
@@ -612,9 +580,7 @@
         {/if}
         {#if button === 'stop'}
           <button class="go" title="Stop" aria-label="Stop" onclick={() => chat.stop()}>
-            <svg viewBox="0 0 13 13"
-              ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
-            >
+            <svg viewBox="0 0 13 13"><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg>
           </button>
         {:else if button === 'send'}
           <button

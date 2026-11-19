@@ -1,9 +1,4 @@
-import {
-  EditorSelection,
-  EditorState,
-  type StateCommand,
-  type TransactionSpec,
-} from '@codemirror/state'
+import { EditorSelection, EditorState, type StateCommand, type TransactionSpec } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { describe, expect, test } from 'vitest'
@@ -71,8 +66,7 @@ function rendered(state: EditorState): string[] {
   return out
 }
 
-const afterChange = (state: EditorState, spec: TransactionSpec): string =>
-  state.update(spec).state.doc.toString()
+const afterChange = (state: EditorState, spec: TransactionSpec): string => state.update(spec).state.doc.toString()
 
 function afterCommand(state: EditorState, command: StateCommand): string {
   let written = state.doc.toString()
@@ -178,9 +172,7 @@ describe('what may still change the document', () => {
 
     for (const userEvent of ['input.paste', 'input.drop', 'delete.selection'])
       expect(afterChange(state, { changes: { from: 0, insert: 'x' }, userEvent })).toBe('# Note')
-    expect(afterChange(state, { changes: { from: 0, to: 6 }, userEvent: 'move.drop' })).toBe(
-      '# Note',
-    )
+    expect(afterChange(state, { changes: { from: 0, to: 6 }, userEvent: 'move.drop' })).toBe('# Note')
   })
 
   test('a note arriving from outside still lands', () => {
@@ -194,12 +186,7 @@ describe('what may still change the document', () => {
   test('the format commands write nothing', () => {
     const state = locked()
 
-    for (const command of [
-      toggleWrap('**'),
-      setHeading(2),
-      insertHorizontalRule,
-      clearFormatting,
-    ]) {
+    for (const command of [toggleWrap('**'), setHeading(2), insertHorizontalRule, clearFormatting]) {
       expect(afterCommand(state, command)).toBe('# Note')
     }
   })
@@ -302,9 +289,7 @@ describe('the classes the stylesheet works from', () => {
     setFocusMode(view, true)
     setTypewriterMode(view, true)
 
-    expect(editorClasses(view.state)).toEqual(
-      expect.arrayContaining(['orden-focus-mode', 'orden-typewriter-mode']),
-    )
+    expect(editorClasses(view.state)).toEqual(expect.arrayContaining(['orden-focus-mode', 'orden-typewriter-mode']))
 
     setFocusMode(view, false)
     expect(editorClasses(view.state)).toContain('orden-typewriter-mode')
@@ -316,9 +301,7 @@ function numbersDrawn(state: EditorState, from = 0): string[] {
   const out: string[] = []
   const drawn = buildDecorations(state, [{ from, to: state.doc.length }]).decorations
   drawn.between(from, state.doc.length, (at, _to, value) => {
-    const number = (value.spec.attributes as Record<string, string> | undefined)?.[
-      'data-heading-number'
-    ]
+    const number = (value.spec.attributes as Record<string, string> | undefined)?.['data-heading-number']
     if (number) out.push(`${number} ${state.doc.lineAt(at).text}`)
   })
   return out
@@ -375,8 +358,7 @@ describe('numbered headings', () => {
 describe('applying every mode again', () => {
   function long(): string {
     const sections: string[] = []
-    for (let at = 0; at < 400; at++)
-      sections.push(`## Section ${at}`, '', 'Some **bold** and *italic* text.', '')
+    for (let at = 0; at < 400; at++) sections.push(`## Section ${at}`, '', 'Some **bold** and *italic* text.', '')
     return sections.join('\n')
   }
 
@@ -415,8 +397,7 @@ describe('a document too long to parse', () => {
     const lines: string[] = []
     let held = 0
     for (let at = 0; held < characters; at++) {
-      const line =
-        at % 12 === 0 ? `## Part ${at}` : `Line ${at} with **bold**, *italic* and a [[link]] in it.`
+      const line = at % 12 === 0 ? `## Part ${at}` : `Line ${at} with **bold**, *italic* and a [[link]] in it.`
       lines.push(line)
       held += line.length + 1
     }

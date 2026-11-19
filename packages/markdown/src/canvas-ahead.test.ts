@@ -1,12 +1,5 @@
 import { afterEach, describe, expect, test } from 'vitest'
-import {
-  emptyCanvas,
-  forgetParsed,
-  type InkStroke,
-  parseAhead,
-  takeParsed,
-  writeCanvas,
-} from './canvas'
+import { emptyCanvas, forgetParsed, type InkStroke, parseAhead, takeParsed, writeCanvas } from './canvas'
 
 function plane(count: number): string {
   const ink: InkStroke[] = []

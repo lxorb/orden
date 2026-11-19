@@ -13,8 +13,7 @@ const settled = <T>(request: IDBRequest<T>): Promise<T> =>
 export function padDisk(): PadDisk {
   const held = heldDatabase(NAME, 1, (request) => request.result.createObjectStore(KEPT))
   return {
-    read: async (key) =>
-      settled<unknown>((await held.transaction(KEPT)).objectStore(KEPT).get(key)),
+    read: async (key) => settled<unknown>((await held.transaction(KEPT)).objectStore(KEPT).get(key)),
     keep: async (key, value) => {
       const tx = await held.transaction(KEPT, 'readwrite')
       tx.objectStore(KEPT).put(value, key)

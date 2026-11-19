@@ -21,11 +21,7 @@ function planned(said: unknown, places: ZenPlaces | null) {
 describe.each(VERSIONS)("Zen %s's Essentials", (_, said, places) => {
   test('are read, in their order, as the Essentials they are', () => {
     const tabs = readZenSession(said, places)?.tabs ?? []
-    expect(tabs.filter((one) => one.essential).map((one) => one.title)).toEqual([
-      'Mail',
-      'Calendar',
-      'Chat',
-    ])
+    expect(tabs.filter((one) => one.essential).map((one) => one.title)).toEqual(['Mail', 'Calendar', 'Chat'])
     expect(tabs.filter((one) => one.essential).every((one) => one.space === null)).toBe(true)
   })
 
@@ -33,12 +29,7 @@ describe.each(VERSIONS)("Zen %s's Essentials", (_, said, places) => {
     const [home, work] = planned(said, places)
     expect(home?.name).toBe('Home')
     expect(home?.bookmarks).toEqual(['Mail.url', 'Calendar.url', 'Chat.url'])
-    expect(home?.order['']?.slice(0, 4)).toEqual([
-      'Mail.url',
-      'Calendar.url',
-      'Chat.url',
-      'News.url',
-    ])
+    expect(home?.order['']?.slice(0, 4)).toEqual(['Mail.url', 'Calendar.url', 'Chat.url', 'News.url'])
     expect(work?.bookmarks).toEqual([])
     const mail = home?.files.find((one) => one.path === 'Mail.url')
     expect(mail?.kind === 'note' && readShortcut(mail.text)?.url).toBe('https://example.com/mail')
@@ -68,9 +59,7 @@ describe('a Zen up to 1.17', () => {
     const [, work] = planned(ZEN_1_17, ZEN_1_17_PLACES)
     expect(work?.order.Docs).toEqual(['The guide.url', 'API.url'])
     const board = work?.files.find((one) => one.path === 'Board.url')
-    expect(board?.kind === 'note' && readShortcut(board.text)?.url).toBe(
-      'https://example.net/board',
-    )
+    expect(board?.kind === 'note' && readShortcut(board.text)?.url).toBe('https://example.net/board')
   })
 })
 

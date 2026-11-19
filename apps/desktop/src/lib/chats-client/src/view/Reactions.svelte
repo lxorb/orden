@@ -22,8 +22,7 @@
   } = $props()
 
   const list = $derived(Object.entries(message.reactions).filter(([, who]) => who.length))
-  const named = (who: readonly Message['author'][]) =>
-    who.map((one) => nameOf(one, page.members, space)).join(', ')
+  const named = (who: readonly Message['author'][]) => who.map((one) => nameOf(one, page.members, space)).join(', ')
 </script>
 
 {#if list.length}

@@ -28,9 +28,7 @@ describe('the first spelling nobody has', () => {
   test('counts a numbered name on instead of numbering it again (#1630)', () => {
     const taken = new Set(['App.application', 'App 2.application'])
     expect(freePath('App 2.application', (one) => taken.has(one))).toBe('App 3.application')
-    expect(freePath('a/App 2.application', (one) => taken.has(one.slice(2)))).toBe(
-      'a/App 3.application',
-    )
+    expect(freePath('a/App 2.application', (one) => taken.has(one.slice(2)))).toBe('a/App 3.application')
     expect(freeName('Work 2', (one) => one === 'Work 2')).toBe('Work 3')
   })
 
@@ -42,9 +40,7 @@ describe('the first spelling nobody has', () => {
 })
 
 test('a name that grew a run of numbers: is the name it grew from (#1630); leaves one number, or numbers that are not a run, alone', () => {
-  expect(unstacked('AbaClient Manager 2 2 2 2 2 2 2.application')).toBe(
-    'AbaClient Manager.application',
-  )
+  expect(unstacked('AbaClient Manager 2 2 2 2 2 2 2.application')).toBe('AbaClient Manager.application')
   expect(unstacked('a/b/Notes 2 2')).toBe('a/b/Notes')
   expect(unstacked('Plan 2.md')).toBe('Plan 2.md')
   expect(unstacked('Plan 3 2.md')).toBe('Plan 3 2.md')
@@ -70,9 +66,7 @@ describe('where the other copy goes', () => {
     expect(conflictPath('Notes', on)).toBe('Notes (from another device 2026-09-13)')
     expect(conflictPath('notes/README', on)).toBe('notes/README (from another device 2026-09-13)')
     expect(conflictPath('v1.2/README', on)).toBe('v1.2/README (from another device 2026-09-13)')
-    expect(conflictPath('C:\\v1.2\\README', on)).toBe(
-      'C:\\v1.2\\README (from another device 2026-09-13)',
-    )
+    expect(conflictPath('C:\\v1.2\\README', on)).toBe('C:\\v1.2\\README (from another device 2026-09-13)')
   })
 
   test('is never the file it is a copy of; steps aside by number when that name is taken too', () => {

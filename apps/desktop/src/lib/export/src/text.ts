@@ -17,9 +17,7 @@ function textOf(spans: readonly Span[]): string {
     if (href !== undefined && last?.href === href) last.words += spanText(span)
     else runs.push({ href, words: spanText(span) })
   }
-  return runs
-    .map(({ href, words }) => (href !== undefined && href !== words ? `${words} (${href})` : words))
-    .join('')
+  return runs.map(({ href, words }) => (href !== undefined && href !== words ? `${words} (${href})` : words)).join('')
 }
 
 const GRAPHEMES = new Intl.Segmenter()
@@ -131,8 +129,7 @@ function pushAll(out: string[], lines: readonly string[]) {
   for (const line of lines) out.push(line)
 }
 
-const wrapped = (text: string, indent: string): string[] =>
-  text.split('\n').map((line) => `${indent}${line}`.trimEnd())
+const wrapped = (text: string, indent: string): string[] => text.split('\n').map((line) => `${indent}${line}`.trimEnd())
 
 export function toPlainText(doc: Doc): string {
   const lines: string[] = []

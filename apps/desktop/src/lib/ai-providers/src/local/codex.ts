@@ -19,9 +19,7 @@ export function codexReader(): (line: string) => Heard {
     if (!event || !params) return {}
     switch (event.method) {
       case 'item/agentMessage/delta':
-        return typeof params.delta === 'string'
-          ? more(text(params.itemId), params.delta, false)
-          : {}
+        return typeof params.delta === 'string' ? more(text(params.itemId), params.delta, false) : {}
       case 'item/reasoning/summaryTextDelta':
       case 'item/reasoning/textDelta':
         return typeof params.delta === 'string' && params.delta ? { thinking: params.delta } : {}
@@ -119,8 +117,7 @@ function limitIn(limits: Record<string, unknown> | null): Limit | null {
   const fullest = windows.sort((a, b) => Number(b.usedPercent) - Number(a.usedPercent))[0]
   if (!fullest && !limits.rateLimitReachedType) return null
   const used = Number(fullest?.usedPercent ?? 100)
-  const state =
-    limits.rateLimitReachedType || used >= 100 ? 'reached' : used >= NEAR ? 'near' : 'fine'
+  const state = limits.rateLimitReachedType || used >= 100 ? 'reached' : used >= NEAR ? 'near' : 'fine'
   const until = typeof fullest?.resetsAt === 'number' ? fullest.resetsAt * 1000 : null
   return { state, until, untilWords: null }
 }
@@ -131,9 +128,7 @@ function trouble(error: Record<string, unknown> | null): Heard {
   const limited = error?.codexErrorInfo === 'usageLimitExceeded' || saysLimit(words)
   return {
     trouble: words,
-    ...(saysSignedOut(words) || error?.codexErrorInfo === 'unauthorized'
-      ? { signedOut: true }
-      : {}),
+    ...(saysSignedOut(words) || error?.codexErrorInfo === 'unauthorized' ? { signedOut: true } : {}),
     ...(limited ? { limit: { state: 'reached', until: null, untilWords: againAt(words) } } : {}),
   }
 }

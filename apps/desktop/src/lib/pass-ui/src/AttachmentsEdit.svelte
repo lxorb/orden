@@ -97,20 +97,12 @@
         {@render line(file.name, file.size, () => (removing = [...removing, file.id]))}
       {/each}
       {#each adding as file, index (index)}
-        {@render line(
-          file.name,
-          file.bytes.length,
-          () => (adding = adding.filter((_, at) => at !== index)),
-        )}
+        {@render line(file.name, file.bytes.length, () => (adding = adding.filter((_, at) => at !== index)))}
       {/each}
     </div>
   {/if}
   <input class="picker" type="file" multiple bind:this={picker} onchange={chosen} tabindex="-1" />
-  <button
-    class="orden-button is-quiet is-soft attach"
-    type="button"
-    onclick={() => picker?.click()}
-  >
+  <button class="orden-button is-quiet is-soft attach" type="button" onclick={() => picker?.click()}>
     <Glyph icon={Paperclip} />Attach file
   </button>
   {#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}

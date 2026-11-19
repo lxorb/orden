@@ -55,9 +55,7 @@ class Plans {
     const said = await invoke<unknown>('chatgpt_account').catch(() => null)
     const email = (said as { email?: unknown } | null)?.email
     this.chatgpt =
-      typeof said === 'object' && said !== null
-        ? { email: typeof email === 'string' ? email : null }
-        : null
+      typeof said === 'object' && said !== null ? { email: typeof email === 'string' ? email : null } : null
   }
 
   watch(account: LocalAccount): void {

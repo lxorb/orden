@@ -21,8 +21,6 @@ describe('items copied from their words, the first with a child, pasted on a new
   })
 
   test('keep a numbered child under its own item', () => {
-    expect(pasted('1. list\n2. ', 'milk\n   1. oat\n3. eggs')).toBe(
-      '1. list\n2. milk\n   1. oat\n3. eggs',
-    )
+    expect(pasted('1. list\n2. ', 'milk\n   1. oat\n3. eggs')).toBe('1. list\n2. milk\n   1. oat\n3. eggs')
   })
 })

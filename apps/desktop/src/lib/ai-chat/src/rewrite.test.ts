@@ -1,12 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  defaultLanguage,
-  languageNames,
-  nameOfLanguage,
-  rewriteMessages,
-  stillThere,
-  VERBS,
-} from './rewrite'
+import { defaultLanguage, languageNames, nameOfLanguage, rewriteMessages, stillThere, VERBS } from './rewrite'
 
 describe('the verbs', () => {
   test('are the four, with the two about length first', () => {

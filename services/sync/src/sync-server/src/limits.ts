@@ -50,20 +50,12 @@ async function counted(env: Env, scope: string, key: string, window: number): Pr
   return row?.count ?? 1
 }
 
-export async function within(
-  env: Env,
-  scope: string,
-  key: string,
-  most: number,
-  window: number,
-): Promise<boolean> {
+export async function within(env: Env, scope: string, key: string, most: number, window: number): Promise<boolean> {
   return (await counted(env, scope, key, window)) <= most
 }
 
 async function uncount(env: Env, scope: string, key: string): Promise<void> {
-  await env.DB.prepare(
-    'update limits set count = count - 1 where scope = ? and key = ? and count > 0',
-  )
+  await env.DB.prepare('update limits set count = count - 1 where scope = ? and key = ? and count > 0')
     .bind(scope, key)
     .run()
 }
@@ -150,11 +142,7 @@ export function mayTakeAnswer(env: Env, spaceId: string): Promise<boolean> {
 const GUESSES_FROM_ONE_MACHINE = 20
 const GUESSES_AT_ONE_SITE = 500
 
-export async function mayGuess(
-  env: Env,
-  spaceId: string,
-  machine: string | null,
-): Promise<boolean> {
+export async function mayGuess(env: Env, spaceId: string, machine: string | null): Promise<boolean> {
   if (!(await within(env, 'guesses', spaceId, GUESSES_AT_ONE_SITE, AN_HOUR))) return false
   if (!machine) return true
 
@@ -225,11 +213,7 @@ export interface MailRefusal {
   aboutTheAddress: boolean
 }
 
-export async function mailCeilings(
-  env: Env,
-  address: string,
-  machine: string | null,
-): Promise<MailRefusal | null> {
+export async function mailCeilings(env: Env, address: string, machine: string | null): Promise<MailRefusal | null> {
   const wait = await mailRunsOutFor(env)
   if (wait !== null) {
     return { error: TOO_MUCH_TODAY, status: 503, retryAfter: wait, aboutTheAddress: false }

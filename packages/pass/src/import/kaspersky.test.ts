@@ -51,13 +51,7 @@ eggs
 describe('parseKaspersky', () => {
   it('reads websites, applications, other accounts and notes', () => {
     const items = parseKaspersky(TXT.replace(/\n/g, '\r\n')).vaults[0]?.items ?? []
-    expect(items.map((one) => one.content.title)).toEqual([
-      'Google',
-      'Bänk',
-      'Skype',
-      'Router',
-      'Shopping',
-    ])
+    expect(items.map((one) => one.content.title)).toEqual(['Google', 'Bänk', 'Skype', 'Router', 'Shopping'])
     const [google, bank, skype, router, shopping] = items
     expect(google?.content).toMatchObject({
       kind: 'login',

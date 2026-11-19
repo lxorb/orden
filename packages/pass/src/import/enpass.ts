@@ -141,8 +141,7 @@ export function parseEnpass(text: string): Imported {
       const password = takeFirst(fields, 'password')
       const totp = takeFirst(fields, 'totp')
       const urls: string[] = []
-      for (let url = takeFirst(fields, 'url'); url !== ''; url = takeFirst(fields, 'url'))
-        urls.push(url)
+      for (let url = takeFirst(fields, 'url'); url !== ''; url = takeFirst(fields, 'url')) urls.push(url)
       add(
         loginOf({
           title,

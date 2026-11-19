@@ -4,14 +4,7 @@ import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { afterEach, describe, expect, test } from 'vitest'
 import { folding } from './fold'
-import {
-  agentMarksIn,
-  foldLine,
-  select,
-  selectionsOf,
-  setAgentMarks,
-  unfoldLine,
-} from './agent-hands'
+import { agentMarksIn, foldLine, select, selectionsOf, setAgentMarks, unfoldLine } from './agent-hands'
 
 const open: EditorView[] = []
 afterEach(() => {
@@ -22,11 +15,7 @@ function viewOf(doc: string): EditorView {
   const view = new EditorView({
     state: EditorState.create({
       doc,
-      extensions: [
-        markdown({ base: markdownLanguage }),
-        folding(),
-        EditorState.allowMultipleSelections.of(true),
-      ],
+      extensions: [markdown({ base: markdownLanguage }), folding(), EditorState.allowMultipleSelections.of(true)],
     }),
     parent: document.body,
   })

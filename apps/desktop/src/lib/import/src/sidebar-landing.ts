@@ -1,12 +1,5 @@
 import { busy } from '../../ui-kit/src/api'
-import {
-  folderOf,
-  relativeTo,
-  invoke,
-  joinPath,
-  safeName,
-  withinSpace,
-} from '../../platform/src/api'
+import { folderOf, relativeTo, invoke, joinPath, safeName, withinSpace } from '../../platform/src/api'
 import { readShortcut } from '@orden/scan/shortcut'
 import { type Space, workspace } from '../../workspace/src/api'
 import { applyImport } from './apply'
@@ -14,11 +7,7 @@ import { nameKey } from './names'
 import type { Planned } from './plan'
 import type { SpacePlan } from './sidebar-plan'
 
-export async function landSpaces(
-  spaces: readonly SpacePlan[],
-  lost: readonly string[],
-  none: string,
-): Promise<Space> {
+export async function landSpaces(spaces: readonly SpacePlan[], lost: readonly string[], none: string): Promise<Space> {
   const landed: Space[] = []
   for (const plan of spaces) {
     const space = await landSpace(plan)
@@ -32,9 +21,7 @@ export async function landSpaces(
 }
 
 async function landSpace(plan: SpacePlan): Promise<Space | null> {
-  const held = workspace.spaces.find(
-    (one) => nameKey(safeName(one.name) ?? '') === nameKey(safeName(plan.name) ?? ''),
-  )
+  const held = workspace.spaces.find((one) => nameKey(safeName(one.name) ?? '') === nameKey(safeName(plan.name) ?? ''))
   const { canWriteAt } = await import('../../sharing/src/api')
   if (held && !canWriteAt(held.root)) return null
   const space = held ?? (await workspace.addSpace(plan.name))
@@ -76,9 +63,7 @@ async function landSpace(plan: SpacePlan): Promise<Space | null> {
 
 async function unseen(root: string, files: readonly Planned[]): Promise<Planned[]> {
   const there = await Promise.all(
-    files.map((file) =>
-      invoke<string>('read_note', { path: joinPath(root, file.path) }).catch(() => null),
-    ),
+    files.map((file) => invoke<string>('read_note', { path: joinPath(root, file.path) }).catch(() => null)),
   )
   const beside = await pagesBeside(root, files)
 
@@ -99,21 +84,14 @@ async function unseen(root: string, files: readonly Planned[]): Promise<Planned[
   })
 }
 
-async function pagesBeside(
-  root: string,
-  files: readonly Planned[],
-): Promise<Map<string, Set<string>>> {
-  const folders = new Set(
-    files.filter((file) => SHORTCUT.test(file.path)).map((file) => nameKey(folderOf(file.path))),
-  )
+async function pagesBeside(root: string, files: readonly Planned[]): Promise<Map<string, Set<string>>> {
+  const folders = new Set(files.filter((file) => SHORTCUT.test(file.path)).map((file) => nameKey(folderOf(file.path))))
   const held = workspace.files
     .map((entry) => withinSpace(root, entry.path))
     .filter((path): path is string => !!path && SHORTCUT.test(path))
     .filter((path) => folders.has(nameKey(folderOf(path))))
   const read = await Promise.all(
-    held.map((path) =>
-      invoke<string>('read_note', { path: joinPath(root, path) }).catch(() => null),
-    ),
+    held.map((path) => invoke<string>('read_note', { path: joinPath(root, path) }).catch(() => null)),
   )
 
   const pages = new Map<string, Set<string>>()

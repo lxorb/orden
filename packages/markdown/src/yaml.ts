@@ -39,8 +39,7 @@ export function uncommented(value: string): string {
 
 const FLOW = /^\[([\s\S]*)\]$/
 
-export const flowItems = (value: string): string[] | null =>
-  writtenFlowItems(value)?.map(unquoted) ?? null
+export const flowItems = (value: string): string[] | null => writtenFlowItems(value)?.map(unquoted) ?? null
 
 export function writtenFlowItems(value: string): string[] | null {
   const found = FLOW.exec(value.trim())
@@ -104,8 +103,7 @@ const ambiguous = (value: string): boolean =>
   /^[-+]?[\d._]+([eE][-+]?\d+)?$/.test(value) ||
   /^0x[\da-f_]+$|^0o[0-7_]+$|^0b[01_]+$|^[-+]?\.(inf|nan)$/i.test(value)
 
-const quoted = (value: string): string =>
-  value.includes("'") ? JSON.stringify(value) : `'${value}'`
+const quoted = (value: string): string => (value.includes("'") ? JSON.stringify(value) : `'${value}'`)
 
 export function scalar(value: string): string {
   const said = oneLine(value)

@@ -25,9 +25,7 @@
     open
       ? overlays.show(onclose, () => [
           layer,
-          ...document.querySelectorAll(
-            '[data-opens-popover], .orden-layer, [role=listbox], [role=menu]',
-          ),
+          ...document.querySelectorAll('[data-opens-popover], .orden-layer, [role=listbox], [role=menu]'),
         ])
       : undefined,
   )

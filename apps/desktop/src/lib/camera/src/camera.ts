@@ -26,8 +26,7 @@ export const FURTHEST = 0.04
 export const PAPER_CLOSEST = 32
 export const SMALLEST_DOT = 1.1
 
-export const clampScale = (scale: number, closest = CLOSEST): number =>
-  Math.min(closest, Math.max(FURTHEST, scale))
+export const clampScale = (scale: number, closest = CLOSEST): number => Math.min(closest, Math.max(FURTHEST, scale))
 
 export const NOTCH = 1.2
 
@@ -50,8 +49,7 @@ export function wheelPixels(turn: Turned, page = PAGE): { x: number; y: number }
 }
 
 export function ctrlWheelZoom(event: Turned): number {
-  const pinch =
-    !event.deltaMode && Math.abs(event.deltaY) < PINCHED && !Number.isInteger(event.deltaY)
+  const pinch = !event.deltaMode && Math.abs(event.deltaY) < PINCHED && !Number.isInteger(event.deltaY)
   return pinch ? Math.exp(-event.deltaY / 100) : wheelZoom(wheelPixels(event).y)
 }
 
@@ -163,11 +161,7 @@ export function screenPoint(
   height: number,
   point: { x: number; y: number },
 ): { x: number; y: number } {
-  const off = turnedBy(
-    (point.x - camera.x) * camera.scale,
-    (point.y - camera.y) * camera.scale,
-    turnOf(camera),
-  )
+  const off = turnedBy((point.x - camera.x) * camera.scale, (point.y - camera.y) * camera.scale, turnOf(camera))
   return { x: off.x + width / 2, y: off.y + height / 2 }
 }
 
@@ -243,15 +237,9 @@ export function framing(
     if (py > highest) highest = py
   }
 
-  if (found === 0)
-    return shown ? framing(x, y, count, width, height, padding) : { x: 0, y: 0, scale: 1 }
+  if (found === 0) return shown ? framing(x, y, count, width, height, padding) : { x: 0, y: 0, scale: 1 }
 
-  return framingBox(
-    { x: least, y: lowest, width: most - least, height: highest - lowest },
-    width,
-    height,
-    padding,
-  )
+  return framingBox({ x: least, y: lowest, width: most - least, height: highest - lowest }, width, height, padding)
 }
 
 export function zoomed(

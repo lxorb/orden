@@ -197,9 +197,7 @@ describe('ChatNotices', () => {
 describe('lineOf', () => {
   it('is the first line a reader would read', () => {
     expect(lineOf(message(1, { body: '\n# Plan\nsecond' }))).toBe('Plan')
-    expect(lineOf(message(1, { body: '> quoted ~~old~~ `code` ||secret||' }))).toBe(
-      'quoted old code secret',
-    )
+    expect(lineOf(message(1, { body: '> quoted ~~old~~ `code` ||secret||' }))).toBe('quoted old code secret')
     expect(lineOf(message(1, { body: '- [x] task' }))).toBe('[x] task')
     expect(lineOf(message(1, { body: 'x'.repeat(300) }))).toHaveLength(200)
   })

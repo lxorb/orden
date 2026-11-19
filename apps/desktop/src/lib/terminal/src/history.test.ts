@@ -77,15 +77,11 @@ describe('how much of a screen is kept', () => {
 })
 
 test('the line under a replayed screen is dim and on a line of its own', () => {
-  expect(restoredLine('Restored 30 Sep 2026, 14:02')).toBe(
-    '\x1b[0m\r\n\x1b[2mRestored 30 Sep 2026, 14:02\x1b[22m\r\n',
-  )
+  expect(restoredLine('Restored 30 Sep 2026, 14:02')).toBe('\x1b[0m\r\n\x1b[2mRestored 30 Sep 2026, 14:02\x1b[22m\r\n')
 })
 
 test('on Windows the replayed screen goes above, and the line saying when is the first row', () => {
-  expect(restoredAbove('Restored', 4)).toBe(
-    '\x1b[0m\r\n' + '\r\n\r\n\r\n' + '\x1b[H' + '\x1b[2mRestored\x1b[22m\r\n',
-  )
+  expect(restoredAbove('Restored', 4)).toBe('\x1b[0m\r\n' + '\r\n\r\n\r\n' + '\x1b[H' + '\x1b[2mRestored\x1b[22m\r\n')
   expect(restoredAbove('Restored', 1)).toBe('\x1b[0m\r\n\x1b[H\x1b[2mRestored\x1b[22m\r\n')
 })
 
@@ -150,10 +146,7 @@ describe('a tab closed', () => {
     await written()
 
     expect(files.has('s1/k1')).toBe(false)
-    expect(said.map((one) => one.command)).toEqual([
-      'terminal_history_write',
-      'terminal_history_forget',
-    ])
+    expect(said.map((one) => one.command)).toEqual(['terminal_history_write', 'terminal_history_forget'])
   })
 
   test('a dozen of them at most', async () => {
@@ -194,10 +187,7 @@ describe('a terminal moved to another space', () => {
     await written()
 
     expect(files.size).toBe(0)
-    expect(said.map((one) => one.command)).toEqual([
-      'terminal_history_read',
-      'terminal_history_forget',
-    ])
+    expect(said.map((one) => one.command)).toEqual(['terminal_history_read', 'terminal_history_forget'])
   })
 })
 

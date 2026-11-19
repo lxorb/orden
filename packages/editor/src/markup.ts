@@ -10,14 +10,11 @@ const trustedField = StateField.define<boolean>({
   },
 })
 
-export const trustsMarkup = (state: EditorState): boolean =>
-  state.field(trustedField, false) ?? false
+export const trustsMarkup = (state: EditorState): boolean => state.field(trustedField, false) ?? false
 
-export const trustedMarkup = (trusted: boolean | undefined): Extension =>
-  trustedField.init(() => trusted ?? false)
+export const trustedMarkup = (trusted: boolean | undefined): Extension => trustedField.init(() => trusted ?? false)
 
-export const trustedMarkupEffect = (trusted: boolean): StateEffect<unknown> =>
-  setTrusted.of(trusted)
+export const trustedMarkupEffect = (trusted: boolean): StateEffect<unknown> => setTrusted.of(trusted)
 
 export const trustChanged = (before: EditorState, after: EditorState): boolean =>
   before.field(trustedField, false) !== after.field(trustedField, false)

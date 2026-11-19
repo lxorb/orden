@@ -22,16 +22,7 @@ import {
   unframe,
 } from '../../src/wire'
 import type { Seeded } from './account'
-import type {
-  Action,
-  Answer,
-  Classification,
-  DeviceAdapter,
-  Held,
-  Link,
-  Pick,
-  View,
-} from './adapters'
+import type { Action, Answer, Classification, DeviceAdapter, Held, Link, Pick, View } from './adapters'
 import type { Clock } from './network'
 import { Random } from './random'
 
@@ -227,9 +218,7 @@ export class ReferenceDevice implements DeviceAdapter {
   }
 
   private hasPending(id: string): boolean {
-    return (
-      (this.store.docs.get(id)?.pending.length ?? 0) > 0 || (this.unsaved.get(id)?.length ?? 0) > 0
-    )
+    return (this.store.docs.get(id)?.pending.length ?? 0) > 0 || (this.unsaved.get(id)?.length ?? 0) > 0
   }
 
   private drop(id: string) {
@@ -249,8 +238,7 @@ export class ReferenceDevice implements DeviceAdapter {
 
   private remade(id: string, kept: Trashed) {
     const shown = this.shown().entries
-    const parent =
-      kept.parent !== null && shown.get(kept.parent)?.deleted === false ? kept.parent : null
+    const parent = kept.parent !== null && shown.get(kept.parent)?.deleted === false ? kept.parent : null
     if (kept.kind === 'folder') {
       this.queue({
         op: this.nextOp(),
@@ -265,13 +253,7 @@ export class ReferenceDevice implements DeviceAdapter {
     this.made(parent, kept.name, kept.text, undefined, id)
   }
 
-  private made(
-    parent: string | null,
-    name: string,
-    text: string,
-    started?: string,
-    again?: string,
-  ): string {
+  private made(parent: string | null, name: string, text: string, started?: string, again?: string): string {
     if (again === undefined) this.store.made += 1
     const id = again ?? `${this.id}-${String(this.store.made)}`
     const stored: StoredDoc = {
@@ -321,11 +303,7 @@ export class ReferenceDevice implements DeviceAdapter {
   private liveEntries(kind: 'note' | 'folder' | 'any'): TreeEntry[] {
     return [...this.shown().entries.values()]
       .filter((entry) => !entry.deleted)
-      .filter(
-        (entry) =>
-          kind === 'any' ||
-          (kind === 'folder' ? entry.kind === 'folder' : DOCUMENTS.has(entry.kind)),
-      )
+      .filter((entry) => kind === 'any' || (kind === 'folder' ? entry.kind === 'folder' : DOCUMENTS.has(entry.kind)))
       .sort((a, b) => (a.id < b.id ? -1 : 1))
   }
 
@@ -334,9 +312,7 @@ export class ReferenceDevice implements DeviceAdapter {
   }
 
   private writable(pick: Pick): string | null {
-    const notes = this.liveEntries('note').filter(
-      (entry) => this.live.has(entry.id) && !this.store.held.has(entry.id),
-    )
+    const notes = this.liveEntries('note').filter((entry) => this.live.has(entry.id) && !this.store.held.has(entry.id))
     return this.chosen(notes, pick)?.id ?? null
   }
 
@@ -422,9 +398,7 @@ export class ReferenceDevice implements DeviceAdapter {
         const shown = this.shown()
         const inside = (id: string | null): boolean =>
           id !== null && (id === target.id || inside(shown.entries.get(id)?.parent ?? null))
-        const gone = [...shown.entries.values()].filter(
-          (entry) => !entry.deleted && inside(entry.id),
-        )
+        const gone = [...shown.entries.values()].filter((entry) => !entry.deleted && inside(entry.id))
 
         let seen = this.store.cursor
         for (const entry of gone) {
@@ -488,11 +462,7 @@ export class ReferenceDevice implements DeviceAdapter {
     if (!id) return
     const ours = this.textNow(id) ?? ''
     const ancestor = this.store.written.get(id) ?? ours
-    const file = withoutWords(
-      withWords(ancestor, action.at, action.words),
-      1 - action.at,
-      action.cut,
-    )
+    const file = withoutWords(withWords(ancestor, action.at, action.words), 1 - action.at, action.cut)
 
     if (ours === ancestor) {
       this.edit(id, file)
@@ -768,8 +738,7 @@ export class ReferenceDevice implements DeviceAdapter {
 
   private async pushDocs(link: Link, alive: () => boolean): Promise<boolean> {
     const ready = [...this.store.docs.entries()].filter(
-      ([id, stored]) =>
-        stored.pending.length && this.store.known.has(id) && !this.store.held.has(id),
+      ([id, stored]) => stored.pending.length && this.store.known.has(id) && !this.store.held.has(id),
     )
     if (!ready.length) return true
 
@@ -891,8 +860,7 @@ export class ReferenceDevice implements DeviceAdapter {
       const entry = this.shown().entries.get(id)
       const name = entry?.name ?? 'Note.md'
       const dot = name.lastIndexOf('.')
-      const copy =
-        dot > 0 ? `${name.slice(0, dot)} (${this.id})${name.slice(dot)}` : `${name} (${this.id})`
+      const copy = dot > 0 ? `${name.slice(0, dot)} (${this.id})${name.slice(dot)}` : `${name} (${this.id})`
       this.made(entry?.parent ?? null, copy, note.local)
     }
     this.save()
@@ -921,8 +889,7 @@ export class ReferenceDevice implements DeviceAdapter {
 
   async launch(): Promise<void> {
     if (this.running) return
-    if (!this.store.clean)
-      for (const stored of this.store.docs.values()) stored.client = this.freshClient()
+    if (!this.store.clean) for (const stored of this.store.docs.values()) stored.client = this.freshClient()
     this.store.clean = false
     this.running = true
     this.build()

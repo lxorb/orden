@@ -201,12 +201,7 @@ export function doorway(failing = 0): { ROOMS: DurableObjectNamespace; asked: He
   return { ROOMS: namespace as unknown as DurableObjectNamespace, asked }
 }
 
-export async function say(
-  made: NoteRoom,
-  state: FakeState,
-  socket: FakeSocket,
-  message: Uint8Array,
-): Promise<void> {
+export async function say(made: NoteRoom, state: FakeState, socket: FakeSocket, message: Uint8Array): Promise<void> {
   await made.webSocketMessage(socket as unknown as WebSocket, message.slice().buffer)
   await state.idle()
 }

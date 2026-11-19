@@ -62,9 +62,9 @@ interface Device {
 async function device(email: string, name: string, app: string): Promise<Device> {
   const token = await signedIn(email)
   const user = idOf(email)
-  const { id: session } = env.db
-    .prepare('select id from sessions where token_hash = ?')
-    .get(await sha256(token)) as { id: string }
+  const { id: session } = env.db.prepare('select id from sessions where token_hash = ?').get(await sha256(token)) as {
+    id: string
+  }
   const id = `device-${name}`
   const socket = connect(running.of(user).hub, { device: id, who: user, session })
   const one = { id, user, socket }
@@ -163,9 +163,7 @@ describe('an account on v1, under all', () => {
     expect(versionOf(MOVER)).toBe(2)
     expect(await syncVersionSaid(token)).toBe(2)
     const said = await call<Rollout>(env, '/v2/admin/sync-rollout', { token: admin })
-    expect(said.json.moves).toEqual([
-      { email: MOVER, at: expect.any(Number), from: 1, to: 2, why: 'hello', min: MIN },
-    ])
+    expect(said.json.moves).toEqual([{ email: MOVER, at: expect.any(Number), from: 1, to: 2, why: 'hello', min: MIN }])
   })
 
   test('stays on v1 while an old device is live, and moves once that device updates', async () => {
@@ -204,9 +202,7 @@ describe('an account on v1, under all', () => {
     env.db.prepare('update devices set revoked_at = 1 where id = ?').run(ended.id)
     const drawer = await device(MOVER, 'drawer', '0.12.0')
     env.db
-      .prepare(
-        'update sessions set expires_at = 1 where id = (select session_id from devices where id = ?)',
-      )
+      .prepare('update sessions set expires_at = 1 where id = (select session_id from devices where id = ?)')
       .run(drawer.id)
     await rollout({ mode: 'all', min: MIN })
 

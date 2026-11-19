@@ -11,16 +11,7 @@ import { experimentalPane } from './experimental-pane'
 import type { Field, Pane } from './fields'
 import { changed } from '../../usage/src/api'
 
-export type {
-  Caption,
-  Field,
-  Group,
-  PairField,
-  Pane,
-  PictureSide,
-  Segment,
-  SwatchOption,
-} from './fields'
+export type { Caption, Field, Group, PairField, Pane, PictureSide, Segment, SwatchOption } from './fields'
 
 export function preferences(view?: EditorView): Pane[] {
   return declaredPanes(view).map((pane) => ({

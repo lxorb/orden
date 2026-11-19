@@ -3,15 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { wallpaperCss } from '@orden/themes/wallpaper'
 import { describe, expect, test } from 'vitest'
 import { ACCENTS } from '../../../theme/src/accents'
-import {
-  AA,
-  type Lift,
-  over,
-  ratio,
-  type Rgb,
-  rgbOf,
-  type Span,
-} from '../../../ui-controls/src/legibility'
+import { AA, type Lift, over, ratio, type Rgb, rgbOf, type Span } from '../../../ui-controls/src/legibility'
 import { floorFor, type Palette, paletteOf } from './floors'
 
 const TOKENS = readFileSync(
@@ -43,10 +35,7 @@ function stacks(one: Palette): Lift[][] {
 
 function readsEverywhere(one: Palette, alpha: number, under: Rgb): boolean {
   return stacks(one).every((lifts) => {
-    const ground = lifts.reduce(
-      (below, lift) => over(lift.colour, lift.alpha, below),
-      over(one.scrim, alpha, under),
-    )
+    const ground = lifts.reduce((below, lift) => over(lift.colour, lift.alpha, below), over(one.scrim, alpha, under))
     return ratio(one.ink, ground) >= AA
   })
 }
@@ -86,10 +75,7 @@ describe('the open note’s row', () => {
       const scrim = tokenOf(wallpaperCss, side, '--wallpaper-scrim')
       const strong = tokenOf(wallpaperCss, side, '--muted-strong')
       for (const accent of accents(side)) {
-        expect(
-          ratio(strong, over(accent, 0.16, scrim)),
-          `${side} ${String(accent)}`,
-        ).toBeGreaterThanOrEqual(AA)
+        expect(ratio(strong, over(accent, 0.16, scrim)), `${side} ${String(accent)}`).toBeGreaterThanOrEqual(AA)
       }
     }
   })
@@ -102,12 +88,9 @@ describe('the floor', () => {
         const one = palette(side)
         const floor = floorFor(one, span)
         expect(floor).toBeLessThan(1)
-        for (const under of [span.least, span.most])
-          expect(readsEverywhere(one, floor, under)).toBe(true)
+        for (const under of [span.least, span.most]) expect(readsEverywhere(one, floor, under)).toBe(true)
         if (floor > 0) {
-          expect(
-            [span.least, span.most].every((under) => readsEverywhere(one, floor - 0.01, under)),
-          ).toBe(false)
+          expect([span.least, span.most].every((under) => readsEverywhere(one, floor - 0.01, under))).toBe(false)
         }
       })
     }
@@ -115,22 +98,20 @@ describe('the floor', () => {
 
   test('only ever rises under the Dim dial, which is a second scrim over it', () => {
     for (const floor of [0, 0.3, 0.6]) {
-      for (const dim of [0, 0.2, 0.9])
-        expect(floor + (1 - floor) * dim).toBeGreaterThanOrEqual(floor)
+      for (const dim of [0, 0.2, 0.9]) expect(floor + (1 - floor) * dim).toBeGreaterThanOrEqual(floor)
     }
   })
 })
 
 describe('the accent field, before a picture is chosen', () => {
   function statedFloor(side: Side): number {
-    const found = new RegExp(
-      String.raw`--wallpaper-floor:\s*var\(--wallpaper-floor-${side},\s*(\d+)%\)`,
-    ).exec(wallpaperCss)
+    const found = new RegExp(String.raw`--wallpaper-floor:\s*var\(--wallpaper-floor-${side},\s*(\d+)%\)`).exec(
+      wallpaperCss,
+    )
     return Number(found?.[1]) / 100
   }
 
-  const share = (token: string) =>
-    Number(new RegExp(String.raw`var\(${token}\) (\d+)%`).exec(wallpaperCss)?.[1]) / 100
+  const share = (token: string) => Number(new RegExp(String.raw`var\(${token}\) (\d+)%`).exec(wallpaperCss)?.[1]) / 100
 
   function fieldOf(side: Side, accent: Rgb): Span {
     const canvas = tokenOf(TOKENS, side, '--canvas-5')
@@ -139,11 +120,7 @@ describe('the accent field, before a picture is chosen', () => {
       tokenOf(wallpaperCss, side, '--wallpaper-base-2'),
     ]
     const lit = grounds.map((ground) => over(accent, share('--accent'), ground))
-    const colours = [
-      ...grounds,
-      ...lit,
-      ...[...grounds, ...lit].map((one) => over(canvas, share('--canvas-5'), one)),
-    ]
+    const colours = [...grounds, ...lit, ...[...grounds, ...lit].map((one) => over(canvas, share('--canvas-5'), one))]
 
     return {
       least: [0, 1, 2].map((at) => Math.min(...colours.map((one) => one[at]!))) as unknown as Rgb,
@@ -153,9 +130,7 @@ describe('the accent field, before a picture is chosen', () => {
 
   for (const side of SIDES) {
     test(`is covered by the ${side} floor the sheet states, whichever accent`, () => {
-      const needed = Math.max(
-        ...accents(side).map((accent) => floorFor(palette(side), fieldOf(side, accent))),
-      )
+      const needed = Math.max(...accents(side).map((accent) => floorFor(palette(side), fieldOf(side, accent))))
       expect(needed).toBeLessThanOrEqual(statedFloor(side))
     })
   }

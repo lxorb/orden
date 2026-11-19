@@ -12,10 +12,7 @@ function viewOf(doc: string, caret: number) {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(caret),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        history(),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), history()],
     }),
   )
   const view = {
@@ -45,16 +42,12 @@ describe('Move block down on a block inside a list item', () => {
 
   test('keeps a subtask under its task', () => {
     const doc = '- [ ] Pack\n  - [ ] socks\n  - [ ] shirts\n'
-    expect(moved(doc, '- [ ] socks', moveBlockDown)).toBe(
-      '- [ ] Pack\n  - [ ] shirts\n  - [ ] socks\n',
-    )
+    expect(moved(doc, '- [ ] socks', moveBlockDown)).toBe('- [ ] Pack\n  - [ ] shirts\n  - [ ] socks\n')
   })
 
   test('keeps a paragraph inside its item when it moves past the item’s last block', () => {
     const doc = '- a\n\n  first words\n\n  second words\n\n- b\n'
     expect(moved('- a\n\n  second words\n\n  first words\n\n- b\n', 'first', moveBlockUp)).toBe(doc)
-    expect(moved(doc, 'first', moveBlockDown)).toBe(
-      '- a\n\n  second words\n\n  first words\n\n- b\n',
-    )
+    expect(moved(doc, 'first', moveBlockDown)).toBe('- a\n\n  second words\n\n  first words\n\n- b\n')
   })
 })

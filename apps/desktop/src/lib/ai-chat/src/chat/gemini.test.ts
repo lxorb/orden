@@ -13,12 +13,7 @@ const { contentsOf, gemini, UNSIGNED } = await import('./gemini')
 const { complete } = await import('../../../ai-providers/src/complete')
 
 import type { Provider } from '../../../ai-providers/src/providers'
-import type {
-  EngineEvent,
-  ModelInfo,
-  Thread,
-  ToolOutput,
-} from '../../../ai-providers/src/chat/types'
+import type { EngineEvent, ModelInfo, Thread, ToolOutput } from '../../../ai-providers/src/chat/types'
 import type { Tools } from './tools'
 import type { Ask } from './wire'
 
@@ -117,12 +112,7 @@ const engine = createApiEngine({
 
 async function send(thread: Thread, text: string) {
   const heard: EngineEvent[] = []
-  await engine.send(
-    thread,
-    { text, attachments: [] },
-    (event) => heard.push(event),
-    new AbortController().signal,
-  )
+  await engine.send(thread, { text, attachments: [] }, (event) => heard.push(event), new AbortController().signal)
   return heard
 }
 
@@ -315,16 +305,8 @@ describe('a call made and answered', () => {
     const third = sent.filter((one) => one.url.includes(':streamGenerateContent'))[2]?.body as {
       contents: { role: string; parts: unknown[] }[]
     }
-    expect(third.contents.map((one) => one.role)).toEqual([
-      'user',
-      'model',
-      'user',
-      'model',
-      'user',
-    ])
-    expect(third.contents[3]?.parts).toEqual([
-      { text: 'Herons stand still.', thoughtSignature: 'ZW5k' },
-    ])
+    expect(third.contents.map((one) => one.role)).toEqual(['user', 'model', 'user', 'model', 'user'])
+    expect(third.contents[3]?.parts).toEqual([{ text: 'Herons stand still.', thoughtSignature: 'ZW5k' }])
   })
 
   test('a refusal says Gemini’s own words', async () => {
@@ -433,9 +415,9 @@ describe('the wire', () => {
     expect(answer.ending).toBe('tool')
     const call = answer.calls[0]
     expect(call?.id).toMatch(/^gemini-call-/)
-    const [back] = gemini.results([
-      { call: call!, output: { text: 'ok', images: [], error: false } },
-    ]) as { parts: { functionResponse: Record<string, unknown> }[] }[]
+    const [back] = gemini.results([{ call: call!, output: { text: 'ok', images: [], error: false } }]) as {
+      parts: { functionResponse: Record<string, unknown> }[]
+    }[]
     expect(back?.parts[0]?.functionResponse).toEqual({
       name: 'read_note',
       response: { output: 'ok' },

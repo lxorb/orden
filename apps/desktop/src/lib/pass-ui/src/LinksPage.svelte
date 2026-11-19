@@ -79,9 +79,7 @@
         >Remove all expired links</button
       >
     </header>
-    <p class="pass-quiet">
-      A link’s key is never kept, so a link cannot be copied again. Make a new one instead.
-    </p>
+    <p class="pass-quiet">A link’s key is never kept, so a link cannot be copied again. Make a new one instead.</p>
     {#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
     {#if rows === null}
       <p class="pass-quiet">Reading…</p>

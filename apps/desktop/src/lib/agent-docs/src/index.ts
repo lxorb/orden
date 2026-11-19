@@ -33,29 +33,13 @@ workspace.fileOps.follow((op) => {
   if (op.op === 'removed') tracksRemoved(op.path)
   if (op.op !== 'created') return undefined
   if (op.key) tracksMoved(`unsaved:${op.key}`, op.path)
-  return tracksCame(
-    op.path,
-    (path) => invoke<string>('read_note', { path }).catch(() => null),
-    op.putBack === true,
-  )
+  return tracksCame(op.path, (path) => invoke<string>('read_note', { path }).catch(() => null), op.putBack === true)
 })
 
 export interface NoteDocs {
   readNote(at: NoteAt, include?: unknown): Promise<NoteRead>
-  editNote(
-    agent: Agent,
-    at: NoteAt,
-    edits: unknown,
-    ifRev?: string,
-    deadline?: AbortSignal,
-  ): Promise<NoteEdited>
-  writeNote(
-    agent: Agent,
-    at: NoteAt,
-    text: string,
-    ifRev?: string,
-    deadline?: AbortSignal,
-  ): Promise<NoteEdited>
+  editNote(agent: Agent, at: NoteAt, edits: unknown, ifRev?: string, deadline?: AbortSignal): Promise<NoteEdited>
+  writeNote(agent: Agent, at: NoteAt, text: string, ifRev?: string, deadline?: AbortSignal): Promise<NoteEdited>
   undoAgent(agent: Agent, at: NoteAt): Promise<{ undone: number }>
 }
 

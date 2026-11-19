@@ -3,15 +3,7 @@ import { untrack } from 'svelte'
 import { BEAT_EVERY, roomDelay, heldForLife } from '../../platform/src/api'
 import { madeDeviceId } from './made-device'
 import { account, invoke, isDesktop, platform, remote } from './ports'
-import {
-  BEAT,
-  DEVICE,
-  readHubFrame,
-  type FromDevice,
-  type FromHub,
-  type HubFrame,
-  type HubType,
-} from './hub-frames'
+import { BEAT, DEVICE, readHubFrame, type FromDevice, type FromHub, type HubFrame, type HubType } from './hub-frames'
 
 export type HubState = 'off' | 'connecting' | 'open'
 
@@ -190,32 +182,28 @@ export class Hub {
     const url = `${remote().base.replace(/^http/, 'ws')}/v2/hub`
     let socket: HubSocket | null = null
     try {
-      socket = this.world.socket(
-        url,
-        [`${TOKEN_PROTOCOL}${token}`, `${DEVICE_PROTOCOL}${device}`],
-        {
-          opened: () => {
-            clearTimeout(this.opening)
-            this.quiet = 0
-            void this.hello()
-            this.stopBeat?.()
-            this.stopBeat = this.world.every(BEAT_EVERY, () => this.beat(socket))
-          },
-          heard: (text) => {
-            if (this.socket === socket) this.quiet = 0
-            const frame = readHubFrame(text)
-            if (!frame) return
-            this.hear(frame)
-            this.channel?.post({ k: 'frame', frame } satisfies Relayed)
-          },
-          closed: (code) => {
-            if (this.socket !== socket) return
-            this.lost(null)
-            if (shutOut(code)) this.shut()
-            else this.again()
-          },
+      socket = this.world.socket(url, [`${TOKEN_PROTOCOL}${token}`, `${DEVICE_PROTOCOL}${device}`], {
+        opened: () => {
+          clearTimeout(this.opening)
+          this.quiet = 0
+          void this.hello()
+          this.stopBeat?.()
+          this.stopBeat = this.world.every(BEAT_EVERY, () => this.beat(socket))
         },
-      )
+        heard: (text) => {
+          if (this.socket === socket) this.quiet = 0
+          const frame = readHubFrame(text)
+          if (!frame) return
+          this.hear(frame)
+          this.channel?.post({ k: 'frame', frame } satisfies Relayed)
+        },
+        closed: (code) => {
+          if (this.socket !== socket) return
+          this.lost(null)
+          if (shutOut(code)) this.shut()
+          else this.again()
+        },
+      })
     } catch {
       this.again()
       return

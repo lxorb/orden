@@ -6,15 +6,7 @@ import { workspace } from '../../workspace/src/api'
 import { writeBytes, writeFile } from '../../file-writes/src/api'
 import { nameKey } from './names'
 import type { ImportPlan, Planned } from './plan'
-import {
-  baseFollowed,
-  basesFollowed,
-  calledBy,
-  canvasFollowed,
-  isBase,
-  isCanvas,
-  linksFollowed,
-} from './rewrite'
+import { baseFollowed, basesFollowed, calledBy, canvasFollowed, isBase, isCanvas, linksFollowed } from './rewrite'
 
 type Written = Pick<ImportPlan, 'files'>
 
@@ -32,11 +24,7 @@ export interface Writing {
   onWritten?: (done: number, total: number) => void
 }
 
-export async function applyImport(
-  plan: Written,
-  target: ImportTarget,
-  options: Writing = {},
-): Promise<Landed> {
+export async function applyImport(plan: Written, target: ImportTarget, options: Writing = {}): Promise<Landed> {
   const { canWriteAt } = await import('../../sharing/src/api')
   const into = target.folder ? joinPath(target.root, target.folder) : target.root
   if (!canWriteAt(into)) throw new Error(UNWRITABLE)
@@ -66,9 +54,7 @@ export async function applyImport(
   return { paths, stepped }
 }
 
-const asPages = async (path: string): Promise<string[]> => [
-  (await workspace.pageNoteForPdf(path)) ?? path,
-]
+const asPages = async (path: string): Promise<string[]> => [(await workspace.pageNoteForPdf(path)) ?? path]
 
 async function landed(paths: string[], wrote: Record<string, string>) {
   workspace.undone.record({ kind: 'import', paths, wrote })
@@ -93,10 +79,7 @@ function judged(files: readonly Planned[]): Planned[] {
 const UNWRITABLE = 'That import could not be written.'
 const ESCAPING = 'That import would have landed outside the space, so nothing was written.'
 
-async function restampedOnDisk(
-  plan: Written,
-  target: ImportTarget,
-): Promise<{ files: Planned[]; stepped: number }> {
+async function restampedOnDisk(plan: Written, target: ImportTarget): Promise<{ files: Planned[]; stepped: number }> {
   const taken = await takenIn(target)
   const there = new Map<string, boolean>()
 
@@ -200,10 +183,7 @@ export function restamped(
     .sort((one, two) => one.path.split('/').length - two.path.split('/').length)
   for (const file of folderNotes) {
     const wanted = into(inside(file.path))
-    const free = freePath(
-      wanted,
-      (candidate) => clashes(candidate) || holds(candidate.replace(/\.md$/i, '')),
-    )
+    const free = freePath(wanted, (candidate) => clashes(candidate) || holds(candidate.replace(/\.md$/i, '')))
     held.add(nameKey(free))
     notes.set(file, free)
     folders.set(nameKey(inside(file.path).replace(/\.md$/i, '')), free.replace(/\.md$/i, ''))
@@ -216,15 +196,11 @@ export function restamped(
   }
   const landedAt = new Map<string, string>()
 
-  for (const file of [
-    ...plan.files.filter((one) => !following(one)),
-    ...plan.files.filter(following),
-  ]) {
+  for (const file of [...plan.files.filter((one) => !following(one)), ...plan.files.filter(following)]) {
     const wanted = inside(file.path)
     const holder = holderOf(file.path)
     const note = holder === null ? undefined : landedAt.get(nameKey(holder))
-    const free =
-      notes.get(file) ?? freePath(note === undefined ? into(wanted) : paperOf(note), clashes)
+    const free = notes.get(file) ?? freePath(note === undefined ? into(wanted) : paperOf(note), clashes)
     held.add(nameKey(free))
     landedAt.set(nameKey(file.path), free)
 
@@ -253,9 +229,7 @@ export function restamped(
       return { ...file, path: now, bytes }
     }
     const linked =
-      moved.size || under || there.size
-        ? linksFollowed(file.text, was, moved, paths, under, space)
-        : file.text
+      moved.size || under || there.size ? linksFollowed(file.text, was, moved, paths, under, space) : file.text
     const text = moved.size || under ? basesFollowed(linked, under, stepped) : linked
     return { ...file, path: now, text }
   })

@@ -1,14 +1,5 @@
 import type { Scheme } from '@orden/contracts'
-import {
-  AA,
-  hexOf,
-  type Lift,
-  over,
-  type Rgb,
-  rgbOf,
-  scrimFloor,
-  type Span,
-} from '../../../ui-controls/src/api'
+import { AA, hexOf, type Lift, over, type Rgb, rgbOf, scrimFloor, type Span } from '../../../ui-controls/src/api'
 import type { Palette } from '../wallpaper/floors'
 import { along, type Stops } from './pairs'
 
@@ -53,9 +44,7 @@ function stacks(side: Palette, grain = 0): Lift[][] {
   const hover = { colour: side.text, alpha: HOVER }
   const own = [[], [hover], [side.layer], [side.layer, hover]]
   if (grain <= 0) return own
-  return [WHITE, BLACK].flatMap((speck) =>
-    own.map((stack) => [{ colour: speck, alpha: grain }, ...stack]),
-  )
+  return [WHITE, BLACK].flatMap((speck) => own.map((stack) => [{ colour: speck, alpha: grain }, ...stack]))
 }
 
 function other(scheme: Scheme): Scheme {
@@ -86,13 +75,7 @@ function carries(side: Palette, colour: Rgb): boolean {
   return floorOf(side, colour, { least: colour, most: colour }) === 0
 }
 
-export function frameFor(
-  source: Source,
-  app: Scheme,
-  sides: Sides,
-  paper: Rgb,
-  dials: Dials = DIALS,
-): Frame {
+export function frameFor(source: Source, app: Scheme, sides: Sides, paper: Rgb, dials: Dials = DIALS): Frame {
   const span: Span = { least: paper, most: paper }
   const strength = Math.min(1, Math.max(0, dials.strength))
 
@@ -108,9 +91,7 @@ export function frameFor(
   } else {
     scheme = app
     const own = sides[app]
-    const tone = TONES.map((amount) =>
-      rgbOf(hexOf(over(source.colour, amount * strength, own.scrim))),
-    )
+    const tone = TONES.map((amount) => rgbOf(hexOf(over(source.colour, amount * strength, own.scrim))))
     tint = tone.find((one): one is Rgb => one !== null && carries(own, one)) ?? own.scrim
     stated = 1
   }
@@ -127,12 +108,7 @@ function written(colour: Rgb): Rgb {
   return rgbOf(hexOf(colour)) ?? colour
 }
 
-export function pairFor(
-  stops: Stops,
-  app: Scheme,
-  sides: Sides,
-  dials: Dials = DIALS,
-): Frame & { second: string } {
+export function pairFor(stops: Stops, app: Scheme, sides: Sides, dials: Dials = DIALS): Frame & { second: string } {
   const strength = Math.min(1, Math.max(0, dials.strength))
   const side = sides[app]
 
@@ -140,9 +116,7 @@ export function pairFor(
   const lift = along([toned[0] ?? side.scrim, toned[1] ?? side.scrim])
     .map((one) => floorOf(side, side.scrim, { least: one, most: one }, AIM, GRAIN))
     .reduce((high, one) => Math.max(high, one), -Infinity)
-  const [first, second] = toned.map((one) =>
-    lift > 0 ? written(over(side.scrim, lift, one)) : one,
-  ) as [Rgb, Rgb]
+  const [first, second] = toned.map((one) => (lift > 0 ? written(over(side.scrim, lift, one)) : one)) as [Rgb, Rgb]
 
   return { scheme: app, tint: hexOf(first), second: hexOf(second), wash: 1 }
 }

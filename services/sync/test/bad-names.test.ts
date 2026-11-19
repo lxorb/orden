@@ -73,9 +73,7 @@ function badRow(table: 'notes' | 'folders', id: string, name: string, deleted = 
 }
 
 test('a name no disk holds is refused by every way in', async () => {
-  expect(await tool('write_note', { path: LONG, content: 'hello' })).toBe(
-    'That is not a note path.',
-  )
+  expect(await tool('write_note', { path: LONG, content: 'hello' })).toBe('That is not a note path.')
   const posted = await call(env, `/v1/spaces/${space}/notes`, {
     token,
     body: { path: LONG, content: 'v1' },
@@ -163,9 +161,7 @@ test('a copy kept beside a note named near the limit, or under a bad folder, sti
     token,
     body: { path: near, content: 'near' },
   })
-  const held = await env.DB.prepare('select * from notes where id = ?')
-    .bind(made.json.note.id)
-    .first<Note>()
+  const held = await env.DB.prepare('select * from notes where id = ?').bind(made.json.note.id).first<Note>()
   const copy = await noteBeside(env, held!, 'other words')
   expect(cleanPath(copy?.path ?? '')).toBe(copy?.path)
   const second = await noteBeside(env, held!, 'more other words')
@@ -187,14 +183,10 @@ test('an answer to a change of such a note is read, and names it as the feed doe
   const change = { ops: [{ op: 'p1', t: 'place', id, pos: 'V', seen: 901 }] }
 
   for (const time of ['first', 'again']) {
-    const answer = opsResponseOf(
-      (await call(env, `/v2/spaces/${space}/ops`, { token, body: change })).json,
-    )
+    const answer = opsResponseOf((await call(env, `/v2/spaces/${space}/ops`, { token, body: change })).json)
     expect(answer?.results[0], time).toMatchObject({ op: 'p1', ok: true, id })
     const named = answer?.results[0]
-    expect(named && 'name' in named && named.name).toBe(
-      (await feed()).read?.items.find((one) => one.id === id)?.name,
-    )
+    expect(named && 'name' in named && named.name).toBe((await feed()).read?.items.find((one) => one.id === id)?.name)
   }
 })
 
@@ -207,9 +199,7 @@ test('two names one letter apart at the limit are told apart within it when a sp
   await call(env, `/v2/spaces/${other}/prepare`, { token, method: 'POST' })
 
   const names = (
-    await env.DB.prepare('select name from notes where space_id = ?')
-      .bind(other)
-      .all<{ name: string }>()
+    await env.DB.prepare('select name from notes where space_id = ?').bind(other).all<{ name: string }>()
   ).results.map((one) => one.name)
   expect(names).toHaveLength(2)
   expect(names.every((one) => isName(one))).toBe(true)

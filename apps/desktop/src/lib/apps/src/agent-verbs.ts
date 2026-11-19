@@ -46,10 +46,7 @@ export async function applicationTabs(call: Call): Promise<AgentAnswer> {
   const tab = applicationTab(call)
   const session = appSessionIfAny(tab)
   if (!session) {
-    throw new Refused(
-      'bad_arguments',
-      `${named(tab)} is not connected yet: it connects once its tab has been shown`,
-    )
+    throw new Refused('bad_arguments', `${named(tab)} is not connected yet: it connects once its tab has been shown`)
   }
   held(tab, session)
 
@@ -148,13 +145,7 @@ function eventsOf(one: unknown, at: number): InputEvent[] {
   const bad = (why: string) => new Refused('bad_arguments', `event ${at}: ${why}`)
   const point = (): { x: number; y: number } => {
     const { x, y } = event
-    if (
-      typeof x !== 'number' ||
-      typeof y !== 'number' ||
-      !Number.isFinite(x + y) ||
-      x < 0 ||
-      y < 0
-    ) {
+    if (typeof x !== 'number' || typeof y !== 'number' || !Number.isFinite(x + y) || x < 0 || y < 0) {
       throw bad('x and y are the picture’s pixels, from its top left')
     }
     return { x: Math.round(x), y: Math.round(y) }
@@ -165,8 +156,7 @@ function eventsOf(one: unknown, at: number): InputEvent[] {
     if (found === undefined) throw bad('button is left, middle or right')
     return found
   }
-  const moved = (): InputEvent[] =>
-    event.x === undefined && event.y === undefined ? [] : [{ t: 'move', ...point() }]
+  const moved = (): InputEvent[] => (event.x === undefined && event.y === undefined ? [] : [{ t: 'move', ...point() }])
 
   switch (event.type) {
     case 'move':
@@ -262,9 +252,7 @@ function chord(said: unknown, bad: (why: string) => Refused): InputEvent[] {
     ...held.map((one): InputEvent => ({ t: 'key', key: one.key, code: one.code, down: true })),
     { t: 'key', key, code, down: true },
     { t: 'key', key, code, down: false },
-    ...held
-      .reverse()
-      .map((one): InputEvent => ({ t: 'key', key: one.key, code: one.code, down: false })),
+    ...held.reverse().map((one): InputEvent => ({ t: 'key', key: one.key, code: one.code, down: false })),
   ]
 }
 

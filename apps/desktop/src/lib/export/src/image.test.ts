@@ -63,11 +63,9 @@ describe('the SVG the browser is handed', () => {
   const svg = svgOf(PAGE, { width: 820, height: 1240 }, '#fffdf7')
 
   test('is the size the note was laid out at', () => {
-    expect(
-      svg.startsWith(
-        '<svg xmlns="http://www.w3.org/2000/svg" data-theme="light" width="820" height="1240"',
-      ),
-    ).toBe(true)
+    expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" data-theme="light" width="820" height="1240"')).toBe(
+      true,
+    )
     expect(svg).toContain('viewBox="0 0 820 1240"')
     expect(svg).toContain('<foreignObject width="100%" height="100%">')
     expect(svg.endsWith('</foreignObject></svg>')).toBe(true)
@@ -79,9 +77,7 @@ describe('the SVG the browser is handed', () => {
   })
 
   test('escapes a colour before it reaches an attribute', () => {
-    expect(svgOf('<p>x</p>', { width: 1, height: 1 }, 'red" onload="x')).toContain(
-      'fill="red&quot; onload=&quot;x"',
-    )
+    expect(svgOf('<p>x</p>', { width: 1, height: 1 }, 'red" onload="x')).toContain('fill="red&quot; onload=&quot;x"')
   })
 
   test('puts the document in the XHTML namespace', () => {
@@ -92,13 +88,9 @@ describe('the SVG the browser is handed', () => {
 
   test('says the page’s scheme on the picture’s root, which is what `:root` is in there', () => {
     expect(svg.startsWith('<svg xmlns="http://www.w3.org/2000/svg" data-theme="light" ')).toBe(true)
-    expect(
-      svgOf(
-        PAGE.replace('data-theme="light"', 'data-theme="dark"'),
-        { width: 1, height: 1 },
-        '#000',
-      ),
-    ).toContain('<svg xmlns="http://www.w3.org/2000/svg" data-theme="dark" ')
+    expect(svgOf(PAGE.replace('data-theme="light"', 'data-theme="dark"'), { width: 1, height: 1 }, '#000')).toContain(
+      '<svg xmlns="http://www.w3.org/2000/svg" data-theme="dark" ',
+    )
   })
 
   test('says no scheme for a fragment that names none', () => {

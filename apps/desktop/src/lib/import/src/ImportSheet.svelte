@@ -36,13 +36,9 @@
     counts.files ? (counts.files === 1 ? '1 file' : `${counts.files} files`) : '',
   ])
 
-  const target = $derived(
-    [importing.spaceName, importing.under].filter(Boolean).join(' / ') || 'This space',
-  )
+  const target = $derived([importing.spaceName, importing.under].filter(Boolean).join(' / ') || 'This space')
 
-  const ready = $derived(
-    importing.stage === 'ready' && !!plan?.files.length && !!importing.root && !importing.error,
-  )
+  const ready = $derived(importing.stage === 'ready' && !!plan?.files.length && !!importing.root && !importing.error)
 
   let token = $state('')
   let withDone = $state(false)
@@ -88,11 +84,7 @@
         <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
       </svg>
       <span class="name">
-        {importing.stage === 'reading'
-          ? 'Reading'
-          : viewport.touch
-            ? 'Choose an export'
-            : 'Drop an export here'}
+        {importing.stage === 'reading' ? 'Reading' : viewport.touch ? 'Choose an export' : 'Drop an export here'}
       </span>
       <span class="hint">A zip, a folder, or a file another app wrote</span>
     </button>
@@ -101,19 +93,13 @@
       <div class="card">
         <div class="row">
           <span class="name">{FORMATS['apple-notes']}</span>
-          <button
-            class="orden-chip"
-            onclick={() => void importing.readMac()}
-            disabled={importing.stage === 'reading'}
-          >
+          <button class="orden-chip" onclick={() => void importing.readMac()} disabled={importing.stage === 'reading'}>
             Read them from this Mac
           </button>
         </div>
         {#if importing.noAccess}
           <p class="hint">Turn Orden on under Full Disk Access, then ask again.</p>
-          <button class="orden-chip" onclick={() => void importing.openAccess()}>
-            Open the setting
-          </button>
+          <button class="orden-chip" onclick={() => void importing.openAccess()}> Open the setting </button>
         {/if}
       </div>
     {/if}
@@ -140,20 +126,15 @@
           Read
         </button>
       </div>
-      <button
-        class="orden-row"
-        role="switch"
-        aria-checked={withDone}
-        onclick={() => (withDone = !withDone)}
-      >
+      <button class="orden-row" role="switch" aria-checked={withDone} onclick={() => (withDone = !withDone)}>
         <span class="orden-row-label">Done tasks too</span>
         <span class="orden-switch" class:on={withDone} aria-hidden="true"></span>
       </button>
     </div>
 
     <p class="note">
-      Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away
-      from the Mac it is on, what to drop is a folder an exporter wrote.
+      Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on,
+      what to drop is a folder an exporter wrote.
     </p>
   {:else}
     <div class="card" in:fade={{ duration: dur(130) }}>
@@ -166,9 +147,7 @@
     {#if importing.needsPandoc}
       {#if choices.pandoc}
         <p class="note">Pandoc reads this one, from the file on your disk.</p>
-        <button class="orden-button" onclick={() => void importing.readWithPandoc()}>
-          Read it with pandoc
-        </button>
+        <button class="orden-button" onclick={() => void importing.readWithPandoc()}> Read it with pandoc </button>
       {:else}
         <p class="note">Only pandoc reads this one, and it is not installed on this machine.</p>
       {/if}
@@ -203,12 +182,7 @@
         </div>
         <div class="row">
           <span class="name">Under</span>
-          <input
-            class="field"
-            bind:value={importing.folder}
-            aria-label="Under"
-            spellcheck="false"
-          />
+          <input class="field" bind:value={importing.folder} aria-label="Under" spellcheck="false" />
         </div>
       </div>
 

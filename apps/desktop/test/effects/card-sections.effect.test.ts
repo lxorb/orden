@@ -6,8 +6,7 @@ import { idle } from './settle'
 const ROOT = '/space'
 
 const NOTES: Record<string, string> = {
-  'Plan.md':
-    '# Plan\n\nThe opening words.\n\n## Later\n\nThe later words. ^later\n\n## Last\n\nThe last words.\n',
+  'Plan.md': '# Plan\n\nThe opening words.\n\n## Later\n\nThe later words. ^later\n\n## Last\n\nThe last words.\n',
 }
 
 vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({

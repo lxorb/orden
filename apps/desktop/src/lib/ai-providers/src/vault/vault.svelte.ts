@@ -11,11 +11,8 @@ const TRIES = 3
 const MOST_BEFORE = 20
 
 function beforeIn(value: unknown): string[] {
-  const kept =
-    typeof value === 'object' && value !== null ? (value as { before?: unknown }).before : null
-  return Array.isArray(kept)
-    ? kept.filter((one): one is string => typeof one === 'string').slice(-MOST_BEFORE)
-    : []
+  const kept = typeof value === 'object' && value !== null ? (value as { before?: unknown }).before : null
+  return Array.isArray(kept) ? kept.filter((one): one is string => typeof one === 'string').slice(-MOST_BEFORE) : []
 }
 
 export interface Allowed {
@@ -74,9 +71,7 @@ export interface VaultWorld {
 }
 
 function isConflict(error: unknown): boolean {
-  return (
-    typeof error === 'object' && error !== null && (error as { status?: unknown }).status === 409
-  )
+  return typeof error === 'object' && error !== null && (error as { status?: unknown }).status === 409
 }
 
 async function printsOf(keys: Record<string, string>): Promise<Record<string, string>> {
@@ -195,11 +190,7 @@ export class Vault {
       }
       const marker = await this.markerOf(this.key)
       const joined = await this.joined(account)
-      if (
-        joined &&
-        joined !== marker &&
-        (await this.before(this.key, read.blob)).includes(joined)
-      ) {
+      if (joined && joined !== marker && (await this.before(this.key, read.blob)).includes(joined)) {
         await this.keepJoined(account, marker)
       } else if (joined !== marker) {
         const by = read.devices.find((one) => one.id === me.nonceFrom)
@@ -341,9 +332,7 @@ export class Vault {
         continue
       }
       if (one.pub === null || one.revealed === null) continue
-      const holds =
-        (await commitment(one.pub, one.revealed)) === mine.commitment &&
-        (await idOf(one.pub)) === one.id
+      const holds = (await commitment(one.pub, one.revealed)) === mine.commitment && (await idOf(one.pub)) === one.id
       if (!holds) continue
       shown.push({
         id: one.id,
@@ -374,9 +363,7 @@ export class Vault {
       remote = await sideOf(contentsIn(parsed))
     }
     const base = this.world.loadBase(account)
-    const { contents, moved } = remote
-      ? merged(base, here, remote)
-      : { contents: here.contents, moved: {} }
+    const { contents, moved } = remote ? merged(base, here, remote) : { contents: here.contents, moved: {} }
     const prints = await printsOf(contents.keys)
     this.seen = contents.seen
     if (!agrees(baseOf(here.contents, here.prints), contents, prints)) {

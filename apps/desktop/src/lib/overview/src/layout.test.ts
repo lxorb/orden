@@ -9,8 +9,7 @@ const panes = (tabs: Record<string, string[]>) => ({
   shapeOf: () => 16 / 10,
 })
 
-const overlaps = (a: Box, b: Box) =>
-  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h
+const overlaps = (a: Box, b: Box) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h
 
 test('one pane’s tabs are a grid of windows the pane’s shape, none over another', () => {
   const laid = lay(pane('p'), room, panes({ p: ['a', 'b', 'c', 'd', 'e'] }))

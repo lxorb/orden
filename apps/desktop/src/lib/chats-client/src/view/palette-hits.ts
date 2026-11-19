@@ -9,9 +9,7 @@ const ALONE = 50
 
 const LINE = 140
 
-export async function messageHits(
-  words: string,
-): Promise<{ rows: PaletteMessage[]; only: boolean }> {
+export async function messageHits(words: string): Promise<{ rows: PaletteMessage[]; only: boolean }> {
   const chats = store()
   if (!chats.ready || !chats.me) return { rows: [], only: false }
   const only = hasModifiers(chats.parse(words))

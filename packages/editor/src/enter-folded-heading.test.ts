@@ -31,9 +31,7 @@ function folded(doc: string, line: string) {
 describe('Enter at the end of a folded heading, then a new heading typed', () => {
   test('keeps the hidden words under their own heading', () => {
     const view = folded('# Plan\nStep one.\nStep two.\n\n# Later', '# Plan')
-    expect(runScopeHandlers(view, new KeyboardEvent('keydown', { key: 'Enter' }), 'editor')).toBe(
-      true,
-    )
+    expect(runScopeHandlers(view, new KeyboardEvent('keydown', { key: 'Enter' }), 'editor')).toBe(true)
     view.dispatch(view.state.replaceSelection('# Next'))
     const doc = view.state.doc.toString()
     expect(doc.indexOf('Step one.')).toBeLessThan(doc.indexOf('# Next'))

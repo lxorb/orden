@@ -48,8 +48,7 @@ export interface Counts {
 
 type Stat = Record<string, unknown> & { type?: unknown; id?: unknown }
 
-const num = (value: unknown): number | null =>
-  typeof value === 'number' && Number.isFinite(value) ? value : null
+const num = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null)
 
 export function streamStats(
   report: Iterable<Stat>,
@@ -59,9 +58,7 @@ export function streamStats(
   const all = [...report]
   const byId = new Map(all.map((one) => [one.id, one]))
   const video = all.find((one) => one.type === 'inbound-rtp' && one.kind === 'video')
-  const pair = all.find(
-    (one) => one.type === 'candidate-pair' && (one.nominated === true || one.selected === true),
-  )
+  const pair = all.find((one) => one.type === 'candidate-pair' && (one.nominated === true || one.selected === true))
   const remote = pair ? byId.get(pair.remoteCandidateId) : undefined
   const local = pair ? byId.get(pair.localCandidateId) : undefined
   const codec = video ? byId.get(video.codecId) : undefined

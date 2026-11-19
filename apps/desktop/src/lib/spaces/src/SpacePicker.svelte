@@ -12,9 +12,7 @@
   $effect(() => (spacePicker.open ? overlays.show(() => spacePicker.dismiss()) : undefined))
   $effect(() => closeOnBack(spacePicker.open, () => spacePicker.dismiss()))
 
-  const typing = $derived(
-    spacePicker.open ? new SpaceTyping((space) => spacePicker.choose(space)) : null,
-  )
+  const typing = $derived(spacePicker.open ? new SpaceTyping((space) => spacePicker.choose(space)) : null)
   $effect(() => {
     const one = typing
     return () => one?.stop()
@@ -23,11 +21,7 @@
 
 {#if typing}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div
-    class="orden-scrim"
-    transition:fade={{ duration: LAYER.fade }}
-    onclick={() => spacePicker.dismiss()}
-  ></div>
+  <div class="orden-scrim" transition:fade={{ duration: LAYER.fade }} onclick={() => spacePicker.dismiss()}></div>
 
   <div
     class="orden-screen is-centred is-steady picker"

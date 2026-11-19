@@ -51,12 +51,7 @@ vi.mock('../src/lib/search/src/api', async (importOriginal) => ({
     const hits: Hit[] = []
 
     for (const [path, content] of Object.entries(notes)) {
-      hits.push(
-        ...matcher.hits(
-          { path: `${ROOT}/${path}`, relative: path, name: path, body: content },
-          limit,
-        ),
-      )
+      hits.push(...matcher.hits({ path: `${ROOT}/${path}`, relative: path, name: path, body: content }, limit))
     }
 
     onFound({ hits, loose: [] })

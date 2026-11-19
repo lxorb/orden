@@ -36,13 +36,7 @@ describe('growing the selection', () => {
   test.each([
     [
       'Some **bold words** here.\n\nNext.',
-      [
-        'bold',
-        'bold words',
-        '**bold words**',
-        'Some **bold words** here.',
-        'Some **bold words** here.\n\nNext.',
-      ],
+      ['bold', 'bold words', '**bold words**', 'Some **bold words** here.', 'Some **bold words** here.\n\nNext.'],
       'Some **bold words** here.\n\nNext.'.indexOf('bold') + 1,
     ],
     [
@@ -61,20 +55,12 @@ describe('growing the selection', () => {
 
   test('a heading’s words before the heading', () => {
     const doc = '## Big title\n\ntext'
-    expect(steps(doc, doc.indexOf('title')).slice(0, 3)).toEqual([
-      'title',
-      'Big title',
-      '## Big title',
-    ])
+    expect(steps(doc, doc.indexOf('title')).slice(0, 3)).toEqual(['title', 'Big title', '## Big title'])
   })
 
   test('a link’s words before the link', () => {
     const doc = 'see [the docs](https://a.ch) now'
-    expect(steps(doc, doc.indexOf('docs')).slice(0, 3)).toEqual([
-      'docs',
-      'the docs',
-      '[the docs](https://a.ch)',
-    ])
+    expect(steps(doc, doc.indexOf('docs')).slice(0, 3)).toEqual(['docs', 'the docs', '[the docs](https://a.ch)'])
   })
 
   test('never grows into the front matter', () => {

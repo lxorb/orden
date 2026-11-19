@@ -49,9 +49,7 @@ export function slides(
   return new Map(
     [...now].flatMap(([path, here]) => {
       const before = was.get(path)
-      return carried.includes(path) || before === undefined || before === here
-        ? []
-        : [[path, before - here] as const]
+      return carried.includes(path) || before === undefined || before === here ? [] : [[path, before - here] as const]
     }),
   )
 }
@@ -236,12 +234,7 @@ function lift(held: Held, row: HTMLElement, entry: Entry) {
 
 let stopping: (() => void) | null = null
 
-export function touchHeld(
-  held: Held,
-  at: { x: number; y: number },
-  row: HTMLElement,
-  entry: Entry,
-): void {
+export function touchHeld(held: Held, at: { x: number; y: number }, row: HTMLElement, entry: Entry): void {
   if (ghost) return
 
   heldAt = at
@@ -252,8 +245,7 @@ export function touchMoved(event: TouchEvent): void {
   const touch = event.touches[0]
   if (!touch || holding === null) return
 
-  const strayed =
-    Math.abs(touch.clientX - heldAt.x) > LIFT_SLOP || Math.abs(touch.clientY - heldAt.y) > LIFT_SLOP
+  const strayed = Math.abs(touch.clientX - heldAt.x) > LIFT_SLOP || Math.abs(touch.clientY - heldAt.y) > LIFT_SLOP
   if (strayed) cancelHold()
 }
 

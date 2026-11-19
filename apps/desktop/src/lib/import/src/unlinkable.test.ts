@@ -28,26 +28,17 @@ describe('a page named with what a wikilink cannot hold', () => {
   })
 
   test('is linked from Logseq as a link that reaches it', async () => {
-    const plan = await readLogseq([
-      file('pages/C#.md', '- A language\n'),
-      file('pages/Langs.md', '- See [[C#]]\n'),
-    ])
+    const plan = await readLogseq([file('pages/C#.md', '- A language\n'), file('pages/Langs.md', '- See [[C#]]\n')])
     expect(reached(textOf(plan, 'Langs.md'))).toEqual(['C#.md'])
   })
 
   test('is linked from Bear as a link that reaches it', async () => {
-    const plan = await readBear([
-      file('C#.md', '# C#\n'),
-      file('Langs.md', '# Langs\nSee [[C#]]\n'),
-    ])
+    const plan = await readBear([file('C#.md', '# C#\n'), file('Langs.md', '# Langs\nSee [[C#]]\n')])
     expect(reached(textOf(plan, 'Langs.md'))).toEqual(['C#.md'])
   })
 
   test('is a Notion relation that reaches it', () => {
-    const value = valueAs(
-      'pages',
-      'C# basics (C%23%20basics%200123456789abcdef0123456789abcdef.md)',
-    )
+    const value = valueAs('pages', 'C# basics (C%23%20basics%200123456789abcdef0123456789abcdef.md)')
     expect(reached(String(value))).toEqual(['C# basics.md'])
   })
 })

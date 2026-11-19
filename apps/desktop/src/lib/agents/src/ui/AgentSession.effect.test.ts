@@ -37,8 +37,7 @@ async function drawn(holding = true) {
   return { fake, tab, target, close: () => void unmount(shown) }
 }
 
-const row = (id: string) =>
-  document.querySelector<HTMLButtonElement>(`button[data-agent-tab="${id}"]`)
+const row = (id: string) => document.querySelector<HTMLButtonElement>(`button[data-agent-tab="${id}"]`)
 const sheet = () => document.querySelector<HTMLElement>('[role="dialog"]')
 
 test("an agent's tab opens large, with the page as the agent sees it", async () => {
@@ -55,9 +54,7 @@ test("an agent's tab opens large, with the page as the agent sees it", async () 
 
   fake.act('claude-code', tab.id, 'browser_click')
   await settle()
-  expect(sheet()?.querySelector('img')?.getAttribute('src')).toBe(
-    `data:image/png;base64,${btoa(`${tab.url}#2`)}`,
-  )
+  expect(sheet()?.querySelector('img')?.getAttribute('src')).toBe(`data:image/png;base64,${btoa(`${tab.url}#2`)}`)
   close()
 })
 
@@ -75,9 +72,7 @@ test('taking the tab over makes it a reader tab and closes the view', async () =
   row(tab.id)?.click()
   await settle()
 
-  const take = [...(sheet()?.querySelectorAll('button') ?? [])].find(
-    (one) => one.textContent.trim() === 'Take over',
-  )
+  const take = [...(sheet()?.querySelectorAll('button') ?? [])].find((one) => one.textContent.trim() === 'Take over')
   take?.click()
   await settle()
 

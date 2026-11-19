@@ -28,11 +28,7 @@
 
 {#each extensions.list as one (one.id)}
   <div class="orden-setting setting extension">
-    <button
-      class="name"
-      aria-expanded={opened === one.id}
-      onclick={() => (opened = opened === one.id ? null : one.id)}
-    >
+    <button class="name" aria-expanded={opened === one.id} onclick={() => (opened = opened === one.id ? null : one.id)}>
       {#if one.picture}
         <img src={one.picture} alt="" draggable="false" />
       {:else}
@@ -72,13 +68,9 @@
       {/if}
       <div class="rows">
         {#if one.options}
-          <button class="orden-chip is-quiet" onclick={() => void options(one.id)}>
-            Options
-          </button>
+          <button class="orden-chip is-quiet" onclick={() => void options(one.id)}> Options </button>
         {/if}
-        <button class="orden-chip is-quiet danger" onclick={() => void extensions.remove(one.id)}>
-          Remove
-        </button>
+        <button class="orden-chip is-quiet danger" onclick={() => void extensions.remove(one.id)}> Remove </button>
       </div>
     </div>
   {/if}

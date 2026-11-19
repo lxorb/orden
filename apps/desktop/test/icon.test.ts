@@ -67,8 +67,7 @@ function icns1024(): Picture {
   const bytes = readFileSync(join(ICONS, 'icon.icns'))
   for (let at = 8; at < bytes.length;) {
     const length = bytes.readUInt32BE(at + 4)
-    if (bytes.toString('ascii', at, at + 4) === 'ic10')
-      return decode(bytes.subarray(at + 8, at + length))
+    if (bytes.toString('ascii', at, at + 4) === 'ic10') return decode(bytes.subarray(at + 8, at + length))
     at += length
   }
   throw new Error('icon.icns has no 1024 entry')
@@ -127,9 +126,7 @@ describe('the document icons', () => {
     expect(types).toEqual([...opened].sort())
     for (const ext of opened) {
       for (const file of [`${ext}.svg`, `${ext}-mid.svg`, `${ext}-small.svg`]) {
-        expect(readFileSync(join(DOCUMENTS, file), 'utf8'), file).toMatch(
-          /^<svg [^>]*viewBox="0 0 1024 1024"/,
-        )
+        expect(readFileSync(join(DOCUMENTS, file), 'utf8'), file).toMatch(/^<svg [^>]*viewBox="0 0 1024 1024"/)
       }
     }
   })
@@ -139,9 +136,7 @@ describe('the document icons', () => {
       for (const file of [`${ext}.svg`, `${ext}-mid.svg`, `${ext}-small.svg`]) {
         const drawing = readFileSync(join(DOCUMENTS, file), 'utf8')
         const colours = new Set(
-          [...drawing.matchAll(/(?:fill|stroke|stop-color)="(#[0-9A-Fa-f]{6})"/g)].map((one) =>
-            one[1]?.toLowerCase(),
-          ),
+          [...drawing.matchAll(/(?:fill|stroke|stop-color)="(#[0-9A-Fa-f]{6})"/g)].map((one) => one[1]?.toLowerCase()),
         )
         expect([...colours].sort(), file).toEqual(['#1c2233', '#bfddfb', '#e7c6ec', '#ffffff'])
         expect(drawing, file).toContain('fill="url(#wash)"')
@@ -219,10 +214,9 @@ describe('the mobile icons', () => {
       for (const layer of ['foreground', 'background', 'monochrome']) {
         expect(adaptive).toContain(`@mipmap/ic_launcher_${layer}`)
         for (const density of DENSITIES) {
-          expect(
-            existsSync(join(dir, `mipmap-${density}`, `ic_launcher_${layer}.png`)),
-            `${density} ${layer}`,
-          ).toBe(true)
+          expect(existsSync(join(dir, `mipmap-${density}`, `ic_launcher_${layer}.png`)), `${density} ${layer}`).toBe(
+            true,
+          )
         }
       }
     }
@@ -244,14 +238,13 @@ describe('the mobile icons', () => {
 
 describe('the other places the mark appears', () => {
   test('the web app carries it at the size its names say', () => {
-    for (const size of [256, 512])
-      expect(picture(ROOT, 'apps/desktop/public', `icon-${size}.png`).size).toBe(size)
+    for (const size of [256, 512]) expect(picture(ROOT, 'apps/desktop/public', `icon-${size}.png`).size).toBe(size)
   })
 
   test('Pass on the web carries its own at the sizes its manifest says', () => {
-    const manifest = JSON.parse(
-      readFileSync(join(ROOT, 'apps/desktop/public/pass.webmanifest'), 'utf8'),
-    ) as { icons: { src: string; sizes: string }[] }
+    const manifest = JSON.parse(readFileSync(join(ROOT, 'apps/desktop/public/pass.webmanifest'), 'utf8')) as {
+      icons: { src: string; sizes: string }[]
+    }
     const drawn = manifest.icons.filter((icon) => icon.src.endsWith('.png'))
     expect(drawn.length).toBeGreaterThan(0)
     for (const icon of drawn) {
@@ -301,20 +294,13 @@ describe('the other places the mark appears', () => {
 
     const touch = /<link rel="apple-touch-icon" href="\/([^"]+)"/.exec(page)?.[1] ?? ''
     const ios = picture(PUBLIC, touch)
-    expect(ios.alpha(0, 0), 'iOS rounds the touch icon itself and paints clear corners black').toBe(
-      255,
-    )
+    expect(ios.alpha(0, 0), 'iOS rounds the touch icon itself and paints clear corners black').toBe(255)
   })
 
   test('the Even icons are greyscale', () => {
     const made = mkdtempSync(join(tmpdir(), 'even-icon-'))
     execFileSync(process.execPath, [join(ROOT, 'scripts/even-icon.mjs'), made])
-    for (const file of [
-      'icon-24.png',
-      'icon-256.png',
-      'icon-background-24.png',
-      'icon-background-256.png',
-    ]) {
+    for (const file of ['icon-24.png', 'icon-256.png', 'icon-background-24.png', 'icon-background-256.png']) {
       expect(picture(made, file).colourType, file).toBe(4)
     }
   })

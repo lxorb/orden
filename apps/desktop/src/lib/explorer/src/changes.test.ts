@@ -1,23 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const crate = {
-  trashPaths: vi.fn((paths: string[]) =>
-    Promise.resolve(paths.map((path) => ({ path, back: path, at: 1 }))),
-  ),
-  renameTo: vi.fn((path: string, name: string) =>
-    Promise.resolve(`${path.slice(0, path.lastIndexOf('/'))}/${name}`),
-  ),
+  trashPaths: vi.fn((paths: string[]) => Promise.resolve(paths.map((path) => ({ path, back: path, at: 1 })))),
+  renameTo: vi.fn((path: string, name: string) => Promise.resolve(`${path.slice(0, path.lastIndexOf('/'))}/${name}`)),
   makeIn: vi.fn((folder: string, name: string) => Promise.resolve(`${folder}/${name}`)),
   clashesIn: vi.fn((): Promise<string[]> => Promise.resolve([])),
   transfer: vi.fn(
-    (
-      _job: string,
-      sources: string[],
-      folder: string,
-      _how?: string,
-      _clash?: string,
-      staying: string[] = [],
-    ) =>
+    (_job: string, sources: string[], folder: string, _how?: string, _clash?: string, staying: string[] = []) =>
       Promise.resolve({
         done: sources.map((from) => ({
           from,
@@ -64,8 +53,7 @@ vi.mock('../../ui-kit/src/prompt.svelte', () => ({
   },
 }))
 
-const { carry, freeName, paste, renameMany, renamePath, removeForGood, takenNames, trash } =
-  await import('./changes')
+const { carry, freeName, paste, renameMany, renamePath, removeForGood, takenNames, trash } = await import('./changes')
 
 function view(path = '/home/me/Downloads') {
   return {
@@ -100,10 +88,7 @@ describe("a file explorer's changes", () => {
 
   test('put what is outside the spaces in the system trash, one undo for it', async () => {
     await trash(view() as never, ['/home/me/Downloads/a.zip', '/home/me/Downloads/b.zip'])
-    expect(crate.trashPaths).toHaveBeenCalledWith([
-      '/home/me/Downloads/a.zip',
-      '/home/me/Downloads/b.zip',
-    ])
+    expect(crate.trashPaths).toHaveBeenCalledWith(['/home/me/Downloads/a.zip', '/home/me/Downloads/b.zip'])
     expect(recorded).toEqual([
       {
         kind: 'outside',
@@ -129,27 +114,19 @@ describe("a file explorer's changes", () => {
       ],
     })
     const here = view()
-    await trash(here as never, [
-      '/home/me/Downloads/a.zip',
-      '/home/me/Downloads/b.zip',
-      '/home/me/Downloads/c.zip',
-    ])
+    await trash(here as never, ['/home/me/Downloads/a.zip', '/home/me/Downloads/b.zip', '/home/me/Downloads/c.zip'])
     expect(recorded).toEqual([
       {
         kind: 'outside',
         steps: [
           {
             op: 'trashed',
-            tickets: [
-              { path: '/home/me/Downloads/b.zip', back: '/home/me/Downloads/b.zip', at: 1 },
-            ],
+            tickets: [{ path: '/home/me/Downloads/b.zip', back: '/home/me/Downloads/b.zip', at: 1 }],
           },
         ],
       },
     ])
-    expect(here.tell).toHaveBeenCalledWith(
-      '/home/me/Downloads/a.zip: in use; /home/me/Downloads/c.zip: denied',
-    )
+    expect(here.tell).toHaveBeenCalledWith('/home/me/Downloads/a.zip: in use; /home/me/Downloads/c.zip: denied')
   })
 
   test('delete for good every picked file past ones that will not go, naming each that stayed', async () => {
@@ -168,9 +145,7 @@ describe("a file explorer's changes", () => {
       '/home/me/Downloads/b.zip',
       '/home/me/Downloads/c.zip',
     ])
-    expect(here.tell).toHaveBeenCalledWith(
-      '/home/me/Downloads/a.zip: in use; /home/me/Downloads/c.zip: denied',
-    )
+    expect(here.tell).toHaveBeenCalledWith('/home/me/Downloads/a.zip: in use; /home/me/Downloads/c.zip: denied')
     expect(here.reload).toHaveBeenCalled()
   })
 
@@ -223,12 +198,7 @@ describe("a file explorer's changes", () => {
   test('ask once about names already there, and do nothing when not answered', async () => {
     crate.clashesIn.mockResolvedValueOnce(['a.txt', 'b.txt'])
     answer = null
-    await carry(
-      view() as never,
-      ['/home/me/Music/a.txt', '/home/me/Music/b.txt'],
-      '/home/me/Downloads',
-      'copy',
-    )
+    await carry(view() as never, ['/home/me/Music/a.txt', '/home/me/Music/b.txt'], '/home/me/Downloads', 'copy')
     expect(asked).toEqual(['2 names are already here'])
     expect(crate.transfer).not.toHaveBeenCalled()
   })
@@ -297,10 +267,7 @@ describe("a file explorer's changes", () => {
 
   test('bring a file from outside into a space as an import, and a move trashes the original', async () => {
     await carry(null, ['/home/me/Downloads/a.txt'], '/home/me/Orden/Work', 'move')
-    expect(workspace.bringIn).toHaveBeenCalledWith(
-      [expect.objectContaining({ name: 'a.txt' })],
-      '/home/me/Orden/Work',
-    )
+    expect(workspace.bringIn).toHaveBeenCalledWith([expect.objectContaining({ name: 'a.txt' })], '/home/me/Orden/Work')
     expect(crate.trashPaths).toHaveBeenCalledWith(['/home/me/Downloads/a.txt'])
     expect(crate.transfer).not.toHaveBeenCalled()
   })
@@ -354,9 +321,7 @@ describe("a file explorer's changes", () => {
 
   test('a rename of many in a space that fails says why rather than throwing', async () => {
     const view_ = view('/home/me/Orden/Work')
-    workspace.rename.mockImplementationOnce(() =>
-      Promise.reject(new Error('b.md is already there')),
-    )
+    workspace.rename.mockImplementationOnce(() => Promise.reject(new Error('b.md is already there')))
     await renameMany(view_ as never, [{ from: '/home/me/Orden/Work/a.md', name: 'b.md' }])
     expect(view_.tell).toHaveBeenCalledWith('b.md is already there')
     expect(view_.reload).toHaveBeenCalled()

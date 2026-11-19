@@ -30,9 +30,7 @@ describe('a helper’s row (#1062)', () => {
       ...(agent ? { agent } : {}),
     })
     expect(helperOf({ verb: 'run_agent', result: ok('Two herons.', 'h-1') })).toBe('h-1')
-    expect(
-      helperOf({ verb: 'mcp__orden__run_agent', result: ok('{"agent": "h-2", "state": "done"}') }),
-    ).toBe('h-2')
+    expect(helperOf({ verb: 'mcp__orden__run_agent', result: ok('{"agent": "h-2", "state": "done"}') })).toBe('h-2')
     expect(helperOf({ verb: 'agent_result', result: ok('{"agent":"h-3"}') })).toBe('h-3')
     expect(helperOf({ verb: 'read_note', result: ok('{"agent":"h-4"}') })).toBeNull()
     expect(helperOf({ verb: 'run_agent' })).toBeNull()

@@ -19,13 +19,12 @@ const HOLDS_NOTHING: Record<string, string> = {
 const WHOSE = ['user_id', 'email', 'space_id', 'note_id', 'who']
 
 function tables(database: DatabaseSync): string[] {
-  const rows = database
-    .prepare("select name, sql from sqlite_master where type = 'table'")
-    .all() as { name: string; sql: string }[]
+  const rows = database.prepare("select name, sql from sqlite_master where type = 'table'").all() as {
+    name: string
+    sql: string
+  }[]
 
-  const virtual = rows
-    .filter((one) => /^create virtual table/i.test(one.sql))
-    .map((one) => one.name)
+  const virtual = rows.filter((one) => /^create virtual table/i.test(one.sql)).map((one) => one.name)
 
   return rows
     .map((one) => one.name)
@@ -35,9 +34,9 @@ function tables(database: DatabaseSync): string[] {
 }
 
 function columns(database: DatabaseSync, table: string): string[] {
-  return (
-    database.prepare(`select name from pragma_table_info(?)`).all(table) as { name: string }[]
-  ).map((one) => one.name)
+  return (database.prepare(`select name from pragma_table_info(?)`).all(table) as { name: string }[]).map(
+    (one) => one.name,
+  )
 }
 
 describe('the list of what is erased', () => {
@@ -51,9 +50,7 @@ describe('the list of what is erased', () => {
 
   test('names every table the schema has, or says why a table holds nothing', () => {
     const erasedTables = new Set(erased().map(([table]) => table))
-    const unaccounted = tables(env.db).filter(
-      (table) => !erasedTables.has(table) && !(table in HOLDS_NOTHING),
-    )
+    const unaccounted = tables(env.db).filter((table) => !erasedTables.has(table) && !(table in HOLDS_NOTHING))
 
     expect(unaccounted).toEqual([])
   })
@@ -104,8 +101,7 @@ const SHARED_VERSION = 'c2'.repeat(32)
 type Person = typeof LEAVING
 
 function seed(database: DatabaseSync, who: Person): void {
-  const run = (sql: string, ...values: (string | number | null)[]) =>
-    database.prepare(sql).run(...values)
+  const run = (sql: string, ...values: (string | number | null)[]) => database.prepare(sql).run(...values)
 
   run(
     `insert into users (id, email, created_at, name, settings, totp_secret, totp_at)
@@ -135,11 +131,7 @@ function seed(database: DatabaseSync, who: Person): void {
     who.note,
     SHARED_VERSION,
   )
-  run(
-    `insert into blog_paths (space_id, slug, note_id, at) values (?, 'old', ?, 1)`,
-    who.space,
-    who.note,
-  )
+  run(`insert into blog_paths (space_id, slug, note_id, at) values (?, 'old', ?, 1)`, who.space, who.note)
   run(
     `insert into form_answers (id, space_id, note_id, at, answers) values (?, ?, ?, 1, '{}')`,
     `answer-${who.id}`,
@@ -151,23 +143,14 @@ function seed(database: DatabaseSync, who: Person): void {
     who.note,
     who.space,
   )
-  run(
-    'insert into room_sockets (note_id, space_id, who, opened_at) values (?, ?, ?, 1)',
-    who.note,
-    who.space,
-    who.id,
-  )
+  run('insert into room_sockets (note_id, space_id, who, opened_at) values (?, ?, ?, 1)', who.note, who.space, who.id)
   run(
     `insert into space_links (space_id, item, token, role, mode, created_at)
      values (?, '', ?, 'read', 'open', 1)`,
     who.space,
     `link-${who.id}`,
   )
-  run(
-    `insert into guests (id, name, email, created_at) values (?, 'Guest', ?, 1)`,
-    who.guest,
-    who.email,
-  )
+  run(`insert into guests (id, name, email, created_at) values (?, 'Guest', ?, 1)`, who.guest, who.email)
   run(
     'insert into guest_sessions (token_hash, guest_id, created_at, expires_at) values (?, ?, 1, 9e15)',
     `guest-session-${who.guest}`,
@@ -273,10 +256,7 @@ function seed(database: DatabaseSync, who: Person): void {
   )
   run("insert into machines (id, user_id, created_at) values ('m-' || ?1, ?1, 1)", who.id)
   run("insert into machine_usage (user_id, month, awake_s) values (?, '2026-10', 60)", who.id)
-  run(
-    "insert into machine_events (machine, at, kind, who) values ('m-' || ?1, 1, 'open', ?1)",
-    who.id,
-  )
+  run("insert into machine_events (machine, at, kind, who) values ('m-' || ?1, 1, 'open', ?1)", who.id)
   run(
     `insert into term_sessions (term, machine, session, user_id, created_at)
      values (?2, 'm-' || ?1, 's-' || ?1, ?1, 1)`,
@@ -290,10 +270,7 @@ function seed(database: DatabaseSync, who: Person): void {
     who.space,
     who.note,
   )
-  run(
-    "insert into chat_reads (chat_id, who, read_seq, notify) values ('chat-' || ?1, ?1, 3, 'all')",
-    who.id,
-  )
+  run("insert into chat_reads (chat_id, who, read_seq, notify) values ('chat-' || ?1, ?1, 3, 'all')", who.id)
   run(
     `insert into chat_files (chat_id, hash, size, type, name, at)
      values ('chat-' || ?1, ?2, 3, 'image/png', 'a.png', 1)`,
@@ -335,11 +312,7 @@ function entangle(database: DatabaseSync, one: Person, other: Person): void {
     other.space,
     one.id,
   )
-  run(
-    "insert into chat_reads (chat_id, who, read_seq) values ('chat-' || ?, ?, 1)",
-    other.id,
-    one.id,
-  )
+  run("insert into chat_reads (chat_id, who, read_seq) values ('chat-' || ?, ?, 1)", other.id, one.id)
   run(
     "insert into chat_sockets (chat_id, space_id, who, opened_at) values ('chat-' || ?, ?, ?, 1)",
     other.id,
@@ -391,8 +364,7 @@ describe('deleting one of two accounts', () => {
   })
 
   test('and every row of the other account that did not name it is where it was', async () => {
-    const theirs = () =>
-      everyRow(env.db).filter(({ row }) => naming(STAYING)(row) && !naming(LEAVING)(row))
+    const theirs = () => everyRow(env.db).filter(({ row }) => naming(STAYING)(row) && !naming(LEAVING)(row))
     const before = theirs()
 
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
@@ -402,15 +374,13 @@ describe('deleting one of two accounts', () => {
   })
 
   test('leaves its words in the other’s chat, and the last word in it nobody’s', async () => {
-    env.db
-      .prepare("update chats set last_by = 'user:' || ? where id = 'chat-' || ?")
-      .run(LEAVING.id, STAYING.id)
+    env.db.prepare("update chats set last_by = 'user:' || ? where id = 'chat-' || ?").run(LEAVING.id, STAYING.id)
 
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
 
-    expect(
-      env.db.prepare("select last_by from chats where id = 'chat-' || ?").get(STAYING.id),
-    ).toEqual({ last_by: null })
+    expect(env.db.prepare("select last_by from chats where id = 'chat-' || ?").get(STAYING.id)).toEqual({
+      last_by: null,
+    })
   })
 
   test('empties the bucket of it, and of nothing somebody else still names', async () => {
@@ -477,14 +447,13 @@ describe('deleting one of two accounts', () => {
 
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
 
-    expect(
-      env.db.prepare("select what from leftovers where what like 'hubs/%' order by what").all(),
-    ).toEqual([{ what: `hubs/${LEAVING.id}` }])
+    expect(env.db.prepare("select what from leftovers where what like 'hubs/%' order by what").all()).toEqual([
+      { what: `hubs/${LEAVING.id}` },
+    ])
   })
 
   test('one that fails part way touches nothing of the other, and is finished the next night', async () => {
-    const theirs = () =>
-      everyRow(env.db).filter(({ row }) => naming(STAYING)(row) && !naming(LEAVING)(row))
+    const theirs = () => everyRow(env.db).filter(({ row }) => naming(STAYING)(row) && !naming(LEAVING)(row))
     const before = theirs()
     env.db.exec("create trigger refuse before delete on users begin select raise(abort, 'no'); end")
 
@@ -493,14 +462,12 @@ describe('deleting one of two accounts', () => {
     ).rejects.toThrow()
 
     expect(theirs()).toEqual(before)
-    expect(
-      env.db.prepare('select count(*) as many from sessions where user_id = ?').get(LEAVING.id),
-    ).toEqual({ many: 0 })
+    expect(env.db.prepare('select count(*) as many from sessions where user_id = ?').get(LEAVING.id)).toEqual({
+      many: 0,
+    })
 
     await finishErasing(env)
-    expect(
-      env.db.prepare('select count(*) as many from users where id = ?').get(LEAVING.id),
-    ).toEqual({ many: 1 })
+    expect(env.db.prepare('select count(*) as many from users where id = ?').get(LEAVING.id)).toEqual({ many: 1 })
 
     env.db.exec('drop trigger refuse')
     await finishErasing(env)
@@ -536,12 +503,8 @@ describe('deleting one of two accounts', () => {
 
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
 
-    expect(
-      env.db.prepare('select count(*) as many from users where id = ?').get(LEAVING.id),
-    ).toEqual({ many: 0 })
-    expect(
-      env.db.prepare("select count(*) as many from notes where id like 'big-%'").get(),
-    ).toEqual({ many: 0 })
+    expect(env.db.prepare('select count(*) as many from users where id = ?').get(LEAVING.id)).toEqual({ many: 0 })
+    expect(env.db.prepare("select count(*) as many from notes where id like 'big-%'").get()).toEqual({ many: 0 })
     expect(Math.max(...pieces)).toBeLessThanOrEqual(3000)
   })
 
@@ -554,12 +517,10 @@ describe('deleting one of two accounts', () => {
     await sweepLeftovers(env)
     await sweepLeftovers(env)
 
-    expect(
-      env.db.prepare("select what from leftovers where what = 'hubs/gone-user'").all(),
-    ).toEqual([])
-    expect(
-      env.db.prepare("select count(*) as many from leftovers where what like 'issues/%'").get(),
-    ).toEqual({ many: 200 })
+    expect(env.db.prepare("select what from leftovers where what = 'hubs/gone-user'").all()).toEqual([])
+    expect(env.db.prepare("select count(*) as many from leftovers where what like 'issues/%'").get()).toEqual({
+      many: 200,
+    })
   })
 
   test('picks up what a request did not get to, the next night', async () => {
@@ -568,9 +529,7 @@ describe('deleting one of two accounts', () => {
     bucket.delete = () => Promise.reject(new Error('the bucket is unwell'))
 
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
-    expect(
-      env.db.prepare('select count(*) as many from users where id = ?').get(LEAVING.id),
-    ).toEqual({ many: 0 })
+    expect(env.db.prepare('select count(*) as many from users where id = ?').get(LEAVING.id)).toEqual({ many: 0 })
     const listed = env.db.prepare('select count(*) as many from leftovers').get() as {
       many: number
     }

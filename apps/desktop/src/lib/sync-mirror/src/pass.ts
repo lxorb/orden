@@ -1,8 +1,4 @@
-import {
-  isOwnFile as carriedOwn,
-  OWN_FILE as INBOX_PATH,
-  withBlocksOf as withTasksOf,
-} from '@orden/sync-core'
+import { isOwnFile as carriedOwn, OWN_FILE as INBOX_PATH, withBlocksOf as withTasksOf } from '@orden/sync-core'
 import { isCanvasTarget, isPagesTarget, isPdfTarget, isWebTarget } from '@orden/markdown/links'
 import { conflictPath } from '@orden/markdown/paths'
 import { inForeignCopy, hash32, isEntryId, syncDeletes } from '@orden/sync-core'
@@ -118,12 +114,7 @@ export interface Joined {
   words?(id: string): string | null
 }
 
-async function carriedElsewhere(
-  joined: Joined,
-  id: string,
-  path: string,
-  content: string,
-): Promise<boolean> {
+async function carriedElsewhere(joined: Joined, id: string, path: string, content: string): Promise<boolean> {
   if (!joined.has(id)) return false
   const held = joined.words?.(id) ?? null
   if (held === null) return false
@@ -148,12 +139,7 @@ export interface Waiting {
   kept?: (path: string) => boolean
 }
 
-export async function pull(
-  mirror: Mirror,
-  token: string,
-  joined: Joined,
-  waiting?: Waiting,
-): Promise<boolean> {
+export async function pull(mirror: Mirror, token: string, joined: Joined, waiting?: Waiting): Promise<boolean> {
   const root = mirror.root
   let moved = false
   await journalled(mirror)
@@ -189,11 +175,7 @@ export async function pull(
     const places = new Map(Object.entries(mirror.notes).map(([path, one]) => [one.id, path]))
     const moves = notes.flatMap((remote) => {
       const was = places.get(remote.id)
-      return !remote.deleted &&
-        carried(remote) &&
-        !untold(remote) &&
-        was !== undefined &&
-        was !== remote.path
+      return !remote.deleted && carried(remote) && !untold(remote) && was !== undefined && was !== remote.path
         ? [{ remote, was }]
         : []
     })
@@ -272,9 +254,7 @@ export async function pull(
         }
 
         if (diverged && local !== content) {
-          const together = await settled(remote.path, local, content, () =>
-            theirsIsNewer(target, remote.updatedAt),
-          )
+          const together = await settled(remote.path, local, content, () => theirsIsNewer(target, remote.updatedAt))
 
           if (together !== null) {
             await writeDown(target, together, local)
@@ -282,9 +262,7 @@ export async function pull(
             continue
           }
 
-          const merged = tracked
-            ? await mergedOver(token, target, remote.id, tracked.hash, local, content)
-            : null
+          const merged = tracked ? await mergedOver(token, target, remote.id, tracked.hash, local, content) : null
           if (merged !== null) {
             await writeDown(target, merged, local)
             wrote()
@@ -416,19 +394,14 @@ async function movedThere(
     if (progress) continue
 
     const holder = [...left].find(
-      (one) =>
-        one.at !== null &&
-        !isAside(one.at) &&
-        [...left].some((other) => other !== one && other.now === one.at),
+      (one) => one.at !== null && !isAside(one.at) && [...left].some((other) => other !== one && other.now === one.at),
     )
     if (!holder?.at || !(await move(holder, asideOf(holder.at, holder.id)))) break
   }
 
   const waits = new Set<string>()
   for (const one of left) {
-    const tied = pending.some(
-      (other) => other !== one && (other.was === one.now || other.now === one.was),
-    )
+    const tied = pending.some((other) => other !== one && (other.was === one.now || other.now === one.was))
     if (one.at !== null && isAside(one.at) && !mirror.notes[one.was]) {
       if (!(await present(full(one.was)))) await move(one, one.was)
     }
@@ -634,10 +607,7 @@ async function deletedThere(
     ? invoke('delete_note', { path: target })
     : invoke('trash_item', { path: target, kind: 'note', arrived: true })
   await how.catch((error: unknown) => {
-    log(
-      'warn',
-      `sync: ${target} was deleted elsewhere and stays, the trash refused it - ${String(error)}`,
-    )
+    log('warn', `sync: ${target} was deleted elsewhere and stays, the trash refused it - ${String(error)}`)
   })
 }
 
@@ -738,14 +708,7 @@ async function toldAgain(
       continue
     }
 
-    await movedOne(
-      mirror,
-      token,
-      one.from,
-      one.to,
-      asked.has(id) ? new Set([id]) : new Set(),
-      clashed,
-    )
+    await movedOne(mirror, token, one.from, one.to, asked.has(id) ? new Set([id]) : new Set(), clashed)
   }
   return done
 }
@@ -851,12 +814,7 @@ async function heldMovedUpThere(
   }
 }
 
-async function renamedUpThere(
-  token: string,
-  tracked: Tracked,
-  path: string,
-  content: string,
-): Promise<Tracked> {
+async function renamedUpThere(token: string, tracked: Tracked, path: string, content: string): Promise<Tracked> {
   try {
     const { note } = await api.writeNote(token, tracked.id, path, content, tracked.version)
     return { id: note.id, version: note.version, hash: note.hash }
@@ -882,12 +840,7 @@ export interface Sending {
 const REFUSALS: ReadonlySet<number> = new Set([400, 413, 415, 422])
 
 function refusesIt(error: unknown): boolean {
-  return (
-    error instanceof ApiError &&
-    REFUSALS.has(error.status) &&
-    isRecord(error.body) &&
-    isString(error.body.error)
-  )
+  return error instanceof ApiError && REFUSALS.has(error.status) && isRecord(error.body) && isString(error.body.error)
 }
 
 function isFull(error: unknown): error is ApiError {
@@ -909,12 +862,7 @@ function linesOf(words: string): Set<string> {
   )
 }
 
-async function wordsWaitIn(
-  token: string,
-  id: string,
-  hash: string,
-  unplaced: readonly Unplaced[],
-): Promise<boolean> {
+async function wordsWaitIn(token: string, id: string, hash: string, unplaced: readonly Unplaced[]): Promise<boolean> {
   if (!unplaced.length) return false
   if (unplaced.some((one) => one.hash === hash)) return true
 
@@ -953,8 +901,7 @@ function refusedOf(mirror: Mirror): Refused {
 }
 
 function notInTheAir(mirror: Mirror, path: string, earlier: string | undefined) {
-  mirror.offered =
-    earlier === undefined ? without(mirror.offered, path) : { ...mirror.offered, [path]: earlier }
+  mirror.offered = earlier === undefined ? without(mirror.offered, path) : { ...mirror.offered, [path]: earlier }
 }
 
 function noteRefused(
@@ -971,17 +918,10 @@ function noteRefused(
   sending.refused?.(path)
 }
 
-export async function push(
-  mirror: Mirror,
-  token: string,
-  joined: Joined,
-  sending: Sending = {},
-): Promise<boolean> {
+export async function push(mirror: Mirror, token: string, joined: Joined, sending: Sending = {}): Promise<boolean> {
   const held = sending.held ?? new Set<string>()
   const root = mirror.root
-  const tree = await invoke<Entry>('read_tree', { root, options: { papers: true } }).catch(
-    () => null,
-  )
+  const tree = await invoke<Entry>('read_tree', { root, options: { papers: true } }).catch(() => null)
   if (!tree || tree.unlisted) return false
   const waits = unsettled.get(mirror) ?? new Set<string>()
   const unread = unlistedIn(tree).map((one) => `${relativeTo(root, one.path)}/`)
@@ -1022,12 +962,10 @@ export async function push(
       continue
     }
 
-    const content = await invoke<string>('read_note', { path: file.path }).catch(
-      (error: unknown) => {
-        log('warn', `sync: ${file.path} not sent - ${String(error)}`)
-        return null
-      },
-    )
+    const content = await invoke<string>('read_note', { path: file.path }).catch((error: unknown) => {
+      log('warn', `sync: ${file.path} not sent - ${String(error)}`)
+      return null
+    })
     if (content === null) continue
 
     const hash = await sha256(content)
@@ -1268,10 +1206,7 @@ async function hashFile(path: string): Promise<string | null> {
 function same(was: Record<string, TrackedFile>, now: Record<string, TrackedFile>): boolean {
   const paths = Object.keys(now)
 
-  return (
-    paths.length === Object.keys(was).length &&
-    paths.every((path) => was[path]?.hash === now[path]?.hash)
-  )
+  return paths.length === Object.keys(was).length && paths.every((path) => was[path]?.hash === now[path]?.hash)
 }
 
 async function create(

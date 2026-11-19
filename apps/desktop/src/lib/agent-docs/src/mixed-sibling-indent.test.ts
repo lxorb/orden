@@ -23,9 +23,7 @@ describe('a tab-nested item with a sibling the editor Tab indented with spaces',
   })
 
   test('a task added after the sub-task does not nest under the sibling', () => {
-    const after = edited(TASKS_TABBED_THEN_TAB, [
-      { at: { task: 'Packing' }, insert_after: '- [ ] Visa' },
-    ])
+    const after = edited(TASKS_TABBED_THEN_TAB, [{ at: { task: 'Packing' }, insert_after: '- [ ] Visa' }])
     expect(renderMarkdown(after)).not.toMatch(/Tickets<ul>/)
   })
 })

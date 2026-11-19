@@ -133,26 +133,12 @@ describe('the kinds a new tab can be', () => {
 
   test('leave the website out on a phone', () => {
     viewport.device = 'phone'
-    expect(newKinds().map((one) => one.kind)).toEqual([
-      'note',
-      'canvas',
-      'pages',
-      'online',
-      'application',
-      'pass',
-    ])
+    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online', 'application', 'pass'])
   })
 
   test('and on a tablet', () => {
     viewport.device = 'tablet'
-    expect(newKinds().map((one) => one.kind)).toEqual([
-      'note',
-      'canvas',
-      'pages',
-      'online',
-      'application',
-      'pass',
-    ])
+    expect(newKinds().map((one) => one.kind)).toEqual(['note', 'canvas', 'pages', 'online', 'application', 'pass'])
   })
 
   test('make one each', async () => {

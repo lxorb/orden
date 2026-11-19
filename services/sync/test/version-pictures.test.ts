@@ -22,9 +22,7 @@ beforeEach(async () => {
     body: { path: 'Kept.md', content: 'x\n' },
   })
   noteId = made.json.note.id
-  owner = (
-    env.db.prepare('select user_id from spaces where id = ?').get(space) as { user_id: string }
-  ).user_id
+  owner = (env.db.prepare('select user_id from spaces where id = ?').get(space) as { user_id: string }).user_id
   const up = await call(env, `/v2/blobs/${HASH}`, {
     token,
     method: 'PUT',
@@ -32,17 +30,13 @@ beforeEach(async () => {
     headers: { 'content-type': 'image/png' },
   })
   expect(up.status).toBe(201)
-  env.db
-    .prepare('insert into unused_blobs (user_id, hash, since) values (?, ?, 1)')
-    .run(owner, HASH)
+  env.db.prepare('insert into unused_blobs (user_id, hash, since) values (?, ?, 1)').run(owner, HASH)
 })
 
 afterEach(() => env.close())
 
 async function older(many: number, words: (at: number) => string): Promise<void> {
-  const row = env.db.prepare(
-    'insert into note_versions (note_id, at, hash, size) values (?, ?, ?, 1)',
-  )
+  const row = env.db.prepare('insert into note_versions (note_id, at, hash, size) values (?, ?, ?, 1)')
   for (let at = 0; at < many; at++) {
     const said = words(at)
     const hash = createHash('sha256').update(said).digest('hex')
@@ -57,8 +51,7 @@ const holds = () =>
       many: number
     }
   ).many
-const listed = () =>
-  (env.db.prepare('select count(*) as many from unused_blobs').get() as { many: number }).many
+const listed = () => (env.db.prepare('select count(*) as many from unused_blobs').get() as { many: number }).many
 const unread = () =>
   (
     env.db.prepare('select count(*) as many from note_versions where pictures is null').get() as {
@@ -149,9 +142,10 @@ describe('a version kept now', () => {
     await say('fifth\n')
     await say('sixth\n')
 
-    const rows = env.db
-      .prepare('select hash, pictures from note_versions where note_id = ?')
-      .all(noteId) as { hash: string; pictures: string | null }[]
+    const rows = env.db.prepare('select hash, pictures from note_versions where note_id = ?').all(noteId) as {
+      hash: string
+      pictures: string | null
+    }[]
     const body = async (hash: string) => (await env.NOTES.get(versionKey(hash)))?.text()
     for (const row of rows) {
       const words = await body(row.hash)

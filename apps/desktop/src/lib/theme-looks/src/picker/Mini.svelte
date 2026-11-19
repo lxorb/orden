@@ -155,11 +155,7 @@
     background:
       var(
           --mini-picture,
-          radial-gradient(
-            110% 90% at 0% 0%,
-            color-mix(in srgb, var(--mini-accent) 40%, transparent),
-            transparent 62%
-          )
+          radial-gradient(110% 90% at 0% 0%, color-mix(in srgb, var(--mini-accent) 40%, transparent), transparent 62%)
         )
         center / cover no-repeat,
       var(--mini-ground);

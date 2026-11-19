@@ -104,13 +104,5 @@ export {
   printCanvas,
   styles,
 } from './picture'
-export {
-  cardHtml,
-  fileShown,
-  fileSource,
-  fileUrl,
-  isPicture,
-  keptByAccount,
-  pageOfFile,
-} from './render'
+export { cardHtml, fileShown, fileSource, fileUrl, isPicture, keptByAccount, pageOfFile } from './render'
 export { inkSvg } from './svg'

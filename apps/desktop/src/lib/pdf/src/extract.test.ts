@@ -125,10 +125,7 @@ describe('the page notes the pass reports', () => {
     await readPapers('/space', listed, tree)
     vi.unstubAllGlobals()
 
-    expect(told.listed.map((one) => one[2])).toEqual([
-      walkedOf('/space', tree),
-      walkedOf('/space', tree),
-    ])
+    expect(told.listed.map((one) => one[2])).toEqual([walkedOf('/space', tree), walkedOf('/space', tree)])
   })
 
   test('are not said at all where the list could not be read', async () => {

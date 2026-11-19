@@ -32,8 +32,7 @@ const STARTING = 5000
 const READY_QUIET = 1000
 const PROMPT_WAIT = 20_000
 
-const OFF_SCREEN =
-  'position:fixed;left:-10000px;top:0;width:960px;height:540px;visibility:hidden;pointer-events:none'
+const OFF_SCREEN = 'position:fixed;left:-10000px;top:0;width:960px;height:540px;visibility:hidden;pointer-events:none'
 
 const SOURCE = 'terminal output'
 
@@ -204,20 +203,10 @@ const RUN_QUIET = 1500
 
 export function runInTab(call: Call): Promise<AgentAnswer> {
   const wait = count(call, 'timeout_ms', RUN_WAIT, MOST_RUN_WAIT)
-  return typed(
-    { ...call, args: { ...call.args, enter: true } },
-    need(call, 'command'),
-    wait,
-    RUN_QUIET,
-  )
+  return typed({ ...call, args: { ...call.args, enter: true } }, need(call, 'command'), wait, RUN_QUIET)
 }
 
-async function typed(
-  call: Call,
-  text: string,
-  patience: number,
-  rest: number,
-): Promise<AgentAnswer> {
+async function typed(call: Call, text: string, patience: number, rest: number): Promise<AgentAnswer> {
   const agent = call.caller.agent
   if (agent === null) throw new Refused('by_hand', 'the command line does not type into a shell')
 

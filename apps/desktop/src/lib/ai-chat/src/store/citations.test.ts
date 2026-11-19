@@ -7,11 +7,7 @@ const passages = [
   { path: 'Hovering.md', name: 'Hovering', line: 14, text: 'A kestrel hovers.' },
 ]
 
-function you(
-  id: string,
-  attachments: Attachment[] = passageAttachments(passages),
-  steered = false,
-): Turn {
+function you(id: string, attachments: Attachment[] = passageAttachments(passages), steered = false): Turn {
   return {
     id,
     role: 'you',

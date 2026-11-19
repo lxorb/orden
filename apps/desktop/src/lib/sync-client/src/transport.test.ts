@@ -36,16 +36,12 @@ describe('the engine over the network', () => {
   })
 
   test('a refusal is said and written in the log, never read as offline', async () => {
-    const device = await made(() =>
-      Promise.resolve(Response.json({ error: 'session ended' }, { status: 401 })),
-    )
+    const device = await made(() => Promise.resolve(Response.json({ error: 'session ended' }, { status: 401 })))
 
     const passing = device.engine.pass(SPACE)
     await expect(passing).rejects.toBeInstanceOf(Refused)
     await expect(passing).rejects.toMatchObject({ status: 401, message: 'session ended' })
-    expect(device.store.rows('log')).toEqual([
-      expect.objectContaining({ space: SPACE, failed: 'session ended' }),
-    ])
+    expect(device.store.rows('log')).toEqual([expect.objectContaining({ space: SPACE, failed: 'session ended' })])
   })
 
   test('a request names the session and the device and carries the framed body', async () => {
@@ -104,8 +100,7 @@ describe('a file’s bytes over the network', () => {
       base: 'https://sync.test',
       token: () => 'token-1',
       device: () => 'one',
-      fetch: () =>
-        Promise.resolve(Response.json({ error: 'no such file', blob: 'h' }, { status: 404 })),
+      fetch: () => Promise.resolve(Response.json({ error: 'no such file', blob: 'h' }, { status: 404 })),
     })
     expect(await lacking.replace('s', 'f', 'h', 'b')).toEqual({ lost: true })
   })
@@ -139,8 +134,7 @@ describe('what a browser asks about the notes it keeps no words of (#1126)', () 
       device: () => 'Browser',
       fetch: answer,
     })
-  const json = (body: unknown, status = 200) =>
-    Promise.resolve(new Response(JSON.stringify(body), { status }))
+  const json = (body: unknown, status = 200) => Promise.resolve(new Response(JSON.stringify(body), { status }))
   const request = { query: parseQuery('plan'), terms: [], limit: 10 }
 
   test('reads the answers', async () => {

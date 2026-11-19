@@ -9,9 +9,7 @@ const SRC = join(HERE, 'src')
 describe('the module stands on its own', () => {
   test('the api leaves the version list and the versions behind doors', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
-    const statics = [...api.matchAll(/^export \{[^}]*\} from '\.\/([A-Za-z.-]+)'/gm)].map(
-      (found) => found[1],
-    )
+    const statics = [...api.matchAll(/^export \{[^}]*\} from '\.\/([A-Za-z.-]+)'/gm)].map((found) => found[1])
     expect(statics).toEqual(['recovery.svelte'])
     expect(typeof loadHistory).toBe('function')
     expect(RECOVERY_KEY).toBe('orden:recovery')

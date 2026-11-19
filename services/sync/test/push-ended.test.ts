@@ -37,9 +37,7 @@ async function serviceAccount(): Promise<string> {
     true,
     ['sign', 'verify'],
   )) as CryptoKeyPair
-  const der = new Uint8Array(
-    (await crypto.subtle.exportKey('pkcs8', pair.privateKey)) as ArrayBuffer,
-  )
+  const der = new Uint8Array((await crypto.subtle.exportKey('pkcs8', pair.privateKey)) as ArrayBuffer)
   const pem = `-----BEGIN PRIVATE KEY-----\n${btoa(String.fromCharCode(...der))}\n-----END PRIVATE KEY-----\n`
   return JSON.stringify({ client_email: 'nib@x.iam', private_key: pem, project_id: 'orden-test' })
 }
@@ -87,9 +85,9 @@ async function setUp() {
 }
 
 function targets(): string[] {
-  return (
-    env.db.prepare('select token from push_targets order by token').all() as { token: string }[]
-  ).map((one) => one.token)
+  return (env.db.prepare('select token from push_targets order by token').all() as { token: string }[]).map(
+    (one) => one.token,
+  )
 }
 
 describe('a device no longer signed in', () => {
@@ -129,9 +127,7 @@ describe('a device no longer signed in', () => {
 
   test('nor once its session has run out, whatever row is left', async () => {
     const { phone } = await setUp()
-    env.db
-      .prepare('update sessions set expires_at = 1 where token_hash = ?')
-      .run(await sha256(phone.token))
+    env.db.prepare('update sessions set expires_at = 1 where token_hash = ?').run(await sha256(phone.token))
     expect(targets()).toContain('lost-phone-token')
 
     const sent = fcm()

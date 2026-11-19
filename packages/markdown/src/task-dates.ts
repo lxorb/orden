@@ -13,8 +13,7 @@ export const startOf = (task: Dated, due: DueReads = 'start'): string | undefine
 export const deadlineOf = (task: Dated, due: DueReads = 'start'): string | undefined =>
   task.deadline ?? (dueIsDeadline(task, due) ? task.due : undefined)
 
-const dueIsDeadline = (task: Dated, due: DueReads): boolean =>
-  due === 'deadline' || task.start !== undefined
+const dueIsDeadline = (task: Dated, due: DueReads): boolean => due === 'deadline' || task.start !== undefined
 
 export const dayOf = (task: Dated, due: DueReads = 'start'): string | undefined =>
   startOf(task, due) ?? task.scheduled ?? deadlineOf(task, due)

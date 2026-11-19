@@ -179,9 +179,7 @@ test('online while an ask is on its way starts no second chain (review of #990, 
 test('another account starts from nothing, and the last one asks no more', async () => {
   const before = vi.fn<Ask>().mockResolvedValue('blob:a')
   const failing = vi.fn<Ask>().mockResolvedValue(null)
-  useStore(
-    storeOf('user:a', (chat, hash) => (hash === 'h7' ? before(chat, hash) : failing(chat, hash))),
-  )
+  useStore(storeOf('user:a', (chat, hash) => (hash === 'h7' ? before(chat, hash) : failing(chat, hash))))
   const seen = row('c1', 'h7')
   const missing = row('c1', 'h8')
   await wait(0)

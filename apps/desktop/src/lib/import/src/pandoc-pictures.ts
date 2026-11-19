@@ -38,10 +38,7 @@ export function relinked(markdown: string, from: string, to: string): string {
     const name = `(?:\\.[\\\\/])?${escaped(spelling)}`
     const opening = String.raw`(\]\(<?|\]:[ \t]+<?|\bsrc=["'])`
     const closing = String.raw`(?=[>)"'\s]|$)`
-    out = out.replace(
-      new RegExp(`${opening}${name}${closing}`, 'g'),
-      (_, before) => `${before}${to}`,
-    )
+    out = out.replace(new RegExp(`${opening}${name}${closing}`, 'g'), (_, before) => `${before}${to}`)
   }
 
   return out

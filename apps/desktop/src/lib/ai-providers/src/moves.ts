@@ -64,11 +64,7 @@ function saidAgain(move: Move): boolean {
   return kept().some((one) => one.from === move.from && one.to === move.to && one.who === move.who)
 }
 
-export function keepMoves(
-  moved: Record<string, string>,
-  at = Date.now(),
-  who: Record<string, string> = {},
-): void {
+export function keepMoves(moved: Record<string, string>, at = Date.now(), who: Record<string, string> = {}): void {
   readAgain()
   const added = Object.entries(moved)
     .filter(([from, to]) => from !== to)

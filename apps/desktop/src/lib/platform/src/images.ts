@@ -3,8 +3,7 @@ import { decodeTarget } from '@orden/markdown/links'
 import { folderOf } from './space-paths'
 import { assetUrl, joinPath } from './tauri'
 
-export const isRemote = (src: string): boolean =>
-  /^([a-z]+:)?\/\//i.test(src) || src.startsWith('data:')
+export const isRemote = (src: string): boolean => /^([a-z]+:)?\/\//i.test(src) || src.startsWith('data:')
 
 const written = (src: string): string => decodeTarget(src)
 
@@ -37,12 +36,7 @@ export function imagePath(
   return foldedPath(joinPath(folderOf(notePath), path))
 }
 
-export function imageUrl(
-  src: string,
-  notePath?: string | null,
-  source = '',
-  top: string | null = null,
-): string {
+export function imageUrl(src: string, notePath?: string | null, source = '', top: string | null = null): string {
   const path = imagePath(src, notePath, source, top)
   return path ? assetUrl(path) : src
 }

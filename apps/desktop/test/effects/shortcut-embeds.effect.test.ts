@@ -16,10 +16,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     Promise.resolve(
       command === 'scan_links'
         ? {
-            notes: [
-              scanNote('Today.md', FILES['Today.md'] ?? ''),
-              scanShortcut('Recipe.url', SHORTCUT),
-            ],
+            notes: [scanNote('Today.md', FILES['Today.md'] ?? ''), scanShortcut('Recipe.url', SHORTCUT)],
             files: ['Recipe.url'],
           }
         : command === 'read_note'

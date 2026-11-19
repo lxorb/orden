@@ -110,11 +110,7 @@ function idDocument(row: CsvRecord): ImportedItem {
 }
 
 function personal(row: CsvRecord): ImportedItem {
-  const street = [
-    pick(row, 'address'),
-    pick(row, 'address_building'),
-    pick(row, 'address_apartment'),
-  ]
+  const street = [pick(row, 'address'), pick(row, 'address_building'), pick(row, 'address_apartment')]
     .filter((one) => one !== '')
     .join(', ')
   return itemOf(

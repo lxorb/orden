@@ -1,19 +1,11 @@
-export function ranked(
-  strip: readonly string[],
-  order: readonly string[],
-  current: string,
-): string[] {
+export function ranked(strip: readonly string[], order: readonly string[], current: string): string[] {
   const used = order.filter((id) => id !== current && strip.includes(id))
   const rest = strip.filter((id) => id !== current && !used.includes(id))
 
   return [...(strip.includes(current) ? [current] : []), ...used, ...rest]
 }
 
-export function successor(
-  left: readonly string[],
-  order: readonly string[],
-  at?: number,
-): string | null {
+export function successor(left: readonly string[], order: readonly string[], at?: number): string | null {
   const recent = order.find((id) => left.includes(id))
   if (recent !== undefined) return recent
   if (at === undefined || at < 0) return left.at(-1) ?? null

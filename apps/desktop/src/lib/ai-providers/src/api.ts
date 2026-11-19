@@ -35,9 +35,7 @@ export { default as AddAccount } from './AddAccount.svelte'
 export { default as ProviderMark } from './ProviderMark.svelte'
 
 export const loadKeysMoved = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no AI keys in the Even Realities plugin'))
-    : import('./KeysMoved.svelte')
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('no AI keys in the Even Realities plugin')) : import('./KeysMoved.svelte')
 
 export const localCli = () =>
   __EVEN_PLUGIN__
@@ -45,16 +43,10 @@ export const localCli = () =>
     : import('./local/cli')
 
 export const chatgptPlan = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no ChatGPT plan in the Even Realities plugin'))
-    : import('./chatgpt')
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('no ChatGPT plan in the Even Realities plugin')) : import('./chatgpt')
 
 export const checkKeysMoved = () =>
-  __EVEN_PLUGIN__
-    ? Promise.resolve(false)
-    : import('./keys-moved.svelte').then((one) => one.keysMoved.check())
+  __EVEN_PLUGIN__ ? Promise.resolve(false) : import('./keys-moved.svelte').then((one) => one.keysMoved.check())
 
 export const loadPlanRows = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no AI plans in the Even Realities plugin'))
-    : import('./PlanRows.svelte')
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('no AI plans in the Even Realities plugin')) : import('./PlanRows.svelte')

@@ -98,9 +98,7 @@
     }
     return [
       ...first,
-      ...pages
-        .filter((one) => !saved.has(one.url))
-        .map((visit): Offer => ({ kind: 'page', visit })),
+      ...pages.filter((one) => !saved.has(one.url)).map((visit): Offer => ({ kind: 'page', visit })),
       ...after,
     ]
   }
@@ -374,8 +372,7 @@
         if (row?.kind === 'note') return row.note.shown
         return row?.visit.title ?? ''
       }}
-      marks={(value: string, text: string) =>
-        byValue.get(value)?.kind === 'note' ? pieces(text, typed) : null}
+      marks={(value: string, text: string) => (byValue.get(value)?.kind === 'note' ? pieces(text, typed) : null)}
       badge={(value: string) => (byValue.get(value)?.kind === 'note' ? 'Saved' : '')}
       lead={site}
       onchoose={(value: string) => choose(value)}

@@ -28,13 +28,9 @@ const LANGUAGES: [RegExp, (text: string) => string[]][] = [
   [/\.css$/, (text) => blocks(text)],
   [
     /\.svelte$/,
-    (text) =>
-      [...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].flatMap((one) => blocks(one[1] ?? '')),
+    (text) => [...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].flatMap((one) => blocks(one[1] ?? '')),
   ],
-  [
-    /\.(html|xml|plist|nuspec)$/,
-    (text) => [...text.matchAll(/<!--[\s\S]*?-->/g)].map((one) => one[0]),
-  ],
+  [/\.(html|xml|plist|nuspec)$/, (text) => [...text.matchAll(/<!--[\s\S]*?-->/g)].map((one) => one[0])],
   [/\.sql$/, dashed],
   [/\.py$/, python],
   [
@@ -133,9 +129,7 @@ function hashed(text: string): string[] {
     const bare = line.trimStart()
     if (bare.startsWith('#')) found.push(bare)
     const unquoted = line.replace(/"(?:\\.|[^"\\])*"|'[^']*'/g, '""')
-    heredoc = unquoted.includes('<<<')
-      ? null
-      : (/<<-?\s*['"]?([A-Za-z_]+)['"]?/.exec(unquoted)?.[1] ?? null)
+    heredoc = unquoted.includes('<<<') ? null : (/<<-?\s*['"]?([A-Za-z_]+)['"]?/.exec(unquoted)?.[1] ?? null)
   }
   return found
 }
@@ -148,19 +142,10 @@ function python(text: string): string[] {
   while (index < text.length) {
     const one = text[index] ?? ''
     const prefix = /^[rRbBuUfF]{0,2}("""|'''|"|')/.exec(text.slice(index, index + 5))
-    if (
-      prefix &&
-      !/\w/.test(text[index - 1] ?? '') &&
-      (one === '"' || one === "'" || /[rRbBuUfF]/.test(one))
-    ) {
+    if (prefix && !/\w/.test(text[index - 1] ?? '') && (one === '"' || one === "'" || /[rRbBuUfF]/.test(one))) {
       const quote = prefix[1] ?? '"'
       const end = quoted(text, index + prefix[0].length - quote.length, quote)
-      if (
-        lineStart &&
-        quote.length === 3 &&
-        /:\s*$/.test(opened) &&
-        /^\s*(async\s+def|def|class)\b/.test(opened)
-      )
+      if (lineStart && quote.length === 3 && /:\s*$/.test(opened) && /^\s*(async\s+def|def|class)\b/.test(opened))
         found.push(text.slice(index, end))
       if (lineStart && quote.length === 3 && opened === '' && !text.includes('__doc__'))
         found.push(text.slice(index, end))

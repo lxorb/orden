@@ -120,9 +120,12 @@ test('reads how a page arrived, and why it did not', () => {
     failure: 'unreachable',
   })
   expect(readSaid({ ...arrived, failure: 'x' })).toEqual(plain)
-  expect(readSaid({ ...arrived, failure: 'other', bare: true, reason: 'No such server.' })).toEqual(
-    { ...arrived, failure: 'other', bare: true, reason: 'No such server.' },
-  )
+  expect(readSaid({ ...arrived, failure: 'other', bare: true, reason: 'No such server.' })).toEqual({
+    ...arrived,
+    failure: 'other',
+    bare: true,
+    reason: 'No such server.',
+  })
   expect(readSaid({ ...arrived, failure: 'other', bare: 'yes', reason: 4 })).toEqual({
     ...plain,
     failure: 'other',
@@ -136,24 +139,10 @@ test('a page that did not arrive and that nothing was drawn for is said, and onl
   const fail = (tab: string, not: unknown) => void failed.push([tab, not])
   const arrived = { tab: 'a', said: 'arrived', url: 'https://no-such-host.invalid/' } as const
 
-  heard(
-    page,
-    { ...arrived, failure: 'other', bare: true, reason: 'No such server.' },
-    undefined,
-    undefined,
-    fail,
-  )
-  expect(failed).toEqual([
-    ['a', { url: 'https://no-such-host.invalid/', failure: 'other', reason: 'No such server.' }],
-  ])
+  heard(page, { ...arrived, failure: 'other', bare: true, reason: 'No such server.' }, undefined, undefined, fail)
+  expect(failed).toEqual([['a', { url: 'https://no-such-host.invalid/', failure: 'other', reason: 'No such server.' }]])
 
-  heard(
-    page,
-    { ...arrived, failure: 'other', bare: false, reason: null },
-    undefined,
-    undefined,
-    fail,
-  )
+  heard(page, { ...arrived, failure: 'other', bare: false, reason: null }, undefined, undefined, fail)
   heard(page, { ...arrived, failure: null, bare: false, reason: null }, undefined, undefined, fail)
   expect(failed).toHaveLength(1)
 })

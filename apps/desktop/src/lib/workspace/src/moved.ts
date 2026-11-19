@@ -1,12 +1,4 @@
-import {
-  forget,
-  isRecord,
-  keep,
-  stored,
-  storedText,
-  invoke,
-  isMobile,
-} from '../../platform/src/api'
+import { forget, isRecord, keep, stored, storedText, invoke, isMobile } from '../../platform/src/api'
 import { noteRootsMoved, ROOTS_MOVED } from './roots-moved'
 import { readSession } from '../../session/src/api'
 
@@ -40,10 +32,7 @@ export function hasMoved(
 export function rebased(text: string, was: string, now: string): string {
   const escape = (path: string) => JSON.stringify(path).slice(1, -1)
   const under = (from: string, to: string, value: string) =>
-    value
-      .replaceAll(`${from}/`, `${to}/`)
-      .replaceAll(`${from}\\`, `${to}\\`)
-      .replaceAll(`"${from}"`, `"${to}"`)
+    value.replaceAll(`${from}/`, `${to}/`).replaceAll(`${from}\\`, `${to}\\`).replaceAll(`"${from}"`, `"${to}"`)
 
   const plain = under(was, now, text)
   return escape(was) === was ? plain : under(escape(was), escape(now), plain)
@@ -72,12 +61,8 @@ function valueMoved(value: unknown, was: string, now: string): unknown {
   if (typeof value === 'string') return pathMoved(value, was, now)
   if (Array.isArray(value)) {
     const kept = (value as unknown[]).map((one) => ({ one, moved: valueMoved(one, was, now) }))
-    const there = new Set(
-      kept.filter(({ one, moved }) => one === moved).map(({ one }) => JSON.stringify(one)),
-    )
-    return kept
-      .filter(({ one, moved }) => one === moved || !there.has(JSON.stringify(moved)))
-      .map(({ moved }) => moved)
+    const there = new Set(kept.filter(({ one, moved }) => one === moved).map(({ one }) => JSON.stringify(one)))
+    return kept.filter(({ one, moved }) => one === moved || !there.has(JSON.stringify(moved))).map(({ moved }) => moved)
   }
   if (!isRecord(value)) return value
   const out: Record<string, unknown> = {}
@@ -126,11 +111,7 @@ export function restate(was: string, now: string, storage: Storage = localStorag
   return changed
 }
 
-export function settleRoot(
-  now: string,
-  roots: readonly string[],
-  listed: readonly string[],
-): string | null {
+export function settleRoot(now: string, roots: readonly string[], listed: readonly string[]): string | null {
   const written = storedText(SPACES_ROOT)
   const was = formerRoot(written, roots)
 

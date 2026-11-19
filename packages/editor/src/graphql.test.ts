@@ -22,8 +22,7 @@ function tokens(document: string): [string, string | null][] {
   return out
 }
 
-const typeOf = (document: string, text: string) =>
-  tokens(document).find(([token]) => token === text)?.[1]
+const typeOf = (document: string, text: string) => tokens(document).find(([token]) => token === text)?.[1]
 
 describe('highlighting a graphql fence', () => {
   test.each([

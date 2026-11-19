@@ -5,12 +5,7 @@ import { childOf, childrenOf, parseXml, textAt, type XmlElement } from './xml'
 
 const STANDARD = new Set(['Title', 'UserName', 'Password', 'URL', 'Notes'])
 const TOTP_KEYS = new Set(['otp', 'totp', 'totp seed', 'timeotp-secret-base32'])
-const IGNORED_KEYS = new Set([
-  'totp settings',
-  'timeotp-algorithm',
-  'timeotp-length',
-  'timeotp-period',
-])
+const IGNORED_KEYS = new Set(['totp settings', 'timeotp-algorithm', 'timeotp-length', 'timeotp-period'])
 const URL_KEY = /^(kp2a_url|url)(_\d+)?$/i
 
 interface Context {
@@ -63,11 +58,7 @@ function entryOf(entry: XmlElement, folder: string, trashed: boolean, context: C
     trashed,
     folder,
   }
-  const plainNote =
-    value('UserName') === '' &&
-    value('Password') === '' &&
-    urls.every((u) => u === '') &&
-    totp === ''
+  const plainNote = value('UserName') === '' && value('Password') === '' && urls.every((u) => u === '') && totp === ''
   const content = plainNote
     ? noteOf(title, value('Notes'), fields)
     : loginOf({
@@ -102,8 +93,7 @@ export function parseKeePass(text: string): Imported {
   const root = parseXml(text)
   if (root.name !== 'KeePassFile') throw new ImportError('This is not a KeePass XML export.')
   const meta = childOf(root, 'Meta')
-  const recycleBin =
-    textAt(meta, 'RecycleBinEnabled') === 'False' ? '-' : textAt(meta, 'RecycleBinUUID').trim()
+  const recycleBin = textAt(meta, 'RecycleBinEnabled') === 'False' ? '-' : textAt(meta, 'RecycleBinUUID').trim()
   const context: Context = {
     into: new Collector(textAt(meta, 'DatabaseName').trim() || 'KeePass'),
     recycleBin: /^A+=*$/.test(recycleBin) ? '' : recycleBin,

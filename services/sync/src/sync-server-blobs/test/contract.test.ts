@@ -14,9 +14,7 @@ let app: Hono<Routes>
 
 beforeEach(() => {
   env = testEnv()
-  env.db
-    .prepare('insert into users (id, email, created_at) values (?, ?, ?)')
-    .run(USER.id, USER.email, USER.created_at)
+  env.db.prepare('insert into users (id, email, created_at) values (?, ?, ?)').run(USER.id, USER.email, USER.created_at)
   app = new Hono<Routes>()
   app.use('/v1/*', async (context, next) => {
     context.set('user', USER)
@@ -37,11 +35,7 @@ function png(seed: number): { bytes: Uint8Array; hash: string } {
 }
 
 async function put(hash: string, bytes: Uint8Array, type = 'image/png'): Promise<Response> {
-  return await app.request(
-    `/v1/blobs/${hash}`,
-    { method: 'PUT', body: bytes, headers: { 'content-type': type } },
-    env,
-  )
+  return await app.request(`/v1/blobs/${hash}`, { method: 'PUT', body: bytes, headers: { 'content-type': type } }, env)
 }
 
 describe('storing a blob', () => {

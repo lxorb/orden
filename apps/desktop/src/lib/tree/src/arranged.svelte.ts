@@ -263,9 +263,7 @@ export class Arranged {
     const listed = next[owner]
     if (listed) {
       const under =
-        folderKeyOf(now) === owner
-          ? renamedIn(listed, nameOf(was), nameOf(now))
-          : withoutName(listed, nameOf(was))
+        folderKeyOf(now) === owner ? renamedIn(listed, nameOf(was), nameOf(now)) : withoutName(listed, nameOf(was))
       if (under) next = withList(next, owner, under)
     }
 
@@ -407,11 +405,8 @@ function folderKeyOf(at: string): string {
   return cut < 0 ? '' : at.slice(0, cut)
 }
 
-const withList = (
-  held: Record<string, string[]>,
-  folder: string,
-  names: string[],
-): Record<string, string[]> => (names.length ? { ...held, [folder]: names } : without(held, folder))
+const withList = (held: Record<string, string[]>, folder: string, names: string[]): Record<string, string[]> =>
+  names.length ? { ...held, [folder]: names } : without(held, folder)
 
 export const SORT_KEY = 'orden:sorting'
 const BEFORE = 'orden:list-order'

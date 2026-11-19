@@ -155,9 +155,7 @@ describe('the places a file a note names could be', () => {
   })
 
   test('the same folder twice is named once', () => {
-    expect(placesOf('Paper.pdf', 'C:\\Notes\\Work\\Paper.pages', root)).toEqual([
-      'C:\\Notes\\Work\\Paper.pdf',
-    ])
+    expect(placesOf('Paper.pdf', 'C:\\Notes\\Work\\Paper.pages', root)).toEqual(['C:\\Notes\\Work\\Paper.pdf'])
   })
 
   test('the browser’s own paths work the same way, with its own separator', () => {
@@ -175,12 +173,8 @@ describe('the places a file a note names could be', () => {
   })
 
   test('a path of its own is itself and nothing else', () => {
-    expect(placesOf('C:/Elsewhere/Paper.pdf', 'C:\\Notes\\Work\\Paper.pages', root)).toEqual([
-      'C:/Elsewhere/Paper.pdf',
-    ])
-    expect(placesOf('/elsewhere/Paper.pdf', '/Work/Paper.pages', '/Work')).toEqual([
-      '/elsewhere/Paper.pdf',
-    ])
+    expect(placesOf('C:/Elsewhere/Paper.pdf', 'C:\\Notes\\Work\\Paper.pages', root)).toEqual(['C:/Elsewhere/Paper.pdf'])
+    expect(placesOf('/elsewhere/Paper.pdf', '/Work/Paper.pages', '/Work')).toEqual(['/elsewhere/Paper.pdf'])
   })
 
   test('nothing named is nowhere to look', () => {

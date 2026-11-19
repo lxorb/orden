@@ -196,10 +196,7 @@ afterEach(() => {
 test('a change from elsewhere reaches the fields nobody touched and leaves the typed ones', () => {
   const shown = open()
   account.spaces = [
-    listed(
-      { subdomain: 'theirs' },
-      { description: 'Theirs', analytics: { url: 'https://count.example' } },
-    ),
+    listed({ subdomain: 'theirs' }, { description: 'Theirs', analytics: { url: 'https://count.example' } }),
   ]
   flushSync()
   const now = { ...typed(), counter: publish.counter }
@@ -235,9 +232,7 @@ test('a site saved under an address that was refused keeps the address and the t
   world.refusePublish = 'taken'
   await publish.publish()
   flushSync()
-  account.spaces = [
-    listed({}, { description: 'About me', rules: { include: [], exclude: [], otherwise: 'none' } }),
-  ]
+  account.spaces = [listed({}, { description: 'About me', rules: { include: [], exclude: [], otherwise: 'none' } })]
   flushSync()
   const now = typed()
   void unmount(shown)
@@ -255,9 +250,7 @@ test('after a publish the form is what the account holds, and follows it from th
   serve(listed({ enabled: true, subdomain: 'my-notes' }, site))
   await publish.publish()
   flushSync()
-  account.spaces = [
-    listed({ enabled: true, subdomain: 'moved' }, { ...site, description: 'Moved' }),
-  ]
+  account.spaces = [listed({ enabled: true, subdomain: 'moved' }, { ...site, description: 'Moved' })]
   flushSync()
   const now = typed()
   void unmount(shown)

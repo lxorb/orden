@@ -81,9 +81,7 @@ export const dropRow = (row: Row, drop: Drop): Promise<boolean> => writeRow(row,
 export async function pressRow(row: Row, change: RowChange): Promise<boolean> {
   const path = pathOf(row)
   if (path === null) return false
-  return rewrite(path, (before) =>
-    Object.keys(change.note ?? {}).length ? changed(before, row, change) : before,
-  )
+  return rewrite(path, (before) => (Object.keys(change.note ?? {}).length ? changed(before, row, change) : before))
 }
 
 async function rewriteTask(

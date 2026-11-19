@@ -22,27 +22,8 @@ export { account, type Vault } from './account.svelte'
 export { AccountOwed } from './account-owed'
 export { readableSize, usage } from './usage.svelte'
 export { default as AccountBadge } from './AccountBadge.svelte'
-export {
-  api,
-  ApiError,
-  BASE,
-  faceUrl,
-  fromServer,
-  MCP_URL,
-  request,
-  turnedDown,
-  warmCalls,
-} from './client'
-export {
-  clampOffset,
-  clampZoom,
-  type Crop,
-  MOST_ZOOM,
-  type Point,
-  scaleAt,
-  wheeledZoom,
-  zoomed,
-} from './crop'
+export { api, ApiError, BASE, faceUrl, fromServer, MCP_URL, request, turnedDown, warmCalls } from './client'
+export { clampOffset, clampZoom, type Crop, MOST_ZOOM, type Point, scaleAt, wheeledZoom, zoomed } from './crop'
 export { decode, prepared } from './encode'
 export type { Face, Presence, Status } from './face'
 export { changeProfile, keepZone, nameIn, removeFace, wearFace } from './mine'

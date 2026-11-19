@@ -45,11 +45,7 @@ export interface AgentReaderPort {
   waiting(agent: string): Promise<number>
   ask(question: AgentQuestion): Promise<string>
   answer(id: string, answer: string | null): void
-  heard(
-    id: string,
-    patience: number,
-    signal: AbortSignal,
-  ): Promise<{ answer: string | null } | null>
+  heard(id: string, patience: number, signal: AbortSignal): Promise<{ answer: string | null } | null>
   hear(on: (heard: AgentHeard) => void): Promise<() => void>
 }
 
@@ -161,8 +157,7 @@ export function registerAgentTabKind(kind: string, load: () => Promise<AgentTabK
   }
 }
 
-export const agentTabKindParts = (kind: string): AgentTabKind =>
-  tabKindsHeld.get(kind) ?? NO_AGENT_TAB_KIND
+export const agentTabKindParts = (kind: string): AgentTabKind => tabKindsHeld.get(kind) ?? NO_AGENT_TAB_KIND
 
 export async function agentTabKindLoaded(kind: string): Promise<AgentTabKind> {
   const load = tabKindLoads.get(kind)

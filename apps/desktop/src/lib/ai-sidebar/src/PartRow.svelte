@@ -14,13 +14,9 @@
   let opened = $state(false)
   const open = $derived(opened || chat.unfolded)
 
-  const verb = $derived(
-    part.kind === 'thinking' ? 'Thought' : (verbOf(part.verb) ?? bareName(part.verb)),
-  )
+  const verb = $derived(part.kind === 'thinking' ? 'Thought' : (verbOf(part.verb) ?? bareName(part.verb)))
 
-  const object = $derived(
-    part.kind === 'thinking' ? (part.ms ? seconds(part.ms, region()) : '') : objectOf(part.args),
-  )
+  const object = $derived(part.kind === 'thinking' ? (part.ms ? seconds(part.ms, region()) : '') : objectOf(part.args))
 
   const going = $derived(live && (part.kind === 'thinking' ? !part.ms : part.state === 'running'))
   const helper = $derived(part.kind === 'tool' ? helperOf(part) : null)
@@ -60,10 +56,7 @@
     <Spawned threads={[helper]} />
   {/if}
   {#if open && detail}
-    <pre
-      class="detail"
-      class:said={command}
-      transition:slide={{ duration: dur(150), easing: cubicOut }}>{detail}</pre>
+    <pre class="detail" class:said={command} transition:slide={{ duration: dur(150), easing: cubicOut }}>{detail}</pre>
   {/if}
 </div>
 

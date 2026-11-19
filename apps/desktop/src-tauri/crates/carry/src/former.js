@@ -38,9 +38,7 @@
     if (typeof value === 'string') return pathMoved(value, was, now)
     if (Array.isArray(value)) {
       const kept = value.map((one) => ({ one, moved: valueMoved(one, was, now) }))
-      const there = new Set(
-        kept.filter(({ one, moved }) => one === moved).map(({ one }) => JSON.stringify(one)),
-      )
+      const there = new Set(kept.filter(({ one, moved }) => one === moved).map(({ one }) => JSON.stringify(one)))
       return kept
         .filter(({ one, moved }) => one === moved || !there.has(JSON.stringify(moved)))
         .map(({ moved }) => moved)
@@ -74,8 +72,7 @@
         const before = parse(had)
         const after = parse(value)
         const both = typeof before === 'object' && before !== null && typeof after === 'object'
-        const next =
-          had !== null && both && after !== null ? JSON.stringify(joined(before, after)) : value
+        const next = had !== null && both && after !== null ? JSON.stringify(joined(before, after)) : value
         if (next !== had) storage.setItem(key, next)
       }
     }
@@ -87,8 +84,7 @@
         const text = storage.getItem(key)
         if (text === null || (!text.includes(from) && !text.includes(escaped))) continue
         const value = parse(text)
-        const moved =
-          value === null ? pathMoved(text, from, to) : JSON.stringify(valueMoved(value, from, to))
+        const moved = value === null ? pathMoved(text, from, to) : JSON.stringify(valueMoved(value, from, to))
         if (moved === text) continue
         storage.setItem(key, moved)
       }

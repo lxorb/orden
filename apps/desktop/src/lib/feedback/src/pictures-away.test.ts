@@ -44,9 +44,7 @@ test('pictures are drawn off the window’s thread, one at a time however many c
   )
   expect(seen.sent).toHaveLength(12)
   expect(seen.most).toBe(1)
-  expect(pictures.map((one) => one?.dataUrl)).toEqual(
-    seen.sent.map((id) => `data:image/png;base64,${String(id)}`),
-  )
+  expect(pictures.map((one) => one?.dataUrl)).toEqual(seen.sent.map((id) => `data:image/png;base64,${String(id)}`))
   expect(new Set(pictures.map((one) => one?.id)).size).toBe(12)
 })
 

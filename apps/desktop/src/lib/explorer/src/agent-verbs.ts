@@ -5,17 +5,7 @@ import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
 import type { Category } from '../../agent-protocol/src/api'
 import { explorerOn } from '../../gates/src/api'
-import {
-  asked,
-  type Call,
-  done,
-  gatedBy,
-  inTime,
-  maybe,
-  need,
-  Refused,
-  verbsOf,
-} from '../../agent-verbs/src/api'
+import { asked, type Call, done, gatedBy, inTime, maybe, need, Refused, verbsOf } from '../../agent-verbs/src/api'
 import type { ExplorerView as View } from './view.svelte'
 
 const OPS = 'op is list, open, go, select, trash, move, copy, rename or mkdir'
@@ -26,9 +16,7 @@ export async function explorerTabs(call: Call): Promise<AgentAnswer> {
   if (op === 'list') {
     return done(
       {
-        tabs: workspace.tabs
-          .filter((tab) => tab.kind === 'explorer')
-          .map((tab) => listed(tab, viewOf(tab))),
+        tabs: workspace.tabs.filter((tab) => tab.kind === 'explorer').map((tab) => listed(tab, viewOf(tab))),
       },
       'the names of files on this computer',
     )
@@ -59,9 +47,7 @@ export async function explorerTabs(call: Call): Promise<AgentAnswer> {
     }
     case 'select': {
       const folds = view.listing !== null && foldsIn(view.listing.path)
-      view.pickNames(
-        namesAt(view.rows, (name) => view.pathOf(name), await pathsOf(call, view), folds),
-      )
+      view.pickNames(namesAt(view.rows, (name) => view.pathOf(name), await pathsOf(call, view), folds))
       return shown(tab, view)
     }
     case 'trash':
@@ -95,8 +81,7 @@ async function changed(
       'that is in your spaces: use move_file, trash_file or create_folder, which keep links, undo and sync right',
     )
   }
-  const category: Category =
-    op === 'trash' ? 'trashing' : call.caller.agent?.mode === 'confirm' ? 'writing' : 'files'
+  const category: Category = op === 'trash' ? 'trashing' : call.caller.agent?.mode === 'confirm' ? 'writing' : 'files'
   const question = await asked(call, category, summary(op, paths, to, maybe(call, 'name')), folder)
   if (question) return question
 
@@ -111,8 +96,7 @@ async function changed(
     if (op === 'trash') await trash(view, paths)
     else if (op === 'rename') {
       const [path] = paths
-      if (path === undefined || paths.length > 1)
-        throw new Refused('bad_arguments', 'rename one path')
+      if (path === undefined || paths.length > 1) throw new Refused('bad_arguments', 'rename one path')
       await renamePath(view, path, need(call, 'name'))
     } else if (op === 'mkdir') {
       const { makeIn } = await import('./commands')
@@ -134,12 +118,7 @@ async function changed(
   return shown(tab, view)
 }
 
-function summary(
-  op: string,
-  paths: readonly string[],
-  to: string | null,
-  name: string | null,
-): string {
+function summary(op: string, paths: readonly string[], to: string | null, name: string | null): string {
   const what = paths.length === 1 ? (paths[0] ?? '') : `${paths.length} files`
   switch (op) {
     case 'trash':
@@ -177,9 +156,7 @@ async function looked(call: Call, folder: string): Promise<string | AgentAnswer>
 }
 
 function stepsAside(path: string): boolean {
-  return (
-    /^\\\\[?.]\\/.test(path) || path.split(/[\\/]/).some((step) => step === '.' || step === '..')
-  )
+  return /^\\\\[?.]\\/.test(path) || path.split(/[\\/]/).some((step) => step === '.' || step === '..')
 }
 
 async function absolute(asked: string): Promise<string> {
@@ -194,10 +171,7 @@ async function absolute(asked: string): Promise<string> {
     return said === '~' ? home : joinPath(home, said.slice(2).replace(/\\/g, '/'))
   }
   if (!/^(\/|[A-Za-z]:[\\/]|\\\\)/.test(said)) {
-    throw new Refused(
-      'bad_arguments',
-      `${asked} is not an absolute path: say where it is, or start it with ~/`,
-    )
+    throw new Refused('bad_arguments', `${asked} is not an absolute path: say where it is, or start it with ~/`)
   }
   return said
 }
@@ -217,10 +191,7 @@ const MOST_PATHS = 1000
 async function pathsOf(call: Call, view: View): Promise<string[]> {
   const raw = call.args.paths ?? (call.args.path === undefined ? undefined : [call.args.path])
   if (!Array.isArray(raw) || !raw.length || !raw.every((one) => typeof one === 'string')) {
-    throw new Refused(
-      'bad_arguments',
-      'say which, as paths: absolute, ~/, or names in the tab’s folder',
-    )
+    throw new Refused('bad_arguments', 'say which, as paths: absolute, ~/, or names in the tab’s folder')
   }
   if (raw.length > MOST_PATHS) {
     throw new Refused('bad_arguments', `paths is a list of up to ${MOST_PATHS} paths`)

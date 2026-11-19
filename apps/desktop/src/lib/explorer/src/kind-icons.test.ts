@@ -88,8 +88,7 @@ describe("the system's icons for kinds of file", () => {
 describe('a row of the file explorer', () => {
   test("wears Orden's own mark for what Orden opens and asks the system only for the rest", async () => {
     workspace.spaces = [{ id: 's', name: 'Me', root: '/me' }]
-    const drawn = (path: string, folder = false) =>
-      render(EntryMark, { props: { path, folder } }).body
+    const drawn = (path: string, folder = false) => render(EntryMark, { props: { path, folder } }).body
     for (const name of ['Plan.md', 'notes.txt', 'paper.pdf', 'board.canvas', 'book.pages']) {
       expect(drawn(`/me/${name}`)).toContain('<svg')
     }

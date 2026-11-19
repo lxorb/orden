@@ -7,20 +7,14 @@
   import { nameOf } from './people'
   import { tip } from './tips.svelte'
 
-  const {
-    message,
-    page,
-    space,
-    canVote,
-  }: { message: Shown; page: ChatPage; space: string | null; canVote: boolean } = $props()
+  const { message, page, space, canVote }: { message: Shown; page: ChatPage; space: string | null; canVote: boolean } =
+    $props()
 
   const poll = $derived(message.poll)
   const ended = $derived(poll?.ends !== undefined && poll.ends < Date.now())
   const voters = $derived(Object.entries(poll?.votes ?? {}) as [Who, number[]][])
   const mine = $derived(page.me ? (poll?.votes[page.me] ?? []) : [])
-  const counts = $derived(
-    (poll?.answers ?? []).map((_, index) => voters.filter(([, chose]) => chose.includes(index))),
-  )
+  const counts = $derived((poll?.answers ?? []).map((_, index) => voters.filter(([, chose]) => chose.includes(index))))
   const tally = $derived(counts.map((one) => one.length))
   const most = $derived(tally.reduce((high, one) => Math.max(high, one), 1))
 

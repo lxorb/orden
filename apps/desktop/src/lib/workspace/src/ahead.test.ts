@@ -5,8 +5,7 @@ const sent: unknown[] = []
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   isDesktop: true,
-  invoke: async (command: string, args?: Record<string, unknown>) =>
-    void sent.push([command, args]),
+  invoke: async (command: string, args?: Record<string, unknown>) => void sent.push([command, args]),
 }))
 
 function arrived(answer: unknown) {

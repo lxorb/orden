@@ -83,9 +83,7 @@ describe('the content policy', () => {
       `'sha256-${createHash('sha256').update(text.replace(/\r\n?/g, '\n')).digest('base64')}'`
     const frames = hashOf(read('../../../packages/editor/src/frame-script.js'))
     const pages = Object.values(PAGES).flatMap((page) =>
-      [...page.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((found) =>
-        hashOf(found[1] ?? ''),
-      ),
+      [...page.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((found) => hashOf(found[1] ?? '')),
     )
     expect(pages.length).toBeGreaterThan(0)
 
@@ -120,12 +118,7 @@ describe('the content policy', () => {
   })
 
   test('and says the four things that fall back to nothing useful', () => {
-    for (const said of [
-      "object-src 'none'",
-      "base-uri 'none'",
-      "form-action 'none'",
-      "frame-ancestors 'none'",
-    ]) {
+    for (const said of ["object-src 'none'", "base-uri 'none'", "form-action 'none'", "frame-ancestors 'none'"]) {
       expect(CSP).toContain(said)
     }
 

@@ -111,11 +111,7 @@ export class Across {
     return this.hearing
   }
 
-  async writing(
-    note: NoteDoc,
-    path: string,
-    write: (words: string) => Promise<unknown>,
-  ): Promise<Written | null> {
+  async writing(note: NoteDoc, path: string, write: (words: string) => Promise<unknown>): Promise<Written | null> {
     const first = await oneWriteAt(path, () => this.attempt(note, path, write))
     if (first !== GONE) return first
     await this.desk.pause()

@@ -67,21 +67,11 @@ describe('a name already in the folder', () => {
   })
 
   test('and so is a name a page note and its paper would share', () => {
-    expect(
-      nameFault({ typed: 'Lecture.pages', extension: '.pdf', taken: beside('Lecture.pages') }),
-    ).toBe('taken')
-    expect(
-      nameFault({ typed: 'lecture.pages.pdf', extension: '.pdf', taken: beside('Lecture.pages') }),
-    ).toBe('taken')
-    expect(
-      nameFault({ typed: 'Report', extension: '.pages', taken: beside('Report.pages.pdf') }),
-    ).toBe('taken')
-    expect(
-      nameFault({ typed: 'Lecture', extension: '.pdf', taken: beside('Lecture.pages') }),
-    ).toBeNull()
-    expect(
-      nameFault({ typed: 'Report', extension: '.md', taken: beside('Report.pages.pdf') }),
-    ).toBeNull()
+    expect(nameFault({ typed: 'Lecture.pages', extension: '.pdf', taken: beside('Lecture.pages') })).toBe('taken')
+    expect(nameFault({ typed: 'lecture.pages.pdf', extension: '.pdf', taken: beside('Lecture.pages') })).toBe('taken')
+    expect(nameFault({ typed: 'Report', extension: '.pages', taken: beside('Report.pages.pdf') })).toBe('taken')
+    expect(nameFault({ typed: 'Lecture', extension: '.pdf', taken: beside('Lecture.pages') })).toBeNull()
+    expect(nameFault({ typed: 'Report', extension: '.md', taken: beside('Report.pages.pdf') })).toBeNull()
   })
 
   test('but a folder of the same name is not, because a note may sit beside one', () => {

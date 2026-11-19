@@ -43,9 +43,7 @@ class Github {
     }
     if (this.boardRefused) {
       return Response.json({
-        errors: [
-          { message: 'Your token has not been granted the required scopes to execute this query.' },
-        ],
+        errors: [{ message: 'Your token has not been granted the required scopes to execute this query.' }],
       })
     }
     if (query.includes('projectV2(number')) {
@@ -121,10 +119,7 @@ class Github {
     this.meanwhile?.()
     const failure = this.failing.shift()
     if (failure === 'refuse') return new Response('{}', { status: 502 })
-    const sent = JSON.parse(typeof init?.body === 'string' ? init.body : '{}') as Omit<
-      Opened,
-      'number'
-    >
+    const sent = JSON.parse(typeof init?.body === 'string' ? init.body : '{}') as Omit<Opened, 'number'>
     const issue = { number: this.issues.length + 1, ...sent }
     this.issues.push(issue)
     if (failure === 'lose') throw new Error('the connection dropped')
@@ -195,9 +190,7 @@ describe('a report', () => {
   test('from somebody signed in says whose it is', async () => {
     const token = await signIn(env, 'reader@example.com')
     await call(env, '/v1/feedback', { token, body: REPORT })
-    const user = env.db
-      .prepare('select id from users where email = ?')
-      .get('reader@example.com') as {
+    const user = env.db.prepare('select id from users where email = ?').get('reader@example.com') as {
       id: string
     }
 
@@ -232,9 +225,7 @@ describe('a report on the board', () => {
     board_next_at: number
   }
   const boardRows = (on: TestEnv) =>
-    on.db
-      .prepare('select issue_node, board_at, board_tries, board_next_at from feedback')
-      .all() as BoardRow[]
+    on.db.prepare('select issue_node, board_at, board_tries, board_next_at from feedback').all() as BoardRow[]
 
   test('goes on it as Todo as soon as its issue is open', async () => {
     const onBoard = testEnv({
@@ -392,9 +383,7 @@ describe('a report whose account is deleted', () => {
     expect(JSON.stringify(issue)).not.toContain('reader@example.com')
     expect(JSON.stringify(issue)).not.toContain('tab strip')
     expect(JSON.stringify(issue)).not.toContain('another line')
-    expect(env.db.prepare("select what from leftovers where what like 'issues/%'").all()).toEqual(
-      [],
-    )
+    expect(env.db.prepare("select what from leftovers where what like 'issues/%'").all()).toEqual([])
   })
 
   test('and is redacted the next night where GitHub did not answer the first time', async () => {
@@ -490,9 +479,7 @@ describe('the issue', () => {
     const body = issueBody(report({ text: forged }))
     const [fence] = /^`+/.exec(body) ?? ['']
     expect(fence.length).toBeGreaterThan(4)
-    expect(
-      body.startsWith(`${fence}\n${forged}\n${fence}\n\n| | |\n| --- | --- |\n| Version |`),
-    ).toBe(true)
+    expect(body.startsWith(`${fence}\n${forged}\n${fence}\n\n| | |\n| --- | --- |\n| Version |`)).toBe(true)
     expect(body.split(forged)).toHaveLength(2)
     expect(body).toContain('| Account | signed out |')
   })
@@ -511,9 +498,7 @@ describe('the issue', () => {
   })
 
   test('is titled with no name anybody answers to', () => {
-    expect(issueTitle('Ask @lxorb about x.@lxorb.')).toBe(
-      'Feedback: Ask @\u200blxorb about x.@\u200blxorb.',
-    )
+    expect(issueTitle('Ask @lxorb about x.@lxorb.')).toBe('Feedback: Ask @\u200blxorb about x.@\u200blxorb.')
   })
 
   test('says so where no log came', () => {

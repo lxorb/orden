@@ -20,9 +20,7 @@ vi.mock('../../platform/src/tauri', () => ({
       return Promise.resolve(btoa('\xff\xfeW\x00\xe9\x00'))
     }
     // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
-    return Promise.reject(
-      `/home/me/Brain/${String(args.path)} could not be read: Permission denied`,
-    )
+    return Promise.reject(`/home/me/Brain/${String(args.path)} could not be read: Permission denied`)
   },
   isDesktop: true,
 }))

@@ -25,9 +25,7 @@
 
   const say = (count: number) => tokens(count, region())
 
-  const whole = $derived(
-    !bands ? '' : bands.window ? `${say(bands.used)} / ${say(bands.window)}` : say(bands.used),
-  )
+  const whole = $derived(!bands ? '' : bands.window ? `${say(bands.used)} / ${say(bands.window)}` : say(bands.used))
 
   const summary = $derived.by(() => {
     const spent = chat.thread?.spent
@@ -39,12 +37,8 @@
   const R = 5.25
   const LENGTH = 2 * Math.PI * R
   const usedArc = $derived(bands?.window ? Math.min(1, bands.used / bands.window) * LENGTH : 0)
-  const nextArc = $derived(
-    bands?.fraction !== null && bands?.fraction !== undefined ? bands.fraction * LENGTH : 0,
-  )
-  const tick = $derived(
-    bands?.window && bands.compacts !== null ? (bands.compacts / bands.window) * 360 : null,
-  )
+  const nextArc = $derived(bands?.fraction !== null && bands?.fraction !== undefined ? bands.fraction * LENGTH : 0)
+  const tick = $derived(bands?.window && bands.compacts !== null ? (bands.compacts / bands.window) * 360 : null)
 
   function compact() {
     chat.popover = null
@@ -108,8 +102,7 @@
         {#if bands.window}
           <div class="bar">
             {#each [...ROWS.map(([band]) => band), 'next' as const] as band (band)}
-              <span class="fill {band}" style:width={`${(bands[band] / bands.window) * 100}%`}
-              ></span>
+              <span class="fill {band}" style:width={`${(bands[band] / bands.window) * 100}%`}></span>
             {/each}
           </div>
         {/if}
@@ -125,10 +118,8 @@
           <span class="what">Next message</span>
           <span class="much">≈ {say(bands.next)}</span>
         </div>
-        <button
-          class="orden-button is-quiet compact"
-          disabled={!head?.kept || chat.busy}
-          onclick={compact}>Compact now</button
+        <button class="orden-button is-quiet compact" disabled={!head?.kept || chat.busy} onclick={compact}
+          >Compact now</button
         >
       </div>
     {/if}

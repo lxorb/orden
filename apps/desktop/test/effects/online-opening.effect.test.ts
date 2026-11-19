@@ -24,8 +24,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-const { Opener, Pace, whereToOpen } =
-  await import('../../src/lib/terminal/src/online/opening.svelte')
+const { Opener, Pace, whereToOpen } = await import('../../src/lib/terminal/src/online/opening.svelte')
 const { land, reset } = await import('./online-opening-world.svelte')
 
 const SIGN_IN =
@@ -128,8 +127,7 @@ test('six a minute, and the same address not twice in a breath', () => {
   expect(pace.allows('https://a.b/', 0)).toBe(true)
   expect(pace.allows('https://a.b/', 1000)).toBe(false)
   expect(pace.allows('https://a.b/', 4000)).toBe(true)
-  for (let one = 0; one < 4; one++)
-    expect(pace.allows(`https://a.b/${String(one)}`, 5000)).toBe(true)
+  for (let one = 0; one < 4; one++) expect(pace.allows(`https://a.b/${String(one)}`, 5000)).toBe(true)
   expect(pace.allows('https://a.b/7', 5000)).toBe(false)
   expect(pace.allows('https://a.b/7', 61_000)).toBe(true)
 })

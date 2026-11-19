@@ -52,23 +52,17 @@ function cell(source: string): string {
 describe('an email address in the note', () => {
   test('drawn as a link opens a mail, as the reading view does', () => {
     expect(renderMarkdown('write to foo@bar.com today')).toContain('href="mailto:foo@bar.com"')
-    expect(linkMarks('write to foo@bar.com today')).toEqual([
-      { text: 'foo@bar.com', href: 'mailto:foo@bar.com' },
-    ])
+    expect(linkMarks('write to foo@bar.com today')).toEqual([{ text: 'foo@bar.com', href: 'mailto:foo@bar.com' }])
   })
 
   test('written between angle brackets opens a mail too', () => {
-    expect(linkMarks('<foo@bar.com>')).toEqual([
-      { text: 'foo@bar.com', href: 'mailto:foo@bar.com' },
-    ])
+    expect(linkMarks('<foo@bar.com>')).toEqual([{ text: 'foo@bar.com', href: 'mailto:foo@bar.com' }])
   })
 })
 
 describe('a web address inside square brackets that are not a link', () => {
   test('is still drawn as a link that opens', () => {
-    expect(linkMarks('see [docs at https://x.com] now')).toEqual([
-      { text: 'https://x.com', href: 'https://x.com' },
-    ])
+    expect(linkMarks('see [docs at https://x.com] now')).toEqual([{ text: 'https://x.com', href: 'https://x.com' }])
   })
 })
 

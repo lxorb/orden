@@ -8,8 +8,7 @@
   import type { Choice } from '../chat-parts'
   import Tally from './Tally.svelte'
 
-  const { sheet }: { sheet: { thread: Thread; panel: ReviewPanel | null; turn: string | null } } =
-    $props()
+  const { sheet }: { sheet: { thread: Thread; panel: ReviewPanel | null; turn: string | null } } = $props()
 
   const thread = $derived(sheet.thread)
   const messages = $derived(checkpoints(thread.turns))
@@ -81,8 +80,7 @@
     else if (event.key === 'Enter') {
       if (plan) void choose(plan.choices[lit])
       else pick(lit)
-    } else if (plan && digit >= 1 && digit <= plan.choices.length)
-      void choose(plan.choices[digit - 1])
+    } else if (plan && digit >= 1 && digit <= plan.choices.length) void choose(plan.choices[digit - 1])
     else return
     event.preventDefault()
     event.stopPropagation()
@@ -101,9 +99,7 @@
 >
   {#if plan}
     <button class="orden-row is-short is-quiet asked" onclick={back}>
-      <svg class="back" viewBox="0 0 13 13" aria-hidden="true"
-        ><path d="M8 3.2L4.7 6.5 8 9.8" /></svg
-      >
+      <svg class="back" viewBox="0 0 13 13" aria-hidden="true"><path d="M8 3.2L4.7 6.5 8 9.8" /></svg>
       <span class="orden-row-label">{plan.turn.draft?.text ?? ''}</span>
       {#if plan.changes.length}
         <Tally

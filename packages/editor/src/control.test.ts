@@ -6,9 +6,7 @@ import { refuseControlCharacters, unprintable } from './control'
 function refused(typed: string): boolean {
   const state = EditorState.create({ extensions: [refuseControlCharacters()] })
   const view = { state } as unknown as EditorView
-  return state
-    .facet(EditorView.inputHandler)
-    .some((handler) => handler(view, 0, 0, typed, () => state.update({})))
+  return state.facet(EditorView.inputHandler).some((handler) => handler(view, 0, 0, typed, () => state.update({})))
 }
 
 describe('a control character typed', () => {

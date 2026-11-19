@@ -27,9 +27,7 @@ describe('a poke', () => {
 
     laptop = await computer(env, running, 'owner@example.com', 'Laptop')
     desktop = await computer(env, running, 'owner@example.com', 'Desktop')
-    space = (
-      env.db.prepare('select id from spaces where user_id = ?').get(laptop.user) as { id: string }
-    ).id
+    space = (env.db.prepare('select id from spaces where user_id = ?').get(laptop.user) as { id: string }).id
   })
 
   afterEach(() => {
@@ -93,9 +91,7 @@ describe('a poke', () => {
     await pokeSpace(env, work, space, 3, laptop.id)
     await work.done()
 
-    expect(running.asked.filter((one) => one.ask === 'poke').map((one) => one.id)).toEqual([
-      laptop.user,
-    ])
+    expect(running.asked.filter((one) => one.ask === 'poke').map((one) => one.id)).toEqual([laptop.user])
     expect(running.of(laptop.user).state.kept.size).toBe(0)
   })
 

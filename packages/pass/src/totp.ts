@@ -73,15 +73,13 @@ function uriIn(text: string): Totp | null {
   } catch {
     return null
   }
-  if (url.protocol.toLowerCase() !== 'otpauth:' || url.hostname.toLowerCase() !== 'totp')
-    return null
+  if (url.protocol.toLowerCase() !== 'otpauth:' || url.hostname.toLowerCase() !== 'totp') return null
   const path = decoded(url.pathname.replace(/^\/+/, ''))
   const secret = secretIn(url.searchParams.get('secret') ?? '', 1)
   const algorithm = algorithmIn(url.searchParams.get('algorithm'))
   const digits = whole(url.searchParams.get('digits'), 6, 6, 8)
   const period = whole(url.searchParams.get('period'), 30, 1, 300)
-  if (path === null || secret === null || algorithm === null || digits === null || period === null)
-    return null
+  if (path === null || secret === null || algorithm === null || digits === null || period === null) return null
   const given = url.searchParams.get('issuer')
   const colon = given !== null && path.startsWith(`${given}:`) ? given.length : path.indexOf(':')
   const prefix = colon < 0 ? '' : path.slice(0, colon)

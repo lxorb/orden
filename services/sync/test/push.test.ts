@@ -38,9 +38,7 @@ function register(body: Record<string, string>) {
 }
 
 function remind(at: number, title = 'Call the bank', id = 'r1') {
-  const user = (
-    env.db.prepare('select user_id from spaces where id = ?').get(space) as { user_id: string }
-  ).user_id
+  const user = (env.db.prepare('select user_id from spaces where id = ?').get(space) as { user_id: string }).user_id
   env.db
     .prepare(
       `insert into push_reminders
@@ -81,8 +79,7 @@ describe('Web Push encryption', () => {
     const body = await encrypted(
       fromBase64url('V2hlbiBJIGdyb3cgdXAsIEkgd2FudCB0byBiZSBhIHdhdGVybWVsb24'),
       {
-        p256dh:
-          'BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcxaOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4',
+        p256dh: 'BCVxsr7N_eNgVRqvHtD0zTZsEc6-VV-JvLexhqUzORcxaOzi6-AYWXvTBHm4bjyPjs7Vd8pZGH6SRpkNtoIAiw4',
         auth: 'BTBZMqHH6r4Tts7J_aSIgg',
       },
       { publicRaw: asPublic, privateKey, salt: fromBase64url('DGv6ra1nlYgDCS1FRnbzlw') },
@@ -107,10 +104,7 @@ describe('targets', () => {
 
   test('refuses what is not a target', async () => {
     expect((await register({ kind: 'pigeon', token: 'x' })).status).toBe(400)
-    expect(
-      (await register({ kind: 'webpush', token: 'http://evil.test/x', p256dh: 'a', auth: 'b' }))
-        .status,
-    ).toBe(400)
+    expect((await register({ kind: 'webpush', token: 'http://evil.test/x', p256dh: 'a', auth: 'b' })).status).toBe(400)
     expect((await register({ kind: 'webpush', token: 'https://push.test/x' })).status).toBe(400)
     expect((await register({ kind: 'fcm', token: 't', zone: 'Mars/Olympus' })).status).toBe(400)
   })
@@ -127,9 +121,7 @@ describe('targets', () => {
   })
 
   test('is closed to anybody signed out', async () => {
-    expect(
-      (await call(env, '/v2/push/targets', { body: { kind: 'fcm', token: 't' } })).status,
-    ).toBe(401)
+    expect((await call(env, '/v2/push/targets', { body: { kind: 'fcm', token: 't' } })).status).toBe(401)
   })
 })
 
@@ -145,9 +137,7 @@ describe('sending', () => {
       true,
       ['sign', 'verify'],
     )) as CryptoKeyPair
-    const der = new Uint8Array(
-      (await crypto.subtle.exportKey('pkcs8', pair.privateKey)) as ArrayBuffer,
-    )
+    const der = new Uint8Array((await crypto.subtle.exportKey('pkcs8', pair.privateKey)) as ArrayBuffer)
     const pem = `-----BEGIN PRIVATE KEY-----\n${btoa(String.fromCharCode(...der))}\n-----END PRIVATE KEY-----\n`
     return JSON.stringify({ client_email: 'nib@x.iam', private_key: pem, project_id: 'orden-test' })
   }
@@ -195,9 +185,7 @@ describe('sending', () => {
     const browser = (await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, [
       'deriveBits',
     ])) as CryptoKeyPair
-    const p256dh = base64url(
-      new Uint8Array((await crypto.subtle.exportKey('raw', browser.publicKey)) as ArrayBuffer),
-    )
+    const p256dh = base64url(new Uint8Array((await crypto.subtle.exportKey('raw', browser.publicKey)) as ArrayBuffer))
     await register({
       kind: 'webpush',
       token: 'https://push.example/send/abc',

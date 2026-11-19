@@ -74,9 +74,7 @@ test('a press on a held note opens it in a tab of its own', async () => {
 test('the passes are the store’s, and a new one is read as it is written', async () => {
   const fake = connectFake([])
   stop = fake.stop
-  fake.engine.spaces = [
-    { space_id: 's1', root: '/spaces/Work', cursor: 0, role: null, store: null },
-  ]
+  fake.engine.spaces = [{ space_id: 's1', root: '/spaces/Work', cursor: 0, role: null, store: null }]
   flushSync()
 
   fake.engine.emit('pass', { at: 1_000, space: 's1', pulled: 3, pushed: 1, failed: null })

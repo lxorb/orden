@@ -143,18 +143,10 @@ function whenText(opened: LinkOpened): string {
   return `Expires ${day}.${views}`
 }
 
-function shownItem(
-  root: HTMLElement,
-  world: LinkWorld,
-  content: Content,
-  opened: LinkOpened,
-): LinkShown {
+function shownItem(root: HTMLElement, world: LinkWorld, content: Content, opened: LinkOpened): LinkShown {
   const card = made('article', 'link-card')
   const head = made('header', 'link-head')
-  head.append(
-    made('div', 'link-kind', kindName(content.kind)),
-    made('h1', 'link-title', content.title || 'Untitled'),
-  )
+  head.append(made('div', 'link-kind', kindName(content.kind)), made('h1', 'link-title', content.title || 'Untitled'))
   card.append(head)
   for (const group of linkGroupsOf(content)) {
     const box = made('section', 'link-group')
@@ -210,12 +202,7 @@ export async function shownLink(root: HTMLElement, world: LinkWorld): Promise<Li
   return shown
 }
 
-async function linkShown(
-  root: HTMLElement,
-  world: LinkWorld,
-  pathname: string,
-  hash: string,
-): Promise<LinkShown> {
+async function linkShown(root: HTMLElement, world: LinkWorld, pathname: string, hash: string): Promise<LinkShown> {
   const id = linkIdOf(pathname)
   const key = linkKeyIn(hash)
   if (id === null || key === null) return said(root, 'incomplete')

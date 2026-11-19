@@ -1,8 +1,7 @@
 import { door } from '@orden/markdown/door'
 import { invoke, isDesktop } from '../../platform/src/api'
 
-export type FormKind =
-  'login' | 'username' | 'password' | 'totp' | 'signup' | 'change' | 'card' | 'identity'
+export type FormKind = 'login' | 'username' | 'password' | 'totp' | 'signup' | 'change' | 'card' | 'identity'
 
 export type FieldRole =
   | 'username'
@@ -98,10 +97,6 @@ export function onSubmitted(then: (said: PassSubmitted) => void): Promise<Unlist
   return heard('orden://pass-submitted', (said) => then(said as PassSubmitted))
 }
 
-export function fill(
-  target: FillTarget,
-  values: Record<string, string>,
-  submit: boolean,
-): Promise<boolean> {
+export function fill(target: FillTarget, values: Record<string, string>, submit: boolean): Promise<boolean> {
   return invoke<boolean>('web_pass_fill', { ...target, values, submit })
 }

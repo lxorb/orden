@@ -10,11 +10,7 @@ interface Gate {
   name: () => string
 }
 
-export function whenOn(
-  gate: Gate,
-  run: () => void = () => undefined,
-  off: () => void = () => undefined,
-): void {
+export function whenOn(gate: Gate, run: () => void = () => undefined, off: () => void = () => undefined): void {
   let ran = false
   let was = false
   $effect.root(() => {
@@ -35,8 +31,7 @@ export function whenOn(
         else if (open.length)
           whenLoaded(
             () => import('./notices.svelte'),
-            ({ gateNote }) =>
-              gateNote.show(`${gate.name()} is turned off, so its tabs were closed`),
+            ({ gateNote }) => gateNote.show(`${gate.name()} is turned off, so its tabs were closed`),
           )
       })
     })

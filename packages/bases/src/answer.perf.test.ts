@@ -73,9 +73,7 @@ test('answered again after one row changed', () => {
   changed[5] = taskRow('Folder 5/Note 5.md', '- [ ] Changed 📅 2026-10-04', 5)
   const again = timed(() => view.answer(changed, context))
   expect(
-    view
-      .answer(changed, context)
-      .groups.some((group) => group.rows.some((row) => row.task?.text === 'Changed')),
+    view.answer(changed, context).groups.some((group) => group.rows.some((row) => row.task?.text === 'Changed')),
   ).toBe(true)
   if (CLOCKED) expect(again).toBeLessThan(10)
 })

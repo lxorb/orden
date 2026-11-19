@@ -1,12 +1,4 @@
-export const BOOKMARK_KINDS = [
-  'note',
-  'folder',
-  'heading',
-  'search',
-  'block',
-  'group',
-  'graph',
-] as const
+export const BOOKMARK_KINDS = ['note', 'folder', 'heading', 'search', 'block', 'group', 'graph'] as const
 
 export type BookmarkKind = (typeof BOOKMARK_KINDS)[number]
 

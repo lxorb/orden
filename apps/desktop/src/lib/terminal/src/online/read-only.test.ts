@@ -5,8 +5,7 @@ const written = vi.hoisted(() => [] as { path: string; text: string }[])
 
 vi.mock('../../../sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../sharing/src/sharing.svelte')>()),
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 vi.mock('../../../file-writes/src/api', async (original) => ({

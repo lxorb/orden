@@ -152,9 +152,7 @@ const RULES: Rule[] = [
     shape: 500,
     hosts: ['reddit.com'],
     oembed: 'Reddit',
-    frames: [
-      ['^/r/(\\w+)/comments/(\\w+)', 'https://www.redditmedia.com/r/$1/comments/$2/?embed=true'],
-    ],
+    frames: [['^/r/(\\w+)/comments/(\\w+)', 'https://www.redditmedia.com/r/$1/comments/$2/?embed=true']],
   },
   {
     id: 'giphy',
@@ -250,12 +248,7 @@ const RULES: Rule[] = [
     shape: 175,
     hosts: ['music.apple.com'],
     oembed: null,
-    frames: [
-      [
-        '^/[\\w-]+/(?:album|song|playlist|artist|music-video)/',
-        'https://embed.music.apple.com$path',
-      ],
-    ],
+    frames: [['^/[\\w-]+/(?:album|song|playlist|artist|music-video)/', 'https://embed.music.apple.com$path']],
   },
   {
     id: 'apple-podcasts',
@@ -274,10 +267,7 @@ const RULES: Rule[] = [
     hosts: ['deezer.com'],
     oembed: null,
     frames: [
-      [
-        '^/(?:[\\w-]+/)?(album|playlist|track|show|episode)/(\\d+)',
-        'https://widget.deezer.com/widget/dark/$1/$2',
-      ],
+      ['^/(?:[\\w-]+/)?(album|playlist|track|show|episode)/(\\d+)', 'https://widget.deezer.com/widget/dark/$1/$2'],
     ],
   },
   {
@@ -320,9 +310,7 @@ const RULES: Rule[] = [
     shape: 'video',
     hosts: ['canva.com'],
     oembed: 'Canva',
-    frames: [
-      ['^/design/([\\w-]+)/([\\w-]+)/view', 'https://www.canva.com/design/$1/$2/view?embed'],
-    ],
+    frames: [['^/design/([\\w-]+)/([\\w-]+)/view', 'https://www.canva.com/design/$1/$2/view?embed']],
   },
   {
     id: 'whimsical',
@@ -383,12 +371,7 @@ const RULES: Rule[] = [
     shape: 400,
     hosts: ['bsky.app'],
     oembed: 'Bluesky Social',
-    frames: [
-      [
-        '^/profile/([\\w.:-]+)/post/(\\w+)',
-        'https://embed.bsky.app/embed/$1/app.bsky.feed.post/$2',
-      ],
-    ],
+    frames: [['^/profile/([\\w.:-]+)/post/(\\w+)', 'https://embed.bsky.app/embed/$1/app.bsky.feed.post/$2']],
   },
   {
     id: 'acast',
@@ -513,8 +496,7 @@ function handWritten(): Set<string> {
   const found = [...source.matchAll(/hosts: \[([^\]]*)\]/g)].flatMap((one) =>
     [...(one[1] ?? '').matchAll(/'([^']+)'/g)].map((quoted) => quoted[1] ?? ''),
   )
-  if (found.length < 9)
-    throw new Error('providers.ts no longer spells its hosts out in `hosts: []`')
+  if (found.length < 9) throw new Error('providers.ts no longer spells its hosts out in `hosts: []`')
 
   return new Set(found)
 }
@@ -636,10 +618,6 @@ writeFileSync(TARGET, source)
 const absent = missing(known, listed)
 const shown = absent.slice(0, 40)
 
-console.log(
-  `wrote ${TARGET} (${(source.length / 1024).toFixed(1)}kB, ${String(listed.length)} rows)`,
-)
-console.log(
-  `${String(known.length)} providers in the registry, ${String(absent.length)} of them with no row here:`,
-)
+console.log(`wrote ${TARGET} (${(source.length / 1024).toFixed(1)}kB, ${String(listed.length)} rows)`)
+console.log(`${String(known.length)} providers in the registry, ${String(absent.length)} of them with no row here:`)
 console.log(`${shown.join(', ')}${absent.length > shown.length ? ', …' : ''}`)

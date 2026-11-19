@@ -100,18 +100,12 @@ async function keyed(account: Account, typed: string, made: boolean): Promise<st
   }
 }
 
-export async function connectKey(
-  kind: 'anthropic' | 'openai' | 'gemini',
-  typed: string,
-): Promise<string | null> {
+export async function connectKey(kind: 'anthropic' | 'openai' | 'gemini', typed: string): Promise<string | null> {
   const { account, made } = await accountOf(kind)
   return keyed(account, typed, made)
 }
 
-export async function connectCompatible(
-  provider: Compatible,
-  typed: string,
-): Promise<string | null> {
+export async function connectCompatible(provider: Compatible, typed: string): Promise<string | null> {
   const { ai } = await import('../../ai-providers/src/api')
   const made = ai.add('compatible')
   ai.update(made.id, { name: provider.name, baseUrl: provider.baseUrl ?? '' })

@@ -43,13 +43,7 @@ test('every kind that is drawn from itself is drawn off the screen once, and kep
   expect(kinds.length).toBeGreaterThan(5)
   const tabs = kinds.map(
     (kind) =>
-      new Tab(
-        new NoteDoc(
-          { kind, path: null, name: `A ${kind}`, text: '', dirty: false },
-          () => undefined,
-        ),
-        'pane',
-      ),
+      new Tab(new NoteDoc({ kind, path: null, name: `A ${kind}`, text: '', dirty: false }, () => undefined), 'pane'),
   )
   workspace.tabs = tabs
   const target = document.createElement('div')
@@ -69,10 +63,7 @@ test('every kind that is drawn from itself is drawn off the screen once, and kep
 
 test('a terminal’s window is its screen as it is now, not only what was written down of it', async () => {
   const tab = new Tab(
-    new NoteDoc(
-      { kind: 'terminal', path: null, name: 'Shell', text: '', dirty: false },
-      () => undefined,
-    ),
+    new NoteDoc({ kind: 'terminal', path: null, name: 'Shell', text: '', dirty: false }, () => undefined),
     'pane',
   )
   expect((await scrollbackOf(tab))?.text).toBe('$ make\nall done')

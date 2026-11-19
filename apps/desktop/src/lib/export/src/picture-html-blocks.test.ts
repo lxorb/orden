@@ -10,14 +10,10 @@ describe('a resized picture written as an <img> tag, in Word and RTF exports', (
   })
 
   test('keeps the picture inside a centred paragraph', () => {
-    expect(pictures('<p align="center"><img src="logo.png" alt="" width="300" /></p>\n')).toEqual([
-      'logo.png',
-    ])
+    expect(pictures('<p align="center"><img src="logo.png" alt="" width="300" /></p>\n')).toEqual(['logo.png'])
   })
 
   test('keeps the picture inside a centred block', () => {
-    expect(
-      pictures('<div align="center">\n<img src="logo.png" alt="" width="300" />\n</div>\n'),
-    ).toEqual(['logo.png'])
+    expect(pictures('<div align="center">\n<img src="logo.png" alt="" width="300" />\n</div>\n')).toEqual(['logo.png'])
   })
 })

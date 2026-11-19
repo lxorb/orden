@@ -118,9 +118,7 @@ export class TodoRecords {
     for (const change of changes) {
       const was = this.held.get(change.id)
       const stamp = this.stamp(Object.keys(change.fields).map((key) => was?.stamps[key]))
-      const stamps: InboxStamps = Object.fromEntries(
-        Object.keys(change.fields).map((key) => [key, stamp]),
-      )
+      const stamps: InboxStamps = Object.fromEntries(Object.keys(change.fields).map((key) => [key, stamp]))
       const merged = mergedInbox(was ?? null, { fields: change.fields, stamps })
       const dirty = [...new Set([...(was?.dirty ?? []), ...Object.keys(change.fields)])]
       const kept: Kept = { id: change.id, fields: merged.fields, stamps: merged.stamps, dirty }

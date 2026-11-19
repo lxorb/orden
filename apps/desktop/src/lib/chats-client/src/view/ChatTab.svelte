@@ -2,14 +2,7 @@
   import { chatOf, type FileRef, type Message, type Poll } from '@orden/chats'
   import { webPages } from '@orden/contracts'
   import { onDestroy, untrack } from 'svelte'
-  import {
-    carriedFiles,
-    carriesFiles,
-    draggedTab,
-    dropOver,
-    isTreeDrag,
-    viewport,
-  } from '../../../ui-kit/src/api'
+  import { carriedFiles, carriesFiles, draggedTab, dropOver, isTreeDrag, viewport } from '../../../ui-kit/src/api'
   import { EmojiPicker } from '../../../emoji/src/api'
   import { shortcuts } from '../../../shortcuts/src/api'
   import { samePath } from '../../../platform/src/api'
@@ -61,9 +54,7 @@
   const phone = $derived(viewport.device === 'phone')
   const narrow = $derived(phone || (width > 0 && width < NARROWEST_BESIDE))
   const membersShown = $derived(
-    !!page &&
-      (narrow ? sheetFor === page.id : membersOpen.shown(page.id)) &&
-      !(phone && page.replying),
+    !!page && (narrow ? sheetFor === page.id : membersOpen.shown(page.id)) && !(phone && page.replying),
   )
 
   function toggleMembers() {
@@ -160,8 +151,7 @@
       return
     }
     const web = workspace.tabs.find((one) => one.id === draggedTab(event.dataTransfer))
-    const address =
-      web && (webPages().addressOf(web.id) ?? web.address ?? workspace.webAddressOf(web))
+    const address = web && (webPages().addressOf(web.id) ?? web.address ?? workspace.webAddressOf(web))
     if (address) {
       event.preventDefault()
       composer?.insert(`${address} `)
@@ -194,13 +184,7 @@
   {#if page}
     {@const open = page}
     <div class="main" class:hidden={phone && open.replying !== null}>
-      <ChatHead
-        page={open}
-        {space}
-        named={lentName}
-        membersOn={membersShown}
-        onmembers={toggleMembers}
-      />
+      <ChatHead page={open} {space} named={lentName} membersOn={membersShown} onmembers={toggleMembers} />
       {#if open.ready}
         <Timeline
           bind:this={timeline}
@@ -277,12 +261,7 @@
 </Float>
 
 {#if looking && page}
-  <Lightbox
-    chat={page.id}
-    files={looking.files}
-    start={looking.start}
-    onclose={() => (looking = null)}
-  />
+  <Lightbox chat={page.id} files={looking.files} start={looking.start} onclose={() => (looking = null)} />
 {/if}
 
 {#if polling}

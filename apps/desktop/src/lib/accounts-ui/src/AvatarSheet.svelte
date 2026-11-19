@@ -233,8 +233,7 @@
           class="picture"
           style:width="{picture.width * scale}px"
           style:height="{picture.height * scale}px"
-          style:transform="translate(calc(-50% + {crop.offset.x}px), calc(-50% + {crop.offset
-            .y}px))"
+          style:transform="translate(calc(-50% + {crop.offset.x}px), calc(-50% + {crop.offset.y}px))"
           use:shows={picture}
         ></div>
       {/if}
@@ -257,16 +256,8 @@
           disabled={!picture}
           oninput={(event) => zoomTo(clampZoom(Number(event.currentTarget.value)))}
         />
-        <button
-          class="orden-glyph"
-          title="Rotate"
-          aria-label="Rotate"
-          disabled={!picture}
-          onclick={turn}
-        >
-          <svg viewBox="0 0 16 16"
-            ><path d="M13 8a5 5 0 1 1-1.6-3.7" /><path d="M13 2.5v3h-3" /></svg
-          >
+        <button class="orden-glyph" title="Rotate" aria-label="Rotate" disabled={!picture} onclick={turn}>
+          <svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.6-3.7" /><path d="M13 2.5v3h-3" /></svg>
         </button>
       </div>
     {/if}
@@ -275,9 +266,7 @@
   </div>
 
   {#snippet foot()}
-    <button class="orden-button" disabled={!picture || busy || !!stream} onclick={() => void keep()}
-      >Keep</button
-    >
+    <button class="orden-button" disabled={!picture || busy || !!stream} onclick={() => void keep()}>Keep</button>
   {/snippet}
 </Sheet>
 

@@ -39,9 +39,7 @@ const button = (label: string): HTMLButtonElement => {
 }
 
 function typed(text: string) {
-  const field = target.querySelector<HTMLInputElement>(
-    'input[placeholder="What are you working on?"]',
-  )
+  const field = target.querySelector<HTMLInputElement>('input[placeholder="What are you working on?"]')
   if (!field) throw new Error('no field to say it in')
   field.value = text
   field.dispatchEvent(new Event('input', { bubbles: true }))
@@ -76,9 +74,7 @@ describe('the time tracker beside the notes', () => {
     expect(target.textContent).toContain('Today')
     expect(target.textContent).not.toContain('Nothing recorded yet')
 
-    const row = [...target.querySelectorAll('button.orden-row')].find((one) =>
-      one.textContent.includes('Analysis'),
-    )
+    const row = [...target.querySelectorAll('button.orden-row')].find((one) => one.textContent.includes('Analysis'))
     row?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
     flushSync()
     expect(time.running).toHaveLength(1)
@@ -103,9 +99,9 @@ describe('the time tracker as a tab', () => {
 
     expect(target.querySelector('[role="radio"][aria-checked="true"]')?.textContent).toBe('Day')
     expect(target.querySelector('.said .block')?.getAttribute('title')).toContain('Study')
-    expect(
-      [...target.querySelectorAll('.lane .band')].map((one) => one.getAttribute('title') ?? ''),
-    ).toContainEqual(expect.stringContaining('moodle.ethz.ch'))
+    expect([...target.querySelectorAll('.lane .band')].map((one) => one.getAttribute('title') ?? '')).toContainEqual(
+      expect.stringContaining('moodle.ethz.ch'),
+    )
     expect(target.textContent).toContain('Drag across the day')
   })
 

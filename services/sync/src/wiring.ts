@@ -1,13 +1,7 @@
 import { wire } from './sync-server/src/api'
 import { requireWhoever, sendCode } from './sync-server-accounts/src/api'
 import { publishesFile } from './sync-server-blog/src/api'
-import {
-  askChat,
-  chatsRevoked,
-  closeChats,
-  eraseChats,
-  linkPointer,
-} from './sync-server-chats/src/api'
+import { askChat, chatsRevoked, closeChats, eraseChats, linkPointer } from './sync-server-chats/src/api'
 import {
   endingTerm,
   endTerms,

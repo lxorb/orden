@@ -31,15 +31,7 @@ import {
 } from 'docx'
 import { fromBase64 } from '../../platform/src/api'
 import { type PaperTwips, TWIPS_PER_INCH } from '../../files-out/src/api'
-import {
-  type Align,
-  type Block,
-  type Doc,
-  type Entry,
-  type Item,
-  type Span,
-  sizedPicture,
-} from './document'
+import { type Align, type Block, type Doc, type Entry, type Item, type Span, sizedPicture } from './document'
 import { ommlFor } from './omml'
 import type { Picture } from './pictures'
 import { legalXml } from './xml-legal'
@@ -166,17 +158,14 @@ const IMAGE_TYPES: Record<string, 'png' | 'jpg' | 'gif' | 'bmp'> = {
   'image/bmp': 'bmp',
 }
 
-const JPEG_FRAMES = new Set([
-  0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf,
-])
+const JPEG_FRAMES = new Set([0xc0, 0xc1, 0xc2, 0xc3, 0xc5, 0xc6, 0xc7, 0xc9, 0xca, 0xcb, 0xcd, 0xce, 0xcf])
 
 interface Size {
   width: number
   height: number
 }
 
-const reader = (bytes: Uint8Array): DataView =>
-  new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+const reader = (bytes: Uint8Array): DataView => new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
 
 function pngSize(bytes: Uint8Array): Size | null {
   if (bytes.length < 24) return null
@@ -311,9 +300,7 @@ const marksOf = (span: Span): IRunPropertiesOptions => ({
 function textRuns(span: Span): TextRun[] {
   const marks = marksOf(span)
 
-  return span.text
-    .split('\n')
-    .map((line, at) => new TextRun({ text: line, ...marks, ...(at > 0 ? { break: 1 } : {}) }))
+  return span.text.split('\n').map((line, at) => new TextRun({ text: line, ...marks, ...(at > 0 ? { break: 1 } : {}) }))
 }
 
 function mathsRuns(span: Span): ParagraphChild[] {
@@ -335,11 +322,7 @@ function runsOf(spans: readonly Span[], writer: Writer): ParagraphChild[] {
   return spans.flatMap((span) => {
     if (span.picture !== undefined) {
       const drawn = pictureRun(span, drawnPicture(span, writer))
-      return [
-        span.href === undefined
-          ? drawn
-          : new ExternalHyperlink({ children: [drawn], link: span.href }),
-      ]
+      return [span.href === undefined ? drawn : new ExternalHyperlink({ children: [drawn], link: span.href })]
     }
     if (span.note !== undefined) return noteRuns(span, writer)
     if (span.maths === true) return mathsRuns(span)
@@ -391,21 +374,12 @@ function tableOf(block: Extract<Block, { kind: 'table' }>, writer: Writer): Tabl
   })
 }
 
-function itemChildren(
-  item: Item,
-  ordered: boolean,
-  instance: number,
-  nesting: Nesting,
-  writer: Writer,
-): FileChild[] {
-  const check =
-    item.checked === null ? [] : [new TextRun({ text: item.checked ? CHECKS.done : CHECKS.open })]
+function itemChildren(item: Item, ordered: boolean, instance: number, nesting: Nesting, writer: Writer): FileChild[] {
+  const check = item.checked === null ? [] : [new TextRun({ text: item.checked ? CHECKS.done : CHECKS.open })]
 
   const rung = Math.min(nesting.level, DEEPEST_RUNG)
   const own = new Paragraph({
-    ...(ordered
-      ? { numbering: { reference: ORDERED, level: rung, instance } }
-      : { bullet: { level: rung } }),
+    ...(ordered ? { numbering: { reference: ORDERED, level: rung, instance } } : { bullet: { level: rung } }),
     children: [...check, ...runsOf(item.spans, writer)],
   })
 
@@ -417,14 +391,9 @@ function paragraphChildren(spans: readonly Span[], writer: Writer, nesting: Nest
   const drawn = only?.picture === undefined ? null : drawnPicture(only, writer)
 
   if (only !== undefined && drawn !== null) {
-    const caption = only.text
-      ? [new Paragraph({ style: 'Caption', children: [new TextRun({ text: only.text })] })]
-      : []
+    const caption = only.text ? [new Paragraph({ style: 'Caption', children: [new TextRun({ text: only.text })] })] : []
 
-    return [
-      new Paragraph({ alignment: AlignmentType.CENTER, children: [pictureRun(only, drawn)] }),
-      ...caption,
-    ]
+    return [new Paragraph({ alignment: AlignmentType.CENTER, children: [pictureRun(only, drawn)] }), ...caption]
   }
 
   return [new Paragraph({ ...nested(nesting), children: runsOf(spans, writer) })]
@@ -452,10 +421,7 @@ function mathsChildren(tex: string): FileChild[] {
   return [
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      children:
-        omml === null
-          ? [new TextRun({ text: tex, style: 'Code' })]
-          : [new Maths({ children: omml })],
+      children: omml === null ? [new TextRun({ text: tex, style: 'Code' })] : [new Maths({ children: omml })],
     }),
   ]
 }
@@ -480,9 +446,7 @@ function blockChildren(block: Block, writer: Writer, nesting: Nesting): FileChil
     case 'code':
       return block.code
         .split('\n')
-        .map(
-          (line) => new Paragraph({ style: 'CodeBlock', children: [new TextRun({ text: line })] }),
-        )
+        .map((line) => new Paragraph({ style: 'CodeBlock', children: [new TextRun({ text: line })] }))
 
     case 'maths':
       return mathsChildren(block.tex)
@@ -504,9 +468,7 @@ function blockChildren(block: Block, writer: Writer, nesting: Nesting): FileChil
     case 'list': {
       const instance = block.ordered ? writer.lists++ : 0
 
-      return block.items.flatMap((item) =>
-        itemChildren(item, block.ordered, instance, nesting, writer),
-      )
+      return block.items.flatMap((item) => itemChildren(item, block.ordered, instance, nesting, writer))
     }
 
     case 'table':
@@ -536,9 +498,7 @@ function titleChildren(doc: Doc): FileChild[] {
   const heads = first?.kind === 'heading' && wordsOf(first.spans).trim() === doc.title.trim()
   if (heads || !doc.named) return []
 
-  return [
-    new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun({ text: doc.title })] }),
-  ]
+  return [new Paragraph({ heading: HeadingLevel.TITLE, children: [new TextRun({ text: doc.title })] })]
 }
 
 function footnotesOf(doc: Doc, writer: Writer): Record<string, { children: Paragraph[] }> {
@@ -580,12 +540,8 @@ function runningOf(paper: PaperTwips) {
     })
 
   return {
-    ...(paper.header
-      ? { headers: { default: new Header({ children: [line(paper.header)] }) } }
-      : {}),
-    ...(paper.footer
-      ? { footers: { default: new Footer({ children: [line(paper.footer)] }) } }
-      : {}),
+    ...(paper.header ? { headers: { default: new Header({ children: [line(paper.header)] }) } } : {}),
+    ...(paper.footer ? { footers: { default: new Footer({ children: [line(paper.footer)] }) } } : {}),
   }
 }
 
@@ -598,11 +554,7 @@ function legalStrings<T>(value: T): T {
   ) as T
 }
 
-export async function toDocx(
-  written: Doc,
-  pictures: readonly Picture[],
-  sheet: PaperTwips,
-): Promise<Uint8Array> {
+export async function toDocx(written: Doc, pictures: readonly Picture[], sheet: PaperTwips): Promise<Uint8Array> {
   const doc = legalStrings(written)
   const paper = legalStrings(sheet)
   const writer: Writer = {

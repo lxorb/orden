@@ -26,8 +26,7 @@ afterEach(() => {
 function clipboardHolding(html: string, text: string) {
   const item = {
     types: ['text/html', 'text/plain'],
-    getType: (type: string) =>
-      Promise.resolve(new Blob([type === 'text/html' ? html : text], { type })),
+    getType: (type: string) => Promise.resolve(new Blob([type === 'text/html' ? html : text], { type })),
   }
   vi.stubGlobal('navigator', {
     clipboard: { read: () => Promise.resolve([item]), readText: () => Promise.resolve(text) },
@@ -40,10 +39,7 @@ function viewOf(doc: string, at: number): EditorView {
       EditorState.create({
         doc,
         selection: EditorSelection.cursor(at),
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          richPaste(),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), richPaste()],
       }),
     ),
     parent: document.body,
@@ -76,9 +72,7 @@ describe('Paste from the menu inside a code block', () => {
 
 async function copiedInOrden(words: string): Promise<{ html: string; text: string }> {
   await readyToCopy()
-  const flavours = copiedFlavours(
-    EditorState.create({ doc: words, selection: { anchor: 0, head: words.length } }),
-  )
+  const flavours = copiedFlavours(EditorState.create({ doc: words, selection: { anchor: 0, head: words.length } }))
   return { html: flavours?.html ?? '', text: flavours?.text ?? '' }
 }
 

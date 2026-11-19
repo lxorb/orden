@@ -3,8 +3,7 @@ import { linearly } from '../../../scripts/growth'
 import { renderMarkdown } from './index'
 
 describe('emphasis nothing closes', () => {
-  const quick = (source: (size: number) => string, size: number) =>
-    linearly((one) => renderMarkdown(source(one)), size)
+  const quick = (source: (size: number) => string, size: number) => linearly((one) => renderMarkdown(source(one)), size)
 
   test('renders in linear time', () => {
     expect(quick((n) => '*a '.repeat(n), 8_000)).not.toContain('<em>')

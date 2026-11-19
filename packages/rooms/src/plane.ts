@@ -31,11 +31,7 @@ export const planeOf = (doc: Y.Doc): Y.Map<Y.Map<unknown>> => doc.getMap(PLANE)
 
 export const buriedOf = (doc: Y.Doc): Y.Map<number> => doc.getMap(BURIED)
 
-export const rootsOf = (doc: Y.Doc): Y.Map<unknown>[] => [
-  doc.getMap(PLANE),
-  doc.getMap(BURIED),
-  doc.getMap(EXTRAS),
-]
+export const rootsOf = (doc: Y.Doc): Y.Map<unknown>[] => [doc.getMap(PLANE), doc.getMap(BURIED), doc.getMap(EXTRAS)]
 
 function putExtras(doc: Y.Doc, canvas: Canvas) {
   const held = doc.getMap<string>(EXTRAS)
@@ -117,8 +113,7 @@ interface Placing {
   record: Y.Map<unknown>
 }
 
-const under = (one: Placing, other: Placing): boolean =>
-  one.z !== other.z ? one.z < other.z : one.id < other.id
+const under = (one: Placing, other: Placing): boolean => (one.z !== other.z ? one.z < other.z : one.id < other.id)
 
 function slotted(
   plane: Y.Map<Y.Map<unknown>>,
@@ -182,10 +177,7 @@ function restack(
   const [ceiling] = placed(after[end])
   const places = middle.flatMap(placed)
   const inside = places.filter(
-    (place) =>
-      !fresh.has(place.id) &&
-      (!floor || under(floor, place)) &&
-      (!ceiling || under(place, ceiling)),
+    (place) => !fresh.has(place.id) && (!floor || under(floor, place)) && (!ceiling || under(place, ceiling)),
   )
 
   const kept = standing(inside, under)
@@ -340,9 +332,7 @@ const NO_NODES: ReadonlySet<string> = new Set<string>()
 function extrasOf(doc: Y.Doc, previous?: Canvas) {
   const text = doc.getMap<string>(EXTRAS).get(HELD)
   const mine = previous?.extras
-  return text !== undefined && holdsExtras(mine) && extrasText(mine) === text
-    ? mine
-    : extrasRead(text)
+  return text !== undefined && holdsExtras(mine) && extrasText(mine) === text ? mine : extrasRead(text)
 }
 
 function inkChanged(doc: Y.Doc, previous: Canvas, changed: ReadonlySet<string>): Canvas | null {
@@ -379,8 +369,7 @@ function inkChanged(doc: Y.Doc, previous: Canvas, changed: ReadonlySet<string>):
   }
 
   const at: Record<string, number> = {}
-  for (const thing of [...previous.nodes, ...previous.edges])
-    at[thing.id] = previous.at[thing.id] ?? 0
+  for (const thing of [...previous.nodes, ...previous.edges]) at[thing.id] = previous.at[thing.id] ?? 0
   for (const thing of ink) {
     const id = thing.id
     const when = changed.has(id) ? plane.get(id)?.get(AT) : previous.at[id]
@@ -402,12 +391,7 @@ function inkChanged(doc: Y.Doc, previous: Canvas, changed: ReadonlySet<string>):
     if (typeof when === 'number') gone[id] = when
   }
 
-  return canvasOf(
-    doc,
-    previous,
-    { nodes: previous.nodes, edges: previous.edges, ink, at, gone },
-    moved,
-  )
+  return canvasOf(doc, previous, { nodes: previous.nodes, edges: previous.edges, ink, at, gone }, moved)
 }
 
 function canvasOf(
@@ -477,13 +461,7 @@ export function readPlane(doc: Y.Doc, previous?: Canvas, changed?: ReadonlySet<s
   for (const [id, when] of buriedOf(doc)) if (typeof when === 'number') gone[id] = when
 
   const bare = <T extends Thing>(list: Placed<T>[]) => list.map((one) => one.thing)
-  return canvasOf(
-    doc,
-    previous,
-    { nodes: bare(nodes), edges: bare(edges), ink: bare(ink), at, gone },
-    moved,
-  )
+  return canvasOf(doc, previous, { nodes: bare(nodes), edges: bare(edges), ink: bare(ink), at, gone }, moved)
 }
 
-export const planeIsEmpty = (doc: Y.Doc): boolean =>
-  planeOf(doc).size === 0 && buriedOf(doc).size === 0
+export const planeIsEmpty = (doc: Y.Doc): boolean => planeOf(doc).size === 0 && buriedOf(doc).size === 0

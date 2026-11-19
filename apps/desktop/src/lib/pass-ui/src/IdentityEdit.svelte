@@ -1,10 +1,5 @@
 <script lang="ts">
-  import {
-    IDENTITY_FIELDS,
-    type Identity,
-    type IdentityGroup,
-    type IdentityKey,
-  } from '@orden/pass/types'
+  import { IDENTITY_FIELDS, type Identity, type IdentityGroup, type IdentityKey } from '@orden/pass/types'
   import EditCard from './EditCard.svelte'
   import EditField from './EditField.svelte'
   import { IDENTITY_FIRST } from '../../pass-sync/src/api'

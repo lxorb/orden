@@ -3,11 +3,7 @@ import { readCanvas } from '@orden/markdown/canvas'
 import { memoryStorage } from '../../../../test/disk'
 
 const BOARD = `${JSON.stringify({ nodes: [], edges: [] }, null, '\t')}\n`
-const MARKED_BOARD = `${JSON.stringify(
-  { nodes: [], edges: [], orden: { version: 1, icon: 'rocket' } },
-  null,
-  '\t',
-)}\n`
+const MARKED_BOARD = `${JSON.stringify({ nodes: [], edges: [], orden: { version: 1, icon: 'rocket' } }, null, '\t')}\n`
 
 const CHAT = 'c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e'
 
@@ -195,12 +191,7 @@ describe('the icon a canvas is given', () => {
   test('keeps the version that was there before it, and is one thing to undo', async () => {
     await setFileIcon('/space/Marked.canvas', 'compass')
     const touched = sent.filter((one) => one.path === '/space/Marked.canvas')
-    expect(touched.map((one) => one.command)).toEqual([
-      'read_note',
-      'read_note',
-      'snapshot_note',
-      'write_note',
-    ])
+    expect(touched.map((one) => one.command)).toEqual(['read_note', 'read_note', 'snapshot_note', 'write_note'])
     expect(touched[2]?.content).toContain('"icon": "rocket"')
     expect(workspace.undone.stack).toHaveLength(1)
   })
@@ -230,13 +221,10 @@ describe('what each kind of icon is written as', () => {
     ['flat-color-icons:calendar', undefined, { icon: 'flat-color-icons:calendar' }],
     ['rocket', 'violet', { icon: 'rocket', 'icon-color': 'violet' }],
     ['rocket', 'chartreuse', { icon: 'rocket' }],
-  ])(
-    '%s in %s is kept as its character, its set s name, and a colour this build knows',
-    async (icon, colour, meta) => {
-      await setFileIcon('/space/plain.md', icon, colour)
-      expect(kept('/space/plain.md')).toEqual(meta)
-    },
-  )
+  ])('%s in %s is kept as its character, its set s name, and a colour this build knows', async (icon, colour, meta) => {
+    await setFileIcon('/space/plain.md', icon, colour)
+    expect(kept('/space/plain.md')).toEqual(meta)
+  })
 
   test('a canvas keeps the colour beside the icon, under the same key', async () => {
     await setFileIcon('/space/Board.canvas', 'rocket', 'violet')
@@ -249,20 +237,13 @@ describe('what each kind of icon is written as', () => {
 describe('the icon a chat is given', () => {
   test('goes into its pointer after the id, with its colour', async () => {
     await setFileIcon('/space/Team.chat', 'rocket', 'violet')
-    expect(written('/space/Team.chat')).toBe(
-      `{"v":1,"chat":"${CHAT}","icon":"rocket","iconColor":"violet"}\n`,
-    )
+    expect(written('/space/Team.chat')).toBe(`{"v":1,"chat":"${CHAT}","icon":"rocket","iconColor":"violet"}\n`)
   })
 
   test('keeps the version that was there before it, and is one thing to undo', async () => {
     await setFileIcon('/space/Team.chat', '🚀')
     const touched = sent.filter((one) => one.path === '/space/Team.chat')
-    expect(touched.map((one) => one.command)).toEqual([
-      'read_note',
-      'read_note',
-      'snapshot_note',
-      'write_note',
-    ])
+    expect(touched.map((one) => one.command)).toEqual(['read_note', 'read_note', 'snapshot_note', 'write_note'])
     expect(touched[2]?.content).toBe(`{"v":1,"chat":"${CHAT}"}\n`)
     expect(workspace.undone.stack).toHaveLength(1)
   })

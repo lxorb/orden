@@ -18,8 +18,7 @@ export interface FarScene {
 }
 
 export function paintFar(canvas: HTMLCanvasElement, scene: FarScene): void {
-  const { nodes, edges, picked, dimmed, skip, view, scale, originX, originY, palette, ratio } =
-    scene
+  const { nodes, edges, picked, dimmed, skip, view, scale, originX, originY, palette, ratio } = scene
   const context = canvas.getContext('2d')
   if (!context) return
   const tint = (colour: string | undefined): string | null =>
@@ -91,12 +90,7 @@ export function paintFar(canvas: HTMLCanvasElement, scene: FarScene): void {
         const bar = Math.max(pixel, box.height * 0.12)
         context.fillRect(box.x + inset, box.y + inset, (box.width - 2 * inset) * 0.7, bar)
         if (box.height * scale >= 16) {
-          context.fillRect(
-            box.x + inset,
-            box.y + inset + 2 * bar,
-            (box.width - 2 * inset) * 0.45,
-            bar,
-          )
+          context.fillRect(box.x + inset, box.y + inset + 2 * bar, (box.width - 2 * inset) * 0.45, bar)
         }
         context.globalAlpha = dimmed && !chosen ? 0.25 : 1
       }

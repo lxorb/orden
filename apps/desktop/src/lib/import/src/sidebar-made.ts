@@ -21,8 +21,7 @@ export const isObject = (value: unknown): value is Said =>
 
 export const list = (value: unknown): Said[] => (Array.isArray(value) ? value.filter(isObject) : [])
 
-export const text = (value: unknown): string | null =>
-  typeof value === 'string' && value.trim() ? value.trim() : null
+export const text = (value: unknown): string | null => (typeof value === 'string' && value.trim() ? value.trim() : null)
 
 export function siteMark(value: unknown): string | null {
   const said = text(value)
@@ -69,9 +68,7 @@ export class Made {
     return parent
   }
 
-  tab(
-    tab: Omit<SidebarTab, 'home' | 'space' | 'essential'> & { essential?: boolean; space?: string },
-  ) {
+  tab(tab: Omit<SidebarTab, 'home' | 'space' | 'essential'> & { essential?: boolean; space?: string }) {
     if (!isWebAddress(tab.url)) {
       this.dropped++
       return

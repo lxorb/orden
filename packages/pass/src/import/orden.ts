@@ -6,9 +6,7 @@ import type { Imported } from './types'
 
 export function parseOrden(text: string): Imported {
   if (isSealedExport(text)) {
-    throw new ImportError(
-      'This export is sealed with a passphrase; open it with the passphrase first.',
-    )
+    throw new ImportError('This export is sealed with a passphrase; open it with the passphrase first.')
   }
   const root = recordOf(jsonOf(text))
   if (root.format !== EXPORT_FORMAT) throw new ImportError('This is not an Orden Pass export.')

@@ -15,15 +15,7 @@ function grantFor(id: string, name: string): Grant {
     id,
     name,
     client: name,
-    scopes: [
-      'context',
-      'notes.read',
-      'notes.write',
-      'tree',
-      'workspace',
-      'browser',
-      'browser.reader',
-    ],
+    scopes: ['context', 'notes.read', 'notes.write', 'tree', 'workspace', 'browser', 'browser.reader'],
     spaces: 'all',
     sites: {},
     scripts: [],
@@ -147,8 +139,7 @@ export class FakeCrate implements Source {
     const again = this.overview.stopped
     this.overview.stopped = true
     if (again) {
-      for (const [agent, tab] of this.overview.tabs)
-        this.emit({ kind: 'closed', agent, id: tab.id })
+      for (const [agent, tab] of this.overview.tabs) this.emit({ kind: 'closed', agent, id: tab.id })
       this.overview.tabs = []
     }
     this.emit({ kind: 'stopped', closed: again })

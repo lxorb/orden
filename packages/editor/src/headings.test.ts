@@ -7,14 +7,7 @@ describe('which nodes are headings', () => {
   })
 
   test('nothing else is one', () => {
-    for (const name of [
-      'Paragraph',
-      'ATXHeading7',
-      'ATXHeading',
-      'SetextHeading1',
-      'SetextHeading2',
-      'Heading1',
-    ]) {
+    for (const name of ['Paragraph', 'ATXHeading7', 'ATXHeading', 'SetextHeading1', 'SetextHeading2', 'Heading1']) {
       expect(headingLevel(name), name).toBeNull()
     }
   })

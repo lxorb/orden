@@ -66,11 +66,7 @@
     said = null
     if (server && made) {
       const warning = warningOf(running)
-      if (
-        warning &&
-        !(await prompt.confirm({ title: warning, confirmLabel: 'Continue', danger: true }))
-      )
-        return
+      if (warning && !(await prompt.confirm({ title: warning, confirmLabel: 'Continue', danger: true }))) return
       const asked = askedOf(server, pick, offers.currency)
       if (!(await prompt.confirm({ ...asked, confirmLabel: 'Resize' }))) return
     }
@@ -130,9 +126,7 @@
           {:else if blocked}
             <span class="hint">{blocked}</span>
           {:else}
-            <button class="orden-chip" disabled={busy} onclick={() => void use(pick)}
-              >{made ? 'Resize' : 'Use'}</button
-            >
+            <button class="orden-chip" disabled={busy} onclick={() => void use(pick)}>{made ? 'Resize' : 'Use'}</button>
           {/if}
         </div>
       </div>

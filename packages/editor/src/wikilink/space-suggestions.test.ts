@@ -21,10 +21,7 @@ function stateFor(typed: string, notes: NoteRef[], tags: SpaceTag[] = []): Edito
     EditorState.create({
       doc: typed,
       selection: EditorSelection.cursor(typed.length),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        noteIndex.of(index),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), noteIndex.of(index)],
     }),
   )
 }
@@ -37,18 +34,12 @@ async function linked(typed: string, notes: NoteRef[]): Promise<string[]> {
 
 describe('suggestions across a space with more than forty matches', () => {
   test('[[## offers the heading named exactly what is typed', async () => {
-    const notes = [
-      ...many.map((at) => note(`Days/${at}.md`, [`Plans for day ${at}`])),
-      note('Plan.md', ['Plans']),
-    ]
+    const notes = [...many.map((at) => note(`Days/${at}.md`, [`Plans for day ${at}`])), note('Plan.md', ['Plans'])]
     expect(await linked('[[##Plans', notes)).toContain('Plans')
   })
 
   test('[[^^ offers the block named exactly what is typed', async () => {
-    const notes = [
-      ...many.map((at) => note(`Days/${at}.md`, [], [`step${at}`])),
-      note('S.md', [], ['step']),
-    ]
+    const notes = [...many.map((at) => note(`Days/${at}.md`, [], [`step${at}`])), note('S.md', [], ['step'])]
     expect(await linked('[[^^step', notes)).toContain('^step')
   })
 

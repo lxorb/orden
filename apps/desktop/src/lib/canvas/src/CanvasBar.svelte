@@ -4,17 +4,7 @@
   import CanvasPen from './CanvasPen.svelte'
   import CanvasPlace from './CanvasPlace.svelte'
   import CanvasRub from './CanvasRub.svelte'
-  import {
-    ABOUT,
-    hinted,
-    MARKS,
-    PEN_ICONS,
-    PEN_NAMES,
-    PLACING,
-    RUBBING,
-    type ToolMark,
-    WORDS,
-  } from './glyphs'
+  import { ABOUT, hinted, MARKS, PEN_ICONS, PEN_NAMES, PLACING, RUBBING, type ToolMark, WORDS } from './glyphs'
   import { hand } from './hand.svelte'
   import { DEFAULT_INK, shownInk } from '../../plane/src/api'
   import { nearestDock, pens, upright } from './pens.svelte'
@@ -44,9 +34,7 @@
   } = $props()
 
   const zoomed = $derived(
-    scale !== undefined && onactual && Math.abs(scale - 1) >= 0.005
-      ? `${String(Math.round(scale * 100))}%`
-      : null,
+    scale !== undefined && onactual && Math.abs(scale - 1) >= 0.005 ? `${String(Math.round(scale * 100))}%` : null,
   )
 
   const early = $derived(viewport.device === 'phone')
@@ -117,9 +105,7 @@
     if (!(button instanceof HTMLElement) || !box) return
 
     const own = button.getBoundingClientRect()
-    popAt = upright(pens.dock)
-      ? own.top + own.height / 2 - box.top
-      : own.left + own.width / 2 - box.left
+    popAt = upright(pens.dock) ? own.top + own.height / 2 - box.top : own.left + own.width / 2 - box.left
   }
 
   function toggle(panel: Panel, event: Event) {
@@ -206,9 +192,7 @@
       : { x: event.clientX, y: event.clientY }
 
     const frame = frameOf(cluster)
-    pens.dockTo(
-      nearestDock({ x: middle.x - frame.left, y: middle.y - frame.top }, frame.width, frame.height),
-    )
+    pens.dockTo(nearestDock({ x: middle.x - frame.left, y: middle.y - frame.top }, frame.width, frame.height))
     carried = null
     open = null
   }
@@ -362,9 +346,7 @@
             class="pen"
             class:on={out}
             class:deeper={out}
-            title={out
-              ? hinted({ title: PEN_NAMES[one.tool], key: 'canvas.tool.draw' })
-              : PEN_NAMES[one.tool]()}
+            title={out ? hinted({ title: PEN_NAMES[one.tool], key: 'canvas.tool.draw' }) : PEN_NAMES[one.tool]()}
             aria-label={PEN_NAMES[one.tool]()}
             aria-pressed={out}
             style:--ink={shownInk(one.colour)}

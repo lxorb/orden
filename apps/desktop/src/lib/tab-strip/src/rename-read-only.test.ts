@@ -4,8 +4,7 @@ import { memoryStorage } from '../../../../test/disk'
 const readOnly = vi.hoisted(() => new Set<string>())
 vi.mock('../../sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../sharing/src/api')>()),
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 vi.stubGlobal('localStorage', memoryStorage())
@@ -15,10 +14,7 @@ const { NoteDoc, Tab } = await import('../../documents/src/api')
 const { renameFromTab } = await import('./ops')
 
 function terminalAt(path: string) {
-  const note = new NoteDoc(
-    { kind: 'terminal', path, name: 'Shell.term', text: '', dirty: false },
-    () => undefined,
-  )
+  const note = new NoteDoc({ kind: 'terminal', path, name: 'Shell.term', text: '', dirty: false }, () => undefined)
   const tab = new Tab(note, 'pane')
   workspace.tabs = [tab]
   return tab

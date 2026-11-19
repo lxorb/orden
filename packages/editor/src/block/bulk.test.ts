@@ -1,11 +1,6 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { syntaxTree } from '@codemirror/language'
-import {
-  EditorSelection,
-  EditorState,
-  type Extension,
-  type TransactionSpec,
-} from '@codemirror/state'
+import { EditorSelection, EditorState, type Extension, type TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { blockIds } from '@orden/markdown/links'
 import { describe, expect, test } from 'vitest'
@@ -45,10 +40,7 @@ function viewOf(doc: string, from: number, to = from, extra: Extension[] = []) {
     EditorState.create({
       doc,
       selection: EditorSelection.range(from, to),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        ...extra,
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), ...extra],
     }),
   )
 
@@ -248,9 +240,7 @@ describe('a link to several blocks', () => {
     const at = table.indexOf('  | a')
     const second = viewOf(table, at, at)
     const [named] = blockTargets(second.view, at)
-    expect(second.said()).toBe(
-      table.replace('2 |\n- Next', `2 |\n\n  ^${named?.slice(2) ?? ''}\n\n- Next`),
-    )
+    expect(second.said()).toBe(table.replace('2 |\n- Next', `2 |\n\n  ^${named?.slice(2) ?? ''}\n\n- Next`))
     expect(named).toMatch(/^#\^\w+$/)
   })
 
@@ -362,11 +352,7 @@ describe('a link to a block', () => {
       { target: '#^abc123', said: 'a\n\n```\ncode\n```\n\n^abc123\n\nb\n' },
       'code',
     ],
-    [
-      '---\ntitle: x\n---\n\nb\n',
-      { target: undefined, said: '---\ntitle: x\n---\n\nb\n' },
-      'title',
-    ],
+    ['---\ntitle: x\n---\n\nb\n', { target: undefined, said: '---\ntitle: x\n---\n\nb\n' }, 'title'],
   ])('%j', (input, wanted, extra) => expect(named(input, extra)).toEqual(wanted))
 
   test('an item with children takes it on its own line', () => {
@@ -385,11 +371,7 @@ describe('naming a block in old notes and open ones', () => {
 
   test.each([
     ['a\n\n```\nx\n', { target: undefined, said: 'a\n\n```\nx\n' }, 'x'],
-    [
-      'a\n\n```\nx\n``` ^abc123\n\nb\n',
-      { target: '#^abc123', said: 'a\n\n```\nx\n``` ^abc123\n\nb\n' },
-      'x',
-    ],
+    ['a\n\n```\nx\n``` ^abc123\n\nb\n', { target: '#^abc123', said: 'a\n\n```\nx\n``` ^abc123\n\nb\n' }, 'x'],
     ['para\n\n^have\n\nb\n', { target: '#^have', said: 'para\n\n^have\n\nb\n' }, 'para'],
   ])('%j', (input, wanted, extra) => expect(named(input, extra)).toEqual(wanted))
 
@@ -403,14 +385,11 @@ describe('a line with a rule under it', () => {
   test.each([
     ['heading2', '## Title\n---\n\nb\n'],
     ['bullet', '- Title\n---\n\nb\n'],
-  ] as const)(
-    'turned into %s keeps its rule, as no heading is written with one',
-    (shape, wanted) => {
-      const { view, said } = viewOf('Title\n---\n\nb\n', 0)
-      expect(turnBlocksInto(view, 0, shape)).toBe(true)
-      expect(said()).toBe(wanted)
-    },
-  )
+  ] as const)('turned into %s keeps its rule, as no heading is written with one', (shape, wanted) => {
+    const { view, said } = viewOf('Title\n---\n\nb\n', 0)
+    expect(turnBlocksInto(view, 0, shape)).toBe(true)
+    expect(said()).toBe(wanted)
+  })
 })
 
 describe('turning a block of several lines into a list', () => {

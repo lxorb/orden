@@ -1,8 +1,5 @@
 interface HeldDatabase {
-  transaction(
-    stores: string | readonly string[],
-    mode?: IDBTransactionMode,
-  ): Promise<IDBTransaction>
+  transaction(stores: string | readonly string[], mode?: IDBTransactionMode): Promise<IDBTransaction>
   close(): void
 }
 

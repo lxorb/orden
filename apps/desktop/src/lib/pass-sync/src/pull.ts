@@ -1,17 +1,5 @@
-import {
-  openItem,
-  openVault,
-  sealedRevOf,
-  sealItem,
-  sealVersion,
-  unwrapVaultKey,
-} from '@orden/pass/keys'
-import type {
-  Accepted,
-  Changes,
-  ItemRow as WireItem,
-  VaultRow as WireVault,
-} from '@orden/pass/wire'
+import { openItem, openVault, sealedRevOf, sealItem, sealVersion, unwrapVaultKey } from '@orden/pass/keys'
+import type { Accepted, Changes, ItemRow as WireItem, VaultRow as WireVault } from '@orden/pass/wire'
 import type { Change, ItemRow, VaultRow, VersionRow } from './local'
 import { KEPT_AFTER_DELETE } from './local'
 import { rekeyed } from './rekey'
@@ -19,13 +7,7 @@ import { itemOf, vaultOf, type Held, type HeldVault } from './rows'
 import { nothingShown, isShown, type Shown } from './shown'
 import type { SyncWorld } from './sync-world'
 import type { DeviceRows } from './synced'
-import {
-  keepAccountKeyring,
-  keepInvites,
-  keepItemBase,
-  keepKeyringBase,
-  keepVaultBase,
-} from './synced'
+import { keepAccountKeyring, keepInvites, keepItemBase, keepKeyringBase, keepVaultBase } from './synced'
 import type { TrustReason } from './trust-problem'
 import { keptPin, vaultDistrust } from './vault-trust'
 
@@ -57,12 +39,7 @@ function sameContent(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
 }
 
-function deviceVaultOf(
-  row: WireVault,
-  key: string,
-  pub: string,
-  accepted: Accepted | null,
-): VaultRow {
+function deviceVaultOf(row: WireVault, key: string, pub: string, accepted: Accepted | null): VaultRow {
   return {
     id: row.id,
     rev: row.rev,
@@ -108,8 +85,7 @@ async function resealed(
   held: Held,
 ): Promise<ItemRow[]> {
   const waiting = (await rows.items()).filter(
-    (one) =>
-      one.vault === vault && one.pending && !one.deleted && one.keyVersion < to.row.keyVersion,
+    (one) => one.vault === vault && one.pending && !one.deleted && one.keyVersion < to.row.keyVersion,
   )
   const made: ItemRow[] = []
   for (const one of waiting) {
@@ -145,11 +121,7 @@ async function versionsRekeyed(
   return made
 }
 
-async function appliedVault(
-  doing: Applying,
-  row: WireVault,
-  local: VaultRow | undefined,
-): Promise<Pulled> {
+async function appliedVault(doing: Applying, row: WireVault, local: VaultRow | undefined): Promise<Pulled> {
   const { rows } = doing.world
   if (row.deleted) {
     if (local && !(local.deleted && !local.pending)) await goneVault(doing, local)
@@ -176,8 +148,7 @@ async function appliedVault(
       distrusted(doing, row.id, null, local ? 'swapped' : 'unasked')
       return 'pulled'
     }
-    const problem =
-      key !== null && renewed ? await vaultDistrust(doing.me, row, key, local, before?.key) : null
+    const problem = key !== null && renewed ? await vaultDistrust(doing.me, row, key, local, before?.key) : null
     if (problem) {
       distrusted(doing, row.id, null, problem)
       return 'pulled'
@@ -205,12 +176,7 @@ async function appliedVault(
   return 'pulled'
 }
 
-async function versionOfOld(
-  doing: Applying,
-  held: Held,
-  local: ItemRow,
-  row: WireItem,
-): Promise<VersionRow[]> {
+async function versionOfOld(doing: Applying, held: Held, local: ItemRow, row: WireItem): Promise<VersionRow[]> {
   const box = held.vaults.get(local.vault)
   if (!box || local.deleted || local.rev === row.rev) return []
   const old = doing.was.get(local.vault)
@@ -359,11 +325,7 @@ export async function appliedChanges(
   return { pulled: 'pulled', fresh: since > 0 ? doing.fresh : [] }
 }
 
-export async function appliedItems(
-  world: SyncWorld,
-  held: Held | null,
-  items: readonly WireItem[],
-): Promise<void> {
+export async function appliedItems(world: SyncWorld, held: Held | null, items: readonly WireItem[]): Promise<void> {
   const doing = await applying(world, held)
   for (const row of items) await appliedItem(doing, row)
   await finished(doing)

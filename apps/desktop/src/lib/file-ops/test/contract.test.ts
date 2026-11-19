@@ -8,9 +8,7 @@ const SRC = join(import.meta.dirname, '../src')
 
 test('the module stands on its own reaches no app module but the platform', () => {
   const reached = ['api.ts', 'landing.ts'].flatMap((name) =>
-    [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.\.[^']*)'/g)].map(
-      (found) => found[1],
-    ),
+    [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.\.[^']*)'/g)].map((found) => found[1]),
   )
   expect([...new Set(reached)]).toEqual(['../../platform/src/api'])
 })

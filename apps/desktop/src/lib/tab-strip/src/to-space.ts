@@ -1,21 +1,12 @@
 import type { MenuEntry } from '../../ui-kit/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import type { Tab } from '../../documents/src/api'
-import {
-  mayCarry,
-  movingOf,
-  type Space,
-  spaceMoving,
-  spacesFor,
-  workspace,
-} from '../../workspace/src/api'
+import { mayCarry, movingOf, type Space, spaceMoving, spacesFor, workspace } from '../../workspace/src/api'
 
 const tabsOf = (ids: readonly string[]) => workspace.tabs.filter((one) => ids.includes(one.id))
 
 const spacesOfMoving = (moving: Parameters<typeof spacesFor>[0]): Space[] =>
-  spacesFor(moving, workspace, canWriteAt, mayCarry).filter(
-    (one) => !workspace.archivedSpaces.has(one.root),
-  )
+  spacesFor(moving, workspace, canWriteAt, mayCarry).filter((one) => !workspace.archivedSpaces.has(one.root))
 
 export const spacesOf = (tabs: readonly Tab[]) => spacesOfMoving(tabs.map(movingOf))
 
@@ -55,8 +46,7 @@ export function spaceEntry(tabs: readonly Tab[]): MenuEntry[] {
       label: 'Move to space',
       asks: true,
       run: () => void whichSpace(spaces).then((space) => space && move(space)),
-      more: () =>
-        Promise.resolve(spaces.map((one) => ({ label: one.name, run: () => move(one.id) }))),
+      more: () => Promise.resolve(spaces.map((one) => ({ label: one.name, run: () => move(one.id) }))),
     },
   ]
 }

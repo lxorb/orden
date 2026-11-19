@@ -12,16 +12,7 @@ import {
 } from '../../ui-kit/src/api'
 import { knownPreset, type PresetId, presetKeys } from './preset-ids'
 import type { Preset } from './presets'
-import {
-  without,
-  isRecord,
-  heardElsewhere,
-  keep,
-  keepJson,
-  stored,
-  storedText,
-  isNative,
-} from '../../platform/src/api'
+import { without, isRecord, heardElsewhere, keep, keepJson, stored, storedText, isNative } from '../../platform/src/api'
 import {
   type AppContext,
   BROWSER_KEYS,
@@ -79,9 +70,7 @@ class Shortcuts {
   restore() {
     this.unkept = false
     this.overrides = usable(stored(STORAGE_KEY))
-    this.preset =
-      knownPreset(storedText(PRESET_KEY)) ??
-      (Object.keys(this.overrides).length ? 'custom' : 'default')
+    this.preset = knownPreset(storedText(PRESET_KEY)) ?? (Object.keys(this.overrides).length ? 'custom' : 'default')
     for (const view of this.views) setShortcutKeys(view, this.overrides)
   }
 
@@ -152,13 +141,11 @@ class Shortcuts {
     if (!key) return null
 
     const taken = (list: string[]) => list.some((one) => sameCombination(one, key, this.platform))
-    if (taken(SYSTEM_KEYS[this.platform]))
-      return 'Your system takes this key before the app sees it.'
+    if (taken(SYSTEM_KEYS[this.platform])) return 'Your system takes this key before the app sees it.'
     const said = key.trim().toLowerCase().split(/\s+/).join(' ')
     if (DICTATION_TAPS[this.platform].some((one) => one.toLowerCase() === said))
       return 'macOS can start dictation with this key too.'
-    if (!isNative && taken(BROWSER_KEYS))
-      return 'Your browser takes this key before the app sees it.'
+    if (!isNative && taken(BROWSER_KEYS)) return 'Your browser takes this key before the app sees it.'
 
     return null
   }

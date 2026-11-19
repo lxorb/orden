@@ -75,10 +75,7 @@ export class NoWord extends Error {
   override readonly message = 'the phone app is still starting; try again in a moment'
 }
 
-export function answer(
-  name: string,
-  fn: ((text: string) => void) | (() => void) | undefined,
-): void {
+export function answer(name: string, fn: ((text: string) => void) | (() => void) | undefined): void {
   if (typeof window === 'undefined') return
   Object.assign(window, { [name]: fn })
 }

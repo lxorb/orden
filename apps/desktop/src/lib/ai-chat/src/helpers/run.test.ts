@@ -75,11 +75,7 @@ describe('a helper asked for through the endpoint', () => {
   })
 
   test('is not started once the deadline has passed while the models were being listed', async () => {
-    const answering = runAgent(
-      { prompt: 'Find the herons.' },
-      { thread: null, mode: 'auto' },
-      deadlineIn(5000),
-    )
+    const answering = runAgent({ prompt: 'Find the herons.' }, { thread: null, mode: 'auto' }, deadlineIn(5000))
     await vi.advanceTimersByTimeAsync(ENDPOINT_PATIENCE)
 
     expect(await answering).toMatchObject({ refused: expect.stringContaining('time to answer') })
@@ -104,11 +100,7 @@ describe('a long-lived deadline', () => {
       remove(...args)
     }
 
-    const answering = runAgent(
-      { prompt: 'Find the herons.' },
-      { thread: null, mode: 'auto' },
-      signal,
-    )
+    const answering = runAgent({ prompt: 'Find the herons.' }, { thread: null, mode: 'auto' }, signal)
     await vi.advanceTimersByTimeAsync(2 * ENDPOINT_PATIENCE)
     await answering
 

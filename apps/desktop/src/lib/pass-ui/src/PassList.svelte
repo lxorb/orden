@@ -38,9 +38,7 @@
 
   const view = $derived(ui.view)
   const trash = $derived(view.scope.kind === 'trash' && heading === null)
-  const source = $derived(
-    heading === null ? pass.items : pass.items.filter((one) => heading.ids.includes(one.id)),
-  )
+  const source = $derived(heading === null ? pass.items : pass.items.filter((one) => heading.ids.includes(one.id)))
   const shown = $derived(
     listed(
       source,
@@ -86,9 +84,7 @@
 
   function pressed(item: Item) {
     if (picked !== null) {
-      ui.picked = pickedSet.has(item.id)
-        ? picked.filter((one) => one !== item.id)
-        : [...picked, item.id]
+      ui.picked = pickedSet.has(item.id) ? picked.filter((one) => one !== item.id) : [...picked, item.id]
       return
     }
     void ui.openItem(item.id)
@@ -141,12 +137,8 @@
 </script>
 
 {#snippet act(label: string, run: () => void, danger = false)}
-  <button
-    class="orden-button is-quiet"
-    class:danger
-    type="button"
-    disabled={!picked?.length}
-    onclick={run}>{label}</button
+  <button class="orden-button is-quiet" class:danger type="button" disabled={!picked?.length} onclick={run}
+    >{label}</button
   >
 {/snippet}
 
@@ -197,9 +189,7 @@
         {@render act('Move', () => (ui.sheet = { kind: 'move', ids: picked }))}
         {@render act('Trash', () => void unpick(pass.trash(picked)), true)}
       {/if}
-      <button class="orden-button is-quiet is-soft" type="button" onclick={() => (ui.picked = null)}
-        >Done</button
-      >
+      <button class="orden-button is-quiet is-soft" type="button" onclick={() => (ui.picked = null)}>Done</button>
     </div>
   {:else}
     <div class="bar">
@@ -220,10 +210,8 @@
       </button>
       <span class="gap"></span>
       {#if trash && rows.length}
-        <button
-          class="orden-chip is-quiet is-shrinkable danger"
-          type="button"
-          onclick={() => void emptyTrash()}>Empty trash</button
+        <button class="orden-chip is-quiet is-shrinkable danger" type="button" onclick={() => void emptyTrash()}
+          >Empty trash</button
         >
       {/if}
       {#if rows.length && heading === null}
@@ -293,9 +281,7 @@
           <p>Nothing here</p>
         {:else}
           <p>Nothing here yet</p>
-          <button class="orden-button" type="button" onclick={() => void ui.newItem(blank('login'))}
-            >New login</button
-          >
+          <button class="orden-button" type="button" onclick={() => void ui.newItem(blank('login'))}>New login</button>
         {/if}
       </div>
     {/each}

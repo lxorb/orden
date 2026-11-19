@@ -86,13 +86,7 @@ export function splitAt(text: string, at: number, fallback: string, named?: stri
   return { kept, taken: `${taken}\n`, name }
 }
 
-export function extracted(
-  text: string,
-  from: number,
-  to: number,
-  fallback: string,
-  named?: string,
-): Split | null {
+export function extracted(text: string, from: number, to: number, fallback: string, named?: string): Split | null {
   const chosen = text.slice(from, to)
   const taken = chosen.trim()
   if (!taken) return null
@@ -109,8 +103,7 @@ export function extracted(
 
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 
-const noteNamed = (name: string): string =>
-  isTabFile(name) || MARKDOWN.test(name) ? `${name}.md` : name
+const noteNamed = (name: string): string => (isTabFile(name) || MARKDOWN.test(name) ? `${name}.md` : name)
 
 const SENTENCE_END = /[.!?。！？]+$/u
 
@@ -120,5 +113,4 @@ function oneLine(text: string): string {
   return words.length > 0 && words.length <= 60 ? words : ''
 }
 
-const lineStart = (text: string, at: number): number =>
-  text.lastIndexOf('\n', Math.max(0, at - 1)) + 1
+const lineStart = (text: string, at: number): number => text.lastIndexOf('\n', Math.max(0, at - 1)) + 1

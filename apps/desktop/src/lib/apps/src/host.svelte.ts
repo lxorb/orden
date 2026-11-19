@@ -51,12 +51,7 @@ export interface Said {
 }
 
 export interface Runner {
-  start(
-    key: string,
-    file: AppFile,
-    view: View,
-    said: (what: Said) => void,
-  ): Promise<NotStarted | null>
+  start(key: string, file: AppFile, view: View, said: (what: Said) => void): Promise<NotStarted | null>
   watch(key: string, said: (what: Said) => void): Promise<boolean>
   stop(key: string): Promise<void>
   signal(key: string, data: string): Promise<string | null>
@@ -135,9 +130,7 @@ class Hosting {
   }
 
   private bye(): void {
-    this.signalling = this.signalling
-      .then(() => this.runner.signal(this.key, BYE))
-      .catch(() => undefined)
+    this.signalling = this.signalling.then(() => this.runner.signal(this.key, BYE)).catch(() => undefined)
   }
 
   private async start(): Promise<void> {
@@ -213,13 +206,7 @@ export function host(world: HostWorld, follow: (changed: () => void) => () => vo
       if (file?.host !== device || over()) return
       const id = await world.idOf(path)
       if (!id || over() || hosting.has(path)) return
-      const one = new Hosting(
-        id,
-        file,
-        world.runner,
-        (heard) => world.link(id, heard),
-        world.cannot,
-      )
+      const one = new Hosting(id, file, world.runner, (heard) => world.link(id, heard), world.cannot)
       hosting.set(path, { id, one })
       one.open()
     } finally {
@@ -286,19 +273,14 @@ async function appWorld(): Promise<{
   world: HostWorld
   follow: (changed: () => void) => () => void
 }> {
-  const [
-    { account, ApiError, BASE, request },
-    { deviceId },
-    { workspace },
-    native,
-    { platform, invoke },
-  ] = await Promise.all([
-    import('../../accounts/src/api'),
-    import('../../sync-client/src/api'),
-    import('../../workspace/src/api'),
-    import('../../crate/src/api'),
-    import('../../platform/src/api'),
-  ])
+  const [{ account, ApiError, BASE, request }, { deviceId }, { workspace }, native, { platform, invoke }] =
+    await Promise.all([
+      import('../../accounts/src/api'),
+      import('../../sync-client/src/api'),
+      import('../../workspace/src/api'),
+      import('../../crate/src/api'),
+      import('../../platform/src/api'),
+    ])
   const linkWorld: LinkWorld = pageWorld(BASE, () => account.accountToken, deviceId)
 
   const runner: Runner = {
@@ -323,10 +305,8 @@ async function appWorld(): Promise<{
       return native.invoke<boolean>('apps_watch', { key, events }).catch(() => false)
     },
     stop: (key) => native.invoke<undefined>('apps_stop', { key }).catch(() => undefined),
-    signal: (key, data) =>
-      native.invoke<string | null>('apps_signal', { key, data }).catch(() => null),
-    view: (key, view) =>
-      native.invoke<undefined>('apps_view', { key, view }).catch(() => undefined),
+    signal: (key, data) => native.invoke<string | null>('apps_signal', { key, data }).catch(() => null),
+    view: (key, view) => native.invoke<undefined>('apps_view', { key, view }).catch(() => undefined),
   }
 
   void native

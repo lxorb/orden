@@ -113,11 +113,7 @@ interface Paper {
   quality: number | undefined
 }
 
-async function bytesOf(
-  canvas: HTMLCanvasElement,
-  mime: string,
-  quality: number | undefined,
-): Promise<Uint8Array> {
+async function bytesOf(canvas: HTMLCanvasElement, mime: string, quality: number | undefined): Promise<Uint8Array> {
   let picture: Blob | null
 
   try {

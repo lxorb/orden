@@ -43,11 +43,7 @@ export async function keptAttachment(
   }
 }
 
-async function fetchedParts(
-  remote: FileApi,
-  item: Item,
-  attachment: Attachment,
-): Promise<FilePartRow[]> {
+async function fetchedParts(remote: FileApi, item: Item, attachment: Attachment): Promise<FilePartRow[]> {
   const parts = partsOf(attachment.size)
   const rows: FilePartRow[] = []
   for (let part = 0; part < parts; part++) {
@@ -74,12 +70,7 @@ export async function openedAttachment(
   return await openFile(itemKey, item.id, attachment.id, attachment.key, sorted, attachment.size)
 }
 
-export async function forgottenAttachment(
-  rows: QueueRows,
-  vault: string,
-  item: string,
-  file: string,
-): Promise<void> {
+export async function forgottenAttachment(rows: QueueRows, vault: string, item: string, file: string): Promise<void> {
   await dropFileParts(item, file)
   await queuedRemoval(rows, vault, item, file)
 }

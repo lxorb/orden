@@ -60,8 +60,7 @@ beforeAll(() => {
   vi.stubGlobal('Path2D', CountingPath)
 })
 
-const { fillInk, firstSeen, origin, paintLive, paintSketch, strokesFilled } =
-  await import('./paint')
+const { fillInk, firstSeen, origin, paintLive, paintSketch, strokesFilled } = await import('./paint')
 
 function stroke(id: string, x: number, overrides: Partial<InkStroke> = {}): InkStroke {
   return {
@@ -129,11 +128,7 @@ describe('one fill of some strokes', () => {
   })
 
   test('the order kinds first appear in is the plane order', () => {
-    const order = firstSeen([
-      stroke('a', 0, { color: 'red' }),
-      stroke('b', 0),
-      stroke('c', 0, { color: 'red' }),
-    ])
+    const order = firstSeen([stroke('a', 0, { color: 'red' }), stroke('b', 0), stroke('c', 0, { color: 'red' })])
 
     expect([...order.keys()]).toEqual(['pen\nred\n1', 'pen\nink\n1'])
   })

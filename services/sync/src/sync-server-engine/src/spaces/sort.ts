@@ -3,15 +3,7 @@ import { type Env, NOT_AN_OBJECT, objectBody, type Variables } from '../../../sy
 import { writeColumn } from './columns'
 import { atLeast, spaceOf } from './space'
 
-const SORTS = new Set([
-  'name',
-  'name-desc',
-  'modified-desc',
-  'modified-asc',
-  'created-desc',
-  'created-asc',
-  'manual',
-])
+const SORTS = new Set(['name', 'name-desc', 'modified-desc', 'modified-asc', 'created-desc', 'created-asc', 'manual'])
 
 export function readSort(raw: string): string {
   return SORTS.has(raw) ? raw : 'name'

@@ -48,17 +48,11 @@ describe('where a tab may go', () => {
   })
 
   test('tabs from two spaces may go to either', () => {
-    expect(spacesFor([note, terminal], where, anywhere).map((one) => one.id)).toEqual([
-      'work',
-      'home',
-      'uni',
-    ])
+    expect(spacesFor([note, terminal], where, anywhere).map((one) => one.id)).toEqual(['work', 'home', 'uni'])
   })
 
   test('nowhere with one space, or no tab', () => {
-    expect(
-      spacesFor([note], { spaces: spaces.slice(0, 1), activeSpaceId: 'work' }, anywhere),
-    ).toEqual([])
+    expect(spacesFor([note], { spaces: spaces.slice(0, 1), activeSpaceId: 'work' }, anywhere)).toEqual([])
     expect(spacesFor([], where, anywhere)).toEqual([])
   })
 
@@ -70,9 +64,6 @@ describe('where a tab may go', () => {
   test('and a file is not taken out of a space it may not be written in', () => {
     const readOnly = (path: string) => !path.startsWith('/spaces/Work')
     expect(spacesFor([note], where, readOnly)).toEqual([])
-    expect(spacesFor([{ ...draft, home: 'work' }], where, readOnly).map((one) => one.id)).toEqual([
-      'home',
-      'uni',
-    ])
+    expect(spacesFor([{ ...draft, home: 'work' }], where, readOnly).map((one) => one.id)).toEqual(['home', 'uni'])
   })
 })

@@ -43,9 +43,7 @@ describe('eachDue', () => {
 describe('the way back to v1', () => {
   const sending = (refusing: string) => ({
     pass: vi.fn((id: string) =>
-      id === refusing
-        ? Promise.reject(new Refused(403, 'not yours'))
-        : Promise.resolve({ finished: true }),
+      id === refusing ? Promise.reject(new Refused(403, 'not yours')) : Promise.resolve({ finished: true }),
     ),
     waiting: () => false,
   })
@@ -61,15 +59,12 @@ describe('the way back to v1', () => {
       pass: () => Promise.reject(new Error('the disk')),
       waiting: () => false,
     }
-    await expect(sentAll(engine, new Set(['one']), 4, () => Promise.resolve())).rejects.toThrow(
-      'the disk',
-    )
+    await expect(sentAll(engine, new Set(['one']), 4, () => Promise.resolve())).rejects.toThrow('the disk')
     const away = { pass: () => Promise.resolve(null), waiting: () => false }
     expect(await sentAll(away, new Set(['one']), 4, () => Promise.resolve())).toBe(false)
   })
 
-  const refused = (status: number) =>
-    Promise.reject(new ApiError(status, 'no', { error: 'no such space' }))
+  const refused = (status: number) => Promise.reject(new ApiError(status, 'no', { error: 'no such space' }))
 
   test('gone is a refused listing and a list of spaces without it', async () => {
     const { listings, gone } = await reachable(
@@ -113,9 +108,7 @@ describe('the way back to v1', () => {
       pass: () => Promise.reject(new Refused(403, 'request failed (403)', false)),
       waiting: () => false,
     }
-    await expect(
-      sentAll(blocked, new Set(['one']), 4, () => Promise.resolve()),
-    ).rejects.toMatchObject({ status: 403 })
+    await expect(sentAll(blocked, new Set(['one']), 4, () => Promise.resolve())).rejects.toMatchObject({ status: 403 })
 
     await expect(
       reachable(

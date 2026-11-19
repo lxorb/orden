@@ -28,9 +28,7 @@ beforeEach(() => {
 registerSidebarPart({ id: 'tasks', toTab: async () => void asked.push('todos') })
 
 const asTab = (id: 'tasks' | 'outline' | 'links' | 'tree' | 'search') =>
-  panelMenu(id, 'right').find(
-    (one) => one !== null && 'label' in one && one.label === 'Open in new tab',
-  )
+  panelMenu(id, 'right').find((one) => one !== null && 'label' in one && one.label === 'Open in new tab')
 
 describe('a panel as a tab', () => {
   test('its icon’s menu opens it through its sidebar part, first', async () => {
@@ -49,8 +47,6 @@ describe('a panel as a tab', () => {
 
   test('the rows a part adds follow its own', () => {
     const rows = panelMenu('time', 'left', [{ label: 'Reminders', run: () => undefined }])
-    expect(rows.some((one) => one !== null && 'label' in one && one.label === 'Reminders')).toBe(
-      true,
-    )
+    expect(rows.some((one) => one !== null && 'label' in one && one.label === 'Reminders')).toBe(true)
   })
 })

@@ -62,12 +62,7 @@ function space(
 const spelled = (target: LinkWrite): string =>
   `[${target.name}](${target.path ?? ''}|${target.from ?? ''}|${target.fragment ?? ''})`
 
-function state(
-  doc: string,
-  index: NoteIndex,
-  at = doc.length,
-  write?: (target: LinkWrite) => string,
-): EditorState {
+function state(doc: string, index: NoteIndex, at = doc.length, write?: (target: LinkWrite) => string): EditorState {
   return parsed(
     EditorState.create({
       doc,
@@ -87,8 +82,7 @@ async function rowsFor(doc: string, asked: Asked): Promise<CompletionResult | nu
   return await wikilinkCompletions(new CompletionContext(built, doc.length, false))
 }
 
-const labels = (found: CompletionResult | null): string[] =>
-  (found?.options ?? []).map((one) => one.label)
+const labels = (found: CompletionResult | null): string[] => (found?.options ?? []).map((one) => one.label)
 
 const details = (found: CompletionResult | null): (string | undefined)[] =>
   (found?.options ?? []).map((one) => one.detail)
@@ -120,10 +114,7 @@ async function picked(
   return { doc: built.doc.toString(), head: built.selection.main.head }
 }
 
-const SPACE = [
-  note('Plan.md', ['Today', 'The plan for Monday'], ['a1b2c3']),
-  note('ideas/Spark.md', ['Sparks']),
-]
+const SPACE = [note('Plan.md', ['Today', 'The plan for Monday'], ['a1b2c3']), note('ideas/Spark.md', ['Sparks'])]
 
 describe('every heading of the space, behind `[[##`', () => {
   test('offers them all, with the note each is in beside it', async () => {
@@ -249,9 +240,7 @@ describe('every block of the space, behind `[[^^`', () => {
       bodies: { 'Plan.md': 'Setup\n```bash\n# install deps\nnpm i\n```\n' },
     })
 
-    expect((await picked('[[^^install', asked, '# install deps')).doc).toBe(
-      '[[Plan#^from-Planmd-2]]',
-    )
+    expect((await picked('[[^^install', asked, '# install deps')).doc).toBe('[[Plan#^from-Planmd-2]]')
   })
 
   test('names one that has no name yet, through the app, and links that', async () => {
@@ -310,16 +299,12 @@ test('a decomposed name is offered for what a keyboard types', async () => {
 })
 
 describe('every row writes the link the app spells', () => {
-  const ALIASED: NoteRef[] = [
-    { ...note('ideas/Spark.md', ['Sparks'], ['b2c3d4']), aliases: ['The spark'] },
-  ]
+  const ALIASED: NoteRef[] = [{ ...note('ideas/Spark.md', ['Sparks'], ['b2c3d4']), aliases: ['The spark'] }]
 
   test('a note row hands over its name, its path and the note being written in', async () => {
     const asked = space(ALIASED, { path: 'journal/Monday.md' })
 
-    expect((await picked('[[Spa', asked, 'Spark', spelled)).doc).toBe(
-      '[Spark](ideas/Spark.md|journal/Monday.md|)',
-    )
+    expect((await picked('[[Spa', asked, 'Spark', spelled)).doc).toBe('[Spark](ideas/Spark.md|journal/Monday.md|)')
   })
 
   test('a note and a web shortcut that answer to one name are each named so the link reaches it', async () => {
@@ -336,9 +321,7 @@ describe('every row writes the link the app spells', () => {
   test('a note whose name reads as a file a tab opens is named with its .md', async () => {
     const asked = space([note('Report.pdf.md'), note('x/Ideas.canvas.md')], { path: 'One.md' })
 
-    expect((await picked('[[Rep', asked, 'Report.pdf', spelled)).doc).toBe(
-      '[Report.pdf.md](Report.pdf.md|One.md|)',
-    )
+    expect((await picked('[[Rep', asked, 'Report.pdf', spelled)).doc).toBe('[Report.pdf.md](Report.pdf.md|One.md|)')
     expect((await picked('[[Ide', asked, 'Ideas.canvas', spelled)).doc).toBe(
       '[Ideas.canvas.md](x/Ideas.canvas.md|One.md|)',
     )
@@ -371,10 +354,9 @@ describe('every row writes the link the app spells', () => {
   })
 
   test('an alias row whose alias reaches another note links the note it belongs to', async () => {
-    const asked = space(
-      [{ ...note('Projects/Project.md'), aliases: ['Roadmap'] }, note('Roadmap.md')],
-      { path: 'Journal.md' },
-    )
+    const asked = space([{ ...note('Projects/Project.md'), aliases: ['Roadmap'] }, note('Roadmap.md')], {
+      path: 'Journal.md',
+    })
 
     expect((await picked('[[Road', asked, 'Roadmap')).doc).toBe('[[Project|Roadmap]]')
   })
@@ -573,9 +555,7 @@ describe('a link picked into front matter', () => {
 
   test('is left as it is when it is a wikilink, or in the body', async () => {
     const doc = '---\nup: [[Pl\n---\n'
-    expect(await pickedAt(doc, doc.indexOf('[[Pl') + 4, asked(), 'Plan')).toBe(
-      '---\nup: [[Plan]]\n---\n',
-    )
+    expect(await pickedAt(doc, doc.indexOf('[[Pl') + 4, asked(), 'Plan')).toBe('---\nup: [[Plan]]\n---\n')
     const body = '---\na: 1\n---\nup: [[Pl\n'
     expect(await pickedAt(body, body.length - 1, asked(), 'Plan', markdown)).toBe(
       '---\na: 1\n---\nup: [Plan](Plan.md)\n',
@@ -589,16 +569,12 @@ describe('a name picked inside a link already written', () => {
 
   test('keeps the words it is shown as', async () => {
     const doc = 'see [[Pl|the plan]] end'
-    expect(await pickedAt(doc, caretAfter(doc, '[[Pl'), asked(), 'Plan')).toBe(
-      'see [[Plan|the plan]] end',
-    )
+    expect(await pickedAt(doc, caretAfter(doc, '[[Pl'), asked(), 'Plan')).toBe('see [[Plan|the plan]] end')
   })
 
   test('keeps the heading it names', async () => {
     const doc = 'see [[Pl#Goals]] end'
-    expect(await pickedAt(doc, caretAfter(doc, '[[Pl'), asked(), 'Plan')).toBe(
-      'see [[Plan#Goals]] end',
-    )
+    expect(await pickedAt(doc, caretAfter(doc, '[[Pl'), asked(), 'Plan')).toBe('see [[Plan#Goals]] end')
   })
 
   test('takes the place of the rest of the old name', async () => {
@@ -608,9 +584,7 @@ describe('a name picked inside a link already written', () => {
 
   test('a heading picked keeps the words the link is shown as', async () => {
     const doc = '[[Plan#Go|alias]]'
-    expect(await pickedAt(doc, caretAfter(doc, '#Go'), asked(), 'Goals')).toBe(
-      '[[Plan#Goals|alias]]',
-    )
+    expect(await pickedAt(doc, caretAfter(doc, '#Go'), asked(), 'Goals')).toBe('[[Plan#Goals|alias]]')
   })
 })
 
@@ -641,10 +615,7 @@ describe('a name two notes share, picked', () => {
 describe('a row after an alias and a hash', () => {
   test('carries the name that says which file, for the shortest markdown link', async () => {
     const asked = space(
-      [
-        { ...note('A/Project.md', ['Goals']) },
-        { ...note('B/Project.md', ['Goals']), aliases: ['Roadmap'] },
-      ],
+      [{ ...note('A/Project.md', ['Goals']) }, { ...note('B/Project.md', ['Goals']), aliases: ['Roadmap'] }],
       { path: 'A/Journal.md' },
     )
     const carried = (target: LinkWrite) => `${target.name}|${target.file ?? ''}`
@@ -707,8 +678,7 @@ describe('naming a block in the note being written, as the note is written', () 
     let start = 0
     while (start < was.length && was[start] === now[start]) start++
     let end = 0
-    while (end < was.length - start && was[was.length - 1 - end] === now[now.length - 1 - end])
-      end++
+    while (end < was.length - start && was[was.length - 1 - end] === now[now.length - 1 - end]) end++
     return { from: start, to: was.length - end, insert: now.slice(start, now.length - end) }
   }
 
@@ -759,15 +729,11 @@ describe('naming a block in the note being written, as the note is written', () 
   })
 
   test('links a block the link sits inside', async () => {
-    expect(await picked('one\ntwo [[#^\nthree', 'one', 'one\ntwo [[#^'.length)).toBe(
-      'one\ntwo [[#^abc]]\nthree ^abc',
-    )
+    expect(await picked('one\ntwo [[#^\nthree', 'one', 'one\ntwo [[#^'.length)).toBe('one\ntwo [[#^abc]]\nthree ^abc')
   })
 
   test('links the block from the second of two links to blocks on one line', async () => {
-    expect(await picked('second block\n\n[[#^a]] [[#^', 'second block')).toBe(
-      'second block ^abc\n\n[[#^a]] [[#^abc]]',
-    )
+    expect(await picked('second block\n\n[[#^a]] [[#^', 'second block')).toBe('second block ^abc\n\n[[#^a]] [[#^abc]]')
   })
 
   test('keeps what the reader typed while the block was named', async () => {
@@ -789,10 +755,7 @@ describe('picking a row while mending a link already written', () => {
       EditorState.create({
         doc,
         selection: EditorSelection.cursor(at),
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          noteIndex.of(index),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), noteIndex.of(index)],
       }),
     )
     const view = {
@@ -819,9 +782,7 @@ describe('picking a row while mending a link already written', () => {
   })
 
   test('a heading row keeps the words the link shows', async () => {
-    expect(await mended('see [[Plan#Hea|the plan]] now', 14, 'Head')).toBe(
-      'see [[Plan#Head|the plan]] now',
-    )
+    expect(await mended('see [[Plan#Hea|the plan]] now', 14, 'Head')).toBe('see [[Plan#Head|the plan]] now')
   })
 
   test('leaves the next link on the line alone', async () => {

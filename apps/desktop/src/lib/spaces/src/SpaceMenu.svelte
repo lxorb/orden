@@ -2,15 +2,7 @@
   import type { SharedItem } from '../../accounts/src/api'
   import { fileMark } from '../../marks/src/api'
   import { FileMark } from '../../marks/src/api'
-  import {
-    arrive,
-    letGo,
-    LIST_STEP,
-    longPress,
-    menu,
-    roving,
-    SharedMark,
-  } from '../../ui-kit/src/api'
+  import { arrive, letGo, LIST_STEP, longPress, menu, roving, SharedMark } from '../../ui-kit/src/api'
   import RowMore from './RowMore.svelte'
   import { newSpace, spaceMenu } from './api'
   import SpaceList from './SpaceList.svelte'
@@ -47,9 +39,7 @@
     )
   }
 
-  const archived = $derived(
-    workspace.spaces.filter((one) => workspace.archivedSpaces.has(one.root)),
-  )
+  const archived = $derived(workspace.spaces.filter((one) => workspace.archivedSpaces.has(one.root)))
 
   async function bringBack(space: Space) {
     close()

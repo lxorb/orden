@@ -78,10 +78,7 @@ function escapeAt(text: string, at: number, midLine: boolean): string {
   }
 }
 
-export function escapeText(
-  text: string,
-  { addresses = false }: { addresses?: boolean } = {},
-): string {
+export function escapeText(text: string, { addresses = false }: { addresses?: boolean } = {}): string {
   const out: string[] = []
   const numbered = A_NUMBER.exec(text)
   const block = numbered ? null : A_BLOCK.exec(text)
@@ -233,16 +230,14 @@ export function editedWords(line: string, edited: string): string {
   const most = Math.min(shown.length, edited.length)
   while (head < most && shown[head] === edited[head]) head++
   let tail = 0
-  while (tail < most - head && shown[shown.length - 1 - tail] === edited[edited.length - 1 - tail])
-    tail++
+  while (tail < most - head && shown[shown.length - 1 - tail] === edited[edited.length - 1 - tail]) tail++
 
   const typed = typedChars(edited)
   const written = (keepHead: number, keepTail: number) => {
     const out: string[] = []
     for (let at = 0; at < edited.length; at++) {
       if (at < keepHead) out.push(was[at]?.written ?? '')
-      else if (at >= edited.length - keepTail)
-        out.push(was[shown.length - (edited.length - at)]?.written ?? '')
+      else if (at >= edited.length - keepTail) out.push(was[shown.length - (edited.length - at)]?.written ?? '')
       else out.push(typed[at] ?? '')
     }
     return out.join('')
@@ -266,9 +261,7 @@ export const heldEscapes = (text: string): string =>
     .map((one) =>
       one.code
         ? one.text
-        : one.text.replace(AN_ESCAPE, (_, char: string) =>
-            String.fromCharCode(HELD + char.charCodeAt(0)),
-          ),
+        : one.text.replace(AN_ESCAPE, (_, char: string) => String.fromCharCode(HELD + char.charCodeAt(0))),
     )
     .join('')
 

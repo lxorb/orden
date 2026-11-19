@@ -26,8 +26,7 @@ function readSite(value: unknown): HeldSite | null {
     label: isString(value.label) ? value.label : '',
     seen: value.seen,
     hash: isString(value.hash) ? value.hash : null,
-    picture:
-      isString(value.picture) && value.picture.startsWith('data:image/') ? value.picture : null,
+    picture: isString(value.picture) && value.picture.startsWith('data:image/') ? value.picture : null,
   }
 }
 
@@ -92,11 +91,7 @@ class SiteIcons {
       if (one.picture !== null && !(await draws(one.picture))) broken.push(one.site)
     }
     if (!broken.length) return
-    this.write(
-      this.list.map((one) =>
-        broken.includes(one.site) ? { ...one, hash: null, picture: null } : one,
-      ),
-    )
+    this.write(this.list.map((one) => (broken.includes(one.site) ? { ...one, hash: null, picture: null } : one)))
   }
 
   private told = new Map<string, string>()

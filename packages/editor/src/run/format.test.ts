@@ -88,9 +88,7 @@ describe('formatting what the sandbox says', () => {
 
   test('needs nothing from outside itself', () => {
     // eslint-disable-next-line @typescript-eslint/no-implied-eval -- evaluating the embedded copy in an empty scope is the whole test
-    const build = new Function(
-      `return (${String(formatRunValues)})`,
-    ) as () => typeof formatRunValues
+    const build = new Function(`return (${String(formatRunValues)})`) as () => typeof formatRunValues
     const alone = build()
     expect(alone([{ a: [1, 'two'] }])).toBe("{ a: [1, 'two'] }")
     expect(alone([new Error('boom')])).toBe('Error: boom')

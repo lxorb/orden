@@ -71,10 +71,7 @@ describe('what a space offers', () => {
   })
 
   test('but not for a space somebody else shared', () => {
-    const nudge = moduleBody(
-      read('lib/spaces/src/api.ts'),
-      'function canNudge(space: Space, by: -1 | 1): boolean',
-    )
+    const nudge = moduleBody(read('lib/spaces/src/api.ts'), 'function canNudge(space: Space, by: -1 | 1): boolean')
 
     expect(nudge).toContain("roleOf(space.root) !== 'owner'")
   })
@@ -159,9 +156,7 @@ describe('what a row of the file list offers', () => {
   test('and the way back to no icon is in the picker, not the menu', () => {
     expect(entries).not.toContain('Remove icon')
     const picker = read('lib/icon-picker/src/IconPicker.svelte')
-    expect(picker).toMatch(
-      /\(worn !== null \|\| tint !== null\)[\s\S]{0,80}onclick=\{remove\}>Remove icon</,
-    )
+    expect(picker).toMatch(/\(worn !== null \|\| tint !== null\)[\s\S]{0,80}onclick=\{remove\}>Remove icon</)
     expect(picker).toMatch(/function remove\(\)[\s\S]{0,120}wear\(asked, null, null\)/)
   })
 
@@ -172,9 +167,7 @@ describe('what a row of the file list offers', () => {
 
   test('on the note the row is drawn as, whichever that is', () => {
     expect(row).toContain('const marked = own ?? entry')
-    expect(body(tree, 'function markPath(entry: Entry, own: Entry | null)')).toContain(
-      'own?.path ?? entry.path',
-    )
+    expect(body(tree, 'function markPath(entry: Entry, own: Entry | null)')).toContain('own?.path ?? entry.path')
   })
 
   test('and deleting asks first where something is nested under it', () => {
@@ -193,10 +186,7 @@ describe('what a row of the file list offers', () => {
   })
 
   test('and the menu is the row menu, fetched by the press', () => {
-    const door = tree.slice(
-      tree.indexOf('function showRowMenu('),
-      tree.indexOf('function openRowAt('),
-    )
+    const door = tree.slice(tree.indexOf('function showRowMenu('), tree.indexOf('function openRowAt('))
 
     expect(door).toContain('rowMenus().then(({ rowMenu })')
     expect(door).toContain('menu.show(event, rowMenu(entry), { title })')
@@ -211,12 +201,8 @@ describe("what the strip's empty stretch offers", () => {
   test('the menu is the strip menu, fetched by the press', () => {
     expect(door()).toContain('here(stripMenus())')
     expect(door()).toContain('menu.show(event, stripMenu(paneId))')
-    expect(read('lib/features.ts')).toContain(
-      "import('./tab-strip/src/api').then((one) => one.stripMenus())",
-    )
-    expect(read('lib/tab-strip/src/shell-parts.ts')).toContain(
-      "stripMenus = () => import('./strip-menu')",
-    )
+    expect(read('lib/features.ts')).toContain("import('./tab-strip/src/api').then((one) => one.stripMenus())")
+    expect(read('lib/tab-strip/src/shell-parts.ts')).toContain("stripMenus = () => import('./strip-menu')")
   })
 
   test('asked for on the strip, and only where nothing else is under the point', () => {
@@ -233,10 +219,7 @@ describe("what the strip's empty stretch offers", () => {
 describe('what the plus in the tab strip offers', () => {
   const tabs = read('lib/tab-strip/src/Tabs.svelte')
 
-  const plus = tabs.slice(
-    tabs.indexOf('class="new"'),
-    tabs.indexOf('</button>', tabs.indexOf('class="new"')),
-  )
+  const plus = tabs.slice(tabs.indexOf('class="new"'), tabs.indexOf('</button>', tabs.indexOf('class="new"')))
 
   test('a new tab, as Ctrl+T makes one, and no list of its own', () => {
     expect(plus).toContain('workspace.newTab(paneId)')

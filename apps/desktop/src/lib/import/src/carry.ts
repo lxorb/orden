@@ -18,10 +18,7 @@ export const NOTION: Carried = {
   keys: 'notion',
 }
 
-export async function carriedBy(
-  format: FormatId,
-  sources: readonly Source[],
-): Promise<Carried | null> {
+export async function carriedBy(format: FormatId, sources: readonly Source[]): Promise<Carried | null> {
   if (format === 'obsidian') {
     const { obsidianCarries } = await import('./obsidian')
     return obsidianCarries(sources)

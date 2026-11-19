@@ -24,8 +24,7 @@ function copyOf(pane: HTMLElement, box: DOMRect) {
   from.forEach((one, index) => {
     const twin = to[index]
     if (!twin) return
-    if (one instanceof HTMLCanvasElement && twin instanceof HTMLCanvasElement)
-      canvases.push([one, twin])
+    if (one instanceof HTMLCanvasElement && twin instanceof HTMLCanvasElement) canvases.push([one, twin])
     if (one instanceof HTMLVideoElement) frames.push([one, twin])
     if (one.scrollTop || one.scrollLeft) scrolls.push([twin, one.scrollTop, one.scrollLeft])
   })
@@ -41,8 +40,7 @@ function copyOf(pane: HTMLElement, box: DOMRect) {
     const still = frameOf(video)
     if (still) twin.replaceWith(still)
   }
-  for (const one of copy.querySelectorAll('iframe, video, audio, object, embed, .cm-cursorLayer'))
-    one.remove()
+  for (const one of copy.querySelectorAll('iframe, video, audio, object, embed, .cm-cursorLayer')) one.remove()
   for (const one of copy.querySelectorAll('[id]')) one.removeAttribute('id')
   for (const one of copy.querySelectorAll('[tabindex], [contenteditable]')) {
     one.removeAttribute('tabindex')
@@ -90,10 +88,7 @@ export function snapshotOf(paneId: string): (() => { html: string; w: number; h:
   return snapshotFrom(pane, box)
 }
 
-export function snapshotFrom(
-  pane: HTMLElement,
-  box: DOMRect,
-): () => { html: string; w: number; h: number } {
+export function snapshotFrom(pane: HTMLElement, box: DOMRect): () => { html: string; w: number; h: number } {
   const { copy, scrolls } = copyOf(pane, box)
   for (const [twin, top, left] of scrolls) twin.setAttribute(SCROLLED, `${top} ${left}`)
   return () => {

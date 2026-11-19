@@ -1,14 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { type TestEnv, testEnv } from '../../sync-server/test/fakes'
-import {
-  accountById,
-  presentUser,
-  requireWhoever,
-  sendCode,
-  sessionFor,
-  signingIn,
-  verifyCode,
-} from '../src/auth'
+import { accountById, presentUser, requireWhoever, sendCode, sessionFor, signingIn, verifyCode } from '../src/auth'
 import { asksForSecond, base32, codeAt, matches, newSecret, recoveryCodes } from '../src/second'
 
 let env: TestEnv

@@ -23,8 +23,6 @@ describe('edit30 a line copied with a triple click, pasted over another triple-c
   })
 
   test('a paragraph line over a paragraph line adds no blank line', () => {
-    expect(pastedOver('First.\nSecond.\nThird.', 'Second.', 'First.\n')).toBe(
-      'First.\nFirst.\nThird.',
-    )
+    expect(pastedOver('First.\nSecond.\nThird.', 'Second.', 'First.\n')).toBe('First.\nFirst.\nThird.')
   })
 })

@@ -300,12 +300,7 @@ describe('the order spaces appear in', () => {
       method: 'PUT',
       token,
       body: {
-        order: [
-          await idOf('Journal'),
-          await idOf('Work'),
-          await idOf('Ideas'),
-          await idOf('Notes'),
-        ],
+        order: [await idOf('Journal'), await idOf('Work'), await idOf('Ideas'), await idOf('Notes')],
       },
     })
 
@@ -470,8 +465,7 @@ describe('notes', () => {
   })
 
   test('takes a page note, which is a canvas under another name', async () => {
-    const paper =
-      '{"nodes":[{"id":"p1","type":"page","x":0,"y":0,"width":794,"height":1123}],"edges":[]}\n'
+    const paper = '{"nodes":[{"id":"p1","type":"page","x":0,"y":0,"width":794,"height":1123}],"edges":[]}\n'
     const created = await addNote('Paper/Journal.pages', paper)
 
     expect(created.status).toBe(201)
@@ -490,9 +484,7 @@ describe('notes', () => {
     })
 
     const page = await call(env, `/v1/spaces/${space}/changes?since=0`, { token })
-    const paper = (page.json.notes as { path: string; version: number }[]).find(
-      (note) => note.path === 'Journal.pages',
-    )
+    const paper = (page.json.notes as { path: string; version: number }[]).find((note) => note.path === 'Journal.pages')
 
     expect(paper?.version).toBe(2)
   })
@@ -517,9 +509,7 @@ describe('notes', () => {
     })
 
     const page = await call(env, `/v1/spaces/${space}/changes?since=0`, { token })
-    const canvas = (page.json.notes as { path: string; version: number }[]).find(
-      (note) => note.path === 'Plan.canvas',
-    )
+    const canvas = (page.json.notes as { path: string; version: number }[]).find((note) => note.path === 'Plan.canvas')
 
     expect(canvas?.version).toBe(2)
   })
@@ -687,9 +677,7 @@ describe('notes', () => {
     const created = await addNote('a.md', 'secret')
     const other = await signIn(env, 'other@b.dev')
 
-    expect((await call(env, `/v1/notes/${created.json.note.id}`, { token: other })).status).toBe(
-      404,
-    )
+    expect((await call(env, `/v1/notes/${created.json.note.id}`, { token: other })).status).toBe(404)
   })
 })
 

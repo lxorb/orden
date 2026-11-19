@@ -57,8 +57,7 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
     const folder = note.isArchived === true ? `${ARCHIVE}/` : ''
     const words: string[] = []
 
-    const text =
-      typeof note.textContent === 'string' ? note.textContent.replace(/\r\n?/g, '\n').trim() : ''
+    const text = typeof note.textContent === 'string' ? note.textContent.replace(/\r\n?/g, '\n').trim() : ''
     if (text) words.push(plainWords(text))
 
     const items = listItems(note.listContent)
@@ -88,8 +87,7 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
 
     const body = words.join('\n\n')
     const said = typeof note.title === 'string' ? note.title.trim() : ''
-    const title =
-      (said ? safeName(said) : (titleFrom(text) ?? titleFrom(items[0]?.text ?? ''))) ?? 'Untitled'
+    const title = (said ? safeName(said) : (titleFrom(text) ?? titleFrom(items[0]?.text ?? ''))) ?? 'Untitled'
 
     const meta: Meta = { tags: labelNames(note.labels) }
     const made = dayOf(asNumber(note.createdTimestampUsec))
@@ -146,8 +144,7 @@ function parsed(text: string): (KeepNote & { color?: unknown }) | null | 'broken
   if (!said || typeof said !== 'object' || Array.isArray(said)) return null
 
   const note = said as KeepNote
-  const looksLikeOne =
-    'textContent' in note || 'listContent' in note || 'isTrashed' in note || 'title' in note
+  const looksLikeOne = 'textContent' in note || 'listContent' in note || 'isTrashed' in note || 'title' in note
   return looksLikeOne ? note : null
 }
 
@@ -172,8 +169,7 @@ interface Item {
   text: string
 }
 
-const taskLine = (item: Item): string =>
-  `- [${item.checked ? 'x' : ' '}] ${plainTaskWords(item.text)}`
+const taskLine = (item: Item): string => `- [${item.checked ? 'x' : ' '}] ${plainTaskWords(item.text)}`
 
 function linksOf(said: unknown, text: string): string[] {
   if (!Array.isArray(said)) return []
@@ -194,12 +190,7 @@ function linksOf(said: unknown, text: string): string[] {
 }
 
 function encoded(path: string): string {
-  return path
-    .replace(/%/g, '%25')
-    .replace(/#/g, '%23')
-    .replace(/ /g, '%20')
-    .replace(/\(/g, '%28')
-    .replace(/\)/g, '%29')
+  return path.replace(/%/g, '%25').replace(/#/g, '%23').replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29')
 }
 
 function labelNames(said: unknown): string[] {
@@ -228,14 +219,9 @@ function filePaths(said: unknown): string[] {
   return paths
 }
 
-const asNumber = (value: unknown): number | null =>
-  typeof value === 'number' && Number.isFinite(value) ? value : null
+const asNumber = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null)
 
-function beside(
-  files: ReadonlyMap<string, Source>,
-  notePath: string,
-  named: string,
-): Source | null {
+function beside(files: ReadonlyMap<string, Source>, notePath: string, named: string): Source | null {
   const at = notePath.lastIndexOf('/')
   const folder = at === -1 ? '' : notePath.slice(0, at + 1)
   const name = named.split('/').pop() ?? named
@@ -249,9 +235,7 @@ function beside(
   const stem = /^(.+)\.(jpe?g|png|gif|webp|heic|heif)$/i.exec(name)?.[1]?.toLowerCase()
   if (!stem) return null
 
-  const picture = new RegExp(
-    `^${escaped(`${folder}${stem}`.toLowerCase())}\\.(jpe?g|png|gif|webp|heic|heif)$`,
-  )
+  const picture = new RegExp(`^${escaped(`${folder}${stem}`.toLowerCase())}\\.(jpe?g|png|gif|webp|heic|heif)$`)
   return [...files.entries()].find(([path]) => picture.test(path))?.[1] ?? null
 }
 

@@ -98,9 +98,7 @@ describe('textops', () => {
         const inside = textops(doc.getText(TEXT), padded, paddedAfter)
 
         expect(inside).toBe(alone)
-        expect(Y.encodeStateAsUpdateV2(doc, vector).length).toBeLessThan(
-          200 + 4 * (before.length + after.length),
-        )
+        expect(Y.encodeStateAsUpdateV2(doc, vector).length).toBeLessThan(200 + 4 * (before.length + after.length))
       }),
       { numRuns: 200 },
     )

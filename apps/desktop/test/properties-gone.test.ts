@@ -10,11 +10,7 @@ const THEMES = join(ROOT, 'packages/themes/src')
 const read = (path: string) => readFileSync(path, 'utf8')
 
 const source = (dir: string) =>
-  walk(
-    dir,
-    (path) =>
-      /\.(ts|svelte)$/.test(path) && !path.endsWith('.test.ts') && !/[\\/]locales[\\/]/.test(path),
-  )
+  walk(dir, (path) => /\.(ts|svelte)$/.test(path) && !path.endsWith('.test.ts') && !/[\\/]locales[\\/]/.test(path))
 
 const OFFERS =
   /'show-properties'|'add-property'|'app\.properties'|`properties:\$\{|'paragraph\.front-matter'|'markdown\.frontMatter'|setProperties|showProperties|newProperty|PropertiesWidget|propertyChoices|hiddenFrontMatter/

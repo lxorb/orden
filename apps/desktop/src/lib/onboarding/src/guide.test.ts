@@ -17,29 +17,19 @@ describe('the guide behind Show me around', () => {
     const fewest = guideCards(came())
     expect(fewest[0]?.at).toBe('sidebar')
     expect(fewest).toHaveLength(3)
-    const most = guideCards(
-      came({ notes: { id: 'notion', name: 'Notion' }, browser: 'Chrome', ai: true }),
-    )
+    const most = guideCards(came({ notes: { id: 'notion', name: 'Notion' }, browser: 'Chrome', ai: true }))
     expect(most).toHaveLength(5)
   })
 
   test('names the notes brought in, and Notion by its pages', () => {
-    expect(titles(came({ notes: { id: 'notion', name: 'Notion' } }))).toContain(
-      'Your Notion pages are here',
-    )
-    expect(titles(came({ notes: { id: 'obsidian', name: 'Obsidian' } }))).toContain(
-      'Your Obsidian notes are here',
-    )
+    expect(titles(came({ notes: { id: 'notion', name: 'Notion' } }))).toContain('Your Notion pages are here')
+    expect(titles(came({ notes: { id: 'obsidian', name: 'Obsidian' } }))).toContain('Your Obsidian notes are here')
     expect(titles(came())).not.toContain('Your Obsidian notes are here')
   })
 
   test('says more than Markdown to people from Markdown apps, and to-dos to the rest', () => {
-    expect(titles(came({ notes: { id: 'obsidian', name: 'Obsidian' } }))).toContain(
-      'More than Markdown',
-    )
-    expect(titles(came({ notes: { id: 'evernote', name: 'Evernote' } }))).toContain(
-      'To-dos in any note',
-    )
+    expect(titles(came({ notes: { id: 'obsidian', name: 'Obsidian' } }))).toContain('More than Markdown')
+    expect(titles(came({ notes: { id: 'evernote', name: 'Evernote' } }))).toContain('To-dos in any note')
     expect(titles(came())).toContain('To-dos in any note')
   })
 
@@ -64,11 +54,7 @@ describe('the guide behind Show me around', () => {
 
   test('sets a card beside what it lights, inside the window', () => {
     const room = { width: 1280, height: 800 }
-    const placed = placeCard(
-      { x: 0, y: 40, width: 250, height: 700 },
-      { width: 320, height: 140 },
-      room,
-    )
+    const placed = placeCard({ x: 0, y: 40, width: 250, height: 700 }, { width: 320, height: 140 }, room)
     expect(placed.spot).not.toBeNull()
     expect(placed.left).toBeGreaterThan(250)
     expect(placed.left + 320).toBeLessThanOrEqual(room.width)

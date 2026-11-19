@@ -1,22 +1,8 @@
 import { type Message, may, mentionsIn, type Post, ulid, type Who } from '@orden/chats'
-import {
-  chatsText,
-  hitsText,
-  type Listed,
-  messagesText,
-  oneLine,
-  type Reading,
-} from '@orden/chats/agent'
+import { chatsText, hitsText, type Listed, messagesText, oneLine, type Reading } from '@orden/chats/agent'
 import { EVENTS_A_MINUTE, LONGEST_SEARCH, MOST_BODY } from '@orden/chats/limits'
 import { postEventsOf } from '@orden/chats/wire'
-import {
-  askInChunks,
-  places,
-  shutFor,
-  within,
-  type Env,
-  type Whoever,
-} from '../../../sync-server/src/api'
+import { askInChunks, places, shutFor, within, type Env, type Whoever } from '../../../sync-server/src/api'
 import { accountById } from '../../../sync-server-accounts/src/api'
 import {
   askChat,
@@ -102,11 +88,7 @@ interface Known extends Listed {
   posting: 'writers' | 'owner'
 }
 
-async function chatsOf(
-  env: Env,
-  who: Whoever,
-  most: number | null = MOST_LISTED,
-): Promise<Known[]> {
+async function chatsOf(env: Env, who: Whoever, most: number | null = MOST_LISTED): Promise<Known[]> {
   const rows = await listed(env, who, null, most)
   if (!rows.length) return []
   const found = await askInChunks(
@@ -124,9 +106,7 @@ async function chatsOf(
     },
   )
   const shut = who.kind === 'user' ? await shutFor(env, who.user.id) : null
-  const named = new Map(
-    found.filter((one) => !(one.path && shut?.(one.spaceId, one.path))).map((one) => [one.id, one]),
-  )
+  const named = new Map(found.filter((one) => !(one.path && shut?.(one.spaceId, one.path))).map((one) => [one.id, one]))
   const me = whoOf(who)
   return rows.flatMap((row): Known[] => {
     const chat = named.get(row.id)
@@ -184,11 +164,7 @@ async function readingOf(env: Env, who: Whoever, chats: readonly string[]): Prom
   return { me: whoOf(who), nameOf: (person) => names.get(person) ?? person }
 }
 
-async function stateOf(
-  env: Env,
-  reached: Reached,
-  query: Record<string, string>,
-): Promise<Message[]> {
+async function stateOf(env: Env, reached: Reached, query: Record<string, string>): Promise<Message[]> {
   const url = `https://chats.invalid/${reached.chat}/state?${new URLSearchParams(query).toString()}`
   const answer = await askChat(env, reached.chat, 'state', asking(reached), { url })
   if (!answer?.ok) return []
@@ -244,11 +220,7 @@ async function searchChats(env: Env, token: TokenRow, who: Whoever, args: Record
   if (query.length > LONGEST_SEARCH) return `A search is at most ${LONGEST_SEARCH} characters.`
   const all = await chatsOf(env, who)
   const picked = (
-    await Promise.all(
-      all
-        .slice(0, 50)
-        .map(async (one) => ({ id: one.id, reached: await reachChat(env, who, one.id) })),
-    )
+    await Promise.all(all.slice(0, 50).map(async (one) => ({ id: one.id, reached: await reachChat(env, who, one.id) })))
   ).flatMap((one) => (one.reached ? [{ id: one.id, reached: one.reached }] : []))
   const names = new Map(all.map((one) => [one.id, one.name]))
   const asked: Record<string, string> = { q: query, zone: await zoneOf(env, token.user_id) }
@@ -322,8 +294,7 @@ async function react(env: Env, token: TokenRow, who: Whoever, args: Record<strin
   const on = args.on !== false
   const event = { kind: 'react', id: ulid(Date.now(), Math.random), target: message, emoji, on }
   return (
-    (await sent(env, reached, event)) ??
-    `${on ? 'Reacted' : 'Took back'} ${emoji} on ${message} in #${known.name}.`
+    (await sent(env, reached, event)) ?? `${on ? 'Reacted' : 'Took back'} ${emoji} on ${message} in #${known.name}.`
   )
 }
 

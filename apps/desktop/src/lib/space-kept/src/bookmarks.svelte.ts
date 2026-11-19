@@ -1,10 +1,4 @@
-import {
-  BOOKMARK_KINDS,
-  type Bookmark,
-  type BookmarkKind,
-  type SyncStorePort,
-  syncStore,
-} from '@orden/contracts'
+import { BOOKMARK_KINDS, type Bookmark, type BookmarkKind, type SyncStorePort, syncStore } from '@orden/contracts'
 import {
   movedTo,
   relativeTo,
@@ -94,9 +88,7 @@ export function located(
     if (!mark.id || !moves) return mark
 
     const there = ids.entryPathOf(root, mark.id)
-    return there === null || there === file
-      ? mark
-      : { ...mark, path: there + mark.path.slice(file.length) }
+    return there === null || there === file ? mark : { ...mark, path: there + mark.path.slice(file.length) }
   })
   return found.filter((one, at) => found.findIndex((other) => sameBookmark(one, other)) === at)
 }
@@ -249,9 +241,7 @@ export class Bookmarks {
       root,
       held
         .filter((one) => !sameBookmark(one, mark))
-        .map((one) =>
-          mark.kind === 'group' && one.parent === mark.path ? filedUnder(one, freed) : one,
-        ),
+        .map((one) => (mark.kind === 'group' && one.parent === mark.path ? filedUnder(one, freed) : one)),
     )
   }
 

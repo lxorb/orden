@@ -110,9 +110,7 @@ export class Swipe {
       const speed = at - this.last > HELD ? 0 : this.speed()
       this.decide(speed, this.travel)
     }
-    const decided: Shown = tracking
-      ? this.shown
-      : { phase: 'idle', side: this.side, progress: 0, travel: 0 }
+    const decided: Shown = tracking ? this.shown : { phase: 'idle', side: this.side, progress: 0, travel: 0 }
     this.reset()
     return decided
   }
@@ -178,8 +176,7 @@ export class Swipe {
     const newest = this.trail[this.trail.length - 1]
     if (!newest) return 0
     const oldest =
-      this.trail.find((one) => one !== newest && one.at >= newest.at - WINDOW) ??
-      this.trail[this.trail.length - 2]
+      this.trail.find((one) => one !== newest && one.at >= newest.at - WINDOW) ?? this.trail[this.trail.length - 2]
     if (!oldest || newest.at <= oldest.at) return 0
     return (newest.pushed - oldest.pushed) / (newest.at - oldest.at)
   }
@@ -203,9 +200,7 @@ export class Swipe {
   }
 }
 
-export function coasting(
-  steps: readonly { along: number; gap: number }[],
-): { from: number; left: number } | null {
+export function coasting(steps: readonly { along: number; gap: number }[]): { from: number; left: number } | null {
   if (steps.length < COAST_RUN) return null
   const speeds = steps.map((one) => one.along / one.gap)
   const first = speeds[0] ?? 0

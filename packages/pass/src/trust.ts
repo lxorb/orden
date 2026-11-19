@@ -38,21 +38,13 @@ export async function acceptedOf(me: Signer, vault: string, owner: string): Prom
   return { owner, sig: await signatureOf(me, acceptedStatement(vault, owner)) }
 }
 
-export async function pinnedOwnerOf(
-  me: string,
-  vault: string,
-  accepted: Accepted | null,
-): Promise<string | null> {
+export async function pinnedOwnerOf(me: string, vault: string, accepted: Accepted | null): Promise<string | null> {
   if (accepted === null) return null
   const mine = await isSignedBy(me, acceptedStatement(vault, accepted.owner), accepted.sig)
   return mine ? accepted.owner : null
 }
 
-export async function ownersFrom(
-  vault: string,
-  pinned: string,
-  handovers: readonly Handover[],
-): Promise<string[]> {
+export async function ownersFrom(vault: string, pinned: string, handovers: readonly Handover[]): Promise<string[]> {
   const owners = [pinned]
   let owner = pinned
   for (const one of handovers) {
@@ -90,11 +82,7 @@ export async function isProven(
   return await isVouched(vault, proof.by, proof.vouch, owners)
 }
 
-export async function invitedOwnerOf(
-  vault: string,
-  inviter: PersonKey,
-  pin: Pin | null,
-): Promise<string | null> {
+export async function invitedOwnerOf(vault: string, inviter: PersonKey, pin: Pin | null): Promise<string | null> {
   if (pin === null) return null
   if (pin.owner === inviter.signPub) return pin.owner
   const vouched = await isVouched(vault, inviter.signPub, pin.vouch, [pin.owner])

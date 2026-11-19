@@ -22,11 +22,7 @@
 >
   <output class="code" dir="ltr" aria-label="Recovery key">{code}</output>
   <div class="row">
-    <button
-      class="orden-button is-quiet is-soft"
-      type="button"
-      onclick={() => void copyField('Recovery key', code)}
-    >
+    <button class="orden-button is-quiet is-soft" type="button" onclick={() => void copyField('Recovery key', code)}>
       <Glyph icon={Copy} />Copy
     </button>
     <button class="orden-button is-quiet is-soft" type="button" onclick={saved}>

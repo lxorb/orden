@@ -31,9 +31,7 @@ describe('items deleted on another device', () => {
     draw(DeletedElsewhere, {})
     await vi.waitFor(() => expect(target.querySelector('[data-gone="i1"]')).not.toBe(null))
     expect(target.textContent).toContain('Deleted on another device')
-    const restore = [...target.querySelectorAll('button')].find(
-      (one) => one.textContent.trim() === 'Restore',
-    )!
+    const restore = [...target.querySelectorAll('button')].find((one) => one.textContent.trim() === 'Restore')!
     restore.click()
     await vi.waitFor(() => expect(fake.pass.restoreDeleted).toHaveBeenCalledWith(GONE))
     await vi.waitFor(() => expect(target.querySelector('[data-gone="i1"]')).toBe(null))

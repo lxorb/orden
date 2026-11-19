@@ -71,10 +71,7 @@ export class PlaneBinding {
     }
 
     if (how === 'step') this.history.stopCapturing()
-    this.doc.transact(
-      () => pushPlane(this.doc, before, after),
-      how === 'aside' ? this.joinedBy : HERE,
-    )
+    this.doc.transact(() => pushPlane(this.doc, before, after), how === 'aside' ? this.joinedBy : HERE)
   }
 
   undo(): boolean {

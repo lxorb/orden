@@ -36,8 +36,7 @@ export function recordRows(view?: object): CommandExtension[] {
       label: woken?.on ? 'Stop recording' : 'Record',
       byHand: true,
       disabled: !canRecord(editor),
-      run: () =>
-        void import('./recording.svelte').then(({ recorder }) => (woken = recorder).toggle()),
+      run: () => void import('./recording.svelte').then(({ recorder }) => (woken = recorder).toggle()),
     },
   ]
 }

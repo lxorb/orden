@@ -8,12 +8,7 @@ export const DEVICES_COUNT_FOR = 90 * 24 * 60 * 60 * 1000
 
 const HASHES_AT_ONCE = 10_000
 
-export function noteUnused(
-  env: Env,
-  spaceId: string,
-  hashes: Iterable<string>,
-  at: number,
-): D1PreparedStatement[] {
+export function noteUnused(env: Env, spaceId: string, hashes: Iterable<string>, at: number): D1PreparedStatement[] {
   return chunks([...new Set(hashes)], HASHES_AT_ONCE).map((piece) =>
     env.DB.prepare(
       `insert into unused_blobs (user_id, hash, since)
@@ -23,12 +18,7 @@ export function noteUnused(
   )
 }
 
-export function noteUnusedBy(
-  env: Env,
-  userId: string,
-  hashes: readonly string[],
-  at: number,
-): D1PreparedStatement {
+export function noteUnusedBy(env: Env, userId: string, hashes: readonly string[], at: number): D1PreparedStatement {
   return env.DB.prepare(
     `insert into unused_blobs (user_id, hash, since)
        select user_id, hash, ?3 from blobs
@@ -36,12 +26,7 @@ export function noteUnusedBy(
   ).bind(userId, JSON.stringify(hashes), at)
 }
 
-export function noteChatFiles(
-  env: Env,
-  where: string,
-  at: number,
-  ...bound: string[]
-): D1PreparedStatement {
+export function noteChatFiles(env: Env, where: string, at: number, ...bound: string[]): D1PreparedStatement {
   return env.DB.prepare(
     `insert into unused_blobs (user_id, hash, since)
        select b.user_id, b.hash, ?1

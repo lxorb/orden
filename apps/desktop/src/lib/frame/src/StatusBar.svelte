@@ -57,9 +57,7 @@
     <span class="reading">Read-only</span>
   {/if}
   {#if plain}
-    <span class="reading" title="Shown as plain text, so typing stays instant in a note this long"
-      >No preview</span
-    >
+    <span class="reading" title="Shown as plain text, so typing stays instant in a note this long">No preview</span>
   {/if}
   {#if paper}
     <span class="page">{paper.at} / {paper.count}</span>

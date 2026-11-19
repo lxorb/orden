@@ -27,13 +27,7 @@ function arrive(note: Meeting, from: string, to: string) {
 
 type Met = { shared: string; asked?: never } | { asked: string; shared?: never }
 
-async function agree(
-  engine: Engine,
-  id: string,
-  note: Meeting,
-  doc: Doc,
-  given?: string,
-): Promise<Met> {
+async function agree(engine: Engine, id: string, note: Meeting, doc: Doc, given?: string): Promise<Met> {
   if (note.latest === doc.text()) return { shared: doc.text() }
 
   const written = given ?? (await writtenOf(engine.core, id))
@@ -52,14 +46,7 @@ async function agree(
   }
 
   const merged = mergedOf(base, mine, theirs)
-  const judged = judge(
-    'words',
-    base,
-    mine,
-    theirs,
-    { local: Date.now(), remote: doc.pendingAt },
-    merged,
-  )
+  const judged = judge('words', base, mine, theirs, { local: Date.now(), remote: doc.pendingAt }, merged)
   if (judged.resolution === null) {
     await engine.holdFile(id, base, mine)
     return { asked: mine }

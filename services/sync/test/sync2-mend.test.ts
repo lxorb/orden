@@ -82,9 +82,7 @@ async function feed(): Promise<FeedPage> {
 
 async function written(id: string, text: string): Promise<void> {
   await env.NOTES.put(noteKey(space, id), text)
-  env.db
-    .prepare('update notes set hash = ?, size = ? where id = ?')
-    .run(await sha256(text), text.length, id)
+  env.db.prepare('update notes set hash = ?, size = ? where id = ?').run(await sha256(text), text.length, id)
 }
 
 function fresh(): string {
@@ -92,9 +90,9 @@ function fresh(): string {
 }
 
 function versionHashes(id: string): string[] {
-  return (
-    env.db.prepare('select hash from note_versions where note_id = ?').all(id) as { hash: string }[]
-  ).map((one) => one.hash)
+  return (env.db.prepare('select hash from note_versions where note_id = ?').all(id) as { hash: string }[]).map(
+    (one) => one.hash,
+  )
 }
 
 function protectedPaths(): string[] {
@@ -116,10 +114,7 @@ describe('a device that sent every item back as new', () => {
     await ops([op('meta', { id: plan, meta: { icon: 'star' } })])
     env.db
       .prepare('update users set protected = ? where id = ?')
-      .run(
-        JSON.stringify({ password: null, spaces: { [space]: { 'Plan 2.md': 'password' } } }),
-        user,
-      )
+      .run(JSON.stringify({ password: null, spaces: { [space]: { 'Plan 2.md': 'password' } } }), user)
 
     const [folderCopy, planCopy, bCopy, extra] = [fresh(), fresh(), fresh(), fresh()]
     const { results } = await ops([
@@ -128,17 +123,10 @@ describe('a device that sent every item back as new', () => {
       op('create', { id: bCopy, kind: 'note', parent: folderCopy, name: 'b.md' }),
       op('create', { id: extra, kind: 'note', parent: folderCopy, name: 'extra.md' }),
     ])
-    expect(results.map((one) => ('name' in one ? one.name : null))).toEqual([
-      'Work 2',
-      'Plan 2.md',
-      'b.md',
-      'extra.md',
-    ])
+    expect(results.map((one) => ('name' in one ? one.name : null))).toEqual(['Work 2', 'Plan 2.md', 'b.md', 'extra.md'])
     await written(planCopy, 'plan as it was\n')
     await written(bCopy, 'b\n')
-    env.db
-      .prepare('update notes set hash = (select hash from notes where id = ?) where id = ?')
-      .run(b, bCopy)
+    env.db.prepare('update notes set hash = (select hash from notes where id = ?) where id = ?').run(b, bCopy)
 
     const page = await feed()
 
@@ -190,9 +178,7 @@ describe('a device that sent every item back as new', () => {
     ])
     await written(planCopy, 'plan written later\n')
     await written(ideaCopy, 'idea\n')
-    env.db
-      .prepare('update notes set updated_at = ? where id = ?')
-      .run(Date.now() + 10 * 60_000, planCopy)
+    env.db.prepare('update notes set updated_at = ? where id = ?').run(Date.now() + 10 * 60_000, planCopy)
 
     await feed()
 

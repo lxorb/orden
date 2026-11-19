@@ -58,9 +58,7 @@ beforeAll(() => {
     if (this.matches('.tile')) return DOMRect.fromRect({ x: 10, y: 100, width: 30, height: 30 })
     return DOMRect.fromRect({ x: -10_000, y: 0, width: 20_000, height: 24 })
   })
-  vi.spyOn(Element.prototype, 'getClientRects').mockImplementation(
-    () => [DOMRect.fromRect()] as unknown as DOMRectList,
-  )
+  vi.spyOn(Element.prototype, 'getClientRects').mockImplementation(() => [DOMRect.fromRect()] as unknown as DOMRectList)
 })
 
 beforeEach(() => {
@@ -110,36 +108,33 @@ const PLACES = {
   },
 }
 
-describe.each(Object.keys(PLACES) as (keyof typeof PLACES)[])(
-  'with the keyboard in a %s',
-  (place) => {
-    function focused(): HTMLElement {
-      const made = PLACES[place]()
-      made.classList.add('focus-place')
-      document.body.append(made)
-      const field = made.querySelector<HTMLElement>('textarea, input') ?? made
-      field.tabIndex = 0
-      field.focus()
-      return field
-    }
+describe.each(Object.keys(PLACES) as (keyof typeof PLACES)[])('with the keyboard in a %s', (place) => {
+  function focused(): HTMLElement {
+    const made = PLACES[place]()
+    made.classList.add('focus-place')
+    document.body.append(made)
+    const field = made.querySelector<HTMLElement>('textarea, input') ?? made
+    field.tabIndex = 0
+    field.focus()
+    return field
+  }
 
-    test('Alt shows the letters with the numbers', () => {
-      const field = focused()
-      press(field, { key: 'Alt', altKey: true })
-      expect(worn()).toEqual(['1', '0', 'N'])
-    })
+  test('Alt shows the letters with the numbers', () => {
+    const field = focused()
+    press(field, { key: 'Alt', altKey: true })
+    expect(worn()).toEqual(['1', '0', 'N'])
+  })
 
-    test('and Alt and the letter goes to its Essential, as Alt and a digit goes to a tab', async () => {
-      const field = focused()
-      press(field, { key: 'Alt', altKey: true })
-      const letter = press(field, { key: 'n', code: 'KeyN', altKey: true })
-      expect(letter.defaultPrevented).toBe(true)
-      expect(worn()).toEqual(['1', '0', 'N'])
-      vi.useRealTimers()
-      await vi.waitFor(() => expect(opened).toEqual(['/space/Notes.md']))
-    })
-  },
-)
+  test('and Alt and the letter goes to its Essential, as Alt and a digit goes to a tab', async () => {
+    const field = focused()
+    press(field, { key: 'Alt', altKey: true })
+    const letter = press(field, { key: 'n', code: 'KeyN', altKey: true })
+    expect(letter.defaultPrevented).toBe(true)
+    expect(worn()).toEqual(['1', '0', 'N'])
+    vi.useRealTimers()
+    await vi.waitFor(() => expect(opened).toEqual(['/space/Notes.md']))
+  })
+})
 
 test('with the keyboard in a web page, the Alt it tells shows the letters with the numbers', () => {
   replay({

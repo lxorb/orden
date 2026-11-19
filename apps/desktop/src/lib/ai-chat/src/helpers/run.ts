@@ -59,8 +59,7 @@ const STRICTNESS: Readonly<Record<string, number>> = {
   deny: DENIED,
 }
 
-const siteNamed = (site: string) =>
-  site.trim().replace(/^\*\./, '').replace(/\.+$/, '').toLowerCase()
+const siteNamed = (site: string) => site.trim().replace(/^\*\./, '').replace(/\.+$/, '').toLowerCase()
 
 function covering(site: string, host: string): boolean {
   const named = siteNamed(site)
@@ -78,8 +77,7 @@ function strictnessAt(sites: Reach['sites'], host: string): number {
 
 const supervision = (grant: Reach) => SUPERVISION[grant.mode ?? 'unsupervised'] ?? 0
 
-const asksAbout = (grant: Reach, category: string) =>
-  !fullPermissions(grant) && grant.asks?.[category] !== false
+const asksAbout = (grant: Reach, category: string) => !fullPermissions(grant) && grant.asks?.[category] !== false
 
 function sitesWithin(helper: Reach, parent: Reach): boolean {
   const hosts = [...Object.keys(helper.sites), ...Object.keys(parent.sites)].map(siteNamed)
@@ -96,15 +94,12 @@ function asksWithin(helper: Reach, parent: Reach): boolean {
 
 function inside(helper: Reach, parent: Reach): boolean {
   const spaces =
-    parent.spaces === 'all' ||
-    (helper.spaces !== 'all' && helper.spaces.every((one) => parent.spaces.includes(one)))
+    parent.spaces === 'all' || (helper.spaces !== 'all' && helper.spaces.every((one) => parent.spaces.includes(one)))
   const held =
     fullPermissions(parent) ||
     (helper.scopes.every((one) => parent.scopes.includes(one)) &&
       helper.programs.every((one) => parent.programs.includes(one)) &&
-      (helper.scripts ?? []).every((script) =>
-        (parent.scripts ?? []).some((one) => covering(one, siteNamed(script))),
-      ))
+      (helper.scripts ?? []).every((script) => (parent.scripts ?? []).some((one) => covering(one, siteNamed(script)))))
   return (
     spaces &&
     held &&
@@ -159,16 +154,7 @@ function word(args: Record<string, unknown>, name: string): string {
   return typeof value === 'string' ? value.trim() : ''
 }
 
-const EFFORTS: readonly Effort[] = [
-  'auto',
-  'off',
-  'minimal',
-  'low',
-  'medium',
-  'high',
-  'xhigh',
-  'max',
-]
+const EFFORTS: readonly Effort[] = ['auto', 'off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']
 
 class RanOut extends Error {}
 
@@ -199,11 +185,7 @@ async function offered(deadline: AbortSignal | undefined): Promise<Offered[]> {
   return listed
 }
 
-export async function runAgent(
-  args: Record<string, unknown>,
-  asker: Asker,
-  deadline?: AbortSignal,
-): Promise<Answered> {
+export async function runAgent(args: Record<string, unknown>, asker: Asker, deadline?: AbortSignal): Promise<Answered> {
   const prompt = word(args, 'prompt')
   if (!prompt) return { refused: 'say prompt: the whole task, as the helper should read it' }
   const { chat } = await import('../store/chat.svelte')
@@ -219,12 +201,7 @@ export async function runAgent(
   const instructions = await notes.wordsOf(profile)
   const all = await grants()
   const reach = asker.reach ?? (parent && all ? grantOf(all, parent.provider) : null)
-  if (
-    parent &&
-    !asker.reach &&
-    isDesktop &&
-    !(fullPermissions(reach) || reach?.scopes.includes('agents'))
-  ) {
+  if (parent && !asker.reach && isDesktop && !(fullPermissions(reach) || reach?.scopes.includes('agents'))) {
     return { refused: 'this agent may not run helpers: its grant does not hold agents' }
   }
   const effort = first(word(args, 'effort'), profile?.effort)
@@ -241,8 +218,7 @@ export async function runAgent(
         ...(instructions ? { instructions } : {}),
       },
       {
-        offered: async () =>
-          offeredWithin(await offered(deadline), reach, parent?.provider ?? null, all),
+        offered: async () => offeredWithin(await offered(deadline), reach, parent?.provider ?? null, all),
         run: (thread: Thread, text: string, signal: AbortSignal) => {
           chat.adopt(thread)
           return chat.turn(thread, text, { signal })
@@ -258,20 +234,13 @@ export async function runAgent(
   return said(now ?? started)
 }
 
-export async function agentResult(
-  args: Record<string, unknown>,
-  deadline?: AbortSignal,
-): Promise<Answered> {
+export async function agentResult(args: Record<string, unknown>, deadline?: AbortSignal): Promise<Answered> {
   const id = word(args, 'agent')
   const now = id ? await helpers.wait(id, WAIT, deadline) : null
   return now ? said(now) : { refused: `there is no helper called "${id}"` }
 }
 
-export async function helperHere(
-  name: string,
-  args: Record<string, unknown>,
-  asker: Asker,
-): Promise<Answered> {
+export async function helperHere(name: string, args: Record<string, unknown>, asker: Asker): Promise<Answered> {
   let answered = name === 'run_agent' ? await runAgent(args, asker) : await agentResult(args)
   while (!('refused' in answered) && answered.state === 'running') {
     answered = await agentResult({ agent: answered.agent })

@@ -22,13 +22,7 @@ vi.mock('../../../sharing/src/api', () => ({
 
 vi.mock('../../../search/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../search/src/api')>()),
-  searchSpace: (
-    root: string,
-    _query: unknown,
-    _terms: unknown,
-    _limit: unknown,
-    onFound: (found: Found) => void,
-  ) => {
+  searchSpace: (root: string, _query: unknown, _terms: unknown, _limit: unknown, onFound: (found: Found) => void) => {
     searched.push(root)
     const hits = [...disk.keys()]
       .filter((path) => path.startsWith(`${root}/`) && path.endsWith('Plan.md'))
@@ -164,9 +158,7 @@ test('a chat of another space goes along from the space it is kept in', async ()
     '',
     WORK,
   )
-  expect(draft.attachments.map((one) => [one.label, one.text])).toEqual([
-    ['Garden', '> plant roses'],
-  ])
+  expect(draft.attachments.map((one) => [one.label, one.text])).toEqual([['Garden', '> plant roses']])
 })
 
 test('a compacted chat goes along with its summary and what was said after it', async () => {
@@ -251,9 +243,7 @@ describe('words somebody else may have steered', () => {
       const chip = { kind: 'selection' as const, id: 'selection', label: 'selection' }
       const picked = { path: '/notes/Work/Team/Ana.md', shared: null }
       const draft = await draftOf('what is this', [chip], 'auto', null, 'Post it', HOME, picked)
-      expect(draft.attachments.map((one) => [one.label, !!one.untrusted])).toEqual([
-        ['selection', true],
-      ])
+      expect(draft.attachments.map((one) => [one.label, !!one.untrusted])).toEqual([['selection', true]])
     } finally {
       othersWrite.clear()
     }
@@ -298,9 +288,7 @@ describe('words from a note shut to agents', () => {
 
   test('a selection made in a shut note stays home while no note is in front', async () => {
     const picked = { path: PLAN, shared: null }
-    const draft = await shut(() =>
-      draftOf('q', [selection], 'auto', null, 'The budget', HOME, picked),
-    )
+    const draft = await shut(() => draftOf('q', [selection], 'auto', null, 'The budget', HOME, picked))
     expect(draft.attachments).toEqual([])
   })
 

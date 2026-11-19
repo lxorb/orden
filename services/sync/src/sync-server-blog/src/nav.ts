@@ -91,9 +91,7 @@ export function navigation(pages: readonly Listed[], current: string): string {
     for (const page of ordered(held.pages)) {
       const here = page.slug === current
       out.push(
-        `<li><a href="/${escape(page.slug)}"${here ? ' aria-current="page"' : ''}>${escape(
-          page.title,
-        )}</a></li>`,
+        `<li><a href="/${escape(page.slug)}"${here ? ' aria-current="page"' : ''}>${escape(page.title)}</a></li>`,
       )
     }
 
@@ -116,16 +114,10 @@ export function navigation(pages: readonly Listed[], current: string): string {
 }
 
 function holds(held: Branch, current: string): boolean {
-  return (
-    held.pages.some((one) => one.slug === current) ||
-    [...held.folders.values()].some((one) => holds(one, current))
-  )
+  return held.pages.some((one) => one.slug === current) || [...held.folders.values()].some((one) => holds(one, current))
 }
 
-export function around(
-  pages: readonly Listed[],
-  current: string,
-): { before: Listed | null; after: Listed | null } {
+export function around(pages: readonly Listed[], current: string): { before: Listed | null; after: Listed | null } {
   const flat = inOrder(pages)
   const at = flat.findIndex((one) => one.slug === current)
   if (at < 0) return { before: null, after: null }
@@ -159,21 +151,16 @@ function namesOf(page: Listed): string[] {
 export function linkedFrom(pages: readonly Listed[], page: Listed): Listed[] {
   const names = namesOf(page)
   const known = new Set(names)
-  const reaches = (link: string) =>
-    link.startsWith('/') ? link.slice(1) === names[0] : known.has(link)
+  const reaches = (link: string) => (link.startsWith('/') ? link.slice(1) === names[0] : known.has(link))
 
-  return ordered(
-    pages.filter((one) => one.slug !== page.slug && (one.front.links ?? []).some(reaches)),
-  )
+  return ordered(pages.filter((one) => one.slug !== page.slug && (one.front.links ?? []).some(reaches)))
 }
 
 export function backlinks(pages: readonly Listed[], page: Listed): string {
   const found = linkedFrom(pages, page)
   if (!found.length) return ''
 
-  const rows = found
-    .map((one) => `<li><a href="/${escape(one.slug)}">${escape(one.title)}</a></li>`)
-    .join('')
+  const rows = found.map((one) => `<li><a href="/${escape(one.slug)}">${escape(one.title)}</a></li>`).join('')
 
   return `<nav class="linked"><h2>Linked from</h2><ul>${rows}</ul></nav>`
 }

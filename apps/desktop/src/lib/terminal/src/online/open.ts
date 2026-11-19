@@ -16,10 +16,7 @@ export async function openOnline(beside = false): Promise<Tab | null> {
   return null
 }
 
-export async function madeOnline(
-  beside: string | null,
-  activate = true,
-): Promise<Tab | Refused | null> {
+export async function madeOnline(beside: string | null, activate = true): Promise<Tab | Refused | null> {
   if (!account.accountToken) return 'signed-out'
   const asking = machine.refresh()
   if (machine.known?.allowed !== true || machine.refused !== null) await asking

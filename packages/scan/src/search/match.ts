@@ -146,8 +146,7 @@ function unitsIn(body: string, starts: readonly number[], unit: Unit): Range[] {
   return out
 }
 
-const keysIn = (body: string): Set<string> =>
-  new Set(frontMatterKeys(body).map((key) => key.toLowerCase()))
+const keysIn = (body: string): Set<string> => new Set(frontMatterKeys(body).map((key) => key.toLowerCase()))
 
 interface Facts {
   note: SearchNote
@@ -161,14 +160,12 @@ interface Facts {
   places: Map<string, number[]>
 }
 
-const foldedOf = (facts: Facts): string =>
-  (facts.folded ??= facts.note.folded?.() ?? fold(facts.note.body))
+const foldedOf = (facts: Facts): string => (facts.folded ??= facts.note.folded?.() ?? fold(facts.note.body))
 
 const startsOf = (facts: Facts): readonly number[] =>
   (facts.starts ??= facts.note.starts?.() ?? lineStarts(facts.note.body))
 
-const tagsOf = (facts: Facts): string[] =>
-  (facts.tags ??= tagsIn(facts.note.body).map((tag) => tagPath(tag.slice(1))))
+const tagsOf = (facts: Facts): string[] => (facts.tags ??= tagsIn(facts.note.body).map((tag) => tagPath(tag.slice(1))))
 
 function propertyOf(facts: Facts, name: string): string[] | undefined {
   if (!(facts.keys ??= keysIn(facts.note.body)).has(name)) return undefined
@@ -190,8 +187,7 @@ const unitsOf = (facts: Facts, unit: Unit): Range[] =>
   (facts.units[unit] ??= unitsIn(facts.note.body, startsOf(facts), unit))
 
 const A_NUMBER = /^-?\d+(?:\.\d+)?$/
-const A_DATE =
-  /^(\d{4}-\d{2}-\d{2})(?:[Tt ](\d{2}:\d{2}(?::\d{2})?)(?:\.\d+)?(?:[Zz]|[+-]\d{2}:?\d{2})?)?$/
+const A_DATE = /^(\d{4}-\d{2}-\d{2})(?:[Tt ](\d{2}:\d{2}(?::\d{2})?)(?:\.\d+)?(?:[Zz]|[+-]\d{2}:?\d{2})?)?$/
 
 function wallClock(said: string): string | null {
   const read = A_DATE.exec(said)
@@ -220,8 +216,7 @@ function order(value: string, asked: string): number {
 function alike(value: string, asked: string): boolean {
   const one = value.trim()
   const other = asked.trim()
-  const measured =
-    (A_NUMBER.test(one) && A_NUMBER.test(other)) || (A_DATE.test(one) && A_DATE.test(other))
+  const measured = (A_NUMBER.test(one) && A_NUMBER.test(other)) || (A_DATE.test(one) && A_DATE.test(other))
   return measured ? order(one, other) === 0 : one.toLowerCase() === other.toLowerCase()
 }
 
@@ -376,9 +371,7 @@ export class Matcher {
       else byLine.set(line, [span])
     }
 
-    return [...byLine.entries()]
-      .slice(0, most)
-      .map(([line, ranges]) => this.row(note, starts, line, ranges))
+    return [...byLine.entries()].slice(0, most).map(([line, ranges]) => this.row(note, starts, line, ranges))
   }
 
   private row(note: SearchNote, starts: readonly number[], line: number, ranges: Range[]): Hit {
@@ -436,9 +429,7 @@ export class Matcher {
         if (!needle) return null
 
         const within =
-          query.kind === 'content'
-            ? clip({ from: wordsFrom(facts), to: facts.note.body.length }, region)
-            : region
+          query.kind === 'content' ? clip({ from: wordsFrom(facts), to: facts.note.body.length }, region) : region
         if (!within) return null
 
         const hay = query.fold ? foldedOf(facts) : facts.note.body
@@ -508,9 +499,7 @@ export class Matcher {
     const held = this.patterns.get(key)
     if (held !== undefined) return held
 
-    const made = searchBacktracksWildly(source, folded)
-      ? null
-      : compiled(source, folded ? 'gi' : 'g')
+    const made = searchBacktracksWildly(source, folded) ? null : compiled(source, folded ? 'gi' : 'g')
 
     this.patterns.set(key, made)
     return made

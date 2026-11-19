@@ -1,12 +1,4 @@
-import {
-  heardElsewhere,
-  movedTo,
-  relativeTo,
-  samePath,
-  keep,
-  storedText,
-  isDesktop,
-} from '../../platform/src/api'
+import { heardElsewhere, movedTo, relativeTo, samePath, keep, storedText, isDesktop } from '../../platform/src/api'
 import type { Lock } from './protection.svelte'
 
 const RELOCK_KEY = 'orden:protect-relock'
@@ -16,9 +8,7 @@ export const DEFAULT_RELOCK = 5
 
 function readRelock(): number {
   const said = Number(storedText(RELOCK_KEY))
-  return (RELOCK_MINUTES as readonly number[]).includes(said) && storedText(RELOCK_KEY) !== null
-    ? said
-    : DEFAULT_RELOCK
+  return (RELOCK_MINUTES as readonly number[]).includes(said) && storedText(RELOCK_KEY) !== null ? said : DEFAULT_RELOCK
 }
 
 const keyOf = (lock: Pick<Lock, 'root' | 'key'>) => `${lock.root}\u0000${lock.key}`

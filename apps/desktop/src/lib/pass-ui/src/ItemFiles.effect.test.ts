@@ -153,9 +153,7 @@ describe('the passkeys of a login', () => {
     await pass.trash([made.id])
     viewing(current(made.id))
     expect(target.querySelector('[data-passkey="github.com"]')).not.toBeNull()
-    expect(
-      target.querySelector('button[aria-label="Remove the passkey for github.com"]'),
-    ).toBeNull()
+    expect(target.querySelector('button[aria-label="Remove the passkey for github.com"]')).toBeNull()
   })
 })
 
@@ -165,9 +163,7 @@ describe('an SSH key', () => {
     await ui.newItem({ ...blank('ssh'), title: 'Server' })
     editing(ui)
     const generate = await vi.waitFor(() => {
-      const button = [...target.querySelectorAll('button')].find(
-        (one) => one.textContent.trim() === 'Generate key',
-      )
+      const button = [...target.querySelectorAll('button')].find((one) => one.textContent.trim() === 'Generate key')
       if (!button) throw new Error('no generate')
       return button
     })
@@ -185,8 +181,6 @@ describe('an SSH key', () => {
 
     closed()
     viewing(key)
-    await vi.waitFor(() =>
-      expect(target.querySelector('[data-field="Fingerprint"]')?.textContent).toMatch(/SHA256:/),
-    )
+    await vi.waitFor(() => expect(target.querySelector('[data-field="Fingerprint"]')?.textContent).toMatch(/SHA256:/))
   })
 })

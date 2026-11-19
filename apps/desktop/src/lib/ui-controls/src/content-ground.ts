@@ -37,9 +37,7 @@ function greyAt(target: number): Rgb {
 function terminalInk(bg: Rgb): Rgb {
   const paper = luminance(bg)
   const dark = paper < 0.5
-  const target = dark
-    ? (paper + 0.05) * TERMINAL_CONTRAST - 0.05
-    : (paper + 0.05) / TERMINAL_CONTRAST - 0.05
+  const target = dark ? (paper + 0.05) * TERMINAL_CONTRAST - 0.05 : (paper + 0.05) / TERMINAL_CONTRAST - 0.05
   return greyAt(Math.min(1, Math.max(0, target)))
 }
 

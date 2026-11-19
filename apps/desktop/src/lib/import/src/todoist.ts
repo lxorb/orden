@@ -92,12 +92,7 @@ export function ruleOf(written: string): string | null {
   return rule ? ruleText(rule) : null
 }
 
-function linesOf(
-  task: Task,
-  children: ReadonlyMap<string, Task[]>,
-  depth: number,
-  kept: Kept,
-): string[] {
+function linesOf(task: Task, children: ReadonlyMap<string, Task[]>, depth: number, kept: Kept): string[] {
   if (kept.written.has(task)) return []
   kept.written.add(task)
   const pad = '  '.repeat(depth)
@@ -127,23 +122,20 @@ function linesOf(
   }
   const under = `${pad}  `
   const lines = [taskLine(fields, `${pad}- `)]
-  for (const line of task.description.split(/\r?\n/))
-    if (line.trim()) lines.push(`${under}${inert(line.trimEnd())}`)
+  for (const line of task.description.split(/\r?\n/)) if (line.trim()) lines.push(`${under}${inert(line.trimEnd())}`)
   if (task.repeats && !rule) lines.push(`${under}Todoist: ${asWords(task.repeats)}`)
   for (const comment of task.comments) {
     const [first = '', ...rest] = comment.text.split(/\r?\n/)
     lines.push(`${under}${comment.at ? `${comment.at}: ` : ''}${inert(first.trimEnd())}`)
     for (const line of rest) if (line.trim()) lines.push(`${under}${inert(line.trimEnd())}`)
   }
-  for (const child of children.get(task.id) ?? [])
-    lines.push(...linesOf(child, children, depth + 1, kept))
+  for (const child of children.get(task.id) ?? []) lines.push(...linesOf(child, children, depth + 1, kept))
   return lines
 }
 
 const oneLine = (said: string) => said.replace(/\s*[\r\n]+\s*/g, ' ').trim()
 
-const inert = (line: string) =>
-  wordsOf(line).replace(/^(\s*(?:[-*+]|\d+[.)])\s+)\[(.)\]/, '$1\\[$2]')
+const inert = (line: string) => wordsOf(line).replace(/^(\s*(?:[-*+]|\d+[.)])\s+)\[(.)\]/, '$1\\[$2]')
 
 function wordsOf(line: string): string {
   let out = ''
@@ -221,15 +213,12 @@ export function planOf(account: Account): ImportPlan & { inbox?: string } {
   const files: Planned[] = []
   let inbox: string | undefined
   for (const project of all) {
-    const own =
-      project.id === ELSEWHERE ? elsewhere : top.filter((one) => one.project === project.id)
+    const own = project.id === ELSEWHERE ? elsewhere : top.filter((one) => one.project === project.id)
     const sections = account.sections.filter((one) => one.project === project.id).sort(byOrder)
     const lines: string[] = aboutLines(project.about)
     if (lines.length) lines.push('')
     if (lines[0]?.startsWith('---')) lines.unshift('')
-    for (const task of own.filter(
-      (one) => !one.section || !sections.some((section) => section.id === one.section),
-    )) {
+    for (const task of own.filter((one) => !one.section || !sections.some((section) => section.id === one.section))) {
       lines.push(...linesOf(task, children, 0, kept))
     }
     for (const section of sections) {
@@ -334,9 +323,7 @@ export function csvProject(name: string, text: string, at: number): Account {
     const priority = Number(column(row, 'PRIORITY'))
     const date = column(row, 'DATE')
     const when = csvDate(date)
-    const duration =
-      Number(column(row, 'DURATION')) *
-      (column(row, 'DURATION_UNIT').toLowerCase() === 'day' ? 1440 : 1)
+    const duration = Number(column(row, 'DURATION')) * (column(row, 'DURATION_UNIT').toLowerCase() === 'day' ? 1440 : 1)
     const deadline = csvDate(column(row, 'DEADLINE'))
     const assignee = personOf(column(row, 'RESPONSIBLE'))
     const task: Task = {
@@ -363,18 +350,14 @@ export function csvProject(name: string, text: string, at: number): Account {
   return { projects: [project], sections, tasks }
 }
 
-export async function readTodoistFiles(
-  sources: readonly Source[],
-): Promise<ImportPlan & { inbox?: string }> {
+export async function readTodoistFiles(sources: readonly Source[]): Promise<ImportPlan & { inbox?: string }> {
   const account: Account = { projects: [], sections: [], tasks: [] }
   let at = 0
   for (const source of sources) {
     if (!/\.csv$/i.test(source.path)) continue
     const text = await source.text()
     if (!isTodoistCsv(text)) continue
-    const name = (source.path.split('/').pop() ?? source.path)
-      .replace(/\.csv$/i, '')
-      .replace(/\s*\[\d+\]$/, '')
+    const name = (source.path.split('/').pop() ?? source.path).replace(/\.csv$/i, '').replace(/\s*\[\d+\]$/, '')
     const one = csvProject(name, text, at++)
     account.projects.push(...one.projects)
     account.sections.push(...one.sections)
@@ -397,8 +380,7 @@ export type Fetch = (
 type Json = Record<string, unknown>
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
-const id = (value: unknown) =>
-  typeof value === 'string' || typeof value === 'number' ? String(value) : ''
+const id = (value: unknown) => (typeof value === 'string' || typeof value === 'number' ? String(value) : '')
 
 async function pages(get: Fetch, token: string, path: string, list = 'results'): Promise<Json[]> {
   const out: Json[] = []
@@ -476,8 +458,7 @@ function taskOf(
 
 function remindOf(row: Json): Remind | null {
   if (row.is_deleted === true) return null
-  if (text(row.type) === 'relative' && typeof row.minute_offset === 'number')
-    return { before: row.minute_offset }
+  if (text(row.type) === 'relative' && typeof row.minute_offset === 'number') return { before: row.minute_offset }
   const at = isRecord(row.due) ? text(row.due.date) : ''
   const found = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(at)
   if (!found?.[1] || !found[2]) return null
@@ -498,11 +479,7 @@ export interface ApiOptions {
   now?: Date
 }
 
-export async function readTodoistAccount(
-  get: Fetch,
-  token: string,
-  options: ApiOptions = {},
-): Promise<Account> {
+export async function readTodoistAccount(get: Fetch, token: string, options: ApiOptions = {}): Promise<Account> {
   const [projects, sections, open, reminders] = await Promise.all([
     pages(get, token, '/projects'),
     pages(get, token, '/sections'),
@@ -545,9 +522,7 @@ export async function readTodoistAccount(
   for (const [at, row] of [...open, ...done].entries()) {
     const comments =
       Number(row.note_count) > 0
-        ? (await pages(get, token, `/comments?task_id=${encodeURIComponent(id(row.id))}`)).map(
-            commentOf,
-          )
+        ? (await pages(get, token, `/comments?task_id=${encodeURIComponent(id(row.id))}`)).map(commentOf)
         : []
     const finished = at >= open.length
     tasks.push(taskOf(row, people, remindOfTask.get(id(row.id)) ?? [], comments, finished))

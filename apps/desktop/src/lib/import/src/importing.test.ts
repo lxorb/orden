@@ -21,9 +21,7 @@ describe('the folder an import makes for itself', () => {
   })
 
   test('is named after the folder that was dropped', () => {
-    expect(
-      folderNameFor([picked('2026_01_02.md', 'My graph/journals/2026_01_02.md')], 'logseq'),
-    ).toBe('My graph')
+    expect(folderNameFor([picked('2026_01_02.md', 'My graph/journals/2026_01_02.md')], 'logseq')).toBe('My graph')
   })
 
   test('is the app it came out of where the file name is one an exporter made up', () => {

@@ -10,8 +10,7 @@ import type { Source } from './sources'
 const APP = /^logseq\//i
 const PROPERTY = /^\s*(?:-\s+)?([A-Za-z][\w -]{0,39}):: *(.*?)\r?$/
 
-const MARKER =
-  /^(\s*)-\s+(TODO|DOING|NOW|LATER|DONE|WAIT|WAITING|IN-PROGRESS|STARTED|CANCELED|CANCELLED)\s+/
+const MARKER = /^(\s*)-\s+(TODO|DOING|NOW|LATER|DONE|WAIT|WAITING|IN-PROGRESS|STARTED|CANCELED|CANCELLED)\s+/
 
 const REFERENCE = /\(\(([0-9a-f-]{36})\)\)/gi
 const LABELLED_REFERENCE = /\[([^\]\n]+)\]\(\(\(([0-9a-f-]{36})\)\)\)/gi
@@ -84,11 +83,7 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
           flattened += said.flattened
 
           const extra = said.meta.extra?.map(
-            ([name, value]) =>
-              [
-                name,
-                typeof value === 'string' ? followed(value, path, free, went) : value,
-              ] as const,
+            ([name, value]) => [name, typeof value === 'string' ? followed(value, path, free, went) : value] as const,
           )
 
           const own = /^journals\//i.test(path) ? [] : [said.title ?? pageName(path)]
@@ -120,12 +115,7 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
   return plan
 }
 
-function followed(
-  value: string,
-  from: string,
-  to: string,
-  went: ReadonlyMap<string, string>,
-): string {
+function followed(value: string, from: string, to: string, went: ReadonlyMap<string, string>): string {
   return value.replace(/\]\(([^)\n]+)\)/g, (whole, target: string) => {
     if (/^[a-z][\w+.-]*:/i.test(target) || target.startsWith('#')) return whole
     const there = went.get(within(folderOf(from), decoded(target.trim())) ?? '')
@@ -156,13 +146,8 @@ function graphRoot(sources: readonly Source[]): string {
   return ''
 }
 
-async function configOf(
-  sources: readonly Source[],
-  root: string,
-): Promise<{ title: string; file: string }> {
-  const config = sources.find(
-    (one) => one.path.toLowerCase() === `${root}logseq/config.edn`.toLowerCase(),
-  )
+async function configOf(sources: readonly Source[], root: string): Promise<{ title: string; file: string }> {
+  const config = sources.find((one) => one.path.toLowerCase() === `${root}logseq/config.edn`.toLowerCase())
   const text = config ? await config.text() : ''
   const setting = (name: string) =>
     new RegExp(`^[ \\t{]*:journal/${name}\\s+"\\s*([^"\\s][^"\\n]*?)\\s*"`, 'm').exec(text)?.[1]
@@ -182,8 +167,7 @@ function journalOf(path: string, format: string): string | null {
 function dayIn(name: string, format: string): string | null {
   const order: string[] = []
   const pattern = format.replace(/yyyy|MM|M|dd|d|[^yMd]/g, (token) => {
-    const which =
-      token === 'yyyy' ? 'y' : token.startsWith('M') ? 'm' : token.startsWith('d') ? 'd' : ''
+    const which = token === 'yyyy' ? 'y' : token.startsWith('M') ? 'm' : token.startsWith('d') ? 'd' : ''
     if (!which) return token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     order.push(which)
     return which === 'y' ? '(\\d{4})' : '(\\d{1,2})'
@@ -426,11 +410,7 @@ function blocksOf(lines: readonly string[]): string[] {
         continue
       }
       const words = line.startsWith(open.inside) ? line.slice(open.inside.length) : line.trimStart()
-      out.push(
-        CODE_BLOCKS.includes(open.kind)
-          ? `${open.inside}${words}`
-          : `${open.inside}> ${words}`.trimEnd(),
-      )
+      out.push(CODE_BLOCKS.includes(open.kind) ? `${open.inside}${words}` : `${open.inside}> ${words}`.trimEnd())
       continue
     }
 
@@ -446,8 +426,7 @@ function blocksOf(lines: readonly string[]): string[] {
       const inside = lead.replace(/-(\s+)$/, ' $1')
       open = { kind, inside }
       const bullet = lead.includes('-')
-      if (!bullet && !CODE_BLOCKS.includes(kind) && out.at(-1)?.trimStart().startsWith('>'))
-        out.push('')
+      if (!bullet && !CODE_BLOCKS.includes(kind) && out.at(-1)?.trimStart().startsWith('>')) out.push('')
       if (callout) out.push(`${lead}> [!${kind.toLowerCase()}]`)
       else if (kind === 'QUOTE') out.push(`${lead}>`)
       else out.push(`${lead}\`\`\`${CODE_LANGUAGE[kind] ?? (begin[3] ?? '').split(/\s/)[0]}`)
@@ -481,9 +460,7 @@ function logseqText(text: string, graph: Graph, count: () => void): string {
   const outsideCode = (plain: string) =>
     plain
       .replace(HIGHLIGHT, '==$1==')
-      .replace(LABELLED_REFERENCE, (whole, words: string, id: string) =>
-        block(whole, id, () => words),
-      )
+      .replace(LABELLED_REFERENCE, (whole, words: string, id: string) => block(whole, id, () => words))
       .replace(BLOCK_EMBED, (whole, id: string) => block(whole, id))
       .replace(REFERENCE, (whole, id: string) => block(whole, id))
       .replace(PAGE_EMBED, (_whole, name: string) => pageLink(page(name), null, true))

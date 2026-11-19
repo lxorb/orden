@@ -10,10 +10,7 @@ export async function mountedFor(root: string): Promise<boolean> {
   return mountOf(root) !== null
 }
 
-export function hearInternal(
-  root: string,
-  heard: (changes: SpaceChange[]) => void,
-): (() => void) | null {
+export function hearInternal(root: string, heard: (changes: SpaceChange[]) => void): (() => void) | null {
   const found = mountOf(root)
   if (!found || found.inside) return null
   const at = (path: string) => joinPath(root, path)
@@ -21,8 +18,7 @@ export function hearInternal(
     heard(
       changes.map((change): SpaceChange => {
         if (change.kind === 'removed') return { ...change, path: at(change.path) }
-        if (change.kind === 'renamed')
-          return { ...change, from: at(change.from), path: at(change.path) }
+        if (change.kind === 'renamed') return { ...change, from: at(change.from), path: at(change.path) }
         return { ...change, path: at(change.path) }
       }),
     )
@@ -48,8 +44,6 @@ export async function listedUnder(root: string): Promise<{ path: string; dir: bo
   if (!kept) return null
   const top = kept.inside ? `${kept.inside}/` : ''
   return (await kept.mount.folder.list()).flatMap(({ path, entry }) =>
-    path.startsWith(top) && path !== kept.inside
-      ? [{ path: path.slice(top.length), dir: !entry.key }]
-      : [],
+    path.startsWith(top) && path !== kept.inside ? [{ path: path.slice(top.length), dir: !entry.key }] : [],
   )
 }

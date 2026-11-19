@@ -1,11 +1,4 @@
-import {
-  type Canvas,
-  type CanvasNode,
-  isPage,
-  type PageNode,
-  readCanvas,
-  writeCanvas,
-} from '@orden/markdown/canvas'
+import { type Canvas, type CanvasNode, isPage, type PageNode, readCanvas, writeCanvas } from '@orden/markdown/canvas'
 import { holderOf, pagesFromPdf, pagesOf, paperOf } from '@orden/markdown/pages'
 import { folderOf, nameOf, placesOf, samePath, joinPath } from '../../platform/src/api'
 
@@ -50,10 +43,7 @@ export async function asPageNote(pdf: string, how: Turning): Promise<string> {
   return note
 }
 
-export async function noteHolding(
-  pdf: string,
-  how: Pick<Turning, 'root' | 'exists' | 'read'>,
-): Promise<string | null> {
+export async function noteHolding(pdf: string, how: Pick<Turning, 'root' | 'exists' | 'read'>): Promise<string | null> {
   const holder = holderOf(pdf)
   if (holder) return (await how.exists(holder)) ? holder : null
 
@@ -81,8 +71,7 @@ export function paperOutside(text: string, inSpace: (path: string) => boolean): 
 }
 
 export function paperNamed(canvas: Canvas, from: string, name: string): Canvas {
-  const held = (node: CanvasNode): node is PageNode =>
-    isPage(node) && !!node.file && samePath(node.file, from)
+  const held = (node: CanvasNode): node is PageNode => isPage(node) && !!node.file && samePath(node.file, from)
   if (!canvas.nodes.some(held)) return canvas
 
   return {
@@ -120,9 +109,7 @@ function besideIts(text: string, note: string, pdf: string, root: string | null)
 
   return (
     pages.length > 0 &&
-    pages.every(
-      (page) => !!page.file && placesOf(page.file, note, root).some((one) => samePath(one, pdf)),
-    )
+    pages.every((page) => !!page.file && placesOf(page.file, note, root).some((one) => samePath(one, pdf)))
   )
 }
 

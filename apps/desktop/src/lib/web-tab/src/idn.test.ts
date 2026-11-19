@@ -38,9 +38,7 @@ describe('the key of a site', () => {
     expect(originKey('https://www.xn--mnchen-3ya.de/a')).toBe('xn--mnchen-3ya.de')
     expect(originKey('http://xn--mnchen-3ya.de/')).toBe('http://xn--mnchen-3ya.de')
     expect(originKey('https://example.com:8443/')).toBe('example.com:8443')
-    expect(originKey('view-source:https://xn--mnchen-3ya.de/')).toBe(
-      'view-source:xn--mnchen-3ya.de',
-    )
+    expect(originKey('view-source:https://xn--mnchen-3ya.de/')).toBe('view-source:xn--mnchen-3ya.de')
   })
 
   test('is read as the name it is only where it is shown', () => {
@@ -57,9 +55,7 @@ describe('Enter on a bar nobody typed in', () => {
   })
 
   test('takes anything else as what was typed', () => {
-    expect(meantBy('https://münchen.de/b', 'https://xn--mnchen-3ya.de/a')).toBe(
-      'https://münchen.de/b',
-    )
+    expect(meantBy('https://münchen.de/b', 'https://xn--mnchen-3ya.de/a')).toBe('https://münchen.de/b')
     expect(meantBy('words', null)).toBe('words')
   })
 })
@@ -104,12 +100,8 @@ describe('a name that is not ASCII', () => {
     expect(shownUrl('https://xn--mnchen-3ya.de/a?b=c#d')).toBe('https://münchen.de/a?b=c#d')
     expect(shownUrl('https://example.com/a')).toBe('https://example.com/a')
     expect(shownUrl('https://xn--pple-43d.com/')).toBe('https://xn--pple-43d.com/')
-    expect(shownUrl('view-source:https://xn--mnchen-3ya.de/')).toBe(
-      'view-source:https://münchen.de/',
-    )
+    expect(shownUrl('view-source:https://xn--mnchen-3ya.de/')).toBe('view-source:https://münchen.de/')
     expect(shownUrl('not an address')).toBe('not an address')
-    expect(shownUrl('https://google.com@xn--mnchen-3ya.de/')).toBe(
-      'https://google.com@xn--mnchen-3ya.de/',
-    )
+    expect(shownUrl('https://google.com@xn--mnchen-3ya.de/')).toBe('https://google.com@xn--mnchen-3ya.de/')
   })
 })

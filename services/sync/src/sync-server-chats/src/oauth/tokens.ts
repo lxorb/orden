@@ -10,9 +10,7 @@ export const MOST_CONNECTIONS = 200
 
 export const tokens = new Hono<{ Bindings: Env }>()
 
-async function tokenBody(
-  context: Context<{ Bindings: Env }>,
-): Promise<Record<string, string | undefined>> {
+async function tokenBody(context: Context<{ Bindings: Env }>): Promise<Record<string, string | undefined>> {
   const type = context.req.header('content-type') ?? ''
   const raw: unknown = type.includes('json')
     ? await context.req.json<unknown>().catch(() => ({}))
@@ -101,10 +99,7 @@ tokens.post('/token', async (context) => {
       return context.json(failure('invalid_request', 'code and code_verifier are required'), 400)
     }
     if (!resourceMatches(context.env, body.resource ?? '')) {
-      return context.json(
-        failure('invalid_target', `this server is ${resourceUrl(context.env, context.req.url)}`),
-        400,
-      )
+      return context.json(failure('invalid_target', `this server is ${resourceUrl(context.env, context.req.url)}`), 400)
     }
 
     const hash = await sha256(body.code)
@@ -158,10 +153,7 @@ tokens.post('/token', async (context) => {
       )
       .run()
     if (!added.meta.changes) {
-      return context.json(
-        failure('invalid_grant', 'that is as many apps as one account connects'),
-        400,
-      )
+      return context.json(failure('invalid_grant', 'that is as many apps as one account connects'), 400)
     }
 
     return context.json(issued.reply, 200, { 'cache-control': 'no-store' })
@@ -207,10 +199,7 @@ tokens.post('/token', async (context) => {
   return context.json(failure('unsupported_grant_type', `use one of ${GRANTS.join(', ')}`), 400)
 })
 
-export async function grantForToken(
-  env: Env,
-  token: string,
-): Promise<{ user_id: string; read_only: number } | null> {
+export async function grantForToken(env: Env, token: string): Promise<{ user_id: string; read_only: number } | null> {
   const hash = await sha256(token)
   const row = await env.DB.prepare(
     'select id, user_id, read_only, access_expires_at from oauth_grants where access_hash = ?',
@@ -220,8 +209,6 @@ export async function grantForToken(
 
   if (!row || row.access_expires_at < now()) return null
 
-  await env.DB.prepare('update oauth_grants set last_used_at = ? where id = ?')
-    .bind(now(), row.id)
-    .run()
+  await env.DB.prepare('update oauth_grants set last_used_at = ? where id = ?').bind(now(), row.id).run()
   return { user_id: row.user_id, read_only: row.read_only }
 }

@@ -16,15 +16,7 @@ describe('what may be in it', () => {
   })
 
   test('and a path inside the space, never one on somebody else s disk', async () => {
-    const set = await put([
-      'Archive',
-      '/etc/passwd',
-      'C:\\notes',
-      '../outside',
-      'fine/../also fine',
-      '',
-      7,
-    ])
+    const set = await put(['Archive', '/etc/passwd', 'C:\\notes', '../outside', 'fine/../also fine', '', 7])
 
     expect(set.json.excluded).toEqual(['Archive'])
   })

@@ -50,9 +50,9 @@ const { readTerminal, typeTerminal } = await import('./tab')
 describe('a terminal note behind a lock shut to agents', () => {
   test('is not read by an agent of its space', async () => {
     const caller = callerOf({ id: 'x', name: 'X', scopes: ['context'], spaces: ['A'] })
-    await expect(
-      readTerminal({ verb: 'read_terminal', caller, args: { tab: 'tt' } }),
-    ).rejects.toMatchObject({ code: 'protected' })
+    await expect(readTerminal({ verb: 'read_terminal', caller, args: { tab: 'tt' } })).rejects.toMatchObject({
+      code: 'protected',
+    })
   })
 
   test('is not typed into by an agent of its space', async () => {

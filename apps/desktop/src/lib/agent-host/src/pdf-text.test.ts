@@ -22,18 +22,13 @@ describe('the pages asked for', () => {
   test('refuse what is not one', () => {
     expect(() => pagesAsked('first', 3)).toThrow(Refused)
     expect(pagesAsked(Array.from({ length: 100 }, () => '1-3').join(','), 10)).toEqual([1, 2, 3])
-    expect(() => pagesAsked(Array.from({ length: 101 }, () => '1-3').join(','), 10)).toThrow(
-      'at most 100 ranges',
-    )
+    expect(() => pagesAsked(Array.from({ length: 101 }, () => '1-3').join(','), 10)).toThrow('at most 100 ranges')
     expect(() => pagesAsked('1-x', 3)).toThrow(Refused)
   })
 })
 
 describe('a quote on a page', () => {
-  const runs = [
-    ...line(700, ['The quick ', 72, 100], ['brown fox', 172, 90]),
-    ...line(680, ['jumps over', 72, 100]),
-  ]
+  const runs = [...line(700, ['The quick ', 72, 100], ['brown fox', 172, 90]), ...line(680, ['jumps over', 72, 100])]
 
   test('is found across runs and line breaks, whatever the spaces', () => {
     const found = quoteIn(runs, 'quick  brown\nfox')

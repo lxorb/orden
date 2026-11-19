@@ -1,16 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { Turn } from '../../../ai-providers/src/chat/types'
-import {
-  CARRY_ON,
-  intervalIn,
-  loopAsk,
-  loopPrompt,
-  nextIn,
-  PACED,
-  PACING,
-  runLoop,
-  SHORTEST,
-} from './loop'
+import { CARRY_ON, intervalIn, loopAsk, loopPrompt, nextIn, PACED, PACING, runLoop, SHORTEST } from './loop'
 import type { Ended } from '../commands/types'
 
 const said = (text: string): Ended => ({
@@ -99,8 +89,7 @@ describe('/loop', () => {
       { every: 60_000, prompt: 'p' },
       'p',
       {
-        turn: () =>
-          Promise.resolve({ stop: 'error', error: 'signed out', turn: null, usage: null }),
+        turn: () => Promise.resolve({ stop: 'error', error: 'signed out', turn: null, usage: null }),
         wait: () => Promise.resolve(),
         ended: (why) => ends.push(why),
       },

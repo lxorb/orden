@@ -19,18 +19,10 @@ function wildcard(name: string): string | null {
 
 function named(value: string, name: string): string {
   const pattern = wildcard(name)
-  return pattern
-    ? `${pattern}.matches(${value})`
-    : `${value}.lower() == ${quote(name.toLowerCase())}`
+  return pattern ? `${pattern}.matches(${value})` : `${value}.lower() == ${quote(name.toLowerCase())}`
 }
 
-function onDate(
-  field: string,
-  op: '==' | '<' | '>',
-  words: string,
-  options: TodoistOptions,
-  at: number,
-): string {
+function onDate(field: string, op: '==' | '<' | '>', words: string, options: TodoistOptions, at: number): string {
   const date = dateWords(words, options)
   if (!date) throw new BasesError(`"${words.trim()}" is not a date`, at)
   if (date.clock) {
@@ -136,8 +128,7 @@ function term(raw: string, options: TodoistOptions, at: number): string {
       if (who === 'others' || who === 'andere') return 'task.assignee && !task.mine'
       return `task.assignee && ${named('task.assignee', value)}`
     }
-    if (key === 'search' || key === 'suche')
-      return `task.text.lower().contains(${quote(value.toLowerCase())})`
+    if (key === 'search' || key === 'suche') return `task.text.lower().contains(${quote(value.toLowerCase())})`
   }
 
   if (text.startsWith('##')) {
@@ -154,9 +145,7 @@ function term(raw: string, options: TodoistOptions, at: number): string {
   if (text.startsWith('@') || text.startsWith('%')) {
     const name = text.slice(1).trim()
     const pattern = wildcard(name)
-    return pattern
-      ? `task.tags.filter(${pattern}.matches(value)).length > 0`
-      : `task.hasTag(${quote(name)})`
+    return pattern ? `task.tags.filter(${pattern}.matches(value)).length > 0` : `task.hasTag(${quote(name)})`
   }
   if (text.startsWith('/')) {
     const name = text.slice(1).trim()

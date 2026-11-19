@@ -158,10 +158,7 @@ const cardFor =
 
         if (source.length <= MOST_EDITED) {
           const host = document.createElement('div')
-          release = view.state.facet(previewEditor)(
-            host,
-            previewNoteOf(view.state, path, source, section, link),
-          )
+          release = view.state.facet(previewEditor)(host, previewNoteOf(view.state, path, source, section, link))
 
           if (release) {
             body.dataset.written = 'yes'

@@ -31,12 +31,7 @@ export async function firewallOfMachine(hetzner: Hetzner, id: string): Promise<n
   return null
 }
 
-const UNAVAILABLE = new Set([
-  'resource_unavailable',
-  'placement_error',
-  'unavailable',
-  'resource_limit_exceeded',
-])
+const UNAVAILABLE = new Set(['resource_unavailable', 'placement_error', 'unavailable', 'resource_limit_exceeded'])
 
 const LINK_TRIES = 3
 const LINK_WAIT = 1000
@@ -78,11 +73,7 @@ export function setupOf(env: Env, mayCost: MayCost): Setup | null {
   const origin = new URL(env.APP_ORIGIN).origin
   return {
     hetzner: new Hetzner(env.HETZNER_TOKEN ?? ''),
-    tunnels: new Tunnels(
-      env.MACHINE_TUNNEL_TOKEN ?? '',
-      env.CF_ACCOUNT_ID ?? '',
-      env.CF_ZONE_ID ?? '',
-    ),
+    tunnels: new Tunnels(env.MACHINE_TUNNEL_TOKEN ?? '', env.CF_ACCOUNT_ID ?? '', env.CF_ZONE_ID ?? ''),
     service:
       env.MACHINE_ACCESS_ID && env.MACHINE_ACCESS_SECRET
         ? { id: env.MACHINE_ACCESS_ID, secret: env.MACHINE_ACCESS_SECRET }
@@ -162,8 +153,7 @@ export function costOf(type: ServerType, location: string, pricing: Pricing) {
   }
 }
 
-const specOf = (type: ServerType) =>
-  JSON.stringify({ cores: type.cores, memory: type.memory, disk: type.disk })
+const specOf = (type: ServerType) => JSON.stringify({ cores: type.cores, memory: type.memory, disk: type.disk })
 
 export class HetznerHost implements MachineHost {
   readonly alwaysOn = true
@@ -176,9 +166,7 @@ export class HetznerHost implements MachineHost {
 
   private need(): Setup {
     if (this.setup) return this.setup
-    throw new Error(
-      `Hetzner machines are not set up: ${hetznerMissing(this.env).join(', ')} missing`,
-    )
+    throw new Error(`Hetzner machines are not set up: ${hetznerMissing(this.env).join(', ')} missing`)
   }
 
   private names(id: string) {
@@ -189,8 +177,7 @@ export class HetznerHost implements MachineHost {
     const setup = this.need()
     const names = this.names(id)
 
-    const tunnel =
-      (await setup.tunnels.found(names.formerTunnel)) ?? (await setup.tunnels.tunnel(names.tunnel))
+    const tunnel = (await setup.tunnels.found(names.formerTunnel)) ?? (await setup.tunnels.tunnel(names.tunnel))
     await setup.tunnels.route(tunnel, names.hostname, setup.access)
     await setup.tunnels.hostname(names.hostname, tunnel)
 
@@ -220,23 +207,13 @@ export class HetznerHost implements MachineHost {
     const type = await setup.hetzner.serverType(wanted)
     const places = asked.filter((one) => !type.available.length || type.available.includes(one))
     const first = places[0]
-    if (!first)
-      throw new HetznerError(
-        503,
-        'resource_unavailable',
-        `no ${wanted} to be had in ${asked.join(' or ')}`,
-      )
+    if (!first) throw new HetznerError(503, 'resource_unavailable', `no ${wanted} to be had in ${asked.join(' or ')}`)
     const pricing = await setup.hetzner.pricing()
-    if (!(await setup.mayCost(costOf(type, first, pricing).monthly, pricing.currency)))
-      throw new HostRefused('budget')
+    if (!(await setup.mayCost(costOf(type, first, pricing).monthly, pricing.currency))) throw new HostRefused('budget')
 
     const firewall =
       (await firewallOfMachine(setup.hetzner, id)) ??
-      (await setup.hetzner.createFirewall(
-        names.server,
-        { [LABEL]: id },
-        firewallRules(sshKey !== null),
-      ))
+      (await setup.hetzner.createFirewall(names.server, { [LABEL]: id }, firewallRules(sshKey !== null)))
     const userData = cloudInit({
       secret,
       tunnel: await setup.tunnels.tokenOf(tunnel),

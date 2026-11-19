@@ -5,8 +5,7 @@ export const isRetiredChat = (chat: string): boolean => chat.startsWith(RETIRED_
 
 export const isRetiredTab = (value: unknown): boolean =>
   isRecord(value) &&
-  (value.kind === 'connect' ||
-    (value.kind === 'channel' && isString(value.doc) && isRetiredChat(value.doc)))
+  (value.kind === 'connect' || (value.kind === 'channel' && isString(value.doc) && isRetiredChat(value.doc)))
 
 export function holdsRetiredTab(value: unknown): boolean {
   if (isRetiredTab(value)) return true

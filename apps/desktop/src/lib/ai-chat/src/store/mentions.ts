@@ -1,16 +1,7 @@
 import { fit } from '@orden/scan/search/fuzzy'
 
 export type MentionKind =
-  | 'note'
-  | 'folder'
-  | 'tag'
-  | 'tab'
-  | 'selection'
-  | 'scratchpad'
-  | 'thread'
-  | 'web'
-  | 'picture'
-  | 'words'
+  'note' | 'folder' | 'tag' | 'tab' | 'selection' | 'scratchpad' | 'thread' | 'web' | 'picture' | 'words'
 
 export interface Mention {
   kind: MentionKind

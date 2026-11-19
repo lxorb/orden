@@ -1,13 +1,4 @@
-import {
-  log,
-  isNumber,
-  isRecord,
-  isString,
-  invoke,
-  isDesktop,
-  isNative,
-  waited,
-} from '../../platform/src/api'
+import { log, isNumber, isRecord, isString, invoke, isDesktop, isNative, waited } from '../../platform/src/api'
 import { mayStop } from '@orden/contracts'
 import { GIVE_UP, settleUp, written } from '../../parting/src/api'
 
@@ -19,11 +10,7 @@ export function asChannel(value: unknown): Channel {
 }
 
 export const webChannel: Channel | null =
-  isNative || __EVEN_PLUGIN__
-    ? null
-    : import.meta.env.VITE_ORDEN_CHANNEL === 'unstable'
-      ? 'unstable'
-      : 'stable'
+  isNative || __EVEN_PLUGIN__ ? null : import.meta.env.VITE_ORDEN_CHANNEL === 'unstable' ? 'unstable' : 'stable'
 
 export function switchWebChannel(to: Channel): void {
   if (to === webChannel) return

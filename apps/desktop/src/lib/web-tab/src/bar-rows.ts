@@ -1,9 +1,4 @@
-export function fieldAlone(
-  room: number,
-  beside: readonly number[],
-  field: number,
-  gap: number,
-): boolean {
+export function fieldAlone(room: number, beside: readonly number[], field: number, gap: number): boolean {
   const wanted = beside.reduce((sum, one) => sum + one, field) + gap * beside.length
   return wanted > room + 0.5
 }

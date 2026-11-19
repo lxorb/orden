@@ -12,8 +12,7 @@ export function usageLine(usage: TabUsage, size: (bytes: number) => string): str
 
 export function streamLine(stream: TabStream): string[] {
   const parts: string[] = []
-  if (stream.width !== null && stream.height !== null)
-    parts.push(`${stream.width}×${stream.height}`)
+  if (stream.width !== null && stream.height !== null) parts.push(`${stream.width}×${stream.height}`)
   if (stream.fps !== null) parts.push(`${Math.round(stream.fps)} fps`)
   if (stream.bitrate !== null) parts.push(`${(stream.bitrate / 1e6).toFixed(1)} Mb/s`)
   if (stream.rtt !== null) parts.push(`${Math.round(stream.rtt)} ms`)

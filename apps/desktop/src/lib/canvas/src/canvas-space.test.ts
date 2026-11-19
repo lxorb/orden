@@ -33,9 +33,7 @@ beforeEach(() => {
 })
 
 test('a card turned into a note points at it relative to the canvas space', async () => {
-  const store = boardInB([
-    { id: 'card', type: 'text', x: 0, y: 0, width: 200, height: 80, text: 'long words' },
-  ])
+  const store = boardInB([{ id: 'card', type: 'text', x: 0, y: 0, width: 200, height: 80, text: 'long words' }])
   vi.spyOn(workspace, 'noteFrom').mockResolvedValue('/home/me/B/Note.md')
   store.pick('card')
 
@@ -62,9 +60,7 @@ test('a note from another space is not put on the canvas as a local path', async
 })
 
 test('a file card opens the file in the canvas space', async () => {
-  const store = boardInB([
-    { id: 'card', type: 'file', x: 0, y: 0, width: 200, height: 80, file: 'Ideas.md' },
-  ])
+  const store = boardInB([{ id: 'card', type: 'file', x: 0, y: 0, width: 200, height: 80, file: 'Ideas.md' }])
   const opened = vi.spyOn(workspace, 'openEntry').mockResolvedValue(undefined)
 
   await run.open(store, { node: 'card', edge: null } as never, { x: 0, y: 0 })

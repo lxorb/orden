@@ -28,9 +28,7 @@ describe('the log in during setup', () => {
     close = () => void unmount(made)
     flushSync()
 
-    const back = [...target.querySelectorAll('button')].find(
-      (one) => one.textContent.trim() === 'Back',
-    )
+    const back = [...target.querySelectorAll('button')].find((one) => one.textContent.trim() === 'Back')
     expect(back).toBeDefined()
     back?.click()
     flushSync()
@@ -119,9 +117,7 @@ describe('skipping the appearance question', () => {
     flushSync()
 
     theme.setScheme('dark')
-    const skip = [...target.querySelectorAll('button')].find(
-      (one) => one.textContent.trim() === 'Skip',
-    )
+    const skip = [...target.querySelectorAll('button')].find((one) => one.textContent.trim() === 'Skip')
     skip?.click()
     flushSync()
 

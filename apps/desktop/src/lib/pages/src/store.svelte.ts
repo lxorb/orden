@@ -10,13 +10,7 @@ import {
   settled,
 } from '@orden/markdown/pages'
 import { type Camera, clampScale, PAPER_CLOSEST, zoomed } from '../../camera/src/api'
-import {
-  type Canvas,
-  canvasRuns,
-  type PageNode,
-  readCanvas,
-  takeParsed,
-} from '@orden/markdown/canvas'
+import { type Canvas, canvasRuns, type PageNode, readCanvas, takeParsed } from '@orden/markdown/canvas'
 import { strokeBox } from '../../plane/src/api'
 import { type KeptView, CanvasStore } from '../../canvas/src/api'
 import type { Highlight, PaperAt, PdfHeading } from '../../pdf/src/api'
@@ -175,9 +169,7 @@ export class PagesStore extends CanvasStore {
     const { width, height } = this.pane
     this.theirs()
     this.halt()
-    this.camera = this.held(
-      zoomed(this.camera, width, height, width / 2, height / 2, by, PAPER_CLOSEST),
-    )
+    this.camera = this.held(zoomed(this.camera, width, height, width / 2, height / 2, by, PAPER_CLOSEST))
   }
 
   zoomAt(at: { x: number; y: number }, by: number) {
@@ -201,10 +193,7 @@ export class PagesStore extends CanvasStore {
     this.theirs()
     this.halt()
     const scale = clampScale(
-      Math.min(
-        (this.pane.width - 2 * MARGIN) / page.width,
-        (this.pane.height - 2 * MARGIN) / page.height,
-      ),
+      Math.min((this.pane.width - 2 * MARGIN) / page.width, (this.pane.height - 2 * MARGIN) / page.height),
     )
     this.camera = this.held({ x: 0, y: page.y + page.height / 2, scale })
   }

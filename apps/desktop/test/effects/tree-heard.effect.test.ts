@@ -28,10 +28,8 @@ const ZETA = '/space/Zeta.md'
 let list: ReturnType<typeof mount> | null = null
 
 const rowOf = (path: string) => document.querySelector<HTMLElement>(`[data-path="${path}"]`)
-const picked = () =>
-  [...document.querySelectorAll<HTMLElement>('.row.is-picked')].map((row) => row.dataset.path)
-const order = () =>
-  [...document.querySelectorAll<HTMLElement>('.row[data-path]')].map((row) => row.dataset.path)
+const picked = () => [...document.querySelectorAll<HTMLElement>('.row.is-picked')].map((row) => row.dataset.path)
+const order = () => [...document.querySelectorAll<HTMLElement>('.row[data-path]')].map((row) => row.dataset.path)
 
 async function heardMove(from: string, to: string) {
   await disk.current!.invoke('rename_note', { from, to })

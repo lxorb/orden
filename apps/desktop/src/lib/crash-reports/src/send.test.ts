@@ -75,9 +75,7 @@ describe('crash reports go to Orden', () => {
   })
 
   test('a report the server refuses outright is not sent again', async () => {
-    const { how, sent } = sending(true, (one) =>
-      one.id.startsWith('a') ? new ApiError(400, 'bad') : { ok: true },
-    )
+    const { how, sent } = sending(true, (one) => (one.id.startsWith('a') ? new ApiError(400, 'bad') : { ok: true }))
     expect(await sendWaiting(how)).toBe('done')
     expect(sent).toEqual(['a'.repeat(32), 'b'.repeat(32)])
   })

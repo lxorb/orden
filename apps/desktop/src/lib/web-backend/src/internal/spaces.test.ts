@@ -41,9 +41,7 @@ const disk = vi.hoisted(() => {
       .filter((one) => parentOf(one) === root && (hidden || !nameOf(one).startsWith('.')))
       .sort()
       .map((one) =>
-        dirs.has(one)
-          ? tree(one, hidden)
-          : { name: nameOf(one), path: one, is_dir: false, children: [] },
+        dirs.has(one) ? tree(one, hidden) : { name: nameOf(one), path: one, is_dir: false, children: [] },
       ),
   })
   const crate = (command: string, args: Record<string, unknown>): unknown => {
@@ -62,10 +60,7 @@ const disk = vi.hoisted(() => {
       case 'read_tree': {
         const root = args.root as string
         if (!dirs.has(root)) throw new Error(`${root} is not a folder`)
-        return tree(
-          root,
-          (args.options as { showHidden?: boolean } | undefined)?.showHidden === true,
-        )
+        return tree(root, (args.options as { showHidden?: boolean } | undefined)?.showHidden === true)
       }
       case 'write_note':
         mkdirs(parentOf(path))
@@ -96,8 +91,7 @@ const disk = vi.hoisted(() => {
         const to = args.to as string
         if (files.has(to) || dirs.has(to)) throw new Error('something already lives there')
         mkdirs(parentOf(to))
-        for (const one of [...dirs])
-          if (under(from, one)) dirs.add(`${to}${one.slice(from.length)}`)
+        for (const one of [...dirs]) if (under(from, one)) dirs.add(`${to}${one.slice(from.length)}`)
         for (const [one, held] of [...files]) {
           if (under(from, one)) files.set(`${to}${one.slice(from.length)}`, held)
         }
@@ -193,8 +187,7 @@ vi.stubGlobal('localStorage', {
 
 const { internalInvoke } = await import('./route')
 
-const call = <T>(command: string, args: Record<string, unknown> = {}) =>
-  internalInvoke<T>(command, args)
+const call = <T>(command: string, args: Record<string, unknown> = {}) => internalInvoke<T>(command, args)
 
 function workspace(...roots: string[]) {
   const said: string[] = []
@@ -232,8 +225,7 @@ async function tapped<T>(
   run: () => Promise<T>,
 ): Promise<T> {
   const write = disk.crate
-  disk.crate = (command, args) =>
-    write(command, (before(command, args) as typeof args | undefined) ?? args)
+  disk.crate = (command, args) => write(command, (before(command, args) as typeof args | undefined) ?? args)
   try {
     return await run()
   } finally {
@@ -270,9 +262,7 @@ describe('a new space', () => {
     const stored = [...disk.files.keys()].filter((one) => one.includes('/.entries/'))
     expect(stored).toHaveLength(1)
     expect(disk.files.get(stored[0] ?? '')).toBe('ship it')
-    expect(() => disk.crate('write_note', { path: `${made.path}/Lost.md`, content: 'x' })).toThrow(
-      'is a file',
-    )
+    expect(() => disk.crate('write_note', { path: `${made.path}/Lost.md`, content: 'x' })).toThrow('is a file')
     expect(await call('create_space', { name: 'Disk' })).toEqual({
       name: 'Disk 2',
       path: '/spaces/.orden/Disk 2/Disk 2',
@@ -353,9 +343,7 @@ describe('a new space', () => {
       disk.crate = write
     }
 
-    const left = [...disk.files.keys(), ...disk.dirs].filter((one) =>
-      one.startsWith('/spaces/.orden/Plans'),
-    )
+    const left = [...disk.files.keys(), ...disk.dirs].filter((one) => one.startsWith('/spaces/.orden/Plans'))
     expect(left).toEqual([])
   })
 
@@ -391,9 +379,9 @@ describe('a new space', () => {
     expect(disk.dirs.has('/spaces/Disk/Work')).toBe(false)
     expect(await call('read_highlights', { path: `${made.path}/Paper.pdf` })).toBe('[]')
     expect(await read(`${made.path}/Work/Plan.md`)).toBe('ship it')
-    expect(
-      new Uint8Array(await call<ArrayBuffer>('read_file', { path: `${made.path}/Paper.pdf` })),
-    ).toEqual(new Uint8Array([1, 2, 3]))
+    expect(new Uint8Array(await call<ArrayBuffer>('read_file', { path: `${made.path}/Paper.pdf` }))).toEqual(
+      new Uint8Array([1, 2, 3]),
+    )
 
     await call('rename_note', { from: `${made.path}/Work`, to: '/spaces/Disk/Back' })
     expect(disk.files.get('/spaces/Disk/Back/Plan.md')).toEqual(new TextEncoder().encode('ship it'))
@@ -439,9 +427,9 @@ describe('a note carried in from a folder', () => {
     disk.files.set('/spaces/Disk/Old.md', latin)
     const made = await call<{ path: string }>('create_space', { name: 'Plans' })
 
-    await expect(
-      call('rename_note', { from: '/spaces/Disk/Old.md', to: `${made.path}/Old.md` }),
-    ).rejects.toThrow('not UTF-8')
+    await expect(call('rename_note', { from: '/spaces/Disk/Old.md', to: `${made.path}/Old.md` })).rejects.toThrow(
+      'not UTF-8',
+    )
     expect(disk.files.get('/spaces/Disk/Old.md')).toEqual(latin)
     expect(await call('path_exists', { path: `${made.path}/Old.md` })).toBe(false)
   })
@@ -454,12 +442,12 @@ describe('a note carried in from a folder', () => {
     const made = await call<{ path: string }>('create_space', { name: 'Plans' })
     await put(`${made.path}/${nfc}`, 'kept here')
 
-    await expect(
-      call('rename_note', { from: `/spaces/Disk/${nfd}`, to: `${made.path}/${nfd}` }),
-    ).rejects.toThrow('something already lives there')
-    await expect(
-      call('copy_path', { from: `/spaces/Disk/${nfd}`, to: `${made.path}/${nfd}` }),
-    ).rejects.toThrow('something already lives there')
+    await expect(call('rename_note', { from: `/spaces/Disk/${nfd}`, to: `${made.path}/${nfd}` })).rejects.toThrow(
+      'something already lives there',
+    )
+    await expect(call('copy_path', { from: `/spaces/Disk/${nfd}`, to: `${made.path}/${nfd}` })).rejects.toThrow(
+      'something already lives there',
+    )
 
     expect(await read(`${made.path}/${nfc}`)).toBe('kept here')
     expect(disk.files.get(`/spaces/Disk/${nfd}`)).toBe('from the folder')
@@ -524,9 +512,9 @@ describe('a space that is a folder', () => {
     expect(ws.held).toEqual(['/spaces/Notes'])
     expect(await read(`${root}/Plan.md`)).toBe('ship it today')
     expect(await read(`${root}/.Inbox.md`)).toBe('- [ ] eggs')
-    expect(
-      new Uint8Array(await call<ArrayBuffer>('read_file', { path: `${root}/Work/cat.png` })),
-    ).toEqual(new Uint8Array([1, 2]))
+    expect(new Uint8Array(await call<ArrayBuffer>('read_file', { path: `${root}/Work/cat.png` }))).toEqual(
+      new Uint8Array([1, 2]),
+    )
     expect(await call('path_exists', { path: `${root}/Empty` })).toBe(true)
     expect(await call('path_exists', { path: `${root}/.obsidian/app.json` })).toBe(true)
     expect(await call('path_exists', { path: `${root}/.obsidian/plugins.json` })).toBe(false)
@@ -596,12 +584,8 @@ describe('a space written out as Markdown and folders', () => {
     disk.dirs.add('/picked/Plans')
 
     expect(await exportSpaceTo(made.path, 'Plans', '/picked')).toBe('/picked/Plans 2')
-    expect(disk.files.get('/picked/Plans 2/Work/Plan.md')).toEqual(
-      new TextEncoder().encode('ship it'),
-    )
-    expect(disk.files.get('/picked/Plans 2/.Inbox.md')).toEqual(
-      new TextEncoder().encode('- [ ] eggs'),
-    )
+    expect(disk.files.get('/picked/Plans 2/Work/Plan.md')).toEqual(new TextEncoder().encode('ship it'))
+    expect(disk.files.get('/picked/Plans 2/.Inbox.md')).toEqual(new TextEncoder().encode('- [ ] eggs'))
     expect(disk.files.get('/picked/Plans 2/cat.png')).toEqual(new Uint8Array([1, 2]))
   })
 
@@ -633,9 +617,7 @@ describe("a space written out keeps each note's own metadata (#1210)", () => {
 
     await exportSpaceTo('/spaces/Disk', 'Disk', '/picked', (path) => meta[path] ?? null)
     const read = (path: string) => new TextDecoder().decode(disk.files.get(path) as Uint8Array)
-    expect(read('/picked/Disk/Work/Plan.md')).toBe(
-      '---\nicon: rocket\nicon-color: red\ncover: cat.png\n---\n# Plan\n',
-    )
+    expect(read('/picked/Disk/Work/Plan.md')).toBe('---\nicon: rocket\nicon-color: red\ncover: cat.png\n---\n# Plan\n')
     expect(read('/picked/Disk/Bare.md')).toBe('words\n')
   })
 })
@@ -702,9 +684,7 @@ describe('a kept space the launch has not mounted yet', () => {
     expect(keptShaped(`${folder}/Plans`)).toBe(true)
     expect(keptShaped('/spaces/Plans')).toBe(false)
     expect(keptShaped('/spaces/.orden/Plans/Other')).toBe(false)
-    expect((await listInternal(`${folder}/Plans`))?.map((one) => one.path)).toEqual([
-      `${folder}/Plans/Plan.md`,
-    ])
+    expect((await listInternal(`${folder}/Plans`))?.map((one) => one.path)).toEqual([`${folder}/Plans/Plan.md`])
     expect(await listInternal('/spaces/Disk')).toBeNull()
   })
 })
@@ -766,9 +746,9 @@ describe('making a folder a kept space, whatever happens on the way', () => {
     expect(disk.files.has(`${half}/.converting`)).toBe(false)
     expect(await read(`${root}/Plan.md`)).toBe('ship it')
     expect(await read(`${root}/Work/Old.md`)).toBe('old')
-    expect(
-      [...disk.dirs].filter((one) => /^\/spaces\/\.orden\/\.backups\/[^/]+$/.test(one)),
-    ).toEqual(['/spaces/.orden/.backups/Notes earlier'])
+    expect([...disk.dirs].filter((one) => /^\/spaces\/\.orden\/\.backups\/[^/]+$/.test(one))).toEqual([
+      '/spaces/.orden/.backups/Notes earlier',
+    ])
   })
 
   test('takes a free name where Orden already keeps a space of that name', async () => {
@@ -798,9 +778,7 @@ describe('making a folder a kept space, whatever happens on the way', () => {
     const root = '/spaces/.orden/Notes/Notes'
     expect(said).toEqual([`space /spaces/Notes -> ${root}`])
     expect(await read(`${root}/Plan.md`)).toBe('ship it')
-    expect([...disk.dirs].some((one) => one.startsWith('/spaces/.orden/.backups/Notes '))).toBe(
-      true,
-    )
+    expect([...disk.dirs].some((one) => one.startsWith('/spaces/.orden/.backups/Notes '))).toBe(true)
   })
 
   test('writes its index a handful of times, not once a file', async () => {

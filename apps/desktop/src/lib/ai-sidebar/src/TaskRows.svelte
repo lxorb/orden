@@ -70,9 +70,7 @@
           aria-label="Done"
           onclick={() => tick(one)}
         ></button>
-        <button class="words" title={one.space} onclick={() => void runCommand('views.todos')}
-          >{one.text}</button
-        >
+        <button class="words" title={one.space} onclick={() => void runCommand('views.todos')}>{one.text}</button>
         {#if when(one)}
           <span class="when">{when(one)}</span>
         {/if}

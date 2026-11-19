@@ -22,9 +22,7 @@ function placeOf(src: string): { here: boolean; host: string } {
   if (DRIVE.test(src)) return { here: true, host: '' }
   try {
     const read = HERE.map((base) => ({ base, at: new URL(src, base) }))
-    const here = read.every(
-      ({ base, at }) => at.protocol === base.protocol && at.host === base.host,
-    )
+    const here = read.every(({ base, at }) => at.protocol === base.protocol && at.host === base.host)
     return { here, host: read[1]?.at.host ?? '' }
   } catch {
     return { here: false, host: '' }
@@ -122,20 +120,14 @@ function lineGroups(code: string): string {
 }
 
 export function inLineGroups(html: string): string {
-  return html.replace(
-    CODE_INSIDE,
-    (_, open: string, code: string, close: string) => open + lineGroups(code) + close,
-  )
+  return html.replace(CODE_INSIDE, (_, open: string, code: string, close: string) => open + lineGroups(code) + close)
 }
 
 export function answerHtml(markdown: string, options: AnswerOptions = {}): string {
   const render: RenderOptions = { escapeHtml: true }
   if (options.resolveLink) render.resolveLink = options.resolveLink
   const drawn = pictures(
-    viewHtml(markdown, render, { live: options.live === true, draws: drawsHere }).replace(
-      MEDIA,
-      '',
-    ),
+    viewHtml(markdown, render, { live: options.live === true, draws: drawsHere }).replace(MEDIA, ''),
     options.from ?? null,
     options.shown ?? new Set(),
   )

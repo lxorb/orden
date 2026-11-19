@@ -11,15 +11,7 @@ import {
   type Variables,
 } from '../../../sync-server/src/api'
 import { PATH_LIMIT, readablePath } from '../notes'
-import {
-  cleanDomain,
-  dnsRecords,
-  DOMAIN_LIMIT,
-  looksLikeDomain,
-  ours,
-  reserved,
-  SUBDOMAIN,
-} from './addresses'
+import { cleanDomain, dnsRecords, DOMAIN_LIMIT, looksLikeDomain, ours, reserved, SUBDOMAIN } from './addresses'
 import { fillFronts } from '../site/fill'
 import { newProof, proveDomain } from './proof'
 import { atLeast, presentSpace, spaceOf } from './space'
@@ -28,10 +20,7 @@ const TITLE_LIMIT = 200
 const SUBDOMAIN_LIMIT = 64
 const DOMAIN_FIELD_LIMIT = DOMAIN_LIMIT + 32
 
-function proofFor(
-  space: Space,
-  domain: string | null,
-): { token: string | null; provedAt: number | null } {
+function proofFor(space: Space, domain: string | null): { token: string | null; provedAt: number | null } {
   if (!domain) return { token: null, provedAt: null }
 
   if (domain === space.blog_domain) {
@@ -63,9 +52,7 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
     }
     if (reserved(context.env, subdomain)) return context.json({ error: 'that name is taken' }, 409)
 
-    const clash = await context.env.DB.prepare(
-      'select id from spaces where blog_subdomain = ? and id != ?',
-    )
+    const clash = await context.env.DB.prepare('select id from spaces where blog_subdomain = ? and id != ?')
       .bind(subdomain, space.id)
       .first()
 
@@ -117,9 +104,7 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
   }
 
   if (note) {
-    const exists = await context.env.DB.prepare(
-      'select id from notes where space_id = ? and path = ? and deleted = 0',
-    )
+    const exists = await context.env.DB.prepare('select id from notes where space_id = ? and path = ? and deleted = 0')
       .bind(space.id, note)
       .first()
 
@@ -143,23 +128,11 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
       where id = ?8
         and not exists (select 1 from spaces where id != ?8 and (blog_subdomain = ?1 or blog_domain = ?2))`,
   )
-    .bind(
-      address.subdomain,
-      address.domain,
-      proof.token,
-      proof.provedAt,
-      chosenTitle,
-      note,
-      at,
-      space.id,
-    )
+    .bind(address.subdomain, address.domain, proof.token, proof.provedAt, chosenTitle, note, at, space.id)
     .run()
 
   if (!wrote.meta.changes) {
-    return context.json(
-      { error: address.domain ? 'that domain is taken' : 'that name is taken' },
-      409,
-    )
+    return context.json({ error: address.domain ? 'that domain is taken' : 'that name is taken' }, 409)
   }
 
   if (space.blog_domain && space.blog_domain !== address.domain) {
@@ -273,7 +246,5 @@ publish.get('/available/:subdomain', async (context) => {
     .bind(subdomain, except, user.id)
     .first()
 
-  return context.json(
-    taken ? { available: false, reason: 'that name is taken' } : { available: true },
-  )
+  return context.json(taken ? { available: false, reason: 'that name is taken' } : { available: true })
 })

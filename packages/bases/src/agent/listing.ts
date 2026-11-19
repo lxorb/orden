@@ -32,10 +32,7 @@ function narrowed(base: Base, filter: Filter): Base {
   if (!view) return everything(filter)
   return {
     ...base,
-    views: [
-      { ...view, filters: view.filters === undefined ? filter : { and: [view.filters, filter] } },
-      ...rest,
-    ],
+    views: [{ ...view, filters: view.filters === undefined ? filter : { and: [view.filters, filter] } }, ...rest],
   }
 }
 
@@ -48,11 +45,7 @@ export interface ListAsk {
   isNote?: TodoistOptions['isNote']
 }
 
-export function listTasks(
-  rows: readonly Row[],
-  ask: ListAsk,
-  context: Context,
-): { total: number; tasks: TaskOut[] } {
+export function listTasks(rows: readonly Row[], ask: ListAsk, context: Context): { total: number; tasks: TaskOut[] } {
   let base: Base
   let view: string | undefined
   if (ask.base) {
@@ -73,10 +66,7 @@ export function listTasks(
     try {
       lists = fromTodoist(ask.filter, { ...(ask.isNote ? { isNote: ask.isNote } : {}) })
     } catch (error) {
-      throw new AgentError(
-        'bad_arguments',
-        `filter: ${error instanceof Error ? error.message : String(error)}`,
-      )
+      throw new AgentError('bad_arguments', `filter: ${error instanceof Error ? error.message : String(error)}`)
     }
   }
 
@@ -95,12 +85,7 @@ export function listTasks(
   return { total: out.length, tasks: out.slice(0, limit).map(taskOut) }
 }
 
-function answered(
-  base: Base,
-  view: string | undefined,
-  rows: readonly Row[],
-  context: Context,
-): Answer {
+function answered(base: Base, view: string | undefined, rows: readonly Row[], context: Context): Answer {
   try {
     return answer(base, view, rows, context)
   } catch (error) {
@@ -118,12 +103,9 @@ export function plainValue(value: Value): unknown {
       return `${value.iso} ${value.time}${typeof value.zone === 'string' ? value.zone : ''}`
     }
     if (value.kind === 'link' && typeof value.target === 'string') return value.target
-    if (value.kind === 'duration' && typeof value.ms === 'number')
-      return `${Math.round(value.ms / 60_000)}m`
+    if (value.kind === 'duration' && typeof value.ms === 'number') return `${Math.round(value.ms / 60_000)}m`
   }
-  return Object.fromEntries(
-    Object.entries(value).map(([key, one]) => [key, plainValue(one as Value)]),
-  )
+  return Object.fromEntries(Object.entries(value).map(([key, one]) => [key, plainValue(one as Value)]))
 }
 
 interface NoteOut {
@@ -146,10 +128,7 @@ export function queryBase(
   limit = 200,
 ): QueryOut {
   const answer = answered(base, view, rows, context)
-  const chosen =
-    view === undefined
-      ? base.views[0]
-      : (base.views.find((one) => one.name === view) ?? base.views[0])
+  const chosen = view === undefined ? base.views[0] : (base.views.find((one) => one.name === view) ?? base.views[0])
   const columns = chosen?.order ?? []
   let left = Math.min(Math.max(1, Math.floor(limit)), 1000)
 
@@ -157,8 +136,7 @@ export function queryBase(
     if (row.kind === 'task') return taskOut(row)
     const values: Record<string, unknown> = {}
     if (columns.length) {
-      for (const column of columns)
-        values[column] = plainValue(cellValue(base, column, row, context))
+      for (const column of columns) values[column] = plainValue(cellValue(base, column, row, context))
     } else {
       for (const [key, value] of Object.entries(row.note)) values[key] = plainValue(value)
     }

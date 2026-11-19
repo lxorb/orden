@@ -35,9 +35,7 @@ vi.mock('../../link-index/src/api', () => ({
   pictureBeside: () => (path: string) => path,
   picturesWrittenOut: (source: string) => source,
   picturePath: (src: string) =>
-    ({ 'R&D.png': '/space/Notes/R&D.png', 'attachments/cat.png': '/space/attachments/cat.png' })[
-      src
-    ] ?? null,
+    ({ 'R&D.png': '/space/Notes/R&D.png', 'attachments/cat.png': '/space/attachments/cat.png' })[src] ?? null,
 }))
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
@@ -85,8 +83,6 @@ describe('the render options for the open note', () => {
     world.active = open('Notes/plan.md')
     world.trusts = true
 
-    expect((await renderOptions(openTarget())).resolveImage?.('R&amp;D.png')).toBe(
-      '/space/Notes/R&D.png',
-    )
+    expect((await renderOptions(openTarget())).resolveImage?.('R&amp;D.png')).toBe('/space/Notes/R&D.png')
   })
 })

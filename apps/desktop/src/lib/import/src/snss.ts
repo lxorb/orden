@@ -201,9 +201,7 @@ class Reader {
 
   hex(at: number, length: number): string {
     if (at + length > this.bytes.length) throw new RangeError('cut short')
-    return [...this.bytes.subarray(at, at + length)]
-      .map((one) => one.toString(16).padStart(2, '0'))
-      .join('')
+    return [...this.bytes.subarray(at, at + length)].map((one) => one.toString(16).padStart(2, '0')).join('')
   }
 
   pickle(): Pickle {

@@ -32,9 +32,13 @@ describe('a query crossing to the account', () => {
 
   test('with its terms, limit and page', () => {
     const query = parseQuery('garden')
-    expect(
-      searchRequestOf({ query, terms: ['garden'], limit: 24, after: 'n1', skip: ['n2'] }),
-    ).toEqual({ query, terms: ['garden'], limit: 24, after: 'n1', skip: ['n2'] })
+    expect(searchRequestOf({ query, terms: ['garden'], limit: 24, after: 'n1', skip: ['n2'] })).toEqual({
+      query,
+      terms: ['garden'],
+      limit: 24,
+      after: 'n1',
+      skip: ['n2'],
+    })
     expect(searchRequestOf({ query, terms: [], limit: 0 })).toBeNull()
     expect(searchRequestOf({ query, terms: [], limit: 201 })).toBeNull()
   })

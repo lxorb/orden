@@ -51,9 +51,7 @@ const FORBIDDEN = '<>:"\\|?*'
 
 function localName(name: string, platform: World['platform']): string {
   if (platform === 'windows') {
-    let out = Array.from(name, (char) =>
-      char < ' ' || FORBIDDEN.includes(char) ? '_' : char,
-    ).join('')
+    let out = Array.from(name, (char) => (char < ' ' || FORBIDDEN.includes(char) ? '_' : char)).join('')
     if (isReserved(out)) out = `_${out}`
     return out.replace(/[. ]+$/, (tail) => '_'.repeat(tail.length))
   }
@@ -268,17 +266,12 @@ export class SpaceState {
     const walk = (parent: string | null, folder: string) => {
       const siblings = (children.get(parent) ?? []).sort((a, b) => (a.id < b.id ? -1 : 1))
       const taken = new Set<string>()
-      const own = new Set(
-        siblings.map((entry) => this.key(localName(entry.name, this.world.platform))),
-      )
+      const own = new Set(siblings.map((entry) => this.key(localName(entry.name, this.world.platform))))
       names.set(parent, { taken, own })
       for (const entry of siblings) {
         const wanted = localName(entry.name, this.world.platform)
         if (hiddenName(wanted)) continue
-        const name = freePath(
-          wanted,
-          (one) => taken.has(this.key(one)) || (one !== wanted && own.has(this.key(one))),
-        )
+        const name = freePath(wanted, (one) => taken.has(this.key(one)) || (one !== wanted && own.has(this.key(one))))
         taken.add(this.key(name))
         const path = joined(folder, name)
         out.set(entry.id, path)
@@ -380,8 +373,7 @@ export class SpaceState {
     if (!this.keepsFew) return null
     for (const id of this.shownKeys().get(wanted) ?? []) {
       const entry = this.entries.get(id)
-      if (entry && !entry.local_path && entry.seq !== null && holdsDocument(entry.kind))
-        return entry
+      if (entry && !entry.local_path && entry.seq !== null && holdsDocument(entry.kind)) return entry
     }
     return null
   }
@@ -389,8 +381,7 @@ export class SpaceState {
   awaitedAt(path: string): EntryRow | null {
     for (const id of this.shownKeys().get(this.key(path)) ?? []) {
       const entry = this.entries.get(id)
-      if (entry?.kind === 'file' && !entry.local_path && entry.seq !== null && this.isLive(id))
-        return entry
+      if (entry?.kind === 'file' && !entry.local_path && entry.seq !== null && this.isLive(id)) return entry
     }
     return null
   }
@@ -546,12 +537,7 @@ export class SpaceState {
   }
 }
 
-function positionAfter(
-  op: Op,
-  had: string | undefined,
-  before: string | null,
-  after: string | null,
-) {
+function positionAfter(op: Op, had: string | undefined, before: string | null, after: string | null) {
   if (op.t === 'place') return op.pos
   if ((op.t === 'move' || op.t === 'mkdir' || op.t === 'create') && op.pos !== undefined) {
     return op.pos

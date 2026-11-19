@@ -2,11 +2,7 @@ import { chunks, places, now, askHub, type Ended, type Env } from '../../../sync
 import { askMachine } from './ask'
 import { audit } from './audit'
 
-export async function endTerms(
-  env: Env,
-  terms: readonly string[],
-  who: string | null,
-): Promise<void> {
+export async function endTerms(env: Env, terms: readonly string[], who: string | null): Promise<void> {
   const ended: Ended[] = []
   const at = now()
   for (const chunk of chunks(terms)) {
@@ -30,11 +26,7 @@ export function endingTerm(env: Env, term: string, at: number): D1PreparedStatem
   ).bind(at, term)
 }
 
-export async function tellEnded(
-  env: Env,
-  ended: readonly Ended[],
-  who: string | null,
-): Promise<void> {
+export async function tellEnded(env: Env, ended: readonly Ended[], who: string | null): Promise<void> {
   for (const one of ended) {
     await audit(env, one.machine, 'ended', { who })
     await askMachine(env, one.machine, 'end', {

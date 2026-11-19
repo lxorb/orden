@@ -11,10 +11,8 @@ interface Kind {
 
 const AGENTS = {
   desktop: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140 Safari/537.36',
-  phone:
-    'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36',
-  tablet:
-    'Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 Chrome/140 Safari/537.36',
+  phone: 'Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 Chrome/140 Mobile Safari/537.36',
+  tablet: 'Mozilla/5.0 (Linux; Android 15; Pixel Tablet) AppleWebKit/537.36 Chrome/140 Safari/537.36',
   asked: 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/140 Safari/537.36',
   ipad: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Version/17 Safari/605',
 } as const
@@ -29,8 +27,7 @@ function stubDocument(window: { layout: number }) {
       },
       dataset: {} as Record<string, string>,
       attributes,
-      toggleAttribute: (name: string, on: boolean) =>
-        on ? attributes.add(name) : attributes.delete(name),
+      toggleAttribute: (name: string, on: boolean) => (on ? attributes.add(name) : attributes.delete(name)),
       style: { setProperty: () => undefined },
     },
   }
@@ -102,9 +99,7 @@ async function started(kind: Kind = {}, width = 390, height = 844) {
   vi.stubGlobal('document', document)
   vi.stubGlobal('navigator', {
     userAgent: kind.agent ?? AGENTS.desktop,
-    ...(kind.mobile === undefined || kind.mobile === null
-      ? {}
-      : { userAgentData: { mobile: kind.mobile } }),
+    ...(kind.mobile === undefined || kind.mobile === null ? {} : { userAgentData: { mobile: kind.mobile } }),
   })
 
   const { pageHeight, viewport } = await import('./viewport.svelte')

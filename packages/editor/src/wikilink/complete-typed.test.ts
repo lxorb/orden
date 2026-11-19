@@ -6,14 +6,7 @@ import { describe, expect, test } from 'vitest'
 import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { blockNamer } from './block-namer'
 import { wikilinkCompletions } from './complete'
-import {
-  type LinkWrite,
-  linkWriter,
-  type NoteIndex,
-  noteIndex,
-  type NoteRef,
-  type SpaceBlock,
-} from './notes'
+import { type LinkWrite, linkWriter, type NoteIndex, noteIndex, type NoteRef, type SpaceBlock } from './notes'
 import { parsed } from '../../test/parsed'
 
 interface Asked {
@@ -59,12 +52,7 @@ function space(
   return asked
 }
 
-function state(
-  doc: string,
-  index: NoteIndex,
-  at = doc.length,
-  write?: (target: LinkWrite) => string,
-): EditorState {
+function state(doc: string, index: NoteIndex, at = doc.length, write?: (target: LinkWrite) => string): EditorState {
   return parsed(
     EditorState.create({
       doc,
@@ -79,18 +67,13 @@ function state(
   )
 }
 
-const SPACE = [
-  note('Plan.md', ['Today', 'The plan for Monday'], ['a1b2c3']),
-  note('ideas/Spark.md', ['Sparks']),
-]
+const SPACE = [note('Plan.md', ['Today', 'The plan for Monday'], ['a1b2c3']), note('ideas/Spark.md', ['Sparks'])]
 
 describe('a block named while its link is picked', () => {
   test('lands the link where the typing has gone, after the name went into this note', async () => {
     const doc = 'Alpha para\n\nSee [[Plan#^alp'
     const asked = space([note('Plan.md')], { bodies: { 'Plan.md': 'Alpha para\n' } })
-    const found = await wikilinkCompletions(
-      new CompletionContext(state(doc, asked.index), doc.length, false),
-    )
+    const found = await wikilinkCompletions(new CompletionContext(state(doc, asked.index), doc.length, false))
     const row = found?.options.find((one) => one.label === 'Alpha para')
     if (!found || !row || typeof row.apply !== 'function') throw new Error('no row')
 
@@ -150,21 +133,13 @@ describe('a suggestion picked inside a link already written', () => {
   }
 
   test('takes the rest of the name it was typed in', async () => {
-    expect(await pickedAt('see [[Proje|ct Plan]] now', 'Project Plan')).toBe(
-      'see [[Project Plan]] now',
-    )
+    expect(await pickedAt('see [[Proje|ct Plan]] now', 'Project Plan')).toBe('see [[Project Plan]] now')
   })
 
   test('and keeps a heading or a label written after the name', async () => {
-    expect(await pickedAt('[[Proje|ct Plan#Heading one]]', 'Project Plan')).toBe(
-      '[[Project Plan#Heading one]]',
-    )
-    expect(await pickedAt('[[Proje|ct Plan|the plan]]', 'Project Plan')).toBe(
-      '[[Project Plan|the plan]]',
-    )
-    expect(await pickedAt('[[Proje|ct Plan\\|the plan]]', 'Project Plan')).toBe(
-      '[[Project Plan\\|the plan]]',
-    )
+    expect(await pickedAt('[[Proje|ct Plan#Heading one]]', 'Project Plan')).toBe('[[Project Plan#Heading one]]')
+    expect(await pickedAt('[[Proje|ct Plan|the plan]]', 'Project Plan')).toBe('[[Project Plan|the plan]]')
+    expect(await pickedAt('[[Proje|ct Plan\\|the plan]]', 'Project Plan')).toBe('[[Project Plan\\|the plan]]')
   })
 })
 
@@ -172,8 +147,6 @@ describe('in code', () => {
   test('two brackets open no suggestions', async () => {
     const doc = '```py\ngrid = [[\n```\n'
     const built = state(doc, space(SPACE).index, doc.indexOf('[[') + 2)
-    expect(
-      await wikilinkCompletions(new CompletionContext(built, doc.indexOf('[[') + 2, false)),
-    ).toBeNull()
+    expect(await wikilinkCompletions(new CompletionContext(built, doc.indexOf('[[') + 2, false))).toBeNull()
   })
 })

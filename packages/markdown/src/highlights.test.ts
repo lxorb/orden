@@ -36,9 +36,7 @@ describe('a coloured highlight rendered', () => {
     expect(html).toContain('<mark class="tone-1">careful</mark>')
     expect(html).not.toContain('🔴')
     expect(renderMarkdown('a ==marked== b')).toContain('<mark>marked</mark>')
-    expect(renderMarkdown('==🔵 **bold** here==')).toContain(
-      '<mark class="tone-5"><strong>bold</strong> here</mark>',
-    )
+    expect(renderMarkdown('==🔵 **bold** here==')).toContain('<mark class="tone-5"><strong>bold</strong> here</mark>')
   })
 
   test('is escaped like anything else when publishing', () => {
@@ -82,9 +80,7 @@ describe('whether a single newline breaks the line', () => {
 })
 
 describe('a paragraph of highlights that never close', () => {
-  const tokenizer = (
-    highlight.extensions?.[0] as { tokenizer: (src: string, tokens: []) => unknown }
-  ).tokenizer
+  const tokenizer = (highlight.extensions?.[0] as { tokenizer: (src: string, tokens: []) => unknown }).tokenizer
 
   test('is read in linear time', () => {
     const tokens: [] = []
@@ -101,9 +97,7 @@ describe('a paragraph of highlights that never close', () => {
   }, 60_000)
 
   test('closes where the pattern closed, on the first `==` after something', () => {
-    expect(renderMarkdown('==a == b== and ==c==')).toBe(
-      '<p><mark>a == b</mark> and <mark>c</mark></p>\n',
-    )
+    expect(renderMarkdown('==a == b== and ==c==')).toBe('<p><mark>a == b</mark> and <mark>c</mark></p>\n')
     expect(renderMarkdown('== a== ==b ==')).toBe('<p>== a== ==b ==</p>\n')
     expect(renderMarkdown('==a ===')).toBe('<p><mark>a =</mark></p>\n')
   })

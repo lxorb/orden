@@ -21,10 +21,7 @@ const OFFERS: Record<ExportKind, readonly ExportId[]> = {
 
 export const offeredBy = (kind: ExportKind): readonly ExportId[] => OFFERS[kind]
 
-export const EXPORT_KEYS: readonly ExportId[] = [
-  ...FORMATS,
-  ...EXPORT_EXTRAS.map((extra) => extra.id),
-]
+export const EXPORT_KEYS: readonly ExportId[] = [...FORMATS, ...EXPORT_EXTRAS.map((extra) => extra.id)]
 
 export interface Open {
   exports: ExportKind
@@ -49,9 +46,6 @@ export function labelOf(id: ExportId): string {
 
 export const canPrint = typeof window !== 'undefined' && typeof window.print === 'function'
 
-const PRINTABLE: ReadonlySet<string> = new Set(
-  __EVEN_PLUGIN__ ? ['note'] : ['note', 'canvas', 'pages'],
-)
+const PRINTABLE: ReadonlySet<string> = new Set(__EVEN_PLUGIN__ ? ['note'] : ['note', 'canvas', 'pages'])
 
-export const printable = (kind: string | undefined): boolean =>
-  kind !== undefined && PRINTABLE.has(kind)
+export const printable = (kind: string | undefined): boolean => kind !== undefined && PRINTABLE.has(kind)

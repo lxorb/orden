@@ -14,8 +14,7 @@ export interface Said {
 
 const base64 = (bytes: Uint8Array): string => btoa(String.fromCharCode(...bytes))
 
-export const sealed = (length = 48): string =>
-  base64(crypto.getRandomValues(new Uint8Array(length)))
+export const sealed = (length = 48): string => base64(crypto.getRandomValues(new Uint8Array(length)))
 
 export const anId = (): string =>
   base64(crypto.getRandomValues(new Uint8Array(12)))
@@ -93,12 +92,7 @@ export function pass(env: TestEnv) {
   }
 }
 
-export async function sharedVault(
-  env: TestEnv,
-  owner: Person,
-  member: Person,
-  role = 'editor',
-): Promise<string> {
+export async function sharedVault(env: TestEnv, owner: Person, member: Person, role = 'editor'): Promise<string> {
   const api = pass(env)
   const vault = anId()
   await api.vault(owner, vault)

@@ -46,11 +46,7 @@ interface Kit {
   PassApi: new (call: unknown) => unknown
   fetchCall(fetcher: (request: Request) => Promise<Response>, base: string, token: string): unknown
   syncOnce(world: unknown): Promise<string>
-  fileApi(
-    base: string,
-    token: string,
-    fetcher: (input: string, init: RequestInit) => Promise<Response>,
-  ): FileApi
+  fileApi(base: string, token: string, fetcher: (input: string, init: RequestInit) => Promise<Response>): FileApi
   queuedUpload(rows: Rows, item: string, file: string, parts: number): Promise<void>
   queuedRemoval(rows: Rows, vault: string, item: string, file: string): Promise<void>
   waitingFiles(rows: Rows): Promise<unknown[]>
@@ -132,12 +128,7 @@ function synced(device: Device, kept: Kept): Promise<string> {
   return k.syncOnce(world)
 }
 
-async function attached(
-  device: Device,
-  kept: Kept,
-  id: string,
-  bytes: Uint8Array,
-): Promise<Attachment> {
+async function attached(device: Device, kept: Kept, id: string, bytes: Uint8Array): Promise<Attachment> {
   const key = device.held?.items.get(id)?.key
   if (!key) throw new Error('no item key')
   const file = crypto.randomUUID()

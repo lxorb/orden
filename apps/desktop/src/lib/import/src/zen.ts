@@ -49,9 +49,7 @@ export function withBookmarks(sidebar: ZenSession, places: ZenPlaces | null): Ze
   }
 
   const made = new Made(first.id)
-  readBookmarks(places.bookmarks, made, (guid, around) =>
-    guid === null ? around : (shown.get(guid) ?? around),
-  )
+  readBookmarks(places.bookmarks, made, (guid, around) => (guid === null ? around : (shown.get(guid) ?? around)))
   return {
     ...sidebar,
     folders: [...sidebar.folders, ...made.kept()],
@@ -65,8 +63,8 @@ const inOrder = (spaces: Said[]): Said[] =>
     .map((one, at) => ({ one, at, position: Number(one.position) }))
     .sort(
       (a, b) =>
-        (Number.isFinite(a.position) ? a.position : a.at) -
-          (Number.isFinite(b.position) ? b.position : b.at) || a.at - b.at,
+        (Number.isFinite(a.position) ? a.position : a.at) - (Number.isFinite(b.position) ? b.position : b.at) ||
+        a.at - b.at,
     )
     .map(({ one }) => one)
 
@@ -205,8 +203,7 @@ function pinnedIn(spaces: SidebarSpace[], folders: Said[], tabs: Said[], pins: S
     .sort(
       (a, b) =>
         Number(flag(b.one.is_essential)) - Number(flag(a.one.is_essential)) ||
-        (Number.isFinite(a.position) ? a.position : 0) -
-          (Number.isFinite(b.position) ? b.position : 0) ||
+        (Number.isFinite(a.position) ? a.position : 0) - (Number.isFinite(b.position) ? b.position : 0) ||
         a.at - b.at,
     )
     .map(({ one }) => one)

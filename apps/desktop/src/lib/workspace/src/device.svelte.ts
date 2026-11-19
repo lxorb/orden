@@ -66,10 +66,7 @@ export class DeviceView {
   }
 
   remember(path: string) {
-    this.recent = [path, ...this.recent.filter((entry) => !samePath(entry, path))].slice(
-      0,
-      RECENT_LIMIT,
-    )
+    this.recent = [path, ...this.recent.filter((entry) => !samePath(entry, path))].slice(0, RECENT_LIMIT)
     keepJson(RECENT_KEY, this.recent)
     void import('../../matching/src/api').then((one) => one.frecency.use(`note:${path}`))
   }
@@ -84,9 +81,7 @@ export class DeviceView {
   }
 
   toggleFolder(path: string) {
-    this.expanded = this.isExpanded(path)
-      ? without(this.expanded, path)
-      : { ...this.expanded, [path]: true }
+    this.expanded = this.isExpanded(path) ? without(this.expanded, path) : { ...this.expanded, [path]: true }
 
     keepJson(EXPANDED_KEY, this.expanded)
   }
@@ -179,9 +174,7 @@ export class DeviceView {
   }
 
   toggleTag(path: string) {
-    this.expandedTags = this.isTagOpen(path)
-      ? without(this.expandedTags, path)
-      : { ...this.expandedTags, [path]: true }
+    this.expandedTags = this.isTagOpen(path) ? without(this.expandedTags, path) : { ...this.expandedTags, [path]: true }
 
     keepJson(TAGS_KEY, this.expandedTags)
   }
@@ -192,9 +185,7 @@ export class DeviceView {
   }
 
   foldUnder(root: string) {
-    const kept = Object.fromEntries(
-      Object.entries(this.expanded).filter(([path]) => withinSpace(root, path) === null),
-    )
+    const kept = Object.fromEntries(Object.entries(this.expanded).filter(([path]) => withinSpace(root, path) === null))
     if (Object.keys(kept).length === Object.keys(this.expanded).length) return
 
     this.expanded = kept

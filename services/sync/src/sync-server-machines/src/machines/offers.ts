@@ -27,11 +27,7 @@ export async function offersOf(env: Env, at: number): Promise<Offers | null> {
   if (!token) return null
   if (kept?.token === token && at - kept.at < KEPT_FOR) return kept.offers
   const hetzner = new Hetzner(token)
-  const [types, locations, pricing] = await Promise.all([
-    hetzner.serverTypes(),
-    hetzner.locations(),
-    hetzner.pricing(),
-  ])
+  const [types, locations, pricing] = await Promise.all([hetzner.serverTypes(), hetzner.locations(), hetzner.pricing()])
   const offered = types.flatMap((type): Offer[] => {
     if (type.deprecated) return []
     const prices = type.prices

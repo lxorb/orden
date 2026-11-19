@@ -13,9 +13,7 @@ export class ArchivedSpaces {
 
   set(root: string, archived: boolean): boolean {
     if (this.has(root) === archived) return false
-    this.roots = archived
-      ? [...this.roots, root].slice(-MOST)
-      : this.roots.filter((one) => !samePath(one, root))
+    this.roots = archived ? [...this.roots, root].slice(-MOST) : this.roots.filter((one) => !samePath(one, root))
     keepJson(KEY, this.roots)
     return true
   }

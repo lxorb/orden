@@ -34,8 +34,5 @@ export function tabsOwnSpace(call: Call, tab: Tab, place: Place): void {
   const said = maybe(call, 'space')
   if (said === null || placeFor(call, said).space.id === place.space.id) return
 
-  throw new Refused(
-    'bad_arguments',
-    `tab ${tab.id} is in ${place.space.name}, not ${said}: name the tab alone`,
-  )
+  throw new Refused('bad_arguments', `tab ${tab.id} is in ${place.space.name}, not ${said}: name the tab alone`)
 }

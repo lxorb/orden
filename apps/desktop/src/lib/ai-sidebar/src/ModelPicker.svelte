@@ -25,9 +25,7 @@
     const want = query.trim().toLowerCase()
     const all = list.length ? list : model ? [model] : []
     return want
-      ? all.filter(
-          (one) => one.name.toLowerCase().includes(want) || one.id.toLowerCase().includes(want),
-        )
+      ? all.filter((one) => one.name.toLowerCase().includes(want) || one.id.toLowerCase().includes(want))
       : all
   })
 
@@ -106,8 +104,7 @@
             <button
               class="orden-chip provider"
               class:is-on={one.id === provider?.id}
-              onclick={() => void chat.chooseModel(one.id, one.model)}
-              ><ProviderMark account={one} />{one.name}</button
+              onclick={() => void chat.chooseModel(one.id, one.model)}><ProviderMark account={one} />{one.name}</button
             >
           {/each}
         </div>

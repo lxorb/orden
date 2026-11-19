@@ -104,9 +104,7 @@
           style:top={top(column.day, piece.from)}
           style:height={tall(piece.to - piece.from)}
           style:--tint={tintOf(piece.span.activity)}
-          title="{nameOf(piece.span.activity, 'No activity')}, {clock(piece.from)}–{clock(
-            piece.to,
-          )}"
+          title="{nameOf(piece.span.activity, 'No activity')}, {clock(piece.from)}–{clock(piece.to)}"
           onclick={() => onpick(column.day, piece.span.id)}
         >
           {#if (piece.to - piece.from) / HOUR >= 0.6}

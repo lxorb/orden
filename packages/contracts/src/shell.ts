@@ -97,8 +97,7 @@ export type SettingsSectionId =
   | 'import'
   | 'export'
 
-export type SidebarPanelId =
-  'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'time' | 'links' | 'ask'
+export type SidebarPanelId = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'time' | 'links' | 'ask'
 
 export type PanelSide = 'left' | 'right'
 

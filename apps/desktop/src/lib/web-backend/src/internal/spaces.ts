@@ -17,8 +17,7 @@ interface Listed {
 
 const foldsCase = () => ['windows', 'macos', 'ios', ''].includes(platform())
 
-const same = (one: string, other: string) =>
-  foldsCase() ? one.toLowerCase() === other.toLowerCase() : one === other
+const same = (one: string, other: string) => (foldsCase() ? one.toLowerCase() === other.toLowerCase() : one === other)
 
 async function home(): Promise<string> {
   return joinPath(await crate<string>('spaces_root'), KEPT_HOME)
@@ -40,9 +39,7 @@ const RETIRED = '.retired'
 export const CONVERTING = '.converting'
 
 async function lines(name: string): Promise<string[]> {
-  const said = await crate<string>('read_note', { path: joinPath(await home(), name) }).catch(
-    () => '',
-  )
+  const said = await crate<string>('read_note', { path: joinPath(await home(), name) }).catch(() => '')
   return said.split('\n').filter(Boolean)
 }
 
@@ -57,9 +54,7 @@ async function addLine(name: string, line: string): Promise<void> {
 
 async function find(): Promise<Space[]> {
   const at = await home()
-  const tree = await crate<Listed>('read_tree', { root: at, options: { every: true } }).catch(
-    () => null,
-  )
+  const tree = await crate<Listed>('read_tree', { root: at, options: { every: true } }).catch(() => null)
   const out: Space[] = []
   for (const one of tree?.children ?? []) {
     if (!one.is_dir) continue
@@ -87,9 +82,7 @@ export async function keptCameFrom(): Promise<{ root: string; from: string }[]> 
   return [...fromOf].map(([root, from]) => ({ root, from }))
 }
 
-export function keptFolder(
-  root: string,
-): { name: string; readText(path: string): Promise<string | null> } | null {
+export function keptFolder(root: string): { name: string; readText(path: string): Promise<string | null> } | null {
   const found = mountOf(root)
   return found && !found.inside ? found.mount.folder : null
 }
@@ -194,7 +187,5 @@ export async function removeKept(root: string, forGood: boolean): Promise<unknow
     fromOf.delete(root)
   }
   unmount(root)
-  return forGood
-    ? crate('delete_folder', { path: folder })
-    : crate('trash_item', { path: folder, kind: 'space' })
+  return forGood ? crate('delete_folder', { path: folder }) : crate('trash_item', { path: folder, kind: 'space' })
 }

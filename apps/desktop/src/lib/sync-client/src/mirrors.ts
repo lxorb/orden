@@ -4,16 +4,7 @@ import { fold } from '@orden/rooms/fold'
 import { applyAwarenessUpdate, Awareness, encodeAwarenessUpdate } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import { roomKindOf, rooms } from '../../collab/src/api'
-import {
-  bind,
-  HAND,
-  handsIn,
-  peersIn,
-  PlaneBinding,
-  relative,
-  saidHand,
-  type Who,
-} from '../../collab-rooms/src/api'
+import { bind, HAND, handsIn, peersIn, PlaneBinding, relative, saidHand, type Who } from '../../collab-rooms/src/api'
 import type { InkStroke } from '@orden/markdown/canvas'
 import { type PlaneSurface, type Point } from '@orden/markdown/plane'
 import type { Scheme } from '../../theme/src/api'
@@ -334,9 +325,7 @@ export class Mirrors {
   private tell(always = false) {
     const all = [...this.held.values()]
     const ids = [...new Set(all.filter((one) => one.joined).map((one) => one.id))].sort()
-    const meeting = [
-      ...new Set(all.filter((one) => one.pending && !ids.includes(one.id)).map((one) => one.id)),
-    ].sort()
+    const meeting = [...new Set(all.filter((one) => one.pending && !ids.includes(one.id)).map((one) => one.id))].sort()
     const said = `${ids.join(',')}|${meeting.join(',')}`
     if (said === this.said && !always) return
     this.said = said

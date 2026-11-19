@@ -1,18 +1,5 @@
-import {
-  Compartment,
-  EditorState,
-  type Extension,
-  StateEffect,
-  StateField,
-} from '@codemirror/state'
-import {
-  Decoration,
-  type DecorationSet,
-  Direction,
-  EditorView,
-  ViewPlugin,
-  type ViewUpdate,
-} from '@codemirror/view'
+import { Compartment, EditorState, type Extension, StateEffect, StateField } from '@codemirror/state'
+import { Decoration, type DecorationSet, Direction, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import { language as currentLanguage, syntaxTree } from '@codemirror/language'
 import type { SyntaxNode } from '@lezer/common'
 import { commonmarkLanguage, markdown, markdownLanguage } from '@codemirror/lang-markdown'
@@ -86,9 +73,7 @@ const parseGuard = EditorState.transactionExtender.of((transaction) => {
   if (!crossed && !set && was.field(seen, false) === true) return null
 
   return {
-    effects: language.reconfigure(
-      plain ? NO_LANGUAGE : markdownFor(strictnessAfter(was, transaction.effects)),
-    ),
+    effects: language.reconfigure(plain ? NO_LANGUAGE : markdownFor(strictnessAfter(was, transaction.effects))),
   }
 })
 
@@ -109,8 +94,7 @@ const focusPlugin = ViewPlugin.fromClass(
     }
 
     update(update: ViewUpdate) {
-      if (update.docChanged || update.selectionSet || update.viewportChanged)
-        this.decorations = this.build(update.view)
+      if (update.docChanged || update.selectionSet || update.viewportChanged) this.decorations = this.build(update.view)
     }
 
     private build(view: EditorView): DecorationSet {
@@ -136,8 +120,7 @@ const focusPlugin = ViewPlugin.fromClass(
 
 function enclosingBlock(state: EditorView['state'], pos: number) {
   let block: SyntaxNode | null = null
-  for (const node of enclosing(syntaxTree(state).resolveInner(pos, -1)))
-    if (node.name !== 'Document') block = node
+  for (const node of enclosing(syntaxTree(state).resolveInner(pos, -1))) if (node.name !== 'Document') block = node
 
   if (!block) {
     const line = state.doc.lineAt(pos)
@@ -193,9 +176,7 @@ const readOnlyExtensions = (): Extension => [
 const readOnlyFor = once((on: boolean): Extension => (on ? readOnlyExtensions() : []))
 const previewFor = once((source: boolean): Extension => (source ? [] : livePreview()))
 
-const focusFor = once((on: boolean): Extension =>
-  on ? [focusPlugin, editorClass('orden-focus-mode')] : [],
-)
+const focusFor = once((on: boolean): Extension => (on ? [focusPlugin, editorClass('orden-focus-mode')] : []))
 
 const typewriterFor = once((on: boolean): Extension =>
   on ? [typewriterPlugin, editorClass('orden-typewriter-mode')] : [],
@@ -211,14 +192,11 @@ const headingNumbersFor = once((on: boolean): Extension =>
   on ? [editorClass('orden-numbered'), numberHeadings.of(true)] : [],
 )
 
-const codeLineNumbersFor = once((on: boolean): Extension =>
-  on ? editorClass('orden-line-numbers') : [],
-)
+const codeLineNumbersFor = once((on: boolean): Extension => (on ? editorClass('orden-line-numbers') : []))
 
 const bracketsFor = once((on: boolean): Extension => (on ? wrapSelection() : []))
 
-const RIGHT_TO_LEFT =
-  /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFC\u{10800}-\u{10FFF}\u{1E800}-\u{1EFFF}]/u
+const RIGHT_TO_LEFT = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFC\u{10800}-\u{10FFF}\u{1E800}-\u{1EFFF}]/u
 
 const STRONG = /\p{L}/u
 const OWN_DIRECTION = new Set(['FencedCode', 'CodeBlock', 'Table', 'FrontMatter', 'BlockMath'])
@@ -258,8 +236,7 @@ function directions(view: EditorView, base: Direction): DecorationSet {
     for (let pos = from; pos <= to;) {
       const line = state.doc.lineAt(pos)
       const said = firstStrong(shownText(line.text))
-      if (said !== null && said !== base && !keepsItsOwn(state, line.from))
-        marks.push(asWritten[said].range(line.from))
+      if (said !== null && said !== base && !keepsItsOwn(state, line.from)) marks.push(asWritten[said].range(line.from))
       if (line.to >= state.doc.length) break
       pos = line.to + 1
     }
@@ -311,8 +288,7 @@ const spellings = once((setting: string): Extension => {
   })
 })
 
-const spellingFor = (on: boolean, language?: string): Extension =>
-  spellings(`${on ? 'on' : 'off'}|${language ?? ''}`)
+const spellingFor = (on: boolean, language?: string): Extension => spellings(`${on ? 'on' : 'off'}|${language ?? ''}`)
 
 export interface ModeSettings {
   source: boolean

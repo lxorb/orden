@@ -126,8 +126,8 @@ describe('new note inside', () => {
       'New web note',
     ])
 
-    const made = (['createNote', 'createCanvas', 'createPages', 'createWebsite'] as const).map(
-      (name) => vi.spyOn(workspace, name).mockResolvedValue(undefined),
+    const made = (['createNote', 'createCanvas', 'createPages', 'createWebsite'] as const).map((name) =>
+      vi.spyOn(workspace, name).mockResolvedValue(undefined),
     )
     for (const one of kinds) if (one?.label !== 'New chat') one?.run()
     await vi.waitFor(() => {
@@ -165,13 +165,7 @@ describe('a paper', () => {
 })
 
 describe('a file with nowhere of its own to write an icon', () => {
-  const kinds = [
-    '/s/paper.pdf',
-    '/s/photo.png',
-    '/s/Mail.application',
-    '/s/Table.base',
-    '/s/Old.webloc',
-  ]
+  const kinds = ['/s/paper.pdf', '/s/photo.png', '/s/Mail.application', '/s/Table.base', '/s/Old.webloc']
 
   test('still offers the picker, every kind of it', () => {
     for (const path of kinds) expect(labels(note(path)), path).toContain('Choose an icon')

@@ -106,8 +106,7 @@ function inZone(zone: string, run: () => void): void {
 
 describe('a date written with its offset', () => {
   const at = contextAt({ today: '2026-11-15', now: '2026-11-15T09:00:00' })
-  const said = (row: ReturnType<typeof noteRow>, expression: string) =>
-    compile(expression).evaluate(row, at, {})
+  const said = (row: ReturnType<typeof noteRow>, expression: string) => compile(expression).evaluate(row, at, {})
 
   test('is the moment it names, on the clock of whoever reads it', () => {
     inZone('America/Los_Angeles', () => {
@@ -127,10 +126,7 @@ describe('a date written with its offset', () => {
 
   test('is earlier or later than another by the moments, not the numbers written', () => {
     inZone('America/Los_Angeles', () => {
-      const row = noteRow(
-        'A.md',
-        '---\na: 2024-03-10T23:30:00+05:00\nb: 2024-03-10T20:00:00Z\n---\n',
-      )
+      const row = noteRow('A.md', '---\na: 2024-03-10T23:30:00+05:00\nb: 2024-03-10T20:00:00Z\n---\n')
       expect(said(row, 'a < b')).toBe(true)
       expect(said(row, 'a.date() == date("2024-03-10")')).toBe(true)
     })
@@ -149,10 +145,7 @@ describe('a date written with its offset', () => {
 
   test('is read on the clock of the zone the reader is in, not the clock of the machine', () => {
     inZone('UTC', () => {
-      const row = noteRow(
-        'Trip.md',
-        '---\nleaves: 2026-03-11T02:00:00+09:00\nlands: 2026-03-11T01:00:00\n---\n',
-      )
+      const row = noteRow('Trip.md', '---\nleaves: 2026-03-11T02:00:00+09:00\nlands: 2026-03-11T01:00:00\n---\n')
       const tokyo = contextAt({
         today: '2026-03-11',
         now: '2026-03-11T01:30:00',
@@ -172,9 +165,7 @@ describe('a date written with its offset', () => {
 
   test('reads the same quoted or written in a list', () => {
     inZone('Europe/Berlin', () => {
-      expect(
-        noteValues('---\na: "2026-06-01T10:00Z"\nb:\n  - 2026-06-01T10:00:00+02:00\n---\n'),
-      ).toEqual({
+      expect(noteValues('---\na: "2026-06-01T10:00Z"\nb:\n  - 2026-06-01T10:00:00+02:00\n---\n')).toEqual({
         a: { kind: 'date', iso: '2026-06-01', time: '10:00', zone: 'Z' },
         b: [{ kind: 'date', iso: '2026-06-01', time: '10:00:00', zone: '+02:00' }],
       })
@@ -193,9 +184,7 @@ describe('a date written with its offset', () => {
 
 describe('a day no calendar has', () => {
   test('is words, not a date', () => {
-    expect(
-      noteValues('---\ndue: 2026-02-30\nleft: 2026-13-01T10:00\nleap: 2028-02-29\n---\n'),
-    ).toEqual({
+    expect(noteValues('---\ndue: 2026-02-30\nleft: 2026-13-01T10:00\nleap: 2028-02-29\n---\n')).toEqual({
       due: '2026-02-30',
       left: '2026-13-01T10:00',
       leap: { kind: 'date', iso: '2028-02-29' },

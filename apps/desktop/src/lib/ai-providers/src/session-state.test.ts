@@ -91,11 +91,7 @@ describe('the order chats are listed in', () => {
       head('new', { state: 'done', updated: 5 }),
       head('unread', { state: 'done', updated: 2 }),
     ]
-    expect(ordered(heads, states(heads), new Set(['unread'])).map((one) => one.id)).toEqual([
-      'unread',
-      'new',
-      'old',
-    ])
+    expect(ordered(heads, states(heads), new Set(['unread'])).map((one) => one.id)).toEqual(['unread', 'new', 'old'])
   })
 
   test('pinned at the top, and archived out of the list', () => {
@@ -104,10 +100,7 @@ describe('the order chats are listed in', () => {
       head('pinned', { state: 'done', pinned: 1 }),
       head('gone', { state: 'needs-input', archived: true }),
     ]
-    expect(ordered(heads, states(heads), new Set()).map((one) => one.id)).toEqual([
-      'pinned',
-      'asks',
-    ])
+    expect(ordered(heads, states(heads), new Set()).map((one) => one.id)).toEqual(['pinned', 'asks'])
   })
 
   test('one with no state is done', () => {
@@ -128,10 +121,7 @@ describe('a helper', () => {
   })
 
   test('and otherwise leaves its chat as it is', () => {
-    const heads = [
-      head('chat', { state: 'done' }),
-      head('helper', { parent: 'chat', state: 'error' }),
-    ]
+    const heads = [head('chat', { state: 'done' }), head('helper', { parent: 'chat', state: 'error' })]
     expect(statesOf(heads).get('chat')).toBe('done')
   })
 })

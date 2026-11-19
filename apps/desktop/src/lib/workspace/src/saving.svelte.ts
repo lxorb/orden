@@ -256,8 +256,7 @@ export class Saving {
 
   private under(from: string): NoteDoc[] {
     return [...this.ws.documents, ...this.waiting, ...this.held.keys()].filter(
-      (one, at, all) =>
-        all.indexOf(one) === at && one.path !== null && within(from, one.path) !== null,
+      (one, at, all) => all.indexOf(one) === at && one.path !== null && within(from, one.path) !== null,
     )
   }
 
@@ -278,11 +277,7 @@ export class Saving {
     }
   }
 
-  async holdingWrites<T>(
-    from: string,
-    run: () => Promise<T>,
-    stalled: () => Promise<T>,
-  ): Promise<T> {
+  async holdingWrites<T>(from: string, run: () => Promise<T>, stalled: () => Promise<T>): Promise<T> {
     const notes = this.under(from)
     let letGo: () => void = () => undefined
     const moving = new Promise<void>((go) => {
@@ -368,10 +363,7 @@ export class Saving {
       const listed = this.ws.nameTaken(folder)
       const name = freePath(
         file,
-        (candidate) =>
-          found.includes(candidate) ||
-          this.isClaimed(joinPath(folder, candidate)) ||
-          listed(candidate),
+        (candidate) => found.includes(candidate) || this.isClaimed(joinPath(folder, candidate)) || listed(candidate),
       )
       const path = joinPath(folder, name)
       const release = await holdIfFree(`orden:claim:${path}`)
@@ -380,8 +372,7 @@ export class Saving {
         continue
       }
       const other = pairOf(name)
-      const taken =
-        (await onDisk(path)) || (other !== null && (await onDisk(joinPath(folder, other))))
+      const taken = (await onDisk(path)) || (other !== null && (await onDisk(joinPath(folder, other))))
       if (note.path !== null) {
         release()
         return null
@@ -470,10 +461,7 @@ export class Saving {
     links.noteSaved(path, content)
 
     if (/\.css$|snippets\.json$/.test(path)) {
-      const [{ choices }, { theme }] = await Promise.all([
-        import('../../modes/src/api'),
-        import('../../theme/src/api'),
-      ])
+      const [{ choices }, { theme }] = await Promise.all([import('../../modes/src/api'), import('../../theme/src/api')])
       await Promise.all([choices.loadSnippets(), theme.reload()])
     }
 

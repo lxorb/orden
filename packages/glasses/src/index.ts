@@ -1,16 +1,4 @@
-export {
-  fit,
-  fold,
-  rightward,
-  rows,
-  ruleOf,
-  SPACE,
-  spread,
-  TICK,
-  undrawable,
-  width,
-  wrap,
-} from './firmware'
+export { fit, fold, rightward, rows, ruleOf, SPACE, spread, TICK, undrawable, width, wrap } from './firmware'
 export {
   type Compaction,
   COMPACTIONS,

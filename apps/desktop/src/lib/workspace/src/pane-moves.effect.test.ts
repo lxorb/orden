@@ -38,8 +38,7 @@ vi.mock('./workspace.svelte', () => ({
       },
     },
     focusPane: (id: string) => (state.focused = id),
-    showing: (id: string) =>
-      id === state.web ? { id: `tab-${id}`, kind: 'web' } : { kind: 'note' },
+    showing: (id: string) => (id === state.web ? { id: `tab-${id}`, kind: 'web' } : { kind: 'note' }),
   },
 }))
 
@@ -61,9 +60,7 @@ function panes() {
 const note = (id: string) => document.querySelector<HTMLElement>(`[data-pane="${id}"] .cm-content`)!
 const tab = (id: string) => document.querySelector<HTMLElement>(`[data-pane="${id}"] .tab`)!
 const over = (target: Element, init: PointerEventInit = {}) =>
-  target.dispatchEvent(
-    new PointerEvent('pointermove', { bubbles: true, pointerType: 'mouse', ...init }),
-  )
+  target.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, pointerType: 'mouse', ...init }))
 
 beforeEach(() => {
   panes()

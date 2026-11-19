@@ -267,8 +267,7 @@ describe('what the store holds', () => {
   })
 
   test('takes a width and an alpha no pen could have and makes them ones it could', () => {
-    const one = readPens(JSON.stringify({ pens: [{ tool: 'pen', size: 9999, opacity: 40 }] }))
-      .pens[0]
+    const one = readPens(JSON.stringify({ pens: [{ tool: 'pen', size: 9999, opacity: 40 }] })).pens[0]
 
     expect(one?.size).toBe(MOST_WIDTH)
     expect(one?.opacity).toBe(1)
@@ -343,14 +342,11 @@ describe('the width a stroke is written with', () => {
     expect(drawnWidth(MOST_WIDTH, 0.04)).toBe(750)
   })
 
-  test.each([0.04, 0.1, 0.25, 0.5, 0.8, 1, 1.5, 2.5, 4])(
-    'shows on the screen as wide as the pen at %s',
-    (scale) => {
-      for (const size of [LEAST_WIDTH, 1, 3, 7.5, MOST_WIDTH]) {
-        expect(shownWidth(drawnWidth(size, scale), scale)).toBeCloseTo(size, 1)
-      }
-    },
-  )
+  test.each([0.04, 0.1, 0.25, 0.5, 0.8, 1, 1.5, 2.5, 4])('shows on the screen as wide as the pen at %s', (scale) => {
+    for (const size of [LEAST_WIDTH, 1, 3, 7.5, MOST_WIDTH]) {
+      expect(shownWidth(drawnWidth(size, scale), scale)).toBeCloseTo(size, 1)
+    }
+  })
 
   test('keeps the pen’s own for a zoom that is no zoom', () => {
     expect(drawnWidth(3, 0)).toBe(3)

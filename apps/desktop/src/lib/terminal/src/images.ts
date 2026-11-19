@@ -31,11 +31,7 @@ export async function clipboardPicture(): Promise<Picture | null> {
   return null
 }
 
-export async function carried(
-  source: Source,
-  pictures: Picture[],
-  shell: string,
-): Promise<string | null> {
+export async function carried(source: Source, pictures: Picture[], shell: string): Promise<string | null> {
   const image = source.image?.bind(source)
   if (!image || !pictures.length) return null
 

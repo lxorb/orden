@@ -1,8 +1,7 @@
 import { foldName } from '@orden/markdown/links'
 import { endingOf, isAgentsName, isReserved } from '@orden/markdown/note-name'
 
-export type NameFault =
-  'empty' | 'separator' | 'illegal' | 'trailing' | 'reserved' | 'agents' | 'taken'
+export type NameFault = 'empty' | 'separator' | 'illegal' | 'trailing' | 'reserved' | 'agents' | 'taken'
 
 const ILLEGAL = /[<>:"|?*]/
 
@@ -47,9 +46,7 @@ export function extensionOf(name: string, isFolder: boolean): string {
   return endingOf(name) ?? '.md'
 }
 
-export function nameToCommit(
-  naming: Naming & { was: string; current?: string | undefined },
-): string | null {
+export function nameToCommit(naming: Naming & { was: string; current?: string | undefined }): string | null {
   if (nameFault(naming)) return null
   if (naming.typed.trim() === naming.was.trim()) return null
 

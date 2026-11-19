@@ -5,9 +5,7 @@ function shown(blocks: readonly Block[]): string[] {
   return blocks
     .flatMap((block) =>
       'spans' in block
-        ? block.spans.map((span) =>
-            span.picture === undefined ? span.text.trim() : `<${span.picture}>`,
-          )
+        ? block.spans.map((span) => (span.picture === undefined ? span.text.trim() : `<${span.picture}>`))
         : [],
     )
     .filter((one) => one !== '')
@@ -26,8 +24,7 @@ describe('resized pictures with their captions right under them, in Word and RTF
   })
 
   test('words written before a picture in an HTML block stay before it', () => {
-    const note =
-      '<div align="center">\n<p>Before the chart</p>\n<img src="chart.png" alt="" width="300" />\n</div>\n'
+    const note = '<div align="center">\n<p>Before the chart</p>\n<img src="chart.png" alt="" width="300" />\n</div>\n'
     expect(shown(documentOf(note, 'Note').blocks)).toEqual(['Before the chart', '<chart.png>'])
   })
 })

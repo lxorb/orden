@@ -15,15 +15,12 @@ const GROCERIES = '# Groceries\n\n- milk\n- eggs\n- bread\n'
 
 async function pickBlock(
   label: string,
-  read: (source: string, id: string) => string | null = (source, id) =>
-    sectionOf(source, { heading: null, block: id }),
+  read: (source: string, id: string) => string | null = (source, id) => sectionOf(source, { heading: null, block: id }),
 ): Promise<string | null> {
   let source = GROCERIES
   const picked: { id: string | null } = { id: null }
   const index: NoteIndex = {
-    notes: [
-      { path: 'Groceries.md', name: 'Groceries', headings: ['Groceries'], blocks: [], aliases: [] },
-    ],
+    notes: [{ path: 'Groceries.md', name: 'Groceries', headings: ['Groceries'], blocks: [], aliases: [] }],
     files: [],
     path: 'Today.md',
     read: () => Promise.resolve(source),

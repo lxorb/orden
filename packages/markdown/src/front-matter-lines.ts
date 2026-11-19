@@ -28,11 +28,7 @@ export function isKeyLine(text: string): boolean {
   if (words > MOST_KEY_WORDS) return false
 
   const value = text.slice(past).trim()
-  return !(
-    words >= SENTENCE_KEY_WORDS &&
-    wordsIn(value) >= SENTENCE_VALUE_WORDS &&
-    /[.!?…]$/u.test(value)
-  )
+  return !(words >= SENTENCE_KEY_WORDS && wordsIn(value) >= SENTENCE_VALUE_WORDS && /[.!?…]$/u.test(value))
 }
 
 function pastQuote(line: string, at: number): number {
@@ -174,8 +170,7 @@ function closingFence(source: string, from: number): number {
           }
 
           const complex =
-            (line[col] === '?' || line[col] === ':') &&
-            (col + 1 === line.length || isBlank(line[col + 1]))
+            (line[col] === '?' || line[col] === ':') && (col + 1 === line.length || isBlank(line[col + 1]))
           const past = complex ? col + 1 : pastKey(line, col)
           const keyed = past !== -1 || TIGHT_KEY.test(line.slice(col))
           const continues = indent > base || (dash >= 0 && list)
@@ -193,11 +188,7 @@ function closingFence(source: string, from: number): number {
 
           const asValue = past !== -1 || dash >= 0 || indent > base || whole
           if (BLOCK_SCALAR.test(said)) scalar = past !== -1 ? col : dash >= 0 ? dash : indent
-          else if (
-            opens &&
-            asValue &&
-            (start === '"' || start === "'" || start === '[' || start === '{')
-          ) {
+          else if (opens && asValue && (start === '"' || start === "'" || start === '[' || start === '{')) {
             const opening: Open = { quote: '', depth: 0 }
             if (staysOpen(said, opening)) {
               open = opening
@@ -214,9 +205,7 @@ function closingFence(source: string, from: number): number {
   return -1
 }
 
-export function frontMatterLines(
-  source: string,
-): { from: number; body: number; close: number } | null {
+export function frontMatterLines(source: string): { from: number; body: number; close: number } | null {
   const from = source.startsWith('﻿') ? 1 : 0
   if (!source.startsWith('---', from)) return null
 

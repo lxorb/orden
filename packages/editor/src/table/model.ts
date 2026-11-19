@@ -63,8 +63,7 @@ function readAlign(cell: string): Align {
   return null
 }
 
-const isDelimiterRow = (line: string): boolean =>
-  /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?\s*$/.test(line)
+const isDelimiterRow = (line: string): boolean => /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?\s*$/.test(line)
 
 export function parseTable(source: string): TableModel | null {
   const lines = source.split('\n').filter((line) => line.trim().length > 0)
@@ -81,10 +80,7 @@ export function parseTable(source: string): TableModel | null {
   })
   const names = named.map((name) => name?.[1] ?? null)
 
-  const columns = rows.reduce(
-    (most, row) => Math.max(most, row.length),
-    Math.max(header.length, align.length),
-  )
+  const columns = rows.reduce((most, row) => Math.max(most, row.length), Math.max(header.length, align.length))
   const fit = (row: string[]) => Array.from({ length: columns }, (_, i) => row[i] ?? '')
 
   return {
@@ -102,8 +98,7 @@ export function nameAfter(model: TableModel, row: number): string {
 
 const MIN_CELL = 3
 
-const padCell = (text: string, width: number): string =>
-  text + ' '.repeat(Math.max(0, width - displayWidth(text)))
+const padCell = (text: string, width: number): string => text + ' '.repeat(Math.max(0, width - displayWidth(text)))
 
 function delimiterCell(align: Align, width: number): string {
   switch (align) {

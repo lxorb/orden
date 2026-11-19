@@ -35,14 +35,7 @@ const labels = (id: string): string[] => actions(id).map((row) => row.label)
 
 describe('the shape of the menu', () => {
   test('has the six groups a menu bar has, and no seventh for exporting', () => {
-    expect(menu().map((one) => one.id)).toEqual([
-      'file',
-      'edit',
-      'paragraph',
-      'format',
-      'view',
-      'help',
-    ])
+    expect(menu().map((one) => one.id)).toEqual(['file', 'edit', 'paragraph', 'format', 'view', 'help'])
   })
 
   test('keeps Export under File, as one row with rows of its own', () => {
@@ -78,25 +71,11 @@ describe('File', () => {
   test('and every row it gave up is still in the palette and on its key', () => {
     const offered = new Set(appCommands().map((one) => one.id))
     const commands = ['new', 'import', 'space', 'settings']
-    for (const id of [
-      ...commands,
-      'close',
-      'reopen',
-      'new-window',
-      'new-private',
-      'close-window',
-    ]) {
+    for (const id of [...commands, 'close', 'reopen', 'new-window', 'new-private', 'close-window']) {
       expect(offered.has(id), id).toBe(true)
     }
 
-    const keys = [
-      'app.new',
-      'app.close',
-      'app.reopen',
-      'app.new-private',
-      'app.close-window',
-      'app.settings',
-    ]
+    const keys = ['app.new', 'app.close', 'app.reopen', 'app.new-private', 'app.close-window', 'app.settings']
     for (const id of keys) expect(BY_ID.get(id)?.key, id).toBeTruthy()
   })
 

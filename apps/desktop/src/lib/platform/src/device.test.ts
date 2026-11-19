@@ -17,8 +17,7 @@ function memoryStorage(): Storage {
   }
 }
 
-const IPAD_AGENT =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)'
+const IPAD_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)'
 
 async function named(width: number, height: number): Promise<string> {
   vi.stubGlobal('screen', { width, height })

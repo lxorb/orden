@@ -116,9 +116,7 @@ async function opened() {
 
 async function press(key: string, code = '', held: KeyboardEventInit = {}) {
   const at = dialog()?.contains(document.activeElement) ? document.activeElement : dialog()
-  at?.dispatchEvent(
-    new KeyboardEvent('keydown', { key, code, bubbles: true, cancelable: true, ...held }),
-  )
+  at?.dispatchEvent(new KeyboardEvent('keydown', { key, code, bubbles: true, cancelable: true, ...held }))
   flushSync()
   await tick()
   flushSync()
@@ -147,9 +145,7 @@ test('no field: the pinned host, the recent one, then the rest by group, numbere
   expect(numbers()).toEqual(['1', '2', '3', '4'])
   dispatchEvent(new KeyboardEvent('keyup', { key: 'Alt', code: 'AltLeft' }))
   await vi.waitFor(() => expect(numbers()).toEqual([null, null, null, null]))
-  expect(
-    [...(dialog()?.querySelectorAll('.head > span') ?? [])].map((one) => one.textContent),
-  ).toEqual(['Home'])
+  expect([...(dialog()?.querySelectorAll('.head > span') ?? [])].map((one) => one.textContent)).toEqual(['Home'])
   expect(dialog()?.querySelectorAll('hr').length).toBe(2)
   expect(rows()[3]?.querySelector('.detail')?.textContent).toBe('emil@10.0.0.5')
   expect(rows()[1]?.querySelector('.orden-row-meta')).not.toBe(null)

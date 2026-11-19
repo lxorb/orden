@@ -1,13 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { hash32, type Op, type OpContext, type TreeEntry } from '@orden/sync-core'
 import { type ByPath, creatingAt, movingTo } from '../src/sync-server-engine/src/sync2/ops'
-import {
-  changeTree,
-  reachOf,
-  readReach,
-  readTree,
-  type Tree,
-} from '../src/sync-server-engine/src/sync2/tree'
+import { changeTree, reachOf, readReach, readTree, type Tree } from '../src/sync-server-engine/src/sync2/tree'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { live } from './sync2'
 
@@ -61,10 +55,8 @@ function anOp(dice: Dice, entries: readonly TreeEntry[], cursor: number): Op {
       seen,
     }
   }
-  if (roll === 1)
-    return { op, t: 'mkdir', id: fresh('f'), parent: place(), name: dice.pick(FOLDERS), seen }
-  if (roll === 2)
-    return { op, t: 'rename', id: some(), name: dice.pick([...NAMES, ...FOLDERS]), seen }
+  if (roll === 1) return { op, t: 'mkdir', id: fresh('f'), parent: place(), name: dice.pick(FOLDERS), seen }
+  if (roll === 2) return { op, t: 'rename', id: some(), name: dice.pick([...NAMES, ...FOLDERS]), seen }
   if (roll === 3 || roll === 4) {
     return dice.next(2)
       ? { op, t: 'move', id: some(), parent: place(), seen }
@@ -87,9 +79,10 @@ function changed(before: Tree, after: Tree): Map<string, string> {
 }
 
 function paths(): Map<string, string> {
-  const rows = env.db
-    .prepare('select id, path from notes where space_id = ? and deleted = 0')
-    .all(space) as { id: string; path: string }[]
+  const rows = env.db.prepare('select id, path from notes where space_id = ? and deleted = 0').all(space) as {
+    id: string
+    path: string
+  }[]
   return new Map(rows.map((row) => [row.id, row.path]))
 }
 
@@ -106,9 +99,7 @@ async function oneStep(ops: readonly Op[], device: string | undefined) {
 
   const wholeChanged = changed(base, whole)
   const partChanged = changed(base, part)
-  expect(JSON.stringify([...partChanged].sort(), null, 1), op).toBe(
-    JSON.stringify([...wholeChanged].sort(), null, 1),
-  )
+  expect(JSON.stringify([...partChanged].sort(), null, 1), op).toBe(JSON.stringify([...wholeChanged].sort(), null, 1))
   expect(part.state.cursor).toBe(whole.state.cursor)
 
   await changeTree(
@@ -157,14 +148,7 @@ describe('a tree op that reads only what it reaches', () => {
         seen: 0,
       })
     }
-    await changeTree(
-      env,
-      space,
-      'd1',
-      (tree) => ops.map((op) => tree.apply(op, context)),
-      [],
-      reachOf(ops),
-    )
+    await changeTree(env, space, 'd1', (tree) => ops.map((op) => tree.apply(op, context)), [], reachOf(ops))
 
     const rename: Op = {
       op: fresh('op'),
@@ -236,9 +220,7 @@ describe('a note made or moved by its path, reading only what the path reaches',
 
   test('reads a few rows of a large space to make a note in a folder', async () => {
     const context: OpContext = { role: 'write', device: 'd1' }
-    const ops: Op[] = [
-      { op: fresh('op'), t: 'mkdir', id: 'deep', parent: null, name: 'Deep', seen: 0 },
-    ]
+    const ops: Op[] = [{ op: fresh('op'), t: 'mkdir', id: 'deep', parent: null, name: 'Deep', seen: 0 }]
     for (let at = 0; at < 300; at++) {
       ops.push({
         op: fresh('op'),
@@ -250,14 +232,7 @@ describe('a note made or moved by its path, reading only what the path reaches',
         seen: 0,
       })
     }
-    await changeTree(
-      env,
-      space,
-      'd1',
-      (tree) => ops.map((op) => tree.apply(op, context)),
-      [],
-      reachOf(ops),
-    )
+    await changeTree(env, space, 'd1', (tree) => ops.map((op) => tree.apply(op, context)), [], reachOf(ops))
 
     const making = creatingAt('Deep/n7.md', 'd1', CONTENT)
     const part = await readReach(env, space, 'd1', making.reach)

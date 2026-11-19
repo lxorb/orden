@@ -136,11 +136,7 @@ describe('many notes that share a name', () => {
     folds = 0
 
     const into = links.backlinks(`${ROOT}/Export/Page 5/index.md`).map((one) => one.path)
-    expect(into.sort()).toEqual([
-      'Export/Page 3/index.md',
-      'Export/Page 4/index.md',
-      'Other/O 5.md',
-    ])
+    expect(into.sort()).toEqual(['Export/Page 3/index.md', 'Export/Page 4/index.md', 'Other/O 5.md'])
     expect(folds).toBeLessThan(15 * MANY)
   })
 })
@@ -158,9 +154,7 @@ describe('a picture shown in a large space', () => {
     compared = 0
     expect(links.fileFor('beside.png', from)).toBe(`${ROOT}/Notes/Day/beside.png`)
     expect(links.fileFor('attachments/cat.png', from)).toBe(`${ROOT}/attachments/cat.png`)
-    expect(links.fileFor('../../attachments/cat.png', from, 'markdown')).toBe(
-      `${ROOT}/attachments/cat.png`,
-    )
+    expect(links.fileFor('../../attachments/cat.png', from, 'markdown')).toBe(`${ROOT}/attachments/cat.png`)
     expect(links.fileFor('img 7.png', from)).toBe(`${ROOT}/Folder 0/img 7.png`)
     expect(links.fileFor('nothing.png', from)).toBeNull()
     expect(compared).toBeLessThanOrEqual(200)

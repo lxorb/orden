@@ -253,11 +253,7 @@ function limitsOf(reader: Reader): Limits | null {
   }
 }
 
-function naryOf(
-  reader: Reader,
-  stop: string | null,
-  sign: 'sum' | 'integral',
-): MathComponent[] | null {
+function naryOf(reader: Reader, stop: string | null, sign: 'sum' | 'integral'): MathComponent[] | null {
   const limits = limitsOf(reader)
   if (limits === null) return null
 

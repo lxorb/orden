@@ -91,9 +91,9 @@ export async function writeInto(view: ExplorerView, files: readonly PickedFile[]
   const made: string[] = []
   try {
     for (const file of files) {
-      const [top = file.name, ...rest] = (
-        file.webkitRelativePath?.length ? file.webkitRelativePath : file.name
-      ).split('/')
+      const [top = file.name, ...rest] = (file.webkitRelativePath?.length ? file.webkitRelativePath : file.name).split(
+        '/',
+      )
       let name = tops.get(top)
       let fresh = name === undefined
       if (name === undefined) {

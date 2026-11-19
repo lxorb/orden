@@ -35,8 +35,7 @@ Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
   return { ...rect, top: 0, left: 0, right: 800, bottom: rect.height, toJSON: () => rect }
 }
 
-const { HOLD, listen, pageSaid, PLAYS, readFingers, touchpad } =
-  await import('../../src/lib/back-swipe/src/swipes')
+const { HOLD, listen, pageSaid, PLAYS, readFingers, touchpad } = await import('../../src/lib/back-swipe/src/swipes')
 const { QUIET, SETTLE } = await import('../../src/lib/back-swipe/src/gesture')
 const { swipeChoice } = await import('../../src/lib/back-swipe/src/choice.svelte')
 const { swiping } = await import('../../src/lib/back-swipe/src/shown.svelte')
@@ -99,9 +98,7 @@ function stamped<T extends Event>(event: T): T {
 
 function sweep(at: Element, steps: number, dx: number, init: WheelEventInit = {}, notch = 0) {
   for (let one = 0; one < steps; one++) {
-    const event = stamped(
-      new WheelEvent('wheel', { deltaX: dx, deltaMode: 0, bubbles: true, ...init }),
-    )
+    const event = stamped(new WheelEvent('wheel', { deltaX: dx, deltaMode: 0, bubbles: true, ...init }))
     if (notch) Object.defineProperty(event, 'wheelDeltaX', { value: notch })
     at.dispatchEvent(event)
   }
@@ -148,8 +145,7 @@ test('a short sweep shows the arrow and goes nowhere', () => {
 })
 
 test('the ring round the arrow fills with the way to where letting go goes', () => {
-  const left = () =>
-    Number(document.querySelector<SVGElement>('.ring circle')?.style.strokeDashoffset)
+  const left = () => Number(document.querySelector<SVGElement>('.ring circle')?.style.strokeDashoffset)
   sweep(words, 12, -10)
   expect(swiping.progress).toBeGreaterThan(0)
   expect(swiping.progress).toBeLessThan(1)

@@ -69,11 +69,7 @@ function shortcutText(parts: {
   chosenColour: string | null
 }): string {
   const { url, title, when, home, icon, own, chosen, chosenColour } = parts
-  const rows = [
-    `URL=${oneLine(url)}`,
-    `Title=${oneLine(title.trim() || url)}`,
-    `Orden-Added=${when.toISOString()}`,
-  ]
+  const rows = [`URL=${oneLine(url)}`, `Title=${oneLine(title.trim() || url)}`, `Orden-Added=${when.toISOString()}`]
 
   if (home && home !== url) rows.push(`Orden-Home=${oneLine(home)}`)
   if (icon) rows.push(`Orden-Icon=${oneLine(icon)}`)
@@ -159,11 +155,7 @@ export function readWebFile(path: string, text: string | null | undefined): Shor
       }
 }
 
-export function apartOf(tab: {
-  path: string | null
-  doc: string
-  apart?: string | null
-}): string | null {
+export function apartOf(tab: { path: string | null; doc: string; apart?: string | null }): string | null {
   return tab.path === null ? (tab.apart ?? null) : (readWebFile(tab.path, tab.doc)?.own ?? null)
 }
 
@@ -175,11 +167,9 @@ export function readWebloc(text: string | null | undefined): string | null {
   return isWebAddress(url) ? url : null
 }
 
-export const aimWebloc = (text: string, url: string): string =>
-  text.replace(WEBLOC_URL, () => escaped(url))
+export const aimWebloc = (text: string, url: string): string => text.replace(WEBLOC_URL, () => escaped(url))
 
-const escaped = (url: string): string =>
-  url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+const escaped = (url: string): string => url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 const entities = (value: string): string =>
   value

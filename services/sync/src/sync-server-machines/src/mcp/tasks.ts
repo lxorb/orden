@@ -1,20 +1,7 @@
 import type { Context, Row } from '@orden/bases'
 import { linkContext } from '@orden/bases/links'
-import {
-  PROTECTED,
-  shutFor,
-  objectIn,
-  type Shut,
-  type Env,
-  type Note,
-} from '../../../sync-server/src/api'
-import {
-  writeInbox,
-  heldInbox,
-  cleanPath,
-  MOVED,
-  blobKey,
-} from '../../../sync-server-engine/src/api'
+import { PROTECTED, shutFor, objectIn, type Shut, type Env, type Note } from '../../../sync-server/src/api'
+import { writeInbox, heldInbox, cleanPath, MOVED, blobKey } from '../../../sync-server-engine/src/api'
 import {
   AgentError,
   clockOf,
@@ -26,25 +13,9 @@ import {
   rowWords,
 } from '@orden/bases/agent'
 import { noteRowsOf } from '@orden/scan/rows'
-import {
-  type InboxChange,
-  inboxFits,
-  inboxStamp,
-  mergedInbox,
-  metaFromText,
-  newer,
-} from '@orden/sync-core'
+import { type InboxChange, inboxFits, inboxStamp, mergedInbox, metaFromText, newer } from '@orden/sync-core'
 import { isCanvasTarget, isPagesTarget } from '@orden/markdown/links'
-import {
-  askedSpace,
-  HIDDEN,
-  hiddenPath,
-  marked,
-  noteBody,
-  putNote,
-  type Space,
-  spaceSource,
-} from './tools'
+import { askedSpace, HIDDEN, hiddenPath, marked, noteBody, putNote, type Space, spaceSource } from './tools'
 import type { TokenRow } from './tokens'
 import { zoneOf } from './zone'
 
@@ -163,19 +134,13 @@ async function notesOf(env: Env, space: Space): Promise<Held[]> {
   return results
 }
 
-async function rowsOf(
-  env: Env,
-  spaces: readonly Space[],
-  shut: Shut,
-): Promise<{ rows: Row[]; partial: boolean }> {
+async function rowsOf(env: Env, spaces: readonly Space[], shut: Shut): Promise<{ rows: Row[]; partial: boolean }> {
   const rows: Row[] = []
   let left = MOST_READ
   let partial = false
   for (const space of spaces) {
     const listed = await notesOf(env, space)
-    const held = listed
-      .slice(0, MOST_READ)
-      .filter((one) => MARKDOWN.test(one.path) && !shut(space.id, one.path))
+    const held = listed.slice(0, MOST_READ).filter((one) => MARKDOWN.test(one.path) && !shut(space.id, one.path))
     if (listed.length > MOST_READ || held.length > left) partial = true
     const reading = held.slice(0, Math.max(0, left))
     left -= reading.length
@@ -222,9 +187,7 @@ async function templateAt(env: Env, space: Writable, link: string): Promise<stri
     .bind(space.id)
     .all<{ path: string }>()
   const found = results.find(
-    (one) =>
-      (fold(one.path) === wanted || fold(one.path).endsWith(`/${wanted}`)) &&
-      !space.shut?.(space.id, one.path),
+    (one) => (fold(one.path) === wanted || fold(one.path).endsWith(`/${wanted}`)) && !space.shut?.(space.id, one.path),
   )
   return found ? wordsAt(env, space, found.path) : null
 }
@@ -243,13 +206,7 @@ class Moved extends Error {
   }
 }
 
-async function written(
-  env: Env,
-  space: Writable,
-  path: string,
-  words: string,
-  read: Note | null,
-): Promise<string> {
+async function written(env: Env, space: Writable, path: string, words: string, read: Note | null): Promise<string> {
   mayReach(space, path)
   const put = await putNote(env, space, path, words, undefined, read)
   if (put === MOVED) throw new Moved(path)
@@ -309,8 +266,7 @@ async function writableSpace(
 ): Promise<Space & { shut: Shut; zone: string; me: string }> {
   mayWrite(token)
   const space = await spaceOf(env, token, args, seen)
-  if (space.role === 'read')
-    throw new Said(`${space.name} was shared with you to read, not to write.`)
+  if (space.role === 'read') throw new Said(`${space.name} was shared with you to read, not to write.`)
   return space
 }
 
@@ -336,8 +292,7 @@ const texts = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
 
 function todoOf(id: string, fields: Fields): Todo | null {
-  if (fields.kind !== 'todo' || fields.gone === true || typeof fields.title !== 'string')
-    return null
+  if (fields.kind !== 'todo' || fields.gone === true || typeof fields.title !== 'string') return null
   const priority = fields.priority
   return {
     id,
@@ -346,8 +301,7 @@ function todoOf(id: string, fields: Fields): Todo | null {
     labels: texts(fields.labels),
     space: typeof fields.space === 'string' && fields.space !== '' ? fields.space : null,
     start: typeof fields.start === 'string' && DAY.test(fields.start) ? fields.start : null,
-    deadline:
-      typeof fields.deadline === 'string' && DAY.test(fields.deadline) ? fields.deadline : null,
+    deadline: typeof fields.deadline === 'string' && DAY.test(fields.deadline) ? fields.deadline : null,
     priority: typeof priority === 'number' && [0, 1, 2, 3].includes(priority) ? priority : 0,
     done: fields.done === true,
     subtasks: Array.isArray(fields.subtasks) ? fields.subtasks : [],
@@ -356,9 +310,7 @@ function todoOf(id: string, fields: Fields): Todo | null {
 }
 
 async function heldTodos(env: Env, userId: string): Promise<Map<string, Fields>> {
-  const { results } = await env.DB.prepare(
-    'select id, fields from inbox_items where user_id = ? order by seq',
-  )
+  const { results } = await env.DB.prepare('select id, fields from inbox_items where user_id = ? order by seq')
     .bind(userId)
     .all<{ id: string; fields: string }>()
   const out = new Map<string, Fields>()
@@ -369,12 +321,7 @@ async function heldTodos(env: Env, userId: string): Promise<Map<string, Fields>>
   return out
 }
 
-async function spaceIdOf(
-  env: Env,
-  token: TokenRow,
-  args: Args,
-  seen: Space[],
-): Promise<string | null> {
+async function spaceIdOf(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<string | null> {
   if (args.space === undefined || args.space === null || args.space === '') return null
   return (await spaceOf(env, token, args, seen)).id
 }
@@ -383,8 +330,7 @@ function dayArg(args: Args, name: string): string | null | undefined {
   const value = args[name]
   if (value === undefined) return undefined
   if (value === null || value === '') return null
-  if (typeof value !== 'string' || !DAY.test(value))
-    throw new Said(`${name} is a day as YYYY-MM-DD.`)
+  if (typeof value !== 'string' || !DAY.test(value)) throw new Said(`${name} is a day as YYYY-MM-DD.`)
   return value
 }
 
@@ -429,14 +375,10 @@ function stampPast(now: string, held: string | undefined): string {
 async function keep(env: Env, userId: string, id: string, fields: Fields): Promise<void> {
   const held = await heldInbox(env, userId, id)
   const now = inboxStamp(Date.now(), 0, 'mcp')
-  const stamps = Object.fromEntries(
-    Object.keys(fields).map((key) => [key, stampPast(now, held?.stamps[key])]),
-  )
+  const stamps = Object.fromEntries(Object.keys(fields).map((key) => [key, stampPast(now, held?.stamps[key])]))
   const change = { id, fields: fields as InboxChange['fields'], stamps }
   if (!inboxFits({ id, ...mergedInbox(held, change) })) {
-    throw new Said(
-      'That would make the todo too large for a device to read. Say it in fewer words.',
-    )
+    throw new Said('That would make the todo too large for a device to read. Say it in fewer words.')
   }
   const kept = await writeInbox(env, userId, [change], 'mcp')
   if (kept === 'full') throw new Said('That is more todos than an account keeps.')
@@ -467,8 +409,7 @@ async function list(env: Env, token: TokenRow, args: Args, seen: Space[]): Promi
 }
 
 function mayWrite(token: TokenRow): void {
-  if (token.read_only)
-    throw new Said('This token may only read. Allow writing in Orden’s settings first.')
+  if (token.read_only) throw new Said('This token may only read. Allow writing in Orden’s settings first.')
 }
 
 async function add(env: Env, token: TokenRow, args: Args, seen: Space[]): Promise<unknown> {
@@ -580,10 +521,7 @@ async function addRow(env: Env, token: TokenRow, args: Args, seen: Space[]): Pro
   throw new Said(`${name} is taken a hundred times over.`)
 }
 
-const RUNS: Record<
-  string,
-  (env: Env, token: TokenRow, args: Args, seen: Space[]) => Promise<unknown>
-> = {
+const RUNS: Record<string, (env: Env, token: TokenRow, args: Args, seen: Space[]) => Promise<unknown>> = {
   list_tasks: list,
   add_task: add,
   update_task: update,
@@ -600,12 +538,7 @@ function sourceOf(seen: readonly Space[]): string | null {
   return sources.length ? sources.join(', ') : null
 }
 
-export async function callTaskTool(
-  env: Env,
-  token: TokenRow,
-  name: string,
-  args: Args,
-): Promise<string> {
+export async function callTaskTool(env: Env, token: TokenRow, name: string, args: Args): Promise<string> {
   const run = RUNS[name]
   if (!run) return `No tool called ${name}.`
   const seen: Space[] = []

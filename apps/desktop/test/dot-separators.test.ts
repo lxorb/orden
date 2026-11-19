@@ -114,9 +114,7 @@ describe('pieces of text are set apart by layout', () => {
 
   test('never by a middle dot or a bullet', () => {
     const wrong = found
-      .filter(
-        ({ path, line }) => !ALLOWED.some((one) => one.path === path && line.includes(one.holds)),
-      )
+      .filter(({ path, line }) => !ALLOWED.some((one) => one.path === path && line.includes(one.holds)))
       .map(({ path, line, at }) => `${path}:${String(at)}: ${line.trim()}`)
     expect(wrong).toEqual([])
   })

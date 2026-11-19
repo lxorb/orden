@@ -88,9 +88,7 @@ describe('an entry that is not a folder of this space with an order on it', () =
     const set = await put(sent)
 
     expect(Object.keys(set.json.arranged).sort()).toEqual(['Work', '__proto__'])
-    expect(Object.getOwnPropertyDescriptor(set.json.arranged, '__proto__')?.value).toEqual([
-      'Plan.md',
-    ])
+    expect(Object.getOwnPropertyDescriptor(set.json.arranged, '__proto__')?.value).toEqual(['Plan.md'])
   })
 
   test('is dropped when the value is not a list of names at all', async () => {

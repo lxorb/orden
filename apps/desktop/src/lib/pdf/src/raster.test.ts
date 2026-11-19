@@ -16,8 +16,7 @@ const drawn = vi.fn()
 vi.stubGlobal('document', {
   createElement: () => ({
     getContext: () => ({ drawImage: drawn }),
-    toBlob: (done: (png: Blob) => void) =>
-      done(new Blob([new Uint8Array([0])], { type: 'image/png' })),
+    toBlob: (done: (png: Blob) => void) => done(new Blob([new Uint8Array([0])], { type: 'image/png' })),
   }),
 })
 

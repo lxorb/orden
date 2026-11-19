@@ -35,8 +35,7 @@
     if (made) chosen = made.id
   }
 
-  const move = (from: number, to: number) =>
-    void remote.keep((kept) => moved(kept, remote.hosts, from, to))
+  const move = (from: number, to: number) => void remote.keep((kept) => moved(kept, remote.hosts, from, to))
 
   async function openConfig() {
     problem = ''

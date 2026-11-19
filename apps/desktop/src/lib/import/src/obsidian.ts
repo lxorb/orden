@@ -9,16 +9,12 @@ const SETTINGS = /^(?:[^/]+\/)?\.obsidian\//
 export function atVaultTop(sources: readonly Source[]): Source[] {
   if (sources.some((one) => one.path.startsWith('.obsidian/'))) return [...sources]
 
-  const wrapper = sources
-    .map((one) => SETTINGS.exec(one.path)?.[0].slice(0, -'.obsidian/'.length))
-    .find(Boolean)
+  const wrapper = sources.map((one) => SETTINGS.exec(one.path)?.[0].slice(0, -'.obsidian/'.length)).find(Boolean)
   if (!wrapper) return [...sources]
   const beside = (path: string) => !path.startsWith(wrapper) && !isJunk(path) && !leftInVault(path)
   if (sources.some((one) => beside(one.path))) return [...sources]
 
-  return sources.map((one) =>
-    one.path.startsWith(wrapper) ? { ...one, path: one.path.slice(wrapper.length) } : one,
-  )
+  return sources.map((one) => (one.path.startsWith(wrapper) ? { ...one, path: one.path.slice(wrapper.length) } : one))
 }
 
 export function leftInVault(path: string): boolean {

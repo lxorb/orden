@@ -49,9 +49,7 @@ describe('a single newline, when the switch says it breaks the line', () => {
     const doc = documentOf(WRAPPED, 'Note.md')
     const first = doc.blocks.find((block) => block.kind === 'paragraph')
 
-    expect(first && 'spans' in first ? first.spans.map((span) => span.text).join('') : '').toBe(
-      'one\ntwo',
-    )
+    expect(first && 'spans' in first ? first.spans.map((span) => span.text).join('') : '').toBe('one\ntwo')
   })
 
   test('is asked of the caller when the caller has an answer of its own', () => {

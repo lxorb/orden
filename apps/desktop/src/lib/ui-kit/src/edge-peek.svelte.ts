@@ -45,8 +45,7 @@ export class EdgePeek {
       else this.leave()
       return
     }
-    if (edge && beside && event.buttons === 0 && event.pointerType !== 'touch' && room.may())
-      this.out = true
+    if (edge && beside && event.buttons === 0 && event.pointerType !== 'touch' && room.may()) this.out = true
   }
 
   away() {

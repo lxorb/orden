@@ -33,9 +33,7 @@ export const wrapSelection = (): Extension =>
             { from, insert: typed },
             { from: to, insert: typed },
           ],
-          range: forward
-            ? EditorSelection.range(from + 1, to + 1)
-            : EditorSelection.range(to + 1, from + 1),
+          range: forward ? EditorSelection.range(from + 1, to + 1) : EditorSelection.range(to + 1, from + 1),
         }
       })
 

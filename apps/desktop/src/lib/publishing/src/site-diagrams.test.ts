@@ -18,13 +18,7 @@ const world = vi.hoisted((): World => ({
 
 vi.mock('../../accounts/src/client', () => ({
   api: {
-    putBlob: (
-      _token: string,
-      hash: string,
-      type: string,
-      bytes: ArrayBuffer,
-      headers: Record<string, string>,
-    ) => {
+    putBlob: (_token: string, hash: string, type: string, bytes: ArrayBuffer, headers: Record<string, string>) => {
       expect(type).toBe('image/svg+xml')
       world.sent[hash] = new TextDecoder().decode(bytes)
       world.said[hash] = headers['x-orden-diagram']!

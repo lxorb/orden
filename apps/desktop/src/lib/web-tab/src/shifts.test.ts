@@ -194,10 +194,7 @@ describe('the screen under the window', () => {
     vi.stubGlobal('devicePixelRatio', 2)
     queries[0]?.heard?.()
     expect(changed).toHaveBeenCalledTimes(1)
-    expect(queries.map((one) => one.media)).toEqual([
-      '(resolution: 1.5dppx)',
-      '(resolution: 2dppx)',
-    ])
+    expect(queries.map((one) => one.media)).toEqual(['(resolution: 1.5dppx)', '(resolution: 2dppx)'])
     expect(queries[0]?.heard).toBeNull()
 
     stop()

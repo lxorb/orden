@@ -1,9 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { sizeStepFor } from './text-size'
 
-function wheel(
-  held: Partial<{ ctrlKey: boolean; deltaY: number; defaultPrevented: boolean }> = {},
-) {
+function wheel(held: Partial<{ ctrlKey: boolean; deltaY: number; defaultPrevented: boolean }> = {}) {
   return { ctrlKey: true, deltaY: -1, defaultPrevented: false, ...held }
 }
 

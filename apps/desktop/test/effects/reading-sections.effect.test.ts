@@ -13,9 +13,7 @@ vi.mock('../../src/lib/reading/src/render', () => ({
       .split('\n')
       .filter(Boolean)
       .map((line) =>
-        line.startsWith('# ')
-          ? `<h1 id="${line.slice(2).toLowerCase()}">${line.slice(2)}</h1>`
-          : `<p>${line}</p>`,
+        line.startsWith('# ') ? `<h1 id="${line.slice(2).toLowerCase()}">${line.slice(2)}</h1>` : `<p>${line}</p>`,
       )
       .join('')
   },
@@ -82,8 +80,7 @@ afterEach(() => {
 
 let top = 0
 
-const rowOf = (element: Element) =>
-  element.parentElement ? [...element.parentElement.children].indexOf(element) : 0
+const rowOf = (element: Element) => (element.parentElement ? [...element.parentElement.children].indexOf(element) : 0)
 
 Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
   configurable: true,
@@ -115,8 +112,7 @@ Object.defineProperty(Element.prototype, 'scrollHeight', {
 function laidOut(box: HTMLElement) {
   const page = box.querySelector('article')
   if (!page) throw new Error('no page')
-  document.elementFromPoint = (_x: number, y: number) =>
-    page.children[Math.floor((y + top) / ROW)] ?? null
+  document.elementFromPoint = (_x: number, y: number) => page.children[Math.floor((y + top) / ROW)] ?? null
   return {
     scrollTo(at: number) {
       top = at
@@ -150,9 +146,7 @@ async function anotherNoteSaved() {
 }
 
 const lines = (count: number) =>
-  Array.from({ length: count }, (_, at) => `Day ${String(at)} of the trip, see [[Plan]].`).join(
-    '\n\n',
-  )
+  Array.from({ length: count }, (_, at) => `Day ${String(at)} of the trip, see [[Plan]].`).join('\n\n')
 
 test('a reader deep in the last section stays there when another note is saved', async () => {
   const layout = await opened(`# Trip\n\nShort start.\n\n# Diary\n\n${lines(300)}`)

@@ -110,9 +110,7 @@ export class ReferenceAccount implements AccountAdapter {
 
     const results: OpResult[] = request.ops.map((op) => {
       const judged =
-        this.plant === 'delete-without-seen' && op.t === 'delete'
-          ? { ...op, seen: Number.MAX_SAFE_INTEGER }
-          : op
+        this.plant === 'delete-without-seen' && op.t === 'delete' ? { ...op, seen: Number.MAX_SAFE_INTEGER } : op
       const result = applyOp(this.tree, judged, { role: 'owner', device })
       if (op.t === 'create' && 'id' in result && DOCUMENTS.has(op.kind) && !this.docs.has(op.id)) {
         this.docs.set(op.id, { doc: new Y.Doc(), seq: 0, at: this.clock.now })
@@ -125,9 +123,7 @@ export class ReferenceAccount implements AccountAdapter {
   private feed(device: string, value: unknown) {
     if (!isRecord(value) || typeof value.since !== 'number') throw new Error('feed: no since')
     const since = value.since
-    const changed = [...this.tree.entries.values()]
-      .filter((entry) => entry.seq > since)
-      .sort((a, b) => a.seq - b.seq)
+    const changed = [...this.tree.entries.values()].filter((entry) => entry.seq > since).sort((a, b) => a.seq - b.seq)
     const page = changed.slice(0, FEED_PAGE)
 
     const items: FeedItem[] = page.map((entry) => ({

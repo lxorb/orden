@@ -34,10 +34,7 @@ function typedAlt(text: string, doc = DOC): EditorView {
       EditorState.create({
         doc,
         selection: EditorSelection.cursor(doc.length),
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          livePreview(),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), livePreview()],
       }),
     ),
     parent: document.body,
@@ -70,9 +67,7 @@ test('in a picture wrapped in HTML, is written to its img tag and leaves the wra
   const view = typedAlt('A dog', doc)
   view.focus()
   await Promise.resolve()
-  expect(view.state.doc.toString()).toBe(
-    'words\n\n<p align="center"><img src="cat.png" alt="A dog"></p>\n\nend',
-  )
+  expect(view.state.doc.toString()).toBe('words\n\n<p align="center"><img src="cat.png" alt="A dog"></p>\n\nend')
   view.destroy()
 })
 
@@ -89,10 +84,7 @@ test('a corner pressed and let go without a drag leaves a sized picture as it wa
       EditorState.create({
         doc,
         selection: EditorSelection.cursor(doc.length),
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          livePreview(),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), livePreview()],
       }),
     ),
     parent: document.body,

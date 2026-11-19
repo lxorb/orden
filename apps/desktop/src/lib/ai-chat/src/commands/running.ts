@@ -62,9 +62,7 @@ function start(host: Host, thread: Thread, goal: Goal, first?: string): void {
       }
     },
   })
-  void pursue(goal, road(host, thread, stopper.signal), stopper.signal, first).finally(() =>
-    tasks.done(task.id),
-  )
+  void pursue(goal, road(host, thread, stopper.signal), stopper.signal, first).finally(() => tasks.done(task.id))
 }
 
 export function goal(host: Host, thread: Thread, args: string): void {
@@ -79,12 +77,7 @@ export function goal(host: Host, thread: Thread, args: string): void {
       return
     case 'resume':
       if (held?.state === 'paused')
-        start(
-          host,
-          thread,
-          held,
-          guidance(held.condition, held.reason ?? '', readOutside(thread.turns)),
-        )
+        start(host, thread, held, guidance(held.condition, held.reason ?? '', readOutside(thread.turns)))
       return
     case 'clear':
       tasks.stop(thread.id, 'goal')

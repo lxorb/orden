@@ -1,14 +1,6 @@
 <script lang="ts">
   import { whenLoaded, settingsWindow } from '@orden/contracts'
-  import {
-    dropOver,
-    Cross,
-    overlays,
-    menu,
-    fullscreen,
-    Door,
-    keyElsewhere,
-  } from '../../ui-kit/src/api'
+  import { dropOver, Cross, overlays, menu, fullscreen, Door, keyElsewhere } from '../../ui-kit/src/api'
   import { onMount, untrack } from 'svelte'
   import { agentMarks, workspace, tabAsk, type TabAsk } from '../../workspace/src/api'
   import { dur, fade, invoke, isDesktop, openExternal } from '../../platform/src/api'
@@ -74,9 +66,7 @@
   const LEAVING = 300
   const UNSEEN = 0.01
   const page = $derived(pages.of(tab.id))
-  const pictured = $derived(
-    page.shot !== null && (page.layering !== 'under' || page.heldAt !== null),
-  )
+  const pictured = $derived(page.shot !== null && (page.layering !== 'under' || page.heldAt !== null))
 
   let hole = $state<HTMLElement>()
   let marked = $state(true)
@@ -100,8 +90,7 @@
 
   function coverOf(box: Rect): { box: Rect; cut: Cut | null } {
     if (page.filling) return { box, cut: null }
-    if (filling.by !== null || (workspace.panes.dragging?.tabId ?? null) !== null)
-      return { box, cut: ALL }
+    if (filling.by !== null || (workspace.panes.dragging?.tabId ?? null) !== null) return { box, cut: ALL }
     if (!hole) return { box, cut: null }
     if (strangerOver(hole)) return { box, cut: ALL }
     const layers = layersOver(hole)
@@ -211,14 +200,9 @@
     const covered = coverOf(box)
     const at = covered.box
     const under = page.layering === 'under'
-    const opacity =
-      !under || page.filling ? 1 : filling.by !== null ? 0 : hole ? opacityOf(hole) : 1
+    const opacity = !under || page.filling ? 1 : filling.by !== null ? 0 : hole ? opacityOf(hole) : 1
     const seen = opacity > UNSEEN
-    const cut = under
-      ? seen
-        ? covered.cut
-        : ALL
-      : settled(covered.cut, page.shot !== null, pages.cuts)
+    const cut = under ? (seen ? covered.cut : ALL) : settled(covered.cut, page.shot !== null, pages.cuts)
     last = at
     const visible = cut === null
     const corner = page.filling ? ([0, 0] as const) : cardCorner(hole)
@@ -413,9 +397,7 @@
   let root = $state<HTMLElement>()
   let onStore = $state<string | null>(null)
   const addable = $derived(
-    onStore !== null && !extensions.list.some((one) => one.id === onStore || one.addon === onStore)
-      ? onStore
-      : null,
+    onStore !== null && !extensions.list.some((one) => one.id === onStore || one.addon === onStore) ? onStore : null,
   )
 
   $effect(() => {
@@ -456,10 +438,7 @@
     showingExtensions = false
     if (one.popup) {
       if (anchor) hangs = under(anchor)
-      opener =
-        anchor ??
-        head?.querySelector<HTMLElement>(`[data-extension="${CSS.escape(one.id)}"]`) ??
-        null
+      opener = anchor ?? head?.querySelector<HTMLElement>(`[data-extension="${CSS.escape(one.id)}"]`) ?? null
       extensions.open(one.id, tab.id, page.store)
       return
     }
@@ -479,8 +458,7 @@
     if (!focused || !isDesktop || !page.live) return
     if (event.defaultPrevented || keyElsewhere(event, root)) return
 
-    const either = (id: string) =>
-      shortcuts.pressed(id, event) || shortcuts.pressed(`${id}.alt`, event)
+    const either = (id: string) => shortcuts.pressed(id, event) || shortcuts.pressed(`${id}.alt`, event)
     const look = shortcuts.pressed('edit.find', event)
       ? 'find'
       : either('edit.find-next')
@@ -559,8 +537,7 @@
         const ask = press ? tabAsk(press) : 'plain'
         if (step === 'back') workspace.goBack(tab.id, ask)
         else if (step === 'forward') workspace.goForward(tab.id, ask)
-        else if (step === 'reload' && ask !== 'plain' && page.url !== null)
-          workspace.openPage(page.url, ask, tab.id)
+        else if (step === 'reload' && ask !== 'plain' && page.url !== null) workspace.openPage(page.url, ask, tab.id)
         else void pages.step(tab.id, step)
       }}
       onhistory={showTrail}
@@ -584,10 +561,8 @@
         void pages.go(tab.id, url, upgrade)
         void workspace.webAimed(tab, url)
       }}
-      onnote={(path: string) =>
-        void import('./web-notes').then((one) => one.openWebNote(workspace, tab, path))}
-      onmenu={(event: MouseEvent) =>
-        menu.show(event, webRows(page, page.zoom, actions), { title: 'Website' })}
+      onnote={(path: string) => void import('./web-notes').then((one) => one.openWebNote(workspace, tab, path))}
+      onmenu={(event: MouseEvent) => menu.show(event, webRows(page, page.zoom, actions), { title: 'Website' })}
       onsite={() => {
         showingSite = !showingSite
         showingDownloads = false
@@ -600,8 +575,7 @@
       }}
       ontyping={(on: boolean) => pages.typing(tab.id, on)}
       onzoom={(step: ZoomStep) => zoomTo(step === 'reset' ? 1 : zoomed(page.zoom, step === 'in'))}
-      onbrowser={(which: 'history' | 'clear') =>
-        which === 'history' ? actions.history() : actions.clearData()}
+      onbrowser={(which: 'history' | 'clear') => (which === 'history' ? actions.history() : actions.clearData())}
       extending={extending
         ? {
             addable,
@@ -661,13 +635,7 @@
     {/if}
 
     {#if showingSite && page.url !== null}
-      <WebSite
-        url={page.url}
-        {site}
-        tab={tab.id}
-        privately={page.inPrivate}
-        onclose={() => (showingSite = false)}
-      />
+      <WebSite url={page.url} {site} tab={tab.id} privately={page.inPrivate} onclose={() => (showingSite = false)} />
     {:else if showingDownloads}
       <WebDownloads onclose={() => (showingDownloads = false)} />
     {:else if extensions.popped?.tab === tab.id}
@@ -734,12 +702,8 @@
         <p class="why">{page.failure.reason}</p>
       {/if}
       <div class="rows">
-        <button class="orden-button" onclick={() => void pages.step(tab.id, 'reload')}>
-          Reload
-        </button>
-        <button class="orden-button is-quiet" onclick={() => void openExternal(address)}>
-          Open in the browser
-        </button>
+        <button class="orden-button" onclick={() => void pages.step(tab.id, 'reload')}> Reload </button>
+        <button class="orden-button is-quiet" onclick={() => void openExternal(address)}> Open in the browser </button>
       </div>
     </div>
   {:else if isDesktop && page.openable}
@@ -771,12 +735,7 @@
       referrerpolicy="origin"
     ></iframe>
   {:else}
-    <div
-      class="card"
-      class:acted={worn !== null}
-      class:resting={worn?.stopped}
-      style:--agent={worn?.colour}
-    >
+    <div class="card" class:acted={worn !== null} class:resting={worn?.stopped} style:--agent={worn?.colour}>
       {#if address}
         {@const mark = siteMark(page.icon, address) ?? favicon(address)}
         {#if marked && mark}
@@ -786,9 +745,7 @@
         <p class="site">{address}</p>
 
         <div class="rows">
-          <button class="orden-button" onclick={() => (page.framing = 'frame')}>
-            Show it here
-          </button>
+          <button class="orden-button" onclick={() => (page.framing = 'frame')}> Show it here </button>
           <button class="orden-button is-quiet" onclick={() => void openExternal(address)}>
             Open in the browser
           </button>

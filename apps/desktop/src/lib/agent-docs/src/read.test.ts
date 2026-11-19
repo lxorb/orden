@@ -66,9 +66,7 @@ describe('a note, read', () => {
       [{ task: 'Call Anna' }, true],
       [{ task: 'Buy milk', nth: 2 }, false],
     ])
-    expect(read.blocks).toEqual([
-      { anchor: { block: 'idea' }, line: 8, text: 'An idea worth keeping' },
-    ])
+    expect(read.blocks).toEqual([{ anchor: { block: 'idea' }, line: 8, text: 'An idea worth keeping' }])
 
     const lines = NOTE.split('\n')
     const rows = [...(read.outline ?? []), ...(read.tasks ?? []), ...(read.blocks ?? [])]
@@ -79,19 +77,9 @@ describe('a note, read', () => {
   })
 
   test('says only what it was asked', async () => {
-    const read = await readNote(deskWith({ 'plan.md': NOTE }).desk, { path: 'plan.md' }, [
-      'properties',
-    ])
+    const read = await readNote(deskWith({ 'plan.md': NOTE }).desk, { path: 'plan.md' }, ['properties'])
 
-    expect(Object.keys(read).sort()).toEqual([
-      'meta',
-      'open',
-      'path',
-      'properties',
-      'rev',
-      'space',
-      'typing',
-    ])
+    expect(Object.keys(read).sort()).toEqual(['meta', 'open', 'path', 'properties', 'rev', 'space', 'typing'])
     expect(read.properties?.map((one) => one.key)).toEqual(['tags'])
   })
 
@@ -102,8 +90,8 @@ describe('a note, read', () => {
   })
 
   test('refuses a list of parts it does not know', async () => {
-    await expect(
-      readNote(deskWith({ 'plan.md': '' }).desk, { path: 'plan.md' }, ['everything']),
-    ).rejects.toThrow('include is some of')
+    await expect(readNote(deskWith({ 'plan.md': '' }).desk, { path: 'plan.md' }, ['everything'])).rejects.toThrow(
+      'include is some of',
+    )
   })
 })

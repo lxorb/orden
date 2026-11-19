@@ -16,22 +16,16 @@ describe('the footnotes of a note', () => {
   })
 
   test('a label is whatever was written between the brackets', () => {
-    expect(scanFootnotes('why[^because]\n\n[^because]: it is').map((one) => one.id)).toEqual([
-      'because',
-    ])
+    expect(scanFootnotes('why[^because]\n\n[^because]: it is').map((one) => one.id)).toEqual(['because'])
   })
 
   test('one nothing points at is still a footnote, and says so', () => {
     const note = 'Words.\n\n[^stray]: left behind'
-    expect(scanFootnotes(note)).toEqual([
-      { id: 'stray', text: 'left behind', line: 2, defined: 2, used: false },
-    ])
+    expect(scanFootnotes(note)).toEqual([{ id: 'stray', text: 'left behind', line: 2, defined: 2, used: false }])
   })
 
   test('and one referred to but never written is one too', () => {
-    expect(scanFootnotes('A claim[^1].')).toEqual([
-      { id: '1', text: '', line: 0, defined: null, used: true },
-    ])
+    expect(scanFootnotes('A claim[^1].')).toEqual([{ id: '1', text: '', line: 0, defined: null, used: true }])
   })
 
   test('the line is the first mark, however many there are', () => {
@@ -47,9 +41,7 @@ describe('the footnotes of a note', () => {
 
   test('a label written twice is read once, the way the renderer reads it', () => {
     const note = 'A[^1]\n\n[^1]: first\n[^1]: second'
-    expect(scanFootnotes(note)).toEqual([
-      { id: '1', text: 'first', line: 0, defined: 2, used: true },
-    ])
+    expect(scanFootnotes(note)).toEqual([{ id: '1', text: 'first', line: 0, defined: 2, used: true }])
   })
 
   test('nothing inside a fence, where brackets are code', () => {
@@ -93,9 +85,7 @@ describe('where the definition is', () => {
 describe('footnotes and code', () => {
   test('a shorter fence inside a longer one does not hide the definition', () => {
     const note = 'Text[^1]\n\n````md\n```\n````\n\n[^1]: The note'
-    expect(scanFootnotes(note)).toEqual([
-      { id: '1', text: 'The note', line: 0, defined: 6, used: true },
-    ])
+    expect(scanFootnotes(note)).toEqual([{ id: '1', text: 'The note', line: 0, defined: 6, used: true }])
   })
 
   test('a mark in quoted code is code', () => {

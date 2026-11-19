@@ -83,21 +83,15 @@ test('a pane is a rounded card, but square and flush where it meets the window w
   expect(/\n {2}\.pane \{([^}]*)\}/.exec(pane)?.[1]).toContain('border-radius: var(--card-radius);')
   for (const toward of ['left', 'right', 'down'])
     expect(pane).toContain(`!paneToward(workspace.panes.frame, pane.id, '${toward}')`)
-  expect(/\.pane\.at-left \{([^}]*)\}/.exec(pane)?.[1]).toContain(
-    'var(--left-edge, var(--card-radius))',
-  )
-  expect(/\.pane\.at-right \{([^}]*)\}/.exec(pane)?.[1]).toContain(
-    'var(--right-edge, var(--card-radius))',
-  )
+  expect(/\.pane\.at-left \{([^}]*)\}/.exec(pane)?.[1]).toContain('var(--left-edge, var(--card-radius))')
+  expect(/\.pane\.at-right \{([^}]*)\}/.exec(pane)?.[1]).toContain('var(--right-edge, var(--card-radius))')
   expect(/\.pane\.at-foot \{([^}]*)\}/.exec(pane)?.[1]).toMatch(
     /border-bottom-left-radius: 0;\s*border-bottom-right-radius: 0;/,
   )
   expect(pane).not.toMatch(/grounded|--card-foot|flushBottom/)
 
   const app = read('../App.svelte')
-  expect(app).toMatch(
-    /const leftShut = \$derived\(viewport\.drawer \|\| workspace\.openOn\('left'\) === null\)/,
-  )
+  expect(app).toMatch(/const leftShut = \$derived\(viewport\.drawer \|\| workspace\.openOn\('left'\) === null\)/)
   expect(app).toMatch(/const rightShut = \$derived\(viewport\.drawer \|\| !rightOpen\)/)
   expect(app).toContain('class:left-shut={leftShut}')
   expect(app).toContain('class:right-shut={rightShut}')

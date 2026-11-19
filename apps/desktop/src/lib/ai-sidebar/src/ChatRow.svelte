@@ -56,8 +56,7 @@
     aria-haspopup={label === 'More' ? 'menu' : undefined}
     onclick={run}
   >
-    <svg viewBox="0 0 13 13" aria-hidden="true"><path class:dots={label === 'More'} d={path} /></svg
-    >
+    <svg viewBox="0 0 13 13" aria-hidden="true"><path class:dots={label === 'More'} d={path} /></svg>
   </button>
 {/snippet}
 

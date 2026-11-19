@@ -17,9 +17,7 @@
 
   const asked = $derived(ui.sheet?.kind === 'link' ? ui.sheet : null)
   const itemId = $derived(asked?.item ?? null)
-  const item = $derived(
-    itemId === null ? null : (pass.items.find((one) => one.id === itemId) ?? null),
-  )
+  const item = $derived(itemId === null ? null : (pass.items.find((one) => one.id === itemId) ?? null))
   const vault = $derived(item ? (pass.vaults.find((one) => one.id === item.vault) ?? null) : null)
   const signedIn = $derived(account.user !== null)
   const lives = $derived(LINK_LIVES.map((one) => ({ value: String(one), label: lifeName(one) })))
@@ -31,9 +29,7 @@
   let wrong = $state('')
 
   const limit = $derived(views.trim() === '' ? null : Number(views.trim()))
-  const fits = $derived(
-    limit === null || (Number.isInteger(limit) && limit >= 1 && limit <= MOST_LINK_VIEWS),
-  )
+  const fits = $derived(limit === null || (Number.isInteger(limit) && limit >= 1 && limit <= MOST_LINK_VIEWS))
 
   $effect(() => {
     if (itemId === null) return
@@ -95,9 +91,7 @@
       </div>
     {:else}
       <form class="form" onsubmit={made}>
-        <p class="pass-quiet">
-          Anybody with the link sees this item without an account. Its attachments stay out.
-        </p>
+        <p class="pass-quiet">Anybody with the link sees this item without an account. Its attachments stay out.</p>
         <div class="orden-setting row">
           <span class="name">Expires after</span>
           <div class="pick">

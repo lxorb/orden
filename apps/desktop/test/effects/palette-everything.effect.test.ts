@@ -71,9 +71,7 @@ test('finds a setting by its own name, and says which pane it is in', () => {
 test('draws the letters the words were found at', () => {
   type('reopen')
   const first = rows()[0]
-  expect(
-    [...(first?.querySelectorAll('.orden-row-label b') ?? [])].map((one) => one.textContent),
-  ).toEqual(['Reopen'])
+  expect([...(first?.querySelectorAll('.orden-row-label b') ?? [])].map((one) => one.textContent)).toEqual(['Reopen'])
 })
 
 test('flips a switch where it stands, and stays up to show it', () => {

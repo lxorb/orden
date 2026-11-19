@@ -216,8 +216,7 @@ describe('an application’s door', () => {
     return { owner, other }
   }
 
-  const on = () =>
-    env.db.prepare("insert into online_service (key, value) values ('apps', 'on')").run()
+  const on = () => env.db.prepare("insert into online_service (key, value) values ('apps', 'on')").run()
 
   test('answers 404 while switched off, as a route that does not exist', async () => {
     const { APPS } = namespace()
@@ -355,10 +354,7 @@ describe('an application’s door', () => {
       const { made, join } = await sockets()
       const host = await join('host', 'desktop')
       const say = (socket: MachineSocket) =>
-        made.webSocketMessage(
-          socket as unknown as WebSocket,
-          JSON.stringify({ t: 'hello', hold: true }),
-        )
+        made.webSocketMessage(socket as unknown as WebSocket, JSON.stringify({ t: 'hello', hold: true }))
       const laptop = await join('viewer', 'laptop')
       await say(laptop)
       const phone = await join('viewer', 'phone')
@@ -375,9 +371,7 @@ describe('an application’s door', () => {
       await vi.advanceTimersByTimeAsync(0)
 
       expect(phone.of('hold')).toEqual([{ t: 'hold' }])
-      expect(host.of('viewer').slice(before)).toEqual([
-        { t: 'viewer', device: 'phone', name: 'phone' },
-      ])
+      expect(host.of('viewer').slice(before)).toEqual([{ t: 'viewer', device: 'phone', name: 'phone' }])
     })
 
     test('a database that does not answer ends nothing', async () => {
@@ -403,9 +397,7 @@ describe('a host’s catalogue', () => {
   async function device(email: string, id: string): Promise<string> {
     const token = await signIn(env, email)
     const hash = createHash('sha256').update(token).digest('hex')
-    const session = env.db
-      .prepare('select id, user_id from sessions where token_hash = ?')
-      .get(hash) as {
+    const session = env.db.prepare('select id, user_id from sessions where token_hash = ?').get(hash) as {
       id: string
       user_id: string
     }
@@ -418,12 +410,10 @@ describe('a host’s catalogue', () => {
     return token
   }
 
-  const on = () =>
-    env.db.prepare("insert into online_service (key, value) values ('apps', 'on')").run()
+  const on = () => env.db.prepare("insert into online_service (key, value) values ('apps', 'on')").run()
   const write = (token: string, apps: unknown) =>
     call(env, '/v2/apps/catalogue', { token, method: 'PUT', body: { apps } })
-  const read = (token: string, id: string) =>
-    call<{ apps?: unknown }>(env, `/v2/apps/catalogue/${id}`, { token })
+  const read = (token: string, id: string) => call<{ apps?: unknown }>(env, `/v2/apps/catalogue/${id}`, { token })
 
   beforeEach(() => {
     env = testEnv({ APPS })
@@ -478,8 +468,7 @@ describe('a host’s catalogue', () => {
 
 describe('an application’s ICE servers', () => {
   const APPS = {} as unknown as DurableObjectNamespace
-  const on = () =>
-    env.db.prepare("insert into online_service (key, value) values ('apps', 'on')").run()
+  const on = () => env.db.prepare("insert into online_service (key, value) values ('apps', 'on')").run()
   const ask = (token: string) => call<{ iceServers?: unknown }>(env, '/v2/apps/ice', { token })
 
   afterEach(() => {
@@ -516,9 +505,7 @@ describe('an application’s ICE servers', () => {
         credential: 'pass',
       },
     ]
-    const asked = vi
-      .spyOn(globalThis, 'fetch')
-      .mockResolvedValue(new Response(JSON.stringify({ iceServers: servers })))
+    const asked = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ iceServers: servers })))
     const token = await signIn(env, 'owner@example.com')
     const answered = await ask(token)
     expect(answered.json.iceServers).toEqual([
@@ -530,9 +517,7 @@ describe('an application’s ICE servers', () => {
       },
     ])
     const [url, init] = asked.mock.calls[0] ?? []
-    expect(url).toBe(
-      'https://rtc.live.cloudflare.com/v1/turn/keys/key-1/credentials/generate-ice-servers',
-    )
+    expect(url).toBe('https://rtc.live.cloudflare.com/v1/turn/keys/key-1/credentials/generate-ice-servers')
     expect(init?.headers).toMatchObject({ authorization: 'Bearer secret' })
     expect(init?.body).toBe(JSON.stringify({ ttl: 86_400 }))
   })
@@ -543,8 +528,6 @@ describe('an application’s ICE servers', () => {
     on()
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('no', { status: 500 }))
     const token = await signIn(env, 'owner@example.com')
-    expect((await ask(token)).json.iceServers).toEqual([
-      { urls: ['stun:stun.cloudflare.com:3478'] },
-    ])
+    expect((await ask(token)).json.iceServers).toEqual([{ urls: ['stun:stun.cloudflare.com:3478'] }])
   })
 })

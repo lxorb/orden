@@ -53,12 +53,7 @@ function roomFor(user: string, sent: string, most: string): string {
                                    and kept.kind = fresh.kind and kept.id = fresh.id)) <= ${most})`
 }
 
-async function written(
-  env: Env,
-  userId: string,
-  changes: readonly TimeChange[],
-  by: string,
-): Promise<number | 'full'> {
+async function written(env: Env, userId: string, changes: readonly TimeChange[], by: string): Promise<number | 'full'> {
   const many = changes.length
   const at = now()
   const rows = changes.map((one, index) => ({
@@ -69,11 +64,7 @@ async function written(
   }))
   const sent = JSON.stringify(rows)
   const results = await env.DB.batch([
-    env.DB.prepare(`select ${roomFor('?1', '?2', '?3')} as room`).bind(
-      userId,
-      sent,
-      MOST_TIME_ENTRIES,
-    ),
+    env.DB.prepare(`select ${roomFor('?1', '?2', '?3')} as room`).bind(userId, sent, MOST_TIME_ENTRIES),
     env.DB.prepare(
       `insert into time_cursor (user_id, next) select ?1, ?2 + 1
         where ${roomFor('?1', '?3', '?4')}

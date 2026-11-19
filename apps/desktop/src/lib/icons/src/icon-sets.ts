@@ -105,10 +105,7 @@ async function loadEmojiWords(): Promise<Map<string, string>> {
 }
 
 async function loadEmoji(): Promise<LoadedSet> {
-  const [groups, said] = await Promise.all([
-    import('unicode-emoji-json/data-by-group.json'),
-    loadEmojiWords(),
-  ])
+  const [groups, said] = await Promise.all([import('unicode-emoji-json/data-by-group.json'), loadEmojiWords()])
 
   const entries: IconEntry[] = []
   const shown: { label: string; names: string[] }[] = []
@@ -137,11 +134,7 @@ async function loadEmoji(): Promise<LoadedSet> {
 
 export async function tonedEmoji(): Promise<Set<string>> {
   const groups = (await import('unicode-emoji-json/data-by-group.json')).default as Toned[]
-  return new Set(
-    groups.flatMap((group) =>
-      group.emojis.filter((one) => one.skin_tone_support).map((one) => one.emoji),
-    ),
-  )
+  return new Set(groups.flatMap((group) => group.emojis.filter((one) => one.skin_tone_support).map((one) => one.emoji)))
 }
 
 interface Toned {
@@ -262,21 +255,12 @@ async function loadOutlines(): Promise<LoadedSet> {
   const wide = set.width ?? 16
   const tall = set.height ?? 16
   const icons: IconifyCollection['icons'] = Object.fromEntries(
-    Object.entries(set.icons).map(([name, icon]) => [
-      name,
-      { ...icon, body: ownIds(icon.body, name) },
-    ]),
+    Object.entries(set.icons).map(([name, icon]) => [name, { ...icon, body: ownIds(icon.body, name) }]),
   )
   for (const [name, alias] of Object.entries(set.aliases ?? {})) {
     const parent = icons[alias.parent]
     if (!parent) continue
-    const body = flipped(
-      parent.body,
-      parent.width ?? wide,
-      parent.height ?? tall,
-      !!alias.hFlip,
-      !!alias.vFlip,
-    )
+    const body = flipped(parent.body, parent.width ?? wide, parent.height ?? tall, !!alias.hFlip, !!alias.vFlip)
     icons[name] = { ...parent, body }
   }
   for (const [name, body] of Object.entries(noto.default)) icons[name] = { body }
@@ -427,9 +411,7 @@ export function mergeSets(parts: readonly { id: string; held: LoadedSet }[]): Ta
 
       const place = part.held.place?.(one.name) ?? null
       const anchor =
-        place && !('group' in place)
-          ? writtenIcon(frame.id, 'same' in place ? place.same : place.after)
-          : null
+        place && !('group' in place) ? writtenIcon(frame.id, 'same' in place ? place.same : place.after) : null
       const twin = anchor === null ? undefined : entries.get(anchor)
 
       if (place && 'same' in place && twin) {
@@ -441,8 +423,7 @@ export function mergeSets(parts: readonly { id: string; held: LoadedSet }[]): Ta
       entries.set(written, { ...one, name: written })
 
       if (anchor !== null && twin) push(after, anchor, written)
-      else if (place && 'group' in place && labels.has(place.group))
-        push(ends, place.group, written)
+      else if (place && 'group' in place && labels.has(place.group)) push(ends, place.group, written)
       else unplaced.push(written)
     }
 
@@ -455,10 +436,7 @@ export function mergeSets(parts: readonly { id: string; held: LoadedSet }[]): Ta
 
   const shown = groups.map((group) => ({
     label: group.label,
-    names: [
-      ...group.names.flatMap((name) => [name, ...(after.get(name) ?? [])]),
-      ...(ends.get(group.label) ?? []),
-    ],
+    names: [...group.names.flatMap((name) => [name, ...(after.get(name) ?? [])]), ...(ends.get(group.label) ?? [])],
   }))
 
   return {

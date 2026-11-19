@@ -6,11 +6,7 @@
   const { colour = null }: { colour?: Colour | null } = $props()
 </script>
 
-<span
-  class="mark"
-  style:color={colour === null ? undefined : `var(--canvas-${colour})`}
-  aria-hidden="true"
->
+<span class="mark" style:color={colour === null ? undefined : `var(--canvas-${colour})`} aria-hidden="true">
   <Icon icon={null} fallback={Server} />
 </span>
 

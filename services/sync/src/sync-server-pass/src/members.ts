@@ -109,10 +109,7 @@ members.post('/vaults/:id/invites', async (context) => {
   const id = context.req.param('id')
   const from = fromOf(context.req.query('from'))
   const body = await readBody(context)
-  const email = await accountAddress(
-    context.env,
-    normaliseEmail(body.text('email', LONGEST_ADDRESS) ?? ''),
-  )
+  const email = await accountAddress(context.env, normaliseEmail(body.text('email', LONGEST_ADDRESS) ?? ''))
   const role = invitedRole(body.text('role', 16))
   const key = body.nullableText('key', MOST_KEY_BYTES) ?? null
   const keyVersion = body.count('keyVersion')

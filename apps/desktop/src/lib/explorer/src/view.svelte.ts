@@ -3,26 +3,11 @@ import { message } from '../../ui-kit/src/api'
 import { afterQuiet, isDesktop, joinPath, samePath } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
-import {
-  CHANGED,
-  type Entry,
-  type Listing,
-  listFolder,
-  unwatchFolder,
-  watchFolder,
-} from './commands'
+import { CHANGED, type Entry, type Listing, listFolder, unwatchFolder, watchFolder } from './commands'
 import { folderName, parentOf } from './crumbs'
 import { filtered, ordered, type Sort, sortShown } from './order'
 import { Search } from './search.svelte'
-import {
-  type How,
-  NOTHING,
-  type Picked,
-  pickedAll,
-  pickedAt,
-  pickedOnly,
-  stillThere,
-} from './picked'
+import { type How, NOTHING, type Picked, pickedAll, pickedAt, pickedOnly, stillThere } from './picked'
 import { onMoved } from './follow'
 import { places } from './places.svelte'
 import { explorerPrefs } from './prefs.svelte'

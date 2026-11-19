@@ -12,8 +12,7 @@ export const MOST_SITES = 300
 
 const MOST_PICTURE_BYTES = 64 * 1024
 
-const SITE =
-  /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/
+const SITE = /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/
 
 const LONGEST_LABEL = 120
 
@@ -55,9 +54,7 @@ siteIcons.get('/', async (context) => {
 siteIcons.get('/:site/picture', async (context) => {
   const user = context.get('user')
   const site = context.req.param('site')
-  const row = await context.env.DB.prepare(
-    'select type, hash, picture from site_icons where user_id = ? and site = ?',
-  )
+  const row = await context.env.DB.prepare('select type, hash, picture from site_icons where user_id = ? and site = ?')
     .bind(user.id, site)
     .first<{ type: string | null; hash: string | null; picture: ArrayBuffer | number[] | null }>()
 
@@ -85,18 +82,14 @@ siteIcons.post('/', async (context) => {
   const now = Date.now()
   const seen = typeof body.seen === 'number' && Number.isFinite(body.seen) ? body.seen : now
   const label = typeof body.label === 'string' ? labelOf(body.label) : ''
-  const source =
-    typeof body.icon === 'string' && body.icon.length <= MOST_PICTURE_BYTES * 2 ? body.icon : null
+  const source = typeof body.icon === 'string' && body.icon.length <= MOST_PICTURE_BYTES * 2 ? body.icon : null
 
-  const held = await context.env.DB.prepare(
-    'select source from site_icons where user_id = ? and site = ?',
-  )
+  const held = await context.env.DB.prepare('select source from site_icons where user_id = ? and site = ?')
     .bind(user.id, site)
     .first<{ source: string | null }>()
 
   const remembered = source === null ? null : sourceKey(source)
-  const picture =
-    remembered !== null && remembered !== held?.source ? await pictureFrom(source ?? '') : null
+  const picture = remembered !== null && remembered !== held?.source ? await pictureFrom(source ?? '') : null
 
   await context.env.DB.prepare(
     `insert into site_icons (user_id, site, label, seen, source, hash, type, picture)
@@ -144,17 +137,13 @@ siteIcons.delete('/', async (context) => {
   if (Array.isArray(body.sites)) {
     const sites = body.sites.map(siteOf).filter((one): one is string => one !== null)
     for (const site of sites) {
-      await context.env.DB.prepare('delete from site_icons where user_id = ? and site = ?')
-        .bind(user.id, site)
-        .run()
+      await context.env.DB.prepare('delete from site_icons where user_id = ? and site = ?').bind(user.id, site).run()
     }
     return context.json({ ok: true })
   }
 
   const since = typeof body.since === 'number' && Number.isFinite(body.since) ? body.since : 0
-  await context.env.DB.prepare('delete from site_icons where user_id = ? and seen >= ?')
-    .bind(user.id, since)
-    .run()
+  await context.env.DB.prepare('delete from site_icons where user_id = ? and seen >= ?').bind(user.id, since).run()
   return context.json({ ok: true })
 })
 

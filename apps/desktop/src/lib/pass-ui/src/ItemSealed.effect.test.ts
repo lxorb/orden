@@ -28,11 +28,7 @@ function menuLabels(): string[] {
 
 beforeAll(async () => {
   await opened()
-  pass.vaults = [
-    ...pass.vaults,
-    { ...vaultAs('viewer', true), id: 'hidden' },
-    { ...vaultAs('viewer'), id: 'open' },
-  ]
+  pass.vaults = [...pass.vaults, { ...vaultAs('viewer', true), id: 'hidden' }, { ...vaultAs('viewer'), id: 'open' }]
 })
 
 afterEach(closed)

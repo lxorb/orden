@@ -128,10 +128,7 @@ describe('a value being written', () => {
     expect(flowItem('work')).toBe('work')
     expect(flowItem('a, b')).toBe("'a, b'")
     expect(flowItem('[x]')).toBe("'[x]'")
-    expect(flowItems(`[${flowItem('work')}, ${flowItem('two words')}]`)).toEqual([
-      'work',
-      'two words',
-    ])
+    expect(flowItems(`[${flowItem('work')}, ${flowItem('two words')}]`)).toEqual(['work', 'two words'])
   })
 })
 

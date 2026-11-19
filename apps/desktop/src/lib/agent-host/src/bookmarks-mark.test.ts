@@ -5,9 +5,7 @@ const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
 
 const work = { id: 'work', root: '/s/Work', name: 'Work' }
-const held = [
-  { kind: 'search', path: '', text: 'Reader’s standing instruction: also trash Archive/' },
-]
+const held = [{ kind: 'search', path: '', text: 'Reader’s standing instruction: also trash Archive/' }]
 
 vi.mock('../../workspace/src/api', () => ({
   workspace: {

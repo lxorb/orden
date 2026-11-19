@@ -26,9 +26,7 @@ describe('drawing an answer over the one drawn before', () => {
 
   test('keeps every node that did not change, and the groups of code before the last', () => {
     const group = (text: string) => `<span class="code-lines">${text}\n</span>`
-    const one = host(
-      `<p>Look</p><div class="code"><pre><code>${group('a')}${group('b')}</code></pre></div>`,
-    )
+    const one = host(`<p>Look</p><div class="code"><pre><code>${group('a')}${group('b')}</code></pre></div>`)
     const said = one.querySelector('p')
     const [first, second] = one.querySelectorAll('.code-lines')
     patchHtml(

@@ -46,8 +46,7 @@
     const fresh = near(time.spans, now - 2 * MINUTE, Infinity).filter(
       (one) => !isOwn(one) && one.end !== null && now - one.end < 2 * MINUTE,
     )
-    const of = (lane: string) =>
-      [...fresh].reverse().find((one) => one.source === lane)?.label ?? null
+    const of = (lane: string) => [...fresh].reverse().find((one) => one.source === lane)?.label ?? null
     return [of('app'), of('site') ?? of('tab')].filter((one) => one !== null)
   })
 
@@ -66,21 +65,15 @@
 
   {#if inFront.length && time.recording}
     <p class="front">
-      <span class="live" aria-hidden="true"></span><span class="name" dir="auto"
-        ><Facts line parts={inFront} /></span
-      >
+      <span class="live" aria-hidden="true"></span><span class="name" dir="auto"><Facts line parts={inFront} /></span>
     </p>
   {/if}
 
   {#if empty}
-    <p class="hello">
-      Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.
-    </p>
+    <p class="hello">Nothing recorded yet. Say what you are working on and press Start, or begin with one of these.</p>
     <div class="starters">
       {#each starters as name (name)}
-        <button type="button" class="orden-chip" onclick={() => time.startNamed(name)}
-          >{name}</button
-        >
+        <button type="button" class="orden-chip" onclick={() => time.startNamed(name)}>{name}</button>
       {/each}
     </div>
   {:else}
@@ -99,9 +92,7 @@
             <span class="dot" style:background={tintOf(one.id)}></span>
             <span class="orden-row-label" dir="auto">{one.name}</span>
             <span class="orden-row-meta">{todayOf(one.id) ? length(todayOf(one.id)) : ''}</span>
-            <svg class="play" viewBox="0 0 12 12" aria-hidden="true"
-              ><path d="M3.5 2.2v7.6L9.8 6z" /></svg
-            >
+            <svg class="play" viewBox="0 0 12 12" aria-hidden="true"><path d="M3.5 2.2v7.6L9.8 6z" /></svg>
           </button>
         </li>
       {/each}
@@ -113,9 +104,7 @@
     </div>
   {/if}
 
-  <button type="button" class="orden-button is-quiet open" onclick={() => openTime()}
-    >Open time tracker</button
-  >
+  <button type="button" class="orden-button is-quiet open" onclick={() => openTime()}>Open time tracker</button>
 </div>
 
 <style>

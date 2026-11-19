@@ -12,8 +12,7 @@ const ids: Record<string, string> = {}
 beforeAll(async () => {
   await opened()
   const vault = pass.vaults[0]?.id ?? ''
-  const login = (title: string, password: string) =>
-    pass.create(vault, { ...blank('login'), title, password })
+  const login = (title: string, password: string) => pass.create(vault, { ...blank('login'), title, password })
   ids.weak = (await login('Weak', 'abc123')).id
   ids.one = (await login('One', 'Vq8#mZ2!pL9@xR4$wT7&')).id
   ids.two = (await login('Two', 'Vq8#mZ2!pL9@xR4$wT7&')).id

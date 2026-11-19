@@ -11,19 +11,12 @@ describe('a Logseq graph', () => {
       file('assets/shot_1234.png', 'PNG'),
     ])
 
-    expect(plan.files.map((one) => one.path)).toEqual([
-      'The plan.md',
-      'Journals/2026-09-11.md',
-      'assets/shot_1234.png',
-    ])
+    expect(plan.files.map((one) => one.path)).toEqual(['The plan.md', 'Journals/2026-09-11.md', 'assets/shot_1234.png'])
   })
 
   test('properties become front matter', async () => {
     const plan = await readLogseq([
-      file(
-        'pages/A.md',
-        'title:: A\ntags:: work, ideas\nid:: 01234567-89ab-cdef-0123-456789abcdef\n\n- Words\n',
-      ),
+      file('pages/A.md', 'title:: A\ntags:: work, ideas\nid:: 01234567-89ab-cdef-0123-456789abcdef\n\n- Words\n'),
     ])
 
     const text = noteAt(plan, 'A.md')
@@ -50,10 +43,7 @@ describe('a Logseq graph', () => {
 
   test('a page dated twice keeps both, each under a key of its own', async () => {
     const plan = await readLogseq([
-      file(
-        'pages/A.md',
-        'created-at:: 1700000000000\ndate:: [[Someday]]\nDue Date:: x\ndue-date:: y\n\n- hi\n',
-      ),
+      file('pages/A.md', 'created-at:: 1700000000000\ndate:: [[Someday]]\nDue Date:: x\ndue-date:: y\n\n- hi\n'),
       file('pages/B.md', 'created-at:: 1700000000000\ndate:: 2026-05-01\n\n- hi\n'),
     ])
 
@@ -72,10 +62,7 @@ describe('a Logseq graph', () => {
 
   test('a task marker is a task', async () => {
     const plan = await readLogseq([
-      file(
-        'pages/A.md',
-        '- TODO Ring the bank\n- DONE Buy milk\n  - LATER Sub task\n- WAITING On them\n',
-      ),
+      file('pages/A.md', '- TODO Ring the bank\n- DONE Buy milk\n  - LATER Sub task\n- WAITING On them\n'),
     ])
 
     const text = noteAt(plan, 'A.md')
@@ -87,10 +74,7 @@ describe('a Logseq graph', () => {
 
   test('a block reference is written out as what it said', async () => {
     const plan = await readLogseq([
-      file(
-        'pages/Source.md',
-        '- The quarter closed ahead of plan\n  id:: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\n',
-      ),
+      file('pages/Source.md', '- The quarter closed ahead of plan\n  id:: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\n'),
       file('pages/Other.md', '- As noted: ((aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee))\n'),
     ])
 
@@ -99,9 +83,7 @@ describe('a Logseq graph', () => {
   })
 
   test('a reference to a block nothing exported is left as it was', async () => {
-    const plan = await readLogseq([
-      file('pages/A.md', '- See ((99999999-8888-7777-6666-555555555555))\n'),
-    ])
+    const plan = await readLogseq([file('pages/A.md', '- See ((99999999-8888-7777-6666-555555555555))\n')])
 
     expect(noteAt(plan, 'A.md')).toContain('((99999999-8888-7777-6666-555555555555))')
     expect(plan.lost).toHaveLength(0)
@@ -211,24 +193,16 @@ describe('a Logseq graph', () => {
   test('a page answers to its aliases, and to the name its file could not hold', async () => {
     const plan = await readLogseq([
       file('pages/New to Logseq%3F.md', '- Start here\n'),
-      file(
-        'pages/config edn file.md',
-        'title:: config.edn\nalias:: settings, [[the config]]\n\n- Words\n',
-      ),
+      file('pages/config edn file.md', 'title:: config.edn\nalias:: settings, [[the config]]\n\n- Words\n'),
     ])
 
     expect(noteAt(plan, 'New to Logseq.md')).toContain('aliases: [New to Logseq?]')
-    expect(noteAt(plan, 'config edn file.md')).toContain(
-      'aliases: [config.edn, settings, the config]',
-    )
+    expect(noteAt(plan, 'config edn file.md')).toContain('aliases: [config.edn, settings, the config]')
   })
 
   test('embeds show what they embedded, and a reference with words keeps the words', async () => {
     const plan = await readLogseq([
-      file(
-        'pages/Source.md',
-        '- The quarter closed ahead of plan\n  id:: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\n',
-      ),
+      file('pages/Source.md', '- The quarter closed ahead of plan\n  id:: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\n'),
       file(
         'pages/Other.md',
         [
@@ -248,10 +222,7 @@ describe('a Logseq graph', () => {
 
   test("a block's fold and a picture's size are Logseq's own and do not come", async () => {
     const plan = await readLogseq([
-      file(
-        'pages/A.md',
-        '- Parent\n  collapsed:: true\n  - ![shot](../assets/shot.png){:height 53, :width 42}\n',
-      ),
+      file('pages/A.md', '- Parent\n  collapsed:: true\n  - ![shot](../assets/shot.png){:height 53, :width 42}\n'),
       file('assets/shot.png', 'PNG'),
     ])
 
@@ -350,10 +321,7 @@ describe('a Logseq graph', () => {
     const id = '650c1a2b-1111-2222-3333-444455556666'
     const plan = await readLogseq([
       file('journals/2026_11_15.md', `- Ship on Friday\n  id:: ${id}\n`),
-      file(
-        'logseq/bak/journals/2026_11_15/2026-11-14T10_00_00.000Z.Desktop.md',
-        `- Ship on Monday\n  id:: ${id}\n`,
-      ),
+      file('logseq/bak/journals/2026_11_15/2026-11-14T10_00_00.000Z.Desktop.md', `- Ship on Monday\n  id:: ${id}\n`),
       file('logseq/version-files/base/journals/2026_11_15.md', `- Ship on Tuesday\n  id:: ${id}\n`),
       file('.recycle/pages/Old.md', `- Ship on Sunday\n  id:: ${id}\n`),
       file('pages/Plan.md', `- As agreed: ((${id}))\n`),

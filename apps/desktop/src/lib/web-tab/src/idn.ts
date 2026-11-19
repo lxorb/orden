@@ -5,8 +5,7 @@ const WITH_MARKS = `Arabic Bengali Devanagari Ethiopic Georgian Gujarati Gurmukh
 
 const WITHOUT_MARKS = ['Armenian', 'Cyrillic', 'Greek']
 
-const LATIN =
-  'a-zà-öø-ÿāăąćĉċčďđēĕėęěĝğġģĥħĩīĭįĵķĺļľłńņňŋōŏőœŕŗřśŝşšţťŧũūŭůűųŵŷźżžșțơưẁẃẅ\\u1EA1-\\u1EF9'
+const LATIN = 'a-zà-öø-ÿāăąćĉċčďđēĕėęěĝğġģĥħĩīĭįĵķĺļľłńņňŋōŏőœŕŗřśŝşšţťŧũūŭůűųŵŷźżžșțơưẁẃẅ\\u1EA1-\\u1EF9'
 const CJK = '\\p{Script=Han}'
 
 const TOGETHER = [
@@ -77,8 +76,7 @@ function decoded(input: string): string | null {
     let weight = 1
     for (let k = BASE; ; k += BASE) {
       const char = input.charCodeAt(at++)
-      const digit =
-        char >= 48 && char <= 57 ? char - 22 : char >= 97 && char <= 122 ? char - 97 : BASE
+      const digit = char >= 48 && char <= 57 ? char - 22 : char >= 97 && char <= 122 ? char - 97 : BASE
       if (at > input.length || digit >= BASE) return null
       i += digit * weight
       const t = k <= bias ? T_MIN : k >= bias + T_MAX ? T_MAX : k - bias

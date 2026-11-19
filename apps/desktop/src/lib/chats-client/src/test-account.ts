@@ -1,12 +1,4 @@
-import {
-  apply,
-  chatState,
-  type Event,
-  type Logged,
-  type Message,
-  mayEvent,
-  type Who,
-} from '@orden/chats'
+import { apply, chatState, type Event, type Logged, type Message, mayEvent, type Who } from '@orden/chats'
 import type { ChatRow, EventsPage, Result, StatePage } from '@orden/chats/wire'
 import type { Remote } from './engine'
 import { keepsRow } from './fold'
@@ -98,8 +90,7 @@ export class Account {
         lastAt: this.log.at(-1)?.at ?? null,
         lastBy: this.log.at(-1)?.author ?? null,
       })
-    const reach = <T>(answer: () => T): Promise<T | null> =>
-      Promise.resolve(online() ? answer() : null)
+    const reach = <T>(answer: () => T): Promise<T | null> => Promise.resolve(online() ? answer() : null)
     return {
       list: () => reach(() => ({ chats: [head()] })),
       events: (_chat, after) =>
@@ -120,8 +111,7 @@ export class Account {
             next: all.length > 5 ? (page.at(-1)?.seq ?? null) : null,
           }
         }),
-      post: (_chat, events) =>
-        reach(() => ({ results: events.map((event) => this.place(who, event)) })),
+      post: (_chat, events) => reach(() => ({ results: events.map((event) => this.place(who, event)) })),
       read: () => reach(() => true).then(Boolean),
     }
   }

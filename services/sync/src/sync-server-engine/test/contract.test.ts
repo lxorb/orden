@@ -48,21 +48,14 @@ function ops(list: readonly Op[]) {
 }
 
 function names(ids: readonly string[]): string[] {
-  return ids.map(
-    (id) =>
-      (env.db.prepare('select name from notes where id = ?').get(id) as { name: string }).name,
-  )
+  return ids.map((id) => (env.db.prepare('select name from notes where id = ?').get(id) as { name: string }).name)
 }
 
 beforeEach(() => {
   env = testEnv()
+  env.db.prepare('insert into users (id, email, created_at) values (?, ?, 1)').run(USER, 'one@example.com')
   env.db
-    .prepare('insert into users (id, email, created_at) values (?, ?, 1)')
-    .run(USER, 'one@example.com')
-  env.db
-    .prepare(
-      'insert into spaces (id, user_id, name, created_at, updated_at) values (?, ?, ?, 1, 1)',
-    )
+    .prepare('insert into spaces (id, user_id, name, created_at, updated_at) values (?, ?, ?, 1, 1)')
     .run(SPACE, USER, 'Contract')
 })
 
@@ -71,9 +64,7 @@ afterEach(() => env.close())
 describe('the feed', () => {
   test('a new device reading from 0 hears the whole tree, past rows the tree never names', async () => {
     await ops([note('n-first', 'first.md')])
-    const { next } = env.db
-      .prepare('select next from space_cursor where space_id = ?')
-      .get(SPACE) as { next: number }
+    const { next } = env.db.prepare('select next from space_cursor where space_id = ?').get(SPACE) as { next: number }
     env.db
       .prepare(
         `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
@@ -91,9 +82,7 @@ describe('the feed', () => {
   })
 
   test('pages by seq, says when more follows, and keeps deleted items in the feed', async () => {
-    const many = Array.from({ length: PAGE + 5 }, (_, at) =>
-      note(`n-${String(at)}`, `${String(at)}.md`),
-    )
+    const many = Array.from({ length: PAGE + 5 }, (_, at) => note(`n-${String(at)}`, `${String(at)}.md`))
     await ops(many)
     await ops([op('delete', { id: 'n-3' })])
 
@@ -108,9 +97,7 @@ describe('the feed', () => {
     const { ids, pages } = await heardFromZero()
     expect(pages).toBe(2)
     expect(new Set(ids).size).toBe(PAGE + 5)
-    const deleted = (await feedPage(env, SPACE, first.cursor)).items.find(
-      (item) => item.id === 'n-3',
-    )
+    const deleted = (await feedPage(env, SPACE, first.cursor)).items.find((item) => item.id === 'n-3')
     expect(deleted?.deleted).toBe(true)
   })
 })
@@ -123,8 +110,7 @@ describe('tree operations', () => {
       op('rename', { id: 'f-1', name: 'Roadmap' }),
     ]
     const once = await ops(batch)
-    const rows = () =>
-      env.db.prepare('select count(*) as n from notes where space_id = ?').get(SPACE)
+    const rows = () => env.db.prepare('select count(*) as n from notes where space_id = ?').get(SPACE)
     const before = rows()
     const again = await ops(batch)
 
@@ -142,12 +128,7 @@ describe('tree operations', () => {
       note('c-2', 'Café.md'),
     ])
     expect(value.every((one) => 'ok' in one)).toBe(true)
-    expect(names(['p-1', 'p-2', 'c-1', 'c-2'])).toEqual([
-      'Plan.md',
-      'plan 2.md',
-      'Café.md',
-      'Café 2.md',
-    ])
+    expect(names(['p-1', 'p-2', 'c-1', 'c-2'])).toEqual(['Plan.md', 'plan 2.md', 'Café.md', 'Café 2.md'])
   })
 
   test('refuses a parent that does not exist instead of inventing it', async () => {

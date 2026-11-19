@@ -28,8 +28,7 @@ export interface Guest {
   readonly created_at: number
 }
 
-export type Whoever =
-  { readonly kind: 'user'; readonly user: User } | { readonly kind: 'guest'; readonly guest: Guest }
+export type Whoever = { readonly kind: 'user'; readonly user: User } | { readonly kind: 'guest'; readonly guest: Guest }
 
 export interface Account {
   readonly id: UserId

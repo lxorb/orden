@@ -114,10 +114,7 @@ interface OtherSpace {
   files: readonly string[]
 }
 
-function asWritten<Link extends { kind: LinkKind; target: string }>(
-  source: string | null,
-  link: Link,
-): Link {
+function asWritten<Link extends { kind: LinkKind; target: string }>(source: string | null, link: Link): Link {
   if (source === null || link.target.startsWith('/')) return link
   if (!isCanvasTarget(source) && !isPagesTarget(source)) return link
   return { ...link, target: `/${link.target}` }
@@ -126,8 +123,7 @@ function asWritten<Link extends { kind: LinkKind; target: string }>(
 function resolvedIn(index: NoteIndex, link: { kind: LinkKind; target: string }): string | null {
   if (!link.target) return null
   if (isTabFile(link.target)) return resolveFile(index, link.target, link.kind)
-  const found =
-    link.kind === 'markdown' ? resolveRelative(index, link.target) : resolveNote(index, link.target)
+  const found = link.kind === 'markdown' ? resolveRelative(index, link.target) : resolveNote(index, link.target)
   return found?.path ?? null
 }
 
@@ -275,9 +271,7 @@ class Links {
       headings: note.headings,
       blocks: note.blocks,
       aliases: note.aliases,
-      ...(coveredBy(archived, note.path) === null && !this.isInstructions(note.path)
-        ? {}
-        : { archived: true }),
+      ...(coveredBy(archived, note.path) === null && !this.isInstructions(note.path) ? {} : { archived: true }),
     }))
   })
 
@@ -318,9 +312,7 @@ class Links {
       .sort((one, other) => other.notes - one.notes || (one.tag < other.tag ? -1 : 1))
   })
 
-  readonly graph = $derived.by((): NoteGraph =>
-    buildGraph(this.seen, (from, link) => this.resolveFrom(from, link)),
-  )
+  readonly graph = $derived.by((): NoteGraph => buildGraph(this.seen, (from, link) => this.resolveFrom(from, link)))
 
   readonly graphWithFiles = $derived.by((): NoteGraph =>
     buildGraph(this.seen, (from, link) => this.resolveFrom(from, link), { attachments: true }),
@@ -594,19 +586,12 @@ class Links {
 
   basesIn(root: string): string[] {
     if (this.root === null || !samePath(this.root, root)) return []
-    return this.notes
-      .filter((note) => note.bases === true)
-      .map((note) => insideSpace(root, note.path))
+    return this.notes.filter((note) => note.bases === true).map((note) => insideSpace(root, note.path))
   }
 
   canvasRead(path: string, content: string) {
     const relative = this.relative(path)
-    if (
-      !relative ||
-      isHiddenPath(relative) ||
-      !(isCanvasTarget(relative) || isPagesTarget(relative))
-    )
-      return
+    if (!relative || isHiddenPath(relative) || !(isCanvasTarget(relative) || isPagesTarget(relative))) return
 
     this.putCanvas(relative, content)
   }
@@ -679,12 +664,9 @@ class Links {
       return
     }
 
-    const moved = (path: string) =>
-      path === was || path.startsWith(`${was}/`) ? now + path.slice(was.length) : path
+    const moved = (path: string) => (path === was || path.startsWith(`${was}/`) ? now + path.slice(was.length) : path)
 
-    this.editFiles((files) =>
-      files.some((path) => moved(path) !== path) ? files.map(moved).sort() : files,
-    )
+    this.editFiles((files) => (files.some((path) => moved(path) !== path) ? files.map(moved).sort() : files))
 
     this.edit((notes) =>
       notes.map((note) => {
@@ -743,11 +725,7 @@ class Links {
     const path = openPath === null ? null : this.relative(openPath)
 
     const locks = this.locksSeen()
-    if (
-      this.handedAt !== this.version ||
-      this.handedArchived !== this.archived ||
-      this.handedLocks !== locks
-    ) {
+    if (this.handedAt !== this.version || this.handedArchived !== this.archived || this.handedLocks !== locks) {
       if (this.handedLocks !== locks) this.read.clear()
       this.handedAt = this.version
       this.handedArchived = this.archived
@@ -857,13 +835,7 @@ class Links {
     const root = this.otherHolding(path)
     const space = root === null ? undefined : this.others.get(root)
     const relative = root === null ? null : within(root, path)
-    if (
-      root === null ||
-      typeof space !== 'object' ||
-      !relative ||
-      isHiddenPath(relative) ||
-      !isMarkdownPath(relative)
-    )
+    if (root === null || typeof space !== 'object' || !relative || isHiddenPath(relative) || !isMarkdownPath(relative))
       return
 
     const ref = refOf(scanNote(relative, content))
@@ -958,9 +930,7 @@ class Links {
     return map
   })
 
-  private readonly notesByPath = $derived.by(
-    () => new Map(this.notes.map((one) => [one.path, one])),
-  )
+  private readonly notesByPath = $derived.by(() => new Map(this.notes.map((one) => [one.path, one])))
 
   rebased(text: string, from: string, to: string): string | null {
     const was = this.otherHolding(from) === null ? this.relative(from) : null
@@ -984,10 +954,7 @@ class Links {
     return this.reachedFrom(from === null ? null : this.relative(from), link)
   }
 
-  private reachedFrom(
-    source: string | null,
-    link: { kind: LinkKind; target: string },
-  ): string | null {
+  private reachedFrom(source: string | null, link: { kind: LinkKind; target: string }): string | null {
     return this.resolveFrom(source, link) ?? fileNamed(this.files, source ?? '', link)
   }
 
@@ -998,10 +965,7 @@ class Links {
     return this.resolveFrom(from === null ? null : this.relative(from), link)
   }
 
-  async targetWhenRead(
-    from: string | null,
-    link: { kind: LinkKind; target: string },
-  ): Promise<string | null> {
+  async targetWhenRead(from: string | null, link: { kind: LinkKind; target: string }): Promise<string | null> {
     const other = from === null ? null : this.otherHolding(from)
     if (from === null || other === null) return null
     await this.otherRead(other)
@@ -1018,19 +982,11 @@ class Links {
     await this.readingOther.get(root)
   }
 
-  private otherTarget(
-    root: string,
-    from: string,
-    link: { kind: LinkKind; target: string },
-  ): string | null {
+  private otherTarget(root: string, from: string, link: { kind: LinkKind; target: string }): string | null {
     return resolvedIn(this.otherIndex(root, from), asWritten(from, link))
   }
 
-  private otherReached(
-    root: string,
-    from: string,
-    link: { kind: LinkKind; target: string },
-  ): string | null {
+  private otherReached(root: string, from: string, link: { kind: LinkKind; target: string }): string | null {
     const index = this.otherIndex(root, from)
     const written = asWritten(from, link)
     return resolvedIn(index, written) ?? resolveFile(index, written.target, written.kind)
@@ -1073,10 +1029,7 @@ class Links {
       path: source,
       read: nothing,
     }
-    const found =
-      link.kind === 'markdown'
-        ? resolveRelative(index, link.target)
-        : resolveNote(index, link.target)
+    const found = link.kind === 'markdown' ? resolveRelative(index, link.target) : resolveNote(index, link.target)
 
     return found?.path ?? null
   }
@@ -1160,10 +1113,7 @@ class Links {
           path: note.path,
           read: nothing,
         }
-        const after =
-          link.kind === 'markdown'
-            ? resolveRelative(index, link.target)
-            : resolveNote(index, link.target)
+        const after = link.kind === 'markdown' ? resolveRelative(index, link.target) : resolveNote(index, link.target)
         if (after?.path === relative) return true
       }
     }
@@ -1218,9 +1168,7 @@ class Links {
       ),
     )
 
-    const linked = new Set(
-      this.backlinks(path).map((reference) => `${reference.path}\0${reference.line}`),
-    )
+    const linked = new Set(this.backlinks(path).map((reference) => `${reference.path}\0${reference.line}`))
     const needles = written.map(foldName)
     const seen: string[] = []
 
@@ -1260,8 +1208,7 @@ class Links {
       const rescanned = new Map<string, { from: ScannedNote; after: string }>()
       const touched = await this.retargetIn(
         this.notes,
-        (source, link) =>
-          this.resolveFrom(source, link, false) ?? fileNamed(this.files, source, link),
+        (source, link) => this.resolveFrom(source, link, false) ?? fileNamed(this.files, source, link),
         (note, after) => rescanned.set(note.path, { from: note, after }),
         {
           was,
@@ -1274,9 +1221,7 @@ class Links {
         },
       )
       if (rescanned.size) {
-        const planes = [...rescanned.keys()].some(
-          (path) => isCanvasTarget(path) || isPagesTarget(path),
-        )
+        const planes = [...rescanned.keys()].some((path) => isCanvasTarget(path) || isPagesTarget(path))
         const { scanCanvas } = planes ? await import('@orden/scan/canvas') : { scanCanvas: null }
         this.notes = this.notes.map((one) => {
           const held = rescanned.get(one.path)
@@ -1305,8 +1250,7 @@ class Links {
     }
     const touched = await this.retargetIn(
       notes,
-      (source, link) =>
-        resolvedIn({ ...index, path: source }, link) ?? fileNamed(index.files, source, link),
+      (source, link) => resolvedIn({ ...index, path: source }, link) ?? fileNamed(index.files, source, link),
       () => undefined,
       { was, now, root, open, how, files: index.files },
     )
@@ -1454,8 +1398,7 @@ class Links {
         const last = link.target.replace(/\\/g, '/').split('/').pop() ?? ''
         const there = moving(found) ?? found
         if (link.kind === 'wikilink' && comparable(last) !== comparable(nameOf(found))) {
-          const arriving =
-            arrivingNames.has(lastOf(link)) || movingAliases.has(comparable(link.target))
+          const arriving = arrivingNames.has(lastOf(link)) || movingAliases.has(comparable(link.target))
           if (there === found && !shifted && !arriving) return null
           const reaches = reaching(source, there)
           if (reaches(link.target)) return null
@@ -1482,8 +1425,7 @@ class Links {
       const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
       const rewrite = plane ? await import('./canvas-rewrite') : null
       const card = rewrite?.cardsMoving(note.path, moving) ?? null
-      const worth =
-        plane || note.links.some((link) => (named(link) || shifted) && to(link) !== null)
+      const worth = plane || note.links.some((link) => (named(link) || shifted) && to(link) !== null)
       if (!worth) continue
 
       const absolute = insideSpace(root, note.path)
@@ -1499,9 +1441,7 @@ class Links {
         if (before === null) return null
         drawing.before = before
         read = listed?.(note.path) ?? note
-        const words = rewrite
-          ? rewrite.retargetCanvas(before, source, file, to)
-          : retargetLinks(before, source, to)
+        const words = rewrite ? rewrite.retargetCanvas(before, source, file, to) : retargetLinks(before, source, to)
         return words === null || words === before ? null : { before, words }
       }
       const keepIt = (before: string) => keepVersion(target, before)
@@ -1553,11 +1493,7 @@ class Links {
     return touched
   }
 
-  private async wordsOf(
-    path: string,
-    file: string,
-    open: (path: string) => OpenNote | null,
-  ): Promise<string | null> {
+  private async wordsOf(path: string, file: string, open: (path: string) => OpenNote | null): Promise<string | null> {
     const doc = open(path)
     if (doc) {
       doc.flush()
@@ -1611,9 +1547,7 @@ class Links {
       const before = await this.wordsOf(absolute, absolute, open)
       if (before === null) return null
 
-      const named = namedBlock(before, line, () =>
-        freeBlockId(new Set(blockIds(before).map((one) => one.id))),
-      )
+      const named = namedBlock(before, line, () => freeBlockId(new Set(blockIds(before).map((one) => one.id))))
       if (!named) return null
       if (named.source === before) return named.id
 
@@ -1637,19 +1571,11 @@ class Links {
     return doc ? name() : oneWriteAt(absolute, name)
   }
 
-  async embedSource(
-    target: string,
-    from: string | null,
-    inSpaceOf: string | null = from,
-  ): Promise<string | null> {
+  async embedSource(target: string, from: string | null, inSpaceOf: string | null = from): Promise<string | null> {
     return (await this.embedded(target, from, inSpaceOf))?.text ?? null
   }
 
-  async embedNote(
-    target: string,
-    from: string | null,
-    inSpaceOf: string | null = from,
-  ): Promise<EmbeddedNote | null> {
+  async embedNote(target: string, from: string | null, inSpaceOf: string | null = from): Promise<EmbeddedNote | null> {
     const [found, { trustsHtmlAt }] = await Promise.all([
       this.embedded(target, from, inSpaceOf),
       import('../../sharing/src/api'),
@@ -1680,9 +1606,7 @@ class Links {
     const path = insideSpace(root, found)
     if (this.lockedAt(path)) return null
     const text =
-      root === other
-        ? await invoke<string>('read_note', { path }).catch(() => null)
-        : await this.readNote(found)
+      root === other ? await invoke<string>('read_note', { path }).catch(() => null) : await this.readNote(found)
     return text === null ? null : { path, text }
   }
 
@@ -1692,9 +1616,7 @@ class Links {
     if (source === null) return null
 
     const found =
-      from !== null && other !== null
-        ? this.otherReached(other, from, link)
-        : this.reachedFrom(source, link)
+      from !== null && other !== null ? this.otherReached(other, from, link) : this.reachedFrom(source, link)
     return found === null ? null : relativePath(folderOf(source), found)
   }
 

@@ -12,10 +12,7 @@ const DATES = /^(created|created time|created at|date|last edited time|last modi
 const TITLES = /^(name|title|task|subject)$/i
 const LABELS = /^(tags?|labels?)$/i
 
-export async function readTable(
-  sources: readonly Source[],
-  rows: Rows = 'table',
-): Promise<ImportPlan> {
+export async function readTable(sources: readonly Source[], rows: Rows = 'table'): Promise<ImportPlan> {
   const names = new Names()
   const files: Planned[] = []
   const lost: string[] = []
@@ -64,10 +61,7 @@ export async function readTable(
   return { format: 'table', files, lost }
 }
 
-export function tableOf(
-  columns: readonly string[],
-  rows: readonly Record<string, string>[],
-): string {
+export function tableOf(columns: readonly string[], rows: readonly Record<string, string>[]): string {
   const head = `| ${columns.map(cell).join(' | ')} |`
   const rule = `| ${columns.map(() => '---').join(' | ')} |`
   const body = rows.map((row) => `| ${columns.map((one) => cell(row[one] ?? '')).join(' | ')} |`)
@@ -79,10 +73,7 @@ function cell(value: string): string {
   return plainWords(value.replace(/\s*\n\s*/g, ' ').trim()).replace(/\|/g, '\\|')
 }
 
-export function rowNote(
-  columns: readonly string[],
-  row: Record<string, string>,
-): { name: string; text: string } {
+export function rowNote(columns: readonly string[], row: Record<string, string>): { name: string; text: string } {
   const titleColumn = titleOf(columns)
   const said = (row[titleColumn] ?? '').trim()
   const name = safeName(said.split('\n')[0] ?? '') || 'Untitled'
@@ -125,8 +116,7 @@ export function rowNote(
   return { name, text: noteText(null, [titleHeading(name), ...words].join('\n\n'), meta) }
 }
 
-const titleOf = (columns: readonly string[]): string =>
-  columns.find((one) => TITLES.test(one)) ?? columns[0] ?? ''
+const titleOf = (columns: readonly string[]): string => columns.find((one) => TITLES.test(one)) ?? columns[0] ?? ''
 
 function renamed(title: string, name: string): boolean {
   return title.replace(/\s+/g, ' ') !== name
@@ -168,11 +158,7 @@ function renamedRow(title: string): boolean {
   return said !== '' && renamed(said, safeName(said))
 }
 
-function baseOf(
-  folder: string,
-  columns: readonly string[],
-  rows: readonly Record<string, string>[],
-): string {
+function baseOf(folder: string, columns: readonly string[], rows: readonly Record<string, string>[]): string {
   const title = titleOf(columns)
   const keys = keysOf(columns)
   const order = columns
@@ -181,10 +167,7 @@ function baseOf(
     .map((one) => keys.get(one) ?? '')
   const base: Base = {
     filters: {
-      or: [
-        `file.folder == ${JSON.stringify(folder)}`,
-        `file.folder.endsWith(${JSON.stringify(`/${folder}`)})`,
-      ],
+      or: [`file.folder == ${JSON.stringify(folder)}`, `file.folder.endsWith(${JSON.stringify(`/${folder}`)})`],
     },
     formulas: {},
     properties: {},

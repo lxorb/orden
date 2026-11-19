@@ -33,9 +33,7 @@ function busyOnce(): { db: D1Database; asked: () => number } {
 }
 
 test('every durable object asks the database again while it is busy, as a request does', async () => {
-  const named = new Set(
-    [...readFileSync(WRANGLER, 'utf8').matchAll(/"class_name":\s*"(\w+)"/g)].map((one) => one[1]),
-  )
+  const named = new Set([...readFileSync(WRANGLER, 'utf8').matchAll(/"class_name":\s*"(\w+)"/g)].map((one) => one[1]))
   expect(named.size).toBeGreaterThan(0)
 
   for (const name of named) {

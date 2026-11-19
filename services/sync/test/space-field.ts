@@ -1,17 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, joined, signIn, testEnv, type TestEnv } from './harness'
 
-type Field =
-  'archived' | 'excluded' | 'graph' | 'bookmarks' | 'arranged' | 'icons' | 'tints' | 'sort'
+type Field = 'archived' | 'excluded' | 'graph' | 'bookmarks' | 'arranged' | 'icons' | 'tints' | 'sort'
 
 export function aSpace() {
   const at = {} as { env: TestEnv; token: string; space: string }
   beforeEach(async () => {
     at.env = testEnv()
     at.token = await signIn(at.env, 'a@b.dev')
-    at.space = (
-      await call(at.env, '/v1/spaces', { token: at.token, body: { name: 'Notes' } })
-    ).json.space.id
+    at.space = (await call(at.env, '/v1/spaces', { token: at.token, body: { name: 'Notes' } })).json.space.id
   })
   afterEach(() => at.env.close())
   return at
@@ -26,9 +23,7 @@ export function spaceField(field: Field, route: string = field) {
       body: { [field]: value, ...(options.tints === undefined ? {} : { tints: options.tints }) },
     })
   const listed = async (as = at.token, which: Field = field) =>
-    (await call(at.env, '/v1/spaces', { token: as })).json.spaces.find(
-      (one) => one.id === at.space,
-    )?.[which]
+    (await call(at.env, '/v1/spaces', { token: as })).json.spaces.find((one) => one.id === at.space)?.[which]
   const column = (raw: string, which: Field = field) =>
     at.env.db.prepare(`update spaces set ${which} = ? where id = ?`).run(raw, at.space)
 

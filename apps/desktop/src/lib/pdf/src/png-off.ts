@@ -79,12 +79,7 @@ function open(): Worker | null {
   return worker
 }
 
-function away(
-  picture: ImageBitmap,
-  as: As,
-  again: () => Promise<Png>,
-  worker: Worker,
-): Promise<Png> {
+function away(picture: ImageBitmap, as: As, again: () => Promise<Png>, worker: Worker): Promise<Png> {
   const id = ++asked
   return new Promise((done) => {
     waiting.set(id, { again, done })
@@ -119,11 +114,7 @@ export async function pngData(canvas: HTMLCanvasElement): Promise<string | null>
   return typeof png === 'string' ? png : null
 }
 
-export async function pngDrawn(
-  width: number,
-  height: number,
-  paint: () => Promise<Draw>,
-): Promise<Uint8Array | null> {
+export async function pngDrawn(width: number, height: number, paint: () => Promise<Draw>): Promise<Uint8Array | null> {
   const again = async () => drawnHere(width, height, await paint())
   const worker = open()
   const sheet = worker ? new OffscreenCanvas(width, height) : null

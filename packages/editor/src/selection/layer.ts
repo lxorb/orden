@@ -1,11 +1,5 @@
 import type { Extension, SelectionRange } from '@codemirror/state'
-import {
-  drawSelection,
-  EditorView,
-  type LayerMarker,
-  layer,
-  RectangleMarker,
-} from '@codemirror/view'
+import { drawSelection, EditorView, type LayerMarker, layer, RectangleMarker } from '@codemirror/view'
 import { type SelectionBlock, selectionBlocks, type SelectionRect } from './shape'
 
 const RADIUS = 6
@@ -81,8 +75,7 @@ const shapes = layer({
     for (const range of view.state.selection.ranges) {
       if (range.empty) continue
 
-      for (const block of selectionBlocks(rectsFor(view, range), radius))
-        markers.push(new Shape(block))
+      for (const block of selectionBlocks(rectsFor(view, range), radius)) markers.push(new Shape(block))
     }
 
     return markers

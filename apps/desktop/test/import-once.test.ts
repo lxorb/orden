@@ -10,15 +10,10 @@ const EACH_TIME =
 
 describe('a module loaded from a listener', () => {
   test('is loaded once, not on every change heard, which in a large space is thousands of loads', () => {
-    const found = walk(
-      SRC,
-      (path) => /\.(ts|svelte)$/.test(path) && !path.includes('.test.'),
-    ).flatMap((path) =>
+    const found = walk(SRC, (path) => /\.(ts|svelte)$/.test(path) && !path.includes('.test.')).flatMap((path) =>
       readFileSync(path, 'utf8')
         .split('\n')
-        .flatMap((line, at) =>
-          EACH_TIME.test(line) ? [`${path.slice(SRC.length)}:${String(at + 1)}`] : [],
-        ),
+        .flatMap((line, at) => (EACH_TIME.test(line) ? [`${path.slice(SRC.length)}:${String(at + 1)}`] : [])),
     )
     expect(found).toEqual([])
   })

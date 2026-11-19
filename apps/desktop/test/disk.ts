@@ -69,9 +69,7 @@ export class Disk {
       case 'write_bytes':
         this.files.set(
           this.spelled(path) ?? path,
-          args.bytes instanceof Uint8Array
-            ? String.fromCharCode(...args.bytes)
-            : atob(text(args.base64)),
+          args.bytes instanceof Uint8Array ? String.fromCharCode(...args.bytes) : atob(text(args.base64)),
         )
         return undefined
       case 'rename_note': {
@@ -117,8 +115,7 @@ export class Disk {
       }
       case 'read_tree': {
         const root = text(args.root)
-        const folder =
-          this.folders.has(root) || [...this.files.keys()].some((one) => one.startsWith(`${root}/`))
+        const folder = this.folders.has(root) || [...this.files.keys()].some((one) => one.startsWith(`${root}/`))
         if (!folder) throw new Error('root is not a directory')
         const options = (args.options ?? {}) as { showHidden?: boolean }
         return this.listing(text(args.root), options.showHidden === true)
@@ -157,8 +154,7 @@ export class Disk {
         .slice(root.length + 1)
         .split('/')
         .some((step) => step.startsWith('.'))
-    for (const path of [...this.folders].sort())
-      if (path.startsWith(`${root}/`) && shown(path)) folderFor(path)
+    for (const path of [...this.folders].sort()) if (path.startsWith(`${root}/`) && shown(path)) folderFor(path)
     for (const path of [...this.files.keys()].sort()) {
       if (!path.startsWith(`${root}/`)) continue
       if (!shown(path)) continue
@@ -167,9 +163,7 @@ export class Disk {
 
     const order = (one: Entry): Entry => ({
       ...one,
-      children: [...one.children]
-        .sort((a, b) => (a.is_dir === b.is_dir ? 0 : a.is_dir ? -1 : 1))
-        .map(order),
+      children: [...one.children].sort((a, b) => (a.is_dir === b.is_dir ? 0 : a.is_dir ? -1 : 1)).map(order),
     })
     return order(tree)
   }

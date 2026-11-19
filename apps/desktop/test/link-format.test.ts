@@ -25,9 +25,7 @@ describe('a link to a note', () => {
   })
 
   test('keeps the name it shows when it goes to a heading, which bare would show too', () => {
-    expect(formatLink({ ...PLAN, fragment: 'Budget', shown: 'Plan' }, 'wikilink')).toBe(
-      '[[Plan#Budget|Plan]]',
-    )
+    expect(formatLink({ ...PLAN, fragment: 'Budget', shown: 'Plan' }, 'wikilink')).toBe('[[Plan#Budget|Plan]]')
   })
 
   test('carries the heading or the block after the target', () => {
@@ -57,27 +55,18 @@ describe('the three markdown spellings', () => {
   })
 
   test('take the path the picker found to reach the note read from the linking note', () => {
-    expect(
-      formatLink(
-        { name: 'b/c', markdown: '/b/c.md', path: 'b/c.md', from: 'a/new.md' },
-        'shortest',
-      ),
-    ).toBe('[b/c](/b/c.md)')
+    expect(formatLink({ name: 'b/c', markdown: '/b/c.md', path: 'b/c.md', from: 'a/new.md' }, 'shortest')).toBe(
+      '[b/c](/b/c.md)',
+    )
   })
 
   test('write the path from the top, slash and all, when only that says which', () => {
-    expect(formatLink({ ...PLAN, name: '/ideas/Plan' }, 'shortest')).toBe(
-      '[ideas/Plan](/ideas/Plan.md)',
-    )
-    expect(formatLink({ name: '/Plan', path: 'Plan.md', from: 'b/n.md' }, 'shortest')).toBe(
-      '[Plan](/Plan.md)',
-    )
+    expect(formatLink({ ...PLAN, name: '/ideas/Plan' }, 'shortest')).toBe('[ideas/Plan](/ideas/Plan.md)')
+    expect(formatLink({ name: '/Plan', path: 'Plan.md', from: 'b/n.md' }, 'shortest')).toBe('[Plan](/Plan.md)')
   })
 
   test('write the folder in the shortest name when the name needs it to say which', () => {
-    expect(formatLink({ ...PLAN, name: 'ideas/Plan' }, 'shortest')).toBe(
-      '[ideas/Plan](ideas/Plan.md)',
-    )
+    expect(formatLink({ ...PLAN, name: 'ideas/Plan' }, 'shortest')).toBe('[ideas/Plan](ideas/Plan.md)')
   })
 
   test('write the folder for an alias when the file’s own name needs it to say which', () => {
@@ -87,9 +76,7 @@ describe('the three markdown spellings', () => {
   })
 
   test('write a name said from the top as a path from the top', () => {
-    expect(
-      formatLink({ name: '/Plan', path: 'Plan.md', from: 'Work/Journal.md' }, 'shortest'),
-    ).toBe('[Plan](/Plan.md)')
+    expect(formatLink({ name: '/Plan', path: 'Plan.md', from: 'Work/Journal.md' }, 'shortest')).toBe('[Plan](/Plan.md)')
   })
 
   test('always show something, since a markdown link with no words shows none', () => {
@@ -98,31 +85,21 @@ describe('the three markdown spellings', () => {
   })
 
   test('encode what a destination cannot hold as written', () => {
-    expect(formatLink({ name: 'My Plan', path: 'My Plan.md' }, 'absolute')).toBe(
-      '[My Plan](My%20Plan.md)',
-    )
+    expect(formatLink({ name: 'My Plan', path: 'My Plan.md' }, 'absolute')).toBe('[My Plan](My%20Plan.md)')
   })
 
   test('a heading with an equals sign in it is a heading, and only a page number is kept', () => {
     expect(formatLink({ name: 'Note', fragment: 'x = 1' }, 'shortest')).toBe('[Note](Note.md#x-1)')
-    expect(formatLink({ name: 'paper.pdf', fragment: 'page=3' }, 'shortest')).toBe(
-      '[paper.pdf](paper.pdf#page=3)',
-    )
+    expect(formatLink({ name: 'paper.pdf', fragment: 'page=3' }, 'shortest')).toBe('[paper.pdf](paper.pdf#page=3)')
   })
 
   test('write a heading as the anchor an exported or published page gives it', () => {
-    expect(formatLink({ ...PLAN, fragment: 'Next steps' }, 'absolute')).toBe(
-      '[Plan](ideas/Plan.md#next-steps)',
-    )
+    expect(formatLink({ ...PLAN, fragment: 'Next steps' }, 'absolute')).toBe('[Plan](ideas/Plan.md#next-steps)')
   })
 
   test('leave a block name and a page number exactly as they were written', () => {
-    expect(formatLink({ ...PLAN, fragment: '^a1b2c3' }, 'absolute')).toBe(
-      '[Plan](ideas/Plan.md#^a1b2c3)',
-    )
-    expect(formatLink({ name: 'paper.pdf', fragment: 'page=3' }, 'shortest')).toBe(
-      '[paper.pdf](paper.pdf#page=3)',
-    )
+    expect(formatLink({ ...PLAN, fragment: '^a1b2c3' }, 'absolute')).toBe('[Plan](ideas/Plan.md#^a1b2c3)')
+    expect(formatLink({ name: 'paper.pdf', fragment: 'page=3' }, 'shortest')).toBe('[paper.pdf](paper.pdf#page=3)')
   })
 
   test('fall back to the name where nothing knows the path', () => {
@@ -159,9 +136,7 @@ describe('every writer in the app', () => {
   })
 
   test('includes the block link a Copy link puts on the clipboard', () => {
-    expect(linkTo('Plan', null, { fragment: '^a1b2c3', path: 'Plan.md', from: 'Plan.md' })).toBe(
-      '[[Plan#^a1b2c3]]',
-    )
+    expect(linkTo('Plan', null, { fragment: '^a1b2c3', path: 'Plan.md', from: 'Plan.md' })).toBe('[[Plan#^a1b2c3]]')
 
     setLinkWriting('relative')
     try {
@@ -174,8 +149,7 @@ describe('every writer in the app', () => {
   })
 
   test('includes the links an import rewrites', () => {
-    const find = (target: string) =>
-      target === 'old/Plan.md' ? { path: 'ideas/Plan.md', name: 'Plan' } : null
+    const find = (target: string) => (target === 'old/Plan.md' ? { path: 'ideas/Plan.md', name: 'Plan' } : null)
     const at = { was: 'old/Monday.md', now: 'journal/Monday.md' }
 
     expect(rewriteLinks('see [the plan](old/Plan.md)', at, find)).toBe('see [[Plan|the plan]]')
@@ -183,9 +157,7 @@ describe('every writer in the app', () => {
 
     setLinkWriting('relative')
     try {
-      expect(rewriteLinks('see [the plan](old/Plan.md)', at, find)).toBe(
-        'see [the plan](../ideas/Plan.md)',
-      )
+      expect(rewriteLinks('see [the plan](old/Plan.md)', at, find)).toBe('see [the plan](../ideas/Plan.md)')
       expect(rewriteLinks('see [[old/Plan.md]]', at, find)).toBe('see [Plan](../ideas/Plan.md)')
     } finally {
       setLinkWriting('wikilink')
@@ -299,9 +271,7 @@ describe('a link to a note a wikilink cannot name', () => {
   })
 
   test('words or a heading that would close a wikilink early do the same', () => {
-    expect(formatLink({ ...PLAN, fragment: 'Foo [bar]' }, 'wikilink')).toBe(
-      '[Plan](Plan.md#foo-bar)',
-    )
+    expect(formatLink({ ...PLAN, fragment: 'Foo [bar]' }, 'wikilink')).toBe('[Plan](Plan.md#foo-bar)')
     expect(findLinks(formatLink({ ...PLAN, shown: 'a]b' }, 'wikilink'))).toMatchObject([
       { kind: 'markdown', target: 'Plan.md' },
     ])

@@ -78,8 +78,7 @@ function says(node: Node): boolean {
   const nodes = (node.fragment as { nodes?: Node[] } | undefined)?.nodes ?? []
   return nodes.some(
     (one) =>
-      (one.type === 'Text' && typeof one.data === 'string' && one.data.trim() !== '') ||
-      one.type === 'ExpressionTag',
+      (one.type === 'Text' && typeof one.data === 'string' && one.data.trim() !== '') || one.type === 'ExpressionTag',
   )
 }
 
@@ -93,10 +92,7 @@ test('the words a row of settings is named by are its .name', () => {
       .flatMap(({ node }) => [...children(node.fragment)])
       .filter((child) => WORDS.has(child.name ?? '') && says(child))
       .filter((child) => !classesOf(child).some((one) => VALUES.has(one)))
-      .map(
-        (child) =>
-          `${file.slice(SRC.length).replaceAll('\\', '/')} ${child.name}.${classesOf(child).join('.')}`,
-      )
+      .map((child) => `${file.slice(SRC.length).replaceAll('\\', '/')} ${child.name}.${classesOf(child).join('.')}`)
   })
 
   expect(bare).toEqual([])
@@ -109,10 +105,7 @@ function ruleOf(sheet: string, selector: string): string {
 }
 
 test("a row's name keeps a readable width and what does not fit beside it wraps under it", () => {
-  const sheet = readFileSync(
-    fileURLToPath(new URL('../../../packages/themes/src/base.css', import.meta.url)),
-    'utf8',
-  )
+  const sheet = readFileSync(fileURLToPath(new URL('../../../packages/themes/src/base.css', import.meta.url)), 'utf8')
 
   expect(ruleOf(sheet, '.orden-setting')).toMatch(/flex-wrap:\s*wrap/)
   expect(ruleOf(sheet, '.orden-setting > .name')).toMatch(
@@ -124,14 +117,9 @@ test("a row's name keeps a readable width and what does not fit beside it wraps 
 
 test('a dropdown in a row and a pane in the list are as long as their words', () => {
   const panel = readFileSync(join(SRC, 'lib/settings/src/SettingsPanel.svelte'), 'utf8')
-  const sheet = readFileSync(
-    fileURLToPath(new URL('../../../packages/themes/src/base.css', import.meta.url)),
-    'utf8',
-  )
+  const sheet = readFileSync(fileURLToPath(new URL('../../../packages/themes/src/base.css', import.meta.url)), 'utf8')
 
-  expect(ruleOf(sheet, '.orden-setting-value')).toMatch(
-    /min-inline-size:\s*min\(var\(--setting-value\),\s*100%\)/,
-  )
+  expect(ruleOf(sheet, '.orden-setting-value')).toMatch(/min-inline-size:\s*min\(var\(--setting-value\),\s*100%\)/)
   expect(ruleOf(sheet, '.orden-setting-value')).not.toMatch(/[\s;](inline-size|width):/)
   expect(ruleOf(panel, '  .item .orden-row-label')).toMatch(/white-space:\s*normal/)
 })

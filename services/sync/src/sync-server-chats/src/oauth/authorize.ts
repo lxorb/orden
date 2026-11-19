@@ -77,10 +77,7 @@ async function checkClient(env: Env, ask: Ask): Promise<{ client: Client } | { p
   const client = await clientFor(env, ask.client_id)
   if (!client) return { problem: 'This app is not known here. Add the connector again in the app.' }
 
-  if (
-    !ask.redirect_uri ||
-    !client.redirectUris.some((one) => sameRedirect(one, ask.redirect_uri))
-  ) {
+  if (!ask.redirect_uri || !client.redirectUris.some((one) => sameRedirect(one, ask.redirect_uri))) {
     return { problem: `${client.name} asked to be sent somewhere it did not register.` }
   }
 
@@ -96,10 +93,7 @@ function checkRequest(
   if (query.response_type !== 'code') {
     return failure('unsupported_response_type', 'only the code flow is supported')
   }
-  if (
-    !challengeLooksRight(ask.code_challenge) ||
-    (query.code_challenge_method ?? 'S256') !== 'S256'
-  ) {
+  if (!challengeLooksRight(ask.code_challenge) || (query.code_challenge_method ?? 'S256') !== 'S256') {
     return failure('invalid_request', 'PKCE with S256 is required')
   }
   if (!resourceMatches(env, ask.resource)) {
@@ -124,9 +118,7 @@ authorize.get('/authorize', async (context) => {
   return page(context.env, emailStep(checked.client, ask, {}))
 })
 
-async function formOf(
-  context: Context<{ Bindings: Env }>,
-): Promise<Record<string, string | undefined>> {
+async function formOf(context: Context<{ Bindings: Env }>): Promise<Record<string, string | undefined>> {
   return textFields(await context.req.parseBody().catch(() => ({})))
 }
 
@@ -143,22 +135,13 @@ authorize.post('/authorize', async (context) => {
     !resourceMatches(context.env, ask.resource) ||
     unknownScopes(ask.scope).length
   ) {
-    return page(
-      context.env,
-      refusal('This request is not complete. Start again from the app.'),
-      400,
-    )
+    return page(context.env, refusal('This request is not complete. Start again from the app.'), 400)
   }
 
   const email = normaliseEmail(form.email ?? '')
 
   if (form.action === 'deny') {
-    return backToClient(
-      context.env,
-      context.req.url,
-      ask,
-      failure('access_denied', 'the person said no'),
-    )
+    return backToClient(context.env, context.req.url, ask, failure('access_denied', 'the person said no'))
   }
 
   if (form.action === 'send') {
@@ -185,10 +168,8 @@ authorize.post('/authorize', async (context) => {
 
   if (form.action === 'second') {
     const holding = form.holding ?? ''
-    const whose =
-      holding && holding.length <= HOLDING_LIMIT ? await whoseHalf(context.env, holding) : null
-    if (!whose)
-      return page(context.env, refusal('That took too long. Start again from the app.'), 400)
+    const whose = holding && holding.length <= HOLDING_LIMIT ? await whoseHalf(context.env, holding) : null
+    if (!whose) return page(context.env, refusal('That took too long. Start again from the app.'), 400)
 
     const write = form.write === '1'
     if (!(await accepted(context.env, whose, form.code ?? '', machineOf(context.req)))) {

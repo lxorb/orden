@@ -79,8 +79,7 @@ describe('a vault’s proofs', () => {
     await api.invite(ada, vault, bob.email, 'editor')
     await api.accept(bob, vault)
     const proof = { by: signPub(), sig: signature(), vouch: null }
-    const trust = (who: Person, body: unknown) =>
-      passCall(env, who, 'PUT', `/vaults/${vault}/trust`, body)
+    const trust = (who: Person, body: unknown) => passCall(env, who, 'PUT', `/vaults/${vault}/trust`, body)
 
     expect((await trust(bob, { proof, keyVersion: 1 })).status).toBe(403)
     expect((await trust(ada, { proof, keyVersion: 2 })).status).toBe(409)
@@ -124,9 +123,7 @@ describe('an invitation’s proofs', () => {
       pin,
     })
     const accepted = { owner: pin.owner, sig: signature() }
-    expect(
-      (await passCall(env, bob, 'POST', `/invites/${vault}/accept`, { accepted })).status,
-    ).toBe(200)
+    expect((await passCall(env, bob, 'POST', `/invites/${vault}/accept`, { accepted })).status).toBe(200)
     expect((await vaultOf(bob, vault))?.accepted).toEqual(accepted)
     const members = await membersOf(ada, vault)
     expect(members.find((one) => one.email === bob.email)?.vouch).toBe(vouch)

@@ -66,11 +66,7 @@ export async function found(root = workspace.activeSpace?.root): Promise<NoteCom
   return asked ? readable(await asked) : now
 }
 
-export async function foundNamed(
-  kind: NoteKind,
-  name: string,
-  root?: string,
-): Promise<NoteCommand | null> {
+export async function foundNamed(kind: NoteKind, name: string, root?: string): Promise<NoteCommand | null> {
   const wanted = name.trim().toLowerCase()
   return (await found(root)).find((one) => one.kind === kind && one.name === wanted) ?? null
 }

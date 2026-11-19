@@ -105,10 +105,7 @@ describe('the request', () => {
     expect(responses.request(ask({ effort: 'off' })).body).toMatchObject({
       reasoning: { effort: 'none' },
     })
-    const auto = responses.request(ask({ effort: 'auto', fast: true })).body as Record<
-      string,
-      unknown
-    >
+    const auto = responses.request(ask({ effort: 'auto', fast: true })).body as Record<string, unknown>
     expect(auto.reasoning).toEqual({ summary: 'auto' })
     expect(auto.service_tier).toBe('priority')
   })
@@ -171,9 +168,7 @@ describe('the request', () => {
         },
         {
           role: 'tool',
-          results: [
-            { id: 'c1', name: 'read_note', output: { text: 'A', images: [], error: false } },
-          ],
+          results: [{ id: 'c1', name: 'read_note', output: { text: 'A', images: [], error: false } }],
         },
       ]),
     ).toEqual([

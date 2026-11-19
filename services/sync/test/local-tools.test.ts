@@ -18,9 +18,7 @@ interface Tool {
   inputSchema: Schema
 }
 
-const LOCAL = fileURLToPath(
-  new URL('../../../apps/desktop/src-tauri/crates/ai/src/mcp/tools.json', import.meta.url),
-)
+const LOCAL = fileURLToPath(new URL('../../../apps/desktop/src-tauri/crates/ai/src/mcp/tools.json', import.meta.url))
 
 const local = JSON.parse(readFileSync(LOCAL, 'utf8')) as Tool[]
 
@@ -41,10 +39,7 @@ describe('the local server beside the connector', () => {
 
       const needed = new Set(connector.inputSchema.required ?? [])
       for (const argument of mine.inputSchema.required ?? []) {
-        expect(
-          needed.has(argument),
-          `${name} needs ${argument}, which the connector does not`,
-        ).toBe(true)
+        expect(needed.has(argument), `${name} needs ${argument}, which the connector does not`).toBe(true)
       }
     },
   )

@@ -52,9 +52,7 @@ describe('deleting a chat', () => {
 
   test('asks once for every chat with messages a gesture deletes', async () => {
     world.answer = true
-    expect(await mayDelete(['/space/Plans.chat', '/space/Trip.chat', '/space/Quiet.chat'])).toBe(
-      true,
-    )
+    expect(await mayDelete(['/space/Plans.chat', '/space/Trip.chat', '/space/Quiet.chat'])).toBe(true)
     expect(world.asked.map((one) => one.title)).toEqual(['Delete 2 chats with messages?'])
   })
 })

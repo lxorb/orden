@@ -39,9 +39,7 @@ export const moveBlockUp = door((commands) => commands.moveBlockUp)
 export const moveBlockDown = door((commands) => commands.moveBlockDown)
 
 const writable =
-  <Target extends { state: { readOnly: boolean } }>(
-    run: (target: Target) => boolean,
-  ): ((target: Target) => boolean) =>
+  <Target extends { state: { readOnly: boolean } }>(run: (target: Target) => boolean): ((target: Target) => boolean) =>
   (target) =>
     !target.state.readOnly && run(target)
 
@@ -52,8 +50,6 @@ const moveUp = door((commands) => commands.moveLineOver(-1))
 export const moveLineOver = (delta: -1 | 1) => writable(delta < 0 ? moveUp : moveDown)
 export const clearFormatting = door((commands) => commands.clearFormatting)
 
-export const marksAcross = (mark: string, adding = false) =>
-  door((commands) => commands.marksAcross(mark, adding))
+export const marksAcross = (mark: string, adding = false) => door((commands) => commands.marksAcross(mark, adding))
 
-export const highlightAcross = (colour: HighlightColour) =>
-  door((commands) => commands.highlightAcross(colour))
+export const highlightAcross = (colour: HighlightColour) => door((commands) => commands.highlightAcross(colour))

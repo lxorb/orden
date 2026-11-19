@@ -13,9 +13,7 @@ export interface Note {
   path: string | null
 }
 
-export function pointer(
-  note: Note,
-): (link: Wikilink, from?: EmbeddedNote) => { href: string | null } | null {
+export function pointer(note: Note): (link: Wikilink, from?: EmbeddedNote) => { href: string | null } | null {
   return (link, from) => {
     if (!link.target) return link.heading === null && link.block === null ? null : { href: '' }
 
@@ -26,18 +24,10 @@ export function pointer(
 }
 
 const noteFrom = (target: string, from: EmbeddedNote): string | null =>
-  from.path === undefined
-    ? null
-    : links.targetOf(from.path, { kind: 'markdown', target: decodeTarget(target) })
+  from.path === undefined ? null : links.targetOf(from.path, { kind: 'markdown', target: decodeTarget(target) })
 
-export const withPictures = (
-  html: string,
-  note: Note,
-  drawn: ReadonlySet<string> = new Set(),
-): string =>
-  mapSources(html, (src) =>
-    drawn.has(src) ? null : escapeAll(notePicture(attributeText(src), note.path, note.text)),
-  )
+export const withPictures = (html: string, note: Note, drawn: ReadonlySet<string> = new Set()): string =>
+  mapSources(html, (src) => (drawn.has(src) ? null : escapeAll(notePicture(attributeText(src), note.path, note.text))))
 
 const TABLE = /<table>[\s\S]*?<\/table>/g
 
@@ -48,21 +38,14 @@ function scrollingTables(html: string): string {
 const MEASURE = 'orden:reading'
 export const tagAnchor: TagHref = (tag) => `#${tag}`
 
-export async function readingHtml(
-  note: Note,
-  scheme: Scheme,
-  trusted: boolean,
-  tagHref?: TagHref,
-): Promise<string> {
+export async function readingHtml(note: Note, scheme: Scheme, trusted: boolean, tagHref?: TagHref): Promise<string> {
   const { prepareNote } = await import('../../fences/src/api')
   const root = note.path === null ? null : links.spaceOf(note.path)
 
-  const { fence, embed } = await prepareNote(
-    note.text,
-    scheme,
-    (target) => links.embedNote(target, note.path),
-    { query: (code) => queryRowsHtml(code, 'Nothing found', root), base: true },
-  )
+  const { fence, embed } = await prepareNote(note.text, scheme, (target) => links.embedNote(target, note.path), {
+    query: (code) => queryRowsHtml(code, 'Nothing found', root),
+    base: true,
+  })
 
   const drawn = new Set<string>()
   const drawing = (path: string) => {

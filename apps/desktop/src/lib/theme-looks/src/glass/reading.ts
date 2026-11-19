@@ -39,24 +39,16 @@ function readFrame(win: Window): PageSaid {
   const wide = root.clientWidth || win.innerWidth
   const scheme = win.getComputedStyle(root).colorScheme || ''
   const dark =
-    scheme.includes('dark') &&
-    (!scheme.includes('light') || win.matchMedia('(prefers-color-scheme: dark)').matches)
+    scheme.includes('dark') && (!scheme.includes('light') || win.matchMedia('(prefers-color-scheme: dark)').matches)
 
   const top: string[] = []
   let pictured = false
   for (const point of [0.08, 0.5, 0.92]) {
     let found = ''
     let here = false
-    for (
-      let one: Element | null = doc.elementFromPoint(Math.round(wide * point), 1);
-      one;
-      one = one.parentElement
-    ) {
+    for (let one: Element | null = doc.elementFromPoint(Math.round(wide * point), 1); one; one = one.parentElement) {
       const style = win.getComputedStyle(one)
-      if (
-        PICTURES.test(one.tagName) ||
-        (style.backgroundImage && style.backgroundImage !== 'none')
-      ) {
+      if (PICTURES.test(one.tagName) || (style.backgroundImage && style.backgroundImage !== 'none')) {
         here = true
         break
       }
@@ -81,9 +73,7 @@ async function asked(tab: string): Promise<PageSaid | null> {
     ])
   }
 
-  const frame = document.querySelector<HTMLIFrameElement>(
-    `iframe[data-web-tab="${CSS.escape(tab)}"]`,
-  )
+  const frame = document.querySelector<HTMLIFrameElement>(`iframe[data-web-tab="${CSS.escape(tab)}"]`)
   try {
     return frame?.contentWindow ? readFrame(frame.contentWindow) : null
   } catch {

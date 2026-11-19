@@ -180,9 +180,7 @@ describe('the spaces an account put away', () => {
     expect((await patch({ archivedSpaces: 'a1' })).status).toBe(400)
     expect((await patch({ archivedSpaces: ['a/b'] })).status).toBe(400)
     expect((await patch({ archivedSpaces: ['a1', 'a1'] })).status).toBe(400)
-    expect(
-      (await patch({ archivedSpaces: Array.from({ length: 101 }, (_, at) => `s${at}`) })).status,
-    ).toBe(400)
+    expect((await patch({ archivedSpaces: Array.from({ length: 101 }, (_, at) => `s${at}`) })).status).toBe(400)
   })
 })
 
@@ -421,10 +419,7 @@ describe('the kinds an account turned off', () => {
   test('are kept as a list of words', async () => {
     const set = await patch({ hiddenKinds: ['canvas', 'online'] })
     expect(set.status).toBe(200)
-    expect((await call(env, '/v1/settings', { token })).json.settings.hiddenKinds).toEqual([
-      'canvas',
-      'online',
-    ])
+    expect((await call(env, '/v1/settings', { token })).json.settings.hiddenKinds).toEqual(['canvas', 'online'])
   })
 
   test('take null, which is every kind offered', async () => {
@@ -542,19 +537,14 @@ describe('the shortcuts an account carries', () => {
   })
 
   test('refuse more than an account holds', async () => {
-    const many = Object.fromEntries(
-      Array.from({ length: 201 }, (_, index) => [`app.thing-${index}`, 'Mod-b']),
-    )
+    const many = Object.fromEntries(Array.from({ length: 201 }, (_, index) => [`app.thing-${index}`, 'Mod-b']))
 
     expect((await patch({ shortcuts: many })).status).toBe(400)
   })
 
   test('refuse a body too big for the column', async () => {
     const big = Object.fromEntries(
-      Array.from({ length: 199 }, (_, index) => [
-        `app.${'thing'.repeat(10)}-${index}`,
-        'Mod-Alt-Shift-ArrowDown',
-      ]),
+      Array.from({ length: 199 }, (_, index) => [`app.${'thing'.repeat(10)}-${index}`, 'Mod-Alt-Shift-ArrowDown']),
     )
 
     expect((await patch({ shortcuts: big })).status).toBe(413)

@@ -19,8 +19,7 @@
 
   const { host, onback }: { host: Host; onback: () => void } = $props()
 
-  const about = (change: Change<About>) =>
-    void remote.keep((kept) => withAbout(kept, host.id, change))
+  const about = (change: Change<About>) => void remote.keep((kept) => withAbout(kept, host.id, change))
 
   const NEW = '\u0000new'
 
@@ -55,9 +54,7 @@
     const wanted = destinationOf(typed)
     if (!wanted) {
       problem = 'Not an address'
-      field.value = host.hostname
-        ? said({ user: host.user, hostname: host.hostname, port: host.port })
-        : ''
+      field.value = host.hostname ? said({ user: host.user, hostname: host.hostname, port: host.port }) : ''
       return
     }
     problem = ''
@@ -110,9 +107,7 @@
     {#if host.own}
       <input
         class="orden-field is-value address"
-        value={host.hostname
-          ? said({ user: host.user, hostname: host.hostname, port: host.port })
-          : ''}
+        value={host.hostname ? said({ user: host.user, hostname: host.hostname, port: host.port }) : ''}
         aria-label="Address"
         spellcheck="false"
         autocomplete="off"
@@ -161,9 +156,8 @@
   {#if host.own}
     <button class="orden-action is-danger" onclick={() => void remove()}>Remove</button>
   {:else if remote.file}
-    <button
-      class="orden-action"
-      onclick={() => void invoke('remote_config_open').catch(() => undefined)}>Open config</button
+    <button class="orden-action" onclick={() => void invoke('remote_config_open').catch(() => undefined)}
+      >Open config</button
     >
   {/if}
 </div>

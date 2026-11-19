@@ -5,15 +5,10 @@ import { orderedTree } from './tree-order'
 import { file, folder } from './entries'
 
 function root(): Entry {
-  return folder('/N', [
-    folder('/N/Deep', [file('/N/Deep/inner.md')]),
-    file('/N/a.md'),
-    file('/N/c.md'),
-  ])
+  return folder('/N', [folder('/N/Deep', [file('/N/Deep/inner.md')]), file('/N/a.md'), file('/N/c.md')])
 }
 
-const shape = (entry: Entry): string[] =>
-  entry.children.flatMap((child) => [child.path, ...shape(child)])
+const shape = (entry: Entry): string[] => entry.children.flatMap((child) => [child.path, ...shape(child)])
 
 describe('the rows a space has archived, left out of the list', () => {
   test('go at any depth, and a folder takes everything under it', () => {
@@ -74,11 +69,7 @@ describe('a row put into the tree before the disk answers', () => {
 
 describe('a row taken out before the disk answers', () => {
   test('goes, and nothing else moves', () => {
-    expect(shape(withoutEntry(root(), '/N/a.md'))).toEqual([
-      '/N/Deep',
-      '/N/Deep/inner.md',
-      '/N/c.md',
-    ])
+    expect(shape(withoutEntry(root(), '/N/a.md'))).toEqual(['/N/Deep', '/N/Deep/inner.md', '/N/c.md'])
   })
 
   test('a folder takes its contents with it', () => {
@@ -86,22 +77,13 @@ describe('a row taken out before the disk answers', () => {
   })
 
   test('a row inside a folder', () => {
-    expect(shape(withoutEntry(root(), '/N/Deep/inner.md'))).toEqual([
-      '/N/Deep',
-      '/N/a.md',
-      '/N/c.md',
-    ])
+    expect(shape(withoutEntry(root(), '/N/Deep/inner.md'))).toEqual(['/N/Deep', '/N/a.md', '/N/c.md'])
   })
 })
 
 describe('a row renamed or moved before the disk answers', () => {
   test('a rename is the row out and the row back under its new name', () => {
-    expect(shape(withMove(root(), '/N/a.md', '/N/z.md'))).toEqual([
-      '/N/Deep',
-      '/N/Deep/inner.md',
-      '/N/c.md',
-      '/N/z.md',
-    ])
+    expect(shape(withMove(root(), '/N/a.md', '/N/z.md'))).toEqual(['/N/Deep', '/N/Deep/inner.md', '/N/c.md', '/N/z.md'])
   })
 
   test('a move into a folder takes the row there', () => {
@@ -185,11 +167,7 @@ describe('rows for notes the account has named and not sent yet', () => {
     const disk = folder('C:\\Notes\\N', [file('C:\\Notes\\N\\a.md')])
     const listed = withComing(disk, ['C:\\Notes\\N\\Work\\plan.md'])
 
-    expect(shape(listed)).toEqual([
-      'C:\\Notes\\N\\a.md',
-      'C:\\Notes\\N\\Work',
-      'C:\\Notes\\N\\Work\\plan.md',
-    ])
+    expect(shape(listed)).toEqual(['C:\\Notes\\N\\a.md', 'C:\\Notes\\N\\Work', 'C:\\Notes\\N\\Work\\plan.md'])
     expect(entryAt(listed, 'C:\\Notes\\N\\Work\\plan.md')?.name).toBe('plan.md')
     expect(entryAt(listed, 'C:\\Notes\\N\\Work')?.name).toBe('Work')
   })
@@ -221,9 +199,7 @@ describe('the two halves together', () => {
 
   test('and in the order somebody arranged, where they arranged one', () => {
     const grown = withEntry(root(), file('/N/b.md'))
-    const drawn = orderedTree(grown, 'manual', (folder) =>
-      folder === '/N' ? ['c.md', 'b.md'] : [],
-    )
+    const drawn = orderedTree(grown, 'manual', (folder) => (folder === '/N' ? ['c.md', 'b.md'] : []))
 
     expect(shape(drawn)).toEqual(['/N/c.md', '/N/b.md', '/N/Deep', '/N/Deep/inner.md', '/N/a.md'])
   })

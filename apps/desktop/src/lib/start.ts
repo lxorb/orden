@@ -56,9 +56,7 @@ async function listenForAgents(): Promise<() => void> {
   if (__EVEN_PLUGIN__ || !isDesktop) return () => undefined
 
   const { listen } = await import('@tauri-apps/api/event')
-  const heard = door(() =>
-    import('./agents/src/api').then((one) => one.agentsUi()).then(({ start }) => start()),
-  )
+  const heard = door(() => import('./agents/src/api').then((one) => one.agentsUi()).then(({ start }) => start()))
 
   return listen<unknown>('orden://agent', ({ payload }) => {
     void heard().then((hear) => hear(payload))
@@ -171,9 +169,7 @@ export function start(): () => void {
       .turn('right')
       .then(() => import('./tasks-model/src/api'))
       .then(({ startTodos }) => startTodos())
-    void startup
-      .turn('right')
-      .then(() => import('./scratchpad/src/api').then((one) => one.wakeScratchpad()))
+    void startup.turn('right').then(() => import('./scratchpad/src/api').then((one) => one.wakeScratchpad()))
     void startup.turn('right').then(blankTabs)
     void startup
       .turn('right')
@@ -201,9 +197,7 @@ export function start(): () => void {
     void startup.turn('rooms').then(across)
     const reporting = !import.meta.env.DEV && !__DRIVEABLE__
     if (isDesktop) {
-      void startup
-        .turn('rooms')
-        .then(() => outsideHearing().then(({ hearOutside }) => hearOutside()))
+      void startup.turn('rooms').then(() => outsideHearing().then(({ hearOutside }) => hearOutside()))
       void startup
         .turn('right')
         .then(() => import('./quick-add/src/api'))

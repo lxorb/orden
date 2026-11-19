@@ -7,9 +7,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     asked.push({ command, id: args.id })
     return Promise.resolve(
-      command === 'web_download_saved'
-        ? `/home/me/Downloads/slides (${String(args.id)}).pdf`
-        : undefined,
+      command === 'web_download_saved' ? `/home/me/Downloads/slides (${String(args.id)}).pdf` : undefined,
     )
   },
 }))
@@ -60,9 +58,7 @@ test('what the crate sends is read, and nothing else is', () => {
     total: 10,
   })
 
-  expect(
-    readDownload({ id: 1, tab: 't', url: 'u', name: 'n', state: 'going', total: null })?.total,
-  ).toBeNull()
+  expect(readDownload({ id: 1, tab: 't', url: 'u', name: 'n', state: 'going', total: null })?.total).toBeNull()
   expect(readDownload({ id: 1, tab: 't', url: 'u', name: 'n', state: 'lost' })).toBeNull()
   expect(readDownload({ id: '1', tab: 't', url: 'u', name: 'n', state: 'done' })).toBeNull()
   expect(readDownload(null)).toBeNull()

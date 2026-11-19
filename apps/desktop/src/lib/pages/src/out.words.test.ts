@@ -1,13 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, test, vi } from 'vitest'
-import {
-  decodePDFRawStream,
-  PDFDict,
-  PDFDocument,
-  PDFName,
-  type PDFRawStream,
-  StandardFonts,
-} from 'pdf-lib'
+import { decodePDFRawStream, PDFDict, PDFDocument, PDFName, type PDFRawStream, StandardFonts } from 'pdf-lib'
 import { added, emptyPages } from '@orden/markdown/pages'
 import { type Canvas, type CanvasNode, type PageNode, writeCanvas } from '@orden/markdown/canvas'
 
@@ -16,9 +9,7 @@ const raster = vi.hoisted(() => ({
   drawn: [] as string[],
   refuse: false,
   png: Uint8Array.from(
-    atob(
-      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
-    ),
+    atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='),
     (one) => one.charCodeAt(0),
   ),
 }))
@@ -100,8 +91,7 @@ async function contentOf(bytes: Uint8Array, at: number): Promise<string> {
   const doc = await PDFDocument.load(bytes)
   const sheet = doc.getPage(at)
   const contents = sheet.node.Contents()
-  const streams =
-    contents && 'asArray' in contents ? contents.asArray() : contents ? [contents] : []
+  const streams = contents && 'asArray' in contents ? contents.asArray() : contents ? [contents] : []
   return streams
     .map((one) => decodePDFRawStream(doc.context.lookup(one as never) as PDFRawStream).decode())
     .map((one) => new TextDecoder().decode(one))
@@ -138,10 +128,7 @@ describe('words typed on a page', () => {
   })
 
   test('are drawn on the lines the browser set them on, as wide as it set them', async () => {
-    layout.runs.set('w1', [
-      run('Exam on', { x: 6, y: 20, width: 70 }),
-      run('Friday', { x: 6, y: 44.8, width: 50 }),
-    ])
+    layout.runs.set('w1', [run('Exam on', { x: 6, y: 20, width: 70 }), run('Friday', { x: 6, y: 44.8, width: 50 })])
     const canvas = note()
     const page = canvas.nodes[0] as PageNode
     const first = await contentOf((await pagesPdf(out(canvas)))!, 0)

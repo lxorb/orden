@@ -30,8 +30,6 @@ describe('a mark over several paragraphs that start with inline code', () => {
   })
 
   test('bold goes on a paragraph that starts with a code span', () => {
-    expect(toggled('Intro\n\n`npm i` installs it', '**')).toBe(
-      '**Intro**\n\n**`npm i` installs it**',
-    )
+    expect(toggled('Intro\n\n`npm i` installs it', '**')).toBe('**Intro**\n\n**`npm i` installs it**')
   })
 })

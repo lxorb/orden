@@ -14,9 +14,7 @@
   const live = $derived(kit.live)
   let made = $state<string | undefined>(undefined)
   const name = $derived(made ?? (column?.startsWith(BUTTON) ? column.slice(BUTTON.length) : ''))
-  const button = $derived(
-    live.base ? (readButtons(live.base).find((one) => one.name === name) ?? null) : null,
-  )
+  const button = $derived(live.base ? (readButtons(live.base).find((one) => one.name === name) ?? null) : null)
   const keys = $derived(
     live.base
       ? knownProperties(live.base, 'notes', live.rows)
@@ -54,9 +52,7 @@
       : [...live.columns, `${BUTTON}${next}`]
     const kept = { ...(button ?? blank()), name: next }
     made = next
-    kit.change((base, at) =>
-      setColumns(withButton(old ? withButton(base, old, null) : base, next, kept), at, columns),
-    )
+    kit.change((base, at) => setColumns(withButton(old ? withButton(base, old, null) : base, next, kept), at, columns))
   }
 
   const sets = $derived(Object.entries(button?.set ?? {}))
@@ -96,8 +92,7 @@
         class="orden-glyph"
         title="Remove"
         aria-label="Remove"
-        onclick={() => write({ set: Object.fromEntries(sets.filter(([k]) => k !== key)) })}
-        ><Cross small /></button
+        onclick={() => write({ set: Object.fromEntries(sets.filter(([k]) => k !== key)) })}><Cross small /></button
       >
     </div>
   {/each}

@@ -52,10 +52,7 @@ function within(index: Map<string, Seen>) {
   for (const [id] of index.values()) holders[id] = (holders[id] ?? 0) + 1
 
   const size = (id: string) =>
-    favicons.sizes.get(id) ??
-    favicons.unwritten.get(id)?.length ??
-    favicons.pictures.get(id)?.length ??
-    0
+    favicons.sizes.get(id) ?? favicons.unwritten.get(id)?.length ?? favicons.pictures.get(id)?.length ?? 0
   let text = 0
   for (const id of Object.keys(holders)) text += size(id)
   if (index.size <= MOST_PAGES && text <= MOST_TEXT) return

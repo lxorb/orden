@@ -29,8 +29,7 @@ export const wantedInkMode = (): InkMode => inkMode({ agent: AGENT, reported: nu
 const announced = new Set<string>()
 
 function announce(mode: InkMode, wanted: InkMode) {
-  const line =
-    mode === wanted ? `nib ink: ${mode} backing` : `nib ink: ${mode} backing, ${wanted} refused`
+  const line = mode === wanted ? `nib ink: ${mode} backing` : `nib ink: ${mode} backing, ${wanted} refused`
   if (announced.has(line)) return
 
   announced.add(line)

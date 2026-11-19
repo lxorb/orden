@@ -47,8 +47,7 @@
 
   function takesWords(element) {
     return (
-      drag.transfer.types.includes('text/plain') &&
-      !!element.closest('[contenteditable="true"], [contenteditable=""]')
+      drag.transfer.types.includes('text/plain') && !!element.closest('[contenteditable="true"], [contenteditable=""]')
     )
   }
 
@@ -95,10 +94,7 @@
     if (event.type === 'pointerup') {
       if (event.button !== 0 && event.buttons & 1) return
       end(event.button === 0 && !(event.buttons & 1) && away <= SAME_PLACE)
-    } else if (
-      event.type === 'pointercancel' ||
-      (event.type === 'pointermove' && !(event.buttons & 1))
-    ) {
+    } else if (event.type === 'pointercancel' || (event.type === 'pointermove' && !(event.buttons & 1))) {
       end(false)
     } else if (event.type === 'pointermove' && away > 0) {
       drag.x = event.clientX
@@ -156,8 +152,7 @@
     const image = element.cloneNode(true)
     image.removeAttribute('id')
     for (const inner of image.querySelectorAll('[id]')) inner.removeAttribute('id')
-    for (const inner of image.querySelectorAll('iframe, video, audio, object, embed'))
-      inner.remove()
+    for (const inner of image.querySelectorAll('iframe, video, audio, object, embed')) inner.remove()
     Object.assign(image.style, {
       position: 'fixed',
       left: '0',

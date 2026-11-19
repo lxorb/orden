@@ -36,14 +36,10 @@ test('the first change still to be sent asks, and a change the account already h
   await import('../../sync-ports')
   const { openWeb } = await import('./browser-store')
   const store = await openWeb('kept-account')
-  await store.write([
-    put('spaces', { space_id: 's', root: 'r', cursor: 0, role: null, store: null }),
-  ])
+  await store.write([put('spaces', { space_id: 's', root: 'r', cursor: 0, role: null, store: null })])
   expect(asked).toBe(0)
 
-  await store.write([
-    put('outbox', { op_id: 'o', space_id: 's', op: new Uint8Array([1]), seen: 1, made_at: 2 }),
-  ])
+  await store.write([put('outbox', { op_id: 'o', space_id: 's', op: new Uint8Array([1]), seen: 1, made_at: 2 })])
   await vi.waitFor(() => expect(asked).toBe(1))
   await store.close()
 })

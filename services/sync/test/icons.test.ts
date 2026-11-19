@@ -109,8 +109,7 @@ describe('a map that is not one', () => {
 })
 
 describe('more folder icons than a space holds', () => {
-  const many = (count: number) =>
-    Object.fromEntries(Array.from({ length: count }, (_, at) => [`${at}`, 'Folder']))
+  const many = (count: number) => Object.fromEntries(Array.from({ length: count }, (_, at) => [`${at}`, 'Folder']))
 
   test('is refused by the count, at the number the app holds itself to', async () => {
     expect((await put(many(400))).status).toBe(200)
@@ -121,9 +120,7 @@ describe('more folder icons than a space holds', () => {
   })
 
   test('is refused by the size, when every entry is legal on its own', async () => {
-    const deep = Object.fromEntries(
-      Array.from({ length: 200 }, (_, at) => [`${'folder/'.repeat(40)}${at}`, 'Folder']),
-    )
+    const deep = Object.fromEntries(Array.from({ length: 200 }, (_, at) => [`${'folder/'.repeat(40)}${at}`, 'Folder']))
 
     expect((await put(deep)).status).toBe(413)
     expect(await listed()).toEqual({})

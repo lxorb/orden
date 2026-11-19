@@ -77,12 +77,7 @@ export class Images {
     this.has = options.has ?? existsSync
   }
 
-  async part(
-    id: string,
-    kind: ImageKind,
-    data: Uint8Array,
-    last: boolean,
-  ): Promise<string | null | undefined> {
+  async part(id: string, kind: ImageKind, data: Uint8Array, last: boolean): Promise<string | null | undefined> {
     if (!isImageId(id)) return null
     const now = this.now()
     this.forgetStalled(now)

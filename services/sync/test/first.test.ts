@@ -39,9 +39,7 @@ describe('a new account', () => {
     const token = await signIn(env, 'a@b.dev')
 
     const { json } = await call(env, '/v1/spaces', { token })
-    expect(json.spaces.map((one) => [one.name, one.icon, one.role])).toEqual([
-      ['Notes', 'NotebookPen', 'owner'],
-    ])
+    expect(json.spaces.map((one) => [one.name, one.icon, one.role])).toEqual([['Notes', 'NotebookPen', 'owner']])
   })
 
   test('holds one note in it, at the path the browser build also seeds', async () => {

@@ -12,13 +12,7 @@
   import { TopStrips } from '../../pane-tree/src/api'
   import { closeWindow, currentWindow, isDesktop, platform } from '../../platform/src/api'
   import { startup } from '../../launch/src/api'
-  import {
-    scratchpadOn,
-    swipeOpens,
-    tabOverview,
-    toggleTabOverview,
-    workspace,
-  } from '../../workspace/src/api'
+  import { scratchpadOn, swipeOpens, tabOverview, toggleTabOverview, workspace } from '../../workspace/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { WindowState } from '../../windows/src/api'
   import { topRow } from '../../panes/src/api'
@@ -39,8 +33,7 @@
 
   const phone = $derived(viewport.device === 'phone' && !__EVEN_PLUGIN__)
 
-  const phoneDoor = () =>
-    __EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('../../phone/src/api')
+  const phoneDoor = () => (__EVEN_PLUGIN__ ? new Promise<never>(() => undefined) : import('../../phone/src/api'))
 
   const touchTabs = $derived(viewport.touch && !__EVEN_PLUGIN__)
   const tabCount = $derived(workspace.tabsIn(workspace.panes.focusedId).length)
@@ -82,18 +75,14 @@
     else delete document.documentElement.dataset.lights
   })
 
-  const listless = $derived(
-    workspace.restored && !workspace.spaces.length && !workspace.tabs.length,
-  )
+  const listless = $derived(workspace.restored && !workspace.spaces.length && !workspace.tabs.length)
 
   const cornered = $derived(lights && !(workspace.panel && !viewport.drawer))
   const bare = $derived(!(isDesktop && !mac && modes.frame === 'orden'))
 
   $effect(() => (isDesktop ? shape.follow(currentWindow) : undefined))
 
-  const only = $derived(
-    workspace.panes.count === 1 || workspace.panes.fills ? workspace.panes.focused : null,
-  )
+  const only = $derived(workspace.panes.count === 1 || workspace.panes.fills ? workspace.panes.focused : null)
   const strips = $derived(only ?? topRow(workspace.panes.frame))
 
   let wide = $state(0)
@@ -141,19 +130,13 @@
     onclick={() => toggleTabOverview()}
   >
     <svg viewBox="0 0 14 14"
-      ><rect x="1.5" y="2.5" width="5" height="4" rx="1.2" /><rect
-        x="7.5"
-        y="2.5"
-        width="5"
-        height="4"
-        rx="1.2"
-      /><rect x="1.5" y="8" width="5" height="4" rx="1.2" /><rect
-        x="7.5"
+      ><rect x="1.5" y="2.5" width="5" height="4" rx="1.2" /><rect x="7.5" y="2.5" width="5" height="4" rx="1.2" /><rect
+        x="1.5"
         y="8"
         width="5"
         height="4"
         rx="1.2"
-      /></svg
+      /><rect x="7.5" y="8" width="5" height="4" rx="1.2" /></svg
     >
   </button>
 {/snippet}
@@ -228,12 +211,7 @@
 >
   {#if viewport.touch}
     {#if phone && !listless}
-      <button
-        class="orden-glyph back"
-        data-phone-back
-        aria-label="Back"
-        onclick={() => workspace.toggleSidebar()}
-      >
+      <button class="orden-glyph back" data-phone-back aria-label="Back" onclick={() => workspace.toggleSidebar()}>
         <svg viewBox="0 0 13 13"><path d={BACK_MARK} /></svg>
       </button>
     {:else}
@@ -276,13 +254,7 @@
 
     {#if phone}
       {#if showing}
-        <button
-          class="orden-glyph more"
-          data-phone-more
-          aria-label="More"
-          aria-haspopup="menu"
-          onclick={showMore}
-        >
+        <button class="orden-glyph more" data-phone-more aria-label="More" aria-haspopup="menu" onclick={showMore}>
           <svg viewBox="0 0 13 13"><path d={MORE_MARK} /></svg>
         </button>
       {/if}
@@ -322,8 +294,7 @@
     -webkit-user-select: none;
     --overview-solid: calc(100% - 100% * var(--overview-bar, 0));
     background: color-mix(in srgb, var(--tab-frame) var(--overview-solid), transparent);
-    box-shadow: inset 0 -1px
-      color-mix(in srgb, var(--chrome-seam) var(--overview-solid), transparent);
+    box-shadow: inset 0 -1px color-mix(in srgb, var(--chrome-seam) var(--overview-solid), transparent);
   }
 
   header:has(:global([data-region='tabs'])) {
@@ -351,10 +322,7 @@
     position: absolute;
     inset-block: 0;
     inset-inline-start: var(--left-inset, var(--card-inset));
-    width: calc(
-      var(--panes-wide, 100%) - var(--left-inset, var(--card-inset)) -
-        var(--right-inset, var(--card-inset))
-    );
+    width: calc(var(--panes-wide, 100%) - var(--left-inset, var(--card-inset)) - var(--right-inset, var(--card-inset)));
     display: flex;
     pointer-events: none;
   }

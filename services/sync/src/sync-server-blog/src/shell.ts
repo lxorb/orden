@@ -25,9 +25,7 @@ export function contents(headings: readonly Heading[]): string {
   const worth = headings.filter((one) => one.level >= 2 && one.level <= 3)
   if (worth.length < 3) return ''
 
-  return `<details class="toc-aside"><summary>Contents</summary>${tableOfContents([
-    ...worth,
-  ])}</details>`
+  return `<details class="toc-aside"><summary>Contents</summary>${tableOfContents([...worth])}</details>`
 }
 
 export function underneath(around: Around, page: Listed | null): string {

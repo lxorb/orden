@@ -21,8 +21,7 @@ function waitingIn(value: unknown): FileWaiting | null {
   return { item, file, parts, gone }
 }
 
-const same = (a: FileWaiting, b: FileWaiting) =>
-  a.item === b.item && a.file === b.file && a.gone === b.gone
+const same = (a: FileWaiting, b: FileWaiting) => a.item === b.item && a.file === b.file && a.gone === b.gone
 
 export async function waitingFiles(rows: QueueRows): Promise<FileWaiting[]> {
   const kept = await rows.read(WAITING)
@@ -30,29 +29,16 @@ export async function waitingFiles(rows: QueueRows): Promise<FileWaiting[]> {
   return kept.flatMap((one) => waitingIn(one) ?? [])
 }
 
-async function changed(
-  rows: QueueRows,
-  next: (all: FileWaiting[]) => FileWaiting[],
-): Promise<void> {
+async function changed(rows: QueueRows, next: (all: FileWaiting[]) => FileWaiting[]): Promise<void> {
   const after = next(await waitingFiles(rows))
   await rows.keep(WAITING, after.length ? after : null)
 }
 
-export async function queuedUpload(
-  rows: QueueRows,
-  item: string,
-  file: string,
-  parts: number,
-): Promise<void> {
+export async function queuedUpload(rows: QueueRows, item: string, file: string, parts: number): Promise<void> {
   await changed(rows, (all) => [...all, { item, file, parts, gone: null }])
 }
 
-export async function queuedRemoval(
-  rows: QueueRows,
-  vault: string,
-  item: string,
-  file: string,
-): Promise<void> {
+export async function queuedRemoval(rows: QueueRows, vault: string, item: string, file: string): Promise<void> {
   await changed(rows, (all) => {
     const upload = all.some((one) => one.item === item && one.file === file && one.gone === null)
     const rest = all.filter((one) => !(one.item === item && one.file === file))

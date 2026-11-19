@@ -6,9 +6,7 @@ let clicks: HTMLInputElement[] = []
 beforeEach(() => {
   clicks = []
   vi.useFakeTimers({ toFake: ['performance'] })
-  vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(function (
-    this: HTMLInputElement,
-  ) {
+  vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(function (this: HTMLInputElement) {
     clicks.push(this)
   })
 })

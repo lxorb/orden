@@ -47,8 +47,7 @@ async function window(spaces: (typeof WORK)[], active: string | null, setsRead?:
 
 const fetched = async () => (await import('./sets.svelte')).sets
 
-const names = (tabs: readonly { kind: string; path: string | null }[]) =>
-  tabs.map((one) => one.path ?? one.kind).sort()
+const names = (tabs: readonly { kind: string; path: string | null }[]) => tabs.map((one) => one.path ?? one.kind).sort()
 
 beforeEach(() => {
   const one = disk.current!
@@ -129,9 +128,7 @@ test('a space out of sight deleted closes its set, built or not', async () => {
   await after.deleteSpace('work')
   await (await fetched()).wake()
   expect(after.tabs).toEqual([])
-  expect(Object.keys((after.setsWritten() as { aside: object } | undefined)?.aside ?? {})).toEqual(
-    [],
-  )
+  expect(Object.keys((after.setsWritten() as { aside: object } | undefined)?.aside ?? {})).toEqual([])
 })
 
 test('the last space deleted leaves its tabs the window’s, for the next space made', async () => {

@@ -1,13 +1,6 @@
 import { may, type Message, type Who } from '@orden/chats'
 import { MOST_BODY } from '@orden/chats/limits'
-import {
-  chatsText,
-  hitsText,
-  type Listed,
-  messagesText,
-  oneLine,
-  type Reading,
-} from '@orden/chats/agent'
+import { chatsText, hitsText, type Listed, messagesText, oneLine, type Reading } from '@orden/chats/agent'
 import type { AgentAnswer } from '@orden/contracts'
 import { threadSpaceOf } from '../../automation/src/api'
 import type { ChatEntry, Chats } from './shapes'
@@ -36,17 +29,13 @@ const MOST_FOUND = 50
 
 async function chatsStore(): Promise<Chats> {
   if (!chatsOn()) {
-    throw new Refused(
-      'not_found',
-      'chats are turned off; the reader turns them on in Settings, Experimental',
-    )
+    throw new Refused('not_found', 'chats are turned off; the reader turns them on in Settings, Experimental')
   }
   const { chats } = await import('./store.svelte')
   for (let waited = 0; !chats.ready && waited < 8000; waited += 100) {
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
-  if (!chats.me)
-    throw new Refused('not_found', 'chats need Orden’s account, and nobody is signed in')
+  if (!chats.me) throw new Refused('not_found', 'chats need Orden’s account, and nobody is signed in')
   return chats
 }
 
@@ -61,9 +50,7 @@ function seenBy(call: Call, store: Chats): Seen[] {
   return store.list.flatMap((entry) => {
     const space = rootedAt(spaces, entry.root)
     if (!protection.agentsMay(entry.path ?? entry.root)) return []
-    return space && entry.name
-      ? [{ entry, name: oneLine(entry.name), space: oneLine(space.name) }]
-      : []
+    return space && entry.name ? [{ entry, name: oneLine(entry.name), space: oneLine(space.name) }] : []
   })
 }
 
@@ -80,14 +67,10 @@ function chatFor(call: Call, store: Chats): Seen {
   const inFront = home === undefined ? byName.filter((one) => one.entry.root === front) : []
   const fitting = inHome.length ? inHome : inFront.length ? inFront : byName
   const [found, ...others] = fitting
-  if (!found)
-    throw new Refused('not_found', `there is no chat called ${named}: list_chats names them`)
+  if (!found) throw new Refused('not_found', `there is no chat called ${named}: list_chats names them`)
   if (others.length) {
     const ids = fitting.map((one) => `${one.entry.id} in ${one.space}`).join(', ')
-    throw new Refused(
-      'ambiguous',
-      `${String(fitting.length)} chats are called ${named}: ${ids}. Name one by its id`,
-    )
+    throw new Refused('ambiguous', `${String(fitting.length)} chats are called ${named}: ${ids}. Name one by its id`)
   }
   return found
 }
@@ -178,10 +161,7 @@ async function writing(call: Call, most = Infinity) {
   const words = text(call, 'text') ?? ''
   if (!words.trim()) throw new Refused('bad_arguments', 'say text')
   if (words.length > most) {
-    throw new Refused(
-      'bad_arguments',
-      `a message is at most ${most} characters: put the rest in a note and link it`,
-    )
+    throw new Refused('bad_arguments', `a message is at most ${most} characters: put the rest in a note and link it`)
   }
   mayPost(chat)
   return { store, chat, words }

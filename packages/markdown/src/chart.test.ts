@@ -43,9 +43,7 @@ describe('reading a chart out of a fence', () => {
     const chart = readChart('title: "A count"\nstacked: true\nseries:\n  - data: [1]\n')
     expect(chart?.title).toBe('A count')
     expect(chart?.series).toEqual([{ title: '', data: [1] }])
-    expect(readChart('labels: [a, b]\nseries: [1, 2]\n')?.series).toEqual([
-      { title: '', data: [1, 2] },
-    ])
+    expect(readChart('labels: [a, b]\nseries: [1, 2]\n')?.series).toEqual([{ title: '', data: [1, 2] }])
   })
 
   test('`label` is `title`, which is what the plugin also accepts', () => {
@@ -91,9 +89,7 @@ describe('reading a chart out of a fence', () => {
 })
 
 test('a flow list over several lines: reads as the one list it is', () => {
-  const chart = readChart(
-    'labels: [\n  a,\n  b\n]\nseries:\n  - title: s\n    data: [\n      1,\n      2\n    ]\n',
-  )
+  const chart = readChart('labels: [\n  a,\n  b\n]\nseries:\n  - title: s\n    data: [\n      1,\n      2\n    ]\n')
   expect(chart?.labels).toEqual(['a', 'b'])
   expect(chart?.series[0]?.data).toEqual([1, 2])
   expect(readChart('data: [\n1,\n2\n]\n')).toBeNull()
@@ -222,9 +218,7 @@ describe('the language the numbers are written in', () => {
     const fence = '```chart\n' + THOUSANDS + '```\n'
     expect(renderMarkdown(fence, { locale: 'de' })).toContain('1.234,5')
     expect(renderMarkdown(fence, { locale: 'en-US' })).toContain('1,234.5')
-    expect(renderMarkdown(fence, { locale: 'de', escapeHtml: true, toc: true })).toContain(
-      '1.234,5',
-    )
+    expect(renderMarkdown(fence, { locale: 'de', escapeHtml: true, toc: true })).toContain('1.234,5')
   })
 })
 
@@ -358,9 +352,7 @@ test('what a comment is not: a hash inside a list; a title that begins with one;
   expect(readChart('series: [1, 2] # [3]')?.series[0]?.data).toEqual([1, 2])
   expect(readChart('title: #1 Sales\nseries: [1]')?.title).toBe('#1 Sales')
   expect(readChart('title: Issue #12\nseries: [1]')?.title).toBe('Issue')
-  const chart = readChart(
-    'labels: # the months\n  - a\nseries: # all\n  - data: # one\n      - 1\n',
-  )
+  const chart = readChart('labels: # the months\n  - a\nseries: # all\n  - data: # one\n      - 1\n')
   expect(chart?.labels).toEqual(['a'])
   expect(chart?.series[0]?.data).toEqual([1])
 })

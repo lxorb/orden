@@ -10,11 +10,7 @@ import { followHref, workspace } from '../../workspace/src/api'
 
 const SETTLES_AFTER = 900
 
-export function mountPreview(
-  host: HTMLElement,
-  note: PreviewNote,
-  from: string | null = null,
-): (() => void) | null {
+export function mountPreview(host: HTMLElement, note: PreviewNote, from: string | null = null): (() => void) | null {
   const root = workspace.rootHolding(from)
   if (root === null) return null
 

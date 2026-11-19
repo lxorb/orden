@@ -1,17 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import {
-  anythingRuns,
-  owes,
-  owesAtTheEnd,
-  owesLast,
-  runs,
-  settleUp,
-  stillWriting,
-  writing,
-  written,
-} from '../src/api'
+import { anythingRuns, owes, owesAtTheEnd, owesLast, runs, settleUp, stillWriting, writing, written } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')

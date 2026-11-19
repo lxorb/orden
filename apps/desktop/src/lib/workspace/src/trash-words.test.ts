@@ -2,8 +2,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const readOnly = new Set<string>()
 vi.mock('../../sharing/src/api', () => ({
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 const trashed: string[] = []

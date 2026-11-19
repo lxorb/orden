@@ -4,10 +4,7 @@ import FileText from 'lucide/dist/esm/icons/file-text.mjs'
 import Play from 'lucide/dist/esm/icons/play.mjs'
 import Shapes from 'lucide/dist/esm/icons/shapes.mjs'
 
-export type IconParts = readonly (readonly [
-  string,
-  Readonly<Record<string, string | number | undefined>>,
-])[]
+export type IconParts = readonly (readonly [string, Readonly<Record<string, string | number | undefined>>])[]
 
 export const ICON_ATTRIBUTES: Readonly<Record<string, string>> = {
   viewBox: '0 0 24 24',

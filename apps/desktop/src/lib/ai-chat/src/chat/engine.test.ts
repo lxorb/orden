@@ -46,9 +46,7 @@ const json = (status: number, said: unknown) => () =>
 const lines =
   (...events: unknown[]) =>
   () =>
-    new Response(
-      events.map((one) => `data: ${JSON.stringify(one)}\n\n`).join('') + 'data: [DONE]\n\n',
-    )
+    new Response(events.map((one) => `data: ${JSON.stringify(one)}\n\n`).join('') + 'data: [DONE]\n\n')
 
 const MODELS: Record<string, unknown> = {
   'https://api.anthropic.com/v1/models': {
@@ -119,12 +117,7 @@ const engine = createApiEngine({
 
 async function send(thread: Thread, text: string, controller = new AbortController()) {
   const heard: EngineEvent[] = []
-  await engine.send(
-    thread,
-    { text, attachments: [] },
-    (event) => heard.push(event),
-    controller.signal,
-  )
+  await engine.send(thread, { text, attachments: [] }, (event) => heard.push(event), controller.signal)
   return heard
 }
 
@@ -197,13 +190,7 @@ describe('a call made and answered', () => {
     await send(thread, 'Thanks.')
 
     const third = sent[2]?.body as { messages: { role: string }[] }
-    expect(third.messages.map((one) => one.role)).toEqual([
-      'user',
-      'assistant',
-      'user',
-      'assistant',
-      'user',
-    ])
+    expect(third.messages.map((one) => one.role)).toEqual(['user', 'assistant', 'user', 'assistant', 'user'])
     expect(JSON.stringify(third.messages)).toContain('EqQBCgIYAhIM')
   })
 
@@ -300,9 +287,7 @@ describe('a call that asks the reader first', () => {
     const heard = await sent(engine, thread)
 
     expect(waited).toEqual(['q1'])
-    const states = heard.flatMap((one) =>
-      one.type === 'part' && one.part.kind === 'tool' ? [one.part.state] : [],
-    )
+    const states = heard.flatMap((one) => (one.type === 'part' && one.part.kind === 'tool' ? [one.part.state] : []))
     expect(states).toContain('asking')
     expect(thread.turns[1]?.parts[2]).toMatchObject({
       state: 'ok',
@@ -400,9 +385,7 @@ describe('where the reader is', () => {
       'Space: Birds. In front: Egrets.md.',
     ])
     const second = sent[1]?.body as { messages: { role: string; content: { text?: string }[] }[] }
-    const texts = second.messages
-      .filter((one) => one.role === 'user')
-      .map((one) => one.content.at(-1)?.text)
+    const texts = second.messages.filter((one) => one.role === 'user').map((one) => one.content.at(-1)?.text)
     expect(texts).toEqual([
       '<reader-context>\nSpace: Birds. In front: Herons.md. Open: Herons.md, Egrets.md.\n</reader-context>\n\nWhat is this note about?',
       '<reader-context>\nSpace: Birds. In front: Egrets.md.\n</reader-context>\n\nAnd this one?',
@@ -422,10 +405,7 @@ describe('tools a model refuses', () => {
   test('leave their notice in the turn, above the answer that came without them', async () => {
     answers = [
       json(400, { error: { message: 'this model does not support tools' } }),
-      lines(
-        { choices: [{ delta: { content: 'Herons wade.' } }] },
-        { choices: [{ delta: {}, finish_reason: 'stop' }] },
-      ),
+      lines({ choices: [{ delta: { content: 'Herons wade.' } }] }, { choices: [{ delta: {}, finish_reason: 'stop' }] }),
     ]
     const thread = newThread('space', 'compatible-1', 'llama', 'auto', 'full')
 
@@ -456,10 +436,7 @@ describe('an effort the model refuses', () => {
     const heard = await send(thread, 'hi')
 
     expect(heard.at(-1)).toEqual({ type: 'done', stop: 'end' })
-    expect(sent.map((one) => (one.body.reasoning as { effort?: string }).effort)).toEqual([
-      'max',
-      'xhigh',
-    ])
+    expect(sent.map((one) => (one.body.reasoning as { effort?: string }).effort)).toEqual(['max', 'xhigh'])
     expect(thread.effort).toBe('xhigh')
     expect(learnt('openai', 'gpt-5.4-mini').refused).toEqual(['minimal', 'max'])
   })
@@ -518,12 +495,7 @@ describe('words steered into a running turn', () => {
     onCall = () => engine.steer(thread, 'and tag them #birds')
     await send(thread, 'What is in Birds.md?')
 
-    expect(thread.turns.map((one) => `${one.role}${one.steered ? '*' : ''}`)).toEqual([
-      'you',
-      'model',
-      'you*',
-      'model',
-    ])
+    expect(thread.turns.map((one) => `${one.role}${one.steered ? '*' : ''}`)).toEqual(['you', 'model', 'you*', 'model'])
     expect(thread.turns[1]?.replay?.messages).toHaveLength(2)
     const second = sent[1]?.body as { messages: { role: string; content: unknown }[] }
     expect(second.messages.at(-1)).toEqual({
@@ -780,9 +752,7 @@ describe('a stream that stops before it says it is done', () => {
   test('runs no call it only heard half of', async () => {
     answers = [
       cut({
-        choices: [
-          { delta: { tool_calls: [{ index: 0, id: 'c', function: { name: 'read_note' } }] } },
-        ],
+        choices: [{ delta: { tool_calls: [{ index: 0, id: 'c', function: { name: 'read_note' } }] } }],
       }),
     ]
     const heard = await send(thread(), 'Read it')

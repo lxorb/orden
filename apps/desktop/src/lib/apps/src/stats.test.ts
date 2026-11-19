@@ -22,9 +22,7 @@ describe('the clocks', () => {
     const wrap = 2 ** 32 / 90
     const fourteen = 14 * 3_600_000
     const rtp = ((fourteen * 90) % 2 ** 32) + 0
-    expect(seenAt(rtp, 100_000, clock, 100_000 + fourteen - 4000)).toBeCloseTo(
-      100_000 + fourteen - 4000,
-    )
+    expect(seenAt(rtp, 100_000, clock, 100_000 + fourteen - 4000)).toBeCloseTo(100_000 + fourteen - 4000)
     expect(wrap).toBeGreaterThan(4.7e7)
   })
 

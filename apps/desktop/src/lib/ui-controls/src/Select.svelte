@@ -114,9 +114,7 @@
 
 {#snippet named(option: Option)}
   <span class="text"
-    >{option.label}{#if option.note}<span class="mark" title={option.note} aria-hidden="true"
-        >*</span
-      >{/if}</span
+    >{option.label}{#if option.note}<span class="mark" title={option.note} aria-hidden="true">*</span>{/if}</span
   >
   {#if option.note}<span class="orden-said">{option.note}</span>{/if}
 {/snippet}

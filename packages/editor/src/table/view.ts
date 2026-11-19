@@ -11,16 +11,7 @@ import {
 import type { Command, EditorView } from '@codemirror/view'
 import { linkOpener, modifier } from '../links'
 import { redoEdit, undoEdit } from '../shared'
-import {
-  attached,
-  button,
-  collapsedAt,
-  element,
-  posOnRow,
-  sameCell,
-  showRendered,
-  showSource,
-} from './cells'
+import { attached, button, collapsedAt, element, posOnRow, sameCell, showRendered, showSource } from './cells'
 import {
   caretAtEdge,
   caretOffset,
@@ -161,9 +152,7 @@ export class TableView {
     this.scroller.append(this.table)
 
     const align = (side: 'left' | 'center' | 'right') =>
-      this.columnButton(`Align ${side}`, ALIGN_PATHS[side], (column) =>
-        this.toggleAlign(column, side),
-      )
+      this.columnButton(`Align ${side}`, ALIGN_PATHS[side], (column) => this.toggleAlign(column, side))
     this.alignButtons = { left: align('left'), center: align('center'), right: align('right') }
     this.columnBar = this.buildColumnBar()
     this.rowBar = this.buildRowBar()
@@ -233,8 +222,7 @@ export class TableView {
     if (row < 0) return model.header[column] === cell ? pending.at : null
 
     const whole = (cells: string[] | undefined) =>
-      cells?.length === mine.length &&
-      cells.every((text, at) => text === (at === column ? cell : mine[at]))
+      cells?.length === mine.length && cells.every((text, at) => text === (at === column ? cell : mine[at]))
     if (whole(model.rows[row])) return pending.at
     const found = model.rows.flatMap((cells, at) => (whole(cells) ? [at] : []))
     if (found.length === 1 && found[0] !== undefined) return { row: found[0], column }
@@ -252,9 +240,7 @@ export class TableView {
       this.pending = { at: place, value: this.pending.value }
     }
     const pending = kept ? this.pending : null
-    const incoming = pending
-      ? setCell(model, pending.at.row, pending.at.column, pending.value)
-      : model
+    const incoming = pending ? setCell(model, pending.at.row, pending.at.column, pending.value) : model
     const shown = sameModel(incoming, this.current())
     const expected = this.expected?.source === text.source ? this.expected : null
     this.aligned = expected ? expected.widths : null
@@ -320,10 +306,7 @@ export class TableView {
 
     const row = side === 'above' ? -1 : this.model.rows.length - 1
     const column = this.columnAt(row, where.x)
-    return this.focusCell(
-      { row, column },
-      { x: where.x, edge: side === 'above' ? 'top' : 'bottom' },
-    )
+    return this.focusCell({ row, column }, { x: where.x, edge: side === 'above' ? 'top' : 'bottom' })
   }
 
   focusCell(at: CellAddress, placement: Placement | number): boolean {
@@ -368,10 +351,7 @@ export class TableView {
       else if (typeof where === 'object') pos = posOnRow(editor, line, side, where.x)
     }
 
-    const goal =
-      typeof where === 'object'
-        ? where.x - editor.contentDOM.getBoundingClientRect().left
-        : undefined
+    const goal = typeof where === 'object' ? where.x - editor.contentDOM.getBoundingClientRect().left : undefined
     editor.dispatch({
       changes: line.changes,
       selection: EditorSelection.create([EditorSelection.cursor(pos, undefined, undefined, goal)]),
@@ -425,9 +405,7 @@ export class TableView {
   private keepCaretBeside(from: number, to: number) {
     const { state } = this.editor
     const blank = (pos: number) => !state.doc.lineAt(pos).text.trim()
-    const beside = [to + 1, from - 1].find(
-      (pos) => pos >= 0 && pos <= state.doc.length && blank(pos),
-    )
+    const beside = [to + 1, from - 1].find((pos) => pos >= 0 && pos <= state.doc.length && blank(pos))
     if (beside === undefined) return
     const { main } = state.selection
     if (state.selection.ranges.length === 1 && main.empty && main.head === beside) return
@@ -463,8 +441,7 @@ export class TableView {
     }
 
     const lines = this.source.split('\n')
-    lines[row < 0 ? 0 : row + 2] =
-      serializeRow(cells, sized) + (row < 0 ? '' : nameAfter(next, row))
+    lines[row < 0 ? 0 : row + 2] = serializeRow(cells, sized) + (row < 0 ? '' : nameAfter(next, row))
     this.write(lines.join('\n'), 'input.type', next, sized)
   }
 
@@ -627,8 +604,7 @@ export class TableView {
 
     if (this.gaps) {
       this.gaps.disconnect()
-      for (const one of wanted)
-        if (one.classList.contains('orden-table-gap')) this.gaps.observe(one)
+      for (const one of wanted) if (one.classList.contains('orden-table-gap')) this.gaps.observe(one)
     }
   }
 
@@ -648,8 +624,7 @@ export class TableView {
     window.addEventListener('resize', this.schedule, { passive: true })
     if (typeof IntersectionObserver !== 'undefined') {
       this.gaps = new IntersectionObserver(this.schedule, { rootMargin: '50%' })
-      for (const one of this.body?.querySelectorAll('.orden-table-gap') ?? [])
-        this.gaps.observe(one)
+      for (const one of this.body?.querySelectorAll('.orden-table-gap') ?? []) this.gaps.observe(one)
     }
     this.schedule()
   }
@@ -717,8 +692,7 @@ export class TableView {
   }
 
   private followedLink(event: MouseEvent): boolean {
-    const asked =
-      event.button === 1 || (event.button === 0 && (modifier(event) || this.editor.state.readOnly))
+    const asked = event.button === 1 || (event.button === 0 && (modifier(event) || this.editor.state.readOnly))
     const target = event.target instanceof Element ? event.target.closest('a[href]') : null
     const href = target?.getAttribute('href')
     if (!asked || !href) return false
@@ -780,8 +754,7 @@ export class TableView {
     cell.addEventListener('beforeinput', (event) => this.inputInCell(event, cell, at))
     cell.addEventListener('paste', (event) => this.pasteInCell(event, cell, at))
     cell.addEventListener(PASTE_TEXT, (event) => {
-      if (event instanceof CustomEvent && typeof event.detail === 'string')
-        this.typeInCell(event.detail, cell, at)
+      if (event instanceof CustomEvent && typeof event.detail === 'string') this.typeInCell(event.detail, cell, at)
     })
 
     return cell
@@ -910,10 +883,7 @@ export class TableView {
     this.focusAfter = { at, offset: caretOffset(cell) }
     const scroll = this.editor.scrollSnapshot()
     const made = changesDuring(this.editor, () => writingTable(() => command(this.editor)))
-    const kept = made.reduce<StateEffect<unknown> | undefined>(
-      (effect, changes) => effect?.map(changes),
-      scroll,
-    )
+    const kept = made.reduce<StateEffect<unknown> | undefined>((effect, changes) => effect?.map(changes), scroll)
     if (kept) this.editor.dispatch({ effects: kept, annotations: tableWrite.of(true) })
     this.focusAfter = null
   }
@@ -1024,15 +994,9 @@ export class TableView {
     const bar = element('div', 'orden-table-rows')
     bar.contentEditable = 'false'
     bar.append(
-      button('orden-table-btn', 'Move row up', 'M1 6l4-4 4 4', () =>
-        this.moveRowBy(this.barRow, -1),
-      ),
-      button('orden-table-btn', 'Move row down', 'M1 4l4 4 4-4', () =>
-        this.moveRowBy(this.barRow, 1),
-      ),
-      button('orden-table-btn', 'Insert row', 'M5 1v8M1 5h8', () =>
-        this.insertRowAfter(this.barRow),
-      ),
+      button('orden-table-btn', 'Move row up', 'M1 6l4-4 4 4', () => this.moveRowBy(this.barRow, -1)),
+      button('orden-table-btn', 'Move row down', 'M1 4l4 4 4-4', () => this.moveRowBy(this.barRow, 1)),
+      button('orden-table-btn', 'Insert row', 'M5 1v8M1 5h8', () => this.insertRowAfter(this.barRow)),
       button('orden-table-btn orden-table-btn-danger', 'Delete row', 'M1 1l8 8M9 1l-8 8', () =>
         this.deleteRow(this.barRow),
       ),
@@ -1047,24 +1011,11 @@ export class TableView {
       this.alignButtons.left,
       this.alignButtons.center,
       this.alignButtons.right,
-      this.columnButton('Move column left', 'M6 1L2 5l4 4', (column) =>
-        this.moveColumnBy(column, -1),
-      ),
-      this.columnButton('Move column right', 'M4 1l4 4-4 4', (column) =>
-        this.moveColumnBy(column, 1),
-      ),
-      this.columnButton('Sort by this column', 'M2 2h6M2 5h4M2 8h2', (column) =>
-        this.sortBy(column),
-      ),
-      this.columnButton('Insert column', 'M5 1v8M1 5h8', (column) =>
-        this.insertColumnAfter(column),
-      ),
-      this.columnButton(
-        'Delete column',
-        'M1 1l8 8M9 1l-8 8',
-        (column) => this.deleteColumn(column),
-        true,
-      ),
+      this.columnButton('Move column left', 'M6 1L2 5l4 4', (column) => this.moveColumnBy(column, -1)),
+      this.columnButton('Move column right', 'M4 1l4 4-4 4', (column) => this.moveColumnBy(column, 1)),
+      this.columnButton('Sort by this column', 'M2 2h6M2 5h4M2 8h2', (column) => this.sortBy(column)),
+      this.columnButton('Insert column', 'M5 1v8M1 5h8', (column) => this.insertColumnAfter(column)),
+      this.columnButton('Delete column', 'M1 1l8 8M9 1l-8 8', (column) => this.deleteColumn(column), true),
     )
     return bar
   }
@@ -1202,9 +1153,7 @@ export class TableView {
   }
 
   private cellAt(at: CellAddress): HTMLElement | null {
-    return this.table.querySelector<HTMLElement>(
-      `[data-row="${at.row}"][data-column="${at.column}"]`,
-    )
+    return this.table.querySelector<HTMLElement>(`[data-row="${at.row}"][data-column="${at.column}"]`)
   }
 
   private headerCell(column: number): HTMLTableCellElement | null {

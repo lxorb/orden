@@ -134,13 +134,8 @@ describe("an agent's session", () => {
     await settle()
 
     expect(target.querySelector('.name')?.textContent).toBe('Claude Code')
-    expect([...target.querySelectorAll('.doing .fact')].map((one) => one.textContent)).toEqual([
-      'Pressing',
-      'Shop',
-    ])
-    const pages = [...target.querySelectorAll('.tabs .orden-row-label')].map(
-      (one) => one.textContent,
-    )
+    expect([...target.querySelectorAll('.doing .fact')].map((one) => one.textContent)).toEqual(['Pressing', 'Shop'])
+    const pages = [...target.querySelectorAll('.tabs .orden-row-label')].map((one) => one.textContent)
     expect(pages).toEqual(['Shop'])
     expect(target.querySelector('img, .picture')).toBeNull()
   })
@@ -154,9 +149,7 @@ describe("an agent's session", () => {
     expect(agentMarks.waiting).toBe(1)
     const question = target.querySelector('.question')
     expect(question?.textContent).toContain('Place order on shop.example')
-    const answers = [...(question?.querySelectorAll('button') ?? [])].map((one) =>
-      one.textContent.trim(),
-    )
+    const answers = [...(question?.querySelectorAll('button') ?? [])].map((one) => one.textContent.trim())
     expect(answers).toEqual(['Don’t allow', 'Allow', 'Always on this site'])
 
     question?.querySelector<HTMLButtonElement>('.always')?.click()
@@ -201,9 +194,7 @@ describe('Full permissions', () => {
     await settle()
 
     expect(agentMarks.waiting).toBe(0)
-    await vi.waitFor(() =>
-      expect(fake.asked.find((one) => one.command === 'adopt')?.args[0]).toBe(tab.id),
-    )
+    await vi.waitFor(() => expect(fake.asked.find((one) => one.command === 'adopt')?.args[0]).toBe(tab.id))
     expect(fake.asked.some((one) => one.command === 'answer')).toBe(false)
     expect(workspace.activeTabId).toBe(reading)
     expect(workspace.tabs.some((one) => one.kind === 'web' && one.id !== reading)).toBe(true)
@@ -222,11 +213,7 @@ describe('questions outside the session', () => {
     ;[...(bubble?.querySelectorAll('button') ?? [])].at(-1)?.click()
     await settle()
 
-    expect(fake.asked.find((one) => one.command === 'answer')?.args).toEqual([
-      asked.id,
-      true,
-      false,
-    ])
+    expect(fake.asked.find((one) => one.command === 'answer')?.args).toEqual([asked.id, true, false])
     await settle()
     expect(document.body.querySelector('.pairing')).toBeNull()
   })
@@ -234,13 +221,7 @@ describe('questions outside the session', () => {
   test('a step asked of the reader is put under the bar of its tab, and takes nothing', async () => {
     fake.connect('claude', 'Claude Code')
     fake.act('claude', 't1', 'browser_click')
-    const asked = fake.ask(
-      'claude',
-      'takeover',
-      'Sign in to the bank',
-      'https://bank.example/',
-      't1',
-    )
+    const asked = fake.ask('claude', 'takeover', 'Sign in to the bank', 'https://bank.example/', 't1')
     await settle()
 
     expect(agentMarks.takeovers.t1).toEqual({ id: asked.id, reason: 'Sign in to the bank' })

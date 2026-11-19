@@ -35,9 +35,7 @@
     return Math.round(length * ratio) / ratio
   }
 
-  const shift = $derived(
-    swiping.side === 'left' ? reach - SIZE : (swiping.room?.width ?? 0) - reach,
-  )
+  const shift = $derived(swiping.side === 'left' ? reach - SIZE : (swiping.room?.width ?? 0) - reach)
 
   const drop = $derived.by(() => {
     const room = swiping.room

@@ -10,18 +10,7 @@ const count = (html: string, tag: string) => html.split(`<${tag}>`).length - 1
 
 describe('a long run of one mark', () => {
   test('renders in time that grows with its length', () => {
-    for (const unit of [
-      '*',
-      '_',
-      '*_',
-      '[^',
-      '- ',
-      '* ',
-      '1. ',
-      '> ',
-      '> - ',
-      'see https://a.b/.,',
-    ]) {
+    for (const unit of ['*', '_', '*_', '[^', '- ', '* ', '1. ', '> ', '> - ', 'see https://a.b/.,']) {
       expect(growth(rendered(unit), 16_000), unit).toBeLessThan(GROWS_AT_MOST)
     }
   }, 60_000)

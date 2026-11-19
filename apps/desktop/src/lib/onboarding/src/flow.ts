@@ -1,16 +1,6 @@
 import type { NotesFrom } from '@orden/contracts'
 
-export const STEPS = [
-  'account',
-  'appearance',
-  'heard',
-  'browser',
-  'import',
-  'notes',
-  'code',
-  'ai',
-  'welcome',
-] as const
+export const STEPS = ['account', 'appearance', 'heard', 'browser', 'import', 'notes', 'code', 'ai', 'welcome'] as const
 
 export type Step = (typeof STEPS)[number]
 
@@ -114,10 +104,7 @@ export function matching<T extends { name: string }>(list: readonly T[], query: 
 export function typedName(query: string): string {
   return query
     .trim()
-    .replace(
-      /(^|\s)(\p{Ll})/gu,
-      (_whole, space: string, letter: string) => `${space}${letter.toLocaleUpperCase()}`,
-    )
+    .replace(/(^|\s)(\p{Ll})/gu, (_whole, space: string, letter: string) => `${space}${letter.toLocaleUpperCase()}`)
 }
 
 export function requestKey(kind: 'browser' | 'notes' | 'ai', name: string): string {

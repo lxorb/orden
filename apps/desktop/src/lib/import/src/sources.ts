@@ -48,8 +48,7 @@ export async function sourcesFrom(picked: readonly PickedFile[]): Promise<Source
     const inside = (one.webkitRelativePath ?? '').trim()
     const path = tidyPath(inside.length ? inside : one.name)
     const bytes = new Uint8Array(await one.arrayBuffer())
-    if (inside.length && (!parts || !path.toLowerCase().endsWith('.zip')))
-      found.push(sourceOf(path, bytes))
+    if (inside.length && (!parts || !path.toLowerCase().endsWith('.zip'))) found.push(sourceOf(path, bytes))
     else for (const source of await expand(path, bytes, 0)) found.push(source)
   }
 
@@ -128,9 +127,7 @@ function zipName(bytes: Uint8Array | readonly unknown[]): string {
       // Not that code page; the next one is tried.
     }
   }
-  return Array.from(said, (one) =>
-    one < 0x80 ? String.fromCharCode(one) : (CP437[one - 0x80] ?? ''),
-  ).join('')
+  return Array.from(said, (one) => (one < 0x80 ? String.fromCharCode(one) : (CP437[one - 0x80] ?? ''))).join('')
 }
 
 function lazily(path: string, read: () => Promise<Uint8Array>): Source {
@@ -144,8 +141,7 @@ function lazily(path: string, read: () => Promise<Uint8Array>): Source {
   }
 }
 
-const ZIPPED_DOCUMENT =
-  /\.(docx|docm|dotx|xlsx|xlsm|pptx|pptm|odt|ods|odp|odg|epub|pages|numbers|key|vsdx)$/i
+const ZIPPED_DOCUMENT = /\.(docx|docm|dotx|xlsx|xlsm|pptx|pptm|odt|ods|odp|odg|epub|pages|numbers|key|vsdx)$/i
 
 function isZip(path: string, bytes: Uint8Array): boolean {
   if (!path.toLowerCase().endsWith('.zip') && ZIPPED_DOCUMENT.test(path)) return false

@@ -18,9 +18,7 @@ function sources(folder: string): string[] {
 describe('the module stands on its own', () => {
   test('reaches only the modules it names', () => {
     const reached = sources(SRC).flatMap((file) =>
-      [...readFileSync(file, 'utf8').matchAll(/from '(?:\.\.\/)+([a-z-]+)\/src\/api'/g)].map(
-        (found) => found[1],
-      ),
+      [...readFileSync(file, 'utf8').matchAll(/from '(?:\.\.\/)+([a-z-]+)\/src\/api'/g)].map((found) => found[1]),
     )
     expect([...new Set(reached)].sort()).toEqual([
       'away',
@@ -37,9 +35,7 @@ describe('the module stands on its own', () => {
 describe('the backends for a browser and for spaces kept here', () => {
   test('the api names no backend file statically, so startup carries only its doors', () => {
     const api = readFileSync(join(SRC, 'api.ts'), 'utf8')
-    const statics = [...api.matchAll(/^(?:import|export) (?!type )[^;]*? from '([^']+)'/gm)].map(
-      (found) => found[1],
-    )
+    const statics = [...api.matchAll(/^(?:import|export) (?!type )[^;]*? from '([^']+)'/gm)].map((found) => found[1])
     expect(statics).toEqual([])
     expect(api).toMatch(/import\('\.\/web\/commands'\)/)
     expect(api).toMatch(/import\('\.\/internal\/route'\)/)

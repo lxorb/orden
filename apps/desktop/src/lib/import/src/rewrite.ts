@@ -1,12 +1,6 @@
 import { baseUnder } from '@orden/bases'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import {
-  encodeTarget,
-  findLinks,
-  foldName,
-  type FoundLink,
-  isWebTarget,
-} from '@orden/markdown/links'
+import { encodeTarget, findLinks, foldName, type FoundLink, isWebTarget } from '@orden/markdown/links'
 
 import { linkTo } from '../../link-format/src/api'
 import { folderOf, isMarkdownPath, relativePath } from '../../platform/src/api'
@@ -28,12 +22,7 @@ export interface Rewriting {
   now: string
 }
 
-export function rewriteLinks(
-  text: string,
-  at: Rewriting,
-  find: Resolver,
-  reaches: Reaching = () => true,
-): string {
+export function rewriteLinks(text: string, at: Rewriting, find: Resolver, reaches: Reaching = () => true): string {
   const folder = folderOf(at.now)
   const tables = tableRanges(text)
   const properties = propertiesTo(text)
@@ -128,24 +117,15 @@ function spotOf(text: string, link: FoundLink): Spot {
     : { labelFrom, labelTo: Math.max(inline, labelFrom), defined: false }
 }
 
-const linksWritten = (text: string, write: Write): string =>
-  written(text, findLinks(text, true), 0, text.length, write)
+const linksWritten = (text: string, write: Write): string => written(text, findLinks(text, true), 0, text.length, write)
 
-function written(
-  text: string,
-  links: readonly FoundLink[],
-  from: number,
-  to: number,
-  write: Write,
-): string {
+function written(text: string, links: readonly FoundLink[], from: number, to: number, write: Write): string {
   let out = ''
   let at = from
   for (const link of links) {
     if (link.from < at || link.to > to) continue
     const spot = spotOf(text, link)
-    const inner = links.filter(
-      (one) => one !== link && one.from >= spot.labelFrom && one.to <= spot.labelTo,
-    )
+    const inner = links.filter((one) => one !== link && one.from >= spot.labelFrom && one.to <= spot.labelTo)
     const words = inner.length
       ? written(text, inner, spot.labelFrom, spot.labelTo, write)
       : text.slice(spot.labelFrom, spot.labelTo)
@@ -158,9 +138,7 @@ function written(
 function wikilinkParts(whole: string): { target: string; shown: string | undefined } {
   const inner = whole.replace(/^!?\[\[/, '').replace(/\]\]$/, '')
   const bar = inner.indexOf('|')
-  return bar === -1
-    ? { target: inner, shown: undefined }
-    : { target: inner.slice(0, bar), shown: inner.slice(bar) }
+  return bar === -1 ? { target: inner, shown: undefined } : { target: inner.slice(0, bar), shown: inner.slice(bar) }
 }
 
 function definitionFollowed(
@@ -186,11 +164,7 @@ function definitionFollowed(
   return `${head}${encodeTarget(now)}${anchor}${text.slice(saidFrom + said.length, link.to)}`
 }
 
-export function canvasFollowed(
-  bytes: Uint8Array,
-  moved: ReadonlyMap<string, string>,
-  under = '',
-): Uint8Array {
+export function canvasFollowed(bytes: Uint8Array, moved: ReadonlyMap<string, string>, under = ''): Uint8Array {
   let text: string
   try {
     text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
@@ -250,8 +224,7 @@ export function linksFollowed(
     const top = path.replace(/^\/+/, '')
     const beside = joined(here, path)
     const dotted = /^\.{1,2}(\/|$)/.test(path)
-    const fromTop =
-      path.startsWith('/') || (!dotted && !known.has(foldName(beside)) && known.has(foldName(top)))
+    const fromTop = path.startsWith('/') || (!dotted && !known.has(foldName(beside)) && known.has(foldName(top)))
     if (!fromTop) {
       const now = movedTo(beside)
       if (now !== undefined) return relativePath(here, now)
@@ -303,8 +276,7 @@ export function linksFollowed(
     const respelt = now === undefined ? said : respelled(said, meant, now)
     if (respelt === null) return whole
 
-    const renamed =
-      under && said.startsWith('/') ? `/${under}/${respelt.replace(/^\/+/, '')}` : respelt
+    const renamed = under && said.startsWith('/') ? `/${under}/${respelt.replace(/^\/+/, '')}` : respelt
     const landing = landed(meant)
     const top = isMarkdownPath(landing) ? withoutExtension(landing) : landing
     const from = landed(was)
@@ -317,8 +289,7 @@ export function linksFollowed(
     const bang = link.embed ? '!' : ''
     const anchor = fragment === null ? '' : `#${fragment}`
     const pipe = inCode(tables, link.from) ? '\\|' : '|'
-    const shownWords =
-      shown ?? (reached === renamed || bang || fragment !== null ? '' : `${pipe}${renamed}`)
+    const shownWords = shown ?? (reached === renamed || bang || fragment !== null ? '' : `${pipe}${renamed}`)
     return `${bang}[[${path.replace(said, () => reached)}${anchor}${cell ? '\\' : ''}${shownWords}]]`
   })
 }
@@ -350,17 +321,11 @@ function fitting(said: string, called: ReadonlyMap<string, string[]>): string[] 
 function holds(path: string, space: ReadonlyMap<string, string[]>): boolean {
   const wanted = foldName(path)
   return fitting(path, space).some(
-    (one) =>
-      foldName(namesNote(one) ? withoutExtension(one) : one) === wanted || foldName(one) === wanted,
+    (one) => foldName(namesNote(one) ? withoutExtension(one) : one) === wanted || foldName(one) === wanted,
   )
 }
 
-function captured(
-  said: string,
-  meant: string,
-  from: string,
-  space: ReadonlyMap<string, string[]>,
-): boolean {
+function captured(said: string, meant: string, from: string, space: ReadonlyMap<string, string[]>): boolean {
   if (said.startsWith('/')) return false
   const note = namesNote(meant)
   const here = foldName(folderOf(from))
@@ -375,18 +340,13 @@ function captured(
 
 const namesNote = (path: string): boolean => isMarkdownPath(path) || isWebTarget(path)
 
-function nearest(
-  said: string,
-  from: string,
-  called: ReadonlyMap<string, string[]>,
-): string | undefined {
+function nearest(said: string, from: string, called: ReadonlyMap<string, string[]>): string | undefined {
   const fits = fitting(said, called)
   const here = folderOf(from)
   const depth = (path: string) => path.split('/').length
   const beside = (path: string) => (folderOf(path) === here ? 0 : 1)
   return [...fits].sort(
-    (one, other) =>
-      beside(one) - beside(other) || depth(one) - depth(other) || (one < other ? -1 : 1),
+    (one, other) => beside(one) - beside(other) || depth(one) - depth(other) || (one < other ? -1 : 1),
   )[0]
 }
 
@@ -412,11 +372,7 @@ function respelled(said: string, from: string, to: string): string | null {
   return `${lead}${[...folders, spelled].join('/')}`
 }
 
-export function baseFollowed(
-  bytes: Uint8Array,
-  under: string,
-  moved?: (path: string) => string,
-): Uint8Array {
+export function baseFollowed(bytes: Uint8Array, under: string, moved?: (path: string) => string): Uint8Array {
   let text: string
   try {
     text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes)
@@ -430,11 +386,7 @@ export function baseFollowed(
 
 const BASE_FENCE = /^(`{3,}|~{3,})[ \t]*base(?:[ \t][^\r\n]*)?\r?\n([\s\S]*?)^\1[`~]*[ \t]*\r?$/gm
 
-export function basesFollowed(
-  text: string,
-  under: string,
-  moved?: (path: string) => string,
-): string {
+export function basesFollowed(text: string, under: string, moved?: (path: string) => string): string {
   return text.replace(BASE_FENCE, (whole, _fence: string, yaml: string) => {
     const lines = yaml.replace(/\r\n/g, '\n')
     const followed = baseUnder(lines, under, moved)
@@ -464,8 +416,7 @@ export function isCanvas(path: string): boolean {
   return /\.canvas$/i.test(path)
 }
 
-const NEW_BLOCK =
-  /^(?:[-+*][ \t]|\d{1,9}[.)][ \t]|#{1,6}(?:[ \t]|$)|`{3}|~{3}|([-*_])(?:[ \t]*\1){2,}[ \t]*$)/
+const NEW_BLOCK = /^(?:[-+*][ \t]|\d{1,9}[.)][ \t]|#{1,6}(?:[ \t]|$)|`{3}|~{3}|([-*_])(?:[ \t]*\1){2,}[ \t]*$)/
 
 function tableRanges(text: string): [number, number][] {
   const ranges: [number, number][] = []
@@ -486,9 +437,7 @@ function tableRanges(text: string): [number, number][] {
 
     let last = one
     const row = (line: number) =>
-      (lines[line] ?? '').trim() !== '' &&
-      !NEW_BLOCK.test(lines[line] ?? '') &&
-      depth(line) === depth(one)
+      (lines[line] ?? '').trim() !== '' && !NEW_BLOCK.test(lines[line] ?? '') && depth(line) === depth(one)
     while (row(last + 1)) last += 1
     ranges.push([starts[one - 1] ?? 0, (starts[last + 1] ?? text.length + 1) - 1])
     one = last
@@ -595,8 +544,7 @@ export class ExportFiles {
     const depth = (path: string) => path.split('/').length
     const beside = (path: string) => (folderOf(path) === here ? 0 : 1)
     const nearest = [...fits].sort(
-      (one, other) =>
-        beside(one) - beside(other) || depth(one) - depth(other) || (one < other ? -1 : 1),
+      (one, other) => beside(one) - beside(other) || depth(one) - depth(other) || (one < other ? -1 : 1),
     )[0]
     return nearest === undefined || nearest === found.path
   }
@@ -612,10 +560,7 @@ export class ExportFiles {
     }
 
     const here = folderOf(from)
-    const tries = (rooted ? [cleaned] : [joined(here, cleaned), cleaned]).flatMap((one) => [
-      one,
-      `${one}.md`,
-    ])
+    const tries = (rooted ? [cleaned] : [joined(here, cleaned), cleaned]).flatMap((one) => [one, `${one}.md`])
     for (const one of tries) {
       const found = this.byPath.exact(one)
       if (found) return this.told(found)
@@ -652,8 +597,7 @@ export class ExportFiles {
     const depth = (path: string) => path.split('/').length
     const beside = (path: string) => (folderOf(path) === here ? 0 : 1)
     return [...fits].sort(
-      ([one], [other]) =>
-        beside(one) - beside(other) || depth(one) - depth(other) || (one < other ? -1 : 1),
+      ([one], [other]) => beside(one) - beside(other) || depth(one) - depth(other) || (one < other ? -1 : 1),
     )[0]?.[1]
   }
 

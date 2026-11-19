@@ -16,11 +16,7 @@
   <div class="card">
     <div class="verbs">
       {#each VERBS as verb (verb.id)}
-        <button
-          class="orden-chip"
-          class:is-on={rewriting.verb === verb.id}
-          onclick={() => rewriting.run(verb.id)}
-        >
+        <button class="orden-chip" class:is-on={rewriting.verb === verb.id} onclick={() => rewriting.run(verb.id)}>
           {verb.label}
         </button>
       {/each}
@@ -68,9 +64,7 @@
   {#if answer}
     <div class="answers">
       <button class="orden-button is-quiet" onclick={() => rewriting.close()}>Discard</button>
-      <button class="orden-button" disabled={rewriting.running} onclick={() => rewriting.accept()}>
-        Replace
-      </button>
+      <button class="orden-button" disabled={rewriting.running} onclick={() => rewriting.accept()}> Replace </button>
     </div>
   {/if}
 </Sheet>

@@ -63,14 +63,7 @@ const ITEM: Item = {
 const URL_MADE = 'https://orden.so/pass-link/AAAAAAAAAAAAAAAAAAAAAA#key'
 
 beforeEach(() => {
-  for (const one of [
-    fake.createLink,
-    fake.links,
-    fake.removeLink,
-    fake.removeExpired,
-    fake.pass.copy,
-  ])
-    one.mockReset()
+  for (const one of [fake.createLink, fake.links, fake.removeLink, fake.removeExpired, fake.pass.copy]) one.mockReset()
   fake.pass.vaults = [vaultAs('editor')]
   fake.pass.items = [ITEM]
   fake.account.user = { id: 'ada', email: 'ada@example.com', name: 'Ada' }
@@ -108,9 +101,7 @@ describe('making a secure link', () => {
     expect(button('Expires after').textContent).toContain('1 week')
     expect(views().placeholder).toBe('Unlimited')
     button('Create').click()
-    await vi.waitFor(() =>
-      expect(fake.createLink).toHaveBeenCalledWith(ITEM, { expires: 7 * DAY, views: null }),
-    )
+    await vi.waitFor(() => expect(fake.createLink).toHaveBeenCalledWith(ITEM, { expires: 7 * DAY, views: null }))
   })
 
   test('offers each life, and takes the one chosen and a view limit', async () => {
@@ -118,26 +109,20 @@ describe('making a secure link', () => {
     sheet()
     button('Expires after').click()
     flushSync()
-    const lives = [...document.querySelectorAll('[role="option"]')].map((one) =>
-      one.textContent.trim(),
-    )
+    const lives = [...document.querySelectorAll('[role="option"]')].map((one) => one.textContent.trim())
     expect(lives).toEqual(['1 hour', '1 day', '1 week', '2 weeks', '30 days'])
     option('1 hour').click()
     flushSync()
     typed(views(), '3')
     button('Create').click()
-    await vi.waitFor(() =>
-      expect(fake.createLink).toHaveBeenCalledWith(ITEM, { expires: HOUR, views: 3 }),
-    )
+    await vi.waitFor(() => expect(fake.createLink).toHaveBeenCalledWith(ITEM, { expires: HOUR, views: 3 }))
   })
 
   test('shows the address once made, and copies it', async () => {
     fake.createLink.mockResolvedValue({ url: URL_MADE, link: {} })
     sheet()
     button('Create').click()
-    await vi.waitFor(() =>
-      expect(target.querySelector<HTMLInputElement>('[data-link-url]')?.value).toBe(URL_MADE),
-    )
+    await vi.waitFor(() => expect(target.querySelector<HTMLInputElement>('[data-link-url]')?.value).toBe(URL_MADE))
     button('Copy').click()
     await vi.waitFor(() => expect(fake.pass.copy).toHaveBeenCalledWith(URL_MADE))
   })
@@ -157,9 +142,7 @@ describe('making a secure link', () => {
     fake.createLink.mockRejectedValue(new Error('pass: too many links'))
     sheet()
     button('Create').click()
-    await vi.waitFor(() =>
-      expect(target.querySelector('[role="alert"]')?.textContent).toContain('too many links'),
-    )
+    await vi.waitFor(() => expect(target.querySelector('[role="alert"]')?.textContent).toContain('too many links'))
   })
 
   test('asks to sign in, and is not offered to a viewer', () => {

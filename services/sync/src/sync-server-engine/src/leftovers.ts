@@ -43,9 +43,7 @@ const isObject = (name: string) =>
   name.startsWith(DOMAIN)
 
 async function sweepWords(env: Env): Promise<number> {
-  const { results } = await env.DB.prepare(
-    'select what from leftovers where what like ? order by since, what limit ?',
-  )
+  const { results } = await env.DB.prepare('select what from leftovers where what like ? order by since, what limit ?')
     .bind(`${WORDS}%`, WORDS_AT_ONCE)
     .all<{ what: string }>()
   if (!results.length) return 0
@@ -54,9 +52,9 @@ async function sweepWords(env: Env): Promise<number> {
   const ids = names.map((one) => one.slice(WORDS.length))
   try {
     await env.DB.batch([
-      env.DB.prepare(
-        'delete from note_search where note_id in (select value from json_each(?))',
-      ).bind(JSON.stringify(ids)),
+      env.DB.prepare('delete from note_search where note_id in (select value from json_each(?))').bind(
+        JSON.stringify(ids),
+      ),
       env.DB.prepare('delete from leftovers where what in (select value from json_each(?))').bind(
         JSON.stringify(names),
       ),
@@ -122,23 +120,18 @@ export async function sweepLeftovers(env: Env): Promise<number> {
     }
   }
 
-  const of = (prefix: string) =>
-    loose.filter((one) => one.startsWith(prefix)).map((one) => one.slice(prefix.length))
+  const of = (prefix: string) => loose.filter((one) => one.startsWith(prefix)).map((one) => one.slice(prefix.length))
   const emptied = new Set([
     ...(await eraseRooms(env, of(ROOM))).map((id) => ROOM + id),
     ...(await eraseHubs(env, of(HUB))).map((id) => HUB + id),
     ...(await hooks().machines.eraseMachines(env, of(MACHINE))).map((id) => MACHINE + id),
     ...(await hooks().chats.eraseChats(env, of(CHAT))).map((id) => CHAT + id),
-    ...(await hooks().feedback.withdrawIssues(env, of(ISSUES).map(Number))).map(
-      (n) => ISSUES + String(n),
-    ),
+    ...(await hooks().feedback.withdrawIssues(env, of(ISSUES).map(Number))).map((n) => ISSUES + String(n)),
     ...(await releaseLeftDomains(env, of(DOMAIN))).map((domain) => DOMAIN + domain),
     ...(homesBucket ? homes : []),
   ])
 
-  const done = names.filter(
-    (one) => (!isObject(one) && !one.startsWith(HOME)) || named.has(one) || emptied.has(one),
-  )
+  const done = names.filter((one) => (!isObject(one) && !one.startsWith(HOME)) || named.has(one) || emptied.has(one))
 
   for (const chunk of chunks(done)) {
     await env.DB.prepare(`delete from leftovers where what in (${places(chunk.length)})`)
@@ -193,11 +186,7 @@ async function stillNamed(env: Env, names: readonly string[]): Promise<Set<strin
     'select id as one from notes where not (deleted = 1 and deleted_at is null) and id in',
     byNote,
   )
-  const heldVersions = await askIn(
-    env,
-    'select distinct hash as one from note_versions where hash in',
-    versions,
-  )
+  const heldVersions = await askIn(env, 'select distinct hash as one from note_versions where hash in', versions)
   const heldBlobs = await askIn(env, 'select distinct hash as one from blobs where hash in', blobs)
   const heldChats = await askIn(env, 'select id as one from chats where id in', chats)
 
@@ -211,11 +200,7 @@ async function stillNamed(env: Env, names: readonly string[]): Promise<Set<strin
   return new Set([...notes, ...heldVersions, ...heldBlobs, ...heldChats, ...heldPassFiles])
 }
 
-async function askIn(
-  env: Env,
-  question: string,
-  keys: ReadonlyMap<string, string>,
-): Promise<string[]> {
+async function askIn(env: Env, question: string, keys: ReadonlyMap<string, string>): Promise<string[]> {
   const found = await askInChunks([...new Set(keys.values())], async (chunk) => {
     const { results } = await env.DB.prepare(`${question} (${places(chunk.length)})`)
       .bind(...chunk)

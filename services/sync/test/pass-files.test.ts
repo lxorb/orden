@@ -34,19 +34,15 @@ function lengthOf(raw: BodyInit): number {
 }
 
 function put(who: Person, at: string, raw: BodyInit, query = '') {
-  return call<{ stored?: boolean; size?: number; error?: string }>(
-    env,
-    `/v2/pass/files/${at}${query}`,
-    {
-      method: 'PUT',
-      raw,
-      token: who.token,
-      headers: {
-        'content-type': 'application/octet-stream',
-        'content-length': String(lengthOf(raw)),
-      },
+  return call<{ stored?: boolean; size?: number; error?: string }>(env, `/v2/pass/files/${at}${query}`, {
+    method: 'PUT',
+    raw,
+    token: who.token,
+    headers: {
+      'content-type': 'application/octet-stream',
+      'content-length': String(lengthOf(raw)),
     },
-  )
+  })
 }
 
 function get(who: Person, at: string, query = '') {
@@ -216,9 +212,7 @@ describe('the files of an item', () => {
     const file = anId()
     const at = `${vault}/${item}/${file}`
     await put(ada, at, 'back')
-    env.db
-      .prepare('insert into leftovers (what, since) values (?, 1)')
-      .run(`pass/files/${item}/${file}/0`)
+    env.db.prepare('insert into leftovers (what, since) values (?, 1)').run(`pass/files/${item}/${file}/0`)
     await sweepLeftovers(env)
     expect((await get(ada, at)).text).toBe('back')
   })
@@ -228,24 +222,17 @@ describe('a file part written while its item or its writer goes', () => {
   test.each([
     [
       'the item is deleted',
-      () =>
-        env.db.prepare("update pass_items set deleted_at = 1, body = '' where id = ?").run(item),
+      () => env.db.prepare("update pass_items set deleted_at = 1, body = '' where id = ?").run(item),
       404,
     ],
     [
       'the writer is removed',
-      () =>
-        env.db
-          .prepare("update pass_members set state = 'removed' where email = 'bob@example.com'")
-          .run(),
+      () => env.db.prepare("update pass_members set state = 'removed' where email = 'bob@example.com'").run(),
       404,
     ],
     [
       'the writer becomes a viewer',
-      () =>
-        env.db
-          .prepare("update pass_members set role = 'viewer' where email = 'bob@example.com'")
-          .run(),
+      () => env.db.prepare("update pass_members set role = 'viewer' where email = 'bob@example.com'").run(),
       403,
     ],
   ] as const)('is not kept when %s', async (_, goes, status) => {
@@ -254,9 +241,7 @@ describe('a file part written while its item or its writer goes', () => {
     item = anId()
     await api.item(ada, vault, item)
     env.justBefore(/insert into pass_file_parts/, goes)
-    expect((await put(bob, `${vault}/${item}/${anId()}`, 'part', '?part=0&parts=1')).status).toBe(
-      status,
-    )
+    expect((await put(bob, `${vault}/${item}/${anId()}`, 'part', '?part=0&parts=1')).status).toBe(status)
     expect(env.db.prepare('select count(*) as n from pass_file_parts').get()).toEqual({ n: 0 })
     expect(objects()).toEqual([])
   })

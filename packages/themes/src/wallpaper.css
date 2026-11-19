@@ -39,16 +39,8 @@
 
 :root {
   --wallpaper-field:
-    radial-gradient(
-      110% 90% at 0% 0%,
-      color-mix(in srgb, var(--accent) 40%, transparent),
-      transparent 62%
-    ),
-    radial-gradient(
-      90% 100% at 100% 100%,
-      color-mix(in srgb, var(--canvas-5) 25%, transparent),
-      transparent 60%
-    ),
+    radial-gradient(110% 90% at 0% 0%, color-mix(in srgb, var(--accent) 40%, transparent), transparent 62%),
+    radial-gradient(90% 100% at 100% 100%, color-mix(in srgb, var(--canvas-5) 25%, transparent), transparent 60%),
     linear-gradient(160deg, var(--wallpaper-base-1), var(--wallpaper-base-2));
 
   --window-ground: var(--wallpaper-ground);
@@ -64,8 +56,8 @@
     var(--wallpaper-grain, none),
     var(--wallpaper-sharp, none) var(--wallpaper-position, center) / var(--wallpaper-size, cover)
       var(--wallpaper-repeat, no-repeat),
-    var(--wallpaper-picture, var(--wallpaper-field)) var(--wallpaper-position, center) /
-      var(--wallpaper-size, cover) var(--wallpaper-repeat, no-repeat),
+    var(--wallpaper-picture, var(--wallpaper-field)) var(--wallpaper-position, center) / var(--wallpaper-size, cover)
+      var(--wallpaper-repeat, no-repeat),
     var(--wallpaper-mean, var(--wallpaper-ground));
 
   --content-ground: color-mix(in srgb, var(--bg) var(--content-alpha), transparent);

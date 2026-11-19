@@ -13,8 +13,7 @@ function inPieces(stream: string, size: number): string[] {
   return out
 }
 
-const STREAM =
-  'data: {"a":1}\n\ndata: {"b":2}\n\nevent: ping\ndata: {"c":3}\n\n' + `data: ${SSE_DONE}\n\n`
+const STREAM = 'data: {"a":1}\n\ndata: {"b":2}\n\nevent: ping\ndata: {"c":3}\n\n' + `data: ${SSE_DONE}\n\n`
 
 describe('splitting a stream into events', () => {
   test('reads the data lines and ignores the rest', () => {

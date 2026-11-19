@@ -1,10 +1,5 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import {
-  EditorSelection,
-  EditorState,
-  type StateCommand,
-  type Transaction,
-} from '@codemirror/state'
+import { EditorSelection, EditorState, type StateCommand, type Transaction } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { ordenMarkdownExtensions } from './markdown/extensions'
@@ -40,9 +35,7 @@ describe('edit14 marks over a callout', () => {
   })
 
   test('a highlight over a whole callout keeps it a callout', () => {
-    expect(ran(highlightAcross(highlightTone(null)), '> [!NOTE] Title\n> body')).not.toContain(
-      '==[!NOTE]',
-    )
+    expect(ran(highlightAcross(highlightTone(null)), '> [!NOTE] Title\n> body')).not.toContain('==[!NOTE]')
   })
 })
 
@@ -59,8 +52,6 @@ describe('clear formatting over a selection that starts or ends inside a run', (
   })
 
   test('a run the selection enters by its start is opened again where the selection ends', () => {
-    expect(cleared('Keep this and *that one* there.', 'this and *that')).toBe(
-      'Keep this and that *one* there.',
-    )
+    expect(cleared('Keep this and *that one* there.', 'this and *that')).toBe('Keep this and that *one* there.')
   })
 })

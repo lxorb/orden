@@ -16,10 +16,7 @@ describe('attachments met from two devices', () => {
 
   test('lose what either side took off', () => {
     const base = [file('a'), file('b')]
-    expect(mergedAttachments(base, [file('b')], [file('a'), file('b'), file('c')])).toEqual([
-      file('b'),
-      file('c'),
-    ])
+    expect(mergedAttachments(base, [file('b')], [file('a'), file('b'), file('c')])).toEqual([file('b'), file('c')])
   })
 
   test('without a base keep both sides', () => {

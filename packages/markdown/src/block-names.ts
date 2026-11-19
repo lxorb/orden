@@ -57,11 +57,7 @@ function endOf(rows: readonly Row[], line: number): number {
   }
 }
 
-export function namedBlock(
-  source: string,
-  line: number,
-  id: () => string,
-): { id: string; source: string } | null {
+export function namedBlock(source: string, line: number, id: () => string): { id: string; source: string } | null {
   const rows = rowsOf(source)
   const row = rows[line]
   if (!row || row.matter) return null

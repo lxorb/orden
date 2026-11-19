@@ -26,9 +26,7 @@ vi.mock('../../platform/src/tauri', () => ({
         return Promise.resolve(undefined)
       }
       case 'list_paper_texts':
-        return Promise.resolve(
-          [...store.records].map(([path, content]) => ({ path, size: content.length })),
-        )
+        return Promise.resolve([...store.records].map(([path, content]) => ({ path, size: content.length })))
       default:
         return Promise.reject(new Error(`no such command: ${command}`))
     }
@@ -54,8 +52,7 @@ const { shownName } = await import('@orden/markdown/note-name')
 const ROOT = '/space'
 const page = (text: string) => text.split(' ')
 
-const found = (source: string, excluded: readonly string[] = []) =>
-  searchPapers(ROOT, parseQuery(source), 20, excluded)
+const found = (source: string, excluded: readonly string[] = []) => searchPapers(ROOT, parseQuery(source), 20, excluded)
 
 beforeEach(() => {
   forgetPapers()
@@ -534,10 +531,7 @@ describe('papers inside a folder or a space', () => {
     await writePapers()
     await settled()
 
-    expect([...store.records.keys()].sort()).toEqual([
-      '/renamed/Week/Ink.pdf',
-      '/renamed/Week/Optics.pages.pdf',
-    ])
+    expect([...store.records.keys()].sort()).toEqual(['/renamed/Week/Ink.pdf', '/renamed/Week/Optics.pages.pdf'])
     expect(searchPapers('/renamed', parseQuery('ink'), 20)).toHaveLength(1)
   })
 })

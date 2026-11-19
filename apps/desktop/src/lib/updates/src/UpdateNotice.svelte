@@ -65,8 +65,7 @@
   async function restart() {
     restarting = true
     try {
-      if (system && !__EVEN_PLUGIN__)
-        command = await (await import('./system-update')).updateBySystem(version, channel)
+      if (system && !__EVEN_PLUGIN__) command = await (await import('./system-update')).updateBySystem(version, channel)
       else await (moving ? (await import('./app-place')).moveToApplications() : restartToUpdate())
     } catch (error) {
       log('error', `update: ${String(error)}`)
@@ -80,9 +79,7 @@
   class:is-news={news}
   class:is-told={command !== null}
   transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-  {@attach told(
-    managed ? `Orden ${version} is available.` : `Orden ${version} is ready to install.`,
-  )}
+  {@attach told(managed ? `Orden ${version} is available.` : `Orden ${version} is ready to install.`)}
   {@attach heldBy}
 >
   {#if command}

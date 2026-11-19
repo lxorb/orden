@@ -1,12 +1,4 @@
-import {
-  KEPT_HOME,
-  locksHere,
-  locksWork,
-  log,
-  nameOf,
-  within,
-  joinPath,
-} from '../../platform/src/api'
+import { KEPT_HOME, locksHere, locksWork, log, nameOf, within, joinPath } from '../../platform/src/api'
 import { keptCameFrom, keptFolder } from '../../web-backend/src/api'
 import { invoke as crate } from '../../crate/src/api'
 import { hearHere } from '../../windows/src/api'
@@ -78,10 +70,10 @@ export function tasksSince(before: string, now: string): string[] {
 
 async function backupOf(from: string, rest: string): Promise<string | null> {
   const backups = joinPath(joinPath(await crate<string>('spaces_root'), KEPT_HOME), '.backups')
-  const tree = await crate<{ children?: { name: string; path: string; is_dir: boolean }[] }>(
-    'read_tree',
-    { root: backups, options: { every: true } },
-  ).catch(() => null)
+  const tree = await crate<{ children?: { name: string; path: string; is_dir: boolean }[] }>('read_tree', {
+    root: backups,
+    options: { every: true },
+  }).catch(() => null)
   const named = `${nameOf(from)} `
   const found = (tree?.children ?? [])
     .filter((one) => one.is_dir && one.name.startsWith(named))
@@ -103,8 +95,7 @@ async function leftBehind(add: Add): Promise<number> {
     const now = await textOf(left)
     if (now === null) return 0
     const marker = joinPath(kept.name, TAKEN)
-    const before =
-      (await textOf(marker)) ?? (await backupOf(from, rest)) ?? (await kept.readText(rest)) ?? ''
+    const before = (await textOf(marker)) ?? (await backupOf(from, rest)) ?? (await kept.readText(rest)) ?? ''
     if (before === now) return 0
     let count = 0
     for (const task of tasksSince(before, now)) {

@@ -45,9 +45,7 @@ describe('the shortcuts', () => {
 
   test('run a feature through the command it registered', async () => {
     const ran: string[] = []
-    const unregister = registerCommand('app.scratchpad', () =>
-      Promise.resolve(() => void ran.push('scratchpad')),
-    )
+    const unregister = registerCommand('app.scratchpad', () => Promise.resolve(() => void ran.push('scratchpad')))
     const context = { palette: () => undefined, fullscreen: () => undefined }
     expect(runEntry('app.scratchpad', context)).toBe(true)
     await vi.waitFor(() => expect(ran).toEqual(['scratchpad']))

@@ -35,9 +35,7 @@ class Updates {
 
   system = $state(false)
 
-  channel = $state<Channel>(
-    __APP_VERSION__.includes('-') ? 'unstable' : asChannel(storedText(CHANNEL_KEY)),
-  )
+  channel = $state<Channel>(__APP_VERSION__.includes('-') ? 'unstable' : asChannel(storedText(CHANNEL_KEY)))
 
   private lookedAt = 0
   private running: { stream: number; done: Promise<void> } | null = null

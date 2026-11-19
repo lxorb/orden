@@ -32,9 +32,7 @@ function agedBy(env: TestEnv, ms: number): void {
 }
 
 function rows(env: TestEnv, noteId: string): { at: number; hash: string; by: string }[] {
-  return env.db
-    .prepare('select at, hash, by from note_versions where note_id = ? order by at')
-    .all(noteId) as never
+  return env.db.prepare('select at, hash, by from note_versions where note_id = ? order by at').all(noteId) as never
 }
 
 describe('the account keeps what a note said', () => {
@@ -125,9 +123,7 @@ describe('the account keeps what a note said', () => {
     const two = await sha256('# Two')
     env.justBefore(/^update note_versions set at/, () => {
       env.db
-        .prepare(
-          "update note_versions set at = at + 1, hash = 'other' where note_id = ? and hash = ?",
-        )
+        .prepare("update note_versions set at = at + 1, hash = 'other' where note_id = ? and hash = ?")
         .run(note, two)
     })
     await call(env, `/v1/notes/${note}`, {
@@ -136,10 +132,7 @@ describe('the account keeps what a note said', () => {
       body: { content: '# Three', baseVersion: 2 },
     })
 
-    expect(rows(env, note).map((one) => one.hash)).toEqual([
-      await sha256('# One'),
-      await sha256('# Three'),
-    ])
+    expect(rows(env, note).map((one) => one.hash)).toEqual([await sha256('# One'), await sha256('# Three')])
   })
 
   test('but not into the words of another device', async () => {
@@ -191,11 +184,7 @@ describe('the account keeps what a note said', () => {
     const at = Date.now() + 60 * 1000
     const clock = vi.spyOn(Date, 'now').mockReturnValue(at)
     env.justBefore(/^update or ignore note_versions set at|^update note_versions set at/, () => {
-      env.db
-        .prepare(
-          "insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'x', 1, '')",
-        )
-        .run(note, at)
+      env.db.prepare("insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'x', 1, '')").run(note, at)
     })
     try {
       await call(env, `/v1/notes/${note}`, {
@@ -290,9 +279,7 @@ describe('the account keeps what a note said', () => {
   })
 
   test('and keeps a bounded number of them per note', async () => {
-    const insert = env.db.prepare(
-      'insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
-    )
+    const insert = env.db.prepare('insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)')
 
     env.db.exec(`delete from note_versions where note_id = '${note}'`)
 
@@ -314,9 +301,7 @@ describe('the account keeps what a note said', () => {
   })
 
   test('and the sweep keeps up with a busy day rather than falling behind it', async () => {
-    const insert = env.db.prepare(
-      'insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
-    )
+    const insert = env.db.prepare('insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)')
 
     const other = await call<VersionView>(env, `/v1/spaces/${space}/notes`, {
       token,
@@ -334,9 +319,7 @@ describe('the account keeps what a note said', () => {
     await sweepVersions(env, Date.now())
 
     for (const which of [note, second]) {
-      const held = rows(env, which).filter(
-        (one) => one.at >= from && one.at < from + 24 * 60 * 60 * 1000,
-      )
+      const held = rows(env, which).filter((one) => one.at >= from && one.at < from + 24 * 60 * 60 * 1000)
       expect(held.length).toBeLessThanOrEqual(25)
     }
   })
@@ -402,10 +385,8 @@ describe('a note many write in at once', () => {
       "insert into note_versions (note_id, at, hash, size, by, held) values (?, ?, ?, 5, '', ?)",
     )
     const week = 7 * 24 * 60 * 60 * 1000
-    for (let at = 1; at <= 50; at++)
-      insert.run(note, clock - at * week, `week-${at}`, at === 30 ? 1 : 0)
-    for (let at = 0; at < MOST_KEPT; at++)
-      insert.run(note, clock - 60 * 60 * 1000 + at, `crowd-${at}`, 0)
+    for (let at = 1; at <= 50; at++) insert.run(note, clock - at * week, `week-${at}`, at === 30 ? 1 : 0)
+    for (let at = 0; at < MOST_KEPT; at++) insert.run(note, clock - 60 * 60 * 1000 + at, `crowd-${at}`, 0)
 
     await saves(1, 1200, ['dev-owner'])
 
@@ -501,9 +482,7 @@ describe('putting a space back to a moment', () => {
         )
         .run(id, space, `Big/${made}.md`, 100 + made, Date.now())
       env.db
-        .prepare(
-          "insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'then', 4, '')",
-        )
+        .prepare("insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'then', 4, '')")
         .run(id, at - 1000)
     }
 
@@ -611,9 +590,7 @@ describe('putting a space back to a moment', () => {
     })
     const id = made.json.note?.id ?? ''
     env.db.prepare('update note_versions set at = at - ? where note_id = ?').run(6 * 60 * 1000, id)
-    env.db
-      .prepare('update notes set updated_at = updated_at - ? where id = ?')
-      .run(6 * 60 * 1000, id)
+    env.db.prepare('update notes set updated_at = updated_at - ? where id = ?').run(6 * 60 * 1000, id)
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
     return id
   }
@@ -705,9 +682,7 @@ describe('putting a space back to a moment', () => {
     const ago = 10 * 60 * 1000
     env.db.prepare('update note_versions set at = at - ? where note_id = ?').run(ago, id)
     env.db
-      .prepare(
-        'update notes set deleted_at = deleted_at - ?1, updated_at = updated_at - ?1 where id = ?2',
-      )
+      .prepare('update notes set deleted_at = deleted_at - ?1, updated_at = updated_at - ?1 where id = ?2')
       .run(ago, id)
 
     const asked = await call<VersionView>(env, `/v1/spaces/${space}/rollback`, {
@@ -894,9 +869,7 @@ describe('putting a space back to a moment', () => {
         )
         .run(id, space, path, 500, Date.now())
       env.db
-        .prepare(
-          "insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'then', 4, '')",
-        )
+        .prepare("insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'then', 4, '')")
         .run(id, at - 1000)
     }
 
@@ -1003,9 +976,7 @@ describe('thinning to one an hour', () => {
 
     env.db.exec(`delete from note_versions where note_id = '${noteId}'`)
 
-    const insert = env.db.prepare(
-      'insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
-    )
+    const insert = env.db.prepare('insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)')
     for (const at of moments) insert.run(noteId, at, `h-${noteId}-${at}`, 5, '')
 
     return noteId
@@ -1083,12 +1054,7 @@ describe('thinning to one an hour', () => {
     const old = Math.floor((now - 60 * day) / day) * day
     const older = Math.floor((now - 180 * day) / week) * week
 
-    const note = await noteWithVersionsAt('long.md', [
-      old + hour,
-      old + 3 * hour,
-      older + day,
-      older + 3 * day,
-    ])
+    const note = await noteWithVersionsAt('long.md', [old + hour, old + 3 * hour, older + day, older + 3 * day])
 
     await sweepVersions(env, now)
 
@@ -1185,9 +1151,7 @@ describe('more history than an account may hold', () => {
   function heavy(bytes: number, count: number) {
     env.db.exec(`delete from note_versions where note_id = '${note}'`)
 
-    const insert = env.db.prepare(
-      'insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
-    )
+    const insert = env.db.prepare('insert into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)')
     const now = Date.now()
     for (let one = 0; one < count; one++) {
       insert.run(note, now - one * 60 * 1000, `big-${one}`, bytes, '')
@@ -1195,9 +1159,10 @@ describe('more history than an account may hold', () => {
   }
 
   function held(): number {
-    const found = env.db
-      .prepare('select count(*) as rows, sum(size) as bytes from note_versions')
-      .get() as { rows: number; bytes: number | null }
+    const found = env.db.prepare('select count(*) as rows, sum(size) as bytes from note_versions').get() as {
+      rows: number
+      bytes: number | null
+    }
 
     return found.bytes ?? 0
   }

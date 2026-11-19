@@ -78,8 +78,7 @@ export class FakeCrate implements AgentsCrate {
   async clear(agent: string | null): Promise<void> {
     await this.fail()
     for (const [day, lines] of this.log) {
-      const kept =
-        agent === null ? [] : lines.filter((line) => !isRecord(line) || line.agent !== agent)
+      const kept = agent === null ? [] : lines.filter((line) => !isRecord(line) || line.agent !== agent)
       if (kept.length) this.log.set(day, kept)
       else this.log.delete(day)
     }
@@ -112,14 +111,7 @@ export class FakeCrate implements AgentsCrate {
     return grant
   }
 
-  called(
-    agent: string,
-    verb: string,
-    at: number,
-    args: Record<string, unknown> = {},
-    status = 'ok',
-    code?: string,
-  ) {
+  called(agent: string, verb: string, at: number, args: Record<string, unknown> = {}, status = 'ok', code?: string) {
     const day = new Date(at).toISOString().slice(0, 10)
     const line = { at, agent, verb, args, status, ms: 12, ...(code ? { code } : {}) }
     const gathered = this.log.get(day)
@@ -160,14 +152,7 @@ export function seeded(now = Date.now()): FakeCrate {
     fake.called(claude.id, verb, morning + at * 90_000, args, status)
   })
   fake.called(claude.id, 'search_notes', now - 40 * 60_000, { query: 'train times' })
-  fake.called(
-    claude.id,
-    'browser_open',
-    now - 39 * 60_000,
-    { url: 'https://bank.example/' },
-    'error',
-    'site_denied',
-  )
+  fake.called(claude.id, 'browser_open', now - 39 * 60_000, { url: 'https://bank.example/' }, 'error', 'site_denied')
   fake.called(codex.id, 'read_note', now - 26 * hour, { path: 'Code/Plan.md' })
   return fake
 }

@@ -72,9 +72,7 @@
     const loops = /\b(?:for|while|do)\b/
     const refuse = (text) => {
       if (loops.test(text)) {
-        throw new EvalError(
-          'Orden runs no loop in code made from text: it could not stop one that never ends',
-        )
+        throw new EvalError('Orden runs no loop in code made from text: it could not stop one that never ends')
       }
     }
 

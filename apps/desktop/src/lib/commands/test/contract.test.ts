@@ -10,8 +10,7 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void held.delete(key),
 })
 
-const { appCommands, blockCommands, blockRows, paletteCommands, runRow } =
-  await import('../src/api')
+const { appCommands, blockCommands, blockRows, paletteCommands, runRow } = await import('../src/api')
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -40,9 +39,7 @@ describe('the module stands on its own', () => {
 describe('the rows', () => {
   test('a feature’s rows show once loaded, where its place is', async () => {
     expect(appCommands().some((one) => one.id === 'web-reload')).toBe(false)
-    const unregister = registerCommandRows('web', () =>
-      Promise.resolve(() => [row('web-reload', 'Reload')]),
-    )
+    const unregister = registerCommandRows('web', () => Promise.resolve(() => [row('web-reload', 'Reload')]))
     await commandRowsLoaded()
     expect(appCommands().find((one) => one.id === 'web-reload')?.label).toBe('Reload')
     unregister()
@@ -74,9 +71,7 @@ describe('the rows', () => {
 
   test('a row of a feature runs the command the feature registered', async () => {
     const ran: string[] = []
-    const unregister = registerCommand('app.quick-question', () =>
-      Promise.resolve(() => void ran.push('asked')),
-    )
+    const unregister = registerCommand('app.quick-question', () => Promise.resolve(() => void ran.push('asked')))
     expect(await runRow('quick-question')).toBe(true)
     await vi.waitFor(() => expect(ran).toEqual(['asked']))
     unregister()

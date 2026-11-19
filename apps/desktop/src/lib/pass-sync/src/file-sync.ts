@@ -13,10 +13,7 @@ export interface WorldFiles {
 export type FilesSent = 'sent' | 'again' | 'stuck'
 
 export async function worldFiles(base: string, token: string): Promise<WorldFiles> {
-  const [{ fileApi }, { dropFileParts, readFileParts }] = await Promise.all([
-    import('./file-api'),
-    import('./local'),
-  ])
+  const [{ fileApi }, { dropFileParts, readFileParts }] = await Promise.all([import('./file-api'), import('./local')])
   return { api: fileApi(base, token), parts: readFileParts, drop: (item) => dropFileParts(item) }
 }
 
@@ -61,9 +58,7 @@ export async function forgottenFiles(world: SyncWorld, rows: readonly WireItem[]
   const gone = rows.filter((one) => one.deleted).map((one) => one.id)
   const files = gone.length ? await world.files?.() : undefined
   if (!files) return
-  const live = new Set(
-    (await world.rows.items()).filter((one) => !one.deleted).map((one) => one.id),
-  )
+  const live = new Set((await world.rows.items()).filter((one) => !one.deleted).map((one) => one.id))
   const forgotten = [...new Set(gone)].filter((id) => !live.has(id))
   for (const id of forgotten) await files.drop(id)
   if (forgotten.length) await droppedWaiting(world.rows, forgotten)

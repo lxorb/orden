@@ -19,8 +19,7 @@ import {
 } from './pane-tree'
 import type { Zone } from './zones'
 
-export type Landing =
-  { kind: 'strip'; paneId: string; at: number } | { kind: 'pane'; paneId: string; zone: Zone }
+export type Landing = { kind: 'strip'; paneId: string; at: number } | { kind: 'pane'; paneId: string; zone: Zone }
 
 export interface Dragging {
   tabId: string | null

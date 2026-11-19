@@ -62,29 +62,15 @@ describe('a run that did not answer', () => {
       'Codex took too long to answer.',
     )
     expect(
-      troubleOf(
-        'Claude Code',
-        'Claude',
-        {},
-        { ...ENDED, code: 1, err: "error: unknown option '--tools'" },
-        false,
-      ),
+      troubleOf('Claude Code', 'Claude', {}, { ...ENDED, code: 1, err: "error: unknown option '--tools'" }, false),
     ).toBe('Claude Code is out of date. Update it and try again.')
   })
 
   test('anything else is the program’s own last word', () => {
-    expect(
-      troubleOf(
-        'Codex',
-        'ChatGPT',
-        {},
-        { ...ENDED, code: 3, err: 'warn\nthe real reason\n' },
-        false,
-      ),
-    ).toBe('the real reason')
-    expect(troubleOf('Codex', 'ChatGPT', {}, { ...ENDED, code: 3 }, false)).toBe(
-      'The model did not answer.',
+    expect(troubleOf('Codex', 'ChatGPT', {}, { ...ENDED, code: 3, err: 'warn\nthe real reason\n' }, false)).toBe(
+      'the real reason',
     )
+    expect(troubleOf('Codex', 'ChatGPT', {}, { ...ENDED, code: 3 }, false)).toBe('The model did not answer.')
   })
 })
 
@@ -110,9 +96,7 @@ describe('whether a program is signed in, as it says', () => {
       account: 'r@example.com',
     })
     expect(standingOf('claude-code', said('{"loggedIn": false}', 1)).state).toBe('out')
-    expect(
-      standingOf('claude-code', said('{"loggedIn": true, "authMethod": "console"}', 0)).plan,
-    ).toBe('API key')
+    expect(standingOf('claude-code', said('{"loggedIn": true, "authMethod": "console"}', 0)).plan).toBe('API key')
   })
 
   test('an older Claude Code with no status is left to the question', () => {
@@ -122,9 +106,7 @@ describe('whether a program is signed in, as it says', () => {
 
   test('Codex says it on stderr', () => {
     expect(standingOf('codex', said('', 0, 'Logged in using ChatGPT')).plan).toBe('ChatGPT')
-    expect(standingOf('codex', said('', 0, 'Logged in using an API key - sk-...')).plan).toBe(
-      'API key',
-    )
+    expect(standingOf('codex', said('', 0, 'Logged in using an API key - sk-...')).plan).toBe('API key')
     expect(standingOf('codex', said('', 1, 'Not logged in')).state).toBe('out')
   })
 })
@@ -160,9 +142,7 @@ describe('the shell a sign-in is typed into', () => {
   test('is one that reads the line as written, whatever shell is chosen for new tabs', () => {
     expect(signingShell(list, shell('/usr/bin/pwsh'), false)?.id).toBe('/bin/zsh')
     expect(signingShell(list, shell('/bin/tcsh'), false)?.id).toBe('/bin/zsh')
-    expect(signingShell(list, shell('/opt/homebrew/bin/fish'), false)?.id).toBe(
-      '/opt/homebrew/bin/fish',
-    )
+    expect(signingShell(list, shell('/opt/homebrew/bin/fish'), false)?.id).toBe('/opt/homebrew/bin/fish')
     expect(signingShell(list, shell('/bin/bash'), false)?.id).toBe('/bin/bash')
     expect(signingShell([shell('cmd'), shell('pwsh')], shell('pwsh'), true)?.id).toBe('cmd')
   })
@@ -172,18 +152,14 @@ describe('the Gemini CLI', () => {
   const said = (out: string) => ({ program: '/bin/gemini', out, code: 0, err: '', timedOut: false })
 
   test('is signed in with Google, a key or Vertex AI, as Orden read its folder', () => {
-    expect(
-      standingOf(
-        'gemini-cli',
-        said('{"signedIn":true,"method":"google","email":"heron@example.com"}'),
-      ),
-    ).toEqual({ state: 'in', program: '/bin/gemini', plan: null, account: 'heron@example.com' })
-    expect(standingOf('gemini-cli', said('{"signedIn":true,"method":"api-key"}')).plan).toBe(
-      'API key',
-    )
-    expect(standingOf('gemini-cli', said('{"signedIn":true,"method":"vertex"}')).plan).toBe(
-      'Vertex AI',
-    )
+    expect(standingOf('gemini-cli', said('{"signedIn":true,"method":"google","email":"heron@example.com"}'))).toEqual({
+      state: 'in',
+      program: '/bin/gemini',
+      plan: null,
+      account: 'heron@example.com',
+    })
+    expect(standingOf('gemini-cli', said('{"signedIn":true,"method":"api-key"}')).plan).toBe('API key')
+    expect(standingOf('gemini-cli', said('{"signedIn":true,"method":"vertex"}')).plan).toBe('Vertex AI')
     expect(standingOf('gemini-cli', said('{"signedIn":false}')).state).toBe('out')
     expect(standingOf('gemini-cli', said('0.99.0')).state).toBe('unknown')
   })

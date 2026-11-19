@@ -63,15 +63,12 @@
 
   const loose = $derived(view === 'day' ? unsaid(time.spans, minutes.list, ...range, now) : [])
   const current = $derived(
-    view === 'day'
-      ? day === midnightOf(now)
-      : startOf(view === 'week' ? 'week' : period, now) === range[0],
+    view === 'day' ? day === midnightOf(now) : startOf(view === 'week' ? 'week' : period, now) === range[0],
   )
 
   const titled = $derived.by(() => {
     if (view === 'day') return localDate(day, { weekday: 'long', day: 'numeric', month: 'long' })
-    if (view === 'reports' && period === 'month')
-      return localDate(range[0], { month: 'long', year: 'numeric' })
+    if (view === 'reports' && period === 'month') return localDate(range[0], { month: 'long', year: 'numeric' })
     return `${localDate(range[0], { day: 'numeric', month: 'short' })} – ${localDate(daysAfter(range[1], -1), { day: 'numeric', month: 'short', year: 'numeric' })}`
   })
 
@@ -89,9 +86,7 @@
   }
 
   function showMenu(event: MouseEvent) {
-    void import('./menu').then(({ trackingMenu }) =>
-      menu.show(event, trackingMenu(), { title: 'Time tracker' }),
-    )
+    void import('./menu').then(({ trackingMenu }) => menu.show(event, trackingMenu(), { title: 'Time tracker' }))
   }
 
   const VIEWS = $derived([
@@ -135,9 +130,7 @@
       </div>
     {/if}
     <div class="moving">
-      <button type="button" class="orden-chip" aria-label="Previous" onclick={() => step(-1)}
-        >‹</button
-      >
+      <button type="button" class="orden-chip" aria-label="Previous" onclick={() => step(-1)}>‹</button>
       <span class="title">{titled}</span>
       <button type="button" class="orden-chip" aria-label="Next" onclick={() => step(1)}>›</button>
       {#if !current}
@@ -151,13 +144,8 @@
         >
       {/if}
     </div>
-    <button
-      type="button"
-      class="orden-chip more"
-      aria-label="More"
-      title="More"
-      aria-haspopup="menu"
-      onclick={showMenu}>⋯</button
+    <button type="button" class="orden-chip more" aria-label="More" title="More" aria-haspopup="menu" onclick={showMenu}
+      >⋯</button
     >
   </div>
 
@@ -193,15 +181,11 @@
                   >
                     <span class="dot" style:background={tintOf(piece.span.activity)}></span>
                     <span class="orden-row-label named"
-                      ><span class="name" dir="auto"
-                        >{nameOf(piece.span.activity, 'No activity')}</span
-                      >{#if piece.span.note}<span class="note" dir="auto">{piece.span.note}</span
-                        >{/if}</span
+                      ><span class="name" dir="auto">{nameOf(piece.span.activity, 'No activity')}</span
+                      >{#if piece.span.note}<span class="note" dir="auto">{piece.span.note}</span>{/if}</span
                     >
                     <span class="orden-row-meta clock"
-                      >{clock(piece.span.start)}–{piece.span.end === null
-                        ? ''
-                        : clock(piece.span.end)}</span
+                      >{clock(piece.span.start)}–{piece.span.end === null ? '' : clock(piece.span.end)}</span
                     >
                     <span class="orden-row-meta long">{length(piece.to - piece.from)}</span>
                   </button>
@@ -247,15 +231,7 @@
         }}
       />
     {:else}
-      <Reports
-        from={range[0]}
-        to={range[1]}
-        spans={time.spans}
-        {own}
-        minutes={minutes.list}
-        {now}
-        onday={toDay}
-      />
+      <Reports from={range[0]} to={range[1]} spans={time.spans} {own} minutes={minutes.list} {now} onday={toDay} />
     {/if}
   </div>
 </div>

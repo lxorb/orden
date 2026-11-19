@@ -68,12 +68,7 @@ describe.each(['default', 'notion', 'obsidian', 'vscode'])('the %s keyboard', (i
 
       const combination = parseCombination(key, 'win')
       if (!combination) wrong.push(`${one}: ${key} is not a combination`)
-      else if (
-        !combination.ctrl &&
-        !combination.meta &&
-        !combination.alt &&
-        combination.key.length === 1
-      ) {
+      else if (!combination.ctrl && !combination.meta && !combination.alt && combination.key.length === 1) {
         wrong.push(`${one}: ${key} would fire while typing`)
       }
     }
@@ -82,9 +77,7 @@ describe.each(['default', 'notion', 'obsidian', 'vscode'])('the %s keyboard', (i
   })
 
   test.each(PLATFORMS)('writes no chord twice (%s)', (platform) => {
-    const written = Object.entries(keysOf()).filter(
-      (pair): pair is [string, string] => pair[1] !== null,
-    )
+    const written = Object.entries(keysOf()).filter((pair): pair is [string, string] => pair[1] !== null)
     const twice: string[] = []
 
     written.forEach(([one, key], index) => {
@@ -246,25 +239,20 @@ describe('Ctrl+D', () => {
     }
   })
 
-  test.each(['default', 'vscode', 'obsidian', 'notion'])(
-    'puts every pane down on Ctrl+Shift+D under %s',
-    (id) => {
-      const keys = presets.presetById(id)?.keys ?? {}
+  test.each(['default', 'vscode', 'obsidian', 'notion'])('puts every pane down on Ctrl+Shift+D under %s', (id) => {
+    const keys = presets.presetById(id)?.keys ?? {}
 
-      for (const platform of PLATFORMS) {
-        expect(keyUnder(keys, 'app.deselect-all', platform), platform).toBe('Mod-Shift-d')
-        const others = registry.SHORTCUTS.filter(
-          (one) =>
-            one.id !== 'app.deselect-all' &&
-            keyUnder(keys, one.id, platform)?.toLowerCase() === 'mod-shift-d',
-        )
-        expect(
-          others.map((one) => one.id),
-          platform,
-        ).toEqual([])
-      }
-    },
-  )
+    for (const platform of PLATFORMS) {
+      expect(keyUnder(keys, 'app.deselect-all', platform), platform).toBe('Mod-Shift-d')
+      const others = registry.SHORTCUTS.filter(
+        (one) => one.id !== 'app.deselect-all' && keyUnder(keys, one.id, platform)?.toLowerCase() === 'mod-shift-d',
+      )
+      expect(
+        others.map((one) => one.id),
+        platform,
+      ).toEqual([])
+    }
+  })
 
   test('is a command of the app’s, which the palette and the list can press', () => {
     const entry = registry.BY_ID.get('app.deselect-tab')

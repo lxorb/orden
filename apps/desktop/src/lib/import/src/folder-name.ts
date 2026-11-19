@@ -4,8 +4,7 @@ import { safeName } from './names'
 import type { FormatId } from './plan'
 import { pickedFolder } from './sources'
 
-const MACHINE_MADE =
-  /^(applejournalentries|export|takeout|backup|notion|graph|roam|logseq|keep|archive)(?:[\s_-]+|$)/i
+const MACHINE_MADE = /^(applejournalentries|export|takeout|backup|notion|graph|roam|logseq|keep|archive)(?:[\s_-]+|$)/i
 
 export function folderNameFor(picked: readonly PickedFile[], format: FormatId): string {
   if (format === 'todoist') return ''

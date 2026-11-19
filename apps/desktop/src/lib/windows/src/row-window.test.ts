@@ -1,16 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
-import {
-  autoScrollBy,
-  heightOf,
-  indexAt,
-  listHeight,
-  offsetOf,
-  type Rows,
-  slotsFor,
-  windowFor,
-} from './row-window'
+import { autoScrollBy, heightOf, indexAt, listHeight, offsetOf, type Rows, slotsFor, windowFor } from './row-window'
 
 const HEIGHT = 28
 const ROOM = 20 * HEIGHT
@@ -227,10 +218,7 @@ describe('walking a long list a row at a time', () => {
       for (const edge of ['top', 'bottom'] as const) {
         const view = windowFor(standing(index, count, edge))
         const held = (one: number) =>
-          one < 0 ||
-          one >= count ||
-          (one >= view.first && one <= view.last) ||
-          view.pinned.includes(one)
+          one < 0 || one >= count || (one >= view.first && one <= view.last) || view.pinned.includes(one)
 
         if (!held(index - 1)) missing.push(`${index} up at the ${edge}`)
         if (!held(index + 1)) missing.push(`${index} down at the ${edge}`)
@@ -258,8 +246,7 @@ describe('walking a long list a row at a time', () => {
 })
 
 describe('the lists that draw through it', () => {
-  const source = (name: string) =>
-    readFileSync(fileURLToPath(new URL(`../../${name}`, import.meta.url)), 'utf8')
+  const source = (name: string) => readFileSync(fileURLToPath(new URL(`../../${name}`, import.meta.url)), 'utf8')
 
   const LONG = ['sidebar/src/Tree.svelte']
 
@@ -292,9 +279,7 @@ describe('the element each row is drawn in', () => {
   test('is handed over, in order, when every row drawn is a new one', () => {
     const next = slotsFor(first, ['p', 'q', 'r', 's'])
 
-    expect(['p', 'q', 'r'].map((key) => next.get(key))).toEqual(
-      ['a', 'b', 'c'].map((key) => first.get(key)),
-    )
+    expect(['p', 'q', 'r'].map((key) => next.get(key))).toEqual(['a', 'b', 'c'].map((key) => first.get(key)))
     expect(made(first, next)).toBe(1)
   })
 

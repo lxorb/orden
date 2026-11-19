@@ -1,11 +1,4 @@
-import {
-  folderOf,
-  joinPath,
-  namesByShortName,
-  onDisk,
-  within,
-  spaceHolding,
-} from '../../../platform/src/api'
+import { folderOf, joinPath, namesByShortName, onDisk, within, spaceHolding } from '../../../platform/src/api'
 import { buried, protection } from '../../../protect/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { type Os, programOf, runsOnTheList } from './shell-text'

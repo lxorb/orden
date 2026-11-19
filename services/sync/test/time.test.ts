@@ -14,8 +14,7 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-const read = (since = 0, as = token) =>
-  call<TimePage>(env, `/v2/time?since=${since}`, { token: as })
+const read = (since = 0, as = token) => call<TimePage>(env, `/v2/time?since=${since}`, { token: as })
 
 const write = (changes: unknown[], as = token) =>
   call<{ cursor: number; error?: string }>(env, '/v2/time', { token: as, body: { changes } })
@@ -108,9 +107,9 @@ describe('the time an account keeps', () => {
     })
 
     expect((await write([span('fresh'), span('fresh', 2)])).status).toBe(413)
-    expect(
-      env.db.prepare('select count(*) as n from time_entries where user_id = ?').get(user.id),
-    ).toEqual({ n: MOST_TIME_ENTRIES })
+    expect(env.db.prepare('select count(*) as n from time_entries where user_id = ?').get(user.id)).toEqual({
+      n: MOST_TIME_ENTRIES,
+    })
   })
 
   test('counts a record sent twice in one request once', async () => {

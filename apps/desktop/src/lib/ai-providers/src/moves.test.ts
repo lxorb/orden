@@ -77,10 +77,7 @@ test('a move another window kept is told along with this window’s own, so noth
 test('a move another window already kept is not kept again from a copy read before it', async () => {
   const { keepMoves, rightsKey, movesAfter } = await moves()
   movesAfter(0)
-  localStorage.setItem(
-    'orden:ai-moves',
-    JSON.stringify([{ from: 'openai', to: 'openai-2', at: 5 }]),
-  )
+  localStorage.setItem('orden:ai-moves', JSON.stringify([{ from: 'openai', to: 'openai-2', at: 5 }]))
   keepMoves({ openai: 'openai-2' }, 7)
   expect(movesAfter(0)).toEqual([{ from: 'openai', to: 'openai-2', at: 5 }])
   expect(rightsKey('openai')).toBe('openai_5')

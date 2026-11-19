@@ -22,16 +22,7 @@
 
   const ATTR = 'data-tauri-drag-region'
   const CLICKABLE = new Set(['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'LABEL', 'SUMMARY'])
-  const ROLES = new Set([
-    'button',
-    'link',
-    'menuitem',
-    'tab',
-    'checkbox',
-    'radio',
-    'switch',
-    'option',
-  ])
+  const ROLES = new Set(['button', 'link', 'menuitem', 'tab', 'checkbox', 'radio', 'switch', 'option'])
   function clickable(el) {
     return (
       CLICKABLE.has(el.tagName) ||

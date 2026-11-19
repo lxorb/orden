@@ -32,8 +32,7 @@ vi.mock('../../../theme/src/api', async () => {
     select: (id: string) => {
       if (faked.theme) faked.theme.id = id
     },
-    keptFor: (owner: string, id: string) =>
-      owner === 'wallpaper' ? faked.kept.get(id) : undefined,
+    keptFor: (owner: string, id: string) => (owner === 'wallpaper' ? faked.kept.get(id) : undefined),
   })
   return { theme: faked.theme, accentColour: (colour: string) => colour }
 })

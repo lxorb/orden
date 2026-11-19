@@ -64,8 +64,7 @@ function listOf(value: unknown, wanted: (marker: unknown) => boolean): string | 
   return null
 }
 
-const isKey = (marker: unknown, key: string): boolean =>
-  marker === key || (isObject(marker) && key in marker)
+const isKey = (marker: unknown, key: string): boolean => marker === key || (isObject(marker) && key in marker)
 
 function profileIs(profile: unknown, folder: string): boolean {
   if (!isObject(profile)) return folder === 'Default'
@@ -80,21 +79,12 @@ function iconOf(info: unknown): string | null {
   const emoji = text(kind.emoji_v2)
   if (emoji) return emoji
   const point = Number(kind.emoji)
-  return Number.isInteger(point) && point > 0 && point <= 0x10ffff
-    ? String.fromCodePoint(point)
-    : null
+  return Number.isInteger(point) && point > 0 && point <= 0x10ffff ? String.fromCodePoint(point) : null
 }
 
 const DEEPEST = 64
 
-function rows(
-  read: Reading,
-  id: string,
-  space: string | null,
-  folder: string | null,
-  row: Row,
-  depth = 0,
-) {
+function rows(read: Reading, id: string, space: string | null, folder: string | null, row: Row, depth = 0) {
   const parent = read.items.get(id)
   if (!parent || depth > DEEPEST || read.seen.has(id)) return
   read.seen.add(id)

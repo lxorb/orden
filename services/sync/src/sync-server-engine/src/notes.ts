@@ -211,9 +211,7 @@ async function placeNote(
   )
   if ('taken' in placed) throw new NoteTaken(placed.taken)
 
-  const note = await env.DB.prepare('select * from notes where id = ?')
-    .bind(placed.made)
-    .first<Note>()
+  const note = await env.DB.prepare('select * from notes where id = ?').bind(placed.made).first<Note>()
   if (!note) throw new Error('a note made in the tree is not there')
 
   await env.NOTES.put(noteKey(spaceId, note.id), content)
@@ -238,16 +236,9 @@ function noteAt(env: Env, spaceId: string, path: string): Promise<Note | null> {
     .first<Note>()
 }
 
-export async function noteBeside(
-  env: Env,
-  note: Note,
-  content: string,
-  by = '',
-): Promise<Note | null> {
+export async function noteBeside(env: Env, note: Note, content: string, by = ''): Promise<Note | null> {
   const hash = await sha256(content)
-  const kept = await env.DB.prepare(
-    'select * from notes where space_id = ? and hash = ? and id != ? and deleted = 0',
-  )
+  const kept = await env.DB.prepare('select * from notes where space_id = ? and hash = ? and id != ? and deleted = 0')
     .bind(note.space_id, hash, note.id)
     .first<Note>()
 
@@ -345,14 +336,10 @@ export async function saveNote(
 
   await env.NOTES.put(noteKey(note.space_id, note.id), content)
 
-  await keepVersion(env, updated, content, by, saving.docBy ?? saving.versionBy ?? null).catch(
-    () => undefined,
-  )
+  await keepVersion(env, updated, content, by, saving.docBy ?? saving.versionBy ?? null).catch(() => undefined)
 
   await rememberOldPaths(env, note, path, readFront(updated.front)).catch(() => undefined)
-  await followOnlyNote(env, note.space_id, [{ from: note.path, to: path }], []).catch(
-    () => undefined,
-  )
+  await followOnlyNote(env, note.space_id, [{ from: note.path, to: path }], []).catch(() => undefined)
   await keepWords(env, updated, content, titleFrom(path, content)).catch(() => undefined)
   await keepPictures(env, updated, content)
   await hooks()
@@ -414,9 +401,7 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
   const shut = await programShut(context.env, context.get('who'))
   if (shut?.(space.id, path)) return context.json({ error: PROTECTED(path) }, 403)
   const there = async (note: Note) =>
-    shut?.(note.space_id, note.path)
-      ? context.json({ error: PROTECTED(path) }, 403)
-      : await alreadyThere(context, note)
+    shut?.(note.space_id, note.path) ? context.json({ error: PROTECTED(path) }, 403) : await alreadyThere(context, note)
 
   const taken = await noteAt(context.env, space.id, path)
   if (taken) return await there(taken)
@@ -438,9 +423,7 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
     )
   } catch (error) {
     const won =
-      error instanceof NoteTaken
-        ? await noteById(context.env, error.id)
-        : await noteAt(context.env, space.id, path)
+      error instanceof NoteTaken ? await noteById(context.env, error.id) : await noteAt(context.env, space.id, path)
     if (!won) throw error
 
     return await there(won)
@@ -450,10 +433,7 @@ notes.post('/spaces/:spaceId/notes', atLeast('write', 'spaceId'), async (context
   return context.json({ note: presentNote(note) }, 201)
 })
 
-async function alreadyThere(
-  context: Context<{ Bindings: Env; Variables: Variables }>,
-  note: Note,
-): Promise<Response> {
+async function alreadyThere(context: Context<{ Bindings: Env; Variables: Variables }>, note: Note): Promise<Response> {
   const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
   return context.json(
     {
@@ -564,9 +544,7 @@ notes.put('/notes/:id/paper', async (context) => {
   if (!kept) return context.json({ error: NO_PAPER }, 409)
 
   if (note.paper !== hash) {
-    await context.env.DB.prepare('update notes set paper = ? where id = ?')
-      .bind(hash, note.id)
-      .run()
+    await context.env.DB.prepare('update notes set paper = ? where id = ?').bind(hash, note.id).run()
   }
   return context.json({ paper: hash })
 })
@@ -616,13 +594,7 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
 
   const folder = under.replace(/^\/+/, '')
   const shut = await programShut(context.env, context.get('who'))
-  const changed = await versionsAt(
-    context.env,
-    space.id,
-    folder,
-    at,
-    (path) => !shut?.(space.id, path),
-  )
+  const changed = await versionsAt(context.env, space.id, folder, at, (path) => !shut?.(space.id, path))
 
   const cut = changed.length >= ROLLBACK_AT_ONCE
   const held = cut ? await countVersionsAt(context.env, space.id, folder, at) : changed.length
@@ -699,10 +671,7 @@ notes.put('/notes/:id', async (context) => {
   if (found.only && path !== note.path) {
     return context.json({ error: 'this note was shared with you, not its folder' }, 403)
   }
-  if (
-    path !== note.path &&
-    (await programShut(context.env, context.get('who')))?.(note.space_id, path)
-  ) {
+  if (path !== note.path && (await programShut(context.env, context.get('who')))?.(note.space_id, path)) {
     return context.json({ error: PROTECTED(path) }, 403)
   }
 
@@ -763,13 +732,8 @@ notes.put('/notes/:id', async (context) => {
   return context.json({ note: presentNote(saved) })
 })
 
-async function conflict(
-  context: Context<{ Bindings: Env; Variables: Variables }>,
-  noteId: string,
-): Promise<Response> {
-  const held = await context.env.DB.prepare('select * from notes where id = ?')
-    .bind(noteId)
-    .first<Note>()
+async function conflict(context: Context<{ Bindings: Env; Variables: Variables }>, noteId: string): Promise<Response> {
+  const held = await context.env.DB.prepare('select * from notes where id = ?').bind(noteId).first<Note>()
 
   const object = held ? await context.env.NOTES.get(noteKey(held.space_id, held.id)) : null
 

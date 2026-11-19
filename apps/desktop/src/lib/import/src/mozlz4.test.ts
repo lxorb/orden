@@ -7,14 +7,7 @@ const read = (bytes: Uint8Array) => new TextDecoder().decode(bytes)
 
 describe('a mozLz4 file', () => {
   test('is the bytes it was made of, short or long', () => {
-    for (const text of [
-      '',
-      '{}',
-      'x'.repeat(14),
-      'y'.repeat(15),
-      'z'.repeat(300),
-      'é'.repeat(700),
-    ]) {
+    for (const text of ['', '{}', 'x'.repeat(14), 'y'.repeat(15), 'z'.repeat(300), 'é'.repeat(700)]) {
       expect(read(unmozLz4(mozLz4Of(words(text))))).toBe(text)
     }
   })

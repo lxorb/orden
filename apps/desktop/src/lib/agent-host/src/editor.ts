@@ -14,15 +14,7 @@ import type { AgentAnswer } from '../../automation/src/api'
 import { views } from '../../panes/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
-import {
-  type Call,
-  docSource,
-  done,
-  need,
-  needScope,
-  Refused,
-  namedTab,
-} from '../../agent-verbs/src/api'
+import { type Call, docSource, done, need, needScope, Refused, namedTab } from '../../agent-verbs/src/api'
 import { readable } from './guarded'
 
 const MOST_MARKS = 500
@@ -72,8 +64,7 @@ export function keepMarksOf(agents: ReadonlySet<string>): void {
 }
 
 function placeIn(value: unknown, name: string): AgentPlace {
-  const record =
-    typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
+  const record = typeof value === 'object' && value !== null ? (value as Record<string, unknown>) : {}
   const line = Number(record.line)
   const ch = Number(record.ch ?? 0)
   if (!Number.isFinite(line) || !Number.isFinite(ch)) {
@@ -86,9 +77,7 @@ function listOf(call: Call, name: string, most: number): Record<string, unknown>
   const value = call.args[name]
   if (!Array.isArray(value)) throw new Refused('bad_arguments', `say ${name}, a list`)
   if (value.length > most) throw new Refused('bad_arguments', `at most ${most} ${name}`)
-  return value.map(
-    (one) => (typeof one === 'object' && one !== null ? one : {}) as Record<string, unknown>,
-  )
+  return value.map((one) => (typeof one === 'object' && one !== null ? one : {}) as Record<string, unknown>)
 }
 
 const SEVERITIES: readonly Severity[] = ['error', 'warning', 'info']
@@ -110,10 +99,7 @@ export function noteEditor(call: Call): AgentAnswer {
             const message = typeof one.message === 'string' ? one.message : ''
             if (!message) throw new Refused('bad_arguments', `mark ${at} says no message`)
             if (message.length > LONGEST_MESSAGE) {
-              throw new Refused(
-                'bad_arguments',
-                `a mark says at most ${LONGEST_MESSAGE} characters`,
-              )
+              throw new Refused('bad_arguments', `a mark says at most ${LONGEST_MESSAGE} characters`)
             }
             return {
               agent: agent.id,
@@ -128,10 +114,7 @@ export function noteEditor(call: Call): AgentAnswer {
   }
 
   if (!view) {
-    throw new Refused(
-      'failed',
-      `tab ${tab.id} is not on screen, so it has no editor: workspace_tabs focus shows it`,
-    )
+    throw new Refused('failed', `tab ${tab.id} is not on screen, so it has no editor: workspace_tabs focus shows it`)
   }
 
   switch (op) {
@@ -163,10 +146,7 @@ export function noteEditor(call: Call): AgentAnswer {
       return done({ tab: tab.id, line })
     }
     default:
-      throw new Refused(
-        'bad_arguments',
-        'op is one of selection, select, mark, clear_marks, fold, unfold, reveal',
-      )
+      throw new Refused('bad_arguments', 'op is one of selection, select, mark, clear_marks, fold, unfold, reveal')
   }
 }
 

@@ -36,9 +36,7 @@
   const managing = $derived(vault !== null && mayManage(vault))
   const owning = $derived(vault !== null && mayHandOn(vault))
   const roles = $derived(INVITED_ROLES.map((one) => ({ value: one, label: roleName(one) })))
-  const heirs = $derived(
-    members.filter((one) => one.state === 'active' && one.role !== 'owner' && one.email !== me),
-  )
+  const heirs = $derived(members.filter((one) => one.state === 'active' && one.role !== 'owner' && one.email !== me))
 
   const close = () => (ui.sheet = null)
   const nameOf = (member: Member) => member.name || member.email
@@ -144,10 +142,7 @@
 
   function roleChanged(member: Member, next: string) {
     const id = vault?.id ?? ''
-    void acted(
-      () => pass.setRole(id, member.email, next as InvitedRole),
-      'The role could not be changed.',
-    )
+    void acted(() => pass.setRole(id, member.email, next as InvitedRole), 'The role could not be changed.')
   }
 
   async function removed(member: Member) {
@@ -221,18 +216,13 @@
 
   function hidden(on: boolean) {
     const id = vault?.id ?? ''
-    void acted(
-      () => pass.updateVault(id, { hidePasswordsFromViewers: on }),
-      'The vault could not be kept.',
-    )
+    void acted(() => pass.updateVault(id, { hidePasswordsFromViewers: on }), 'The vault could not be kept.')
   }
 </script>
 
 {#snippet safety(found: Person | undefined, match: (found: Person) => void)}
   {#if found?.code === null}
-    <p class="pass-quiet" data-safety>
-      They have not set up Pass yet. Confirm them here once they have.
-    </p>
+    <p class="pass-quiet" data-safety>They have not set up Pass yet. Confirm them here once they have.</p>
   {:else if found}
     {#if found.known === 'changed'}
       <p class="wrong" role="alert" data-changed>
@@ -245,11 +235,8 @@
       {#if found.known === 'confirmed'}
         <span class="pass-quiet" data-matched>Checked</span>
       {:else}
-        <button
-          class="orden-button is-soft"
-          type="button"
-          disabled={busy}
-          onclick={() => match(found)}>Codes match</button
+        <button class="orden-button is-soft" type="button" disabled={busy} onclick={() => match(found)}
+          >Codes match</button
         >
       {/if}
     </p>
@@ -275,15 +262,8 @@
             bind:value={email}
             data-lands
           />
-          <Select
-            label="Role"
-            value={role}
-            options={roles}
-            onchange={(next: string) => (role = next as InvitedRole)}
-          />
-          <button class="orden-button" type="submit" disabled={busy || !EMAIL.test(email.trim())}
-            >Invite</button
-          >
+          <Select label="Role" value={role} options={roles} onchange={(next: string) => (role = next as InvitedRole)} />
+          <button class="orden-button" type="submit" disabled={busy || !EMAIL.test(email.trim())}>Invite</button>
         </form>
         {@render safety(person, (found) => void matched(found))}
         {#if person?.code}
@@ -303,9 +283,7 @@
               <span class="who">
                 <span class="name">{nameOf(member)}{member.email === me ? ` (you)` : ''}</span>
                 {#if member.name}<span class="email">{member.email}</span>{/if}
-                <span class="state" data-state={member.state}
-                  >{stateName(member.state, managing)}</span
-                >
+                <span class="state" data-state={member.state}>{stateName(member.state, managing)}</span>
               </span>
               {#if changeable(member)}
                 <div class="pick">
@@ -321,11 +299,8 @@
                 <span class="text role">{roleName(member.role)}</span>
               {/if}
               {#if member.state === 'confirm' && managing}
-                <button
-                  class="orden-chip"
-                  type="button"
-                  disabled={busy}
-                  onclick={() => void confirmed(member)}>Confirm</button
+                <button class="orden-chip" type="button" disabled={busy} onclick={() => void confirmed(member)}
+                  >Confirm</button
                 >
               {/if}
               {#if member.pub !== null && member.email !== me}
@@ -384,11 +359,8 @@
             onclick={() => void handedOn()}>Transfer ownership</button
           >
         {:else}
-          <button
-            class="orden-button is-quiet danger"
-            type="button"
-            disabled={busy}
-            onclick={() => void left()}>Leave vault</button
+          <button class="orden-button is-quiet danger" type="button" disabled={busy} onclick={() => void left()}
+            >Leave vault</button
           >
         {/if}
       </div>

@@ -1,12 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  DIAGRAM_LANGUAGES,
-  DIAGRAM_SCHEMES,
-  diagramAlt,
-  diagramFigure,
-  diagramKey,
-  isDiagram,
-} from './diagrams'
+import { DIAGRAM_LANGUAGES, DIAGRAM_SCHEMES, diagramAlt, diagramFigure, diagramKey, isDiagram } from './diagrams'
 
 const SPACE = '7d1f4e8c-0000-4000-8000-000000000001'
 const CODE = 'graph TD\n  A[A note] --> B[A published page]\n'
@@ -30,9 +23,7 @@ describe('what a diagram is named by', () => {
   })
 
   test('is one name per scheme, because there is one picture per scheme', async () => {
-    const [light, dark] = await Promise.all(
-      DIAGRAM_SCHEMES.map((scheme) => diagramKey(SPACE, 'mermaid', CODE, scheme)),
-    )
+    const [light, dark] = await Promise.all(DIAGRAM_SCHEMES.map((scheme) => diagramKey(SPACE, 'mermaid', CODE, scheme)))
     expect(light).not.toBe(dark)
   })
 
@@ -43,9 +34,7 @@ describe('what a diagram is named by', () => {
   })
 
   test('does not change with the case a fence was opened in', async () => {
-    expect(await diagramKey(SPACE, 'Mermaid', CODE, 'light')).toBe(
-      await diagramKey(SPACE, 'mermaid', CODE, 'light'),
-    )
+    expect(await diagramKey(SPACE, 'Mermaid', CODE, 'light')).toBe(await diagramKey(SPACE, 'mermaid', CODE, 'light'))
   })
 
   test('changes with the language, since the same text draws differently', async () => {
@@ -63,9 +52,7 @@ describe('what a diagram is named by', () => {
 })
 
 test("what a reader who cannot see it is told: is mermaid's own description where the author wrote one; is the title where that is all there is; is never the first line of the fence", () => {
-  expect(diagramAlt('graph TD\n  accDescr: How a note reaches a page\n  A --> B\n')).toBe(
-    'How a note reaches a page',
-  )
+  expect(diagramAlt('graph TD\n  accDescr: How a note reaches a page\n  A --> B\n')).toBe('How a note reaches a page')
   expect(diagramAlt('graph TD\n  accTitle: The pipeline\n  A --> B\n')).toBe('The pipeline')
   expect(diagramAlt('graph TD\n  A --> B\n')).toBe('Diagram')
 })
@@ -87,9 +74,7 @@ describe('the figure a drawn fence becomes', () => {
   test('is one picture with nothing to switch where only the light one is there', () => {
     const html = diagramFigure('flow', 'Diagram', { light: '/i/aaa.svg', dark: null })
     expect(html).toBe(
-      '<figure class="diagram" data-language="flow">' +
-        '<img src="/i/aaa.svg" alt="Diagram">' +
-        '</figure>\n',
+      '<figure class="diagram" data-language="flow">' + '<img src="/i/aaa.svg" alt="Diagram">' + '</figure>\n',
     )
   })
 

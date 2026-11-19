@@ -29,9 +29,7 @@ describe('a task named by its words, as the read lists it', () => {
   })
 
   test('words added after a task do not join the task', () => {
-    const after = edited('- [ ] Call\n- [ ] Two\n', [
-      { at: { task: 'Call' }, insert_after: 'Ask about the date.' },
-    ])
+    const after = edited('- [ ] Call\n- [ ] Two\n', [{ at: { task: 'Call' }, insert_after: 'Ask about the date.' }])
     expect(renderMarkdown(after)).toContain('<p>Ask about the date.</p>')
   })
 })

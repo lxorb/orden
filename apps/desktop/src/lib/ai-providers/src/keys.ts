@@ -72,8 +72,6 @@ export const readSecret = (id: string): Promise<string | null> => read(id)
 
 async function read(id: string): Promise<string | null> {
   const phone = isMobile ? bridge() : undefined
-  const found: unknown = phone
-    ? phone.secretRead(await word(), id)
-    : await invoke<unknown>('secret_read', { name: id })
+  const found: unknown = phone ? phone.secretRead(await word(), id) : await invoke<unknown>('secret_read', { name: id })
   return typeof found === 'string' && found ? found : null
 }

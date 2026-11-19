@@ -100,12 +100,8 @@
       }}
     />
   {:else}
-    <button
-      type="button"
-      class="topic"
-      class:empty={!meta.topic}
-      disabled={!canTopic}
-      onclick={startTopic}>{meta.topic || (canTopic ? 'Topic' : '')}</button
+    <button type="button" class="topic" class:empty={!meta.topic} disabled={!canTopic} onclick={startTopic}
+      >{meta.topic || (canTopic ? 'Topic' : '')}</button
     >
   {/if}
   <span class="grow"></span>
@@ -136,8 +132,7 @@
     notify={page.entry?.notify ?? null}
     mutedUntil={page.entry?.mutedUntil ?? null}
     members={page.entry?.members ?? page.members.length}
-    onchange={(notify: Notify | null, mutedUntil: number | null) =>
-      void store().notifyFor(page.id, notify, mutedUntil)}
+    onchange={(notify: Notify | null, mutedUntil: number | null) => void store().notifyFor(page.id, notify, mutedUntil)}
   />
   <button
     type="button"

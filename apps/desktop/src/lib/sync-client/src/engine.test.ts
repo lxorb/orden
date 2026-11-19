@@ -133,8 +133,7 @@ async function device(
         name: id,
         now: () => 1000,
         random: Math.random,
-        digest: (text) =>
-          Promise.resolve(`${String(hash32('a', text))}.${String(hash32('b', text))}`),
+        digest: (text) => Promise.resolve(`${String(hash32('a', text))}.${String(hash32('b', text))}`),
         join: (root, path) => `${root}/${path}`,
         foldsCase: true,
         platform: 'other',
@@ -173,8 +172,7 @@ describe('a keystroke', () => {
     const writes = one.store.writes
     const files = new Map(one.disk.files)
 
-    for (let at = 0; at < 50; at++)
-      doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'x'), HERE)
+    for (let at = 0; at < 50; at++) doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'x'), HERE)
 
     expect(one.store.writes).toBe(writes)
     expect(one.disk.files).toEqual(files)
@@ -368,9 +366,7 @@ describe('a full store (road 7)', () => {
     store.write = (changes) => (full ? Promise.reject(new StoreError('disk full')) : write(changes))
 
     doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'kept '), HERE)
-    await expect(one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')).rejects.toThrow(
-      'disk full',
-    )
+    await expect(one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')).rejects.toThrow('disk full')
     full = false
     await one.engine.quit()
     one.engine.stop()
@@ -385,10 +381,7 @@ describe('an open note', () => {
     const one = await device()
     const path = `${ROOT}/Plan.md`
     const before = one.disk.files.get(path) ?? ''
-    const note = new NoteDoc(
-      { kind: 'note', path, name: 'Plan.md', text: before, dirty: false },
-      () => undefined,
-    )
+    const note = new NoteDoc({ kind: 'note', path, name: 'Plan.md', text: before, dirty: false }, () => undefined)
     const part = await attach(one.engine, PLAN, note, () => true)
     const theirs = `${before}\nFROM THE OTHER WINDOW\n`
     one.disk.files.set(path, theirs)
@@ -401,10 +394,7 @@ describe('an open note', () => {
     const one = await device()
     const path = `${ROOT}/Plan.md`
     const before = one.disk.files.get(path) ?? ''
-    const note = new NoteDoc(
-      { kind: 'note', path, name: 'Plan.md', text: before, dirty: false },
-      () => undefined,
-    )
+    const note = new NoteDoc({ kind: 'note', path, name: 'Plan.md', text: before, dirty: false }, () => undefined)
     const part = await attach(one.engine, PLAN, note, () => true)
 
     const appended = `${before}\nAPPENDED BY GIT\n`
@@ -450,12 +440,7 @@ describe('an open note', () => {
     let changed = 0
     note.onChange = () => (changed += 1)
 
-    const part = await attach(
-      one.engine,
-      PLAN,
-      { live: note, latest: note.text.toString() },
-      () => true,
-    )
+    const part = await attach(one.engine, PLAN, { live: note, latest: note.text.toString() }, () => true)
     expect(part).not.toBeNull()
     expect(changed).toBe(0)
     expect(note.text.toString()).toBe(SEEDED[0]?.text)
@@ -491,9 +476,7 @@ describe('an open note', () => {
     await here.engine.pass(SPACE)
 
     expect(note.text.toString()).toBe(`${SEEDED[0]?.text ?? ''}From there.`)
-    expect(arrived).toEqual([
-      [{ from: SEEDED[0]?.text.length, to: SEEDED[0]?.text.length, insert: 'From there.' }],
-    ])
+    expect(arrived).toEqual([[{ from: SEEDED[0]?.text.length, to: SEEDED[0]?.text.length, insert: 'From there.' }]])
   })
 
   test('meeting a document that moved too, the side a small overlap loses is kept as a version', async () => {
@@ -536,12 +519,7 @@ describe('an open note', () => {
     }, HERE)
     await one.engine.letGo(PLAN)
     const mine = seeded.replace('Monday', 'Tuesday')
-    const part = await attach(
-      one.engine,
-      PLAN,
-      { live: new SharedDoc(mine), latest: mine },
-      () => true,
-    )
+    const part = await attach(one.engine, PLAN, { live: new SharedDoc(mine), latest: mine }, () => true)
     const kept = () =>
       (one.engine.core.spaces.get(SPACE)?.outbox ?? []).flatMap(({ record }) =>
         record.t === 'keep' ? [record.keep.text] : [],
@@ -549,10 +527,7 @@ describe('an open note', () => {
 
     one.online = true
     one.refuses = (route) => route === 'keep'
-    for (const refusal of [
-      new Refused(401, 'sign in first'),
-      new Refused(403, 'request failed (403)', false),
-    ]) {
+    for (const refusal of [new Refused(401, 'sign in first'), new Refused(403, 'request failed (403)', false)]) {
       one.refusal = refusal
       await one.engine.pass(SPACE).catch(() => undefined)
       expect(kept()).toEqual([theirs])
@@ -578,12 +553,7 @@ describe('an open note', () => {
     }, HERE)
     await one.engine.letGo(PLAN)
     const mine = seeded.replace('Monday', 'Tuesday')
-    const part = await attach(
-      one.engine,
-      PLAN,
-      { live: new SharedDoc(mine), latest: mine },
-      () => true,
-    )
+    const part = await attach(one.engine, PLAN, { live: new SharedDoc(mine), latest: mine }, () => true)
     const kept = () =>
       (one.engine.core.spaces.get(SPACE)?.outbox ?? []).flatMap(({ record }) =>
         record.t === 'keep' ? [record.keep.text] : [],
@@ -865,8 +835,7 @@ describe('a push the account refuses', () => {
     doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'kept '), HERE)
     await one.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
     const pushes = () => one.routes.filter((route) => route === 'push').length
-    const logged = async () =>
-      (await one.engine.core.store.read([scan('log')]))[0].flatMap((row) => row.failed ?? [])
+    const logged = async () => (await one.engine.core.store.read([scan('log')]))[0].flatMap((row) => row.failed ?? [])
     return {
       one,
       said,
@@ -1275,9 +1244,7 @@ describe('a delete put back (#1068)', () => {
     expect(plan?.name).toBe('Plan.md')
     expect(plan?.parent).not.toBeNull()
     expect(here.engine.core.spaces.get(SPACE)?.at('Work/Plan.md')?.id).toBe(PLAN)
-    expect([...here.disk.files.keys()].filter((path) => path.endsWith('Plan.md'))).toEqual([
-      `${ROOT}/Work/Plan.md`,
-    ])
+    expect([...here.disk.files.keys()].filter((path) => path.endsWith('Plan.md'))).toEqual([`${ROOT}/Work/Plan.md`])
   })
 
   test('of a folder another device brought back meanwhile puts what it held into it', async () => {
@@ -1397,8 +1364,7 @@ describe('a move to another space', () => {
 
     await here.disk.move(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
     const read = here.disk.read.bind(here.disk)
-    here.disk.read = (path: string) =>
-      path === `${WORK_ROOT}/Trip/Map.md` ? Promise.resolve(null) : read(path)
+    here.disk.read = (path: string) => (path === `${WORK_ROOT}/Trip/Map.md` ? Promise.resolve(null) : read(path))
     await here.engine.moved(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
 
     expect(held(here, WORK)).toEqual(['Trip folder'])
@@ -1479,9 +1445,7 @@ describe('the folder watcher', () => {
     watched.stop()
 
     const space = here.engine.core.spaces.get(SPACE)
-    const folders = [...(space?.entries.values() ?? [])].filter(
-      (entry) => entry.kind === 'folder' && !entry.deleted,
-    )
+    const folders = [...(space?.entries.values() ?? [])].filter((entry) => entry.kind === 'folder' && !entry.deleted)
     expect(folders.map((folder) => folder.local_path)).toEqual(['Work'])
     expect(await here.disk.exists(`${ROOT}/Work/Plan.md`)).toBe(true)
   })
@@ -1500,8 +1464,7 @@ describe('the folder watcher', () => {
     })
     await here.disk.write(`${ROOT}/Late.md`, 'late\n')
     await here.disk.mkdir(`${ROOT}/Quiet`)
-    const told = (path: string, dir: boolean) =>
-      ({ kind: 'modified', path, dir, size: 1, mtime: 1, id: null }) as const
+    const told = (path: string, dir: boolean) => ({ kind: 'modified', path, dir, size: 1, mtime: 1, id: null }) as const
     for (const hear of heard) {
       hear({
         root: ROOT,
@@ -1701,9 +1664,7 @@ describe('the folder watcher', () => {
     expect(names).not.toContain('_Plan.md')
 
     await expect(
-      here.engine.moving(`${ROOT}/Work/_Plan.md`, `${ROOT}/Work/Goals.md`, () =>
-        Promise.reject(new Error('in use')),
-      ),
+      here.engine.moving(`${ROOT}/Work/_Plan.md`, `${ROOT}/Work/Goals.md`, () => Promise.reject(new Error('in use'))),
     ).rejects.toThrow('in use')
     await here.engine.pass(SPACE)
     const after = (await account.view()).entries.map((one) => one.name)
@@ -1715,9 +1676,7 @@ describe('the folder watcher', () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const here = await device(account, 'd0')
     await expect(
-      here.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`, () =>
-        Promise.reject(new Error('in use')),
-      ),
+      here.engine.moving(`${ROOT}/Plan.md`, `${ROOT}/Goals.md`, () => Promise.reject(new Error('in use'))),
     ).rejects.toThrow('in use')
     await here.engine.pass(SPACE)
 
@@ -1740,8 +1699,7 @@ describe('the folder watcher', () => {
     })
     await here.disk.write(`${ROOT}/.Inbox.md`, '- [ ] Call the bank\n')
     await here.disk.write(`${ROOT}/.secret.md`, 'not for anybody')
-    const made = (path: string) =>
-      ({ kind: 'created', path, dir: false, size: 1, mtime: 1, id: null }) as const
+    const made = (path: string) => ({ kind: 'created', path, dir: false, size: 1, mtime: 1, id: null }) as const
     for (const hear of heard) {
       hear({
         root: ROOT,
@@ -1828,8 +1786,7 @@ describe('another sync tool’s copy', () => {
   const CLASH = 'Plan (# Name clash 2026-10-05 a1b2c3C #).md'
   const WITH_CLASH: readonly Seeded[] = [...SEEDED, { id: 'n9', name: CLASH, text: 'theirs\n' }]
 
-  const names = async (account: ReferenceAccount) =>
-    (await account.view()).entries.map((entry) => entry.name)
+  const names = async (account: ReferenceAccount) => (await account.view()).entries.map((entry) => entry.name)
 
   test('made here never reaches the account, and is not an entry here', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
@@ -2112,8 +2069,7 @@ describe('notes pushed together that are larger than one request may carry', () 
   test('one too large to send is left here and said, and the rest still arrive', async () => {
     const { account, one } = await grown({ b1: 9 * 1024 * 1024 })
     expect(await textOn(account, 'b1')).toBe('# Big 1\n')
-    for (const id of ['b2', 'b3', 's1'])
-      expect((await textOn(account, id)).length).toBeGreaterThan(10)
+    for (const id of ['b2', 'b3', 's1']) expect((await textOn(account, id)).length).toBeGreaterThan(10)
     const [log] = await one.engine.core.store.read([scan('log')])
     expect(log.some((row) => row.failed === 'that note is too large')).toBe(true)
   })

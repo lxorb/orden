@@ -6,8 +6,7 @@ const world = vi.hoisted(() => ({
   refuses: false,
   made: [] as { title: string; options: NotificationOptions; onclick: (() => void) | null }[],
   byWorker: [] as { title: string; options: NotificationOptions & { data?: unknown } }[],
-  heard: null as
-    ((event: { data: unknown; ports?: { postMessage(said: unknown): void }[] }) => void) | null,
+  heard: null as ((event: { data: unknown; ports?: { postMessage(said: unknown): void }[] }) => void) | null,
 }))
 
 class Paged {
@@ -73,9 +72,7 @@ describe('notices in a browser', () => {
   it('go through the service worker where the page may not, as on Android, and are no error', async () => {
     world.refuses = true
     const opened = vi.fn()
-    expect(() =>
-      show({ title: 'Lucile', body: 'The figures are in', tag: 'c_2', opened }),
-    ).not.toThrow()
+    expect(() => show({ title: 'Lucile', body: 'The figures are in', tag: 'c_2', opened })).not.toThrow()
     await settled()
     expect(world.byWorker).toEqual([
       {

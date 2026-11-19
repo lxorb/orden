@@ -122,9 +122,7 @@ describe('the pane over the crate', () => {
     expect(pane.calls.some((one) => one.agent === 'codex')).toBe(true)
     expect(pane.last.has('claude-code')).toBe(false)
     const left = await Promise.all((await fake.days()).map((day) => fake.day(day)))
-    expect(left.flat().every((line) => (line as { agent: string }).agent !== 'claude-code')).toBe(
-      true,
-    )
+    expect(left.flat().every((line) => (line as { agent: string }).agent !== 'claude-code')).toBe(true)
   })
 })
 

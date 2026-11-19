@@ -26,10 +26,7 @@ beforeEach(() => {
 
 test('after a restart, a chat answered since it was seen puts the dot up, panel unopened', async () => {
   heads.set('work', [head('read', { answered: 1, seen: 2 })])
-  heads.set('home', [
-    head('parent', { answered: 1, seen: 2 }),
-    head('helper', { parent: 'parent', answered: 3 }),
-  ])
+  heads.set('home', [head('parent', { answered: 1, seen: 2 }), head('helper', { parent: 'parent', answered: 3 })])
   const { chatsUnread, lookAtLaunch } = await import('./unread.svelte')
   await lookAtLaunch(['work', 'home'])
   expect(chatsUnread.any).toBe(true)

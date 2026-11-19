@@ -28,8 +28,6 @@ export class Trace {
   }
 
   get line(): string {
-    return this.held
-      .map((one) => `${one.what}/${one.kind} b${one.button} B${one.buttons}`)
-      .join(' | ')
+    return this.held.map((one) => `${one.what}/${one.kind} b${one.button} B${one.buttons}`).join(' | ')
   }
 }

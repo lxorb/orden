@@ -1,15 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { GRID } from '../../plane/src/api'
-import {
-  aimed,
-  fading,
-  type Fade,
-  latticeEvery,
-  latticeLayers,
-  latticeLevel,
-  settled,
-  stepped,
-} from './lattice'
+import { aimed, fading, type Fade, latticeEvery, latticeLayers, latticeLevel, settled, stepped } from './lattice'
 
 const THINS_AT = 12
 const FILLS_AT = 15

@@ -45,9 +45,7 @@ function steadyStatement(statement: D1PreparedStatement, sql: string): D1Prepare
       }
       const value: unknown = Reflect.get(target, key, target)
       if (!ANSWERS.has(key) || typeof value !== 'function') {
-        return typeof value === 'function'
-          ? (value as (...values: unknown[]) => unknown).bind(target)
-          : value
+        return typeof value === 'function' ? (value as (...values: unknown[]) => unknown).bind(target) : value
       }
       const answer = value as (...values: unknown[]) => Promise<unknown>
       return (...values: unknown[]) => steadily(() => answer.apply(target, values), reads)
@@ -75,9 +73,7 @@ export function steadyDb(db: D1Database): D1Database {
           steadily(() => target.batch(statements.map((one) => unwrapped.get(one) ?? one)), false)
       }
       const value: unknown = Reflect.get(target, key, target)
-      return typeof value === 'function'
-        ? (value as (...values: unknown[]) => unknown).bind(target)
-        : value
+      return typeof value === 'function' ? (value as (...values: unknown[]) => unknown).bind(target) : value
     },
   })
   steadied.set(db, held)
@@ -89,9 +85,7 @@ export function steadyEnv(env: Env): Env {
   return new Proxy(env, {
     get(target, key) {
       const value: unknown = Reflect.get(target, key, target)
-      return key === 'DB' && typeof value === 'object' && value !== null
-        ? steadyDb(value as D1Database)
-        : value
+      return key === 'DB' && typeof value === 'object' && value !== null ? steadyDb(value as D1Database) : value
     },
   })
 }

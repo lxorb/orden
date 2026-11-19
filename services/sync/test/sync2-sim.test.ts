@@ -27,11 +27,7 @@ describe('the Worker as the simulator’s account', () => {
 
 test.each([
   ['random walks hold every check', 25, {}],
-  [
-    'rows arranged at random end in the same place everywhere',
-    10,
-    { devices: 4, steps: 60, mix: 'order' },
-  ],
+  ['rows arranged at random end in the same place everywhere', 10, { devices: 4, steps: 60, mix: 'order' }],
 ] as const)(
   '%s, %i seeds against the Worker',
   async (_, seeds, more) => {

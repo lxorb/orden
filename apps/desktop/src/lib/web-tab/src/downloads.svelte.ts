@@ -19,8 +19,7 @@ export function readDownload(said: unknown): Download | null {
   if (!isRecord(said)) return null
   const { id, tab, url, name } = said
   const state = STATES.find((one) => one === said.state)
-  if (typeof id !== 'number' || !isString(tab) || !isString(url) || !isString(name) || !state)
-    return null
+  if (typeof id !== 'number' || !isString(tab) || !isString(url) || !isString(name) || !state) return null
 
   return {
     id,

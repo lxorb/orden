@@ -93,10 +93,7 @@ const asks = StateField.define<readonly AiRun[]>({
       if (effect.is(openAsk)) {
         const { id, from, stop } = effect.value
         for (const run of next.filter((one) => one.from === from)) run.stop()
-        next = [
-          ...next.filter((one) => one.from !== from),
-          { id, from, body: null, at: null, stop },
-        ]
+        next = [...next.filter((one) => one.from !== from), { id, from, body: null, at: null, stop }]
       } else if (effect.is(beganAnswer)) {
         const { id, body } = effect.value
         next = next.map((run) => (run.id === id ? { ...run, body, at: body } : run))
@@ -132,12 +129,7 @@ let counter = 0
 const runOf = (state: EditorState, id: number): AiRun | null =>
   (state.field(asks, false) ?? []).find((run) => run.id === id) ?? null
 
-function holderOf(
-  view: AiView,
-  note: SharedDoc | null,
-  turn: number | undefined,
-  id: number,
-): AiView | null {
+function holderOf(view: AiView, note: SharedDoc | null, turn: number | undefined, id: number): AiView | null {
   if (note && note.turn !== turn) return null
   if (runOf(view.state, id)) return view
   return note?.holding((state) => runOf(state, id) !== null) ?? null
@@ -209,9 +201,7 @@ function beginAnswer(view: AiView, id: number, model: string) {
 
 function within(text: string, lead: string): string {
   if (!lead) return text
-  return text.replace(/\n(?=(\n?))/g, (_all, blank: string) =>
-    blank ? `\n${lead.trimEnd()}` : `\n${lead}`,
-  )
+  return text.replace(/\n(?=(\n?))/g, (_all, blank: string) => (blank ? `\n${lead.trimEnd()}` : `\n${lead}`))
 }
 
 function writeAnswer(view: AiView, id: number, text: string) {

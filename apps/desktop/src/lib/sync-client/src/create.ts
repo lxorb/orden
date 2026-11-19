@@ -1,13 +1,7 @@
 import { isOwnFile as carriedOwn } from '@orden/sync-core'
 import { unstacked } from '@orden/markdown/paths'
 import { fileMade } from './files'
-import {
-  inForeignCopy,
-  kindOfName,
-  type MetaPatch,
-  type EntryKind,
-  type Op,
-} from '@orden/sync-core'
+import { inForeignCopy, kindOfName, type MetaPatch, type EntryKind, type Op } from '@orden/sync-core'
 import type { Core } from './core'
 import { MINE } from './docs'
 import { holdsDocument, shapeOf, turn } from './kinds'
@@ -88,11 +82,7 @@ export interface Made {
   kind?: EntryKind
 }
 
-export async function made(
-  core: Core,
-  space: SpaceState,
-  what: Made,
-): Promise<{ id: string; changes: Change[] }> {
+export async function made(core: Core, space: SpaceState, what: Made): Promise<{ id: string; changes: Change[] }> {
   if (inForeignCopy(what.path) || hiddenPath(what.path)) return { id: freshId(core), changes: [] }
   const changes: Change[] = []
   const parent = folderFor(core, space, folderOf(what.path), changes)
@@ -137,11 +127,7 @@ export async function made(
 
 export function mergeableAfter(space: SpaceState, entry: EntryRow, text: string): Change[] {
   const one = space.outbox.find(
-    (op) =>
-      op.record.t === 'op' &&
-      !op.record.sent &&
-      op.record.op.t === 'create' &&
-      op.record.op.id === entry.id,
+    (op) => op.record.t === 'op' && !op.record.sent && op.record.op.t === 'create' && op.record.op.id === entry.id,
   )
   if (one?.record.t !== 'op' || one.record.op.t !== 'create') return []
   one.record = { t: 'op', op: { ...one.record.op, mergeable: { text } } }
@@ -174,9 +160,7 @@ export function moved(core: Core, space: SpaceState, from: string, to: string): 
 function keptName(space: SpaceState, entry: EntryRow, from: string, to: string): string {
   const had = space.shown().entries.get(entry.id)?.name
   const name = nameOf(to)
-  return had !== undefined && (nameOf(from) === name || placedAs(space, entry.id, name))
-    ? had
-    : name
+  return had !== undefined && (nameOf(from) === name || placedAs(space, entry.id, name)) ? had : name
 }
 
 function placedAs(space: SpaceState, id: string, name: string): boolean {
@@ -208,13 +192,7 @@ export function carried(space: SpaceState, from: string, to: string): Change[] {
   return changes
 }
 
-function placing(
-  core: Core,
-  space: SpaceState,
-  entry: EntryRow,
-  parent: string | null,
-  name: string,
-): Change[] {
+function placing(core: Core, space: SpaceState, entry: EntryRow, parent: string | null, name: string): Change[] {
   const seen = space.row.cursor
   const shown = space.shown().entries.get(entry.id)
   if (shown?.parent === parent) {
@@ -226,32 +204,20 @@ function placing(
   return queue(core, space, op)
 }
 
-export function placed(
-  core: Core,
-  space: SpaceState,
-  places: ReadonlyMap<string, string>,
-): Change[] {
+export function placed(core: Core, space: SpaceState, places: ReadonlyMap<string, string>): Change[] {
   const changes: Change[] = []
   for (const [id, pos] of places) {
-    changes.push(
-      ...queue(core, space, { op: core.nextId('o'), t: 'place', id, pos, seen: space.row.cursor }),
-    )
+    changes.push(...queue(core, space, { op: core.nextId('o'), t: 'place', id, pos, seen: space.row.cursor }))
   }
   if (places.size) core.reorders += 1
   space.changed()
   return changes
 }
 
-export function described(
-  core: Core,
-  space: SpaceState,
-  patches: ReadonlyMap<string, MetaPatch>,
-): Change[] {
+export function described(core: Core, space: SpaceState, patches: ReadonlyMap<string, MetaPatch>): Change[] {
   const changes: Change[] = []
   for (const [id, meta] of patches) {
-    changes.push(
-      ...queue(core, space, { op: core.nextId('o'), t: 'meta', id, meta, seen: space.row.cursor }),
-    )
+    changes.push(...queue(core, space, { op: core.nextId('o'), t: 'meta', id, meta, seen: space.row.cursor }))
   }
   if (patches.size) core.reorders += 1
   space.changed()
@@ -296,9 +262,7 @@ function inside(space: SpaceState, folder: string): EntryRow[] {
     if (id === folder) return true
     return holds(space.entries.get(id)?.parent ?? null, depth + 1)
   }
-  return [...space.entries.values()].filter(
-    (one) => !one.deleted && one.id !== folder && holds(one.parent),
-  )
+  return [...space.entries.values()].filter((one) => !one.deleted && one.id !== folder && holds(one.parent))
 }
 
 export function removed(core: Core, space: SpaceState, path: string, back?: string): Change[] {
@@ -353,11 +317,7 @@ function making(space: SpaceState, id: string, unsent = false): boolean {
 
 function unsent(space: SpaceState, id: string, changes: Change[]): boolean {
   const one = space.outbox.find(
-    (op) =>
-      op.record.t === 'op' &&
-      !op.record.sent &&
-      op.record.op.t === 'delete' &&
-      op.record.op.id === id,
+    (op) => op.record.t === 'op' && !op.record.sent && op.record.op.t === 'delete' && op.record.op.id === id,
   )
   if (!one) return false
   space.outbox = space.outbox.filter((other) => other !== one)
@@ -366,12 +326,7 @@ function unsent(space: SpaceState, id: string, changes: Change[]): boolean {
   return true
 }
 
-export async function restored(
-  core: Core,
-  space: SpaceState,
-  id: string,
-  path: string,
-): Promise<Change[] | null> {
+export async function restored(core: Core, space: SpaceState, id: string, path: string): Promise<Change[] | null> {
   const top = space.entries.get(id)
   if (!top) return null
   const holder = space.at(path)
@@ -420,9 +375,7 @@ export async function restored(
         copies.push({ at: copy, home: entry.local_path, kind: entry.kind as EntryKind })
       }
       const seen = space.row.cursor
-      changes.push(
-        ...queue(core, space, { op: core.nextId('o'), t: 'restore', id: entry.id, seen }),
-      )
+      changes.push(...queue(core, space, { op: core.nextId('o'), t: 'restore', id: entry.id, seen }))
       continue
     }
     const at = homeOf(copy)
@@ -431,11 +384,7 @@ export async function restored(
       if (!(await core.world.disk.exists(full(copy)))) continue
       try {
         await core.world.disk.mkdir(full(folderOf(at)))
-        await core.world.disk.move(
-          full(copy),
-          full(at),
-          entry.kind === 'folder' ? 'folder' : 'file',
-        )
+        await core.world.disk.move(full(copy), full(at), entry.kind === 'folder' ? 'folder' : 'file')
       } catch {
         continue
       }
@@ -485,9 +434,7 @@ export async function restored(
   for (const copy of copies) {
     if (homeOf(copy.at) !== copy.at) continue
     if (!(await core.world.disk.exists(full(copy.at)))) continue
-    await core.world.disk
-      .remove(full(copy.at), copy.kind === 'folder' ? 'folder' : 'file')
-      .catch(() => undefined)
+    await core.world.disk.remove(full(copy.at), copy.kind === 'folder' ? 'folder' : 'file').catch(() => undefined)
   }
 
   const now = space.shown().entries.get(id)
@@ -520,9 +467,7 @@ export function unstackedNames(core: Core, space: SpaceState): Change[] {
     if (name === entry.name) continue
     tried.add(entry.id)
     const seen = space.row.cursor
-    changes.push(
-      ...queue(core, space, { op: core.nextId('o'), t: 'rename', id: entry.id, name, seen }),
-    )
+    changes.push(...queue(core, space, { op: core.nextId('o'), t: 'rename', id: entry.id, name, seen }))
   }
   if (changes.length) space.changed()
   return changes

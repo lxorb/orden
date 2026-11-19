@@ -32,12 +32,7 @@ class Overlays {
 
   private readonly watchers = new Set<() => void>()
 
-  show(
-    close: () => void,
-    holds?: Holds,
-    from: Opener | null = this.clicking,
-    keepsFocus = false,
-  ): () => void {
+  show(close: () => void, holds?: Holds, from: Opener | null = this.clicking, keepsFocus = false): () => void {
     return this.push({ close, holds: holds ?? null, from, said: null, keepsFocus, peek: false })
   }
 
@@ -134,8 +129,7 @@ class Overlays {
   }
 
   away() {
-    for (let top = this.stack.at(-1); top?.holds && !top.keepsFocus; top = this.stack.at(-1))
-      this.shut(top)
+    for (let top = this.stack.at(-1); top?.holds && !top.keepsFocus; top = this.stack.at(-1)) this.shut(top)
   }
 
   private shut(one: Open) {
@@ -169,11 +163,7 @@ function bare(node: Node): boolean {
   if (typeof Element === 'undefined' || !(node instanceof Element)) return false
   const style = getComputedStyle(node)
   const none = (value: string) => value === 'none' || value === ''
-  return (
-    style.backgroundColor === 'rgba(0, 0, 0, 0)' &&
-    none(style.backgroundImage) &&
-    none(style.borderTopStyle)
-  )
+  return style.backgroundColor === 'rgba(0, 0, 0, 0)' && none(style.backgroundImage) && none(style.borderTopStyle)
 }
 
 function spend(press: Press) {

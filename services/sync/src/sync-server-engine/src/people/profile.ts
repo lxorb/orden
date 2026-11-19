@@ -23,8 +23,7 @@ export interface ProfileRow {
   hidden: number
 }
 
-export const PROFILE_COLUMNS =
-  'u.id, u.email, u.name, u.avatar, u.pronouns, u.bio, u.status, u.zone, u.hidden'
+export const PROFILE_COLUMNS = 'u.id, u.email, u.name, u.avatar, u.pronouns, u.bio, u.status, u.zone, u.hidden'
 
 const PRONOUNS_LIMIT = 40
 const BIO_LIMIT = 190
@@ -77,9 +76,7 @@ export interface ProfileChanges {
   hidden?: boolean
 }
 
-export function profileChanges(
-  fields: Record<string, unknown>,
-): { changes: ProfileChanges } | { problem: string } {
+export function profileChanges(fields: Record<string, unknown>): { changes: ProfileChanges } | { problem: string } {
   const changes: ProfileChanges = {}
 
   const words = (
@@ -90,8 +87,7 @@ export function profileChanges(
     const value = fields[name]
     if (value === null) return { kept: null }
     if (typeof value !== 'string') return { problem: `${name} must be text` }
-    const kept =
-      name === 'bio' ? value.replace(/(?!\n)\p{Cc}/gu, '').trim() : cleanPersonName(value)
+    const kept = name === 'bio' ? value.replace(/(?!\n)\p{Cc}/gu, '').trim() : cleanPersonName(value)
     if (kept.length > limit) return { problem: `use at most ${limit} characters` }
     return { kept: kept || null }
   }
@@ -139,12 +135,7 @@ function presentFace(row: ProfileRow) {
   }
 }
 
-export function presentProfile(
-  row: ProfileRow,
-  presence: Presence | null,
-  now: number,
-  asker: string,
-) {
+export function presentProfile(row: ProfileRow, presence: Presence | null, now: number, asker: string) {
   const mine = row.id === asker
   return {
     ...presentFace(row),

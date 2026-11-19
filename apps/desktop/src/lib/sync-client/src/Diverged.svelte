@@ -50,9 +50,7 @@
       const port = portOf('canvas.pictures')
       if (!port.ok) return
       const path = shown?.path ?? null
-      const space = path
-        ? workspace().spaces.find((one) => withinSpace(one.root, path) !== null)
-        : null
+      const space = path ? workspace().spaces.find((one) => withinSpace(one.root, path) !== null) : null
       const svg = await port.value.svg({
         text,
         name: shown?.name ?? '',
@@ -115,8 +113,7 @@
       </div>
     {:else}
       <p class="excerpt" dir="auto">
-        {#each runsOf(side.excerpt) as run, at (at)}{#if run.marked}<mark>{run.text}</mark
-            >{:else}{run.text}{/if}{/each}
+        {#each runsOf(side.excerpt) as run, at (at)}{#if run.marked}<mark>{run.text}</mark>{:else}{run.text}{/if}{/each}
       </p>
     {/if}
 

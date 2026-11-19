@@ -104,13 +104,7 @@ class Helpers {
     const route = routed(asked.model, offered, parentProvider)
     if ('refused' in route) return route
 
-    const thread = newThread(
-      asked.space,
-      route.provider.id,
-      route.model,
-      asked.effort ?? 'auto',
-      asked.mode,
-    )
+    const thread = newThread(asked.space, route.provider.id, route.model, asked.effort ?? 'auto', asked.mode)
     const named = [asked.description, asked.prompt.split('\n')[0]?.slice(0, 60)].find(Boolean)
     thread.title = `↳ ${named ?? ''}`
     if (parent) thread.parent = parent.id

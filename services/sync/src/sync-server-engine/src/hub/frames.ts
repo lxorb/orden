@@ -9,9 +9,7 @@ const MOST_PLATFORM = 24
 const MOST_APP = 32
 
 export type FromDevice =
-  | { t: 'hello'; device: string; name: string; platform: string; app: string }
-  | { t: 'active' }
-  | { t: 'idle' }
+  { t: 'hello'; device: string; name: string; platform: string; app: string } | { t: 'active' } | { t: 'idle' }
 
 export type FromHub =
   | { t: 'poke'; space: string; seq: number }

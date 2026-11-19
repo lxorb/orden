@@ -7,9 +7,7 @@ describe('what a note gives the rows of its space', () => {
       '# Home\n- [ ] Water the plants 📅 2026-10-04\n## Kitchen\n  - [/] Descale\n# Bank\n1. [x] Call ✅ 2026-10-01\n',
     )
 
-    expect(
-      tasks.map((one) => [one.line, one.indent, one.mark, one.text, one.section.join(' > ')]),
-    ).toEqual([
+    expect(tasks.map((one) => [one.line, one.indent, one.mark, one.text, one.section.join(' > ')])).toEqual([
       [1, 0, ' ', 'Water the plants 📅 2026-10-04', 'Home'],
       [3, 2, '/', 'Descale', 'Home > Kitchen'],
       [5, 0, 'x', 'Call ✅ 2026-10-01', 'Bank'],
@@ -17,9 +15,7 @@ describe('what a note gives the rows of its space', () => {
   })
 
   test('front matter is raw, and code and front matter hold no tasks', () => {
-    const read = scanRows(
-      '---\nstatus: open\n# a comment\n---\n```\n- [ ] not a task\n```\n- [ ] a task\n',
-    )
+    const read = scanRows('---\nstatus: open\n# a comment\n---\n```\n- [ ] not a task\n```\n- [ ] a task\n')
 
     expect(read.front).toBe('status: open\n# a comment')
     expect(read.tasks.map((one) => [one.line, one.section])).toEqual([[7, []]])
@@ -91,9 +87,13 @@ describe('what a note gives the rows of its space', () => {
 
   test('a task in a list item, nested or not, is still one', () => {
     const texts = (text: string) => scanRows(text).tasks.map((one) => one.text)
-    expect(
-      texts('- [ ] one\n    - [ ] two\n\t- [ ] three\n- item\n  - [ ] four\n\n  - [ ] five\n'),
-    ).toEqual(['one', 'two', 'three', 'four', 'five'])
+    expect(texts('- [ ] one\n    - [ ] two\n\t- [ ] three\n- item\n  - [ ] four\n\n  - [ ] five\n')).toEqual([
+      'one',
+      'two',
+      'three',
+      'four',
+      'five',
+    ])
   })
 
   test('a fence in the front matter opens no code below it', () => {

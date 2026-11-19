@@ -36,11 +36,7 @@ export async function machinesRevoked(
 
 const MOST_LOGINS = 100
 
-export async function machinesSignedOut(
-  env: Env,
-  who: string,
-  logins: readonly string[],
-): Promise<void> {
+export async function machinesSignedOut(env: Env, who: string, logins: readonly string[]): Promise<void> {
   const ended = logins.filter(Boolean).slice(0, MOST_LOGINS)
   if (!env.MACHINES || !who || !ended.length) return
 
@@ -60,8 +56,6 @@ export async function machinesSignedOut(
     .all<{ machine: string }>()
 
   await Promise.all(
-    results.map((one) =>
-      askMachine(env, one.machine, 'signedout', { 'x-orden-logins': ended.join(',') }),
-    ),
+    results.map((one) => askMachine(env, one.machine, 'signedout', { 'x-orden-logins': ended.join(',') })),
   )
 }

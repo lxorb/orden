@@ -37,9 +37,7 @@
 >
   {#if canPost}
     {#each quick as emoji (emoji)}
-      <button type="button" class="one emoji" aria-label={emoji} onclick={() => onreact(emoji)}
-        >{emoji}</button
-      >
+      <button type="button" class="one emoji" aria-label={emoji} onclick={() => onreact(emoji)}>{emoji}</button>
     {/each}
     <button
       type="button"
@@ -55,12 +53,8 @@
       ><Glyph name="quote" /></button
     >
   {/if}
-  <button
-    type="button"
-    class="one"
-    aria-label="More"
-    use:tip={() => 'More'}
-    onclick={(event) => onmenu(event)}><Glyph name="more" /></button
+  <button type="button" class="one" aria-label="More" use:tip={() => 'More'} onclick={(event) => onmenu(event)}
+    ><Glyph name="more" /></button
   >
 </div>
 

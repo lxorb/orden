@@ -83,18 +83,13 @@ describe('withPending', () => {
 
   it('moves a card to another lane of its own column', () => {
     const groups = [group('todo', [a, b], [group('one', [a]), group('two', [b])])]
-    const out = withPending(groups, [
-      moving({ to: 'todo', key: 'todo', fromLane: 'one', lane: 'two', index: 1 }),
-    ])
+    const out = withPending(groups, [moving({ to: 'todo', key: 'todo', fromLane: 'one', lane: 'two', index: 1 })])
     expect(names(out[0]?.rows ?? [])).toEqual(['B', 'A'])
     expect(out[0]?.sub?.map((lane) => names(lane.rows))).toEqual([[], ['B', 'A']])
   })
 
   it('opens a lane a column had no card in', () => {
-    const groups = [
-      group('todo', [a], [group('one', [a])]),
-      group('done', [c], [group('one', [c])]),
-    ]
+    const groups = [group('todo', [a], [group('one', [a])]), group('done', [c], [group('one', [c])])]
     const out = withPending(groups, [moving({ fromLane: 'one', lane: 'two', index: 0 })])
     expect(out[1]?.sub?.map((lane) => [lane.key, names(lane.rows)])).toEqual([
       ['one', ['C']],

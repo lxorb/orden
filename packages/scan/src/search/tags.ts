@@ -1,9 +1,5 @@
 import { CodeBlocks, WORDS } from '@orden/markdown/fences'
-import {
-  type FrontMatterBlock,
-  frontMatterBlock,
-  valueClosesAt,
-} from '@orden/markdown/front-matter'
+import { type FrontMatterBlock, frontMatterBlock, valueClosesAt } from '@orden/markdown/front-matter'
 import { codeSpans, inCode, TAG_NAME, tagAt } from '@orden/markdown/tags'
 
 export interface TagUse {
@@ -111,8 +107,7 @@ function widened(body: string, use: TagUse): { from: number; to: number } {
     if (body.charAt(to + gap + 1) === '#') return { from, to: to + gap }
     const past = spaces(body, to + gap + 1, after)
     const matter = (frontMatterBlock(body)?.close ?? 0) > from
-    if (matter && past && body.charAt(to + gap + 1 + past) === '#')
-      return { from, to: to + gap + 1 }
+    if (matter && past && body.charAt(to + gap + 1 + past) === '#') return { from, to: to + gap + 1 }
     return { from, to: to + gap + 1 + past }
   }
 
@@ -193,10 +188,7 @@ function readItems(body: string, from: number, front: FrontMatterBlock, out: Tag
 }
 
 const blankedComments = (text: string): string =>
-  text.replace(
-    /(^|\s)(#\s.*)$/gm,
-    (_, gap: string, comment: string) => `${gap}${' '.repeat(comment.length)}`,
-  )
+  text.replace(/(^|\s)(#\s.*)$/gm, (_, gap: string, comment: string) => `${gap}${' '.repeat(comment.length)}`)
 
 function readValues(from: number, text: string, out: TagUse[]) {
   for (const found of text.matchAll(VALUE)) {

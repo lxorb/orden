@@ -32,18 +32,12 @@ describe('the pictures a body shows', () => {
     ['a picture by reference', `![a][r]\n\n[r]: ${URL}\n`],
     ['an image tag with a source set', `<img srcset="${URL} 2x">`],
     ['an image tag whose words hold a bracket', `<img alt="a>b" src="${URL}">`],
-    [
-      'an image tag with an entity in its address',
-      `<img src="https://nibeditor.com&#47;i/${HASH}.png">`,
-    ],
+    ['an image tag with an entity in its address', `<img src="https://nibeditor.com&#47;i/${HASH}.png">`],
     ['a picture element', `<picture><source srcset="${URL}"><img src="x.png"></picture>`],
     ['a film with a poster', `<video poster="${URL}"></video>`],
     ['a background in a style', `<div style="background-image:url(${URL})">x</div>`],
     ['a picture by a shortcut reference', `![l]\n\n[l]: ${URL}\n`],
-    [
-      'a group behind a picture on a canvas',
-      JSON.stringify({ nodes: [{ type: 'group', background: URL }] }),
-    ],
+    ['a group behind a picture on a canvas', JSON.stringify({ nodes: [{ type: 'group', background: URL }] })],
     ['a picture by a collapsed reference', `![Shot][]\n\n[shot]: <${URL}>\n`],
     ['a picture after a fence that held another mark', `~~~\n\`\`\`\n~~~\n![](${URL})`],
     [

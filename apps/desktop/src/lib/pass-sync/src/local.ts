@@ -226,9 +226,7 @@ export async function readItem(vault: string, id: string): Promise<ItemRow | nul
 }
 
 export async function readVersions(vault: string, id: string): Promise<VersionRow[]> {
-  const rows = (await read('versions', (store) =>
-    store.getAll(versionsOf(vault, id)),
-  )) as VersionRow[]
+  const rows = (await read('versions', (store) => store.getAll(versionsOf(vault, id)))) as VersionRow[]
   return rows.reverse()
 }
 

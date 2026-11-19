@@ -1,12 +1,7 @@
 const FAVORITES = 'C-TOP-DEFAULT'
 const OTHER_FAVORITES = 'C-TOP-P1'
 
-const item = (
-  id: string,
-  parentID: string,
-  data: Record<string, unknown>,
-  said: Record<string, unknown> = {},
-) => ({
+const item = (id: string, parentID: string, data: Record<string, unknown>, said: Record<string, unknown> = {}) => ({
   id,
   parentID,
   childrenIds: [],
@@ -35,29 +30,11 @@ const items = [
   container(FAVORITES, { topApps: { _0: { default: true } } }, ['F-MAIL', 'F-CAL']),
   tab('F-MAIL', FAVORITES, 'https://mail.example.com/', 'Inbox'),
   tab('F-CAL', FAVORITES, 'https://calendar.example.com/', 'Calendar'),
-  container(
-    OTHER_FAVORITES,
-    { topApps: { _0: { custom: { _0: { directoryBasename: 'Profile 1' } } } } },
-    ['F-OTHER'],
-  ),
+  container(OTHER_FAVORITES, { topApps: { _0: { custom: { _0: { directoryBasename: 'Profile 1' } } } } }, ['F-OTHER']),
   tab('F-OTHER', OTHER_FAVORITES, 'https://other.example.com/', 'Other'),
-  container('C-PERSONAL-PINNED', { spaceItems: { _0: 'S-PERSONAL' } }, [
-    'P-DOCS',
-    'P-NEWS',
-    'P-EASEL',
-  ]),
-  item(
-    'P-DOCS',
-    'C-PERSONAL-PINNED',
-    { list: {} },
-    { title: 'Docs', childrenIds: ['P-SPLIT', 'P-GUIDE'] },
-  ),
-  item(
-    'P-SPLIT',
-    'P-DOCS',
-    { splitView: { layoutOrientation: 'horizontal' } },
-    { childrenIds: ['P-LEFT', 'P-RIGHT'] },
-  ),
+  container('C-PERSONAL-PINNED', { spaceItems: { _0: 'S-PERSONAL' } }, ['P-DOCS', 'P-NEWS', 'P-EASEL']),
+  item('P-DOCS', 'C-PERSONAL-PINNED', { list: {} }, { title: 'Docs', childrenIds: ['P-SPLIT', 'P-GUIDE'] }),
+  item('P-SPLIT', 'P-DOCS', { splitView: { layoutOrientation: 'horizontal' } }, { childrenIds: ['P-LEFT', 'P-RIGHT'] }),
   tab('P-LEFT', 'P-SPLIT', 'https://left.example.com/', 'Left'),
   tab('P-RIGHT', 'P-SPLIT', 'https://right.example.com/', 'Right'),
   { ...tab('P-GUIDE', 'P-DOCS', 'https://docs.example.com/guide', 'Guide'), title: 'The guide' },
@@ -78,12 +55,7 @@ const spaces = [
     title: 'Personal',
     profile: { default: true },
     customInfo: { iconType: { emoji_v2: '🏠' }, windowTheme: { semanticColorPalettes: {} } },
-    newContainerIDs: [
-      { pinned: {} },
-      'C-PERSONAL-PINNED',
-      { unpinned: { _0: { shared: {} } } },
-      'C-PERSONAL-OPEN',
-    ],
+    newContainerIDs: [{ pinned: {} }, 'C-PERSONAL-PINNED', { unpinned: { _0: { shared: {} } } }, 'C-PERSONAL-OPEN'],
     containerIDs: ['pinned', 'C-PERSONAL-PINNED', 'unpinned', 'C-PERSONAL-OPEN'],
   },
   {

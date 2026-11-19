@@ -37,9 +37,7 @@ test('opened by a key, the toggle keeps the keyboard until Tab takes it in', asy
   await idle(200)
   expect(document.activeElement).toBe(toggle())
 
-  toggle()?.dispatchEvent(
-    new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }),
-  )
+  toggle()?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }))
   await vi.waitFor(() => expect(document.activeElement?.classList.contains('row')).toBe(true))
 })
 

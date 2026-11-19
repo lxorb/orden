@@ -258,14 +258,8 @@ describe('what stands in for words', () => {
     flushSync()
 
     const cards = [...page.querySelectorAll('.side')]
-    expect(cards.map((card) => card.querySelector('.size')?.textContent)).toEqual([
-      '2.0 KB',
-      '3.0 MB',
-    ])
-    expect(cards.map((card) => card.querySelector('img')?.getAttribute('src'))).toEqual([
-      'blob:Laptop',
-      'blob:iPhone',
-    ])
+    expect(cards.map((card) => card.querySelector('.size')?.textContent)).toEqual(['2.0 KB', '3.0 MB'])
+    expect(cards.map((card) => card.querySelector('img')?.getAttribute('src'))).toEqual(['blob:Laptop', 'blob:iPhone'])
     expect(cards[0]?.querySelector('.called')?.textContent).toBe('Cover.png')
   })
 })

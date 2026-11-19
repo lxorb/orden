@@ -2,14 +2,7 @@ import { setSearchQuery } from '@codemirror/search'
 import { EditorState, type TransactionSpec } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { beforeAll, describe, expect, test } from 'vitest'
-import {
-  findExtensions,
-  type FindSpec,
-  loadFind,
-  NO_FIND,
-  replaceEverywhere,
-  replaceHere,
-} from './find'
+import { findExtensions, type FindSpec, loadFind, NO_FIND, replaceEverywhere, replaceHere } from './find'
 import { queryFor } from './finding'
 
 beforeAll(async () => {

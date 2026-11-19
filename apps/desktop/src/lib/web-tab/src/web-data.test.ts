@@ -50,9 +50,7 @@ describe('the name of a store', () => {
 
   test('a site within a space', () => {
     expect(storeName('site', '0-k3j9x2', 'ethz.ch')).toBe('site_0-k3j9x2_ethz.ch')
-    expect(storeName('site', '1-aaaaaa', 'ethz.ch')).not.toBe(
-      storeName('site', '0-k3j9x2', 'ethz.ch'),
-    )
+    expect(storeName('site', '1-aaaaaa', 'ethz.ch')).not.toBe(storeName('site', '0-k3j9x2', 'ethz.ch'))
   })
 
   test('a page with no site is in the space’s own store', () => {

@@ -58,10 +58,7 @@ describe('the note a clip is', () => {
   })
 
   test('a page with no words to keep says the one thing it knows', async () => {
-    const note = await clipNote(
-      { url: 'https://example.com/post', title: 'A post', html: '' },
-      WHEN,
-    )
+    const note = await clipNote({ url: 'https://example.com/post', title: 'A post', html: '' }, WHEN)
     expect(note).toContain('<https://example.com/post>')
   })
 
@@ -86,10 +83,7 @@ describe('the note a clip is', () => {
   })
 
   test('a title that is a paragraph is cut to a line', async () => {
-    const note = await clipNote(
-      { url: 'https://example.com/a', title: 'One\nTwo', html: '<p>x</p>' },
-      WHEN,
-    )
+    const note = await clipNote({ url: 'https://example.com/a', title: 'One\nTwo', html: '<p>x</p>' }, WHEN)
     expect(frontMatterValue(note, 'title')).toBe('One Two')
   })
 })
@@ -109,9 +103,7 @@ describe('a tab with no address is not a clip', () => {
   })
 
   test('while a page that has an address clips from it, read first', () => {
-    expect(clipSource('https://a.example/read', 'https://a.example/tab')).toBe(
-      'https://a.example/read',
-    )
+    expect(clipSource('https://a.example/read', 'https://a.example/tab')).toBe('https://a.example/read')
     expect(clipSource('', 'https://a.example/tab')).toBe('https://a.example/tab')
     expect(clipSource(null, 'https://a.example/tab')).toBe('https://a.example/tab')
   })

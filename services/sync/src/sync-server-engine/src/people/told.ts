@@ -19,9 +19,7 @@ export async function profileTold(env: Env, user: User, space?: string): Promise
 
   for (const round of chunks(results, AT_ONCE)) {
     await Promise.all(
-      round.map((one) =>
-        hooks().chats.askChat(env, one.chat, 'profile', { 'x-orden-profile': `user:${user.id}` }),
-      ),
+      round.map((one) => hooks().chats.askChat(env, one.chat, 'profile', { 'x-orden-profile': `user:${user.id}` })),
     )
   }
 }

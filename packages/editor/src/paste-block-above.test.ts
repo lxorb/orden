@@ -33,9 +33,7 @@ describe('whole block lines copied in Orden, pasted at the start of a paragraph'
   })
 
   test('a quote leaves the paragraph outside the quote', () => {
-    expect(
-      standsAlone(pasted(doc, start, '> Pack light.\n> Leave early.\n'), 'After the trip.'),
-    ).toBe(true)
+    expect(standsAlone(pasted(doc, start, '> Pack light.\n> Leave early.\n'), 'After the trip.')).toBe(true)
   })
 
   test('a table leaves the paragraph out of its rows', () => {

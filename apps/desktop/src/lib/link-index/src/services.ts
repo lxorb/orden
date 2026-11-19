@@ -7,12 +7,7 @@ import type { Query } from '@orden/scan/search/query'
 type BaseAsk = Parameters<NonNullable<NoteIndex['mountBase']>>[1]
 type FileDrawer = (card: HTMLElement, file: FileDrawing & { root: string }) => () => void
 
-type BaseMounter = (
-  host: HTMLElement,
-  ask: BaseAsk,
-  from: string | null,
-  stranger: boolean,
-) => () => void
+type BaseMounter = (host: HTMLElement, ask: BaseAsk, from: string | null, stranger: boolean) => () => void
 
 interface DrawnPlane {
   relinked(change: (canvas: Canvas) => Canvas): boolean

@@ -275,9 +275,7 @@ describe('tree ops', () => {
 
   test('a malformed op, a folder made by create, or a batch too long is refused', () => {
     expect(opOf({ op: '1', t: 'mkdir', id: 'f', parent: null, name: 'a/b', seen: 0 })).toBeNull()
-    expect(
-      opOf({ op: '1', t: 'create', id: 'f', kind: 'folder', parent: null, name: 'F', seen: 0 }),
-    ).toBeNull()
+    expect(opOf({ op: '1', t: 'create', id: 'f', kind: 'folder', parent: null, name: 'F', seen: 0 })).toBeNull()
     expect(opOf({ op: '1', t: 'delete', id: 'f', seen: -1 })).toBeNull()
     expect(opOf({ op: '1', t: 'explode', id: 'f', seen: 0 })).toBeNull()
     expect(opOf({ op: '', t: 'delete', id: 'f', seen: 0 })).toBeNull()
@@ -390,9 +388,7 @@ describe('documents', () => {
         docs: [{ id: 'n', push: 'p', epoch: 1, seq: 1, base: 'AA==', update: bytes(1), at: 5 }],
       }),
     ).toBeNull()
-    expect(
-      pushRequestOf({ docs: [{ id: 'n', epoch: 1, base: bytes(0), update: bytes(1), at: 5 }] }),
-    ).toBeNull()
+    expect(pushRequestOf({ docs: [{ id: 'n', epoch: 1, base: bytes(0), update: bytes(1), at: 5 }] })).toBeNull()
     const one = { id: 'n', push: 'p', epoch: 1, seq: 1, base: bytes(0), update: bytes(1), at: 5 }
     expect(pushRequestOf({ docs: Array.from({ length: PUSH_BATCH + 1 }, () => one) })).toBeNull()
   })

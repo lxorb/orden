@@ -1,9 +1,4 @@
-import {
-  type PaletteMessages,
-  type PaletteOpenHow,
-  registerPaletteKind,
-  registerSettingFields,
-} from '@orden/contracts'
+import { type PaletteMessages, type PaletteOpenHow, registerPaletteKind, registerSettingFields } from '@orden/contracts'
 
 const messages: PaletteMessages = {
   hits: async (words) => {

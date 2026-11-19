@@ -121,9 +121,7 @@ class FakeHost implements MachineHost {
   }
 
   restore(_id: string, from: { snapshot?: string; backup?: string }): Promise<void> {
-    this.calls.push(
-      from.snapshot ? `restore snapshot ${from.snapshot}` : `restore backup ${from.backup ?? ''}`,
-    )
+    this.calls.push(from.snapshot ? `restore snapshot ${from.snapshot}` : `restore backup ${from.backup ?? ''}`)
     if (from.backup && this.hangRestore) return new Promise<void>(() => undefined)
     return Promise.resolve()
   }

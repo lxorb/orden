@@ -26,17 +26,7 @@ import type { Imported } from './types'
 const NAME = '1Password'
 const SEPARATOR = /^\*\*\*[0-9a-f-]{36}\*\*\*$/i
 
-type Category =
-  | 'login'
-  | 'card'
-  | 'note'
-  | 'identity'
-  | 'password'
-  | 'document'
-  | 'wifi'
-  | 'ssh'
-  | 'custom'
-  | 'unknown'
+type Category = 'login' | 'card' | 'note' | 'identity' | 'password' | 'document' | 'wifi' | 'ssh' | 'custom' | 'unknown'
 
 interface OneField {
   id: string
@@ -147,9 +137,7 @@ function wholeJson(text: string): unknown {
 }
 
 function parse1pux(files: Files): Imported {
-  const name = Object.keys(files).find(
-    (one) => one === 'export.data' || one.endsWith('/export.data'),
-  )
+  const name = Object.keys(files).find((one) => one === 'export.data' || one.endsWith('/export.data'))
   const bytes = name === undefined ? undefined : files[name]
   if (bytes === undefined) throw new ImportError('The 1PUX archive has no export.data.')
   return parseAccounts(textOf(bytes))
@@ -175,13 +163,7 @@ function blankItem(category: Category, template: string): OneItem {
   }
 }
 
-function oneField(
-  id: string,
-  title: string,
-  section: string,
-  kind: FieldKind,
-  value: string,
-): OneField {
+function oneField(id: string, title: string, section: string, kind: FieldKind, value: string): OneField {
   return { id, title, section, kind, value, address: null, privateKey: '', publicKey: '' }
 }
 
@@ -206,13 +188,7 @@ function addressText(address: Record<string, string>): string {
     .join(', ')
 }
 
-function typedField(
-  key: string,
-  id: string,
-  title: string,
-  section: string,
-  value: unknown,
-): OneField {
+function typedField(key: string, id: string, title: string, section: string, value: unknown): OneField {
   if (key === 'concealed') return oneField(id, title, section, 'hidden', stringOf(value))
   if (key === 'date') return oneField(id, title, section, 'date', dayOf(dateOf(value)))
   if (key === 'monthYear') return oneField(id, title, section, 'text', monthYearText(value))
@@ -313,9 +289,7 @@ function legacyField(raw: unknown, section: string): OneField | null {
   const title = stringOf(field.t)
   const kind = stringOf(field.k)
   if (id.startsWith('TOTP')) return oneField(id, title, section, 'totp', stringOf(field.v))
-  return kind === 'reference' || kind === 'file'
-    ? null
-    : typedField(kind, id, title, section, field.v)
+  return kind === 'reference' || kind === 'file' ? null : typedField(kind, id, title, section, field.v)
 }
 
 function legacyCategory(typeName: string): [Category, string] {
@@ -357,11 +331,7 @@ function parse1pif(text: string): Imported {
   return into.result()
 }
 
-function legacyItem(
-  raw: Record<string, unknown>,
-  typeName: string,
-  folders: Map<string, string>,
-): OneItem {
+function legacyItem(raw: Record<string, unknown>, typeName: string, folders: Map<string, string>): OneItem {
   const [category, template] = legacyCategory(typeName)
   const item = blankItem(category, template)
   const secure = recordOf(raw.secureContents)
@@ -386,10 +356,7 @@ function legacyItem(
   if (month !== '' && year !== '') {
     item.fields.push(oneField('expiry', 'expiry', '', 'text', `${month}/${year}`))
   }
-  const sections = [
-    ...listOf(secure.sections),
-    ...listOf(recordOf(secure.unknown_details).sections),
-  ]
+  const sections = [...listOf(secure.sections), ...listOf(recordOf(secure.unknown_details).sections)]
   sectioned(item, sections, legacyField)
   return item
 }
@@ -405,9 +372,7 @@ function take(item: OneItem, ...ids: string[]): string {
 }
 
 function extraOf(fields: readonly OneField[]): Field[] {
-  return fields
-    .filter((one) => one.value !== '')
-    .map((one) => fieldOf(one.title || one.id, one.value, one.kind))
+  return fields.filter((one) => one.value !== '').map((one) => fieldOf(one.title || one.id, one.value, one.kind))
 }
 
 function sectionsOf(fields: readonly OneField[]): Section[] {
@@ -516,8 +481,7 @@ function add(into: Collector, item: OneItem, vault: string): void {
     into.skip(`Kept as a note: Orden has no kind for 1Password's "${item.template}".`, item.title)
   }
   if (item.attachment) into.skip('Its file was not imported.', item.title)
-  if (item.passkey)
-    into.skip('Its passkey stays in 1Password: 1Password does not export it.', item.title)
+  if (item.passkey) into.skip('Its passkey stays in 1Password: 1Password does not export it.', item.title)
   into.add(itemOf(content, item), vault)
 }
 

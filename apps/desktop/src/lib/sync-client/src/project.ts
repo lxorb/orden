@@ -29,13 +29,7 @@ export function readFine(core: Core, id: string): void {
   core.unsyncedTold.delete(id)
 }
 
-export function notWritten(
-  core: Core,
-  space: SpaceState,
-  entry: EntryRow,
-  doc: Doc,
-  error: unknown,
-): Change[] {
+export function notWritten(core: Core, space: SpaceState, entry: EntryRow, doc: Doc, error: unknown): Change[] {
   core.wanted(space.id).set(entry.id, { docSeq: doc.pulled, epoch: doc.epoch })
   const times = (core.unwrittenFor.get(entry.id) ?? 0) + 1
   core.unwrittenFor.set(entry.id, times)
@@ -45,12 +39,7 @@ export function notWritten(
   return [put('log', { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed })]
 }
 
-export async function project(
-  core: Core,
-  space: SpaceState,
-  entry: EntryRow,
-  doc: Doc,
-): Promise<Change[]> {
+export async function project(core: Core, space: SpaceState, entry: EntryRow, doc: Doc): Promise<Change[]> {
   if (core.pinned.has(entry.id) || space.foreign(entry.id)) return []
   const path = entry.local_path || space.paths().get(entry.id)
   if (!path) return []

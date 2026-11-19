@@ -1,10 +1,4 @@
-export function stepped(
-  key: string,
-  at: number | null,
-  count: number,
-  columns: number,
-  page: number,
-): number | null {
+export function stepped(key: string, at: number | null, count: number, columns: number, page: number): number | null {
   if (count <= 0) return null
   const last = count - 1
   const clamp = (to: number) => Math.min(last, Math.max(0, to))

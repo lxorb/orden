@@ -46,8 +46,6 @@ describe('edit76 an apostrophe typed after a link or marked words', () => {
   })
 
   test('after a link adds no closing quote', () => {
-    expect(typedAfter('Read [the guide](https://x.com)', "'s end")).toBe(
-      "Read [the guide](https://x.com)'s end",
-    )
+    expect(typedAfter('Read [the guide](https://x.com)', "'s end")).toBe("Read [the guide](https://x.com)'s end")
   })
 })

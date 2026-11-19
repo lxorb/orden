@@ -118,11 +118,7 @@ function tableStarts(tree: Tree, lines: readonly string[]): Map<number, number> 
   return found
 }
 
-function readTable(
-  lines: string[],
-  start: number,
-  end: number,
-): { text: string; next: number } | null {
+function readTable(lines: string[], start: number, end: number): { text: string; next: number } | null {
   if (!lines[start]?.includes('|')) return null
 
   const block = lines.slice(start, end).join('\n')
@@ -148,10 +144,7 @@ function verbatim(tree: Tree, lines: readonly string[]): [number, number][][] {
     const end = start + line.length
     const within = ranges
       .filter(([from, to]) => from <= end && to > start)
-      .map(([from, to]): [number, number] => [
-        Math.max(from, start) - start,
-        Math.min(to, end) - start,
-      ])
+      .map(([from, to]): [number, number] => [Math.max(from, start) - start, Math.min(to, end) - start])
     start = end + 1
     return within
   })

@@ -73,11 +73,7 @@ export async function codeOf(key: PersonKey): Promise<string> {
     : await safetyCodeOf({ pub: key.pub, signPub: key.signPub })
 }
 
-export async function personOf(
-  rows: DeviceRows,
-  email: string,
-  key: PersonKey | null,
-): Promise<Person> {
+export async function personOf(rows: DeviceRows, email: string, key: PersonKey | null): Promise<Person> {
   if (key === null) return { email, key, code: null, known: 'new' }
   const known = knownOf((await pinsOf(rows)).get(email), key)
   return { email, key, code: await codeOf(key), known }
@@ -98,10 +94,6 @@ export async function confirmedPerson(rows: DeviceRows, person: Person): Promise
   return { ...person, known: 'confirmed' }
 }
 
-export async function isConfirmed(
-  rows: DeviceRows,
-  email: string,
-  key: PersonKey,
-): Promise<boolean> {
+export async function isConfirmed(rows: DeviceRows, email: string, key: PersonKey): Promise<boolean> {
   return knownOf((await pinsOf(rows)).get(email), key) === 'confirmed'
 }

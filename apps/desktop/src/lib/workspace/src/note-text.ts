@@ -6,14 +6,7 @@ import { taskAt } from '@orden/markdown/tasks'
 import type { SpaceTag } from '@orden/editor'
 import { links } from '../../link-index/src/api'
 import { lineStarts } from '@orden/scan/search/lines'
-import {
-  isMarkdownPath,
-  samePath,
-  keepVersion,
-  oneWriteAt,
-  readText,
-  writeInTurn,
-} from '../../platform/src/api'
+import { isMarkdownPath, samePath, keepVersion, oneWriteAt, readText, writeInTurn } from '../../platform/src/api'
 import {
   applied,
   appliedToFile,
@@ -76,16 +69,9 @@ export async function noteText(ws: HoldsNotes, path: string): Promise<string | n
   return readText(path)
 }
 
-export function toggleTaskAt(
-  ws: HoldsNotes,
-  path: string,
-  asked: number,
-  hash?: string,
-): Promise<boolean> {
+export function toggleTaskAt(ws: HoldsNotes, path: string, asked: number, hash?: string): Promise<boolean> {
   const before = toggling.get(path)
-  const running = (before ? waitedFor(before) : Promise.resolve()).then(() =>
-    toggled(ws, path, asked, hash),
-  )
+  const running = (before ? waitedFor(before) : Promise.resolve()).then(() => toggled(ws, path, asked, hash))
   const done = () => {
     if (toggling.get(path) === running) toggling.delete(path)
   }
@@ -109,12 +95,7 @@ function waitedFor(tick: Promise<boolean>): Promise<void> {
   })
 }
 
-async function toggled(
-  ws: HoldsNotes,
-  path: string,
-  asked: number,
-  hash?: string,
-): Promise<boolean> {
+async function toggled(ws: HoldsNotes, path: string, asked: number, hash?: string): Promise<boolean> {
   const before = await noteText(ws, path)
   if (before === null) return false
 
@@ -158,9 +139,7 @@ export async function writeNoteText(
   const edit = oneEdit(before, after)
   if (!edit) return true
 
-  return (
-    (await replaceInNotes(ws, [changeOf(path, before, [edit])], { ...keeping, anyFile: true })) > 0
-  )
+  return (await replaceInNotes(ws, [changeOf(path, before, [edit])], { ...keeping, anyFile: true })) > 0
 }
 
 type Undone = Extract<FileAction, { kind: 'replace' }>['notes'][number]
@@ -184,8 +163,7 @@ export async function replaceInNotes(
   changes: readonly Change[],
   keeping: Keeping = {},
 ): Promise<number> {
-  const notes =
-    keeping.anyFile === true ? changes : changes.filter((one) => isMarkdownPath(one.path))
+  const notes = keeping.anyFile === true ? changes : changes.filter((one) => isMarkdownPath(one.path))
   if (!notes.length) return 0
 
   const [{ canWriteAt }, { protection }] = await Promise.all([
@@ -193,8 +171,7 @@ export async function replaceInNotes(
     import('../../protect/src/api'),
   ])
   const writable = notes.filter(
-    (change) =>
-      canWriteAt(change.path) && (keeping.throughLocks === true || !protection.locked(change.path)),
+    (change) => canWriteAt(change.path) && (keeping.throughLocks === true || !protection.locked(change.path)),
   )
   if (!writable.length) return 0
 
@@ -202,9 +179,7 @@ export async function replaceInNotes(
 
   for (const change of writable) {
     const open = ws.documentAt(change.path)
-    const wrote = open
-      ? await writeOpen(open, change, keeping)
-      : await writeClosed(ws, change, keeping)
+    const wrote = open ? await writeOpen(open, change, keeping) : await writeClosed(ws, change, keeping)
     if (wrote) done.push(wrote)
   }
 
@@ -224,19 +199,13 @@ async function writeOpen(open: NoteDoc, change: Change, keeping: Keeping): Promi
   const took = open.take(change.edits, change.before)
   const after = applied(took.flat, took.edits)
 
-  const written = await writeEdited(open, change.path, took.text, onDisk, () =>
-    keep(change.path, before, keeping),
-  )
+  const written = await writeEdited(open, change.path, took.text, onDisk, () => keep(change.path, before, keeping))
   if (written !== null) links.noteSaved(change.path, written)
 
   return { path: change.path, content: before, after, edits: reverse(took.flat, took.edits) }
 }
 
-async function writeClosed(
-  ws: HoldsNotes,
-  change: Change,
-  keeping: Keeping,
-): Promise<Undone | null> {
+async function writeClosed(ws: HoldsNotes, change: Change, keeping: Keeping): Promise<Undone | null> {
   const turn = await oneWriteAt(change.path, async () => {
     const read = await readText(change.path)
     if (read === null) return null
@@ -276,8 +245,7 @@ function carriedPast(before: string, now: string, edits: readonly Edit[]): Edit[
   const carried: Edit[] = []
   for (const one of edits) {
     if (one.to <= since.from) carried.push(one)
-    else if (one.from >= since.to)
-      carried.push({ ...one, from: one.from + grew, to: one.to + grew })
+    else if (one.from >= since.to) carried.push({ ...one, from: one.from + grew, to: one.to + grew })
     else return null
   }
   return carried

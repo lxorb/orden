@@ -4,15 +4,7 @@ import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { afterAll, beforeAll, describe, expect, test } from 'vitest'
-import {
-  APP_FOLDERS,
-  BUDGETS,
-  LIBRARIES,
-  PACKAGES,
-  type Part,
-  partOf,
-  sourceOf,
-} from '../../../../even-contents'
+import { APP_FOLDERS, BUDGETS, LIBRARIES, PACKAGES, type Part, partOf, sourceOf } from '../../../../even-contents'
 import manifest from '../../../../even.app.json'
 
 const app = resolve(import.meta.dirname, '../../../..')
@@ -35,16 +27,12 @@ function walk(dir: string): string[] {
 let files: { name: string; text: string }[] = []
 
 beforeAll(() => {
-  execFileSync(
-    'pnpm',
-    ['exec', 'vite', 'build', '--config', 'vite.even.config.ts', '--outDir', staged],
-    {
-      cwd: app,
-      stdio: 'pipe',
-      shell: process.platform === 'win32',
-      env: { ...process.env, NODE_ENV: 'production', ORDEN_EVEN_CONTENTS: contents },
-    },
-  )
+  execFileSync('pnpm', ['exec', 'vite', 'build', '--config', 'vite.even.config.ts', '--outDir', staged], {
+    cwd: app,
+    stdio: 'pipe',
+    shell: process.platform === 'win32',
+    env: { ...process.env, NODE_ENV: 'production', ORDEN_EVEN_CONTENTS: contents },
+  })
   execFileSync('node', [resolve(app, '../../scripts/even-stage.mjs'), staged, staged], {
     cwd: app,
     stdio: 'pipe',
@@ -117,10 +105,7 @@ describe('the bundle a package is made of', () => {
     for (const file of files) {
       for (const way of ways) {
         const at = way.exec(file.text)
-        if (at)
-          found.push(
-            `${file.name}: ...${file.text.slice(Math.max(0, at.index - 60), at.index + 40)}`,
-          )
+        if (at) found.push(`${file.name}: ...${file.text.slice(Math.max(0, at.index - 60), at.index + 40)}`)
       }
     }
 
@@ -130,8 +115,7 @@ describe('the bundle a package is made of', () => {
   test('has no way to run a fence, and no button offering to', () => {
     const runner = files.filter(
       (one) =>
-        one.name.endsWith('.js') &&
-        (one.text.includes('orden-run-panel') || one.text.includes('orden-run-output')),
+        one.name.endsWith('.js') && (one.text.includes('orden-run-panel') || one.text.includes('orden-run-output')),
     )
 
     expect(runner.map((one) => one.name)).toEqual([])
@@ -181,9 +165,7 @@ describe('the bundle a package is made of', () => {
       'ai_thread_write',
       'ai_agent_call',
     ]
-    const here = commands.filter((name) =>
-      files.some((one) => one.name.endsWith('.js') && one.text.includes(name)),
-    )
+    const here = commands.filter((name) => files.some((one) => one.name.endsWith('.js') && one.text.includes(name)))
 
     expect(here).toEqual([])
   })
@@ -198,10 +180,7 @@ describe('the bundle a package is made of', () => {
 
     expect(code.some((one) => one.text.includes('createIcons'))).toBe(true)
 
-    const shapes = code.reduce(
-      (sum, one) => sum + (one.text.match(/[{,]\s*"?d"?\s*:\s*['"`]M/g)?.length ?? 0),
-      0,
-    )
+    const shapes = code.reduce((sum, one) => sum + (one.text.match(/[{,]\s*"?d"?\s*:\s*['"`]M/g)?.length ?? 0), 0)
     expect(shapes).toBeGreaterThan(2000)
 
     for (const name of ['GraduationCap', 'Book', 'SquareCheck', 'Newspaper']) {
@@ -226,9 +205,7 @@ describe('the bundle a package is made of', () => {
     const full = read('emojis.json') as Record<string, { char: string }>
     const slim = read('simplemap.json') as Record<string, string>
 
-    expect(Object.entries(slim)).toEqual(
-      Object.entries(full).map(([name, row]) => [name, row.char]),
-    )
+    expect(Object.entries(slim)).toEqual(Object.entries(full).map(([name, row]) => [name, row.char]))
   })
 
   describe('what came in', () => {

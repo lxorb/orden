@@ -4,10 +4,7 @@ import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 
 const HTML = readFileSync(fileURLToPath(new URL('../index.html', import.meta.url)), 'utf8')
-const TOKENS = readFileSync(
-  fileURLToPath(new URL('../../../packages/themes/src/tokens.css', import.meta.url)),
-  'utf8',
-)
+const TOKENS = readFileSync(fileURLToPath(new URL('../../../packages/themes/src/tokens.css', import.meta.url)), 'utf8')
 const GROUND = readFileSync(join(import.meta.dirname, '../src/lib/theme/src/ground.ts'), 'utf8')
 
 function background(scheme: 'dark' | 'light'): string {

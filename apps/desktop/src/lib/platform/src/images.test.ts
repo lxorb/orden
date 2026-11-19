@@ -6,9 +6,7 @@ const NOTE = '/Notes/Work/Plan.md'
 describe('where a picture a note points at lives', () => {
   test("is the space's own folder when the note climbs to it", () => {
     expect(imagePath('../assets/pic.png', NOTE)).toBe('/Notes/assets/pic.png')
-    expect(imagePath('../../assets/pic.png', '/Notes/Work/2026/Q1.md')).toBe(
-      '/Notes/assets/pic.png',
-    )
+    expect(imagePath('../../assets/pic.png', '/Notes/Work/2026/Q1.md')).toBe('/Notes/assets/pic.png')
   })
 
   test('is nothing for a picture the browser can already fetch', () => {

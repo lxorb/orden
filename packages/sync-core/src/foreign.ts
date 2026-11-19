@@ -1,5 +1,4 @@
-export type ForeignTool =
-  'Proton' | 'Dropbox' | 'OneDrive' | 'Syncthing' | 'Nextcloud' | 'ownCloud' | 'Seafile'
+export type ForeignTool = 'Proton' | 'Dropbox' | 'OneDrive' | 'Syncthing' | 'Nextcloud' | 'ownCloud' | 'Seafile'
 
 export interface ForeignCopy {
   tool: ForeignTool

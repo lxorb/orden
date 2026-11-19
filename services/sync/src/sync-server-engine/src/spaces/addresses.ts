@@ -166,10 +166,7 @@ export function proofNames(domain: string): string[] {
   return [proofName(domain), `_nib-verify.${domain}`]
 }
 
-export function dnsRecords(
-  env: Env,
-  space: Space,
-): { type: string; name: string; value: string; note?: string }[] {
+export function dnsRecords(env: Env, space: Space): { type: string; name: string; value: string; note?: string }[] {
   if (!space.blog_domain) return []
 
   const apex = space.blog_domain.split('.').length === 2

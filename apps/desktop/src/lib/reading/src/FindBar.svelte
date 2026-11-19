@@ -91,9 +91,7 @@
 <div class="findbar" transition:arrive>
   <div class="line">
     <div class="box">
-      <svg class="orden-field-mark mag" viewBox="0 0 13 13" aria-hidden="true"
-        ><path d={SEARCH_MARK} /></svg
-      >
+      <svg class="orden-field-mark mag" viewBox="0 0 13 13" aria-hidden="true"><path d={SEARCH_MARK} /></svg>
 
       <input
         bind:this={field}
@@ -106,8 +104,7 @@
         spellcheck="false"
         autocapitalize="off"
         autocorrect="off"
-        oninput={(event: Event & { currentTarget: HTMLInputElement }) =>
-          onquery(event.currentTarget.value)}
+        oninput={(event: Event & { currentTarget: HTMLInputElement }) => onquery(event.currentTarget.value)}
         onkeydown={onKeydown}
       />
 
@@ -224,8 +221,7 @@
           spellcheck="false"
           autocapitalize="off"
           autocorrect="off"
-          oninput={(event: Event & { currentTarget: HTMLInputElement }) =>
-            onreplacement?.(event.currentTarget.value)}
+          oninput={(event: Event & { currentTarget: HTMLInputElement }) => onreplacement?.(event.currentTarget.value)}
           onkeydown={(event: KeyboardEvent) => {
             if (event.key === 'Escape') {
               event.preventDefault()

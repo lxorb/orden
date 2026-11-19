@@ -45,9 +45,7 @@ class FileClipboard {
     this.held = new Map(
       [...this.held].map(([path, entry]) => {
         const there = movedTo(path, from, to)
-        return there === null
-          ? [path, entry]
-          : [there, { ...entry, path: there, name: nameOf(there), children: [] }]
+        return there === null ? [path, entry] : [there, { ...entry, path: there, name: nameOf(there), children: [] }]
       }),
     )
     this.paths = now
@@ -119,11 +117,7 @@ export function dropOnList(event: DragEvent, folder: string) {
 
   const sites = portOf('web.sites')
   if (transfer && isLinkDrop(transfer) && sites.ok) {
-    void sites.value.dropped(
-      folder,
-      transfer.getData('text/uri-list'),
-      transfer.getData('text/html'),
-    )
+    void sites.value.dropped(folder, transfer.getData('text/uri-list'), transfer.getData('text/html'))
     return
   }
 

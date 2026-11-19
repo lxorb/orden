@@ -1,11 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  SITE_JS,
-  SITE_JS_PATH,
-  SITE_JS_SOURCES,
-  THEME_JS,
-  THEME_JS_HASH,
-} from '../src/sync-server-blog/src/script'
+import { SITE_JS, SITE_JS_PATH, SITE_JS_SOURCES, THEME_JS, THEME_JS_HASH } from '../src/sync-server-blog/src/script'
 import { sourceHash } from '../../../scripts/site-sources'
 
 describe('the script a site serves', () => {

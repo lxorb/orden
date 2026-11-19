@@ -267,14 +267,7 @@ export class TestDevice {
     }
     const versions: VersionRow[] = []
     if (was && before) {
-      const kept = await sealVersion(
-        box.key,
-        vault,
-        id,
-        before.row.rev,
-        envelopeOf(was),
-        before.key,
-      )
+      const kept = await sealVersion(box.key, vault, id, before.row.rev, envelopeOf(was), before.key)
       versions.push({ vault, id, rev: before.row.rev, at: before.row.at, ...kept })
     }
     await this.rows.write({ items: [row], versions })

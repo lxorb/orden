@@ -37,9 +37,7 @@
   class:pressable={!!onpress}
   style:--size="{size}px"
   style:--fill={fill}
-  {...onpress
-    ? { type: 'button', 'aria-label': label ?? face.name, onclick: onpress }
-    : { 'aria-hidden': 'true' }}
+  {...onpress ? { type: 'button', 'aria-label': label ?? face.name, onclick: onpress } : { 'aria-hidden': 'true' }}
 >
   <span class="face">
     {#if url && failed !== url}
@@ -135,11 +133,7 @@
   }
 
   .dot.quiet {
-    background: radial-gradient(
-      circle at 30% 30%,
-      var(--avatar-ring, var(--surface)) 34%,
-      var(--callout-warning) 36%
-    );
+    background: radial-gradient(circle at 30% 30%, var(--avatar-ring, var(--surface)) 34%, var(--callout-warning) 36%);
   }
 
   .mark {

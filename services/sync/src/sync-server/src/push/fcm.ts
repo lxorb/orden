@@ -10,9 +10,7 @@ interface ServiceAccount {
 function account(json: string): ServiceAccount | null {
   try {
     const read = JSON.parse(json) as Partial<ServiceAccount>
-    return read.client_email && read.private_key && read.project_id
-      ? (read as ServiceAccount)
-      : null
+    return read.client_email && read.private_key && read.project_id ? (read as ServiceAccount) : null
   } catch {
     return null
   }
@@ -20,11 +18,7 @@ function account(json: string): ServiceAccount | null {
 
 let held: { token: string; until: number; for: string } | null = null
 
-async function accessToken(
-  service: ServiceAccount,
-  now: number,
-  send: typeof fetch,
-): Promise<string | null> {
+async function accessToken(service: ServiceAccount, now: number, send: typeof fetch): Promise<string | null> {
   if (held?.for === service.client_email && held.until > now + 60_000) return held.token
 
   const iat = Math.floor(now / 1000)

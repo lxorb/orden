@@ -106,9 +106,7 @@ describe('an Evernote export', () => {
     const plan = await readEvernote([file('A.enex', enex(secret))])
 
     expect(noteAt(plan, 'Secret.md')).toContain('…')
-    expect(plan.lost[0]).toBe(
-      '1 passages are encrypted, and nothing can read them without Evernote',
-    )
+    expect(plan.lost[0]).toBe('1 passages are encrypted, and nothing can read them without Evernote')
   })
 
   test('an attachment with no name of its own is named after its bytes', async () => {
@@ -120,16 +118,11 @@ describe('an Evernote export', () => {
 
     const plan = await readEvernote([file('A.enex', enex(unnamed))])
 
-    expect(plan.files.find((one) => one.kind === 'file')?.path).toBe(
-      `assets/${HASH.slice(0, 16)}.jpg`,
-    )
+    expect(plan.files.find((one) => one.kind === 'file')?.path).toBe(`assets/${HASH.slice(0, 16)}.jpg`)
   })
 
   test('two notebooks become two folders, and one becomes none', async () => {
-    const several = await readEvernote([
-      file('Travel.enex', enex(NOTE)),
-      file('Work.enex', enex(NOTE)),
-    ])
+    const several = await readEvernote([file('Travel.enex', enex(NOTE)), file('Work.enex', enex(NOTE))])
 
     expect(several.files.filter((one) => one.kind === 'note').map((one) => one.path)).toEqual([
       'Travel/Trip to Iceland.md',
@@ -169,9 +162,7 @@ ${rest}
 }
 
 function picture(data = BASE64, name = ''): string {
-  const named = name
-    ? `<resource-attributes><file-name>${name}</file-name></resource-attributes>`
-    : ''
+  const named = name ? `<resource-attributes><file-name>${name}</file-name></resource-attributes>` : ''
   return `<resource><data encoding="base64">${data}</data><mime>image/png</mime>${named}</resource>`
 }
 
@@ -191,23 +182,14 @@ describe('an Evernote export that is not quite what the format says', () => {
 
   test('a picture whose attachment the export left out is counted', async () => {
     const plan = await readEvernote([
-      file(
-        'A.enex',
-        enex(
-          bodied('Gone', `<en-media type="image/png" hash="0123456789abcdef0123456789abcdef"/>`),
-        ),
-      ),
+      file('A.enex', enex(bodied('Gone', `<en-media type="image/png" hash="0123456789abcdef0123456789abcdef"/>`))),
     ])
 
     expect(plan.lost).toEqual(['1 attachment was missing from the export or could not be read'])
   })
 
   test('an attachment named with a hash or a percent sign is still what its link reaches', async () => {
-    const named = bodied(
-      'Named',
-      `<en-media type="image/png" hash="${HASH}"/>`,
-      picture(BASE64, '100% done #3.png'),
-    )
+    const named = bodied('Named', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, '100% done #3.png'))
     const plan = await readEvernote([file('A.enex', enex(named))])
 
     expect(plan.files.some((one) => one.path === 'assets/100% done #3.png')).toBe(true)
@@ -216,10 +198,7 @@ describe('an Evernote export that is not quite what the format says', () => {
 
   test('a hash in single quotes still finds its picture', async () => {
     const plan = await readEvernote([
-      file(
-        'A.enex',
-        enex(bodied('Quoted', `<en-media type='image/png' hash='${HASH}'/>`, picture())),
-      ),
+      file('A.enex', enex(bodied('Quoted', `<en-media type='image/png' hash='${HASH}'/>`, picture()))),
     ])
 
     expect(noteAt(plan, 'Quoted.md')).toContain(`![](assets/${HASH.slice(0, 16)}.png)`)
@@ -241,11 +220,7 @@ describe('an Evernote export that is not quite what the format says', () => {
   })
 
   test('a reminder order of nought is no reminder', async () => {
-    const none = bodied(
-      'None',
-      'x',
-      '<note-attributes><reminder-order>0</reminder-order></note-attributes>',
-    )
+    const none = bodied('None', 'x', '<note-attributes><reminder-order>0</reminder-order></note-attributes>')
     const one = bodied(
       'One',
       'x',
@@ -263,9 +238,7 @@ ${bodied('Two', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, '
 
     const plan = await readEvernote([file('A.enex', enex(twice))])
 
-    expect(plan.files.filter((one) => one.kind === 'file').map((one) => one.path)).toEqual([
-      'assets/p.png',
-    ])
+    expect(plan.files.filter((one) => one.kind === 'file').map((one) => one.path)).toEqual(['assets/p.png'])
     expect(noteAt(plan, 'Two.md')).toContain('![](assets/p.png)')
   })
 
@@ -280,9 +253,7 @@ ${bodied('Two', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, '
     ]
     const resources = kinds.map(([mime, name], at) => {
       const bytes = Uint8Array.from([at, 7, 7])
-      const named = name
-        ? `<resource-attributes><file-name>${name}</file-name></resource-attributes>`
-        : ''
+      const named = name ? `<resource-attributes><file-name>${name}</file-name></resource-attributes>` : ''
       return {
         tag: `<en-media type="${mime}" hash="${md5(bytes)}"/>`,
         xml: `<resource><data encoding="base64">${Buffer.from(bytes).toString('base64')}</data><mime>${mime}</mime>${named}</resource>`,
@@ -292,13 +263,7 @@ ${bodied('Two', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, '
     const plan = await readEvernote([
       file(
         'A.enex',
-        enex(
-          bodied(
-            'Kinds',
-            resources.map((one) => one.tag).join(''),
-            resources.map((one) => one.xml).join(''),
-          ),
-        ),
+        enex(bodied('Kinds', resources.map((one) => one.tag).join(''), resources.map((one) => one.xml).join(''))),
       ),
     ])
 
@@ -318,11 +283,7 @@ ${bodied('Two', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, '
       file(
         'A.enex',
         enex(
-          bodied(
-            'Scan',
-            `<en-media type="image/png" hash="${HASH}"/>`,
-            picture(BASE64, 'C:\\Users\\ann\\scan.png'),
-          ),
+          bodied('Scan', `<en-media type="image/png" hash="${HASH}"/>`, picture(BASE64, 'C:\\Users\\ann\\scan.png')),
         ),
       ),
     ])
@@ -370,23 +331,19 @@ describe('the markup of an Evernote note', () => {
   })
 
   test('a list inside a list is nested and numbered as drawn', async () => {
-    const list =
-      '<ol><li><div>One</div></li><ol><li><div>Inner</div></li></ol><li><div>Two</div></li></ol>'
+    const list = '<ol><li><div>One</div></li><ol><li><div>Inner</div></li></ol><li><div>Two</div></li></ol>'
 
     expect(await body(list)).toBe('1. One\n   1. Inner\n2. Two')
   })
 
   test('a checkbox at the start of a list item is that item’s box', async () => {
-    const list =
-      '<ul><li><b><en-todo checked="true"/></b>Done</li><li><en-todo></en-todo>Open</li></ul>'
+    const list = '<ul><li><b><en-todo checked="true"/></b>Done</li><li><en-todo></en-todo>Open</li></ul>'
 
     expect(await body(list)).toBe('- [x] Done\n- [ ] Open')
   })
 
   test('a break at the end of a checkbox line does not loosen the list', async () => {
-    expect(await body('<div><en-todo/>One<br/></div><div><en-todo/>Two</div>')).toBe(
-      '- [ ] One\n- [ ] Two',
-    )
+    expect(await body('<div><en-todo/>One<br/></div><div><en-todo/>Two</div>')).toBe('- [ ] One\n- [ ] Two')
   })
 
   test('a code block is code, a line per div', async () => {
@@ -398,9 +355,7 @@ describe('the markup of an Evernote note', () => {
   })
 
   test('an encrypted passage in a sentence leaves the sentence whole', async () => {
-    expect(await body('<div>Before <en-crypt cipher="AES">abc</en-crypt> after</div>')).toBe(
-      'Before … after',
-    )
+    expect(await body('<div>Before <en-crypt cipher="AES">abc</en-crypt> after</div>')).toBe('Before … after')
   })
 })
 

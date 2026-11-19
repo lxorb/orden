@@ -144,8 +144,7 @@ export function shellWorld(todos: () => readonly Todo[]): ShownWorld {
       const space = workspace()?.activeSpace ?? null
       return space ? { ...todoSpaceOf(space), name: space.name } : null
     },
-    spaces: () =>
-      (workspace()?.spaces ?? []).map((one) => ({ ...todoSpaceOf(one), name: one.name })),
+    spaces: () => (workspace()?.spaces ?? []).map((one) => ({ ...todoSpaceOf(one), name: one.name })),
     today: () => dayOf(),
     kept: () => storage()?.json(KEPT),
     keep: (value) => void storage()?.keepJson(KEPT, value),

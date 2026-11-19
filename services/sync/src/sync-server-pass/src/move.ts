@@ -4,15 +4,7 @@ import { readBody, now, type Env, type Variables } from '../../sync-server/src/a
 import { activeIn, holdsSql, mayAct } from './access'
 import { sealedIn } from './item-body'
 import { itemOf } from './items'
-import {
-  NO_SUCH_VAULT,
-  NOT_AN_ITEM,
-  NOT_YOUR_ROLE,
-  ROTATED,
-  STALE,
-  TAKEN,
-  TOO_MANY_ITEMS,
-} from './refusals'
+import { NO_SUCH_VAULT, NOT_AN_ITEM, NOT_YOUR_ROLE, ROTATED, STALE, TAKEN, TOO_MANY_ITEMS } from './refusals'
 import { itemRowOf } from './rows'
 import { bump, SEQ } from './seq'
 import { fromOf, membersOf, tell } from './tell'
@@ -63,18 +55,7 @@ moves.post('/items/:vault/:id/move', async (context) => {
            seq = excluded.seq
           where pass_items.deleted_at is not null`,
       )
-      .bind(
-        to,
-        id,
-        sent.key,
-        sent.body,
-        sent.keyVersion,
-        at,
-        vault,
-        sent.rev,
-        MOST_ITEMS,
-        user.email,
-      ),
+      .bind(to, id, sent.key, sent.body, sent.keyVersion, at, vault, sent.rev, MOST_ITEMS, user.email),
     bump(db),
     db
       .prepare(
@@ -130,10 +111,7 @@ moves.post('/items/:vault/:id/move', async (context) => {
     return context.json({ error: TOO_MANY_ITEMS }, 409)
   }
 
-  const [one, other] = await Promise.all([
-    membersOf(context.env, vault),
-    membersOf(context.env, to),
-  ])
+  const [one, other] = await Promise.all([membersOf(context.env, vault), membersOf(context.env, to)])
   await tell(context.env, [user.id, ...one, ...other], from)
   const moved = await itemOf(context.env, to, id)
   return context.json({ rev: moved?.rev ?? 1, at })

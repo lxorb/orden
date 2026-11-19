@@ -11,9 +11,7 @@ describe('where a page looks for its paper', () => {
   })
 
   test('once, where the page names that paper already', () => {
-    expect(paperPlaces('Optics.pages.pdf', '/s/Optics.pages', '/s')).toEqual([
-      '/s/Optics.pages.pdf',
-    ])
+    expect(paperPlaces('Optics.pages.pdf', '/s/Optics.pages', '/s')).toEqual(['/s/Optics.pages.pdf'])
   })
 
   test('and only where it names one: a blank sheet has no paper behind it', () => {

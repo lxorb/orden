@@ -1,11 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
-import type {
-  Draft,
-  Engine,
-  EngineEvent,
-  GoalTo,
-  Thread,
-} from '../../../ai-providers/src/chat/types'
+import type { Draft, Engine, EngineEvent, GoalTo, Thread } from '../../../ai-providers/src/chat/types'
 import type { Provider } from '../../../ai-providers/src/providers'
 
 class FakeChannel {
@@ -104,8 +98,7 @@ const QUIET = {
 }
 
 function engine(provider: Provider, instructions = '') {
-  const kind =
-    provider.kind === 'codex' || provider.kind === 'gemini-cli' ? provider.kind : 'claude-code'
+  const kind = provider.kind === 'codex' || provider.kind === 'gemini-cli' ? provider.kind : 'claude-code'
   return createLocalEngine(kind, {
     provider: (id) => (id === provider.id ? provider : null),
     answers: QUIET,
@@ -144,9 +137,7 @@ const claudeTurn = (text: string, window = 200000) => [
   JSON.stringify({
     type: 'assistant',
     message: {
-      content: [
-        { type: 'tool_use', id: 'u1', name: 'mcp__orden__read_note', input: { path: 'Herons.md' } },
-      ],
+      content: [{ type: 'tool_use', id: 'u1', name: 'mcp__orden__read_note', input: { path: 'Herons.md' } }],
     },
   }),
   JSON.stringify({
@@ -177,8 +168,7 @@ beforeEach(() => {
 
 describe('a call that asks the reader, in a program’s session', () => {
   function questions() {
-    let hear:
-      ((asked: { id: string; agent: string; verb: string; category: string }) => void) | null = null
+    let hear: ((asked: { id: string; agent: string; verb: string; category: string }) => void) | null = null
     const given: { id: string; allow: boolean }[] = []
     const answers = {
       answer: (id: string, allow: boolean) => {
@@ -198,8 +188,7 @@ describe('a call that asks the reader, in a program’s session', () => {
     return {
       built,
       given,
-      raise: (verb: string, agent = 'orden-cc', category = 'writing') =>
-        hear?.({ id: 'q1', agent, verb, category }),
+      raise: (verb: string, agent = 'orden-cc', category = 'writing') => hear?.({ id: 'q1', agent, verb, category }),
     }
   }
 
@@ -221,12 +210,7 @@ describe('a call that asks the reader, in a program’s session', () => {
     const { built, raise } = questions()
     const on = thread(CLAUDE)
     const events: EngineEvent[] = []
-    const sent = built.send(
-      on,
-      draft('what waits?'),
-      (event) => events.push(event),
-      new AbortController().signal,
-    )
+    const sent = built.send(on, draft('what waits?'), (event) => events.push(event), new AbortController().signal)
     await vi.waitFor(() => expect(on.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' }))
 
     raise('edit_note')
@@ -450,9 +434,7 @@ describe('a Claude Code thread', () => {
     let holding: Open | undefined
     answer = (open, said) => {
       if (said.kind === 'turn') holding ??= open
-      return said.kind === 'interrupt'
-        ? ['{"type":"result","subtype":"error_during_execution","is_error":true}']
-        : []
+      return said.kind === 'interrupt' ? ['{"type":"result","subtype":"error_during_execution","is_error":true}'] : []
     }
     const built = engine(CLAUDE)
     const on = thread(CLAUDE)
@@ -634,12 +616,7 @@ const codexGoal = (status: string) =>
     },
   })
 
-async function pursue(
-  built: Engine,
-  on: Thread,
-  to: GoalTo,
-  signal = new AbortController().signal,
-) {
+async function pursue(built: Engine, on: Thread, to: GoalTo, signal = new AbortController().signal) {
   const events: EngineEvent[] = []
   if (!built.goal) throw new Error('this engine runs no goal of its own')
   const state = await built.goal(on, to, (event) => events.push(event), signal)
@@ -659,12 +636,7 @@ describe('a program’s own goal', () => {
       if (said.kind === 'goal') return [codexGoal('active')]
       if (said.kind !== 'turn') return []
       const last = codexTurn(' Done.')
-      return [
-        ...codexTurn('Filed.'),
-        ...last.slice(0, -1),
-        codexGoal('complete'),
-        ...last.slice(-1),
-      ]
+      return [...codexTurn('Filed.'), ...last.slice(0, -1), codexGoal('complete'), ...last.slice(-1)]
     }
     const on = thread(CODEX)
     const { state, events } = await pursue(engine(CODEX), on, {
@@ -685,11 +657,7 @@ describe('a program’s own goal', () => {
   test('Codex resumes it with its own pause undone and the next turn’s words', async () => {
     answer = (_, said) =>
       said.kind === 'turn'
-        ? [
-            ...codexTurn('More.').slice(0, -1),
-            codexGoal('budgetLimited'),
-            ...codexTurn('').slice(-1),
-          ]
+        ? [...codexTurn('More.').slice(0, -1), codexGoal('budgetLimited'), ...codexTurn('').slice(-1)]
         : []
     const on = thread(CODEX)
     const { state } = await pursue(engine(CODEX), on, {
@@ -725,10 +693,7 @@ describe('a program’s own goal', () => {
     const { state } = await going
 
     expect(state).toBe('paused')
-    expect(opened[0]?.said.slice(-2)).toEqual([
-      { kind: 'goal', goal: { do: 'pause' } },
-      { kind: 'interrupt' },
-    ])
+    expect(opened[0]?.said.slice(-2)).toEqual([{ kind: 'goal', goal: { do: 'pause' } }, { kind: 'interrupt' }])
   })
 
   test('a stop between two of its turns holds it at once, and keeps the session', async () => {
@@ -736,9 +701,7 @@ describe('a program’s own goal', () => {
     const stopper = new AbortController()
     const on = thread(CODEX)
     const going = pursue(engine(CODEX), on, { do: 'set', condition: 'c' }, stopper.signal)
-    await vi.waitFor(() =>
-      expect(on.turns.at(-1)?.parts).toEqual([{ kind: 'text', text: 'Filed.' }]),
-    )
+    await vi.waitFor(() => expect(on.turns.at(-1)?.parts).toEqual([{ kind: 'text', text: 'Filed.' }]))
     await new Promise((settle) => setTimeout(settle, 20))
     stopper.abort()
     const { state, events } = await going
@@ -764,8 +727,7 @@ describe('a program’s own goal', () => {
   })
 
   test('Claude Code’s is its own message, answered as one, and says nothing of where it stands', async () => {
-    answer = (_, said) =>
-      said.kind === 'turn' || said.kind === 'goal' ? claudeTurn('Herons wait.') : []
+    answer = (_, said) => (said.kind === 'turn' || said.kind === 'goal' ? claudeTurn('Herons wait.') : [])
     const built = engine(CLAUDE)
     const on = thread(CLAUDE)
     await send(CLAUDE, on, 'hi', built)
@@ -785,8 +747,7 @@ describe('a program’s own goal', () => {
   })
 
   test('a Claude Code session that has to be seeded hears the transcript first, then the goal', async () => {
-    answer = (_, said) =>
-      said.kind === 'turn' || said.kind === 'goal' ? claudeTurn('Herons wait.') : []
+    answer = (_, said) => (said.kind === 'turn' || said.kind === 'goal' ? claudeTurn('Herons wait.') : [])
     const on = thread(CLAUDE)
     await send(CLAUDE, on, 'one', engine(CLAUDE))
     const { state } = await pursue(engine(CLAUDE), on, { do: 'set', condition: 'tests pass' })
@@ -794,11 +755,7 @@ describe('a program’s own goal', () => {
     expect(state).toBeNull()
     expect(opened[1]?.said.map((one) => one.kind)).toEqual(['turn', 'goal'])
     expect(String(opened[1]?.said[0]?.text)).toContain('<conversation>')
-    expect(words(on).slice(2)).toEqual([
-      'you: tests pass',
-      'thinking tool Herons wait.',
-      'thinking tool Herons wait.',
-    ])
+    expect(words(on).slice(2)).toEqual(['you: tests pass', 'thinking tool Herons wait.', 'thinking tool Herons wait.'])
   })
 
   test('Claude Code has no paused goal: a pause clears it there, and Orden keeps the condition', async () => {
@@ -839,12 +796,7 @@ describe('the Gemini CLI', () => {
     expect(model?.parts.map((one) => one.kind)).toEqual(['tool', 'text'])
     expect(model?.parts[0]).toMatchObject({ verb: 'read_note', state: 'ok' })
     expect(on.usage).toMatchObject({ input: 9, output: 2 })
-    expect((await built.models(GEMINI)).map((one) => one.id)).toEqual([
-      'auto',
-      'pro',
-      'flash',
-      'flash-lite',
-    ])
+    expect((await built.models(GEMINI)).map((one) => one.id)).toEqual(['auto', 'pro', 'flash', 'flash-lite'])
     expect(await built.steer(on, 'and a stork')).toBe(false)
   })
 

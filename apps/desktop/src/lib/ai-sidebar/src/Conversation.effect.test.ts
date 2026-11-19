@@ -108,16 +108,11 @@ test('an unread chat open in the window in focus is read; with the window away, 
 
 test('the home’s rows say unread and their state to a screen reader', () => {
   panel.turns = []
-  panel.heads = [
-    listed('a', 1, { title: 'Serie 6' }),
-    listed('b', 1, { title: 'Garden', state: 'running' }),
-  ]
+  panel.heads = [listed('a', 1, { title: 'Serie 6' }), listed('b', 1, { title: 'Garden', state: 'running' })]
   panel.unread = new Set(['a'])
   panel.running = ['b']
   const shown = draw()
-  const names = [...shown.target.querySelectorAll('.recent .row')].map((one) =>
-    one.getAttribute('aria-label'),
-  )
+  const names = [...shown.target.querySelectorAll('.recent .row')].map((one) => one.getAttribute('aria-label'))
   expect(names).toEqual(['Serie 6, unread, done', 'Garden, working'])
   expect(shown.target.querySelectorAll('.recent .unread')).toHaveLength(1)
   void shown.close()
@@ -133,8 +128,7 @@ test('Show all shows the rest in place, and no archived chat', () => {
     listed('gone', 99, { archived: true }),
   ]
   const shown = draw()
-  const titles = () =>
-    [...shown.target.querySelectorAll('.recent .title')].map((one) => one.textContent)
+  const titles = () => [...shown.target.querySelectorAll('.recent .title')].map((one) => one.textContent)
   expect(titles()).toEqual(['one', 'two', 'three'])
   const all = shown.target.querySelector<HTMLButtonElement>('.recent .all')
   expect(all?.textContent).toContain('5')
@@ -148,9 +142,7 @@ test('Show all shows the rest in place, and no archived chat', () => {
 
 test('Show all over a thousand chats draws the rows in sight, not every one', () => {
   panel.turns = []
-  panel.heads = Array.from({ length: 1000 }, (_, at) =>
-    listed(`c${at}`, 1000 - at, { title: `chat ${at}` }),
-  )
+  panel.heads = Array.from({ length: 1000 }, (_, at) => listed(`c${at}`, 1000 - at, { title: `chat ${at}` }))
   const shown = draw()
   shown.target.querySelector<HTMLButtonElement>('.recent .all')?.click()
   flushSync()
@@ -165,8 +157,7 @@ test('Show all over a thousand chats draws the rows in sight, not every one', ()
 test('a long chat draws its last turns first and earlier ones as it is scrolled up', async () => {
   panel.turns = Array.from({ length: 100 }, (_, at) => you(`u${at}`, `question ${at}`, [], at))
   const shown = draw()
-  const said = () =>
-    [...shown.target.querySelectorAll('.said .bubble')].map((one) => one.textContent)
+  const said = () => [...shown.target.querySelectorAll('.said .bubble')].map((one) => one.textContent)
   expect(said()).toHaveLength(40)
   expect(said().at(-1)).toBe('question 99')
   const talk = shown.target.querySelector<HTMLElement>('.talk')

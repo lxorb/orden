@@ -45,10 +45,7 @@ describe('words typed after Enter at the end of a folded heading', () => {
   })
 
   test('do not become a row of the hidden table', () => {
-    const view = folded(
-      '## Costs\n| item | cost |\n| --- | --- |\n| tea | 2 |\n\n## Later',
-      '## Costs',
-    )
+    const view = folded('## Costs\n| item | cost |\n| --- | --- |\n| tea | 2 |\n\n## Later', '## Costs')
     expect(holdersOfTyped(view, 'Ask Sam first.')).not.toContain('Table')
   })
 

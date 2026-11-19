@@ -1,17 +1,5 @@
-import {
-  type EditorState,
-  type Extension,
-  type Range,
-  StateEffect,
-  StateField,
-} from '@codemirror/state'
-import {
-  Decoration,
-  type DecorationSet,
-  EditorView,
-  hoverTooltip,
-  type Tooltip,
-} from '@codemirror/view'
+import { type EditorState, type Extension, type Range, StateEffect, StateField } from '@codemirror/state'
+import { Decoration, type DecorationSet, EditorView, hoverTooltip, type Tooltip } from '@codemirror/view'
 import { OrdenWidget } from '../live-preview/widget'
 import { type SharedDoc, sharedOf } from '../shared'
 
@@ -83,11 +71,7 @@ function drawn(state: EditorState, marks: readonly ReviewMark[]): Held {
 
     const fading = mark.fading ? ' is-fading' : ''
     if (mark.removed) {
-      ranges.push(
-        Decoration.widget({ widget: new Removed(mark.removed, !!mark.fading), side: -1 }).range(
-          from,
-        ),
-      )
+      ranges.push(Decoration.widget({ widget: new Removed(mark.removed, !!mark.fading), side: -1 }).range(from))
     }
     if (to > from) {
       ranges.push(
@@ -114,8 +98,7 @@ const field = StateField.define<Held>({
   update(held, transaction) {
     for (const effect of transaction.effects)
       if (effect.is(setReviewMarks)) return drawn(transaction.state, effect.value)
-    if (sharedOf(transaction.state) !== sharedOf(transaction.startState))
-      return asked(transaction.state)
+    if (sharedOf(transaction.state) !== sharedOf(transaction.startState)) return asked(transaction.state)
     if (!transaction.docChanged || !held.marks.length) return held
 
     const changes = transaction.changes
@@ -132,11 +115,7 @@ const field = StateField.define<Held>({
 
 function changeAt(state: EditorState, at: number): ReviewMark | null {
   const held = state.field(field, false)
-  return (
-    held?.marks.find(
-      (mark) => !mark.fading && mark.from <= at && at <= Math.max(mark.to, mark.from + 1),
-    ) ?? null
-  )
+  return held?.marks.find((mark) => !mark.fading && mark.from <= at && at <= Math.max(mark.to, mark.from + 1)) ?? null
 }
 
 const offer = hoverTooltip(
@@ -218,5 +197,4 @@ const extension: Extension = [field, offer, style]
 
 export const reviewMarks = (): Extension => extension
 
-export const reviewMarksOf = (state: EditorState): readonly ReviewMark[] =>
-  state.field(field, false)?.marks ?? []
+export const reviewMarksOf = (state: EditorState): readonly ReviewMark[] => state.field(field, false)?.marks ?? []

@@ -68,9 +68,7 @@ function page(own: number | null = null) {
     },
   }
   const at = (type: string, handler: Heard['handler'], capture: boolean) =>
-    heard.findIndex(
-      (one) => one.type === type && one.handler === handler && one.capture === capture,
-    )
+    heard.findIndex((one) => one.type === type && one.handler === handler && one.capture === capture)
   const addEventListener = (type: string, handler: Heard['handler'], capture = false) => {
     if (at(type, handler, capture) < 0) heard.push({ type, handler, capture })
   }
@@ -156,9 +154,7 @@ describe('the script in every page', () => {
   test('steps on Ctrl+G and F3, back with Shift', () => {
     const one = page()
     expect(one.press({ keyCode: 71, ctrlKey: true }).opened).toEqual(['orden-find-next'])
-    expect(one.press({ keyCode: 71, ctrlKey: true, shiftKey: true }).opened).toEqual([
-      'orden-find-previous',
-    ])
+    expect(one.press({ keyCode: 71, ctrlKey: true, shiftKey: true }).opened).toEqual(['orden-find-previous'])
     expect(one.press({ keyCode: 114 }).opened).toEqual(['orden-find-next'])
     expect(one.press({ keyCode: 114, shiftKey: true }).opened).toEqual(['orden-find-previous'])
   })
@@ -264,14 +260,10 @@ describe('a modifier tapped twice in a page', () => {
 
     const fake = page()
     for (const at of [0, 150]) {
-      fake.press(
-        { key: 'Shift', keyCode: 16, shiftKey: true, timeStamp: at, isTrusted: false },
-        'keydown',
+      fake.press({ key: 'Shift', keyCode: 16, shiftKey: true, timeStamp: at, isTrusted: false }, 'keydown')
+      expect(fake.press({ key: 'Shift', keyCode: 16, timeStamp: at + 40, isTrusted: false }, 'keyup').opened).toEqual(
+        [],
       )
-      expect(
-        fake.press({ key: 'Shift', keyCode: 16, timeStamp: at + 40, isTrusted: false }, 'keyup')
-          .opened,
-      ).toEqual([])
     }
   })
 
@@ -285,15 +277,7 @@ describe('a modifier tapped twice in a page', () => {
 
 describe("the crate's word for an ask", () => {
   test('is one of seven, for a tab', () => {
-    for (const key of [
-      'find',
-      'next',
-      'previous',
-      'address',
-      'shift-shift',
-      'ctrl-ctrl',
-      'alt-alt',
-    ]) {
+    for (const key of ['find', 'next', 'previous', 'address', 'shift-shift', 'ctrl-ctrl', 'alt-alt']) {
       expect(readAsk({ tab: 't1', key })).toEqual({ tab: 't1', key })
     }
   })
@@ -334,9 +318,7 @@ describe('an ask', () => {
     one.find.open = true
     one.find.query = 'orden'
     answer('t1', one, 'previous')
-    expect(called).toEqual([
-      { command: 'web_find', args: { tab: 't1', term: 'orden', look: 'previous' } },
-    ])
+    expect(called).toEqual([{ command: 'web_find', args: { tab: 't1', term: 'orden', look: 'previous' } }])
   })
 
   test("for the address field is that page's, and a new ask each time", () => {
@@ -359,11 +341,7 @@ describe('the bar', () => {
     expect(one.find).toMatchObject({ query: '', count: 0, at: -1 })
     shut('t1', one)
     expect(one.find.open).toBe(false)
-    expect(called.map((one) => one.command)).toEqual([
-      'web_find_stop',
-      'web_find_stop',
-      'keyboard_back',
-    ])
+    expect(called.map((one) => one.command)).toEqual(['web_find_stop', 'web_find_stop', 'keyboard_back'])
   })
 
   test('gives the page its keyboard back as it closes, as in Chrome', () => {

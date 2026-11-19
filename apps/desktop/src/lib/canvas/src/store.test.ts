@@ -66,9 +66,7 @@ function room(): Shared & { pushed: Canvas[]; hows: Pushed[]; undone: number } {
 const ids = (canvas: Canvas) => canvas.nodes.map((node) => node.id)
 
 test('a plane arriving from a room says nothing about the icon, so the file keeps it and its colour', () => {
-  const { store } = opened(
-    JSON.stringify({ nodes: [], edges: [], orden: { icon: 'star', iconColor: 'red' } }),
-  )
+  const { store } = opened(JSON.stringify({ nodes: [], edges: [], orden: { icon: 'star', iconColor: 'red' } }))
   store.arrived({ ...blank(), nodes: [card('a')] })
   expect(store.canvas.icon).toBe('star')
   expect(store.canvas.iconColor).toBe('red')
@@ -77,9 +75,7 @@ test('a plane arriving from a room says nothing about the icon, so the file keep
 test('a plane written down after a room spoke does not take its own write for news, so nothing writes again', () => {
   vi.useFakeTimers()
   try {
-    const { store, note } = opened(
-      JSON.stringify({ nodes: [], edges: [], orden: { icon: 'star', iconColor: 'red' } }),
-    )
+    const { store, note } = opened(JSON.stringify({ nodes: [], edges: [], orden: { icon: 'star', iconColor: 'red' } }))
     store.arrived({ ...blank(), nodes: [card('a')] })
     vi.runOnlyPendingTimers()
     const revision = note.revision
@@ -573,13 +569,10 @@ describe('a rename the plane follows (#2173)', () => {
     ...canvas,
     nodes: canvas.nodes.map((node) => (node.id === 'f' ? linked('New.md') : node)),
   })
-  const files = (canvas: Canvas) =>
-    canvas.nodes.map((node) => (node.type === 'file' ? node.file : node.id))
+  const files = (canvas: Canvas) => canvas.nodes.map((node) => (node.type === 'file' ? node.file : node.id))
 
   test('is no step undo takes back', () => {
-    const { store } = opened(
-      writeCanvas({ ...readCanvas(blankCanvas()), nodes: [linked('Old.md')] }),
-    )
+    const { store } = opened(writeCanvas({ ...readCanvas(blankCanvas()), nodes: [linked('Old.md')] }))
     store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card('a')] })
     store.relinked(renamed)
     store.undo()
@@ -602,9 +595,7 @@ describe('a rename the plane follows (#2173)', () => {
   })
 
   test('goes to a room aside, where undo does not reach it', () => {
-    const { store } = opened(
-      writeCanvas({ ...readCanvas(blankCanvas()), nodes: [linked('Old.md')] }),
-    )
+    const { store } = opened(writeCanvas({ ...readCanvas(blankCanvas()), nodes: [linked('Old.md')] }))
     const shared = room()
     store.shared = shared
     store.relinked(renamed)
@@ -615,33 +606,23 @@ describe('a rename the plane follows (#2173)', () => {
 
 describe('an edit another window made meanwhile (#1847)', () => {
   function edited() {
-    const { store, note } = opened(
-      writeCanvas({ ...readCanvas(blankCanvas()), nodes: [card('a'), card('b', 300)] }),
-    )
+    const { store, note } = opened(writeCanvas({ ...readCanvas(blankCanvas()), nodes: [card('a'), card('b', 300)] }))
     store.edit({ ...store.canvas, nodes: [{ ...card('a'), y: 200 }, card('b', 300)] })
     store.part()
     return { store, note }
   }
 
-  async function elsewhere(
-    note: InstanceType<typeof NoteDoc>,
-    change: (nodes: CanvasNode[]) => CanvasNode[],
-  ) {
+  async function elsewhere(note: InstanceType<typeof NoteDoc>, change: (nodes: CanvasNode[]) => CanvasNode[]) {
     const { stamped } = await import('@orden/markdown/canvas-merge')
     const theirs = readCanvas(note.text)
-    note.replace(
-      writeCanvas(stamped(theirs, { ...theirs, nodes: change(theirs.nodes) }, Date.now() + 60_000)),
-    )
+    note.replace(writeCanvas(stamped(theirs, { ...theirs, nodes: change(theirs.nodes) }, Date.now() + 60_000)))
   }
 
-  const where = (canvas: Canvas) =>
-    Object.fromEntries(canvas.nodes.map((node) => [node.id, node.y]))
+  const where = (canvas: Canvas) => Object.fromEntries(canvas.nodes.map((node) => [node.id, node.y]))
 
   test('stays when undo takes this window’s own edit back, and comes again with a redo', async () => {
     const { store, note } = edited()
-    await elsewhere(note, (nodes) =>
-      nodes.map((node) => (node.id === 'b' ? { ...node, y: 500 } : node)),
-    )
+    await elsewhere(note, (nodes) => nodes.map((node) => (node.id === 'b' ? { ...node, y: 500 } : node)))
     store.follow()
 
     expect(store.canUndo).toBe(true)

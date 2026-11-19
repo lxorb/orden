@@ -57,10 +57,7 @@ describe('the paper a Word document goes out on', () => {
   })
 
   test('is A5 turned on its side, with a 33 mm margin, when that is what was asked', async () => {
-    const page = await docxPage(
-      NOTE,
-      setup({ paper: 'A5', orientation: 'landscape', margin: '33mm' }),
-    )
+    const page = await docxPage(NOTE, setup({ paper: 'A5', orientation: 'landscape', margin: '33mm' }))
 
     expect(page.width).toBe(11906)
     expect(page.height).toBe(8391)
@@ -163,8 +160,6 @@ describe('the setup as a document writer needs it', () => {
   })
 
   test('and falls back to the default margin for a length nothing could read', () => {
-    expect(paperTwips({ ...DEFAULT_PAGE_SETUP, margin: 'wide' }, 'A', '2026-09-14').margin).toBe(
-      1134,
-    )
+    expect(paperTwips({ ...DEFAULT_PAGE_SETUP, margin: 'wide' }, 'A', '2026-09-14').margin).toBe(1134)
   })
 })

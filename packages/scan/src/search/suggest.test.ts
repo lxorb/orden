@@ -136,12 +136,7 @@ describe('finishing an operator name', () => {
   test('offers the ones the letters could still become', () => {
     const at = asked('ta')
     expect(at?.field).toBe('name')
-    expect(offered(at?.typed ?? '', OPERATORS)).toEqual([
-      'tag:',
-      'task:',
-      'task-todo:',
-      'task-done:',
-    ])
+    expect(offered(at?.typed ?? '', OPERATORS)).toEqual(['tag:', 'task:', 'task-todo:', 'task-done:'])
   })
 
   test('and the hyphenated ones, which are the reason for offering any', () => {

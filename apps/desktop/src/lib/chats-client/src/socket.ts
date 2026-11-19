@@ -101,10 +101,7 @@ export class ChatSocket {
   private connect(): void {
     if (this.stopped) return
     const url = `${BASE.replace(/^http/, 'ws')}${socketPath(this.chat)}`
-    const protocols = [
-      subprotocol(this.token),
-      ...(this.device ? [`${DEVICE_PROTOCOL}${this.device}`] : []),
-    ]
+    const protocols = [subprotocol(this.token), ...(this.device ? [`${DEVICE_PROTOCOL}${this.device}`] : [])]
     let wire: Wire | null = null
     try {
       wire = this.dial(url, protocols, {

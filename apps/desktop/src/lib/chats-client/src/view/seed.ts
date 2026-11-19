@@ -44,11 +44,7 @@ export function seeded(now = Date.now()): { store: FixtureChats; thesis: string;
     store.place(thesis, who, made)
   }
 
-  const draft = say(
-    0,
-    EMIL,
-    'Draft of chapter 3 is up: [[Chapter 3]] has the second experiment in it.',
-  )
+  const draft = say(0, EMIL, 'Draft of chapter 3 is up: [[Chapter 3]] has the second experiment in it.')
   event(1, EMIL, { kind: 'react', id: store.id(), target: draft, emoji: '🎉', on: true })
   event(2, LUCILE, { kind: 'react', id: store.id(), target: draft, emoji: '🎉', on: true })
   event(3, MIA, { kind: 'react', id: store.id(), target: draft, emoji: '👀', on: true })
@@ -73,11 +69,7 @@ export function seeded(now = Date.now()): { store: FixtureChats; thesis: string;
   ] as const) {
     event(41, who, { kind: 'vote', id: store.id(), target: poll, answers: [answer] })
   }
-  const pinned = say(
-    43,
-    PAUL,
-    'Defence is on **14 November**, room HG F 3. Slides due the week before.',
-  )
+  const pinned = say(43, PAUL, 'Defence is on **14 November**, room HG F 3. Slides due the week before.')
   event(44, PAUL, { kind: 'pin', id: store.id(), target: pinned, on: true })
   event(45, LUCILE, { kind: 'react', id: store.id(), target: pinned, emoji: '👍', on: true })
   event(45, MIA, { kind: 'react', id: store.id(), target: pinned, emoji: '👍', on: true })
@@ -110,9 +102,7 @@ export function seeded(now = Date.now()): { store: FixtureChats; thesis: string;
     },
   })
   say(60, MIA, 'and the dataset', {
-    files: [
-      fixtureFile(random, { name: 'residuals-2026-10.csv', size: 1_840_000, type: 'text/csv' }),
-    ],
+    files: [fixtureFile(random, { name: 'residuals-2026-10.csv', size: 1_840_000, type: 'text/csv' })],
   })
 
   const morning = new Date(now)
@@ -168,11 +158,7 @@ export function bigChat(count: number, now = Date.now()): { store: FixtureChats;
   const people = [EMIL, LUCILE, MIA, PAUL]
   for (let n = 0; n < count; n++) {
     at += MINUTE / 2 + (n % 7) * 9000
-    store.speak(
-      chat,
-      people[n % 4] ?? EMIL,
-      `Message ${n + 1}${n % 5 === 0 ? '\nwith a second line' : ''}`,
-    )
+    store.speak(chat, people[n % 4] ?? EMIL, `Message ${n + 1}${n % 5 === 0 ? '\nwith a second line' : ''}`)
   }
   store.readHere(chat, store.must(chat).state.seq)
   at = now

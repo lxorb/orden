@@ -1,11 +1,4 @@
-import {
-  heldName,
-  keepRequestOf,
-  opsRequestOf,
-  pullRequestOf,
-  pushRequestOf,
-  type OpResult,
-} from '@orden/sync-core'
+import { heldName, keepRequestOf, opsRequestOf, pullRequestOf, pushRequestOf, type OpResult } from '@orden/sync-core'
 import { indexRequestOf, searchRequestOf } from '@orden/scan/wire'
 import { Hono } from 'hono'
 import {
@@ -137,10 +130,7 @@ v2Docs.post('/keep', async (context) => {
   const request = keepRequestOf(await requestBody(context))
   if (!request) return context.json({ error: NOT_A_REQUEST }, 400)
   const who = context.get('who')
-  if (
-    !(await mayPushDocuments(context.env, whoseId(who))) ||
-    !(await mayKeepVersions(context.env, whoseId(who)))
-  ) {
+  if (!(await mayPushDocuments(context.env, whoseId(who))) || !(await mayKeepVersions(context.env, whoseId(who)))) {
     return context.json({ error: TOO_MANY_CHANGES }, 429)
   }
 

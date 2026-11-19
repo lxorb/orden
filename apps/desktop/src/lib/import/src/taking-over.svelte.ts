@@ -28,11 +28,7 @@ class TakingOver {
   bring() {
     if (this.state === 'asking') return
 
-    const popup = window.open(
-      `${LEGACY_WEB}${HANDOFF_PATH}`,
-      'orden-handoff',
-      'popup,width=420,height=320',
-    )
+    const popup = window.open(`${LEGACY_WEB}${HANDOFF_PATH}`, 'orden-handoff', 'popup,width=420,height=320')
     if (!popup) return
     this.state = 'asking'
 

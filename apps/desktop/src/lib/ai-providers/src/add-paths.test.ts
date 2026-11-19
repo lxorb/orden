@@ -7,12 +7,7 @@ const WEB = offeredKinds(false, true)
 
 describe('adding an AI account', () => {
   test('offers each provider once, as a tile', () => {
-    expect(makersOf(DESKTOP).map((one) => one.id)).toEqual([
-      'anthropic',
-      'openai',
-      'google',
-      'compatible',
-    ])
+    expect(makersOf(DESKTOP).map((one) => one.id)).toEqual(['anthropic', 'openai', 'google', 'compatible'])
   })
 
   test('connects each provider every way it can on the desktop', () => {

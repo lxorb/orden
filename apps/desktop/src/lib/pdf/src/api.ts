@@ -1,14 +1,6 @@
 export { lentMoved, loading, openDocument, pageSizes, pdfjs, warmPdf } from './document'
 export { placesOnPaper, spansOver, wordsOfRuns } from './find'
-export {
-  boxOf,
-  COLOURS,
-  frozen,
-  type Held,
-  type Highlight,
-  type Quad,
-  toViewport,
-} from './highlights'
+export { boxOf, COLOURS, frozen, type Held, type Highlight, type Quad, toViewport } from './highlights'
 export { type PdfHeading, readOutline } from './outline'
 export { PDF_TO_CSS, sheetFor } from './pages'
 export {

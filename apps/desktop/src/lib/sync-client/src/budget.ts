@@ -12,8 +12,7 @@ const TIGHT = 0.8
 export const TRIM_AFTER = 5_000
 
 export async function keptBudget(): Promise<number> {
-  const estimate =
-    'storage' in navigator ? await navigator.storage.estimate().catch(() => null) : null
+  const estimate = 'storage' in navigator ? await navigator.storage.estimate().catch(() => null) : null
   const quota = estimate?.quota ?? 0
   if (!quota) return FLOOR
   const budget = Math.min(CEILING, Math.max(FLOOR, (quota * SHARE) / BYTES_PER_CHARACTER))
@@ -38,8 +37,7 @@ function holdWindow(locks: LockManager): Promise<void> {
 }
 
 export function holdThisWindow(): void {
-  const locks =
-    typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : undefined
+  const locks = typeof navigator !== 'undefined' && 'locks' in navigator ? navigator.locks : undefined
   if (locks) void holdWindow(locks)
 }
 

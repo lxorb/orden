@@ -6,8 +6,7 @@ import { contextAt, noteRow, taskRow } from './fixtures/rows'
 import type { Answer, Row } from './types'
 
 const context = contextAt()
-const keyed = (result: Answer) =>
-  result.groups.map((group) => [group.key, group.rows.map((row) => row.task?.text)])
+const keyed = (result: Answer) => result.groups.map((group) => [group.key, group.rows.map((row) => row.task?.text)])
 
 const rows: Row[] = [
   taskRow('Inbox.md', '- [ ] Call the bank [time:: 16:00] ⏫ 🛫 2026-10-04', 0),
@@ -55,9 +54,7 @@ describe('the built-in views', () => {
       [null, ['Whenever']],
     ])
     const every = answer(builtinView('todos'), 0, due, context)
-    expect(every.groups.flatMap((group) => group.rows.map((row) => row.task?.text))).toContain(
-      'Other space',
-    )
+    expect(every.groups.flatMap((group) => group.rows.map((row) => row.task?.text))).toContain('Other space')
   })
 
   test('Today: overdue first, then today, by priority and time; not started and done ones out', () => {
@@ -113,10 +110,7 @@ describe('the built-in views', () => {
     const label = builtinView('label', { tag: 'work' })
     const result = answer(label, 0, rows, context)
     expect(
-      result.groups.map((group) => [
-        group.key,
-        group.rows.map((row) => row.task?.text ?? row.file.basename),
-      ]),
+      result.groups.map((group) => [group.key, group.rows.map((row) => row.task?.text ?? row.file.basename)]),
     ).toEqual([
       ['Notes//Errands.md', ['Fix the bug']],
       ['Notes//Projects/Thesis.md', ['Thesis']],
@@ -125,11 +119,9 @@ describe('the built-in views', () => {
   })
 
   test('assigned to me', () => {
-    expect(
-      answer(builtinView('assigned'), 0, rows, context).groups[0]?.rows.map(
-        (row) => row.task?.text,
-      ),
-    ).toEqual(['Fix the bug'])
+    expect(answer(builtinView('assigned'), 0, rows, context).groups[0]?.rows.map((row) => row.task?.text)).toEqual([
+      'Fix the bug',
+    ])
   })
 
   test('each one copies to a base file that reads back the same', () => {

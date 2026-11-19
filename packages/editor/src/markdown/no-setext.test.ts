@@ -1,9 +1,5 @@
 import { insertNewlineAndIndent } from '@codemirror/commands'
-import {
-  insertNewlineContinueMarkupCommand,
-  markdown,
-  markdownLanguage,
-} from '@codemirror/lang-markdown'
+import { insertNewlineContinueMarkupCommand, markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { ensureSyntaxTree } from '@codemirror/language'
 import { EditorSelection, EditorState, type Transaction } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'

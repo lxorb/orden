@@ -19,9 +19,7 @@ function opened(extensions: (typeof heron)[]): EditorView {
 test('editors whose themes came in another order leave the page styles alone', async () => {
   opened([heron, kestrel])
   opened([kestrel, heron])
-  const sheet = [...document.head.querySelectorAll('style')].find((one) =>
-    one.textContent.includes('.cm-heron'),
-  )
+  const sheet = [...document.head.querySelectorAll('style')].find((one) => one.textContent.includes('.cm-heron'))
   if (!sheet) throw new Error('no editor styles')
   const text = sheet.textContent
 

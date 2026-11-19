@@ -20,9 +20,7 @@ test('a space that keeps its web data apart keeps its history apart', () => {
 test("says what a page called itself, whatever the address's fragment", () => {
   visited.saw('orden:web-visits:titles', 'c', 'https://svelte.dev/docs', 'Svelte docs')
 
-  expect(visited.titleOf('orden:web-visits:titles', 'https://svelte.dev/docs#intro')).toBe(
-    'Svelte docs',
-  )
+  expect(visited.titleOf('orden:web-visits:titles', 'https://svelte.dev/docs#intro')).toBe('Svelte docs')
   expect(visited.titleOf('orden:web-visits:titles', 'https://svelte.dev/blog')).toBe('')
 })
 
@@ -39,10 +37,7 @@ test("folds another browser's history in, read row by row, and the same twice on
   visited.brought(book, rows)
 
   const all = visited.all(book)
-  expect(all.map((one) => one.url).sort()).toEqual([
-    'https://ethz.ch/',
-    'https://moodle.example.com/',
-  ])
+  expect(all.map((one) => one.url).sort()).toEqual(['https://ethz.ch/', 'https://moodle.example.com/'])
   const eth = all.find((one) => one.url === 'https://ethz.ch/')
   expect(eth).toMatchObject({ title: 'ETH', visits: 9, typed: 2 })
   expect(eth?.last).toBeGreaterThan(5)

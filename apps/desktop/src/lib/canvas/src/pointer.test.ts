@@ -108,10 +108,7 @@ describe('picking with the arrow', () => {
     const added = play([down({ hit: hit({ node: 'c' }), shift: true })], context({ picked: ['a'] }))
     expect(added.machine.gesture).toMatchObject({ ids: ['a', 'c'] })
 
-    const removed = play(
-      [down({ hit: hit({ node: 'a' }), shift: true })],
-      context({ picked: ['a', 'b'] }),
-    )
+    const removed = play([down({ hit: hit({ node: 'a' }), shift: true })], context({ picked: ['a', 'b'] }))
     expect(removed.machine.gesture).toMatchObject({ ids: ['b'] })
   })
 
@@ -123,22 +120,14 @@ describe('picking with the arrow', () => {
   })
 
   test('a band says what it covers as it is dragged', () => {
-    const { effects } = play(
-      [down(), move({ x: 90, y: 60 }), up({ x: 90, y: 60 })],
-      context({ picked: ['a'] }),
-    )
+    const { effects } = play([down(), move({ x: 90, y: 60 }), up({ x: 90, y: 60 })], context({ picked: ['a'] }))
 
     const bands = effects.filter((one) => one.do === 'band')
-    expect(bands).toEqual([
-      { do: 'band', from: HERE, to: { x: 90, y: 60 }, was: [], adding: false },
-    ])
+    expect(bands).toEqual([{ do: 'band', from: HERE, to: { x: 90, y: 60 }, was: [], adding: false }])
   })
 
   test('a band held with shift keeps what was already picked', () => {
-    const { effects } = play(
-      [down({ shift: true }), move({ x: 9, y: 6 })],
-      context({ picked: ['a'] }),
-    )
+    const { effects } = play([down({ shift: true }), move({ x: 9, y: 6 })], context({ picked: ['a'] }))
 
     expect(effects.filter((one) => one.do === 'band')).toEqual([
       { do: 'band', from: HERE, to: { x: 9, y: 6 }, was: ['a'], adding: true },
@@ -146,10 +135,7 @@ describe('picking with the arrow', () => {
   })
 
   test('a card being written in keeps its own pointer', () => {
-    const { machine, effects } = play(
-      [down({ hit: hit({ node: 'a' }) })],
-      context({ editing: 'a', picked: ['a'] }),
-    )
+    const { machine, effects } = play([down({ hit: hit({ node: 'a' }) })], context({ editing: 'a', picked: ['a'] }))
 
     expect(effects).toEqual([])
     expect(machine.gesture).toBeNull()
@@ -161,12 +147,7 @@ describe('dragging', () => {
 
   test('says how far it went, once, when the pointer comes up', () => {
     const { effects } = play(
-      [
-        down({ hit: hit({ node: 'a' }) }),
-        move({ x: 40, y: 20 }),
-        move({ x: 80, y: 20 }),
-        up({ x: 80, y: 20 }),
-      ],
+      [down({ hit: hit({ node: 'a' }) }), move({ x: 40, y: 20 }), move({ x: 80, y: 20 }), up({ x: 80, y: 20 })],
       where,
     )
 
@@ -186,16 +167,11 @@ describe('dragging', () => {
       where,
     )
 
-    expect(effects.filter((one) => one.do === 'move')).toEqual([
-      { do: 'move', ids: ['a'], dx: 40, dy: 20 },
-    ])
+    expect(effects.filter((one) => one.do === 'move')).toEqual([{ do: 'move', ids: ['a'], dx: 40, dy: 20 }])
   })
 
   test('a drag that was really a click records nothing', () => {
-    const { effects } = play(
-      [down({ hit: hit({ node: 'a' }) }), move({ x: 1, y: 1 }), up({ x: 1, y: 1 })],
-      where,
-    )
+    const { effects } = play([down({ hit: hit({ node: 'a' }) }), move({ x: 1, y: 1 }), up({ x: 1, y: 1 })], where)
 
     expect(verbs(effects)).toEqual(['leave', 'pick'])
   })
@@ -240,11 +216,7 @@ describe('panning', () => {
 
   test('a finger that panned and lifted leaves what was picked alone', () => {
     const { effects } = play(
-      [
-        down({ pointer: 'touch' }),
-        move(HERE, { screen: { x: 60, y: 0 } }),
-        up(HERE, { screen: { x: 60, y: 0 } }),
-      ],
+      [down({ pointer: 'touch' }), move(HERE, { screen: { x: 60, y: 0 } }), up(HERE, { screen: { x: 60, y: 0 } })],
       context({ picked: ['a'] }),
     )
 
@@ -252,10 +224,7 @@ describe('panning', () => {
   })
 
   test('a pan says how far the plane moved, on screen', () => {
-    const { effects } = play(
-      [down({ button: 1 }), move(HERE, { screen: { x: 30, y: -10 } })],
-      context(),
-    )
+    const { effects } = play([down({ button: 1 }), move(HERE, { screen: { x: 30, y: -10 } })], context())
 
     expect(effects).toEqual([{ do: 'pan', dx: 30, dy: -10 }])
   })
@@ -282,11 +251,7 @@ describe('two fingers', () => {
 
   test('moving them together comes out as a pan and no zoom at all', () => {
     const { machine, effects } = play(
-      [
-        ...pinch.slice(0, 2),
-        move(HERE, { screen: { x: 20, y: 0 } }),
-        move(HERE, { id: 2, screen: { x: 120, y: 0 } }),
-      ],
+      [...pinch.slice(0, 2), move(HERE, { screen: { x: 20, y: 0 } }), move(HERE, { id: 2, screen: { x: 120, y: 0 } })],
       context(),
     )
 
@@ -311,9 +276,7 @@ describe('two fingers turning the view (#351)', () => {
     const moves: Input[] = []
     for (let step = 1; step <= steps; step++) {
       const angle = ((degrees * step) / steps) * (Math.PI / 180)
-      moves.push(
-        move(HERE, { id: 2, screen: { x: 100 * Math.cos(angle), y: 100 * Math.sin(angle) } }),
-      )
+      moves.push(move(HERE, { id: 2, screen: { x: 100 * Math.cos(angle), y: 100 * Math.sin(angle) } }))
     }
     return [
       down({ id: 1, pointer: 'touch', screen: { x: 0, y: 0 } }),
@@ -322,8 +285,7 @@ describe('two fingers turning the view (#351)', () => {
     ]
   }
 
-  const turnedBy = (effects: Effect[]) =>
-    effects.reduce((all, one) => all + (one.do === 'turn' ? one.by : 0), 0)
+  const turnedBy = (effects: Effect[]) => effects.reduce((all, one) => all + (one.do === 'turn' ? one.by : 0), 0)
 
   test('turn it with them, past the deadband, where the setting is on', () => {
     const { effects } = play(swung(40), context({ turns: true }))
@@ -382,9 +344,7 @@ describe('a pointer the system takes back', () => {
     )
 
     expect(machine.gesture).toBeNull()
-    expect(effects.filter((one) => one.do === 'move')).toEqual([
-      { do: 'move', ids: ['a'], dx: 50, dy: 0 },
-    ])
+    expect(effects.filter((one) => one.do === 'move')).toEqual([{ do: 'move', ids: ['a'], dx: 50, dy: 0 }])
   })
 })
 
@@ -403,10 +363,7 @@ describe('palm rejection', () => {
     const drawing = play(
       [
         down({ id: 1, pointer: 'pen' }),
-        move(
-          { x: 9, y: 9 },
-          { screen: HERE, samples: [{ x: 9, y: 9, pressure: 0.7, tiltX: 0, tiltY: 0, t: 8 }] },
-        ),
+        move({ x: 9, y: 9 }, { screen: HERE, samples: [{ x: 9, y: 9, pressure: 0.7, tiltX: 0, tiltY: 0, t: 8 }] }),
       ],
       where,
     )
@@ -460,10 +417,7 @@ describe('a finger on a device that has a pen', () => {
 
   test('picks a card and carries it, whichever ink tool is in hand', () => {
     for (const tool of INK) {
-      const { machine, effects } = play(
-        [down({ pointer: 'touch', hit: hit({ node: 'a' }) })],
-        tablet({ tool }),
-      )
+      const { machine, effects } = play([down({ pointer: 'touch', hit: hit({ node: 'a' }) })], tablet({ tool }))
 
       expect(machine.gesture, tool).toMatchObject({ kind: 'drag', ids: ['a'] })
       expect(verbs(effects), tool).toEqual(['leave', 'pick'])
@@ -471,10 +425,7 @@ describe('a finger on a device that has a pen', () => {
   })
 
   test('tapped on the plane and lifted clears what was picked', () => {
-    const { effects } = play(
-      [down({ pointer: 'touch' }), up(HERE)],
-      tablet({ tool: 'draw', picked: ['a'] }),
-    )
+    const { effects } = play([down({ pointer: 'touch' }), up(HERE)], tablet({ tool: 'draw', picked: ['a'] }))
 
     expect(verbs(effects)).toEqual(['leave', 'clear'])
   })
@@ -537,10 +488,7 @@ describe('a finger on a device that has a pen', () => {
   })
 
   test('draws again when the reader has asked for it', () => {
-    const { machine } = play(
-      [down({ pointer: 'touch' })],
-      tablet({ tool: 'draw', fingerDraws: true }),
-    )
+    const { machine } = play([down({ pointer: 'touch' })], tablet({ tool: 'draw', fingerDraws: true }))
 
     expect(machine.gesture?.kind).toBe('draw')
   })
@@ -573,10 +521,7 @@ describe('drawing', () => {
       { x: 2, y: 2, pressure: 0.5, tiltX: 0, tiltY: 0, t: 8 },
     ]
 
-    const { machine } = play(
-      [down({ pointer: 'pen' }), move({ x: 2, y: 2 }, { screen: HERE, samples })],
-      where,
-    )
+    const { machine } = play([down({ pointer: 'pen' }), move({ x: 2, y: 2 }, { screen: HERE, samples })], where)
 
     expect(machine.gesture).toMatchObject({ kind: 'draw' })
     expect(machine.gesture?.kind === 'draw' && machine.gesture.stroke.points).toHaveLength(3)
@@ -586,10 +531,7 @@ describe('drawing', () => {
     const { effects } = play(
       [
         down({ pointer: 'pen' }),
-        move(
-          { x: 5, y: 5 },
-          { screen: HERE, samples: [{ x: 5, y: 5, pressure: 0.6, tiltX: 3, tiltY: -2, t: 8 }] },
-        ),
+        move({ x: 5, y: 5 }, { screen: HERE, samples: [{ x: 5, y: 5, pressure: 0.6, tiltX: 3, tiltY: -2, t: 8 }] }),
         up({ x: 5, y: 5 }, { screen: HERE }),
       ],
       where,
@@ -615,10 +557,7 @@ describe('drawing', () => {
   })
 
   test('the pen button rubs out whatever the tool is', () => {
-    const { machine, effects } = play(
-      [down({ pointer: 'pen', eraser: true })],
-      context({ tool: 'draw' }),
-    )
+    const { machine, effects } = play([down({ pointer: 'pen', eraser: true })], context({ tool: 'draw' }))
 
     expect(machine.gesture?.kind).toBe('erase')
     expect(verbs(effects)).toEqual(['cut'])
@@ -726,10 +665,7 @@ describe('rubbing out', () => {
       points: [0, 40].map((x) => ({ x, y: 8, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })),
     }
     const reaches = (pointer: 'touch' | 'pen') =>
-      play(
-        [down({ pointer })],
-        context({ tool: 'erase', eraser: { ...context().eraser, whole: true } }),
-      ).effects.some(
+      play([down({ pointer })], context({ tool: 'erase', eraser: { ...context().eraser, whole: true } })).effects.some(
         (one) => one.do === 'rub' && one.ats.some((at) => nearStroke(line, at, one.reach)),
       )
 
@@ -778,16 +714,11 @@ describe('the lasso', () => {
     })
 
     const { effects } = play(
-      [
-        down({ at: { x: 50, y: 50 }, hit: hit({ ink: 'inside' }) }),
-        move({ x: 70, y: 50 }, { screen: HERE }),
-      ],
+      [down({ at: { x: 50, y: 50 }, hit: hit({ ink: 'inside' }) }), move({ x: 70, y: 50 }, { screen: HERE })],
       where,
     )
 
-    expect(effects).toEqual([
-      { do: 'ink', dx: 20, dy: 0, scale: 1, turn: 0, about: { x: 50, y: 50 } },
-    ])
+    expect(effects).toEqual([{ do: 'ink', dx: 20, dy: 0, scale: 1, turn: 0, about: { x: 50, y: 50 } }])
   })
 })
 
@@ -830,11 +761,7 @@ describe('the tools that put something down', () => {
 
   test('one that was dragged lands at the size it was dragged to, once, on the way up', () => {
     const { effects } = play(
-      [
-        down({ at: { x: 0, y: 0 } }),
-        move({ x: 60, y: 40 }, { screen: HERE }),
-        up({ x: 60, y: 40 }, { screen: HERE }),
-      ],
+      [down({ at: { x: 0, y: 0 } }), move({ x: 60, y: 40 }, { screen: HERE }), up({ x: 60, y: 40 }, { screen: HERE })],
       context({ tool: 'rect' }),
     )
 
@@ -934,10 +861,7 @@ describe('moving an end of a connector', () => {
 
 describe('alt on a drag', () => {
   test('leaves a copy where the drag began and carries the originals off', () => {
-    const { machine, effects } = play(
-      [down({ alt: true, hit: hit({ node: 'a' }) })],
-      context({ picked: ['a'] }),
-    )
+    const { machine, effects } = play([down({ alt: true, hit: hit({ node: 'a' }) })], context({ picked: ['a'] }))
 
     expect(verbs(effects)).toEqual(['leave', 'clone'])
     expect(machine.gesture).toMatchObject({ kind: 'drag', ids: ['a'] })
@@ -963,10 +887,7 @@ describe('holding the shape of what is resized', () => {
 
   test('is what a picture gets from a corner without being asked', () => {
     for (const handle of ['nw', 'ne', 'se', 'sw'] as const) {
-      const { machine } = play(
-        [down({ hit: hit({ handle }) })],
-        context({ picked: ['a'], aspect: true }),
-      )
+      const { machine } = play([down({ hit: hit({ handle }) })], context({ picked: ['a'], aspect: true }))
 
       expect(machine.gesture).toMatchObject({ kind: 'resize', aspect: true })
     }
@@ -974,10 +895,7 @@ describe('holding the shape of what is resized', () => {
 
   test('a picture pulled by a side stretches one way only', () => {
     for (const handle of ['n', 'e', 's', 'w'] as const) {
-      const { machine } = play(
-        [down({ hit: hit({ handle }) })],
-        context({ picked: ['a'], aspect: true }),
-      )
+      const { machine } = play([down({ hit: hit({ handle }) })], context({ picked: ['a'], aspect: true }))
 
       expect(machine.gesture).toMatchObject({ kind: 'resize', aspect: false })
     }
@@ -1009,17 +927,12 @@ describe('connecting', () => {
       context(),
     )
 
-    expect(effects).toEqual([
-      { do: 'connect', from: 'a', fromSide: 'right', to: 'b', toSide: 'auto' },
-    ])
+    expect(effects).toEqual([{ do: 'connect', from: 'a', fromSide: 'right', to: 'b', toSide: 'auto' }])
   })
 
   test('dropped on nothing is nothing', () => {
     const { effects } = play(
-      [
-        down({ hit: hit({ port: { id: 'a', side: 'right' } }) }),
-        up({ x: 200, y: 0 }, { screen: HERE }),
-      ],
+      [down({ hit: hit({ port: { id: 'a', side: 'right' } }) }), up({ x: 200, y: 0 }, { screen: HERE })],
       context(),
     )
 
@@ -1029,10 +942,7 @@ describe('connecting', () => {
 
 describe('what a gesture leaves behind', () => {
   test('a cancelled pointer leaves nothing half done', () => {
-    const { machine } = play(
-      [down({ pointer: 'pen' }), { kind: 'cancel', id: 1 }],
-      context({ tool: 'draw' }),
-    )
+    const { machine } = play([down({ pointer: 'pen' }), { kind: 'cancel', id: 1 }], context({ tool: 'draw' }))
 
     expect(machine.gesture).toBeNull()
     expect(machine.penDown).toBe(false)
@@ -1046,10 +956,7 @@ describe('what a gesture leaves behind', () => {
   })
 
   test('a finger held on the plane asks for the menu', () => {
-    const { effects } = play(
-      [down({ pointer: 'touch' }), { kind: 'held', at: { x: 7, y: 8 } }],
-      context(),
-    )
+    const { effects } = play([down({ pointer: 'touch' }), { kind: 'held', at: { x: 7, y: 8 } }], context())
 
     expect(effects.at(-1)).toEqual({ do: 'menu', at: { x: 7, y: 8 } })
   })
@@ -1071,10 +978,7 @@ describe('a second finger', () => {
   })
 
   test('takes over a shape being dragged out', () => {
-    const { machine } = play(
-      [down({ id: 1, pointer: 'touch' }), second()],
-      context({ tool: 'rect' }),
-    )
+    const { machine } = play([down({ id: 1, pointer: 'touch' }), second()], context({ tool: 'rect' }))
 
     expect(machine.gesture?.kind).toBe('pinch')
   })
@@ -1091,11 +995,7 @@ describe('a second finger', () => {
 
   test('leaves a stroke that is already under way alone', () => {
     const { machine } = play(
-      [
-        down({ id: 1, pointer: 'touch', sample: nib }),
-        move({ x: 9, y: 9 }, { samples: [nib] }),
-        second({ time: 900 }),
-      ],
+      [down({ id: 1, pointer: 'touch', sample: nib }), move({ x: 9, y: 9 }, { samples: [nib] }), second({ time: 900 })],
       context({ tool: 'draw' }),
     )
 
@@ -1128,10 +1028,7 @@ describe('a second finger', () => {
 
   test('takes back what a finger rubbed out when the pen comes down and takes over', () => {
     const { machine, effects } = play(
-      [
-        down({ id: 1, pointer: 'touch', hit: hit({ stroke: 's1' }) }),
-        down({ id: 2, pointer: 'pen', time: 900 }),
-      ],
+      [down({ id: 1, pointer: 'touch', hit: hit({ stroke: 's1' }) }), down({ id: 2, pointer: 'pen', time: 900 })],
       context({ tool: 'erase', penSeen: true, fingerDraws: true }),
     )
 
@@ -1161,10 +1058,7 @@ describe('a second finger', () => {
 
   test('keeps what the pen rubbed out when the pen comes down again', () => {
     const { effects } = play(
-      [
-        down({ id: 1, pointer: 'pen', hit: hit({ stroke: 's1' }) }),
-        down({ id: 2, pointer: 'pen', time: 900 }),
-      ],
+      [down({ id: 1, pointer: 'pen', hit: hit({ stroke: 's1' }) }), down({ id: 2, pointer: 'pen', time: 900 })],
       context({ tool: 'erase' }),
     )
 
@@ -1172,10 +1066,7 @@ describe('a second finger', () => {
   })
 
   test('is a palm rather than a pinch once the eraser has begun rubbing out', () => {
-    const { machine } = play(
-      [down({ id: 1, pointer: 'touch' }), second({ time: 900 })],
-      context({ tool: 'erase' }),
-    )
+    const { machine } = play([down({ id: 1, pointer: 'touch' }), second({ time: 900 })], context({ tool: 'erase' }))
 
     expect(machine.gesture?.kind).toBe('erase')
   })
@@ -1226,10 +1117,7 @@ describe('a contact that turns out to be a pen', () => {
   } as const
 
   test('draws from where the nib landed rather than panning', () => {
-    const { machine } = play(
-      [down({ pointer: 'touch' }), penned],
-      context({ tool: 'draw', penSeen: true }),
-    )
+    const { machine } = play([down({ pointer: 'touch' }), penned], context({ tool: 'draw', penSeen: true }))
 
     expect(machine.gesture).toMatchObject({ kind: 'draw' })
     expect(machine.gesture?.kind === 'draw' && machine.gesture.stroke.points).toEqual([nib])
@@ -1248,11 +1136,7 @@ describe('a contact that turns out to be a pen', () => {
 
   test('leaves a stroke that is already drawing where it is', () => {
     const { machine } = play(
-      [
-        down({ pointer: 'pen', sample: nib }),
-        move({ x: 9, y: 9 }, { screen: HERE, samples: [nib] }),
-        penned,
-      ],
+      [down({ pointer: 'pen', sample: nib }), move({ x: 9, y: 9 }, { screen: HERE, samples: [nib] }), penned],
       context({ tool: 'draw' }),
     )
 
@@ -1309,10 +1193,7 @@ describe('the lasso pulled out as a box', () => {
   const where = context({ tool: 'lasso', lassoBox: true })
 
   test('is the four corners of the box, so what draws it and what reads it agree', () => {
-    const { machine } = play(
-      [down({ at: { x: 0, y: 0 } }), move({ x: 10, y: 6 }, { screen: HERE })],
-      where,
-    )
+    const { machine } = play([down({ at: { x: 0, y: 0 } }), move({ x: 10, y: 6 }, { screen: HERE })], where)
 
     expect(machine.gesture?.kind === 'lasso' && machine.gesture.points).toEqual([
       { x: 0, y: 0 },
@@ -1324,11 +1205,7 @@ describe('the lasso pulled out as a box', () => {
 
   test('catches what the box went round when it is let go', () => {
     const { effects } = play(
-      [
-        down({ at: { x: 0, y: 0 } }),
-        move({ x: 10, y: 6 }, { screen: HERE }),
-        up({ x: 10, y: 6 }, { screen: HERE }),
-      ],
+      [down({ at: { x: 0, y: 0 } }), move({ x: 10, y: 6 }, { screen: HERE }), up({ x: 10, y: 6 }, { screen: HERE })],
       where,
     )
 
@@ -1357,11 +1234,7 @@ describe('straightening what was drawn', () => {
 
   test('is not the menu, whatever a pen is holding', () => {
     const spacing = step(start(), { kind: 'space', down: true }, context()).machine
-    const { effects } = play(
-      [down({ pointer: 'pen' }), { kind: 'held', at: HERE }],
-      context(),
-      spacing,
-    )
+    const { effects } = play([down({ pointer: 'pen' }), { kind: 'held', at: HERE }], context(), spacing)
 
     expect(verbs(effects)).not.toContain('menu')
   })
@@ -1427,11 +1300,7 @@ describe('a finger held on the bare plane, then moved', () => {
 
   test('a finger held on a card still only asks for the menu', () => {
     const { machine, effects } = play(
-      [
-        down({ pointer: 'touch', hit: hit({ node: 'a' }) }),
-        { kind: 'held', at: at(7, 8) },
-        move(at(80, 80)),
-      ],
+      [down({ pointer: 'touch', hit: hit({ node: 'a' }) }), { kind: 'held', at: at(7, 8) }, move(at(80, 80))],
       context(),
     )
     expect(effects).toContainEqual({ do: 'menu', at: at(7, 8) })

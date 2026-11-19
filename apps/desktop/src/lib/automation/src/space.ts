@@ -20,9 +20,7 @@ export async function spaceFor(args: Said): Promise<Space> {
   }
 
   const folded = wanted.toLowerCase()
-  const found = workspace.spaces.find(
-    (one) => one.id === wanted || one.name.toLowerCase() === folded,
-  )
+  const found = workspace.spaces.find((one) => one.id === wanted || one.name.toLowerCase() === folded)
   if (!found) throw new Error(`there is no space called ${wanted}`)
 
   if (found.id !== workspace.activeSpaceId) await workspace.showSpace(found.id)

@@ -69,7 +69,6 @@ class Tools {
   }
 }
 
-const drawn = (tool: Tool): boolean =>
-  tool === 'draw' || tool === 'erase' || tool === 'lasso' || tool === 'hand'
+const drawn = (tool: Tool): boolean => tool === 'draw' || tool === 'erase' || tool === 'lasso' || tool === 'hand'
 
 export const tools = new Tools()

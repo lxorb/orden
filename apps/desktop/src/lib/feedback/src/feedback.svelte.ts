@@ -43,10 +43,7 @@ function readPast(): Past[] {
   if (!Array.isArray(kept)) return []
   return (kept as unknown[]).filter(
     (one): one is Past =>
-      isRecord(one) &&
-      typeof one.url === 'string' &&
-      typeof one.title === 'string' &&
-      typeof one.at === 'number',
+      isRecord(one) && typeof one.url === 'string' && typeof one.title === 'string' && typeof one.at === 'number',
   )
 }
 

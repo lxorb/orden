@@ -111,9 +111,7 @@
       box.scrollTop = top + rowHeight - box.clientHeight
     }
     scrolled = box.scrollTop
-    requestAnimationFrame(() =>
-      box.querySelector<HTMLElement>(`[data-row="${String(at)}"]`)?.focus(),
-    )
+    requestAnimationFrame(() => box.querySelector<HTMLElement>(`[data-row="${String(at)}"]`)?.focus())
   }
 </script>
 

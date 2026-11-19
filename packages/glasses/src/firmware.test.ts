@@ -1,19 +1,7 @@
 import { measureTextWrap } from '@evenrealities/pretext'
 import { describe, expect, test } from 'vitest'
 import { growth, GROWS_AT_MOST } from '../../../scripts/growth'
-import {
-  draws,
-  fit,
-  fold,
-  rightward,
-  rows,
-  ruleOf,
-  SPACE,
-  TICK,
-  width,
-  workDone,
-  wrap,
-} from './firmware'
+import { draws, fit, fold, rightward, rows, ruleOf, SPACE, TICK, width, workDone, wrap } from './firmware'
 import { BODY_INNER, LINE } from './panel'
 
 describe('the firmware font', () => {
@@ -55,9 +43,7 @@ describe('the firmware font', () => {
 
 describe('folding a note to what the font can draw', () => {
   test('leaves what the font has exactly as it is', () => {
-    expect(fold('The quick brown fox, 1234 (five) - six.')).toBe(
-      'The quick brown fox, 1234 (five) - six.',
-    )
+    expect(fold('The quick brown fox, 1234 (five) - six.')).toBe('The quick brown fox, 1234 (five) - six.')
   })
 
   test('keeps newlines, which are the one control the container reads', () => {

@@ -1,16 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import {
-  account,
-  ApiError,
-  called,
-  clearsAt,
-  faceUrl,
-  farApart,
-  fromServer,
-  stands,
-} from '../src/api'
+import { account, ApiError, called, clearsAt, faceUrl, farApart, fromServer, stands } from '../src/api'
 import { clampOffset, sourceSquare, zoomed } from '../src/crop'
 import { withoutMetadata } from '../src/encode'
 import { readPerson } from '../src/read'

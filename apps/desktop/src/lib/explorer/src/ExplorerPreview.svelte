@@ -3,15 +3,7 @@
   import { identifier } from '../../platform/src/api'
   import { readableSize } from '../../accounts/src/api'
   import { when } from '../../ui-controls/src/api'
-  import {
-    cancelJob,
-    type Count,
-    countIn,
-    type Entry,
-    type Facts,
-    factsOf,
-    peekAt,
-  } from './commands'
+  import { cancelJob, type Count, countIn, type Entry, type Facts, factsOf, peekAt } from './commands'
   import EntryMark from './EntryMark.svelte'
   import { mediaUrl, MOST_MEDIA, MOST_TEXT, shownAs, textOf } from './preview'
   import type { ExplorerView } from './view.svelte'
@@ -19,14 +11,10 @@
   const { view, large = false }: { view: ExplorerView; large?: boolean } = $props()
 
   const entry = $derived<Entry | null>(
-    view.picked.cursor === null
-      ? null
-      : (view.rows.find((one) => one.name === view.picked.cursor) ?? null),
+    view.picked.cursor === null ? null : (view.rows.find((one) => one.name === view.picked.cursor) ?? null),
   )
   const path = $derived(entry ? view.pathOf(entry.name) : (view.listing?.path ?? null))
-  const same = $derived(
-    entry ? [entry.name, entry.folder, entry.size, entry.modified].join('\u0000') : null,
-  )
+  const same = $derived(entry ? [entry.name, entry.folder, entry.size, entry.modified].join('\u0000') : null)
 
   let facts = $state<Facts | null>(null)
   const SETTLED_MS = 150

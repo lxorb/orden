@@ -51,13 +51,7 @@ type Held = { track: Track; row: Touched | null }[]
 
 const waiting = new Map<string, Held>()
 
-function heldMoved(
-  held: Map<string, Held>,
-  from: string,
-  to: string,
-  root: string | undefined,
-  join: boolean,
-): void {
+function heldMoved(held: Map<string, Held>, from: string, to: string, root: string | undefined, join: boolean): void {
   for (const [key, one] of [...held]) {
     const [agent, path] = partsOf(key)
     const now = movedTo(path, from, to, root)
@@ -159,9 +153,7 @@ export async function tracksCame(
 export function tracksAside(agent: string): [string, Track][] {
   const prefix = keyOf(agent, '')
   return [...aside].flatMap(([key, held]) =>
-    key.startsWith(prefix)
-      ? held.map(({ track }): [string, Track] => [key.slice(prefix.length), track])
-      : [],
+    key.startsWith(prefix) ? held.map(({ track }): [string, Track] => [key.slice(prefix.length), track]) : [],
   )
 }
 
@@ -192,12 +184,7 @@ export function tracksOf(agent: string): Map<string, Track> {
   return found
 }
 
-type Planner = (
-  text: string,
-  selected: Selected | null,
-  open: NoteDoc | null,
-  again: boolean,
-) => Planned
+type Planner = (text: string, selected: Selected | null, open: NoteDoc | null, again: boolean) => Planned
 
 export async function editNote(
   desk: Desk,
@@ -217,11 +204,7 @@ export async function editNote(
         return plan(asked, text, selected)
       } catch (error) {
         if (again && error instanceof DocError && error.code !== 'overlapping') {
-          throw new DocError(
-            'reader_edited_here',
-            error.about,
-            `the reader edited there: ${error.message}`,
-          )
+          throw new DocError('reader_edited_here', error.about, `the reader edited there: ${error.message}`)
         }
         throw error
       }
@@ -261,12 +244,7 @@ interface Waits {
   deadline: AbortSignal | undefined
 }
 
-function inTurnBy<T>(
-  key: string,
-  note: Located,
-  deadline: AbortSignal | undefined,
-  run: () => Promise<T>,
-): Promise<T> {
+function inTurnBy<T>(key: string, note: Located, deadline: AbortSignal | undefined, run: () => Promise<T>): Promise<T> {
   return startsBefore(
     deadline,
     () => ranOut(note, false),
@@ -285,11 +263,7 @@ function ranOut(note: Located, waitedOnTheReader: boolean): DocError {
 }
 
 function stillTyping(note: Located): DocError {
-  return new DocError(
-    'reader_typing',
-    note.relative,
-    'the reader is still writing where the edit goes',
-  )
+  return new DocError('reader_typing', note.relative, 'the reader is still writing where the edit goes')
 }
 
 async function change(
@@ -367,8 +341,7 @@ function changeOpen(
   if (first && !note.draft) void desk.snapshot(note.path, text, agent.name)
 
   const last = planned.edits.at(-1)
-  if (last)
-    showAgent(open, agent, changes.mapPos(last.to, 1), desk.scheme(), desk.tabsShowing(open))
+  if (last) showAgent(open, agent, changes.mapPos(last.to, 1), desk.scheme(), desk.tabsShowing(open))
 
   return answer(note, open.live.text.toString(), planned, changes)
 }
@@ -452,8 +425,7 @@ function answer(
   changes: { mapPos(at: number, assoc?: number): number } | null,
 ): NoteEdited {
   const starts = [0]
-  for (let at = after.indexOf('\n'); at !== -1; at = after.indexOf('\n', at + 1))
-    starts.push(at + 1)
+  for (let at = after.indexOf('\n'); at !== -1; at = after.indexOf('\n', at + 1)) starts.push(at + 1)
 
   const lineOf = (at: number) => {
     let low = 0
@@ -530,12 +502,7 @@ export async function undoSomeAt(
   })
 }
 
-export async function putBackAt(
-  desk: Desk,
-  agent: Agent,
-  note: Located,
-  token: string,
-): Promise<string[]> {
+export async function putBackAt(desk: Desk, agent: Agent, note: Located, token: string): Promise<string[]> {
   const key = keyOf(agent.id, note.path)
   const track = tracks.get(key)
   if (!track?.holds(token)) return []

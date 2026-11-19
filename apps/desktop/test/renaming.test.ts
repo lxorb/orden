@@ -140,9 +140,7 @@ describe('what the field draws', () => {
   })
 
   test('and a name already taken says so', () => {
-    expect(draw({ value: 'Beta', extension: '.md', taken: ['Beta.md'] })).toContain(
-      'That name is taken',
-    )
+    expect(draw({ value: 'Beta', extension: '.md', taken: ['Beta.md'] })).toContain('That name is taken')
   })
 })
 

@@ -36,9 +36,7 @@ async function sha(...parts: Uint8Array[]): Promise<Uint8Array> {
 async function aDevice() {
   const pub = random(65)
   const nonce = random(32)
-  const id = [...(await sha(pub)).slice(0, 16)]
-    .map((one) => one.toString(16).padStart(2, '0'))
-    .join('')
+  const id = [...(await sha(pub)).slice(0, 16)].map((one) => one.toString(16).padStart(2, '0')).join('')
   return {
     id,
     pub: base64(pub),
@@ -65,8 +63,7 @@ describe('the AI vault', () => {
     env.close()
   })
 
-  const read = (device: string, as = token) =>
-    call<Read>(env, `/v2/ai?device=${device}`, { token: as })
+  const read = (device: string, as = token) => call<Read>(env, `/v2/ai?device=${device}`, { token: as })
 
   const register = (one: { id: string; commitment: string }, name: string, as = token) =>
     call(env, '/v2/ai/devices', {
@@ -187,8 +184,7 @@ describe('the AI vault', () => {
     const phone = await aDevice()
     await register(phone, 'Phone')
     const forged = base64(random(32))
-    const as = (path: string, method: string, body: unknown) =>
-      call(env, path, { token, method, body })
+    const as = (path: string, method: string, body: unknown) => call(env, path, { token, method, body })
 
     expect(
       (
@@ -199,13 +195,8 @@ describe('the AI vault', () => {
         })
       ).status,
     ).toBe(403)
-    expect(
-      (await as(`/v2/ai/devices/${phone.id}/nonce`, 'PUT', { nonce: 'bm9uY2U', from: phone.id }))
-        .status,
-    ).toBe(403)
-    expect(
-      (await as(`/v2/ai/devices/${laptop.id}/wrap`, 'PUT', { wrapped: 'eA', auth: forged })).status,
-    ).toBe(403)
+    expect((await as(`/v2/ai/devices/${phone.id}/nonce`, 'PUT', { nonce: 'bm9uY2U', from: phone.id })).status).toBe(403)
+    expect((await as(`/v2/ai/devices/${laptop.id}/wrap`, 'PUT', { wrapped: 'eA', auth: forged })).status).toBe(403)
     expect((await as('/v2/ai/vault', 'PUT', { rev: 1, blob: 'eA', auth: forged })).status).toBe(403)
     expect((await as('/v2/ai/vault', 'DELETE', { auth: forged })).status).toBe(403)
     expect((await as('/v2/ai/vault', 'DELETE', {})).status).toBe(403)
@@ -249,9 +240,7 @@ describe('the AI vault', () => {
 
   test('starting over lets go of the vault and every wrap, by the key or once no device is allowed', async () => {
     const laptop = await first()
-    expect(
-      (await call(env, '/v2/ai/vault', { token, method: 'DELETE', body: { auth } })).status,
-    ).toBe(200)
+    expect((await call(env, '/v2/ai/vault', { token, method: 'DELETE', body: { auth } })).status).toBe(200)
     expect((await read(laptop.id)).json).toMatchObject({
       rev: 0,
       blob: null,
@@ -298,10 +287,9 @@ describe('the AI vault', () => {
 
   test('lets an allowed device go by changing the key, and only so', async () => {
     const { laptop, phone, tablet } = await three()
-    expect(
-      (await call(env, `/v2/ai/devices/${phone.id}`, { token, method: 'DELETE', body: { auth } }))
-        .status,
-    ).toBe(409)
+    expect((await call(env, `/v2/ai/devices/${phone.id}`, { token, method: 'DELETE', body: { auth } })).status).toBe(
+      409,
+    )
 
     const next = base64(random(32))
     const turned = await rotate({
@@ -392,9 +380,7 @@ describe('the AI vault', () => {
     expect((await rotate({ ...body, go: [] })).status).toBe(400)
     expect((await rotate({ ...body, wraps: [] })).status).toBe(400)
     expect((await rotate({ ...body, keep: [], wraps: [] })).status).toBe(400)
-    expect(
-      (await rotate({ ...body, keep: [laptop.id, phone.id], wraps: ['YQ', 'Yg'] })).status,
-    ).toBe(400)
+    expect((await rotate({ ...body, keep: [laptop.id, phone.id], wraps: ['YQ', 'Yg'] })).status).toBe(400)
     expect((await rotate({ ...body, next: '' })).status).toBe(400)
     expect((await rotate({ ...body, auth: base64(random(32)) })).status).toBe(403)
   })
@@ -405,14 +391,8 @@ describe('the AI vault', () => {
       body: { id: 'not-hex', name: 'x', commitment: 'Y29tbWl0' },
     })
     expect(bad.status).toBe(400)
-    expect(
-      (await call(env, '/v2/ai/vault', { method: 'PUT', body: { rev: 0, blob: 'eA', auth } }))
-        .status,
-    ).toBe(401)
-    expect(
-      (await call(env, '/v2/ai/vault', { token, method: 'PUT', body: { rev: 0, blob: 'eA' } }))
-        .status,
-    ).toBe(403)
+    expect((await call(env, '/v2/ai/vault', { method: 'PUT', body: { rev: 0, blob: 'eA', auth } })).status).toBe(401)
+    expect((await call(env, '/v2/ai/vault', { token, method: 'PUT', body: { rev: 0, blob: 'eA' } })).status).toBe(403)
   })
 
   test('holds no more devices than an account keeps when two ask at the same moment', async () => {
@@ -432,9 +412,7 @@ describe('the AI vault', () => {
 
     const laptop = await aDevice()
     expect((await register(laptop, 'Laptop')).status).toBe(409)
-    expect(
-      env.db.prepare('select count(*) as n from ai_devices where user_id = ?').get(user),
-    ).toEqual({ n: 30 })
+    expect(env.db.prepare('select count(*) as n from ai_devices where user_id = ?').get(user)).toEqual({ n: 30 })
   })
 
   test('is the account’s alone', async () => {

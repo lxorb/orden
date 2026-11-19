@@ -2,15 +2,7 @@ import { htmlToMarkdown } from '@orden/markdown/from-html'
 import { folderPlan, isJunk } from './folder'
 import { dayOf, freeKey, type Meta, noteText, propertyName, type Property } from './meta'
 import { hasNotionId, Names, pageLink, safeName, safeParts, withoutNotionId } from './names'
-import {
-  baseBlock,
-  type Database,
-  databaseOf,
-  type Kind,
-  kindOf,
-  notionDate,
-  valueAs,
-} from './notion-database'
+import { baseBlock, type Database, databaseOf, type Kind, kindOf, notionDate, valueAs } from './notion-database'
 import type { ImportPlan } from './plan'
 import type { Source } from './sources'
 import { elements, closingOf, tagsIn, unescapeXml } from './xml'
@@ -45,12 +37,10 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
   const owners = new Map<string, string>()
   for (const csv of kept) owners.set(folderOf(csv), csv)
   for (const one of sources) {
-    if (MARKDOWN.test(one.path) && !isJunk(one.path))
-      owners.set(one.path.replace(MARKDOWN, ''), one.path)
+    if (MARKDOWN.test(one.path) && !isJunk(one.path)) owners.set(one.path.replace(MARKDOWN, ''), one.path)
   }
   const placeOf = notionPaths(names, owners, (path, folder) => {
-    if (!isTable(path))
-      return inside(folder(parentOf(path)), safeParts(nameOf(path), withoutNotionId))
+    if (!isTable(path)) return inside(folder(parentOf(path)), safeParts(nameOf(path), withoutNotionId))
     const own = folderOf(path)
     return `${inside(folder(parentOf(own)), safeName(withoutNotionId(nameOf(own))))}.md`
   })
@@ -135,11 +125,7 @@ function rowFolders(sources: readonly Source[], kept: ReadonlySet<string>): Map<
     for (const part of parts) {
       const named = NAMED.exec(part)
       const ways = named
-        ? [
-            part,
-            named[1] ?? '',
-            `${named[1] ?? ''} ${(named[2] ?? '').slice(0, 4)}-${(named[2] ?? '').slice(-4)}`,
-          ]
+        ? [part, named[1] ?? '', `${named[1] ?? ''} ${(named[2] ?? '').slice(0, 4)}-${(named[2] ?? '').slice(-4)}`]
         : [part]
       spellings = spellings.flatMap((one) => ways.map((way) => (one ? `${one}/${way}` : way)))
     }
@@ -316,9 +302,7 @@ function isTable(path: string): boolean {
 
 function usefulCsvs(sources: readonly Source[]): Set<string> {
   const csvs = sources.filter((one) => isTable(one.path)).map((one) => one.path)
-  const alls = new Set(
-    csvs.filter((one) => /_all\.csv$/i.test(one)).map((one) => one.replace(/_all\.csv$/i, '')),
-  )
+  const alls = new Set(csvs.filter((one) => /_all\.csv$/i.test(one)).map((one) => one.replace(/_all\.csv$/i, '')))
 
   return new Set(csvs.filter((one) => /_all\.csv$/i.test(one) || !alls.has(one.replace(CSV, ''))))
 }
@@ -436,8 +420,7 @@ async function readNotionHtml(sources: readonly Source[]): Promise<ImportPlan> {
   let pages = 0
   const owners = new Map<string, string>()
   for (const one of sources) {
-    if (HTML.test(one.path) && !isJunk(one.path) && !isIndex(one.path))
-      owners.set(one.path.replace(HTML, ''), one.path)
+    if (HTML.test(one.path) && !isJunk(one.path) && !isIndex(one.path)) owners.set(one.path.replace(HTML, ''), one.path)
   }
   const placeOf = notionPaths(names, owners, (path, folder) =>
     inside(folder(parentOf(path)), safeParts(nameOf(path), withoutNotionId).replace(HTML, '.md')),
@@ -483,8 +466,7 @@ function notionHtml(text: string): { html: string; meta: Meta } {
   let meta: Meta = {}
 
   for (const tag of tagsIn(text)) {
-    if (tag.closing || tag.name !== 'table' || !/\bproperties\b/.test(tag.attributes.class ?? ''))
-      continue
+    if (tag.closing || tag.name !== 'table' || !/\bproperties\b/.test(tag.attributes.class ?? '')) continue
 
     const end = closingOf(text, 'table', tag.to)
     const close = text.indexOf('>', end)

@@ -53,13 +53,9 @@ export async function usage(thread: Thread | null, provider: Provider | null): P
   let limit = null
   if (provider && isLocal(provider.kind)) limit = (await plansOf()).of(provider.id).limit
   else if (provider?.kind === 'chatgpt') limit = (await plansOf()).chatgptLimit
-  const until = limit?.until
-    ? localDate(limit.until, { dateStyle: 'medium', timeStyle: 'short' })
-    : limit?.untilWords
+  const until = limit?.until ? localDate(limit.until, { dateStyle: 'medium', timeStyle: 'short' }) : limit?.untilWords
   const standing =
-    limit && limit.state !== 'fine'
-      ? [limit.state === 'reached' ? 'At its limit' : 'Near its limit', until]
-      : []
+    limit && limit.state !== 'fine' ? [limit.state === 'reached' ? 'At its limit' : 'Near its limit', until] : []
   return (
     rows([
       ['This thread', spent ? `↑ ${tokens(spent.input)} ↓ ${tokens(spent.output)}` : null],

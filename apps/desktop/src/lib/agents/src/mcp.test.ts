@@ -17,9 +17,7 @@ describe('the line that adds Orden to a client', () => {
   })
 
   it('quotes a path elsewhere only when the shell would split it', () => {
-    expect(mcpLine('/usr/bin/orden')).toBe(
-      'claude mcp add --scope user orden -- /usr/bin/orden mcp',
-    )
+    expect(mcpLine('/usr/bin/orden')).toBe('claude mcp add --scope user orden -- /usr/bin/orden mcp')
     expect(mcpLine('/Applications/Orden.app/Contents/MacOS/orden', 'codex')).toBe(
       'codex mcp add orden -- /Applications/Orden.app/Contents/MacOS/orden mcp',
     )
@@ -37,18 +35,12 @@ describe('the line that adds Orden to a client', () => {
 
 describe("the MCP server's tools", () => {
   const table = JSON.parse(
-    readFileSync(
-      fileURLToPath(new URL('../../../../src-tauri/crates/ai/src/mcp/tools.json', import.meta.url)),
-      'utf8',
-    ),
+    readFileSync(fileURLToPath(new URL('../../../../src-tauri/crates/ai/src/mcp/tools.json', import.meta.url)), 'utf8'),
   ) as { name: string }[]
 
   it('are every verb an agent may call, and nothing else', () => {
     const own = new Set(['agent_pair', 'agent_bye'])
-    const verbs = [
-      ...BROWSER_VERBS.filter((verb) => !own.has(verb)),
-      ...Object.keys(AGENT_WINDOW_VERBS),
-    ]
+    const verbs = [...BROWSER_VERBS.filter((verb) => !own.has(verb)), ...Object.keys(AGENT_WINDOW_VERBS)]
 
     expect(table.map((tool) => tool.name).sort()).toEqual(verbs.sort())
   })

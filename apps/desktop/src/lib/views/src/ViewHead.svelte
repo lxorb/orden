@@ -1,13 +1,6 @@
 <script lang="ts">
   import { type Base, writeBase } from '@orden/bases'
-  import {
-    DIVIDER,
-    menu,
-    type MenuEntry,
-    ORDER_MARK,
-    segmented,
-    viewport,
-  } from '../../ui-kit/src/api'
+  import { DIVIDER, menu, type MenuEntry, ORDER_MARK, segmented, viewport } from '../../ui-kit/src/api'
   import { relativeTo } from '../../platform/src/api'
   import { workspace } from '../../workspace/src/api'
   import ArrangeBuilder from './ArrangeBuilder.svelte'
@@ -90,10 +83,7 @@
     return `[[${relativeTo(root, path).replace(/\.md$/i, '')}]]`
   }
 
-  async function templateRows(
-    chosen: string | undefined,
-    pick: (link: string | null) => void,
-  ): Promise<MenuEntry[]> {
+  async function templateRows(chosen: string | undefined, pick: (link: string | null) => void): Promise<MenuEntry[]> {
     const found = await templates()
     return [
       { label: 'Blank', checked: chosen === undefined, run: () => pick(null) },
@@ -179,9 +169,7 @@
                   label: one.label,
                   checked: (view?.orden.lines ?? 1) === one.lines,
                   run: () =>
-                    kit.change((b, at) =>
-                      setViewOrden(b, at, 'lines', one.lines === 1 ? undefined : one.lines),
-                    ),
+                    kit.change((b, at) => setViewOrden(b, at, 'lines', one.lines === 1 ? undefined : one.lines)),
                 })),
               ),
             ),
@@ -210,21 +198,13 @@
       DIVIDER,
       {
         label: view?.orden.locked ? 'Unlock view' : 'Lock view',
-        run: () =>
-          kit.change(
-            (b, at) => setViewOrden(b, at, 'locked', view?.orden.locked ? undefined : true),
-            true,
-          ),
+        run: () => kit.change((b, at) => setViewOrden(b, at, 'locked', view?.orden.locked ? undefined : true), true),
       },
       ...(kit.file !== null
         ? [
             {
               label: base.orden.locked ? 'Unlock base' : 'Lock base',
-              run: () =>
-                kit.change(
-                  (b) => setBaseOrden(b, 'locked', base.orden.locked ? undefined : true),
-                  true,
-                ),
+              run: () => kit.change((b) => setBaseOrden(b, 'locked', base.orden.locked ? undefined : true), true),
             },
           ]
         : []),
@@ -376,10 +356,7 @@
         title="Unlock view"
         aria-label="Unlock view"
         onclick={() =>
-          kit.change(
-            (b, at) => setBaseOrden(setViewOrden(b, at, 'locked', undefined), 'locked', undefined),
-            true,
-          )}
+          kit.change((b, at) => setBaseOrden(setViewOrden(b, at, 'locked', undefined), 'locked', undefined), true)}
       >
         <svg viewBox="0 0 13 13"><path d={LOCK_MARK} /></svg>
       </button>
@@ -516,21 +493,13 @@
               }}
               oncontextmenu={(event) => tabMenu(event, at)}
             >
-              <svg viewBox="0 0 13 13" aria-hidden="true"
-                ><path d={LAYOUT_MARKS[layoutOf(one.type)]} /></svg
-              >
+              <svg viewBox="0 0 13 13" aria-hidden="true"><path d={LAYOUT_MARKS[layoutOf(one.type)]} /></svg>
               <span class="words">{one.name || title}</span>
             </button>
           {/if}
         {/each}
         {#if kit.writable}
-          <button
-            type="button"
-            class="orden-glyph"
-            title="New view"
-            aria-label="New view"
-            onclick={addTab}
-          >
+          <button type="button" class="orden-glyph" title="New view" aria-label="New view" onclick={addTab}>
             <svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg>
           </button>
         {/if}
@@ -563,9 +532,7 @@
               {kit}
               more={(event?: MouseEvent) => {
                 const rows = moreRows(event)
-                return rows.map((row) =>
-                  row ? { ...row, run: () => ((open = null), row.run()) } : row,
-                )
+                return rows.map((row) => (row ? { ...row, run: () => ((open = null), row.run()) } : row))
               }}
             />
           </Popover>

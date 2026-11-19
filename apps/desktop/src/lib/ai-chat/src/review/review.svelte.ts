@@ -1,22 +1,9 @@
 import { SvelteSet } from 'svelte/reactivity'
 import { carryIntoEditors, type SharedDoc, StateEffect } from '@orden/editor'
-import {
-  type ReviewMark,
-  reviewMarks,
-  setReviewActions,
-  setReviewMarks,
-  setReviewSource,
-} from '@orden/editor/review'
+import { type ReviewMark, reviewMarks, setReviewActions, setReviewMarks, setReviewSource } from '@orden/editor/review'
 import { agentDocs } from '../../../agent-docs/src/api'
 import { busy } from '../../../ui-kit/src/api'
-import {
-  insideSpace,
-  notePath,
-  withinSpace,
-  dur,
-  onDisk,
-  onceAFrame,
-} from '../../../platform/src/api'
+import { insideSpace, notePath, withinSpace, dur, onDisk, onceAFrame } from '../../../platform/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { type NoteDoc } from '../../../documents/src/api'
 import { writeFile } from '../../../file-writes/src/api'
@@ -86,9 +73,7 @@ class Review {
   readonly filesDone = new SvelteSet<string>()
   private readonly fading = new SvelteSet<string>()
   listing = $state<string | null>(null)
-  sheet = $state.raw<{ thread: Thread; panel: ReviewPanel | null; turn: string | null } | null>(
-    null,
-  )
+  sheet = $state.raw<{ thread: Thread; panel: ReviewPanel | null; turn: string | null } | null>(null)
   redo = $state.raw<Redo | null>(null)
   said = $state<string | null>(null)
   readonly following = new SvelteSet<string>()
@@ -112,8 +97,7 @@ class Review {
     onSent(() => this.version++)
     setReviewSource((doc) => this.marksOfDoc(doc))
     carryIntoEditors(reviewMarks())
-    for (const note of workspace.documents)
-      note.live.announce([StateEffect.appendConfig.of(reviewMarks())])
+    for (const note of workspace.documents) note.live.announce([StateEffect.appendConfig.of(reviewMarks())])
     setReviewActions((id, keep) => {
       const change = this.edits().find((one) => one.id === id)
       if (!change) return
@@ -183,10 +167,7 @@ class Review {
     return more
   }
 
-  private async take(
-    changes: readonly Edit[],
-    token?: string,
-  ): Promise<{ more: number; short: boolean }> {
+  private async take(changes: readonly Edit[], token?: string): Promise<{ more: number; short: boolean }> {
     let more = 0
     let short = false
     for (const [key, group] of this.grouped(changes)) {
@@ -330,12 +311,7 @@ class Review {
     this.sheet = null
   }
 
-  async rewind(
-    thread: Thread,
-    turn: string,
-    choice: Choice,
-    panel: ReviewPanel | null,
-  ): Promise<void> {
+  async rewind(thread: Thread, turn: string, choice: Choice, panel: ReviewPanel | null): Promise<void> {
     const plan = this.plan(thread, turn)
     if (!plan) return
     this.forgetRedo()
@@ -395,10 +371,7 @@ class Review {
     }
   }
 
-  private async stepsBack(
-    thread: Thread,
-    steps: readonly Step[],
-  ): Promise<{ taken: Taken[]; short: boolean }> {
+  private async stepsBack(thread: Thread, steps: readonly Step[]): Promise<{ taken: Taken[]; short: boolean }> {
     const taken: Taken[] = []
     let short = false
     for (const step of steps) {
@@ -427,10 +400,7 @@ class Review {
     return { taken, short }
   }
 
-  private async unmake(
-    thread: Thread,
-    one: Made,
-  ): Promise<{ path: string; words: string } | 'stayed' | null> {
+  private async unmake(thread: Thread, one: Made): Promise<{ path: string; words: string } | 'stayed' | null> {
     const space =
       (one.space ? spaceNamed(workspace.spaces, one.space) : undefined) ??
       workspace.spaces.find((each) => each.id === thread.space)
@@ -501,12 +471,10 @@ class Review {
     for (const agent of one.agents) {
       for (const [path, track] of tracksOf(agent)) {
         if (!track.holds(one.token)) continue
-        const back = await putBackIn({ id: agent, name: agent }, path, one.token).catch(
-          (error: unknown) => {
-            console.warn(`no edits put back in ${path}: ${String(error)}`)
-            return []
-          },
-        )
+        const back = await putBackIn({ id: agent, name: agent }, path, one.token).catch((error: unknown) => {
+          console.warn(`no edits put back in ${path}: ${String(error)}`)
+          return []
+        })
         if (!back.length) short = true
       }
     }

@@ -1,12 +1,4 @@
-import {
-  forget,
-  isNumber,
-  isRecord,
-  keepJson,
-  stored,
-  stringList,
-  afterQuiet,
-} from '../../platform/src/api'
+import { forget, isNumber, isRecord, keepJson, stored, stringList, afterQuiet } from '../../platform/src/api'
 
 const KEY = 'orden:palette-picks'
 const USED_KEY = 'orden:palette-used'

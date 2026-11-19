@@ -12,12 +12,7 @@ export function lastMessage(thread: Thread): Turn | null {
   return checkpoints(thread.turns).at(-1) ?? null
 }
 
-export function editMessage(
-  thread: Thread,
-  turn: string,
-  text: string,
-  panel: ReviewPanel,
-): Promise<void> {
+export function editMessage(thread: Thread, turn: string, text: string, panel: ReviewPanel): Promise<void> {
   return review.edit(thread, turn, text, panel)
 }
 

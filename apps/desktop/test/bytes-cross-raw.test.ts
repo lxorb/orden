@@ -37,13 +37,9 @@ describe('bytes on their way to the crate', () => {
   })
 
   test('are never handed to a command as base64 or as an array of numbers', () => {
-    const found = walk(
-      LIB,
-      (path) => /\.(ts|svelte)$/.test(path) && !/\.test\.ts$|\.fixture\.ts$/.test(path),
-      ['web'],
-    ).flatMap((path) =>
-      encodedArguments(readFileSync(path, 'utf8')).map((one) => `${relative(LIB, path)}: ${one}`),
-    )
+    const found = walk(LIB, (path) => /\.(ts|svelte)$/.test(path) && !/\.test\.ts$|\.fixture\.ts$/.test(path), [
+      'web',
+    ]).flatMap((path) => encodedArguments(readFileSync(path, 'utf8')).map((one) => `${relative(LIB, path)}: ${one}`))
     expect(found).toEqual([])
   })
 })

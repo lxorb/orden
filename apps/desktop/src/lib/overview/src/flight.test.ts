@@ -2,9 +2,7 @@ import { expect, test } from 'vitest'
 import { paneDrawn } from './flight'
 
 function drawnAt(transform: string, box: { x: number; y: number }, px: number, py: number) {
-  const [tx, ty, scale] = (
-    /translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(transform) ?? []
-  )
+  const [tx, ty, scale] = (/translate\(([-\d.]+)px, ([-\d.]+)px\) scale\(([-\d.]+)\)/.exec(transform) ?? [])
     .slice(1)
     .map(Number)
   return { x: box.x + (tx ?? 0) + (scale ?? 1) * px, y: box.y + (ty ?? 0) + (scale ?? 1) * py }
@@ -30,9 +28,7 @@ test('out on the canvas, what the pane shows lies on its window under the camera
   expect(corner.x).toBeCloseTo(screen.x)
   expect(corner.y).toBeCloseTo(screen.y)
   expect(drawnAt(drawn.transform, box, box.width, head).x).toBeCloseTo(screen.x + screen.w)
-  const [top, bottom, radius] = (
-    /inset\(([\d.]+)px 0 ([\d.]+)px 0 round ([\d.]+)px/.exec(drawn.clipPath) ?? []
-  )
+  const [top, bottom, radius] = (/inset\(([\d.]+)px 0 ([\d.]+)px 0 round ([\d.]+)px/.exec(drawn.clipPath) ?? [])
     .slice(1)
     .map(Number)
   expect(top).toBe(head)
@@ -65,9 +61,7 @@ test('a pane’s corners are its own at home and become the window’s as the ov
     const seen = cornersOf(drawn.clipPath).map((one) => one * scale)
     if (step === 0) expect(seen).toEqual([...home])
     if (step === 40) for (const one of seen) expect(one).toBeCloseTo(10)
-    if (before)
-      for (const [i, one] of seen.entries())
-        expect(Math.abs(one - (before[i] ?? 0))).toBeLessThan(1)
+    if (before) for (const [i, one] of seen.entries()) expect(Math.abs(one - (before[i] ?? 0))).toBeLessThan(1)
     before = seen
   }
 })

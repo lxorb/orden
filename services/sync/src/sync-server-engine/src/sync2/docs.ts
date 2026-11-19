@@ -37,11 +37,7 @@ interface Reached {
   role: Role
 }
 
-async function reachedNotes(
-  env: Env,
-  who: Asking,
-  ids: readonly string[],
-): Promise<Map<string, Reached>> {
+async function reachedNotes(env: Env, who: Asking, ids: readonly string[]): Promise<Map<string, Reached>> {
   const shut = await programShut(env, who)
   const { results } = await env.DB.prepare(
     `select * from notes where id in (select value from json_each(?))
@@ -72,26 +68,20 @@ async function reachedNotes(
 async function onEpochs(env: Env, found: Map<string, Reached>): Promise<void> {
   const spaces = new Set<string>()
   for (const { note } of found.values()) {
-    if ((note.epoch ?? 0) === 0 && DOCUMENT_KINDS.has(note.kind ?? 'note'))
-      spaces.add(note.space_id)
+    if ((note.epoch ?? 0) === 0 && DOCUMENT_KINDS.has(note.kind ?? 'note')) spaces.add(note.space_id)
   }
   if (!spaces.size) return
 
   for (const space of spaces) await prepareSpace(env, space)
   const ids = [...found.values()].filter(({ note }) => spaces.has(note.space_id))
   for (const { note } of ids) {
-    const fresh = await env.DB.prepare('select * from notes where id = ?')
-      .bind(note.id)
-      .first<Note>()
+    const fresh = await env.DB.prepare('select * from notes where id = ?').bind(note.id).first<Note>()
     const held = found.get(note.id)
     if (fresh && held) held.note = fresh
   }
 }
 
-export async function documentOf(
-  env: Env,
-  note: Note,
-): Promise<{ update: Uint8Array; seq: number } | null> {
+export async function documentOf(env: Env, note: Note): Promise<{ update: Uint8Array; seq: number } | null> {
   const epoch = note.epoch ?? 0
   const kept = await env.NOTES.get(snapshotKey(note.id))
   if (kept && kept.customMetadata?.epoch === String(epoch)) {
@@ -159,11 +149,7 @@ export async function pullDocs(
   return out
 }
 
-async function pulled(
-  env: Env,
-  found: Reached | undefined,
-  doc: PullDoc,
-): Promise<PullAnswer | null> {
+async function pulled(env: Env, found: Reached | undefined, doc: PullDoc): Promise<PullAnswer | null> {
   const note = found?.note
   if (!note || !DOCUMENT_KINDS.has(note.kind ?? 'note')) return { id: doc.id, refused: 'gone' }
 
@@ -266,11 +252,7 @@ async function pushed(
   return refused(doc.id, why === 'large' || why === 'role' ? why : 'gone')
 }
 
-export async function keepDoc(
-  env: Env,
-  who: Asking,
-  request: KeepRequest,
-): Promise<'kept' | 'gone' | 'role' | 'full'> {
+export async function keepDoc(env: Env, who: Asking, request: KeepRequest): Promise<'kept' | 'gone' | 'role' | 'full'> {
   const found = (await reachedNotes(env, who, [request.id])).get(request.id)
   if (!found || !DOCUMENT_KINDS.has(found.note.kind ?? 'note')) return 'gone'
   if (!allows(found.role, 'write')) return 'role'

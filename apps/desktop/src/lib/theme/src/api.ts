@@ -1,12 +1,4 @@
-export {
-  accentColour,
-  accentFor,
-  accentIdFor,
-  ACCENTS,
-  accentSetting,
-  accentTokens,
-  DEFAULT_ACCENT,
-} from './accents'
+export { accentColour, accentFor, accentIdFor, ACCENTS, accentSetting, accentTokens, DEFAULT_ACCENT } from './accents'
 export type { Scheme, SchemeChoice, ThemeSetting, ThemeValue } from '@orden/contracts'
 export { carriedCss, carriedToken } from './carried'
 export { chrome, type Ground, landed } from './chrome.svelte'

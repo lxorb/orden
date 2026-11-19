@@ -45,11 +45,8 @@
       <div class="one" data-gone={item.id}>
         <ItemMark content={item.content} />
         <span class="name">{item.content.title || 'Untitled'}</span>
-        <button
-          class="orden-button is-soft"
-          type="button"
-          disabled={busy}
-          onclick={() => void restored(item)}>Restore</button
+        <button class="orden-button is-soft" type="button" disabled={busy} onclick={() => void restored(item)}
+          >Restore</button
         >
       </div>
     {/each}

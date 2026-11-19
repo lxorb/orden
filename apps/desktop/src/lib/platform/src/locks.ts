@@ -39,11 +39,7 @@ export function locksWork(locks: LockManager | undefined = locksHere()): Promise
 
 export type Held = 'held' | 'taken' | 'broken'
 
-export async function inTurn<T>(
-  name: () => string,
-  run: () => Promise<T>,
-  patience: number,
-): Promise<T> {
+export async function inTurn<T>(name: () => string, run: () => Promise<T>, patience: number): Promise<T> {
   const locks = locksHere()
   if (!locks || !(await locksWork(locks))) return run()
   return new Promise<T>((resolve, reject) => {
@@ -63,11 +59,7 @@ export async function inTurn<T>(
   })
 }
 
-export function ifFree(
-  locks: LockManager,
-  name: string,
-  work: () => Promise<unknown>,
-): Promise<Held> {
+export function ifFree(locks: LockManager, name: string, work: () => Promise<unknown>): Promise<Held> {
   return new Promise((resolve) => {
     let answered = false
     const answer = (held: Held) => {

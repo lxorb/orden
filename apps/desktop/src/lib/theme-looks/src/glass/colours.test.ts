@@ -5,10 +5,7 @@ function pixels(...each: [number, number, number, number?][]): number[] {
   return each.flatMap(([r, g, b, a = 255]) => [r, g, b, a])
 }
 
-function many(
-  count: number,
-  pixel: [number, number, number, number?],
-): [number, number, number, number?][] {
+function many(count: number, pixel: [number, number, number, number?]): [number, number, number, number?][] {
   return Array.from({ length: count }, () => pixel)
 }
 
@@ -68,9 +65,7 @@ describe('what a page says it stands on', () => {
   })
 
   test('is its top edge where it names none', () => {
-    expect(
-      groundSaid({ theme: '', top: ['#0f0f0f', '#0f0f0f', '#212121'], pictured: false }),
-    ).toEqual([15, 15, 15])
+    expect(groundSaid({ theme: '', top: ['#0f0f0f', '#0f0f0f', '#212121'], pictured: false })).toEqual([15, 15, 15])
   })
 
   test('is left to its picture where the top is one', () => {
@@ -100,9 +95,7 @@ describe('what a page says it stands on', () => {
     expect(groundSaid(linear)).toEqual([8, 9, 10])
     const proton = { theme: '#1b1340', top: ['', '', ''], pictured: true }
     expect(groundSaid(proton)).toEqual([27, 19, 64])
-    expect(
-      groundSaid({ ...proton, top: ['#ffffff', '#ffffff', '#ffffff'], pictured: false }),
-    ).toEqual([27, 19, 64])
+    expect(groundSaid({ ...proton, top: ['#ffffff', '#ffffff', '#ffffff'], pictured: false })).toEqual([27, 19, 64])
   })
 
   test('takes a see-through theme colour as no word at all', () => {
@@ -125,32 +118,22 @@ describe('a mark', () => {
   })
 
   test('is its most common grey where it has no colour', () => {
-    expect(dominant(pixels(...many(10, [20, 20, 20]), ...many(3, [255, 255, 255])))).toEqual([
-      20, 20, 20,
-    ])
+    expect(dominant(pixels(...many(10, [20, 20, 20]), ...many(3, [255, 255, 255])))).toEqual([20, 20, 20])
   })
 
   test('ignores what is see-through round its shape', () => {
-    expect(dominant(pixels(...many(50, [0, 200, 0, 0]), ...many(5, [0, 0, 200])))).toEqual([
-      0, 0, 200,
-    ])
+    expect(dominant(pixels(...many(50, [0, 200, 0, 0]), ...many(5, [0, 0, 200])))).toEqual([0, 0, 200])
     expect(dominant(pixels(...many(4, [255, 0, 0, 10])))).toBeNull()
   })
 })
 
 describe("a page's still along its top", () => {
   test('is the colour most of it is', () => {
-    expect(stripGround(pixels(...many(80, [255, 255, 255]), ...many(20, [30, 30, 30])))).toEqual([
-      255, 255, 255,
-    ])
+    expect(stripGround(pixels(...many(80, [255, 255, 255]), ...many(20, [30, 30, 30])))).toEqual([255, 255, 255])
   })
 
   test('is what a picture too busy for one colour comes to, as dark as it is', () => {
-    const busy = pixels(
-      ...many(30, [200, 0, 0]),
-      ...many(30, [0, 200, 0]),
-      ...many(40, [0, 0, 200]),
-    )
+    const busy = pixels(...many(30, [200, 0, 0]), ...many(30, [0, 200, 0]), ...many(40, [0, 0, 200]))
     expect(stripGround(busy)).toEqual([60, 60, 80])
     const hero = pixels(
       ...many(25, [10, 10, 12]),

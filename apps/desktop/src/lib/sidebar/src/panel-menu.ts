@@ -25,11 +25,7 @@ function resultsMenu(): MenuEntry[] {
   }))
 }
 
-export function panelMenu(
-  id: Panel,
-  side: PanelSide | undefined,
-  making: MenuEntry[] = [],
-): MenuEntry[] {
+export function panelMenu(id: Panel, side: PanelSide | undefined, making: MenuEntry[] = []): MenuEntry[] {
   const sorts = id === 'tree' ? sortMenu(making) : id === 'search' ? resultsMenu() : making
   const toTab = sidebarPart(id)?.toTab
   const asTab: MenuEntry[] = toTab ? [{ label: 'Open in new tab', run: () => void toTab() }] : []

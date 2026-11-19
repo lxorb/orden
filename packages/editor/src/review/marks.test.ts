@@ -1,13 +1,7 @@
 import { EditorState, type TransactionSpec } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { type DocView, SharedDoc, sharing } from '../shared'
-import {
-  type ReviewMark,
-  reviewMarks,
-  reviewMarksOf,
-  setReviewMarks,
-  setReviewSource,
-} from './marks'
+import { type ReviewMark, reviewMarks, reviewMarksOf, setReviewMarks, setReviewSource } from './marks'
 
 class Pane implements DocView {
   state: EditorState

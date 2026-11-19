@@ -84,9 +84,7 @@ describe('changing case over a note with links and block ids in it', () => {
   })
 
   test('upper case changes the picture text and leaves the picture path alone', () => {
-    expect(recasedNote(upperCase, 'a cat ![cat](attachments/cat.png)')).toBe(
-      'A CAT ![CAT](attachments/cat.png)',
-    )
+    expect(recasedNote(upperCase, 'a cat ![cat](attachments/cat.png)')).toBe('A CAT ![CAT](attachments/cat.png)')
   })
 
   test('upper case leaves the block id other notes link to alone', () => {
@@ -98,8 +96,6 @@ describe('changing case over a note with links and block ids in it', () => {
   })
 
   test('upper case changes the shown words of a wikilink and leaves where it points alone', () => {
-    expect(recasedNote(upperCase, 'go [[Plan#^Step-1|next step]]')).toBe(
-      'GO [[Plan#^Step-1|NEXT STEP]]',
-    )
+    expect(recasedNote(upperCase, 'go [[Plan#^Step-1|next step]]')).toBe('GO [[Plan#^Step-1|NEXT STEP]]')
   })
 })

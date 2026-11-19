@@ -38,9 +38,7 @@ function carried(state: EditorState, words: string, pos: number, upper: boolean)
   const edit = moveBlock(state, span, to)
   return {
     mark: { text: line.text, under },
-    text: edit
-      ? state.update({ changes: edit.changes }).state.doc.toString()
-      : state.doc.toString(),
+    text: edit ? state.update({ changes: edit.changes }).state.doc.toString() : state.doc.toString(),
   }
 }
 
@@ -53,10 +51,7 @@ describe('the line a carried block would land on (#2039)', () => {
   test('under the last block, the line sits right under it, not under the empty lines after it', () => {
     const dropped = carried(state, 'payrexx', at('abacus') + 3, false)
     expect(dropped.mark).toEqual({ text: '- [ ] abacus zahlungsmethode', under: true })
-    expect(lines(dropped.text).slice(-2)).toEqual([
-      '- [ ] abacus zahlungsmethode',
-      '- [ ] payrexx import',
-    ])
+    expect(lines(dropped.text).slice(-2)).toEqual(['- [ ] abacus zahlungsmethode', '- [ ] payrexx import'])
   })
 
   test('the empty area under the note lands after the last block, drawn under it', () => {
@@ -68,11 +63,7 @@ describe('the line a carried block would land on (#2039)', () => {
   test('in the gap between two blocks, it lands between them, drawn over the lower', () => {
     const dropped = carried(state, 'payrexx', at('quaestur') - 1, true)
     expect(dropped.mark).toEqual({ text: 'quaestur:', under: false })
-    expect(lines(dropped.text).slice(0, 3)).toEqual([
-      'cleanes konto',
-      '- [ ] payrexx import',
-      'quaestur:',
-    ])
+    expect(lines(dropped.text).slice(0, 3)).toEqual(['cleanes konto', '- [ ] payrexx import', 'quaestur:'])
   })
 
   test('over the top half of the first block, it lands at the top', () => {

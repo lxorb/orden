@@ -30,10 +30,7 @@ import { FILLS_ITS_BOX } from './outline-names'
 const load = (id: string) => setNamed(id)!.load()
 const labels = (held: Pick<LoadedSet, 'groups'>) => held.groups.map((one) => one.label)
 
-function finds(
-  held: Pick<LoadedSet, 'entries'>,
-  cases: [query: string, limit: number, name: string][],
-) {
+function finds(held: Pick<LoadedSet, 'entries'>, cases: [query: string, limit: number, name: string][]) {
   for (const [query, limit, name] of cases) {
     expect(rankIcons(held.entries, query, limit), query).toContain(name)
   }
@@ -47,14 +44,7 @@ function drawn(held: LoadedSet, name: string) {
 
 describe('the sets an icon can come from', () => {
   test('are the six the picker offers, each named, with an id nothing else uses', () => {
-    expect(ICON_SETS.map((one) => one.id)).toEqual([
-      LUCIDE,
-      EMOJI_SET,
-      FLAT_COLOUR,
-      EMOJI_OUTLINE,
-      SITE_ICONS,
-      BRANDS,
-    ])
+    expect(ICON_SETS.map((one) => one.id)).toEqual([LUCIDE, EMOJI_SET, FLAT_COLOUR, EMOJI_OUTLINE, SITE_ICONS, BRANDS])
     expect(new Set(ICON_SETS.map((one) => one.id)).size).toBe(ICON_SETS.length)
     for (const set of ICON_SETS) expect(set.label, set.id).toBeTruthy()
   })
@@ -81,9 +71,7 @@ describe('the emoji', () => {
       'Symbols',
       'Flags',
     ])
-    expect(held.groups.reduce((count, one) => count + one.names.length, 0)).toBe(
-      held.entries.length,
-    )
+    expect(held.groups.reduce((count, one) => count + one.names.length, 0)).toBe(held.entries.length)
     expect(held.entries.length).toBeGreaterThan(1500)
     const tones = ['🏻', '🏼', '🏽', '🏾', '🏿']
     expect(held.entries.filter((one) => tones.some((tone) => one.name.includes(tone)))).toEqual([])
@@ -125,15 +113,12 @@ describe('a coloured set', () => {
     expect(held.shape('not-an-icon-anybody-drew')).toBeNull()
   })
 
-  test.each([FLAT_COLOUR, LUCIDE])(
-    'and %s holds no icon named after an object property',
-    async (id) => {
-      const held = await load(id)
-      for (const name of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
-        expect(held.shape(name)).toBeNull()
-      }
-    },
-  )
+  test.each([FLAT_COLOUR, LUCIDE])('and %s holds no icon named after an object property', async (id) => {
+    const held = await load(id)
+    for (const name of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+      expect(held.shape(name)).toBeNull()
+    }
+  })
 })
 
 describe('the stroked set', () => {
@@ -160,18 +145,14 @@ describe('the stroked set', () => {
 
 describe('the sets the picker searches', () => {
   test('are every set, each once, the brands waiting for a search, each credited', () => {
-    expect([...PICKER_SETS, EMOJI_OUTLINE, SITE_ICONS].sort()).toEqual(
-      ICON_SETS.map((one) => one.id).sort(),
-    )
+    expect([...PICKER_SETS, EMOJI_OUTLINE, SITE_ICONS].sort()).toEqual(ICON_SETS.map((one) => one.id).sort())
     expect(new Set(PICKER_SETS).size).toBe(PICKER_SETS.length)
     expect([...LATER_SETS]).toEqual([BRANDS])
     for (const set of ICON_SETS) expect(pickerCredit()).toContain(set.credit)
   })
 
   test('are one list: the emoji s groups, then the line icons and the brands', async () => {
-    const held = mergeSets(
-      await Promise.all(PICKER_SETS.map(async (id) => ({ id, held: await load(id) }))),
-    )
+    const held = mergeSets(await Promise.all(PICKER_SETS.map(async (id) => ({ id, held: await load(id) }))))
     expect(labels(held).slice(-2)).toEqual(['Line', 'Brands'])
     expect(new Set(held.entries.map((one) => one.name)).size).toBe(held.entries.length)
     finds(held, [
@@ -269,9 +250,7 @@ describe('the brands', () => {
       expect(held.shape(slug)?.kind, slug).toBe('drawn')
     }
     for (const { name } of held.entries) {
-      expect(drawn(held, name).body, name).not.toMatch(
-        /fill="#|stroke="#|fill="(?!currentColor|none)/,
-      )
+      expect(drawn(held, name).body, name).not.toMatch(/fill="#|stroke="#|fill="(?!currentColor|none)/)
     }
     expect(rankIcons(held.entries, 'github', 1)).toEqual(['github'])
     finds(held, [
@@ -280,9 +259,7 @@ describe('the brands', () => {
       ['claude code', 4, 'claude'],
       ['obs', 8, 'obsstudio'],
     ])
-    expect(held.entries.find((one) => one.name === 'visualstudiocode')?.words).toBe(
-      'visual studio code',
-    )
+    expect(held.entries.find((one) => one.name === 'visualstudiocode')?.words).toBe('visual studio code')
     expect(rankIcons(held.entries, 'orden', 3)[0]).toBe(ORDEN)
     const mark = drawn(held, ORDEN)
     expect(mark.body).toContain('currentColor')
@@ -348,8 +325,7 @@ describe('the emoji in one colour', () => {
         }
         owners.set(id!, name)
       }
-      for (const [, id] of shape.body.matchAll(/url\(#([^)]+)\)/g))
-        expect(shape.body, name).toContain(`id="${id}"`)
+      for (const [, id] of shape.body.matchAll(/url\(#([^)]+)\)/g)) expect(shape.body, name).toContain(`id="${id}"`)
     }
   })
 

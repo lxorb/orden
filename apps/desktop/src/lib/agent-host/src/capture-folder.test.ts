@@ -55,8 +55,7 @@ beforeEach(() => {
   written.length = 0
 })
 
-const capture = (args: Record<string, string>) =>
-  captureToNote({ verb: 'capture_to_note', caller: caller(), args })
+const capture = (args: Record<string, string>) => captureToNote({ verb: 'capture_to_note', caller: caller(), args })
 
 describe('an agent capturing a page into a folder', () => {
   test('cannot walk out of the space it was given', async () => {

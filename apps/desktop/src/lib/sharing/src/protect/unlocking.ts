@@ -1,14 +1,6 @@
 import { mount, unmount } from 'svelte'
 import { busy, prompt } from '../../../ui-kit/src/api'
-import {
-  deviceCan,
-  deviceName,
-  deviceSays,
-  hashPassword,
-  matches,
-  unlocks,
-  protection,
-} from '../../../protect/src/api'
+import { deviceCan, deviceName, deviceSays, hashPassword, matches, unlocks, protection } from '../../../protect/src/api'
 import PasswordSheet from './PasswordSheet.svelte'
 import type { Way } from '../../../protect/src/api'
 
@@ -34,13 +26,11 @@ async function passwordOpens(typed: string): Promise<boolean> {
   return kept !== null && (await matches(typed, kept))
 }
 
-const ownerSays = () =>
-  busy.run(`Waiting for ${deviceName()}…`, () => deviceSays('Unlock what you protected in Orden'))
+const ownerSays = () => busy.run(`Waiting for ${deviceName()}…`, () => deviceSays('Unlock what you protected in Orden'))
 
 const reasonOf = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
-const couldNotAsk = (error: unknown) =>
-  busy.failed(`${deviceName()} could not be asked: ${reasonOf(error)}`)
+const couldNotAsk = (error: unknown) => busy.failed(`${deviceName()} could not be asked: ${reasonOf(error)}`)
 
 const turnedAway = () => busy.failed(`${deviceName()} did not confirm it was you`)
 
@@ -104,8 +94,7 @@ async function wayFor(): Promise<Way | null> {
   return 'password'
 }
 
-const cannotProtect = (error: unknown) =>
-  busy.failed(`That could not be protected: ${reasonOf(error)}`)
+const cannotProtect = (error: unknown) => busy.failed(`That could not be protected: ${reasonOf(error)}`)
 
 export async function protect(root: string, path: string): Promise<void> {
   const way = await wayFor().catch((error: unknown) => {

@@ -37,8 +37,7 @@ function stream(
 
 const swipe = (source: Source = 'touchpad') => new Swipe(source, () => ROOM)
 const told = () => new Swipe('touchpad', () => ROOM, true)
-const times = (count: number, step: readonly [number, number]) =>
-  Array.from({ length: count }, () => step)
+const times = (count: number, step: readonly [number, number]) => Array.from({ length: count }, () => step)
 
 describe('the start', () => {
   test('is no swipe until the stream has gone the start sideways', () => {
@@ -90,9 +89,7 @@ describe('the start', () => {
 describe('the content first', () => {
   test('a scroll the content can take is the content s, to the stream s end', () => {
     const one = swipe()
-    expect(
-      stream(one, times(3, [-10, 0]), { scrolls: { left: true, right: false } }).shown.phase,
-    ).toBe('content')
+    expect(stream(one, times(3, [-10, 0]), { scrolls: { left: true, right: false } }).shown.phase).toBe('content')
     expect(stream(one, times(40, [-20, 0]), {}, 2000).shown.phase).toBe('content')
     expect(one.lift(3000).phase).toBe('idle')
 
@@ -101,9 +98,7 @@ describe('the content first', () => {
 
   test('the content scrolling the other way leaves this way free', () => {
     const one = swipe()
-    expect(
-      stream(one, times(10, [-10, 0]), { scrolls: { left: false, right: true } }).shown.phase,
-    ).toBe('tracking')
+    expect(stream(one, times(10, [-10, 0]), { scrolls: { left: false, right: true } }).shown.phase).toBe('tracking')
   })
 })
 

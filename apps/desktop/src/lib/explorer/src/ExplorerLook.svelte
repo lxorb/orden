@@ -28,15 +28,7 @@
   }
 </script>
 
-<div
-  class="look"
-  role="dialog"
-  aria-modal="true"
-  aria-label="Preview"
-  tabindex="-1"
-  bind:this={box}
-  onkeydown={onkey}
->
+<div class="look" role="dialog" aria-modal="true" aria-label="Preview" tabindex="-1" bind:this={box} onkeydown={onkey}>
   <ExplorerPreview {view} large />
 </div>
 

@@ -66,8 +66,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 
 vi.mock('../../sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../sharing/src/sharing.svelte')>()),
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 vi.stubGlobal('localStorage', memoryStorage())
@@ -156,9 +155,7 @@ describe('in a space shared to be read', () => {
 
   test('converting the space writes nothing', async () => {
     const { links } = await import('../../link-index/src/api')
-    vi.spyOn(links, 'urlOf').mockImplementation((path) =>
-      path.endsWith('Kit.md') ? 'https://kit.svelte.dev/' : null,
-    )
+    vi.spyOn(links, 'urlOf').mockImplementation((path) => (path.endsWith('Kit.md') ? 'https://kit.svelte.dev/' : null))
     const was = before()
 
     expect(await workspace.convertWebsites()).toBe(0)

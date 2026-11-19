@@ -106,9 +106,7 @@ const fake = vi.hoisted(() => {
 
   const api = {
     changes: async (_token: string, _spaceId: string, since: number) => {
-      const notes = [...remote.values()]
-        .filter((one) => one.seq > since)
-        .sort((a, b) => a.seq - b.seq)
+      const notes = [...remote.values()].filter((one) => one.seq > since).sort((a, b) => a.seq - b.seq)
 
       return {
         notes: await Promise.all(notes.map(present)),
@@ -121,13 +119,7 @@ const fake = vi.hoisted(() => {
       if (!note) throw new Error('no such note')
       return { note: await present(note), content: note.content }
     },
-    writeNote: async (
-      _token: string,
-      id: string,
-      path: string,
-      content: string,
-      baseVersion: number,
-    ) => {
+    writeNote: async (_token: string, id: string, path: string, content: string, baseVersion: number) => {
       const note = remote.get(id)
       if (!note) throw new Error('no such note')
       meanwhile()

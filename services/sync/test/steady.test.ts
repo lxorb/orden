@@ -46,9 +46,7 @@ describe('the database a request reads', () => {
             const bound = made.bind(...values)
             return {
               all: () =>
-                busy-- > 0
-                  ? Promise.reject(new Error('D1_ERROR: database is locked: SQLITE_BUSY'))
-                  : bound.all(),
+                busy-- > 0 ? Promise.reject(new Error('D1_ERROR: database is locked: SQLITE_BUSY')) : bound.all(),
             }
           },
         }
@@ -66,9 +64,7 @@ describe('the database a request reads', () => {
     expect(reading.asked).toHaveLength(3)
 
     const writing = failing(1, 'D1_ERROR: Network connection lost.')
-    await expect(writing.db.prepare('update notes set seq = 1').bind().run()).rejects.toThrow(
-      'Network connection lost',
-    )
+    await expect(writing.db.prepare('update notes set seq = 1').bind().run()).rejects.toThrow('Network connection lost')
     expect(writing.asked).toHaveLength(1)
 
     const locked = failing(1, 'database is locked: SQLITE_BUSY')

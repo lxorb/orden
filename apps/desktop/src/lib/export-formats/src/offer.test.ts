@@ -149,9 +149,7 @@ const { isSubmenu } = await import('../../ui-kit/src/menu-item')
 const { SHORTCUTS } = await import('../../shortcuts/src/registry')
 
 function menuRows(): MenuItem[] {
-  const file = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find(
-    (one) => one.id === 'file',
-  )
+  const file = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find((one) => one.id === 'file')
 
   const submenu = file?.rows.find((row) => row !== null && isSubmenu(row))
   if (!submenu || !isSubmenu(submenu)) throw new Error('Export is not a submenu of File')

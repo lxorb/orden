@@ -23,7 +23,5 @@ export function kindName(kind: KindName): string {
 }
 
 export function kindLabel(kind: KindName): string {
-  return AS_NAMED.has(kind)
-    ? NAMES[kind]
-    : `New ${NAMES[kind].replace(/^[A-Z](?=[a-z])/, (one) => one.toLowerCase())}`
+  return AS_NAMED.has(kind) ? NAMES[kind] : `New ${NAMES[kind].replace(/^[A-Z](?=[a-z])/, (one) => one.toLowerCase())}`
 }

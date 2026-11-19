@@ -20,9 +20,7 @@ describe('a span turned back into words', () => {
   const span = { from: 9, to: 17 }
 
   test('moves with the words when something is typed before it', () => {
-    expect(carried([span], 'Call mum tomorrow', 'Now call mum tomorrow')).toEqual([
-      { from: 13, to: 21 },
-    ])
+    expect(carried([span], 'Call mum tomorrow', 'Now call mum tomorrow')).toEqual([{ from: 13, to: 21 }])
   })
 
   test('stays when something is typed after it', () => {
@@ -40,9 +38,13 @@ test('a chip taken out closes the gap it leaves', () => {
 })
 
 test('a paste of several lines is a task a line, each without the mark it was copied with', () => {
-  expect(
-    pastedLines('- [ ] Milk\r\n* Bread tomorrow\n\n2. Eggs #shop\n   \n• Butter\nplain words'),
-  ).toEqual(['Milk', 'Bread tomorrow', 'Eggs #shop', 'Butter', 'plain words'])
+  expect(pastedLines('- [ ] Milk\r\n* Bread tomorrow\n\n2. Eggs #shop\n   \n• Butter\nplain words')).toEqual([
+    'Milk',
+    'Bread tomorrow',
+    'Eggs #shop',
+    'Butter',
+    'plain words',
+  ])
   expect(pastedLines('one line')).toEqual(['one line'])
 })
 
@@ -56,11 +58,7 @@ describe('a word that asks for a suggestion', () => {
   })
 
   test('is offered what starts with it first, then what holds it', () => {
-    expect(suggestions('fa', ['family', 'farm', 'breakfast', 'work'])).toEqual([
-      'family',
-      'farm',
-      'breakfast',
-    ])
+    expect(suggestions('fa', ['family', 'farm', 'breakfast', 'work'])).toEqual(['family', 'farm', 'breakfast'])
     expect(suggestions('', ['a', 'b'])).toEqual(['a', 'b'])
     expect(suggestions('family', ['family'])).toEqual([])
   })

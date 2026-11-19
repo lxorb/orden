@@ -1,11 +1,4 @@
-import {
-  type Base,
-  type Group,
-  groupName,
-  type Row,
-  type SelectOption,
-  type Value,
-} from '@orden/bases'
+import { type Base, type Group, groupName, type Row, type SelectOption, type Value } from '@orden/bases'
 import { copyText } from '../../ui-controls/src/api'
 import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
 import { workspace } from '../../workspace/src/api'
@@ -26,9 +19,7 @@ const TONES: readonly { tone: string; label: () => string }[] = [
 ]
 
 function writeOptions(kit: Kit, property: string, next: SelectOption[]) {
-  kit.change((base) =>
-    setProperty(base, bare(property), { options: next.length ? next : undefined }),
-  )
+  kit.change((base) => setProperty(base, bare(property), { options: next.length ? next : undefined }))
 }
 
 export function renameOption(kit: Kit, property: string, from: string, to: string): boolean {
@@ -43,12 +34,7 @@ export function renameOption(kit: Kit, property: string, from: string, to: strin
   void asOneUndo([
     () =>
       kit.changed((one) =>
-        renamedGroup(
-          listed ? setProperty(one, bare(property), { options: next }) : one,
-          property,
-          from,
-          value,
-        ),
+        renamedGroup(listed ? setProperty(one, bare(property), { options: next }) : one, property, from, value),
       ),
     () => writeEach(notes),
   ])
@@ -83,10 +69,7 @@ function mergeInto(kit: Kit, property: string, from: string, to: string) {
   const base = kit.live.base
   if (!base || from === to) return
   const notes = renamedInBase(base, kit.live.rows, kit.live.context, property, from, to)
-  void asOneUndo([
-    () => kit.changed((one) => renamedGroup(one, property, from, to, true)),
-    () => writeEach(notes),
-  ])
+  void asOneUndo([() => kit.changed((one) => renamedGroup(one, property, from, to, true)), () => writeEach(notes)])
 }
 
 function deleteOption(kit: Kit, property: string, value: string) {
@@ -247,11 +230,7 @@ export function cardEntries(ask: CardAsk): MenuEntry[] {
   ]
 }
 
-export function optionFor(
-  base: Base | null,
-  property: string,
-  value: Value,
-): SelectOption | undefined {
+export function optionFor(base: Base | null, property: string, value: Value): SelectOption | undefined {
   if (!base || typeof value !== 'string') return undefined
   return optionsAt(base, property).find((one) => one.value === value)
 }

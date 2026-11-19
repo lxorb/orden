@@ -170,9 +170,7 @@ export function readFront(raw: string | null): NoteFront {
   }
 
   const uncommented = (value: string | undefined) =>
-    value === undefined
-      ? undefined
-      : withoutComments(value).replace(/\s+/g, ' ').trim() || undefined
+    value === undefined ? undefined : withoutComments(value).replace(/\s+/g, ' ').trim() || undefined
   const heading = uncommented(front.heading)
   const summary = uncommented(front.summary)
   delete front.heading

@@ -116,9 +116,7 @@ class Publish {
     reason?: string | undefined
   }>({ checking: false, available: null })
 
-  readonly remote = $derived.by(
-    (): RemoteSpace | null => account.spaces.find((one) => one.id === this.spaceId) ?? null,
-  )
+  readonly remote = $derived.by((): RemoteSpace | null => account.spaces.find((one) => one.id === this.spaceId) ?? null)
 
   readonly blog = $derived.by((): Blog | undefined => this.remote?.blog)
 
@@ -179,14 +177,10 @@ class Publish {
   }
 
   get themes(): { value: string; label: string }[] {
-    return theme.files
-      .filter((one) => !!one.path)
-      .map((one) => ({ value: one.name, label: one.name }))
+    return theme.files.filter((one) => !!one.path).map((one) => ({ value: one.name, label: one.name }))
   }
 
-  private async themeFor(
-    token: string,
-  ): Promise<{ name: string; hash: string } | null | undefined> {
+  private async themeFor(token: string): Promise<{ name: string; hash: string } | null | undefined> {
     if (!this.themeName) return null
 
     const held = this.blog?.site.theme
@@ -334,9 +328,7 @@ class Publish {
 
     const sent = await this.send(
       token,
-      this.address === 'subdomain'
-        ? { subdomain: this.subdomain, note }
-        : { domain: this.domain, note },
+      this.address === 'subdomain' ? { subdomain: this.subdomain, note } : { domain: this.domain, note },
     )
 
     if (sent) await this.sendDiagrams(token)

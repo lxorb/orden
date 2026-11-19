@@ -19,10 +19,7 @@ function inFolder(tree: Entry, path: string, change: (children: Entry[]) => Entr
 }
 
 export const withEntry = (tree: Entry, entry: Entry): Entry =>
-  inFolder(tree, folderOf(entry.path), (children) => [
-    ...children.filter((child) => child.path !== entry.path),
-    entry,
-  ])
+  inFolder(tree, folderOf(entry.path), (children) => [...children.filter((child) => child.path !== entry.path), entry])
 
 export const withoutEntry = (tree: Entry, path: string): Entry =>
   inFolder(tree, folderOf(path), (children) => children.filter((child) => child.path !== path))

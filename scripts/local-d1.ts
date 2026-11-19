@@ -22,17 +22,7 @@ export function wrangler(args: string[]): string {
 }
 
 export function migrateLocal(state: string): string {
-  return wrangler([
-    'd1',
-    'migrations',
-    'apply',
-    'nib',
-    '--local',
-    '--persist-to',
-    state,
-    '--config',
-    CONFIG,
-  ])
+  return wrangler(['d1', 'migrations', 'apply', 'nib', '--local', '--persist-to', state, '--config', CONFIG])
 }
 
 export function sqlLocal(state: string, command: string, more: string[] = []): string {

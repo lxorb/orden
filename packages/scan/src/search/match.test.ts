@@ -361,8 +361,7 @@ Words.
   })
 
   test('and a bare day as the whole of that day, against a time written on it', () => {
-    const at = (source: string, due: string) =>
-      answers(source, { body: `---\ndue: ${due}\n---\n\nWords.\n` })
+    const at = (source: string, due: string) => answers(source, { body: `---\ndue: ${due}\n---\n\nWords.\n` })
 
     expect(at('[due:<=2026-11-15]', '2026-11-15 10:00')).toBe(true)
     expect(at('[due:2026-11-01..2026-11-15]', '2026-11-15 10:00')).toBe(true)
@@ -422,8 +421,7 @@ Words.
 })
 
 describe('front matter read the way the properties read it', () => {
-  const held = (source: string, front: string) =>
-    answers(source, { body: `---\n${front}\n---\n\nWords.\n` })
+  const held = (source: string, front: string) => answers(source, { body: `---\n${front}\n---\n\nWords.\n` })
 
   test('looks at each item of a list, under the key or in brackets', () => {
     expect(held('[authors:Herbert]', 'authors:\n  - Herbert\n  - Asimov')).toBe(true)

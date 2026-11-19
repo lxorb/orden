@@ -1,11 +1,5 @@
 import { frontMatterEdits } from '@orden/markdown/front-matter'
-import {
-  isCanvasTarget,
-  isChatTarget,
-  isPagesTarget,
-  isTermTarget,
-  isWebTarget,
-} from '@orden/markdown/links'
+import { isCanvasTarget, isChatTarget, isPagesTarget, isTermTarget, isWebTarget } from '@orden/markdown/links'
 import { oneEdit, type TextEdit } from '@orden/markdown/edits'
 import { isFolderNote } from '../../tree/src/api'
 import { ICON_COLOUR_KEY, ICON_KEY, readTint, message } from '../../ui-kit/src/api'
@@ -14,11 +8,7 @@ import { sayNotice } from '@orden/contracts'
 import { folderOf, isMarkdownPath } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 
-export async function setFileIcon(
-  path: string,
-  value: string | null,
-  tint: string | null = null,
-): Promise<void> {
+export async function setFileIcon(path: string, value: string | null, tint: string | null = null): Promise<void> {
   const colour = value === null ? null : readTint(tint)
 
   if (isMarkdownPath(path)) {
@@ -78,22 +68,14 @@ async function webIconEdit(
   return oneEdit(before, rewriteShortcut(said, { chosen: icon, chosenColour: colour }))
 }
 
-async function chatIconEdit(
-  before: string,
-  icon: string | null,
-  colour: string | null,
-): Promise<TextEdit | null> {
+async function chatIconEdit(before: string, icon: string | null, colour: string | null): Promise<TextEdit | null> {
   if (__EVEN_PLUGIN__) return null
   const { chatOf, chatText, withIcon } = await import('@orden/chats')
   const pointer = chatOf(before)
   return pointer && oneEdit(before, chatText(withIcon(pointer, icon, colour)))
 }
 
-async function termIconEdit(
-  before: string,
-  icon: string | null,
-  colour: string | null,
-): Promise<TextEdit | null> {
+async function termIconEdit(before: string, icon: string | null, colour: string | null): Promise<TextEdit | null> {
   if (__EVEN_PLUGIN__) return null
   const { termOf, termText } = await import('@orden/online/term')
   const term = termOf(before)

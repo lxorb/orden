@@ -23,9 +23,7 @@ export function pageSheet(css: string): string {
   return [
     ...shared,
     ...light.map((body) => `:root {${body}}`),
-    ...dark.map(
-      (body) => `@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) {${body}} }`,
-    ),
+    ...dark.map((body) => `@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) {${body}} }`),
     ...dark.map((body) => `:root[data-theme='dark'] {${body}}`),
     ...light.map((body) => `:root[data-theme='light'] {${body}}`),
     ...light.map((body) => `@media print { :root, :root[data-theme='dark'] {${body}} }`),

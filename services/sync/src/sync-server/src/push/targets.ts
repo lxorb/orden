@@ -67,9 +67,7 @@ push.post('/targets', async (context) => {
     .bind(user.id, MOST_TARGETS)
     .run()
 
-  const row = await context.env.DB.prepare(
-    'select id from push_targets where user_id = ? and token = ?',
-  )
+  const row = await context.env.DB.prepare('select id from push_targets where user_id = ? and token = ?')
     .bind(user.id, token)
     .first<{ id: string }>()
   return context.json({ id: row?.id ?? id })

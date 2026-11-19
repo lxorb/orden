@@ -1,13 +1,5 @@
 import { type Canvas, readCanvas, writeCanvas } from '@orden/markdown/canvas'
-import {
-  fileBytes,
-  log,
-  nameFromTitle,
-  nameOf,
-  samePath,
-  spaceHolding,
-  invoke,
-} from '../../platform/src/api'
+import { fileBytes, log, nameFromTitle, nameOf, samePath, spaceHolding, invoke } from '../../platform/src/api'
 import { CanvasStore } from '../../canvas/src/api'
 import { paperOf } from '@orden/markdown/pages'
 import { pageSizes } from '../../pdf/src/api'

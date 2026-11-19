@@ -29,9 +29,7 @@ test('looks asked while one runs are one more look, not a pile', async () => {
 
 test('a failed look keeps the last picture and says it is stale', async () => {
   let fail = false
-  const watching = new Watching(() =>
-    fail ? Promise.reject(new Error('gone')) : Promise.resolve(shot('a')),
-  )
+  const watching = new Watching(() => (fail ? Promise.reject(new Error('gone')) : Promise.resolve(shot('a'))))
   await watching.look()
   fail = true
   await watching.look()

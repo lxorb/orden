@@ -30,11 +30,7 @@ function typeOf(path: string): string {
 
 type Holding = 'hover' | 'paths' | readonly File[]
 
-function holding(
-  paths: readonly string[],
-  what: Holding,
-  effect: DataTransfer['dropEffect'] = 'none',
-): DataTransfer {
+function holding(paths: readonly string[], what: Holding, effect: DataTransfer['dropEffect'] = 'none'): DataTransfer {
   const transfer = new DataTransfer()
   let allowed: DataTransfer['effectAllowed'] = 'copy'
   let wanted = effect
@@ -187,9 +183,7 @@ export async function filesAt(
   const files = await Promise.all(
     paths.map(async (path) => {
       const bytes = await read(path).catch(() => null)
-      return bytes
-        ? new File([bytes as Uint8Array<ArrayBuffer>], nameOf(path), { type: typeOf(path) })
-        : null
+      return bytes ? new File([bytes as Uint8Array<ArrayBuffer>], nameOf(path), { type: typeOf(path) }) : null
     }),
   )
   return files.filter((one): one is File => one !== null)

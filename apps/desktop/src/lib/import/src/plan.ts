@@ -18,8 +18,7 @@ export type FormatId =
   | 'todoist'
 
 export type Planned =
-  | { kind: 'note'; path: string; text: string }
-  | { kind: 'file'; path: string; bytes: Uint8Array; pages?: true }
+  { kind: 'note'; path: string; text: string } | { kind: 'file'; path: string; bytes: Uint8Array; pages?: true }
 
 export interface ImportPlan {
   format: FormatId

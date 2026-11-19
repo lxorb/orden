@@ -2,11 +2,7 @@ import { atLeast, type Role, ROLES } from '@orden/pass/types'
 import type { Env } from '../../sync-server/src/api'
 import { VAULT_SELECT, type VaultDb } from './rows'
 
-export async function membershipOf(
-  env: Env,
-  vault: string,
-  email: string,
-): Promise<VaultDb | null> {
+export async function membershipOf(env: Env, vault: string, email: string): Promise<VaultDb | null> {
   return await env.DB.prepare(`${VAULT_SELECT} where m.vault_id = ? and m.email = ?`)
     .bind(vault, email)
     .first<VaultDb>()

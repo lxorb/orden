@@ -29,13 +29,11 @@ function followNoteAt(view: EditorView, pos: number, press?: LinkPress): boolean
   return true
 }
 
-export const followNoteAtCaret: Command = (view) =>
-  followNoteAt(view, view.state.selection.main.head)
+export const followNoteAtCaret: Command = (view) => followNoteAt(view, view.state.selection.main.head)
 
 export const noteClicks = EditorView.domEventHandlers({
   mousedown(event, view) {
-    const asked =
-      event.button === 1 || (event.button === 0 && (modifier(event) || view.state.readOnly))
+    const asked = event.button === 1 || (event.button === 0 && (modifier(event) || view.state.readOnly))
     if (!asked) return false
 
     const target = event.target

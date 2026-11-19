@@ -1,17 +1,5 @@
-import {
-  type EditorState,
-  type Extension,
-  type Line,
-  StateEffect,
-  StateField,
-} from '@codemirror/state'
-import {
-  Decoration,
-  type DecorationSet,
-  EditorView,
-  ViewPlugin,
-  type ViewUpdate,
-} from '@codemirror/view'
+import { type EditorState, type Extension, type Line, StateEffect, StateField } from '@codemirror/state'
+import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import { OrdenWidget } from '../live-preview/widget'
 import { landing, moveBlock } from './move'
 import { blockAt, blocksIn, type BlockSpan, withListIds, writtenLine } from './span'
@@ -44,21 +32,13 @@ const carrying = StateField.define<Carrying | null>({
       const doc = state.doc
       const marks = []
 
-      for (
-        let number = doc.lineAt(held.span.from).number;
-        number <= doc.lineAt(held.span.to).number;
-        number++
-      ) {
+      for (let number = doc.lineAt(held.span.from).number; number <= doc.lineAt(held.span.to).number; number++) {
         marks.push(Decoration.line({ class: 'orden-block-lifted' }).range(doc.line(number).from))
       }
 
       if (held.at !== null) {
         const { line, under } = landingMark(state, held.at)
-        marks.push(
-          Decoration.line({ class: under ? 'orden-block-under' : 'orden-block-over' }).range(
-            line.from,
-          ),
-        )
+        marks.push(Decoration.line({ class: under ? 'orden-block-under' : 'orden-block-over' }).range(line.from))
       }
 
       return Decoration.set(marks, true)
@@ -82,11 +62,7 @@ export function landingMark(state: EditorState, at: number): { line: Line; under
   return { line: writtenLine(state, doc.lines, -1) ?? doc.line(doc.lines), under: true }
 }
 
-export function dropAt(
-  state: EditorState,
-  pos: number,
-  upperHalf: (block: BlockSpan) => boolean,
-): number | null {
+export function dropAt(state: EditorState, pos: number, upperHalf: (block: BlockSpan) => boolean): number | null {
   const doc = state.doc
   const line = doc.lineAt(pos)
   const block = blockAt(state, pos)
@@ -168,8 +144,7 @@ function carry(view: EditorView, mark: HTMLElement, span: BlockSpan, start: Mous
       letGo()
       return
     }
-    const travelled =
-      Math.abs(event.clientY - start.clientY) + Math.abs(event.clientX - start.clientX)
+    const travelled = Math.abs(event.clientY - start.clientY) + Math.abs(event.clientX - start.clientX)
     if (!dragging && travelled < A_DRAG) return
 
     dragging = true

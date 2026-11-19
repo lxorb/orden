@@ -11,9 +11,7 @@ const TARGET = fileURLToPath(new URL('services/sync/src/sync-server-blog/src/scr
 
 async function bundle(): Promise<string> {
   const vite = (await import(
-    pathToFileURL(
-      createRequire(fileURLToPath(new URL('apps/desktop/package.json', ROOT))).resolve('vite'),
-    ).href
+    pathToFileURL(createRequire(fileURLToPath(new URL('apps/desktop/package.json', ROOT))).resolve('vite')).href
   )) as typeof import('vite')
 
   const out = await vite.build({
@@ -59,9 +57,7 @@ export const SITE_JS = ${JSON.stringify(code)}
 /** The one inline script a page carries, and the hash the policy names it by. */
 export const THEME_JS = ${JSON.stringify(THEME_JS)}
 
-export const THEME_JS_HASH = ${JSON.stringify(
-    `sha256-${createHash('sha256').update(THEME_JS).digest('base64')}`,
-  )}
+export const THEME_JS_HASH = ${JSON.stringify(`sha256-${createHash('sha256').update(THEME_JS).digest('base64')}`)}
 
 export const SITE_JS_PATH = ${JSON.stringify(path)}
 

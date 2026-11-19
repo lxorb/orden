@@ -63,8 +63,7 @@ export async function bookmarks(call: Call): Promise<AgentAnswer> {
         }
         return false
       }
-      if (kept(workspace.bookmarks.of(root)))
-        return done({ ...shown(mark), added: false }, sharedSource(place))
+      if (kept(workspace.bookmarks.of(root))) return done({ ...shown(mark), added: false }, sharedSource(place))
 
       const question = await asked(call, null, `Bookmark ${mark.text || mark.path}`)
       if (question) return question

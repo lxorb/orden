@@ -6,8 +6,7 @@ import { TAB_KINDS } from '../src/lib/tab-kinds/src/api'
 const read = (name: string) => readFileSync(`${SOURCE}${name}`, 'utf8')
 
 const app = read('App.svelte')
-const plus =
-  /\{#if viewport\.touch[^}]*!ownBar\(workspace\.active\?\.kind\)[^}]*\}\s*<button class="fab"/
+const plus = /\{#if viewport\.touch[^}]*!ownBar\(workspace\.active\?\.kind\)[^}]*\}\s*<button class="fab"/
 
 function roomUnderThePlus(style: string, scroller: string): boolean {
   for (const rule of style.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
@@ -28,9 +27,7 @@ describe('the phone’s + button over Settings', () => {
   test.each(['nav', '.body'])(
     'leaves the end of the list and of a page, %s, scrollable out from under it',
     (scroller) => {
-      expect(
-        roomUnderThePlus(read('lib/settings/src/SettingsPanel.svelte'), `.sheet.phone ${scroller}`),
-      ).toBe(true)
+      expect(roomUnderThePlus(read('lib/settings/src/SettingsPanel.svelte'), `.sheet.phone ${scroller}`)).toBe(true)
     },
   )
 })

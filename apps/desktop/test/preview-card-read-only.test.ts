@@ -36,11 +36,7 @@ const { mountPreview } = await import('../src/lib/pane-tree/src/preview-card')
 function card(readOnly = false) {
   const host = document.createElement('div')
   document.body.append(host)
-  const release = mountPreview(
-    host,
-    { path: 'Linked.md', text: '# Linked\n', at: 0, readOnly },
-    '/s/Home/Note.md',
-  )
+  const release = mountPreview(host, { path: 'Linked.md', text: '# Linked\n', at: 0, readOnly }, '/s/Home/Note.md')
   const editor = host.querySelector('.cm-editor')
   const view = editor instanceof HTMLElement ? EditorView.findFromDOM(editor) : null
   if (!release || !view) throw new Error('no card')

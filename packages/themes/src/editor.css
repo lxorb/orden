@@ -691,13 +691,7 @@
   width: 100%;
   height: 1px;
   vertical-align: middle;
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--line-strong) 12%,
-    var(--line-strong) 88%,
-    transparent
-  );
+  background: linear-gradient(to right, transparent, var(--line-strong) 12%, var(--line-strong) 88%, transparent);
 }
 
 .cm-line.orden-table {

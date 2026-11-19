@@ -9,9 +9,7 @@ describe('front matter for an imported note', () => {
 
   test('writes the last-edited day only when it is a different day', () => {
     expect(frontMatterFor({ date: '2026-01-02', updated: '2026-01-02' })).not.toContain('updated')
-    expect(frontMatterFor({ date: '2026-01-02', updated: '2026-03-04' })).toContain(
-      'updated: 2026-03-04',
-    )
+    expect(frontMatterFor({ date: '2026-01-02', updated: '2026-03-04' })).toContain('updated: 2026-03-04')
   })
 
   test('writes tags as a list, tidied, with nothing said twice', () => {
@@ -120,9 +118,7 @@ describe('a whole note', () => {
         },
         true,
       ),
-    ).toBe(
-      '---\ntitle: Trip\nDate: 2020-01-01\nstatus: draft\nupdated: 2024-02-03\n---\n\n# Trip\n\nWords.\n',
-    )
+    ).toBe('---\ntitle: Trip\nDate: 2020-01-01\nstatus: draft\nupdated: 2024-02-03\n---\n\n# Trip\n\nWords.\n')
   })
 
   test('a rule at the top of a note is a rule, not properties', () => {
@@ -131,9 +127,7 @@ describe('a whole note', () => {
         date: '2024-01-02',
         tags: ['travel'],
       }),
-    ).toBe(
-      '---\ndate: 2024-01-02\ntags: [travel]\n---\n\n# Trip\n\n---\n\nIntro paragraph.\n\n---\n\nRest\n',
-    )
+    ).toBe('---\ndate: 2024-01-02\ntags: [travel]\n---\n\n# Trip\n\n---\n\nIntro paragraph.\n\n---\n\nRest\n')
     expect(noteText(null, '---\n---\nWords.\n')).toBe('---\n---\nWords.\n')
   })
 
@@ -156,9 +150,7 @@ describe('a whole note', () => {
   })
 
   test('a note whose own block is all it says still opens with it', () => {
-    expect(noteText('Trip', '---\nstatus: draft\n---', {}, true)).toBe(
-      '---\nstatus: draft\n---\n\n# Trip\n\n',
-    )
+    expect(noteText('Trip', '---\nstatus: draft\n---', {}, true)).toBe('---\nstatus: draft\n---\n\n# Trip\n\n')
   })
 
   test('a note with no words at all is its heading, the way a new note is', () => {
@@ -228,14 +220,7 @@ describe('the day an instant lands on, west of Greenwich', () => {
 })
 
 describe('a title as the note heading', () => {
-  const TITLES = [
-    'Tickets $5-$10',
-    'a==b and c==d',
-    'Ideas #work',
-    'See [[Other]]',
-    'H~2~O',
-    'Issue #',
-  ]
+  const TITLES = ['Tickets $5-$10', 'a==b and c==d', 'Ideas #work', 'See [[Other]]', 'H~2~O', 'Issue #']
 
   test.each(TITLES)('%s is its words', (title) => {
     const html = renderMarkdown(noteText(title, 'Words.'))

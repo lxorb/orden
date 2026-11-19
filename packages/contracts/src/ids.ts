@@ -27,8 +27,7 @@ export const isId = (value: unknown): value is string =>
 export const isEntryId = (value: unknown): value is string =>
   isId(value) && !/[/\\\p{Cc}]/u.test(value) && !value.includes('..')
 
-export const isUlid = (value: unknown): value is Ulid =>
-  typeof value === 'string' && ULID.test(value)
+export const isUlid = (value: unknown): value is Ulid => typeof value === 'string' && ULID.test(value)
 
 export const spaceId = (value: string): SpaceId | null => (isId(value) ? (value as SpaceId) : null)
 
@@ -36,14 +35,11 @@ export const userId = (value: string): UserId | null => (isId(value) ? (value as
 
 export const guestId = (value: string): GuestId | null => (isId(value) ? (value as GuestId) : null)
 
-export const deviceId = (value: string): DeviceId | null =>
-  isId(value) ? (value as DeviceId) : null
+export const deviceId = (value: string): DeviceId | null => (isId(value) ? (value as DeviceId) : null)
 
-export const itemId = (value: string): ItemId | null =>
-  isEntryId(value) ? (value as ItemId) : null
+export const itemId = (value: string): ItemId | null => (isEntryId(value) ? (value as ItemId) : null)
 
-export const noteId = (value: string): NoteId | null =>
-  isEntryId(value) ? (value as NoteId) : null
+export const noteId = (value: string): NoteId | null => (isEntryId(value) ? (value as NoteId) : null)
 
 export const tabId = (value: string): TabId | null => (isId(value) ? (value as TabId) : null)
 
@@ -53,8 +49,7 @@ export const docKey = (value: string): DocKey | null => (isId(value) ? (value as
 
 export const agentId = (value: string): AgentId | null => (isId(value) ? (value as AgentId) : null)
 
-export const commandId = (value: string): CommandId | null =>
-  isId(value) ? (value as CommandId) : null
+export const commandId = (value: string): CommandId | null => (isId(value) ? (value as CommandId) : null)
 
 export const themeId = (value: string): ThemeId | null => (isId(value) ? (value as ThemeId) : null)
 

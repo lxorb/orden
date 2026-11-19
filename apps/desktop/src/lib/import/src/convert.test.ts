@@ -35,8 +35,7 @@ describe("Bear's closed tags", () => {
 })
 
 test('Roam marks converted in a note of the space keep its heading, block and embed links as written', () => {
-  const text =
-    '- {{[[TODO]]}} read [[Plan#Goals]] and [[Plan#^abc123]] and ![[Plan#Goals]] and ^^key^^\n'
+  const text = '- {{[[TODO]]}} read [[Plan#Goals]] and [[Plan#^abc123]] and ![[Plan#Goals]] and ^^key^^\n'
   expect(convertRoam(text).text).toBe(
     '- [ ] read [[Plan#Goals]] and [[Plan#^abc123]] and ![[Plan#Goals]] and ==key==\n',
   )

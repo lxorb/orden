@@ -93,10 +93,7 @@ export async function newNote(args: Said): Promise<unknown> {
   }
 
   const folder = folderOf(relative)
-  await workspace.createNote(
-    folder ? insideSpace(space.root, folder) : space.root,
-    withExtension(nameOf(relative)),
-  )
+  await workspace.createNote(folder ? insideSpace(space.root, folder) : space.root, withExtension(nameOf(relative)))
 
   const made = workspace.active
   if (content) {
@@ -216,13 +213,9 @@ export async function writeFile(args: Said): Promise<unknown> {
   if (content === null) throw new Error('say the content')
 
   const before = await workspace.noteText(path)
-  if (before === null)
-    return { path: await madeFile(args, relative, content), written: content.length }
+  if (before === null) return { path: await madeFile(args, relative, content), written: content.length }
 
-  wroteTo(
-    relative,
-    await workspace.replaceInNotes([whole(path, before, content)], { anyFile: true }),
-  )
+  wroteTo(relative, await workspace.replaceInNotes([whole(path, before, content)], { anyFile: true }))
 
   return { path: relative, written: content.length }
 }

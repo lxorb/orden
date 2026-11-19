@@ -50,8 +50,7 @@ describe('a diagram drawn again', () => {
 
   test('only the most recent are kept', async () => {
     const before = drawn.times
-    for (let one = 0; one < 150; one++)
-      await settled(new DiagramWidget(`graph TD\nN${one}`, 'mermaid').toDOM())
+    for (let one = 0; one < 150; one++) await settled(new DiagramWidget(`graph TD\nN${one}`, 'mermaid').toDOM())
     expect(drawn.times).toBe(before + 150)
 
     new DiagramWidget('graph TD\nN149', 'mermaid').toDOM()

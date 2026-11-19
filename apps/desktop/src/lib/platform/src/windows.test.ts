@@ -45,11 +45,7 @@ class Locks {
 
   gone(client: number) {
     for (const [name, holder] of [...this.held]) if (holder === client) this.held.delete(name)
-    this.waiting.splice(
-      0,
-      this.waiting.length,
-      ...this.waiting.filter((one) => one.client !== client),
-    )
+    this.waiting.splice(0, this.waiting.length, ...this.waiting.filter((one) => one.client !== client))
     this.next()
   }
 

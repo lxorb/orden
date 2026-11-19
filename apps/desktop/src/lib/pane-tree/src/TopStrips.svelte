@@ -18,11 +18,7 @@
 </script>
 
 {#if split}
-  <div
-    class="split"
-    class:sliding={workspace.panes.sliding === split.id}
-    style:grid-template-columns={tracks(split)}
-  >
+  <div class="split" class:sliding={workspace.panes.sliding === split.id} style:grid-template-columns={tracks(split)}>
     <TopStrips frame={split.sides[0]} {start} end={false} />
     <span></span>
     <TopStrips frame={split.sides[1]} start={false} {end} />

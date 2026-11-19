@@ -80,17 +80,13 @@ let loaded: typeof import('./finding') | null = null
 export const loadFind: () => Promise<typeof import('./finding')> = door(() =>
   import('./finding').then((module) => {
     loaded = module
-    for (const view of openViews())
-      view.dispatch({ effects: engine.reconfigure(module.searching()) })
+    for (const view of openViews()) view.dispatch({ effects: engine.reconfigure(module.searching()) })
 
     return module
   }),
 )
 
-export function findExtensions(
-  onFind?: (ask: FindAsk | null) => void,
-  onSlow?: (view: EditorView) => void,
-): Extension {
+export function findExtensions(onFind?: (ask: FindAsk | null) => void, onSlow?: (view: EditorView) => void): Extension {
   return [
     findShown,
     engine.of(loaded ? loaded.searching() : []),
@@ -99,8 +95,7 @@ export function findExtensions(
       ? [
           EditorView.updateListener.of((update) => {
             for (const transaction of update.transactions)
-              for (const effect of transaction.effects)
-                if (effect.is(findAsked)) onFind(effect.value)
+              for (const effect of transaction.effects) if (effect.is(findAsked)) onFind(effect.value)
           }),
         ]
       : []),
@@ -141,11 +136,9 @@ export async function setFind(view: EditorView, spec: FindSpec): Promise<void> {
   await found.setQuery(view, spec)
 }
 
-export const findTally = (state: EditorState): FindTally =>
-  loaded ? loaded.tally(state) : NO_TALLY
+export const findTally = (state: EditorState): FindTally => (loaded ? loaded.tally(state) : NO_TALLY)
 
-export const findReady = (view: EditorView): Promise<boolean> =>
-  loaded ? loaded.clear(view) : Promise.resolve(true)
+export const findReady = (view: EditorView): Promise<boolean> => (loaded ? loaded.clear(view) : Promise.resolve(true))
 
 function once(found: typeof import('./finding'), view: EditorView, run: Command): boolean {
   if (found.cleared(view.state)) return run(view)

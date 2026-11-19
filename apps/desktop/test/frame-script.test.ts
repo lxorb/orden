@@ -4,10 +4,7 @@ import { type DOMWindow, JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 import { htmlFrameDocument } from '@orden/editor'
 
-const SCRIPT = readFileSync(
-  join(import.meta.dirname, '../../../packages/editor/src/frame-script.js'),
-  'utf8',
-)
+const SCRIPT = readFileSync(join(import.meta.dirname, '../../../packages/editor/src/frame-script.js'), 'utf8')
 
 function framed(html: string, url = 'about:blank'): DOMWindow & Record<string, unknown> {
   const dom = new JSDOM(htmlFrameDocument(html, SCRIPT), {

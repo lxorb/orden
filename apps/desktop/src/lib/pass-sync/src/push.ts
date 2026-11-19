@@ -1,11 +1,4 @@
-import {
-  openItem,
-  openVault,
-  sealedRevOf,
-  sealItem,
-  sealVault,
-  sealVersion,
-} from '@orden/pass/keys'
+import { openItem, openVault, sealedRevOf, sealItem, sealVault, sealVersion } from '@orden/pass/keys'
 import type { Envelope, VaultMeta } from '@orden/pass/types'
 import type { ItemRow as WireItem } from '@orden/pass/wire'
 import type { ItemRow, KeyringRow, VaultRow, VersionRow } from './local'
@@ -187,9 +180,7 @@ async function pushedVaultGone(world: SyncWorld, row: VaultRow): Promise<Sent> {
   const base = await vaultBaseOf(world.rows, row.id)
   if (base) {
     const answer =
-      row.role === 'owner'
-        ? await world.api.deleteVault(row.id)
-        : await world.api.leaveVault(row.id, world.email)
+      row.role === 'owner' ? await world.api.deleteVault(row.id) : await world.api.leaveVault(row.id, world.email)
     if (!answer.ok && answer.status !== 404) return 'stuck'
   }
   await settledVaultGone(world, row)
@@ -210,11 +201,7 @@ async function settledItem(world: SyncWorld, sent: ItemRow, landed: Landed): Pro
   return 'sent'
 }
 
-async function settledTombstone(
-  world: SyncWorld,
-  sent: ItemRow,
-  rev: number | null,
-): Promise<'sent'> {
+async function settledTombstone(world: SyncWorld, sent: ItemRow, rev: number | null): Promise<'sent'> {
   const { rows } = world
   await world.exclusive(async () => {
     await keepItemBase(rows, sent.vault, sent.id, null)
@@ -248,16 +235,10 @@ async function versionOf(
 }
 
 function nextRevOf(rev: number, ...bodies: string[]): number {
-  return bodies
-    .map((one) => (sealedRevOf(one) ?? 0) + 1)
-    .reduce((high, one) => Math.max(high, one), rev)
+  return bodies.map((one) => (sealedRevOf(one) ?? 0) + 1).reduce((high, one) => Math.max(high, one), rev)
 }
 
-async function mergedItem(
-  world: SyncWorld,
-  sent: ItemRow,
-  current: WireItem,
-): Promise<ItemRow | null> {
+async function mergedItem(world: SyncWorld, sent: ItemRow, current: WireItem): Promise<ItemRow | null> {
   const { rows } = world
   return await world.exclusive(async (held) => {
     const box = held?.vaults.get(sent.vault)
@@ -273,12 +254,7 @@ async function mergedItem(
     const base = await itemBaseOf(rows, sent.vault, sent.id)
     const was = base ? await opened(box, { ...sent, ...base }) : null
     const merged = mergedEnvelope(was?.envelope ?? null, mine.envelope, theirs.envelope)
-    const envelope = await attachmentsUnder(
-      merged.envelope,
-      sent.id,
-      [mine.itemKey],
-      theirs.itemKey,
-    )
+    const envelope = await attachmentsUnder(merged.envelope, sent.id, [mine.itemKey], theirs.itemKey)
     const rev = current.rev + 1
     const at = { keyVersion: box.row.keyVersion, rev: nextRevOf(rev, now.body, current.body) }
     const sealed = await sealItem(box.key, sent.vault, sent.id, envelope, at, theirs.itemKey)
@@ -414,10 +390,7 @@ export async function pushed(world: SyncWorld): Promise<Pushed> {
   const vaults = (await world.rows.vaults()).filter((one) => one.pending)
   let all: Sent = 'sent'
   for (const row of vaults) {
-    all = worst(
-      all,
-      row.deleted ? await pushedVaultGone(world, row) : await pushedVault(world, row),
-    )
+    all = worst(all, row.deleted ? await pushedVaultGone(world, row) : await pushedVault(world, row))
   }
   const gone = new Set(vaults.filter((one) => one.deleted).map((one) => one.id))
   all = worst(all, await pushedItems(world, gone))

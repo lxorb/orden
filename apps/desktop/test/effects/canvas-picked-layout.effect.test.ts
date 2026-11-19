@@ -5,12 +5,11 @@ const CanvasPicked = (await import('../../src/lib/canvas/src/CanvasPicked.svelte
 const { at } = await import('./canvas-picked-world.svelte')
 
 const read: string[] = []
-const spies = (['offsetWidth', 'clientWidth', 'offsetHeight', 'clientHeight'] as const).map(
-  (name) =>
-    vi.spyOn(HTMLElement.prototype, name, 'get').mockImplementation(() => {
-      read.push(name)
-      return 0
-    }),
+const spies = (['offsetWidth', 'clientWidth', 'offsetHeight', 'clientHeight'] as const).map((name) =>
+  vi.spyOn(HTMLElement.prototype, name, 'get').mockImplementation(() => {
+    read.push(name)
+    return 0
+  }),
 )
 
 let app: ReturnType<typeof mount> | null = null

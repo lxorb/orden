@@ -62,9 +62,7 @@ describe('the module stands on its own', () => {
     const reaching: string[] = []
     for (const file of sources(join(import.meta.dirname, '../src'))) {
       const text = readFileSync(file, 'utf8')
-      for (const match of text.matchAll(
-        /from\s+'(\.\.\/\.\.\/[^']+)'|import\('(\.\.\/\.\.\/[^']+)'\)/g,
-      )) {
+      for (const match of text.matchAll(/from\s+'(\.\.\/\.\.\/[^']+)'|import\('(\.\.\/\.\.\/[^']+)'\)/g)) {
         const target = (match[1] ?? match[2] ?? '').slice('../../'.length)
         if (SHELL.some((one) => target === one || target.startsWith(one)))
           reaching.push(`${file.slice(file.lastIndexOf('/') + 1)} -> ${target}`)
@@ -127,32 +125,22 @@ describe('a name made twice', () => {
   }
 
   function space(rows: EntryRow[]) {
-    return new SpaceState(
-      { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
-      rows,
-      [],
-      'd',
-      { platform: 'linux', foldsCase: true } as never,
-    )
+    return new SpaceState({ space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null }, rows, [], 'd', {
+      platform: 'linux',
+      foldsCase: true,
+    } as never)
   }
 
   test('a numbered twin goes back to its name once the original is gone with the same bytes', () => {
     expect(
-      madeTwice(
-        space([
-          row('a', 'Photo.png', '', 'p1', true),
-          row('b', 'Photo 2.png', 'Photo 2.png', 'p1'),
-        ]),
-      ),
+      madeTwice(space([row('a', 'Photo.png', '', 'p1', true), row('b', 'Photo 2.png', 'Photo 2.png', 'p1')])),
     ).toEqual([{ from: 'Photo 2.png', to: 'Photo.png' }])
   })
 
   test('a numbered name the reader chose, or other bytes, is kept', () => {
     expect(madeTwice(space([row('b', 'Plan 2.pdf', 'Plan 2.pdf', 'h1')]))).toEqual([])
     expect(
-      madeTwice(
-        space([row('a', 'Plan.pdf', '', 'old', true), row('b', 'Plan 2.pdf', 'Plan 2.pdf', 'new')]),
-      ),
+      madeTwice(space([row('a', 'Plan.pdf', '', 'old', true), row('b', 'Plan 2.pdf', 'Plan 2.pdf', 'new')])),
     ).toEqual([])
   })
 
@@ -210,9 +198,7 @@ describe('offline, then back', () => {
     ])
     expect(report.failures).toEqual([])
     expect(report.held).toBe(0)
-    expect(markersIn(textOf(report, 'Plan.md'))).toEqual(
-      expect.arrayContaining(['mk101z', 'mk102z']),
-    )
+    expect(markersIn(textOf(report, 'Plan.md'))).toEqual(expect.arrayContaining(['mk101z', 'mk102z']))
     expect(report.account.entries.filter((one) => one.name.includes('from another'))).toEqual([])
   })
 })

@@ -50,9 +50,7 @@ describe('a setting', () => {
 
   test('puts its value in the one column, not at a width of its own', () => {
     const widths = PANES.flatMap(({ path, source }) =>
-      [...styleOf(source).matchAll(/(?<![-\w])(min-)?width:\s*1[24]rem/g)].map(
-        (hit) => `${path}: ${hit[0]}`,
-      ),
+      [...styleOf(source).matchAll(/(?<![-\w])(min-)?width:\s*1[24]rem/g)].map((hit) => `${path}: ${hit[0]}`),
     )
     expect(widths).toEqual(['settings/src/SettingsPanel.svelte: min-width: 12rem'])
   })
@@ -66,9 +64,7 @@ describe('a setting', () => {
         .filter((tag) => !NOT_VALUES.some((reason) => reason.test(tag)))
         .map((tag) => `${path}: ${tag.trim().split(/\s+/).slice(0, 3).join(' ')}`),
     )
-    expect(bare).toEqual([
-      expect.stringMatching(/^accounts-ui\/src\/ProfileRows\.svelte: value=\{status/),
-    ])
+    expect(bare).toEqual([expect.stringMatching(/^accounts-ui\/src\/ProfileRows\.svelte: value=\{status/)])
   })
 })
 
@@ -78,9 +74,7 @@ describe('the value box', () => {
 
   test('is one column wide, said once', () => {
     expect(tokens).toMatch(/--setting-value:\s*14rem/)
-    expect(base).toMatch(
-      /\.orden-setting > \.orden-field\.is-value \{[^}]*inline-size:\s*var\(--setting-value\)/,
-    )
+    expect(base).toMatch(/\.orden-setting > \.orden-field\.is-value \{[^}]*inline-size:\s*var\(--setting-value\)/)
   })
 
   test('is the shape the dropdown closes into as well', () => {
@@ -107,9 +101,7 @@ describe('Settings > Account', () => {
   })
 
   test('asks when a status clears only while there is one', () => {
-    expect(markup).toMatch(
-      /\{#if status\}\s*<div class="orden-setting setting">[\s\S]*?Clear after/,
-    )
+    expect(markup).toMatch(/\{#if status\}\s*<div class="orden-setting setting">[\s\S]*?Clear after/)
   })
 
   test('changes and removes a picture with the same kind of button', () => {
@@ -119,8 +111,7 @@ describe('Settings > Account', () => {
   })
 })
 
-const SHARED =
-  /\b(orden-chip|orden-button|orden-action|orden-glyph|orden-tag|orden-row|orden-setting)\b/
+const SHARED = /\b(orden-chip|orden-button|orden-action|orden-glyph|orden-tag|orden-row|orden-setting)\b/
 
 const OWN: Record<string, RegExp> = {
   'ui-controls/src/Swatches.svelte': /class="swatch/,
@@ -132,9 +123,7 @@ const OWN: Record<string, RegExp> = {
 }
 
 function buttons(source: string): string[] {
-  return [...source.matchAll(/<button\b([^>]*?)>/g)].map((hit) =>
-    (hit[1] ?? '').replace(/\s+/g, ' '),
-  )
+  return [...source.matchAll(/<button\b([^>]*?)>/g)].map((hit) => (hit[1] ?? '').replace(/\s+/g, ' '))
 }
 
 describe('a button in Settings', () => {
@@ -167,9 +156,7 @@ describe('a button in Settings', () => {
 describe('a row in Settings', () => {
   test('keeps its explanation behind its ?, never as a line of text under its name', () => {
     const inline = ROWS.flatMap(({ path, source }) =>
-      [...source.matchAll(/<(small|p)\b[^>]*>\s*\{[^}]*\b(why|hint)\b[^}]*\}/g)].map(
-        (hit) => `${path}: ${hit[0]}`,
-      ),
+      [...source.matchAll(/<(small|p)\b[^>]*>\s*\{[^}]*\b(why|hint)\b[^}]*\}/g)].map((hit) => `${path}: ${hit[0]}`),
     )
     expect(inline).toEqual([])
   })
@@ -182,14 +169,9 @@ describe('an on/off control in Settings', () => {
   test('is the shared switch, never one drawn by hand', () => {
     const files = FILES.filter((one) => SETTINGS.test(one.path))
     expect(files.map((one) => one.path)).toEqual(
-      expect.arrayContaining([
-        'settings/src/SettingsPanel.svelte',
-        'web-tab/src/ExtensionRows.svelte',
-      ]),
+      expect.arrayContaining(['settings/src/SettingsPanel.svelte', 'web-tab/src/ExtensionRows.svelte']),
     )
-    const own = files
-      .filter(({ source }) => /orden-switch|role="switch"/.test(source))
-      .map((one) => one.path)
+    const own = files.filter(({ source }) => /orden-switch|role="switch"/.test(source)).map((one) => one.path)
     expect(own).toEqual([])
   })
 })

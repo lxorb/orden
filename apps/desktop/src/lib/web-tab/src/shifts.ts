@@ -14,12 +14,7 @@ export function marginAround(box: Box, width: number, height: number): string {
 }
 
 export function sameBox(one: Box, other: Box): boolean {
-  return (
-    one.left === other.left &&
-    one.top === other.top &&
-    one.width === other.width &&
-    one.height === other.height
-  )
+  return one.left === other.left && one.top === other.top && one.width === other.width && one.height === other.height
 }
 
 function boxOf(node: Element): Box {

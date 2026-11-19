@@ -4,10 +4,7 @@ const written: { under: string; size: number; more: boolean; fresh?: boolean }[]
 let refused = ''
 
 vi.mock('../../platform/src/tauri', () => ({
-  invoke: (
-    command: string,
-    args: { under: string; bytes: Uint8Array; more?: boolean; fresh?: boolean },
-  ) => {
+  invoke: (command: string, args: { under: string; bytes: Uint8Array; more?: boolean; fresh?: boolean }) => {
     if (command === 'explorer_write') {
       if (args.under.startsWith(refused) && refused) return Promise.reject(new Error('it is there'))
       written.push({

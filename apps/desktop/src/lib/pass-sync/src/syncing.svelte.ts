@@ -11,8 +11,7 @@ import { PassApi, type PassCall } from './sync'
 import type { SyncWorld } from './sync-world'
 import { invitesOf } from './synced'
 
-export type PassSyncState =
-  'off' | 'syncing' | 'synced' | 'offline' | 'old-server' | 'conflict' | 'other-account'
+export type PassSyncState = 'off' | 'syncing' | 'synced' | 'offline' | 'old-server' | 'conflict' | 'other-account'
 
 const SETTLE = 800
 const EVERY = 5 * 60_000

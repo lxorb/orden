@@ -21,15 +21,9 @@ function lineAt(text: string, from: number): string {
   return text.slice(from, end === -1 ? text.length : end).replace(/\r$/, '')
 }
 
-export function taskIn(
-  text: string,
-  space: string,
-  path: string,
-  anchor: { line: number; hash: string },
-): Row {
+export function taskIn(text: string, space: string, path: string, anchor: { line: number; hash: string }): Row {
   const found = findTask(taskRowsOfText(space, path, text), anchor)
-  if (!found?.anchor)
-    throw new AgentError('not_found', 'that task is not in the note any more: list_tasks again')
+  if (!found?.anchor) throw new AgentError('not_found', 'that task is not in the note any more: list_tasks again')
   return found
 }
 
@@ -81,11 +75,8 @@ export function editedTask(
 }
 
 function taskOn(text: string, space: string, path: string, line: number): Row {
-  const found = taskRowsOfText(space, path, text).find(
-    (one) => one.kind === 'task' && one.anchor?.line === line,
-  )
-  if (!found)
-    throw new AgentError('not_found', 'that task is not in the note any more: list_tasks again')
+  const found = taskRowsOfText(space, path, text).find((one) => one.kind === 'task' && one.anchor?.line === line)
+  if (!found) throw new AgentError('not_found', 'that task is not in the note any more: list_tasks again')
   return found
 }
 
@@ -100,7 +91,5 @@ export function movedTask(
   const into = to === null ? source : to.text
   const placed = placeIn(into, block.lines, under ?? to?.under)
   const target = appliedEdits(into, [placedEdit(placed)])
-  return to === null
-    ? { source: target, target: null, line: placed.line }
-    : { source, target, line: placed.line }
+  return to === null ? { source: target, target: null, line: placed.line } : { source, target, line: placed.line }
 }

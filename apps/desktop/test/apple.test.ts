@@ -12,9 +12,7 @@ const read = (...parts: string[]) => readFileSync(join(...parts), 'utf8')
 
 function sentences(plist: string): Map<string, string> {
   const found = new Map<string, string>()
-  for (const [, key = '', words = ''] of plist.matchAll(
-    /<key>(\w+)<\/key>\s*<string>([^<]*)<\/string>/g,
-  )) {
+  for (const [, key = '', words = ''] of plist.matchAll(/<key>(\w+)<\/key>\s*<string>([^<]*)<\/string>/g)) {
     found.set(key, words)
   }
 
@@ -81,9 +79,7 @@ describe('what an iPhone needs before it will show the app at all', () => {
   })
 
   test('the oldest iOS it installs on can read the page', () => {
-    const [major = 0, minor = 0] = (config.bundle?.iOS?.minimumSystemVersion ?? '0')
-      .split('.')
-      .map(Number)
+    const [major = 0, minor = 0] = (config.bundle?.iOS?.minimumSystemVersion ?? '0').split('.').map(Number)
     expect(major * 100 + minor).toBeGreaterThanOrEqual(1604)
   })
 })
@@ -93,9 +89,7 @@ describe('the oldest Mac it installs on', () => {
     const config = JSON.parse(read(TAURI, 'tauri.macos.conf.json')) as {
       bundle?: { macOS?: { minimumSystemVersion?: string } }
     }
-    const [major = 0, minor = 0] = (config.bundle?.macOS?.minimumSystemVersion ?? '0')
-      .split('.')
-      .map(Number)
+    const [major = 0, minor = 0] = (config.bundle?.macOS?.minimumSystemVersion ?? '0').split('.').map(Number)
     expect(major * 100 + minor).toBeGreaterThanOrEqual(1303)
   })
 })

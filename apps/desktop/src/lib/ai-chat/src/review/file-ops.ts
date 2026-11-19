@@ -13,8 +13,7 @@ async function moved(root: string, from: string, to: string): Promise<void> {
 function rootOf(change: FileChange, thread: Pick<Thread, 'space'>): string | null {
   const named = change.space
   const space =
-    (named ? spaceNamed(workspace.spaces, named) : undefined) ??
-    workspace.spaces.find((one) => one.id === thread.space)
+    (named ? spaceNamed(workspace.spaces, named) : undefined) ?? workspace.spaces.find((one) => one.id === thread.space)
   return space?.root ?? null
 }
 
@@ -33,10 +32,7 @@ export function markUnmade(path: string): void {
   if (step) unmade.add(step)
 }
 
-export async function undoFile(
-  change: FileChange,
-  thread: Pick<Thread, 'space'>,
-): Promise<boolean> {
+export async function undoFile(change: FileChange, thread: Pick<Thread, 'space'>): Promise<boolean> {
   const root = rootOf(change, thread)
   if (!root) return false
   try {
@@ -49,11 +45,7 @@ export async function undoFile(
     const { putBack } = await fileUndoing()
     const back = await putBack(step)
     workspace.undone.stack = workspace.undone.stack.flatMap((one): FileAction[] =>
-      one === step
-        ? []
-        : one.kind === 'many'
-          ? [{ ...one, steps: one.steps.filter((x) => x !== step) }]
-          : [one],
+      one === step ? [] : one.kind === 'many' ? [{ ...one, steps: one.steps.filter((x) => x !== step) }] : [one],
     )
     cameBackAt.set(change, back)
     await workspace.fileCame(back, 'file', undefined, undefined, true)

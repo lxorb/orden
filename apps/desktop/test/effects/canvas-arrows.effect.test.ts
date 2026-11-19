@@ -35,10 +35,7 @@ describe.each(SURFACES)('on a $surface', ({ kind, name, blank, Store }) => {
   let note: NoteDoc
 
   beforeEach(() => {
-    note = new NoteDoc(
-      { kind, path: `/space/${name}`, name, text: blank(), dirty: false },
-      () => undefined,
-    )
+    note = new NoteDoc({ kind, path: `/space/${name}`, name, text: blank(), dirty: false }, () => undefined)
     store = new Store(new Tab(note, 'pane'))
 
     host = document.createElement('div')

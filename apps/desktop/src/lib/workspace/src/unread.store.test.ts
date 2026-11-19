@@ -9,8 +9,7 @@ vi.mock('../../platform/src/tauri', async (original) => ({
   },
   invoke: (command: string, args: { path?: string } = {}) => {
     const there = args.path !== undefined && disk.files.has(args.path)
-    if (command === 'file_stamp')
-      return Promise.resolve(disk.native && there ? { modified: 1, len: 4 } : null)
+    if (command === 'file_stamp') return Promise.resolve(disk.native && there ? { modified: 1, len: 4 } : null)
     if (command === 'path_exists') return Promise.resolve(there)
     if (command === 'read_tree') return Promise.reject(new Error('no folder'))
     return Promise.resolve(null)

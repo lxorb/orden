@@ -39,9 +39,7 @@ function treeOut(mount: Mounted, entry: Entry, top: boolean): Entry {
         }
       : {}),
     path: outOf(mount, entry.path),
-    ...(entry.children
-      ? { children: entry.children.map((one) => treeOut(mount, one, false)) }
-      : {}),
+    ...(entry.children ? { children: entry.children.map((one) => treeOut(mount, one, false)) } : {}),
   }
 }
 
@@ -53,21 +51,14 @@ function trashedOut(entry: Trashed, mounts: readonly Mounted[]): Trashed {
   return entry
 }
 
-async function trash<T>(
-  command: string,
-  args: Record<string, unknown>,
-  mounts: readonly Mounted[],
-): Promise<T> {
+async function trash<T>(command: string, args: Record<string, unknown>, mounts: readonly Mounted[]): Promise<T> {
   const kept = (await web<Trashed[]>('list_trash')).map((one) => trashedOut(one, mounts))
   if (command === 'list_trash') {
     const all = [...(await crate<Trashed[]>('list_trash')), ...kept]
     return all.sort((a, b) => b.trashedAt - a.trashedAt) as T
   }
   if (command === 'purge_trash_older_than') {
-    const [here, there] = await Promise.all([
-      crate<number>(command, args),
-      web<number>(command, args),
-    ])
+    const [here, there] = await Promise.all([crate<number>(command, args), web<number>(command, args)])
     return (here + there) as T
   }
   if (!kept.some((one) => one.id === args.id)) return crate<T>(command, args)
@@ -152,9 +143,7 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
   const read = (one: { rest: string }) =>
     source.kept
       ? keptBytes(from, one.rest)
-      : crate<ArrayBuffer>('read_file', { path: join(from, one.rest, false) }).then(
-          (bytes) => new Uint8Array(bytes),
-        )
+      : crate<ArrayBuffer>('read_file', { path: join(from, one.rest, false) }).then((bytes) => new Uint8Array(bytes))
   const words = new Map<string, Uint8Array>()
   if (target.kept) {
     const { readsAsText } = await import('../web/commands')
@@ -187,9 +176,7 @@ async function across<T>(command: string, args: Record<string, unknown>): Promis
     }
     const folders = going.filter((each) => each.dir).reverse()
     for (const one of folders) {
-      await crate('remove_empty_folder', { path: join(from, one.rest, false) }).catch(
-        () => undefined,
-      )
+      await crate('remove_empty_folder', { path: join(from, one.rest, false) }).catch(() => undefined)
     }
     return undefined as T
   }

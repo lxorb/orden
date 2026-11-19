@@ -29,9 +29,7 @@ describe('how long a room waits before trying again', () => {
 
 describe('how long an online terminal waits before trying again', () => {
   test('tries again in a quarter of a second, then doubles', () => {
-    expect([1, 2, 3, 4, 5].map((tries) => linkDelay(tries, false, 0.5))).toEqual([
-      250, 500, 1000, 2000, 4000,
-    ])
+    expect([1, 2, 3, 4, 5].map((tries) => linkDelay(tries, false, 0.5))).toEqual([250, 500, 1000, 2000, 4000])
   })
 
   test('never waits more than five seconds while it is on screen', () => {

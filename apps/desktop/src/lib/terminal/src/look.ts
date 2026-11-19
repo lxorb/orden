@@ -21,12 +21,7 @@ function resolver(): (value: string, fallback: string) => string {
   }
 }
 
-function mix(
-  resolve: (value: string, fallback: string) => string,
-  a: string,
-  b: string,
-  part: number,
-) {
+function mix(resolve: (value: string, fallback: string) => string, a: string, b: string, part: number) {
   return resolve(`color-mix(in srgb, ${a} ${part}%, ${b})`, a)
 }
 

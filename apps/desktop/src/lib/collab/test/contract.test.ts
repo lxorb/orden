@@ -18,12 +18,10 @@ describe('which room a note needs', () => {
 })
 
 describe('the notes that are in rooms', () => {
-  const note = (shared: string | null) =>
-    ({ shared }) as unknown as Parameters<typeof inRooms>[0][number]['note']
+  const note = (shared: string | null) => ({ shared }) as unknown as Parameters<typeof inRooms>[0][number]['note']
 
   test('are the shared ones and the tracked ones, each with its id, version and hash', () => {
-    const tracked = (path: string) =>
-      path === '/a.md' ? { id: 'id-a', version: 3, hash: 'h' } : null
+    const tracked = (path: string) => (path === '/a.md' ? { id: 'id-a', version: 3, hash: 'h' } : null)
     const open = [
       { key: 'k1', path: '/a.md', note: note(null) },
       { key: 'k2', path: '/b.md', note: note(null) },

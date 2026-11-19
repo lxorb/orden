@@ -18,12 +18,7 @@ const ORDERS: Folding<Record<string, string[]>> = {
   same,
 }
 
-export async function fold(
-  store: Arranged,
-  root: string,
-  theirs: unknown,
-  accountId: string,
-): Promise<void> {
+export async function fold(store: Arranged, root: string, theirs: unknown, accountId: string): Promise<void> {
   const account = arrangedMap(theirs)
   const held = store.kept(root)
   const met = meet(held, accountId, held.folders, account, ORDERS)

@@ -75,15 +75,10 @@ async function answer(id: number, asked: Request) {
 
     const verb = typeof asked.verb === 'string' ? asked.verb : ''
     const args = isRecord(asked.args) ? asked.args : {}
-    const rest = Array.isArray(asked.rest)
-      ? asked.rest.filter((one): one is string => typeof one === 'string')
-      : []
+    const rest = Array.isArray(asked.rest) ? asked.rest.filter((one): one is string => typeof one === 'string') : []
     const caller = callerOf(asked.agent, asked.thread)
 
-    const result = await Promise.race([
-      dispatch(verb, args, rest, 'here', caller, due.deadline),
-      due.late,
-    ])
+    const result = await Promise.race([dispatch(verb, args, rest, 'here', caller, due.deadline), due.late])
     await invoke('automation_result', { id, result }).catch(() => undefined)
   } finally {
     due.end()

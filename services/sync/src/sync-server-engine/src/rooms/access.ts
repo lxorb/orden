@@ -31,11 +31,7 @@ select case when sp.deleted = 1 then 'none'
 
 export type Access = 'write' | 'read' | 'none'
 
-export async function accessOf(
-  env: Env,
-  noteId: string,
-  logins: readonly string[],
-): Promise<Map<string, Access>> {
+export async function accessOf(env: Env, noteId: string, logins: readonly string[]): Promise<Map<string, Access>> {
   const at = Date.now()
   const found = new Map<string, Access>()
   await Promise.all(

@@ -44,5 +44,4 @@ export function sensedOf(value: unknown): Sensed | null {
   }
 }
 
-export const withIdle = (said: Sensed, idleMs: number): Sensed =>
-  said.idleMs === null ? { ...said, idleMs } : said
+export const withIdle = (said: Sensed, idleMs: number): Sensed => (said.idleMs === null ? { ...said, idleMs } : said)

@@ -79,9 +79,7 @@ Object.defineProperty(navigator, 'clipboard', {
       reads.count += 1
       const { picture } = clipboard
       return Promise.resolve(
-        picture
-          ? [{ types: ['image/png'], getType: () => Promise.resolve(pictureFile(picture)) }]
-          : [],
+        picture ? [{ types: ['image/png'], getType: () => Promise.resolve(pictureFile(picture)) }] : [],
       )
     },
     readText: () => Promise.resolve(clipboard.text ?? ''),
@@ -109,10 +107,7 @@ let place: HTMLElement
 
 async function local(key: string): Promise<Opened> {
   const words = JSON.stringify({ shell: '/bin/bash', folder: null, key })
-  const doc = new NoteDoc(
-    { kind: 'terminal', path: null, name: 'bash', text: words, dirty: false },
-    () => undefined,
-  )
+  const doc = new NoteDoc({ kind: 'terminal', path: null, name: 'bash', text: words, dirty: false }, () => undefined)
   const tab = new Tab(doc, 'pane')
   workspace.tabs = [...workspace.tabs, tab]
   return drawn(sessionOf(tab))
@@ -256,9 +251,7 @@ test('so is one pasted from the menu when the clipboard holds no text', async ()
   clipboard = { picture: new Uint8Array([7]) }
   const session = await local('img-3')
 
-  session.term.textarea?.dispatchEvent(
-    new MouseEvent('contextmenu', { bubbles: true, cancelable: true }),
-  )
+  session.term.textarea?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }))
   flushSync()
   const { menu } = await import('../../src/lib/ui-kit/src/api')
   const row = menu.items.find((one) => one !== null && 'label' in one && one.label === 'Paste')

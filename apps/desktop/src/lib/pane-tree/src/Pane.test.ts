@@ -68,9 +68,7 @@ describe('a protected tab', () => {
   })
 
   test('is never a column beside an open one, and has no find bar', () => {
-    expect(SOURCE).toMatch(
-      /one\.kind === 'note' && !one\.reading && !protection\.locked\(one\.path\)/,
-    )
+    expect(SOURCE).toMatch(/one\.kind === 'note' && !one\.reading && !protection\.locked\(one\.path\)/)
     expect(SOURCE).toMatch(/const writing = \$derived\([^)]*&& !locked\)/)
   })
 })

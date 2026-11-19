@@ -1,5 +1,4 @@
-export type BlockShape =
-  'heading1' | 'heading2' | 'heading3' | 'paragraph' | 'bullet' | 'numbered' | 'task' | 'quote'
+export type BlockShape = 'heading1' | 'heading2' | 'heading3' | 'paragraph' | 'bullet' | 'numbered' | 'task' | 'quote'
 
 const INDENT = /^[ \t]*/
 const QUOTED = /^(?:>[ \t]?)+/
@@ -49,13 +48,7 @@ function markFor(shape: BlockShape, nth: number): string {
   }
 }
 
-export function shaped(
-  text: string,
-  shape: BlockShape,
-  nth = 1,
-  listed = true,
-  quoted = false,
-): string {
+export function shaped(text: string, shape: BlockShape, nth = 1, listed = true, quoted = false): string {
   const { lead, indent, words } = wordsOf(text, listed, quoted)
   if (!words.trim()) return text
 

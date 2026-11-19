@@ -17,17 +17,12 @@ import type {
 type Plain = Record<string, unknown>
 
 const scalar = (value: unknown): string =>
-  typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
-    ? String(value)
-    : ''
+  typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : ''
 
-const isPlain = (value: unknown): value is Plain =>
-  value !== null && typeof value === 'object' && !Array.isArray(value)
+const isPlain = (value: unknown): value is Plain => value !== null && typeof value === 'object' && !Array.isArray(value)
 
 const stringsOf = (value: unknown): Record<string, string> =>
-  isPlain(value)
-    ? Object.fromEntries(Object.entries(value).map(([key, one]) => [key, scalar(one)]))
-    : {}
+  isPlain(value) ? Object.fromEntries(Object.entries(value).map(([key, one]) => [key, scalar(one)])) : {}
 
 const rest = (value: Plain, known: readonly string[]): Plain =>
   Object.fromEntries(Object.entries(value).filter(([key]) => !known.includes(key)))
@@ -49,8 +44,7 @@ function readOptions(raw: unknown): SelectOption[] | undefined {
     if (typeof one === 'string' || typeof one === 'number') return [{ value: String(one) }]
     if (!isPlain(one) || one.value === undefined) return []
     const option: SelectOption = { value: scalar(one.value) }
-    if (one.group === 'todo' || one.group === 'doing' || one.group === 'done')
-      option.group = one.group
+    if (one.group === 'todo' || one.group === 'doing' || one.group === 'done') option.group = one.group
     if (typeof one.tone === 'string' || typeof one.tone === 'number') option.tone = String(one.tone)
     const kept = rest(one, ['value', 'group', 'tone'])
     if (Object.keys(kept).length) option.kept = kept
@@ -90,10 +84,7 @@ function readOrdenView(raw: unknown): OrdenView {
   if (sub) orden.subGroupBy = sub
   if (isPlain(raw.order)) {
     orden.order = Object.fromEntries(
-      Object.entries(raw.order).map(([key, list]) => [
-        key,
-        Array.isArray(list) ? list.map(String) : [],
-      ]),
+      Object.entries(raw.order).map(([key, list]) => [key, Array.isArray(list) ? list.map(String) : []]),
     )
   }
   if (typeof raw.date === 'string') orden.date = raw.date
@@ -116,18 +107,7 @@ function readOrdenView(raw: unknown): OrdenView {
   return orden
 }
 
-const VIEW_KEYS = [
-  'type',
-  'name',
-  'filters',
-  'order',
-  'sort',
-  'groupBy',
-  'limit',
-  'summaries',
-  'orden',
-  'nib',
-]
+const VIEW_KEYS = ['type', 'name', 'filters', 'order', 'sort', 'groupBy', 'limit', 'summaries', 'orden', 'nib']
 
 function readView(raw: unknown, at: number): View {
   const plain = isPlain(raw) ? raw : {}
@@ -164,9 +144,7 @@ function readOrdenBase(raw: unknown): OrdenBase {
   const plain = isPlain(raw) ? raw : {}
   const orden: OrdenBase = {
     properties: isPlain(plain.properties)
-      ? Object.fromEntries(
-          Object.entries(plain.properties).map(([key, one]) => [key, readOrdenProperty(one)]),
-        )
+      ? Object.fromEntries(Object.entries(plain.properties).map(([key, one]) => [key, readOrdenProperty(one)]))
       : {},
     kept: rest(plain, ['template', 'id', 'properties', 'locked']),
   }
@@ -344,8 +322,7 @@ function merged(document: Document, node: unknown, value: unknown): unknown {
   }
   if (Array.isArray(value) && isSeq(node)) {
     value.forEach((one, at) => {
-      node.items[at] =
-        at < node.items.length ? merged(document, node.items[at], one) : document.createNode(one)
+      node.items[at] = at < node.items.length ? merged(document, node.items[at], one) : document.createNode(one)
     })
     node.items.length = value.length
     return node

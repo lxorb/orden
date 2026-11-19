@@ -223,18 +223,14 @@ describe('a note asked about again', () => {
     record.clash(aClash('/Work/Plan.md'))
     record.clash({ ...aClash('/Work/Plan.md'), version: 3, theirs: 'and more', at: 2 })
 
-    expect(record.clashes).toEqual([
-      { ...aClash('/Work/Plan.md'), version: 3, theirs: 'and more', at: 2 },
-    ])
+    expect(record.clashes).toEqual([{ ...aClash('/Work/Plan.md'), version: 3, theirs: 'and more', at: 2 }])
   })
 
   test('and is the same question under another name', () => {
     record.clash(aClash('/Work/Plan.md'))
     record.clash({ ...aClash('/Work/Goals.md'), version: 3, theirs: 'and more' })
 
-    expect(record.clashes.map((one) => [one.path, one.theirs])).toEqual([
-      ['/Work/Goals.md', 'and more'],
-    ])
+    expect(record.clashes.map((one) => [one.path, one.theirs])).toEqual([['/Work/Goals.md', 'and more']])
   })
 })
 

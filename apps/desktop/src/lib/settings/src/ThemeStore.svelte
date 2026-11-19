@@ -8,13 +8,7 @@
   import { type Scheme, theme } from '../../theme/src/api'
   import { viewport } from '../../ui-kit/src/api'
   import type { StoreTheme } from '../../theme-looks/src/api'
-  import {
-    FRAME,
-    FULL_HEIGHT,
-    miniatureCss,
-    paletteCss,
-    sampleHtml,
-  } from '../../theme-looks/src/api'
+  import { FRAME, FULL_HEIGHT, miniatureCss, paletteCss, sampleHtml } from '../../theme-looks/src/api'
   import { PAINT, store } from '../../theme-looks/src/api'
   import { dur, fade, fly, LAYER, scale } from '../../platform/src/api'
   import { trap } from '../../ui-controls/src/api'
@@ -121,11 +115,7 @@
 
 {#if store.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div
-    class="orden-scrim scrim"
-    transition:fade={{ duration: LAYER.fade }}
-    onclick={() => store.close()}
-  ></div>
+  <div class="orden-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={() => store.close()}></div>
 
   <div
     class="orden-screen is-centred is-steady sheet"
@@ -234,12 +224,7 @@
 
   <div class="full" in:fly={{ y: 8, duration: dur(180), easing: cubicOut }}>
     <div class="shown">
-      <div
-        class="frame big {FRAME}"
-        data-palette={one.id}
-        data-theme={scheme}
-        style:--mini-page="{FULL_HEIGHT}px"
-      >
+      <div class="frame big {FRAME}" data-palette={one.id} data-theme={scheme} style:--mini-page="{FULL_HEIGHT}px">
         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
         <div class="orden-mini-page">{@html fullSample}</div>
       </div>
@@ -247,11 +232,7 @@
       {#if one.variants.length > 1}
         <div class="sides">
           {#each one.variants as variant (variant)}
-            <button
-              class="side"
-              class:at={variant === scheme}
-              onclick={() => (previewing = variant)}
-            >
+            <button class="side" class:at={variant === scheme} onclick={() => (previewing = variant)}>
               {variant === 'light' ? 'Light' : 'Dark'}
             </button>
           {/each}
@@ -290,10 +271,7 @@
             onclick={() => void store.remove(one.id)}>Remove</button
           >
         {:else}
-          <button
-            class="orden-button"
-            disabled={store.working !== null}
-            onclick={() => void store.install(one)}
+          <button class="orden-button" disabled={store.working !== null} onclick={() => void store.install(one)}
             >{store.updatable(one) ? 'Update' : 'Install'}</button
           >
         {/if}

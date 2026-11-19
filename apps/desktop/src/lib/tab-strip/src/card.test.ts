@@ -34,9 +34,7 @@ describe('where the card says a file lives', () => {
   ]
 
   test('is its space and the folders down to it', () => {
-    expect(whereOf('C:\\Spaces\\Work\\Projects\\2026\\Plan.md', spaces)).toBe(
-      'Work / Projects / 2026',
-    )
+    expect(whereOf('C:\\Spaces\\Work\\Projects\\2026\\Plan.md', spaces)).toBe('Work / Projects / 2026')
     expect(whereOf('/home/me/Spaces/Home/List.md', spaces)).toBe('Home')
   })
 

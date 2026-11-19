@@ -37,9 +37,7 @@ function idOf(value: unknown): string | number | null {
 }
 
 function fields(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {}
+  return value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
 }
 
 export const mcp = new Hono<{ Bindings: Env }>()
@@ -91,9 +89,7 @@ mcp.post('/', async (context) => {
       const name = typeof params.name === 'string' ? params.name : ''
       const args = fields(params.arguments)
 
-      const shut = (await closedGates(context.env, token.user_id)).find((gate) =>
-        gate.tools.has(name),
-      )
+      const shut = (await closedGates(context.env, token.user_id)).find((gate) => gate.tools.has(name))
       if (shut) return reply({ content: [{ type: 'text', text: shut.off }], isError: true })
 
       try {

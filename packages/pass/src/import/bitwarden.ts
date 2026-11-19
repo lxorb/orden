@@ -23,8 +23,7 @@ import type { Imported } from './types'
 
 const NAME = 'Bitwarden'
 
-const ENCRYPTED =
-  'The export is encrypted: export it again from Bitwarden as "JSON" or "CSV", not "JSON (Encrypted)".'
+const ENCRYPTED = 'The export is encrypted: export it again from Bitwarden as "JSON" or "CSV", not "JSON (Encrypted)".'
 
 const MATCH: Record<number, MatchRule> = {
   0: 'domain',
@@ -161,9 +160,7 @@ function parseBitwardenJson(text: string): Imported {
   if (root.encrypted === true) return skippedOnly(NAME, ENCRYPTED)
   if (!Array.isArray(root.items)) throw new ImportError('This is not a Bitwarden export.')
   const names = (raw: unknown): Map<string, string> =>
-    new Map<string, string>(
-      listOf(raw).map((one) => [stringOf(recordOf(one).id), stringOf(recordOf(one).name)]),
-    )
+    new Map<string, string>(listOf(raw).map((one) => [stringOf(recordOf(one).id), stringOf(recordOf(one).name)]))
   const folders = names(root.folders)
   const collections = names(root.collections)
   const into = new Collector(NAME)
@@ -219,8 +216,7 @@ function csvContentOf(row: CsvRecord): Content {
 function parseBitwardenCsv(text: string): Imported {
   const rows = csvRecords(text)
   const first = rows[0]
-  if (first && !('login_password' in first))
-    throw new ImportError('This is not a Bitwarden CSV export.')
+  if (first && !('login_password' in first)) throw new ImportError('This is not a Bitwarden CSV export.')
   const into = new Collector(NAME)
   for (const row of rows) {
     const type = row.type ?? 'login'
@@ -229,10 +225,7 @@ function parseBitwardenCsv(text: string): Imported {
       into.skip(`Kept as a login: Bitwarden's CSV has no type "${type}".`, content.title)
     }
     const collection = (row.collections ?? '').split(',')[0] ?? ''
-    into.add(
-      itemOf(content, { pinned: row.favorite === '1', folder: row.folder ?? null }),
-      collection,
-    )
+    into.add(itemOf(content, { pinned: row.favorite === '1', folder: row.folder ?? null }), collection)
   }
   return into.result()
 }

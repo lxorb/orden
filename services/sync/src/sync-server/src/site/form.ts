@@ -152,10 +152,7 @@ ${rows}
 </form>`
 }
 
-export function answersFrom(
-  form: Form,
-  sent: FormData,
-): { answers: Record<string, string> } | { wrong: string } {
+export function answersFrom(form: Form, sent: FormData): { answers: Record<string, string> } | { wrong: string } {
   const answers: Record<string, string> = {}
 
   for (const [at, one] of form.fields.entries()) {
@@ -188,9 +185,7 @@ export function answersFrom(
   return { answers }
 }
 
-export function asCsv(
-  rows: readonly { at: number; path: string; answers: Record<string, string> }[],
-): string {
+export function asCsv(rows: readonly { at: number; path: string; answers: Record<string, string> }[]): string {
   const asked = [...new Set(rows.flatMap((one) => Object.keys(one.answers)))]
 
   const cell = (said: string) => {
@@ -201,11 +196,7 @@ export function asCsv(
 
   for (const row of rows) {
     lines.push(
-      [
-        new Date(row.at).toISOString(),
-        row.path,
-        ...asked.map((column) => row.answers[column] ?? ''),
-      ]
+      [new Date(row.at).toISOString(), row.path, ...asked.map((column) => row.answers[column] ?? '')]
         .map(cell)
         .join(','),
     )

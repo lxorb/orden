@@ -3,15 +3,7 @@ import { protection } from '../../protect/src/api'
 import { fillTemplate, withoutTemplateKeys } from '@orden/bases'
 import { menu } from '../../ui-kit/src/api'
 import { rows } from '../../rows/src/api'
-import {
-  folderOf,
-  insideSpace,
-  relativeTo,
-  samePath,
-  within,
-  invoke,
-  joinPath,
-} from '../../platform/src/api'
+import { folderOf, insideSpace, relativeTo, samePath, within, invoke, joinPath } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import { nowHere } from './days'
@@ -24,11 +16,8 @@ export function templatesFolder(root: string): Promise<string> {
     found = invoke<string>('read_note', { path: joinPath(root, '.obsidian/templates.json') })
       .then((text) => {
         const said: unknown = JSON.parse(text)
-        const folder =
-          said !== null && typeof said === 'object' && 'folder' in said ? said.folder : null
-        return typeof folder === 'string' && folder.trim()
-          ? folder.trim().replace(/^\/+|\/+$/g, '')
-          : 'Templates'
+        const folder = said !== null && typeof said === 'object' && 'folder' in said ? said.folder : null
+        return typeof folder === 'string' && folder.trim() ? folder.trim().replace(/^\/+|\/+$/g, '') : 'Templates'
       })
       .catch(() => 'Templates')
     folders.set(root, found)
@@ -41,12 +30,7 @@ export async function templates(): Promise<Entry[]> {
   if (root === undefined) return []
   const folder = joinPath(root, await templatesFolder(root))
   return workspace.notes
-    .filter(
-      (one) =>
-        /\.md$/i.test(one.name) &&
-        within(folder, one.path, root) !== null &&
-        !protection.locked(one.path),
-    )
+    .filter((one) => /\.md$/i.test(one.name) && within(folder, one.path, root) !== null && !protection.locked(one.path))
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
@@ -77,9 +61,7 @@ export async function templateWords(path: string, title: string): Promise<string
   const text = await workspace.noteText(path).catch(() => null)
   if (text === null) return ''
   const now = nowHere()
-  return withoutTemplateKeys(
-    fillTemplate(text, { title, today: now.slice(0, 10), time: now.slice(11, 16) }),
-  )
+  return withoutTemplateKeys(fillTemplate(text, { title, today: now.slice(0, 10), time: now.slice(11, 16) }))
 }
 
 export async function pickTemplate(): Promise<void> {
@@ -88,8 +70,7 @@ export async function pickTemplate(): Promise<void> {
   const found = await templates()
   if (!found.length) return
   const active = workspace.active?.path ?? null
-  const dir =
-    active && within(space.root, active, space.root) !== null ? folderOf(active) : space.root
+  const dir = active && within(space.root, active, space.root) !== null ? folderOf(active) : space.root
   const make = async (template: string) => {
     const name = await workspace.freeNameOnDisk(dir, 'Untitled.md')
     const path = joinPath(dir, name)

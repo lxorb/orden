@@ -77,10 +77,7 @@ export async function createFile(
   }
   const paper = pairOf(path)
   if (paper !== null && (await exists(paper))) {
-    throw new Refused(
-      'exists',
-      `${nameOf(paper)} is already there, and would be taken for its paper`,
-    )
+    throw new Refused('exists', `${nameOf(paper)} is already there, and would be taken for its paper`)
   }
 
   const words = await firstWords(call, kind, nameOf(relative))

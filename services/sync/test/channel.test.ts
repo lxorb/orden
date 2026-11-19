@@ -7,18 +7,11 @@ function assets(files: Record<string, string>): { fetch(request: Request): Promi
     fetch(request: Request): Promise<Response> {
       const path = new URL(request.url).pathname
       if (path.endsWith('.html') && files[path] !== undefined) {
-        const to = path.endsWith('/index.html')
-          ? path.slice(0, -'index.html'.length)
-          : path.slice(0, -5)
-        if (request.redirect === 'follow')
-          return binding.fetch(new Request(new URL(to, request.url)))
+        const to = path.endsWith('/index.html') ? path.slice(0, -'index.html'.length) : path.slice(0, -5)
+        if (request.redirect === 'follow') return binding.fetch(new Request(new URL(to, request.url)))
         return Promise.resolve(new Response(null, { status: 307, headers: { location: to } }))
       }
-      const file = path.endsWith('/')
-        ? `${path}index.html`
-        : files[path] !== undefined
-          ? path
-          : `${path}.html`
+      const file = path.endsWith('/') ? `${path}index.html` : files[path] !== undefined ? path : `${path}.html`
       const body = files[file]
       if (body === undefined) return Promise.resolve(new Response(null, { status: 404 }))
       const type = file.endsWith('.html') ? 'text/html' : 'text/javascript'
@@ -91,9 +84,7 @@ describe('with the cookie', () => {
   })
 
   test('falls back to the release when the edge was not deployed', async () => {
-    const stable = Object.fromEntries(
-      Object.entries(BOTH).filter(([path]) => !path.startsWith('/_unstable/')),
-    )
+    const stable = Object.fromEntries(Object.entries(BOTH).filter(([path]) => !path.startsWith('/_unstable/')))
     env = testEnv({ ASSETS: assets(stable) })
     expect((await call(env, '/', { headers: ON_EDGE })).text).toBe('stable index')
     expect((await call(env, '/s/where', { headers: ON_EDGE })).text).toBe('stable index')
@@ -136,9 +127,7 @@ describe('?channel=', () => {
     expect(answer.status).toBe(302)
     expect(answer.headers.get('location')).toBe('/s/x?a=1')
     const cookie = answer.headers.getSetCookie()[0] ?? ''
-    expect(cookie).toMatch(
-      /^__Host-orden-channel=unstable; Path=\/; Max-Age=\d+; SameSite=Lax; Secure$/,
-    )
+    expect(cookie).toMatch(/^__Host-orden-channel=unstable; Path=\/; Max-Age=\d+; SameSite=Lax; Secure$/)
     expect(cookie).not.toMatch(/HttpOnly/i)
   })
 
@@ -160,9 +149,7 @@ describe('?channel=', () => {
       expect.stringMatching(/^orden-channel=unstable; Path=\/; Max-Age=\d+; SameSite=Lax$/),
     ])
     const release = switchChannel(new Request('http://localhost:8787/?channel=stable'))
-    expect(release?.headers.getSetCookie()).toEqual([
-      'orden-channel=; Path=/; Max-Age=0; SameSite=Lax',
-    ])
+    expect(release?.headers.getSetCookie()).toEqual(['orden-channel=; Path=/; Max-Age=0; SameSite=Lax'])
   })
 
   test('anything else is just a parameter', async () => {
@@ -232,9 +219,7 @@ describe('Pass under its own name', () => {
     env = testEnv({ ASSETS: assets(PASS) })
     const token = await signIn(env, 'a@b.dev')
     const space = (await call(env, '/v1/spaces', { token, body: { name: 'Taken' } })).json.space.id
-    env.db
-      .prepare('update spaces set blog_subdomain = ?, blog_enabled = 1 where id = ?')
-      .run('pass', space)
+    env.db.prepare('update spaces set blog_subdomain = ?, blog_enabled = 1 where id = ?').run('pass', space)
     expect((await call(env, '/', { host })).text).toBe('stable pass')
   })
 

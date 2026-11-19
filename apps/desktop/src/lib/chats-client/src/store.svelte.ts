@@ -16,28 +16,10 @@ import {
 import { MOST_FILES, UNSEND_WITHIN } from '@orden/chats/limits'
 import { chatPokeOf } from '@orden/chats/wire'
 import { account } from '../../accounts/src/api'
-import {
-  samePath,
-  within,
-  spaceHolding,
-  keep,
-  storedText,
-  isNative,
-  joinPath,
-} from '../../platform/src/api'
+import { samePath, within, spaceHolding, keep, storedText, isNative, joinPath } from '../../platform/src/api'
 import { sync } from '../../sync-store/src/api'
 import { workspace } from '../../workspace/src/api'
-import type {
-  ChatEntry,
-  ChatMember,
-  Chats,
-  ChatView,
-  Draft,
-  HistoryAsk,
-  Hit,
-  Offer,
-  Scheduled,
-} from './shapes'
+import type { ChatEntry, ChatMember, Chats, ChatView, Draft, HistoryAsk, Hit, Offer, Scheduled } from './shapes'
 import { type ChatCache, MemoryCache } from './cache'
 import { ChatEngine, type Remote } from './engine'
 import * as http from './http'
@@ -64,8 +46,7 @@ function remoteFor(id: string): Remote {
     events: (chat, after) => (other() ? Promise.resolve(null) : http.eventsOf(chat, { after })),
     state: (chat, before) => (other() ? Promise.resolve(null) : http.stateOf(chat, before)),
     post: (chat, events) => (other() ? Promise.resolve(null) : http.sendEvents(chat, events)),
-    read: (chat, seq, back) =>
-      other() ? Promise.resolve(false) : http.postRead(chat, seq, back).catch(() => false),
+    read: (chat, seq, back) => (other() ? Promise.resolve(false) : http.postRead(chat, seq, back).catch(() => false)),
   }
 }
 
@@ -122,8 +103,7 @@ class ChatsStore implements Chats {
     this.cache = cache
     this.engine = engine
     for (const one of await cache.drafts().catch(() => [])) {
-      if (isRetiredChat(one.chat))
-        void cache.write([{ t: 'undraft', chat: one.chat }]).catch(() => undefined)
+      if (isRetiredChat(one.chat)) void cache.write([{ t: 'undraft', chat: one.chat }]).catch(() => undefined)
       else this.drafts.set(one.chat, one.text)
     }
 
@@ -131,8 +111,7 @@ class ChatsStore implements Chats {
       engine.listen((change) => {
         if (change.t === 'messages') {
           this.countLater(change.chat)
-          if (change.arrived.length)
-            for (const hear of this.arrivals) hear(change.chat, change.arrived)
+          if (change.arrived.length) for (const hear of this.arrivals) hear(change.chat, change.arrived)
         }
         if (change.t === 'list') this.drawList()
       }),
@@ -358,8 +337,7 @@ class ChatsStore implements Chats {
     const known = new Set(placed.map((one) => one.path))
     const held = new Set(paths)
     const came = paths.some((path) => !known.has(path))
-    const went =
-      root !== null && placed.some((one) => samePath(one.root, root) && !held.has(one.path))
+    const went = root !== null && placed.some((one) => samePath(one.root, root) && !held.has(one.path))
     if (came || went) void this.lookForPointers()
   }
 
@@ -510,9 +488,7 @@ class ChatsStore implements Chats {
   private rowsAbout(chat: string, message: string) {
     return (this.engine?.pending(chat) ?? []).filter((row) => {
       const event = row.event
-      return event.kind === 'post'
-        ? event.message === message
-        : 'target' in event && event.target === message
+      return event.kind === 'post' ? event.message === message : 'target' in event && event.target === message
     })
   }
 
@@ -560,9 +536,7 @@ class ChatsStore implements Chats {
     const names = new Map(this.list.map((one) => [one.id, one.name ?? '']))
     const inChats = asked.in.length
       ? this.list
-          .filter((one) =>
-            asked.in.some((name) => name.toLowerCase() === (one.name ?? '').toLowerCase()),
-          )
+          .filter((one) => asked.in.some((name) => name.toLowerCase() === (one.name ?? '').toLowerCase()))
           .map((one) => one.id)
       : []
     if (asked.in.length && !inChats.length) return []
@@ -694,17 +668,13 @@ class ChatsStore implements Chats {
     if (text) this.drafts.set(chat, text)
     else this.drafts.delete(chat)
     void this.cache
-      ?.write([
-        text ? { t: 'draft', draft: { chat, text, at: Date.now() } } : { t: 'undraft', chat },
-      ])
+      ?.write([text ? { t: 'draft', draft: { chat, text, at: Date.now() } } : { t: 'undraft', chat }])
       .catch(() => undefined)
   }
 
   async upload(bytes: Uint8Array): Promise<string | null> {
     const digest = await crypto.subtle.digest('SHA-256', new Uint8Array(bytes))
-    const hash = [...new Uint8Array(digest)]
-      .map((one) => one.toString(16).padStart(2, '0'))
-      .join('')
+    const hash = [...new Uint8Array(digest)].map((one) => one.toString(16).padStart(2, '0')).join('')
     return (await http.putBlob(hash, bytes)) ? hash : null
   }
 
@@ -777,8 +747,7 @@ class ChatsStore implements Chats {
     if (chat) this.gone.delete(chat)
     const row = chat ? (this.engine?.chats.get(chat)?.row ?? null) : null
     const root = to ? (spaceHolding(workspace.spaces, to)?.root ?? null) : null
-    const moved =
-      before !== undefined && row !== null && root !== null && this.remoteOf(root) !== row.space
+    const moved = before !== undefined && row !== null && root !== null && this.remoteOf(root) !== row.space
     if ((before && !chat) || (chat !== null && !row) || moved) {
       void this.engine?.refresh().catch(() => false)
     }

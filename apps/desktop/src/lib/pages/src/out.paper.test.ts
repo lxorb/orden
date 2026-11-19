@@ -24,12 +24,7 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
 }))
 vi.mock('../../pdf/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../pdf/src/api')>()),
-  svgToPng: async (
-    svg: string,
-    _width: number,
-    _height: number,
-    under: (() => unknown) | null = null,
-  ) => {
+  svgToPng: async (svg: string, _width: number, _height: number, under: (() => unknown) | null = null) => {
     held.drawn.push(svg)
     held.under.push(under ? await under() : null)
     return new Uint8Array([1])

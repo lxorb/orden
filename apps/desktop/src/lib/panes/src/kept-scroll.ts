@@ -191,8 +191,7 @@ export function keepsScroll(root: HTMLElement, key: string | null) {
 
   const scrolled = (event: Event) => {
     const target = event.target
-    if (at === null || !(target instanceof HTMLElement) || restoring.has(target) || own(target))
-      return
+    if (at === null || !(target instanceof HTMLElement) || restoring.has(target) || own(target)) return
     const place = placeOf(root, target)
     if (place === null) return
     held.delete(target)

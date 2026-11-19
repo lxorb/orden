@@ -48,9 +48,7 @@ export function readUri(uri: string): Followable | null {
     cancel: given['x-cancel'] ?? null,
   }
 
-  const args = Object.fromEntries(
-    Object.entries(given).filter(([key]) => !CALLBACK_KEYS.some((one) => one === key)),
-  )
+  const args = Object.fromEntries(Object.entries(given).filter(([key]) => !CALLBACK_KEYS.some((one) => one === key)))
 
   return { action, args, callbacks }
 }

@@ -443,9 +443,7 @@ describe('a page note with many pages and strokes', () => {
   function ownerOf(thing: Box, pages: readonly PageNode[]): PageNode | null {
     const x = thing.x + thing.width / 2
     const y = thing.y + thing.height / 2
-    const held = pages.find(
-      (one) => x >= one.x && x < one.x + one.width && y >= one.y && y < one.y + one.height,
-    )
+    const held = pages.find((one) => x >= one.x && x < one.x + one.width && y >= one.y && y < one.y + one.height)
     if (held) return held
     let best: PageNode | null = null
     let most = 0
@@ -502,9 +500,7 @@ describe('a page note with many pages and strokes', () => {
     }
     for (const [at, stroke] of canvas.ink.entries()) {
       const now = after.ink[at]
-      expect((now?.points[0]?.y ?? 0) - (stroke.points[0]?.y ?? 0)).toBe(
-        shift(inkOwnerOf(stroke, pages)),
-      )
+      expect((now?.points[0]?.y ?? 0) - (stroke.points[0]?.y ?? 0)).toBe(shift(inkOwnerOf(stroke, pages)))
     }
   })
 
@@ -596,9 +592,7 @@ describe('a page out of a PDF', () => {
   })
 
   test('a page named Letter keeps Letter when the file is read back; a paper with no pages still gives somewhere to write; one page is a page and nothing else', () => {
-    const once = pagesFromPdf('Paper.pdf', [
-      { width: PAPERS.letter.width, height: PAPERS.letter.height },
-    ])
+    const once = pagesFromPdf('Paper.pdf', [{ width: PAPERS.letter.width, height: PAPERS.letter.height }])
     expect(pagesOf(readCanvas(writeCanvas(once)))[0]?.paper).toBe('letter')
     expect(pagesOf(pagesFromPdf('Paper.pdf', []))).toHaveLength(1)
     const one = pdfPage('Paper.pdf', 3, 600, 800)

@@ -59,11 +59,7 @@
     } catch (error) {
       const said = error instanceof Error ? error.message : String(error)
       if (said !== 'stopped') {
-        trouble(
-          said === 'timed out'
-            ? 'Could not sign in.'
-            : message(new Error(said), 'Could not sign in.'),
-        )
+        trouble(said === 'timed out' ? 'Could not sign in.' : message(new Error(said), 'Could not sign in.'))
       }
     } finally {
       if (signIns === mine) signingIn = false
@@ -94,13 +90,8 @@
         <span class="hint">Asking…</span>
       {:else if plan.state === 'missing'}
         <span class="hint">Not installed</span>
-        <button class="orden-chip" onclick={() => void openExternal(INSTALL[kind])}>
-          Install
-        </button>
-        <button
-          class="orden-chip is-quiet"
-          onclick={() => void plans.check({ id: provider.id, kind })}
-        >
+        <button class="orden-chip" onclick={() => void openExternal(INSTALL[kind])}> Install </button>
+        <button class="orden-chip is-quiet" onclick={() => void plans.check({ id: provider.id, kind })}>
           Check again
         </button>
       {:else if plan.state === 'in'}
@@ -109,13 +100,9 @@
         </span>
       {:else if vault.seen[provider.id]}
         <span class="hint">{vault.seen[provider.id]}</span>
-        <button class="orden-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
-          Sign in here
-        </button>
+        <button class="orden-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}> Sign in here </button>
       {:else}
-        <button class="orden-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
-          Sign in
-        </button>
+        <button class="orden-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}> Sign in </button>
       {/if}
     </div>
   </div>
@@ -128,9 +115,7 @@
     <div class="row">
       {#if plans.chatgpt}
         <span class="hint">{plans.chatgpt.email ?? 'Signed in'}</span>
-        <button class="orden-chip is-quiet" onclick={() => void signOutOfChatgpt()}>
-          Sign out
-        </button>
+        <button class="orden-chip is-quiet" onclick={() => void signOutOfChatgpt()}> Sign out </button>
       {:else if plans.chatgpt === null}
         {#if signingIn}<span class="hint">Asking…</span>
         {:else if vault.seen[provider.id]}<span class="hint">{vault.seen[provider.id]}</span>{/if}
@@ -150,9 +135,7 @@
   {#if limitWords(kind, limit)}
     <div class="orden-setting setting" transition:slide={{ duration: dur(160) }}>
       <span class="name hint">{limitWords(kind, limit)}</span>
-      <button class="orden-chip is-quiet" onclick={() => void openExternal(USAGE_OF[kind])}>
-        Manage usage
-      </button>
+      <button class="orden-chip is-quiet" onclick={() => void openExternal(USAGE_OF[kind])}> Manage usage </button>
     </div>
   {/if}
 {/snippet}

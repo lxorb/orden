@@ -153,8 +153,7 @@ describe('Android’s recogniser', () => {
     phone = held
     Object.assign(globalThis, {
       __ORDEN_SYSTEM__: {
-        askForTheFrame: () =>
-          (window as { __ordenFrame?: (word: string) => void }).__ordenFrame?.('word'),
+        askForTheFrame: () => (window as { __ordenFrame?: (word: string) => void }).__ordenFrame?.('word'),
         listen: (_word: string, on: boolean) => {
           held.on.push(on)
           return on

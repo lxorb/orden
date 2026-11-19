@@ -6,8 +6,7 @@ export interface TreeRow {
   open: boolean
 }
 
-export type TreeStep =
-  { do: 'stand'; path: string } | { do: 'expand'; path: string } | { do: 'collapse'; path: string }
+export type TreeStep = { do: 'stand'; path: string } | { do: 'expand'; path: string } | { do: 'collapse'; path: string }
 
 export const TREE_MOVES: readonly (readonly [string, string])[] = [
   ['tree.down', 'ArrowDown'],
@@ -21,11 +20,7 @@ function holds(folder: string, path: string): boolean {
   return path.replace(/\\/g, '/').startsWith(`${one}/`)
 }
 
-export function treeStep(
-  key: string,
-  rows: readonly TreeRow[],
-  here: string | null,
-): TreeStep | null {
+export function treeStep(key: string, rows: readonly TreeRow[], here: string | null): TreeStep | null {
   const at = here === null ? -1 : rows.findIndex((row) => row.path === here)
   const row = at < 0 ? undefined : rows[at]
 

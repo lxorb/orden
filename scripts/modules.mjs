@@ -9,12 +9,7 @@ const LAYERS = { foundation: 0, shell: 1, content: 2, features: 3, native: 0 }
 
 const SKIPPED = new Set(['node_modules', 'dist', 'target', '.git', 'graphify-out', 'shots'])
 
-const MODULE_ROOTS = [
-  'packages',
-  'services',
-  'apps/desktop/src/lib',
-  'apps/desktop/src-tauri/crates',
-]
+const MODULE_ROOTS = ['packages', 'services', 'apps/desktop/src/lib', 'apps/desktop/src-tauri/crates']
 
 const CONTRACT_TESTS = {
   ts: ['test/contract.test.ts', 'contract.test.ts', 'src/contract.test.ts'],
@@ -77,10 +72,7 @@ function enclosingPackage(dir, root) {
         return {
           name: typeof parsed.name === 'string' ? parsed.name : null,
           dir: at,
-          libraries: new Set([
-            ...Object.keys(parsed.dependencies ?? {}),
-            ...Object.keys(parsed.devDependencies ?? {}),
-          ]),
+          libraries: new Set([...Object.keys(parsed.dependencies ?? {}), ...Object.keys(parsed.devDependencies ?? {})]),
         }
       } catch {
         return null
@@ -117,21 +109,15 @@ function crateProblems(module, json) {
   if (/^name = "([^"]+)"$/m.exec(cargo)?.[1] !== `orden-${json.name}`)
     found.push(`${module.dir}/Cargo.toml: the crate is named orden-${json.name}`)
   const reached = new Set()
-  for (const [, crate, folder] of cargo.matchAll(
-    /^orden-([a-z0-9-]+) = \{[^}]*path = "\.\.\/([a-z0-9-]+)"/gm,
-  )) {
-    if (crate !== folder)
-      found.push(`${module.dir}/Cargo.toml: orden-${crate} lives in ../${crate}, not ../${folder}`)
+  for (const [, crate, folder] of cargo.matchAll(/^orden-([a-z0-9-]+) = \{[^}]*path = "\.\.\/([a-z0-9-]+)"/gm)) {
+    if (crate !== folder) found.push(`${module.dir}/Cargo.toml: orden-${crate} lives in ../${crate}, not ../${folder}`)
     reached.add(folder)
   }
   for (const one of reached)
     if (!json.dependsOn.includes(one))
-      found.push(
-        `${module.dir}/Cargo.toml: depends on orden-${one}, which module.json does not declare`,
-      )
+      found.push(`${module.dir}/Cargo.toml: depends on orden-${one}, which module.json does not declare`)
   for (const one of json.dependsOn)
-    if (!reached.has(one))
-      found.push(`${module.file}: declares '${one}', which Cargo.toml does not depend on`)
+    if (!reached.has(one)) found.push(`${module.file}: declares '${one}', which Cargo.toml does not depend on`)
   return found
 }
 
@@ -170,9 +156,7 @@ function standsAlone(module, test, problems, modules) {
       continue
     }
     if (specifier === own || specifier === '@orden/contracts') continue
-    const library = specifier.startsWith('@')
-      ? specifier.split('/').slice(0, 2).join('/')
-      : specifier.split('/')[0]
+    const library = specifier.startsWith('@') ? specifier.split('/').slice(0, 2).join('/') : specifier.split('/')[0]
     if (!specifier.startsWith('@orden/') && module.host?.libraries.has(library)) continue
     const fake = /^@orden\/([a-z0-9-]+)\/(?:sim|fakes)$/.exec(specifier)
     if (fake && module.dependsOn.includes(fake[1])) continue
@@ -220,9 +204,7 @@ function reachesOnlyApis(module, root, problems, modules) {
       }
       const path = ENDINGS.map((one) => target + one).find((one) => existsSync(one)) ?? target
       if (module.pending.includes(relative(root, path).split(sep).join('/'))) continue
-      problems.push(
-        `${relative(root, file).split(sep).join('/')}: reaches '${specifier}', past a module api`,
-      )
+      problems.push(`${relative(root, file).split(sep).join('/')}: reaches '${specifier}', past a module api`)
     }
   }
 }
@@ -232,9 +214,7 @@ const TYPES_ONLY = /(?:^|\n)\s*(?:import|export)\s+type\s[^;'"]*?from\s*['"][^'"
 const LAZY = /import\(\s*['"](\.[^'"]+)['"]\s*\)/g
 
 function fileAt(target) {
-  return (
-    ENDINGS.map((one) => target + one).find((one) => existsSync(one) && !one.endsWith(sep)) ?? null
-  )
+  return ENDINGS.map((one) => target + one).find((one) => existsSync(one) && !one.endsWith(sep)) ?? null
 }
 
 function doorsStayShut(module, root, problems) {
@@ -292,10 +272,7 @@ export function check(root = ROOT) {
     if (json.api !== undefined && (typeof json.api !== 'string' || !json.api.startsWith('src/'))) {
       problems.push(`${module.file}: 'api' must name a file under src/`)
     }
-    if (
-      !Array.isArray(json.dependsOn) ||
-      json.dependsOn.some((one) => typeof one !== 'string' || !NAME.test(one))
-    ) {
+    if (!Array.isArray(json.dependsOn) || json.dependsOn.some((one) => typeof one !== 'string' || !NAME.test(one))) {
       problems.push(`${module.file}: 'dependsOn' must be a list of module names`)
     } else if (new Set(json.dependsOn).size !== json.dependsOn.length) {
       problems.push(`${module.file}: 'dependsOn' names a module twice`)
@@ -311,10 +288,8 @@ export function check(root = ROOT) {
       }
     }
     const folder = module.dir.split('/').at(-1)
-    if (folder !== json.name)
-      problems.push(`${module.file}: module '${json.name}' lives in a folder named '${folder}'`)
-    if (byName.has(keyOf(module)))
-      problems.push(`${module.file}: module '${json.name}' is declared twice`)
+    if (folder !== json.name) problems.push(`${module.file}: module '${json.name}' lives in a folder named '${folder}'`)
+    if (byName.has(keyOf(module))) problems.push(`${module.file}: module '${json.name}' is declared twice`)
     const manifest = join(module.absolute, 'package.json')
     let packageName = null
     if (module.lang === 'ts' && existsSync(manifest)) {
@@ -323,9 +298,7 @@ export function check(root = ROOT) {
         packageName = parsed.name ?? null
         const main = parsed.exports?.['.'] ?? parsed.exports
         if (typeof main !== 'string' || main.replace(/^\.\//, '') !== module.api) {
-          problems.push(
-            `${module.dir}/package.json: exports['.'] must be ./${module.api}, the module's api`,
-          )
+          problems.push(`${module.dir}/package.json: exports['.'] must be ./${module.api}, the module's api`)
         }
       } catch {
         problems.push(`${module.dir}/package.json: not valid JSON`)
@@ -336,13 +309,9 @@ export function check(root = ROOT) {
     } else if (module.lang === 'rust') {
       problems.push(...crateProblems(module, json))
     }
-    if (!existsSync(join(module.absolute, module.api)))
-      problems.push(`${module.dir}: missing its api, ${module.api}`)
+    if (!existsSync(join(module.absolute, module.api))) problems.push(`${module.dir}: missing its api, ${module.api}`)
     const test = contractTestOf(module)
-    if (!test)
-      problems.push(
-        `${module.dir}: missing its contract test (${CONTRACT_TESTS[module.lang].join(' or ')})`,
-      )
+    if (!test) problems.push(`${module.dir}: missing its contract test (${CONTRACT_TESTS[module.lang].join(' or ')})`)
     byName.set(keyOf(module), { ...module, packageName, test })
   }
   for (const module of byName.values()) {
@@ -353,25 +322,17 @@ export function check(root = ROOT) {
       const target = byName.get(`${module.lang}:${dep}`) ?? byName.get(`ts:${dep}`)
       if (!target) {
         if (!packages.has(dep))
-          problems.push(
-            `${module.file}: depends on '${dep}', which is neither a module nor a workspace package`,
-          )
+          problems.push(`${module.file}: depends on '${dep}', which is neither a module nor a workspace package`)
         continue
       }
       if (LAYERS[target.layer] > LAYERS[module.layer]) {
-        problems.push(
-          `${module.file}: a ${module.layer} module may not depend on '${dep}' (${target.layer})`,
-        )
+        problems.push(`${module.file}: a ${module.layer} module may not depend on '${dep}' (${target.layer})`)
       }
       if (module.layer === 'features' && target.layer === 'features') {
-        problems.push(
-          `${module.file}: features never depend on each other ('${dep}'); go through contracts`,
-        )
+        problems.push(`${module.file}: features never depend on each other ('${dep}'); go through contracts`)
       }
       if (module.lang !== target.lang && dep !== 'contracts') {
-        problems.push(
-          `${module.file}: '${dep}' is a ${target.lang} module; the two sides meet only in contracts`,
-        )
+        problems.push(`${module.file}: '${dep}' is a ${target.lang} module; the two sides meet only in contracts`)
       }
     }
     if (module.test) standsAlone(module, module.test, problems, [...byName.values()])
@@ -427,10 +388,7 @@ function runContracts(root, lang) {
     if (!module.test || (lang && module.lang !== lang)) continue
     const command =
       module.lang === 'rust'
-        ? [
-            'cargo',
-            ['test', '--manifest-path', join(module.dir, 'Cargo.toml'), '--test', 'contract'],
-          ]
+        ? ['cargo', ['test', '--manifest-path', join(module.dir, 'Cargo.toml'), '--test', 'contract']]
         : [
             'pnpm',
             [

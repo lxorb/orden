@@ -101,9 +101,7 @@ describe('moving a block', () => {
     const second = blockAt(one, NOTE.indexOf('item two') + 2)!
     const first = blockAt(one, NOTE.indexOf('item one') + 2)!
 
-    expect(after(one, moveBlock(one, second, first.from))).toContain(
-      '- item two\n- item one\n  - nested\n',
-    )
+    expect(after(one, moveBlock(one, second, first.from))).toContain('- item two\n- item one\n  - nested\n')
   })
 
   test('a block is not dropped inside itself', () => {

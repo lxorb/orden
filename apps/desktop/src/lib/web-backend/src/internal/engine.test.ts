@@ -118,8 +118,7 @@ async function device(account: ReferenceAccount, id: string, root: string, disk:
   const world: World = {
     disk,
     account: {
-      ask: async (route, body) =>
-        route === 'prepare' ? null : unframe(await account.handle(id, route, frame(body))),
+      ask: async (route, body) => (route === 'prepare' ? null : unframe(await account.handle(id, route, frame(body)))),
     },
     name: id,
     now: () => 1000,
@@ -208,14 +207,7 @@ describe('the engine over a space Orden keeps', () => {
     const hits = async (words: string) => {
       const found: string[] = []
       const query = parseQuery(words)
-      await searchInternal(
-        root,
-        query,
-        [],
-        50,
-        ({ hits }) => found.push(...hits.map((hit) => hit.path)),
-        [],
-      )
+      await searchInternal(root, query, [], 50, ({ hits }) => found.push(...hits.map((hit) => hit.path)), [])
       return found
     }
     expect(await hits('eggs')).toEqual([`${root}\\Work\\Plan.md`])
@@ -226,9 +218,7 @@ describe('the engine over a space Orden keeps', () => {
     await webInvoke('rename_note', { from: '/internal-s/Work/Plan.md', to: '/internal-s/Ham.md' })
     await settled()
     expect(await hits('ham')).toEqual([`${root}\\Ham.md`])
-    expect(
-      await searchInternal('C:\\Elsewhere', parseQuery('ham'), [], 5, () => undefined, []),
-    ).toBe(false)
+    expect(await searchInternal('C:\\Elsewhere', parseQuery('ham'), [], 5, () => undefined, [])).toBe(false)
   })
 
   test("keeps the space's inbox as a document only its store holds: carried, never listed or walked", async () => {

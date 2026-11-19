@@ -20,10 +20,7 @@ function answer(context: Context<{ Bindings: Env }>, body: object, status: 200 |
 
 openLink.get('/:id', async (context) => {
   const machine = machineOf(context.req)
-  if (
-    machine &&
-    !(await within(context.env, 'pass-link', machine, OPENS_FROM_ONE_MACHINE, AN_HOUR))
-  ) {
+  if (machine && !(await within(context.env, 'pass-link', machine, OPENS_FROM_ONE_MACHINE, AN_HOUR))) {
     return answer(context, { error: TRY_IN_AN_HOUR }, 429)
   }
 
@@ -41,9 +38,7 @@ openLink.get('/:id', async (context) => {
 
   if (!opened) {
     const there = await db.prepare('select 1 as one from pass_links where id = ?').bind(id).first()
-    return there
-      ? answer(context, { error: LINK_GONE }, 410)
-      : answer(context, { error: NO_SUCH_LINK }, 404)
+    return there ? answer(context, { error: LINK_GONE }, 410) : answer(context, { error: NO_SUCH_LINK }, 404)
   }
 
   if (opened.max_views !== null && opened.views >= opened.max_views) {

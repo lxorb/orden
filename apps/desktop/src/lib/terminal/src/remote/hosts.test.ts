@@ -30,28 +30,16 @@ const kept = (more: Partial<Kept> = {}): Kept => ({ ...NOTHING_KEPT, ...more })
 
 describe('the list', () => {
   test("the config's hosts in its order, then Orden's own, each saying where it is", () => {
-    const hosts = hostsOf(
-      CONFIG,
-      kept({ own: [{ id: 'n-1', name: 'Box', hostname: 'box', user: 'me' }] }),
-    )
+    const hosts = hostsOf(CONFIG, kept({ own: [{ id: 'n-1', name: 'Box', hostname: 'box', user: 'me' }] }))
 
     expect(hosts.map((one) => one.id)).toEqual(['pi', 'nas', 'office', 'build', 'n-1'])
-    expect(hosts.map((one) => one.detail)).toEqual([
-      'emil@10.0.0.5',
-      null,
-      'office.example.com:2222',
-      null,
-      'me@box',
-    ])
+    expect(hosts.map((one) => one.detail)).toEqual(['emil@10.0.0.5', null, 'office.example.com:2222', null, 'me@box'])
     expect(hosts[0]?.also).toEqual(['raspberry', '10.0.0.5'])
     expect(hosts.map((one) => one.own)).toEqual([false, false, false, false, true])
   })
 
   test("Settings' order goes first, and a group set in Orden before the config's", () => {
-    const hosts = hostsOf(
-      CONFIG,
-      kept({ order: ['build', 'pi'], about: { nas: { group: 'Storage', colour: '3' } } }),
-    )
+    const hosts = hostsOf(CONFIG, kept({ order: ['build', 'pi'], about: { nas: { group: 'Storage', colour: '3' } } }))
 
     expect(hosts.map((one) => one.id)).toEqual(['build', 'pi', 'nas', 'office'])
     expect(hosts.find((one) => one.id === 'nas')).toMatchObject({ group: 'Storage', colour: '3' })

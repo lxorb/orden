@@ -4,16 +4,7 @@ import type { ChangeSpec, EditorState, Line } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
 import { frontMatterSpan } from '../live-preview/front-matter'
 import { enclosing } from '../nodes'
-import {
-  above,
-  below,
-  gap,
-  indentOf,
-  itemsAround,
-  holderQuote,
-  leadOf,
-  type Side,
-} from './separation'
+import { above, below, gap, indentOf, itemsAround, holderQuote, leadOf, type Side } from './separation'
 import type { BlockSpan } from './span'
 import { writtenLine } from './span'
 
@@ -80,12 +71,7 @@ function opensCalloutAt(state: EditorState, block: Measured, at: number): boolea
   return false
 }
 
-function landingOf(
-  state: EditorState,
-  span: BlockSpan,
-  block: Measured,
-  at: number,
-): number | null {
+function landingOf(state: EditorState, span: BlockSpan, block: Measured, at: number): number | null {
   if (span.kind === 'front-matter') return null
 
   const doc = state.doc
@@ -96,10 +82,7 @@ function landingOf(
 
   const stranger = to < doc.length ? strangerAt(state, block, to) : null
   if (stranger) {
-    to =
-      to < block.first.from
-        ? doc.lineAt(stranger.from).from
-        : settled(state, doc.lineAt(stranger.to).to + 1)
+    to = to < block.first.from ? doc.lineAt(stranger.from).from : settled(state, doc.lineAt(stranger.to).to + 1)
   }
 
   if (to < block.first.from && opensCalloutAt(state, block, to)) return null
@@ -211,13 +194,7 @@ export function copyBlock(state: EditorState, span: BlockSpan): BlockEdit {
   const doc = state.doc
   const text = doc.sliceString(block.first.from, block.last.to)
   const existing = block.down ? doc.sliceString(block.last.to, block.down.from) : null
-  const between = gap(
-    state,
-    above(state, block.last),
-    below(state, block.first),
-    existing,
-    block.holder,
-  )
+  const between = gap(state, above(state, block.last), below(state, block.first), existing, block.holder)
 
   return {
     changes: [{ from: block.last.to, insert: between + text }],

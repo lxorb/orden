@@ -6,9 +6,7 @@ import { recordVoice } from '../src/voice'
 describe('a note sent to a chat', () => {
   test('is its link alone, or the quoted lines above a link to the heading they sit under', () => {
     expect(sentWords('Plan')).toBe('[[Plan]] ')
-    expect(sentWords('Plan', { text: 'one\n\ntwo', heading: 'Goals' })).toBe(
-      '> one\n>\n> two\n\n[[Plan#Goals]] ',
-    )
+    expect(sentWords('Plan', { text: 'one\n\ntwo', heading: 'Goals' })).toBe('> one\n>\n> two\n\n[[Plan#Goals]] ')
   })
 
   test('finds the nearest heading above where the quote starts', () => {
@@ -20,9 +18,12 @@ describe('a note sent to a chat', () => {
 
 describe('how urgent a message is', () => {
   test('reads as a word for every level', () => {
-    expect(
-      ['urgent', 'important', 'if-time', 'unimportant'].map((one) => levelWord(one as never)),
-    ).toEqual(['Urgent', 'Important', 'If time', 'Unimportant'])
+    expect(['urgent', 'important', 'if-time', 'unimportant'].map((one) => levelWord(one as never))).toEqual([
+      'Urgent',
+      'Important',
+      'If time',
+      'Unimportant',
+    ])
   })
 })
 

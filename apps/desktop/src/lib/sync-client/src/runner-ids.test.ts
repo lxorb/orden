@@ -61,9 +61,10 @@ describe('the id sync gave a file', () => {
     const open = runner as unknown as Open
     open.current = engine('owner', { id: 'a1' })
     open.reconciledAt = 1
-    expect(
-      await open.answering({ what: 'id-at', args: { path: '/s/Notepad.application' } }),
-    ).toEqual({ id: 'a1', own: true })
+    expect(await open.answering({ what: 'id-at', args: { path: '/s/Notepad.application' } })).toEqual({
+      id: 'a1',
+      own: true,
+    })
     open.current = null
   })
 })
@@ -71,9 +72,7 @@ describe('the id sync gave a file', () => {
 describe('the space sync keeps for a folder', () => {
   test('is found under any spelling of that folder', () => {
     const open = runner as unknown as Open & { local: boolean }
-    const spaces = new Map([
-      ['s1', { id: 's1', row: { root: 'C:\\Users\\Ada\\Orden\\Notes', role: 'read' } }],
-    ])
+    const spaces = new Map([['s1', { id: 's1', row: { root: 'C:\\Users\\Ada\\Orden\\Notes', role: 'read' } }]])
     open.local = false
     open.current = { core: { spaces } }
 

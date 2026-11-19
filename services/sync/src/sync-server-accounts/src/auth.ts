@@ -63,9 +63,7 @@ async function userForToken(env: Env, token: string): Promise<User | null> {
   if (!row) return null
 
   if (!row.seen || now() - row.seen > SEEN_EVERY) {
-    await env.DB.prepare('update sessions set last_used_at = ? where token_hash = ?')
-      .bind(now(), hash)
-      .run()
+    await env.DB.prepare('update sessions set last_used_at = ? where token_hash = ?').bind(now(), hash).run()
   }
 
   return { id: row.id, email: row.email, name: row.name, created_at: row.created_at }
@@ -73,10 +71,7 @@ async function userForToken(env: Env, token: string): Promise<User | null> {
 
 const SEEN_EVERY = 60 * 60 * 1000
 
-export async function requireWhoever(
-  env: Env,
-  header: string | undefined,
-): Promise<Whoever | null> {
+export async function requireWhoever(env: Env, header: string | undefined): Promise<Whoever | null> {
   const token = tokenIn(header)
   if (!token) return null
 
@@ -88,9 +83,7 @@ export async function requireWhoever(
 }
 
 export function accountById(env: Env, id: string): Promise<User | null> {
-  return env.DB.prepare('select id, email, name, created_at from users where id = ?')
-    .bind(id)
-    .first<User>()
+  return env.DB.prepare('select id, email, name, created_at from users where id = ?').bind(id).first<User>()
 }
 
 async function openSession(env: Env, userId: string, device = ''): Promise<string> {
@@ -157,10 +150,7 @@ export async function signingIn(
 }
 
 export async function sessionFor(env: Env, user: User, device = ''): Promise<Session> {
-  const [token, profile] = await Promise.all([
-    openSession(env, user.id, device),
-    ownProfile(env, user.id),
-  ])
+  const [token, profile] = await Promise.all([openSession(env, user.id, device), ownProfile(env, user.id)])
   return {
     token,
     user: { ...presentUser(user), ...(profile ? presentOwnProfile(profile, Date.now()) : {}) },
@@ -172,10 +162,7 @@ export async function sendCode(
   address: string,
   machine: string | null = null,
   message: (code: string) => { subject: string; text: string; html: string } = codeMessage,
-): Promise<
-  | { ok: true; resendIn: number }
-  | { error: string; status: 400 | 429 | 503; retryAfter: number | null }
-> {
+): Promise<{ ok: true; resendIn: number } | { error: string; status: 400 | 429 | 503; retryAfter: number | null }> {
   if (!isEmail(address)) return { error: NOT_AN_EMAIL, status: 400, retryAfter: null }
 
   const existing = await env.DB.prepare('select sent_at from login_codes where email = ?')
@@ -243,9 +230,7 @@ export async function checkCode(
     return { error: WRONG_CODE, status: 400 }
   }
 
-  const pending = await env.DB.prepare(
-    'select code_hash, salt, expires_at, attempts from login_codes where email = ?',
-  )
+  const pending = await env.DB.prepare('select code_hash, salt, expires_at, attempts from login_codes where email = ?')
     .bind(address)
     .first<{ code_hash: string; salt: string; expires_at: number; attempts: number }>()
 
@@ -432,9 +417,7 @@ auth.post('/signout', async (context) => {
   const token = tokenIn(context.req.header('authorization'))
   if (token) {
     const hash = await sha256(token)
-    const held = await context.env.DB.prepare(
-      'delete from sessions where token_hash = ? returning user_id, id',
-    )
+    const held = await context.env.DB.prepare('delete from sessions where token_hash = ? returning user_id, id')
       .bind(hash)
       .first<{ user_id: string; id: string | null }>()
 
@@ -443,9 +426,7 @@ auth.post('/signout', async (context) => {
       return context.json({ ok: true })
     }
 
-    const guest = await context.env.DB.prepare(
-      'delete from guest_sessions where token_hash = ? returning guest_id',
-    )
+    const guest = await context.env.DB.prepare('delete from guest_sessions where token_hash = ? returning guest_id')
       .bind(hash)
       .first<{ guest_id: string }>()
     if (guest) {

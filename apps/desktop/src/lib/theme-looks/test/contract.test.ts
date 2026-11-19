@@ -17,9 +17,7 @@ describe('a published page sheet', () => {
       "@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { --bg: #000; --text: #eee } }",
     )
     expect(sheet).toContain(":root[data-theme='dark'] { --bg: #000; --text: #eee }")
-    expect(sheet).toContain(
-      "@media print { :root, :root[data-theme='dark'] { --bg: #fff; --text: #111 } }",
-    )
+    expect(sheet).toContain("@media print { :root, :root[data-theme='dark'] { --bg: #fff; --text: #111 } }")
   })
 })
 

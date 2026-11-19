@@ -14,10 +14,7 @@ function sources(folder: string): string[] {
   })
 }
 
-const OWN_DECISION = [
-  /\bmode\s*[!=]==?\s*'autonomous'/,
-  /\bagent\??\.scopes\??\.(includes|every|some)\(/,
-]
+const OWN_DECISION = [/\bmode\s*[!=]==?\s*'autonomous'/, /\bagent\??\.scopes\??\.(includes|every|some)\(/]
 
 describe('what an agent holds', () => {
   test('is the crate’s Grant::holds: every scope under Full permissions, the listed ones otherwise', () => {

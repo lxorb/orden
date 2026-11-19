@@ -20,12 +20,7 @@
   import { accelerator, Glyph, Hint, Switch, Select } from '../../ui-controls/src/api'
   import DefaultBrowser from './DefaultBrowser.svelte'
   import FontPicker from './FontPicker.svelte'
-  import {
-    type SettingsPart,
-    type SettingsPartHost,
-    settingsPartsIn,
-    whenLoaded,
-  } from '@orden/contracts'
+  import { type SettingsPart, type SettingsPartHost, settingsPartsIn, whenLoaded } from '@orden/contracts'
   import { Outward } from '../../ui-controls/src/api'
   import { Icon } from '../../glyphs/src/api'
   import { localDate } from '../../platform/src/api'
@@ -190,11 +185,7 @@
   const fraction = (field: Extract<Field, { kind: 'slider' }>, value: number) =>
     ((value - field.min) / (field.max - field.min)) * 100
 
-  function dialled(
-    field: Extract<Field, { kind: 'slider' }>,
-    input: HTMLInputElement,
-    kept: boolean,
-  ) {
+  function dialled(field: Extract<Field, { kind: 'slider' }>, input: HTMLInputElement, kept: boolean) {
     const value = Number(input.value)
     if (kept || !field.preview) field.set(value)
     else field.preview(value)
@@ -274,11 +265,7 @@
       id: category.id,
       label: category.label(),
       rows: SHORTCUTS.filter((one) => one.category === category.id && offeredHere(one)).filter(
-        (one) =>
-          !needle ||
-          has(one.label()) ||
-          has(shown(shortcuts.keyFor(one.id))) ||
-          has(category.label()),
+        (one) => !needle || has(one.label()) || has(shown(shortcuts.keyFor(one.id))) || has(category.label()),
       ),
     })).filter((group) => group.rows.length)
   })
@@ -300,9 +287,7 @@
           one.category === category.id &&
           runnable(one.id) &&
           !held.has(one.id) &&
-          (!needle ||
-            one.label().toLowerCase().includes(needle) ||
-            category.label().toLowerCase().includes(needle)),
+          (!needle || one.label().toLowerCase().includes(needle) || category.label().toLowerCase().includes(needle)),
       ),
     })).filter((group) => group.rows.length)
   })
@@ -357,8 +342,7 @@
     if (settings.section === 'shortcuts') globalKeys.follow()
   })
 
-  const enter = (x: number) =>
-    stacked ? { x, duration: dur(200), easing: cubicOut } : { duration: dur(0) }
+  const enter = (x: number) => (stacked ? { x, duration: dur(200), easing: cubicOut } : { duration: dur(0) })
 
   $effect.pre(() => closeOnBack(stacked && !settings.listing, () => (settings.listing = true)))
 </script>
@@ -412,12 +396,9 @@
                 class:is-on={!stacked && !query && settings.section === item.id}
                 onclick={() => go(item.id)}
               >
-                <svg class="glyph orden-row-mark" viewBox="0 0 16 16"
-                  ><path d={ICONS[item.id]} /></svg
-                >
+                <svg class="glyph orden-row-mark" viewBox="0 0 16 16"><path d={ICONS[item.id]} /></svg>
                 <span class="orden-row-label">{item.label}</span>
-                <svg class="chevron orden-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg
-                >
+                <svg class="chevron orden-mirror" viewBox="0 0 16 16"><path d="M6 3l5 5-5 5" /></svg>
               </button>
             {/each}
           </div>
@@ -523,12 +504,7 @@
       }}
     >
       {@render named(field, where)}
-      <Switch
-        on={held}
-        label={field.label}
-        disabled={locked}
-        onchange={(on: boolean) => field.set(on)}
-      />
+      <Switch on={held} label={field.label} disabled={locked} onchange={(on: boolean) => field.set(on)} />
     </div>
   {:else if field.kind === 'slider'}
     {@const held = field.get()}
@@ -603,8 +579,7 @@
                 side.choose()
               }}
             >
-              {#if held}<span class="focus" style:left="{x * 100}%" style:top="{y * 100}%"
-                ></span>{/if}
+              {#if held}<span class="focus" style:left="{x * 100}%" style:top="{y * 100}%"></span>{/if}
             </button>
             {#if side.own()}
               <button
@@ -683,9 +658,7 @@
   <div class="orden-setting setting">
     <span class="name"
       ><span class="what"
-        >Default browser<Hint
-          text="Makes Orden the browser that links from other programs open in."
-        /></span
+        >Default browser<Hint text="Makes Orden the browser that links from other programs open in." /></span
       ></span
     >
     <DefaultBrowser />
@@ -729,9 +702,7 @@
         {#if group.caption.url}
           {@const url = group.caption.url}
           <p class="hint caption">
-            <button class="link" onclick={() => void openExternal(url)}
-              >{group.caption.text}<Outward /></button
-            >
+            <button class="link" onclick={() => void openExternal(url)}>{group.caption.text}<Outward /></button>
           </p>
         {:else}
           <p class="hint caption">{group.caption.text}</p>
@@ -759,9 +730,7 @@
         <label class="orden-setting setting">
           <span class="name"
             ><span class="what"
-              >Display name<Hint
-                text="The name the others see on what you share and in chats."
-              /></span
+              >Display name<Hint text="The name the others see on what you share and in chats." /></span
             ></span
           >
           <input
@@ -792,10 +761,7 @@
             aria-valuemax={usage.limit}
             aria-valuenow={usage.used}
           >
-            <div
-              class="orden-meter-fill"
-              style:width="{Math.min(100, usage.fraction * 100)}%"
-            ></div>
+            <div class="orden-meter-fill" style:width="{Math.min(100, usage.fraction * 100)}%"></div>
           </div>
           <p class="hint">
             {readableSize(usage.used)} of {readableSize(usage.limit)} used.
@@ -814,16 +780,13 @@
       <Security />
 
       <div class="card">
-        <button class="orden-action is-danger" onclick={() => void account.leave()}>Sign out</button
-        >
+        <button class="orden-action is-danger" onclick={() => void account.leave()}>Sign out</button>
         {#if leaving}
           {#await import('../../accounts-ui/src/api') then ui}
             <ui.DeleteAccount onend={() => (leaving = false)} />
           {/await}
         {:else}
-          <button class="orden-action is-danger" onclick={() => (leaving = true)}
-            >Delete account</button
-          >
+          <button class="orden-action is-danger" onclick={() => (leaving = true)}>Delete account</button>
         {/if}
       </div>
     {:else if account.guest}
@@ -873,9 +836,7 @@
     <div class="orden-setting setting">
       <span class="name"
         ><span class="what"
-          >Shortcuts<Hint
-            text="Which app’s keys Orden follows; any key below can still be changed."
-          /></span
+          >Shortcuts<Hint text="Which app’s keys Orden follows; any key below can still be changed." /></span
         ></span
       >
       <div class="orden-setting-value">
@@ -933,12 +894,9 @@
                 {#if warning}<small class="caution">{warning}</small>{/if}
                 {#if reach}<small class="reach"
                     >{reach.text}{#if reach.change}
-                      <button class="link" onclick={() => globalKeys.change()}>Change</button
-                      >{/if}</small
+                      <button class="link" onclick={() => globalKeys.change()}>Change</button>{/if}</small
                   >{/if}
-                {#if rebind.turnedDown?.id === entry.id}<small class="warn"
-                    >{rebind.turnedDown.reason}</small
-                  >{/if}
+                {#if rebind.turnedDown?.id === entry.id}<small class="warn">{rebind.turnedDown.reason}</small>{/if}
               </span>
 
               {#if entry.scope === 'fixed'}
@@ -977,9 +935,7 @@
                     .join(', ')}.
                 </span>
                 <button class="orden-chip" onclick={() => rebind.takeOver()}>Take it over</button>
-                <button class="orden-chip is-quiet" onclick={() => (rebind.clash = null)}
-                  >Cancel</button
-                >
+                <button class="orden-chip is-quiet" onclick={() => (rebind.clash = null)}>Cancel</button>
               </div>
             {/if}
           {/each}
@@ -1064,9 +1020,7 @@
   </div>
 
   <div class="card">
-    <button class="orden-action" disabled={!toolbar.changed} onclick={() => toolbar.reset()}>
-      Reset the bar
-    </button>
+    <button class="orden-action" disabled={!toolbar.changed} onclick={() => toolbar.reset()}> Reset the bar </button>
   </div>
 
   <h3>Everything else</h3>

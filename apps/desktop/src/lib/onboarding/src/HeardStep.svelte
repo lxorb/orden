@@ -44,26 +44,15 @@
         onclick={() => pick(one.id)}
       >
         <span class="ico" class:dots={one.id === 'other'}>
-          <svg viewBox="0 0 24 24" aria-hidden="true"
-            ><path d={one.id === 'other' ? DOTS : ICONS[one.id]} /></svg
-          >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={one.id === 'other' ? DOTS : ICONS[one.id]} /></svg>
         </span>
         <span>{one.name}</span>
-        <svg class="check" viewBox="0 0 24 24" aria-hidden="true"
-          ><path d="M5 12.5l4.5 4.5L19 7.5" /></svg
-        >
+        <svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
       </button>
     {/each}
   </div>
   {#if picked === 'other'}
-    <input
-      bind:this={field}
-      bind:value={where}
-      class="field"
-      type="text"
-      placeholder="Where?"
-      aria-label="Where?"
-    />
+    <input bind:this={field} bind:value={where} class="field" type="text" placeholder="Where?" aria-label="Where?" />
   {/if}
 </Screen>
 

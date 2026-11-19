@@ -22,10 +22,7 @@ async function pasted(marked: string, text: string, html: string): Promise<strin
       EditorState.create({
         doc: marked.replace('|', ''),
         selection: { anchor: caret },
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          richPaste(),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), richPaste()],
       }),
     ),
   })

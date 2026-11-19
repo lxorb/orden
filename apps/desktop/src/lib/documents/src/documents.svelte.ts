@@ -177,12 +177,7 @@ export class NoteDoc {
     if (this.before !== null) this.before = written
   }
 
-  writeTo(
-    path: string,
-    words: string,
-    knew: string | null,
-    first: () => Promise<unknown>,
-  ): Promise<string | null> {
+  writeTo(path: string, words: string, knew: string | null, first: () => Promise<unknown>): Promise<string | null> {
     return writeEdited(this, path, words, knew, first)
   }
 

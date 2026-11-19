@@ -15,8 +15,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 
 vi.mock('../../sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../sharing/src/sharing.svelte')>()),
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 vi.mock('../../pdf/src/api', async (importOriginal) => ({
@@ -62,8 +61,7 @@ function current(): import('../../../../test/disk').Disk {
   return disk.current
 }
 
-const changes = () =>
-  current().sent.filter((one) => /^(write_note|rename_note|delete_note|trash_item) /.test(one))
+const changes = () => current().sent.filter((one) => /^(write_note|rename_note|delete_note|trash_item) /.test(one))
 
 const sitting = () => ({
   frame: {

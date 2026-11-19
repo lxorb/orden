@@ -150,9 +150,7 @@
       {#if !pass.settings.checkBreaches}
         <button class="orden-button check" type="button" onclick={turnOn}>Check</button>
       {:else if wrong}
-        <button class="orden-chip check" type="button" onclick={() => void check()}>
-          Try again
-        </button>
+        <button class="orden-chip check" type="button" onclick={() => void check()}> Try again </button>
       {/if}
     </div>
 
@@ -208,11 +206,7 @@
               <span class="text bad">{said}</span>
             {:else if said}
               <span class="text" class:bad={said.length > 0}>
-                {said.length
-                  ? said.length === 1
-                    ? '1 breach'
-                    : `${said.length} breaches`
-                  : 'No breaches'}
+                {said.length ? (said.length === 1 ? '1 breach' : `${said.length} breaches`) : 'No breaches'}
               </span>
             {/if}
           </div>
@@ -220,14 +214,9 @@
           <p class="pass-quiet">No email addresses in your logins</p>
         {/each}
         <div class="buttons pass-buttons">
-          <button class="orden-button is-quiet" type="button" onclick={() => void forgetKey()}
-            >Remove key</button
-          >
-          <button
-            class="orden-button"
-            type="button"
-            disabled={!emails.length}
-            onclick={() => void lookUp()}>Check</button
+          <button class="orden-button is-quiet" type="button" onclick={() => void forgetKey()}>Remove key</button>
+          <button class="orden-button" type="button" disabled={!emails.length} onclick={() => void lookUp()}
+            >Check</button
           >
         </div>
       </div>

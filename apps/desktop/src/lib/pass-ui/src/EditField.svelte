@@ -42,11 +42,7 @@
   const id = `pass-field-${Math.random().toString(36).slice(2, 8)}`
 </script>
 
-<div
-  class="field orden-edit-row"
-  class:is-invalid={invalid !== null}
-  class:is-tall={kind === 'multiline'}
->
+<div class="field orden-edit-row" class:is-invalid={invalid !== null} class:is-tall={kind === 'multiline'}>
   {#if icon}<span class="mark"><Glyph {icon} /></span>{/if}
   <div class="text">
     {#if named}
@@ -102,13 +98,7 @@
   {/if}
   {#if tools}{@render tools()}{/if}
   {#if onremove}
-    <button
-      type="button"
-      class="orden-glyph"
-      aria-label="Remove"
-      title="Remove"
-      onclick={() => onremove()}
-    >
+    <button type="button" class="orden-glyph" aria-label="Remove" title="Remove" onclick={() => onremove()}>
       <Cross />
     </button>
   {/if}

@@ -140,31 +140,24 @@ const isId = (value: unknown): value is string => typeof value === 'string' && I
 
 export const isWho = (value: unknown): value is Who => typeof value === 'string' && WHO.test(value)
 
-const isMention = (value: unknown): value is Mention =>
-  value === 'here' || value === 'everyone' || isWho(value)
+const isMention = (value: unknown): value is Mention => value === 'here' || value === 'everyone' || isWho(value)
 
 const isHash = (value: unknown): value is string => typeof value === 'string' && HASH.test(value)
 
 const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 
-const isTime = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value) && value >= 0
+const isTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0
 
-const isText = (value: unknown, most: number): value is string =>
-  typeof value === 'string' && value.length <= most
+const isText = (value: unknown, most: number): value is string => typeof value === 'string' && value.length <= most
 
-const isLine = (value: unknown, most: number): value is string =>
-  isText(value, most) && value.trim().length > 0
+const isLine = (value: unknown, most: number): value is string => isText(value, most) && value.trim().length > 0
 
-const isEmoji = (value: unknown): value is string =>
-  isLine(value, LONGEST_EMOJI) && !/\s/.test(value)
+const isEmoji = (value: unknown): value is string => isLine(value, LONGEST_EMOJI) && !/\s/.test(value)
 
-const isUrl = (value: unknown): value is string =>
-  isText(value, LONGEST_URL) && /^https?:\/\/\S+$/i.test(value)
+const isUrl = (value: unknown): value is string => isText(value, LONGEST_URL) && /^https?:\/\/\S+$/i.test(value)
 
-const oneOf = <T>(list: readonly T[], value: unknown): value is T =>
-  list.some((one) => one === value)
+const oneOf = <T>(list: readonly T[], value: unknown): value is T => list.some((one) => one === value)
 
 function listOf<T>(value: unknown, most: number, check: (one: unknown) => T | null): T[] | null {
   if (!Array.isArray(value) || value.length > most) return null
@@ -180,10 +173,7 @@ function listOf<T>(value: unknown, most: number, check: (one: unknown) => T | nu
 const optional = <T>(value: unknown, check: (one: unknown) => T | null): T | null | undefined =>
   value === undefined ? undefined : check(value)
 
-function filled<T extends object>(
-  base: T,
-  extra: { [K in keyof T]?: T[K] | null | undefined },
-): T | null {
+function filled<T extends object>(base: T, extra: { [K in keyof T]?: T[K] | null | undefined }): T | null {
   const given = Object.entries(extra)
   if (given.some(([, one]) => one === null)) return null
   for (const [key, one] of given) if (one !== undefined) Object.assign(base, { [key]: one })
@@ -196,8 +186,7 @@ const whoOf = (value: unknown): Who | null => (isWho(value) ? value : null)
 
 const mentionOf = (value: unknown): Mention | null => (isMention(value) ? value : null)
 
-const answerOf = (value: unknown): number | null =>
-  isCount(value) && value < MOST_ANSWERS ? value : null
+const answerOf = (value: unknown): number | null => (isCount(value) && value < MOST_ANSWERS ? value : null)
 
 function parsed(raw: string): unknown {
   try {
@@ -243,9 +232,7 @@ function previewOf(value: unknown): Preview | null {
 function pollOf(value: unknown): Poll | null {
   if (!isRecord(value) || !isLine(value.question, LONGEST_QUESTION)) return null
   if (typeof value.several !== 'boolean') return null
-  const answers = listOf(value.answers, MOST_ANSWERS, (one) =>
-    isLine(one, LONGEST_ANSWER) ? one : null,
-  )
+  const answers = listOf(value.answers, MOST_ANSWERS, (one) => (isLine(one, LONGEST_ANSWER) ? one : null))
   if (!answers || answers.length < FEWEST_ANSWERS) return null
   return filled<Poll>(
     { question: value.question, answers, several: value.several },
@@ -288,12 +275,8 @@ function postOf(value: Fields): Post | null {
 
 function metaKeysOf(value: Fields): Partial<Meta> | null {
   const topic = optional(value.topic, (one) => (isText(one, LONGEST_TOPIC) ? one : null))
-  const posting = optional(value.posting, (one) =>
-    oneOf<Posting>(['writers', 'owner'], one) ? one : null,
-  )
-  const slowmode = optional(value.slowmode, (one) =>
-    isCount(one) && one <= MOST_SLOWMODE ? one : null,
-  )
+  const posting = optional(value.posting, (one) => (oneOf<Posting>(['writers', 'owner'], one) ? one : null))
+  const slowmode = optional(value.slowmode, (one) => (isCount(one) && one <= MOST_SLOWMODE ? one : null))
   return filled<Partial<Meta>>({}, { topic, posting, slowmode })
 }
 
@@ -318,10 +301,7 @@ export function eventOf(value: unknown): Event | null {
     case 'edit': {
       if (!isText(value.body, MOST_BODY)) return null
       const files = optional(value.files, (one) => listOf(one, MOST_FILES, fileRefOf))
-      return filled<Extract<Event, { kind: 'edit' }>>(
-        { kind: 'edit', id, target, body: value.body },
-        { files },
-      )
+      return filled<Extract<Event, { kind: 'edit' }>>({ kind: 'edit', id, target, body: value.body }, { files })
     }
     case 'delete':
       return { kind: 'delete', id, target }
@@ -352,9 +332,7 @@ export function loggedOf(value: unknown): Logged | null {
 }
 
 const wordingOf = (value: unknown): Wording | null =>
-  isRecord(value) && isText(value.body, MOST_BODY) && isTime(value.at)
-    ? { body: value.body, at: value.at }
-    : null
+  isRecord(value) && isText(value.body, MOST_BODY) && isTime(value.at) ? { body: value.body, at: value.at } : null
 
 function votesOf(value: unknown): Record<Who, number[]> | null {
   if (!isRecord(value)) return null
@@ -381,14 +359,8 @@ function reactionsOf(value: unknown): Record<string, Who[]> | null {
 export function messageOf(value: unknown): Message | null {
   if (!isRecord(value)) return null
   const { id, seq, at, author, body, alsoToChat, pinned, deleted, replies } = value
-  if (!isId(id) || !isCount(seq) || !isTime(at) || !isWho(author) || !isText(body, MOST_BODY))
-    return null
-  if (
-    typeof alsoToChat !== 'boolean' ||
-    typeof pinned !== 'boolean' ||
-    typeof deleted !== 'boolean'
-  )
-    return null
+  if (!isId(id) || !isCount(seq) || !isTime(at) || !isWho(author) || !isText(body, MOST_BODY)) return null
+  if (typeof alsoToChat !== 'boolean' || typeof pinned !== 'boolean' || typeof deleted !== 'boolean') return null
   if (!isCount(replies)) return null
 
   const files = listOf(value.files, MOST_FILES, fileRefOf)
@@ -478,9 +450,7 @@ export function serverFrameOf(raw: string): ServerFrame | null {
       if (value.parent === undefined) return { t: 'typing', who: value.who }
       return isId(value.parent) ? { t: 'typing', who: value.who, parent: value.parent } : null
     case 'read':
-      return isWho(value.who) && isCount(value.seq)
-        ? { t: 'read', who: value.who, seq: value.seq }
-        : null
+      return isWho(value.who) && isCount(value.seq) ? { t: 'read', who: value.who, seq: value.seq } : null
     case 'here': {
       const who = listOf(value.who, MOST_MEMBERS, whoOf)
       return who && { t: 'here', who }
@@ -495,26 +465,18 @@ export function serverFrameOf(raw: string): ServerFrame | null {
 export function chatPokeOf(value: unknown): ChatPoke | null {
   if (!isRecord(value) || value.t !== 'chat') return null
   const { chat, seq, at, by, mention } = value
-  if (!isChatId(chat) || !isCount(seq) || !isTime(at) || !isWho(by) || typeof mention !== 'boolean')
-    return null
+  if (!isChatId(chat) || !isCount(seq) || !isTime(at) || !isWho(by) || typeof mention !== 'boolean') return null
   return { t: 'chat', chat, seq, at, by, mention }
 }
 
 export function chatRowOf(value: unknown): ChatRow | null {
   if (!isRecord(value)) return null
-  const { id, space, members, lastSeq, lastAt, lastBy, readSeq, mentions, notify, mutedUntil } =
-    value
+  const { id, space, members, lastSeq, lastAt, lastBy, readSeq, mentions, notify, mutedUntil } = value
   if (!isChatId(id) || !isLine(space, LONGEST_DEVICE) || !isCount(members)) return null
   const role = value.role
   if (!oneOf<Role>(['read', 'write', 'owner'], role)) return null
-  if (
-    !isCount(lastSeq) ||
-    !(lastAt === null || isTime(lastAt)) ||
-    !(lastBy === null || isWho(lastBy))
-  )
-    return null
-  if (!isCount(readSeq) || !isCount(mentions) || !(mutedUntil === null || isTime(mutedUntil)))
-    return null
+  if (!isCount(lastSeq) || !(lastAt === null || isTime(lastAt)) || !(lastBy === null || isWho(lastBy))) return null
+  if (!isCount(readSeq) || !isCount(mentions) || !(mutedUntil === null || isTime(mutedUntil))) return null
   if (!(notify === null || oneOf<Notify>(['all', 'mentions', 'nothing'], notify))) return null
   const meta = metaOf(value.meta)
   if (!meta) return null
@@ -554,8 +516,7 @@ export function eventsPageOf(value: unknown): EventsPage | null {
 }
 
 export function statePageOf(value: unknown): StatePage | null {
-  if (!isRecord(value) || !isCount(value.seq) || !(value.next === null || isCount(value.next)))
-    return null
+  if (!isRecord(value) || !isCount(value.seq) || !(value.next === null || isCount(value.next))) return null
   const messages = listOf(value.messages, Number.MAX_SAFE_INTEGER, messageOf)
   const meta = metaOf(value.meta)
   return messages && meta && { messages, meta, seq: value.seq, next: value.next }
@@ -572,9 +533,7 @@ function resultOf(value: unknown): Result | null {
   if (value.refused !== undefined) {
     return oneOf(REFUSALS, value.refused) ? { id: value.id, refused: value.refused } : null
   }
-  return isCount(value.seq) && isTime(value.at)
-    ? { id: value.id, seq: value.seq, at: value.at }
-    : null
+  return isCount(value.seq) && isTime(value.at) ? { id: value.id, seq: value.seq, at: value.at } : null
 }
 
 export function resultsOf(value: unknown): Results | null {

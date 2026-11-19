@@ -79,11 +79,7 @@ function quality(words: readonly string[], reading: string, slips: boolean): num
 
 const usePoints = (use: number): number => Math.min(MOST_USE, 12 * Math.log2(1 + use))
 
-function scored<T>(
-  { words, typed, short }: Typed,
-  one: Candidate<T>,
-  slips: boolean,
-): number | null {
+function scored<T>({ words, typed, short }: Typed, one: Candidate<T>, slips: boolean): number | null {
   let found = quality(words, one.name, slips)
   let raw = found
   const weigh = (readings: readonly string[], weight: number) => {
@@ -103,14 +99,7 @@ function scored<T>(
 
   const naming = one.name === typed ? EXACT : one.name.startsWith(typed) ? PREFIX : 0
 
-  return (
-    100 * found +
-    naming +
-    KIND[one.kind] +
-    (short ? SHORT[one.kind] : 0) +
-    usePoints(one.use) +
-    one.lift
-  )
+  return 100 * found + naming + KIND[one.kind] + (short ? SHORT[one.kind] : 0) + usePoints(one.use) + one.lift
 }
 
 export function ranked<T>(term: string, candidates: readonly Candidate<T>[], most = MOST): T[] {

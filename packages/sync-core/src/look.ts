@@ -82,10 +82,7 @@ export function lookWrong(value: unknown): string | null {
   const wrong = valuesWrong(value.values)
   if (wrong) return wrong
 
-  if (
-    value.css !== undefined &&
-    (typeof value.css !== 'string' || value.css.length > MOST_LOOK_CSS)
-  ) {
+  if (value.css !== undefined && (typeof value.css !== 'string' || value.css.length > MOST_LOOK_CSS)) {
     return `look.css must be a stylesheet of at most ${MOST_LOOK_CSS} characters`
   }
 

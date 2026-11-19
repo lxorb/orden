@@ -31,19 +31,10 @@ describe('a new database', () => {
       now: '2026-10-19T09:00:00',
       this: own,
     })
-    expect(shown.groups.map((group) => groupName(group.key))).toEqual([
-      '',
-      'Not started',
-      'In progress',
-      'Done',
-    ])
+    expect(shown.groups.map((group) => groupName(group.key))).toEqual(['', 'Not started', 'In progress', 'Done'])
     expect(base.views[0]?.type).toBe('kanban')
     expect(base.views[0]?.orden.cardSize).toBe('medium')
-    expect(base.orden.properties.status?.options?.map((one) => one.tone)).toEqual([
-      undefined,
-      '5',
-      '4',
-    ])
+    expect(base.orden.properties.status?.options?.map((one) => one.tone)).toEqual([undefined, '5', '4'])
   })
 })
 

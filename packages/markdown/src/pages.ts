@@ -120,9 +120,7 @@ export function removed(canvas: Canvas, id: string): Canvas {
   if (!page || pages.length < 2) return canvas
 
   const column = columnOf(pages)
-  const nodes = canvas.nodes.filter(
-    (node) => node.id !== id && (isPage(node) || ownerOf(node, column) !== page),
-  )
+  const nodes = canvas.nodes.filter((node) => node.id !== id && (isPage(node) || ownerOf(node, column) !== page))
   const ink = canvas.ink.filter((stroke) => inkOwnerOf(stroke, column) !== page)
 
   return settled({ ...canvas, nodes, ink }, pages)
@@ -135,12 +133,7 @@ export function onPage(
   const first = stroke.points[0]
   if (!first) return false
 
-  return (
-    first.x >= box.x &&
-    first.x < box.x + box.width &&
-    first.y >= box.y &&
-    first.y < box.y + box.height
-  )
+  return first.x >= box.x && first.x < box.x + box.width && first.y >= box.y && first.y < box.y + box.height
 }
 
 export function moved(canvas: Canvas, id: string, to: number): Canvas {
@@ -233,11 +226,7 @@ function ownerOf<T extends Box>(thing: Box, column: Column<T>): T | null {
   return best
 }
 
-export function reshaped(
-  canvas: Canvas,
-  id: string,
-  change: { paper?: Paper; pattern?: Pattern },
-): Canvas {
+export function reshaped(canvas: Canvas, id: string, change: { paper?: Paper; pattern?: Pattern }): Canvas {
   const nodes = canvas.nodes.map((node) => {
     if (node.id !== id || !isPage(node)) return node
 
@@ -324,25 +313,14 @@ export const emptyPages = (paper: Paper = 'a4'): Canvas => ({
 
 export const blankPages = (paper: Paper = 'a4'): string => writeCanvas(emptyPages(paper))
 
-export function pagesFromPdf(
-  file: string,
-  sizes: readonly { width: number; height: number }[],
-): Canvas {
+export function pagesFromPdf(file: string, sizes: readonly { width: number; height: number }[]): Canvas {
   const pages = sizes.map((size, at) => pdfPage(file, at + 1, size.width, size.height))
   return settled({ ...emptyCanvas(), nodes: pages.length ? pages : [newPage()] })
 }
 
-export function pageAt(
-  pages: readonly PageNode[],
-  point: { x: number; y: number },
-): PageNode | null {
+export function pageAt(pages: readonly PageNode[], point: { x: number; y: number }): PageNode | null {
   for (const page of pages) {
-    if (
-      point.x >= page.x &&
-      point.x <= page.x + page.width &&
-      point.y >= page.y &&
-      point.y <= page.y + page.height
-    ) {
+    if (point.x >= page.x && point.x <= page.x + page.width && point.y >= page.y && point.y <= page.y + page.height) {
       return page
     }
   }
@@ -384,5 +362,4 @@ export const paperOf = (pages: string): string => `${pages}.pdf`
 export const holderOf = (path: string): string | null =>
   /\.pages\.pdf$/i.test(path) ? path.slice(0, -'.pdf'.length) : null
 
-export const pairOf = (path: string): string | null =>
-  holderOf(path) ?? (/\.pages$/i.test(path) ? paperOf(path) : null)
+export const pairOf = (path: string): string | null => holderOf(path) ?? (/\.pages$/i.test(path) ? paperOf(path) : null)

@@ -45,8 +45,7 @@ export function packed(
         for (let i = 0; i < N; i += AROUND) {
           const c = COS[i] ?? 0
           const s = SIN[i] ?? 0
-          const reach =
-            gap + (one[i] ?? 0) + (item.outline[(i + N / 2) % N] ?? 0) - (base.x * c + base.y * s)
+          const reach = gap + (one[i] ?? 0) + (item.outline[(i + N / 2) % N] ?? 0) - (base.x * c + base.y * s)
           tryAt({ x: base.x + c * reach, y: base.y + s * reach })
         }
       }
@@ -116,7 +115,6 @@ export function pushedAside(
     if (!moving) break
   }
   const out: Record<string, Shift> = {}
-  for (const [key, shift] of now)
-    if (Math.abs(shift.x) > 0.01 || Math.abs(shift.y) > 0.01) out[key] = shift
+  for (const [key, shift] of now) if (Math.abs(shift.x) > 0.01 || Math.abs(shift.y) > 0.01) out[key] = shift
   return out
 }

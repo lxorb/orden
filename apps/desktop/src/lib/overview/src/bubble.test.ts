@@ -86,8 +86,7 @@ function tightestOf(one: Bubble): number {
     const [ax, ay] = curve[i] ?? [0, 0]
     const [bx, by] = curve[(i + 1) % curve.length] ?? [0, 0]
     const steps = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / 2))
-    for (let k = 0; k < steps; k++)
-      even.push([ax + ((bx - ax) * k) / steps, ay + ((by - ay) * k) / steps])
+    for (let k = 0; k < steps; k++) even.push([ax + ((bx - ax) * k) / steps, ay + ((by - ay) * k) / steps])
   }
   let least = Number.POSITIVE_INFINITY
   const n = even.length
@@ -97,9 +96,7 @@ function tightestOf(one: Bubble): number {
     const [cx, cy] = even[(i + 5) % n] ?? [0, 0]
     const area = Math.abs((bx - ax) * (cy - ay) - (cx - ax) * (by - ay)) / 2
     if (area < 1e-9) continue
-    const r =
-      (Math.hypot(bx - ax, by - ay) * Math.hypot(cx - bx, cy - by) * Math.hypot(cx - ax, cy - ay)) /
-      (4 * area)
+    const r = (Math.hypot(bx - ax, by - ay) * Math.hypot(cx - bx, cy - by) * Math.hypot(cx - ax, cy - ay)) / (4 * area)
     least = Math.min(least, r)
   }
   return least
@@ -193,9 +190,7 @@ test('every window is inside it on every frame: dragged, thrown, arriving and le
     const one = new Bubble(windows.slice(0, 1))
     for (let frame = 0; frame < 90; frame++) {
       const count = 1 + (Math.floor(frame / 15 + round) % windows.length)
-      const shown = windows
-        .slice(0, count)
-        .map((w, i) => ({ ...w, x: w.x + Math.sin(frame / 7 + round + i) * 140 }))
+      const shown = windows.slice(0, count).map((w, i) => ({ ...w, x: w.x + Math.sin(frame / 7 + round + i) * 140 }))
       one.step(1 / 60, frame / 60, shown)
       if (frame % 3 === 0) expect(encloses(one, shown)).toBe(true)
     }
@@ -262,8 +257,7 @@ function walked(one: Bubble, step = 2): [number, number][] {
     const [ax, ay] = curve[i] ?? [0, 0]
     const [bx, by] = curve[(i + 1) % curve.length] ?? [0, 0]
     const steps = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / step))
-    for (let k = 0; k < steps; k++)
-      out.push([ax + ((bx - ax) * k) / steps, ay + ((by - ay) * k) / steps])
+    for (let k = 0; k < steps; k++) out.push([ax + ((bx - ax) * k) / steps, ay + ((by - ay) * k) / steps])
   }
   return out
 }

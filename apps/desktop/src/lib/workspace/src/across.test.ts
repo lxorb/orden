@@ -72,8 +72,7 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
     documents,
     tell: async (op) => {
       heard.push(op)
-      if (op.op === 'removed')
-        documents.splice(0, documents.length, ...documents.filter((n) => n.path))
+      if (op.op === 'removed') documents.splice(0, documents.length, ...documents.filter((n) => n.path))
     },
     follow: () => undefined,
     loadTree: async () => undefined,
@@ -101,9 +100,7 @@ function aWindow(line: ReturnType<ReturnType<typeof channel>['end']>, disk: Map<
   const windows = new Windows(() => line)
   const across = new Across(desk, windows)
   const open = (text: string, kind: NoteDoc['kind'] = 'note') => {
-    const note = new NoteDoc({ kind, path: PATH, name: 'Both.md', text, dirty: false }, (one) =>
-      edited.push(one),
-    )
+    const note = new NoteDoc({ kind, path: PATH, name: 'Both.md', text, dirty: false }, (one) => edited.push(one))
     documents.push(note)
     return note
   }
@@ -446,9 +443,7 @@ describe('whatever order the news arrives in', () => {
         }
         await Promise.all(windows.map((one) => one.across.heardSoFar()))
         await tick()
-        await Promise.all(
-          windows.map(async (one, at) => (notes[at]?.dirty ? await one.save(notes[at]) : null)),
-        )
+        await Promise.all(windows.map(async (one, at) => (notes[at]?.dirty ? await one.save(notes[at]) : null)))
         await tick()
         await Promise.all(windows.map((one) => one.across.heardSoFar()))
       }
@@ -523,16 +518,12 @@ function savingLikeTheCrate(window: ReturnType<typeof aWindow>, disk: Map<string
   }
 }
 
-const CRLF =
-  '# Title\r\n\r\nFirst paragraph here.\r\n\r\nSecond paragraph here.\r\n\r\nThird one.\r\n'
+const CRLF = '# Title\r\n\r\nFirst paragraph here.\r\n\r\nSecond paragraph here.\r\n\r\nThird one.\r\n'
 const LF = CRLF.replace(/\r\n/g, '\n')
 
 describe('a file with CRLF endings', () => {
   test('holds one line ending, whatever way the words came in', () => {
-    const doc = new NoteDoc(
-      { kind: 'note', path: PATH, name: 'Both.md', text: CRLF, dirty: false },
-      () => undefined,
-    )
+    const doc = new NoteDoc({ kind: 'note', path: PATH, name: 'Both.md', text: CRLF, dirty: false }, () => undefined)
     expect(doc.latest).toBe(LF)
     expect(doc.text).toBe(LF)
     expect(doc.onDisk).toBe(LF)
@@ -551,10 +542,7 @@ describe('a file with CRLF endings', () => {
   })
 
   test('the first write still keeps the file as it was', () => {
-    const doc = new NoteDoc(
-      { kind: 'note', path: PATH, name: 'Both.md', text: CRLF, dirty: false },
-      () => undefined,
-    )
+    const doc = new NoteDoc({ kind: 'note', path: PATH, name: 'Both.md', text: CRLF, dirty: false }, () => undefined)
     expect(doc.firstVersion()).toBe(CRLF)
   })
 
@@ -672,9 +660,7 @@ describe('a file with CRLF endings', () => {
         }
         await Promise.all(windows.map((one) => one.across.heardSoFar()))
         await tick()
-        await Promise.all(
-          notes.map(async (note, at) => (note.dirty ? await saves[at]?.(note) : null)),
-        )
+        await Promise.all(notes.map(async (note, at) => (note.dirty ? await saves[at]?.(note) : null)))
         await tick()
         await Promise.all(windows.map((one) => one.across.heardSoFar()))
       }
@@ -700,9 +686,8 @@ describe('a merge that throws does not stop the saving', () => {
     ['takeOn', (note: NoteDoc) => vi.spyOn(note.live, 'takeOn')],
   ] as const)('a throw out of the rope in %s leaves typing owed', (name, spy) => {
     const edited: NoteDoc[] = []
-    const note = new NoteDoc(
-      { kind: 'note', path: PATH, name: 'Both.md', text: BASE, dirty: false },
-      (one) => edited.push(one),
+    const note = new NoteDoc({ kind: 'note', path: PATH, name: 'Both.md', text: BASE, dirty: false }, (one) =>
+      edited.push(one),
     )
     const stub = spy(note).mockImplementation(() => {
       throw new RangeError('no')
@@ -722,9 +707,8 @@ describe('a merge that throws does not stop the saving', () => {
 
   test('took: the rope refuses, and typing afterwards is still owed', () => {
     const edited: NoteDoc[] = []
-    const note = new NoteDoc(
-      { kind: 'note', path: PATH, name: 'Both.md', text: BASE, dirty: false },
-      (one) => edited.push(one),
+    const note = new NoteDoc({ kind: 'note', path: PATH, name: 'Both.md', text: BASE, dirty: false }, (one) =>
+      edited.push(one),
     )
     const restore = refusing(note)
     expect(() => note.took({ from: 0, to: 0, insert: 'x' }, `x${BASE}`)).toThrow()
@@ -781,10 +765,7 @@ describe('a merge that throws does not stop the saving', () => {
   })
 
   test('the fallback leaves the version the first write keeps as it was', () => {
-    const note = new NoteDoc(
-      { kind: 'note', path: PATH, name: 'Both.md', text: BASE, dirty: false },
-      () => undefined,
-    )
+    const note = new NoteDoc({ kind: 'note', path: PATH, name: 'Both.md', text: BASE, dirty: false }, () => undefined)
     const { disk, a } = twoWindows()
     a.documents.push(note)
     note.live.edit([{ from: 0, to: 0, insert: 'X' }])

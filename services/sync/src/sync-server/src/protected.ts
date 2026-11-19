@@ -42,8 +42,7 @@ function passwordOf(value: unknown): Password | null {
   return { n, r, p, salt, hash, at }
 }
 
-const fitted = (key: string) =>
-  key.length > LONGEST_PATH ? key.slice(0, LONGEST_PATH).replace(/\/?[^/]*$/, '') : key
+const fitted = (key: string) => (key.length > LONGEST_PATH ? key.slice(0, LONGEST_PATH).replace(/\/?[^/]*$/, '') : key)
 
 function waysOf(value: unknown): Record<string, Way> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return {}
@@ -61,8 +60,7 @@ function readProtected(raw: string | null | undefined): Protected {
   const held = objectIn(raw) ?? {}
   const spaces: Record<string, Record<string, Way>> = {}
   const listed = held.spaces
-  const entries =
-    listed && typeof listed === 'object' && !Array.isArray(listed) ? Object.entries(listed) : []
+  const entries = listed && typeof listed === 'object' && !Array.isArray(listed) ? Object.entries(listed) : []
   for (const [id, ways] of entries) {
     if (Object.keys(spaces).length >= MOST_SPACES) break
     const kept = waysOf(ways)
@@ -103,8 +101,7 @@ function covers(ways: Record<string, Way> | undefined, path: string): boolean {
 
 export type Shut = (spaceId: string, path: string) => boolean
 
-export const PROTECTED = (path: string) =>
-  `${path} is protected. The reader can open it in Orden; an agent cannot.`
+export const PROTECTED = (path: string) => `${path} is protected. The reader can open it in Orden; an agent cannot.`
 
 export async function shutFor(env: Env, userId: string): Promise<Shut> {
   const held = await protectedFor(env, userId)
@@ -113,20 +110,13 @@ export async function shutFor(env: Env, userId: string): Promise<Shut> {
 
 export const KEPT_FROM_TOKENS = 'This space keeps notes from agents, so a token cannot reach it.'
 
-export async function programKeptFrom(
-  env: Env,
-  who: Whoever & { program?: true },
-  spaceId: string,
-): Promise<boolean> {
+export async function programKeptFrom(env: Env, who: Whoever & { program?: true }, spaceId: string): Promise<boolean> {
   if (who.kind !== 'user' || !who.program) return false
   const { spaces } = await protectedFor(env, who.user.id)
   return Object.keys(spaces[spaceId] ?? {}).length > 0
 }
 
-export async function programShut(
-  env: Env,
-  who: Whoever & { program?: true },
-): Promise<Shut | null> {
+export async function programShut(env: Env, who: Whoever & { program?: true }): Promise<Shut | null> {
   return who.kind === 'user' && who.program ? await shutFor(env, who.user.id) : null
 }
 
@@ -154,9 +144,7 @@ async function rewrite(
     if ('error' in next) return next
     const written = JSON.stringify(next)
     if (byteLength(written) > MOST_BYTES) return { error: TOO_MUCH, status: 413 }
-    const done = await env.DB.prepare(
-      'update users set protected = ?1 where id = ?2 and protected is ?3',
-    )
+    const done = await env.DB.prepare('update users set protected = ?1 where id = ?2 and protected is ?3')
       .bind(written, userId, raw)
       .run()
     if (done.meta.changes) return next
@@ -196,9 +184,7 @@ function mergedWays(
   base: Record<string, Way>,
   sent: Record<string, Way>,
 ): Record<string, Way> {
-  const out = Object.fromEntries(
-    Object.entries(held).filter(([key]) => !(key in base) || key in sent),
-  )
+  const out = Object.fromEntries(Object.entries(held).filter(([key]) => !(key in base) || key in sent))
   for (const [key, way] of Object.entries(sent)) {
     if (base[key] !== way) out[key] = way
   }

@@ -1,16 +1,6 @@
 import { type TabKind, TAB_KINDS } from '../../tab-kinds/src/api'
 
-export const REGIONS = [
-  'space',
-  'panels',
-  'list',
-  'foot',
-  'tabs',
-  'notices',
-  'editor',
-  'status',
-  'right',
-] as const
+export const REGIONS = ['space', 'panels', 'list', 'foot', 'tabs', 'notices', 'editor', 'status', 'right'] as const
 
 export type Region = (typeof REGIONS)[number]
 
@@ -25,11 +15,7 @@ function ordered(present: readonly string[]): Region[] {
   return kept.sort((a, b) => (RANK.get(a) ?? 0) - (RANK.get(b) ?? 0))
 }
 
-export function stepRegion(
-  present: readonly string[],
-  from: string | null,
-  direction: number,
-): Region | null {
+export function stepRegion(present: readonly string[], from: string | null, direction: number): Region | null {
   const list = ordered(present)
   if (!list.length) return null
 

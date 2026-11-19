@@ -34,9 +34,7 @@ function shifted(canvas: Canvas, moves: ReadonlyMap<string, { dx: number; dy: nu
   for (const [id, move] of moves) {
     if (!move.dx && !move.dy) continue
     const node = nodes.get(id)
-    const whole = node
-      ? { dx: Math.round(node.x + move.dx) - node.x, dy: Math.round(node.y + move.dy) - node.y }
-      : move
+    const whole = node ? { dx: Math.round(node.x + move.dx) - node.x, dy: Math.round(node.y + move.dy) - node.y } : move
     for (const carried of reach([id])) {
       if (!byId.has(carried)) byId.set(carried, whole)
     }
@@ -48,15 +46,11 @@ function shifted(canvas: Canvas, moves: ReadonlyMap<string, { dx: number; dy: nu
     ...canvas,
     nodes: canvas.nodes.map((node) => {
       const move = byId.get(node.id)
-      return move
-        ? { ...node, x: Math.round(node.x + move.dx), y: Math.round(node.y + move.dy) }
-        : node
+      return move ? { ...node, x: Math.round(node.x + move.dx), y: Math.round(node.y + move.dy) } : node
     }),
     ink: canvas.ink.map((stroke) => {
       const move = byId.get(stroke.id)
-      return move
-        ? transformed(stroke, { ...move, sx: 1, sy: 1, turn: 0, about: { x: 0, y: 0 } })
-        : stroke
+      return move ? transformed(stroke, { ...move, sx: 1, sy: 1, turn: 0, about: { x: 0, y: 0 } }) : stroke
     }),
   }
 }
@@ -89,8 +83,7 @@ export function distributed(canvas: Canvas, picked: readonly string[], axis: 'x'
   const last = order[order.length - 1]
   if (!first || !last) return canvas
 
-  const room =
-    along(last) - along(first) - order.slice(0, -1).reduce((sum, one) => sum + size(one), 0)
+  const room = along(last) - along(first) - order.slice(0, -1).reduce((sum, one) => sum + size(one), 0)
   const gap = room / (order.length - 1)
 
   const moves = new Map<string, { dx: number; dy: number }>()

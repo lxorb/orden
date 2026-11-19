@@ -29,13 +29,7 @@ describe("Arc's sidebar as Orden's", () => {
 
   test('puts the pinned tabs and folders first, a split view in its folder, then the open tabs', () => {
     const [personal, work] = planned()
-    expect(personal?.order['']).toEqual([
-      'Inbox.url',
-      'Calendar.url',
-      'Docs',
-      'News.url',
-      'arc - Search.url',
-    ])
+    expect(personal?.order['']).toEqual(['Inbox.url', 'Calendar.url', 'Docs', 'News.url', 'arc - Search.url'])
     expect(personal?.order.Docs).toEqual(['Left.url', 'Right.url', 'The guide.url'])
     expect(work?.order['']).toEqual(['Board.url'])
   })

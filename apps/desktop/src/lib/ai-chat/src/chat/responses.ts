@@ -210,9 +210,7 @@ class ResponsesReader extends PartsReader implements Reader {
     let at = this.drawn.get(index)
     if (at === undefined) {
       if (!words) return { changed: [] }
-      at = this.add(
-        kind === 'text' ? { kind: 'text', text: '' } : { kind: 'thinking', text: '', ms: 0 },
-      )
+      at = this.add(kind === 'text' ? { kind: 'text', text: '' } : { kind: 'thinking', text: '', ms: 0 })
       this.drawn.set(index, at)
     }
     const part = this.parts[at]
@@ -241,9 +239,7 @@ class ResponsesReader extends PartsReader implements Reader {
   }
 
   answer(): Answer {
-    const items = [...this.items.entries()]
-      .sort(([a], [b]) => a - b)
-      .map(([, one]) => sentBack(one))
+    const items = [...this.items.entries()].sort(([a], [b]) => a - b).map(([, one]) => sentBack(one))
     const calls: Call[] = items
       .filter((one) => one.type === 'function_call')
       .map((one) => ({

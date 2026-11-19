@@ -63,8 +63,7 @@
       if (scale === 'day') out.push({ day, label: localDate(date, { day: 'numeric' }) })
       else if (scale === 'week' && date.getDay() === 1)
         out.push({ day, label: localDate(date, { month: 'short', day: 'numeric' }) })
-      else if (scale === 'month' && first)
-        out.push({ day, label: localDate(date, { month: 'short' }) })
+      else if (scale === 'month' && first) out.push({ day, label: localDate(date, { month: 'short' }) })
       else if (scale === 'quarter' && first && date.getMonth() % 3 === 0)
         out.push({ day, label: localDate(date, { month: 'short', year: '2-digit' }) })
     }
@@ -161,11 +160,7 @@
     <div class="names">
       <div class="corner"></div>
       {#each bars as bar (`${bar.row.space}:${rowId(bar.row)}`)}
-        <button
-          type="button"
-          class="name"
-          onclick={(event) => kit.choose(bar.row, linkModifier(event))}
-        >
+        <button type="button" class="name" onclick={(event) => kit.choose(bar.row, linkModifier(event))}>
           {bar.row.task ? plain(bar.row.task.text) : bar.row.file.basename}
         </button>
       {/each}

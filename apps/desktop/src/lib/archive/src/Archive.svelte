@@ -66,9 +66,7 @@
       }
     }
 
-    const newest = standing(workspace.archive.keysOf(root)).sort(
-      (one, other) => (map[other] ?? 0) - (map[one] ?? 0),
-    )
+    const newest = standing(workspace.archive.keysOf(root)).sort((one, other) => (map[other] ?? 0) - (map[one] ?? 0))
     for (const at of newest) {
       const entry = workspace.entryAt(insideSpace(root, at))
       if (!entry) continue
@@ -165,10 +163,7 @@
       }}
     >
       {#each rows as row (row.entry.path)}
-        <li
-          animate:flip={{ duration: dur(150) }}
-          transition:slide={{ duration: dur(150), easing: cubicOut }}
-        >
+        <li animate:flip={{ duration: dur(150) }} transition:slide={{ duration: dur(150), easing: cubicOut }}>
           <div class="line" class:holds={row.holds}>
             <button
               class="orden-row row"
@@ -187,9 +182,7 @@
                 })}
             >
               <FileMark mark={row.mark} path={row.markPath} />
-              <span class="orden-row-label" dir="auto"
-                >{rowName(row.entry.name, row.entry.is_dir)}</span
-              >
+              <span class="orden-row-label" dir="auto">{rowName(row.entry.name, row.entry.is_dir)}</span>
               {#if row.from}<span class="orden-row-meta">{row.from}</span>{/if}
             </button>
 

@@ -1,20 +1,9 @@
-import {
-  fromBase64,
-  toBase64,
-  assetType,
-  basename,
-  normalise,
-  parent,
-} from '../../../platform/src/api'
+import { fromBase64, toBase64, assetType, basename, normalise, parent } from '../../../platform/src/api'
 import type { PlaneMarks } from '@orden/scan/canvas'
 import { type AssetRow, type FileRow, KEEP, type Rows, type Trashed } from '../web/store'
 import type { InternalEntry, InternalFolder } from './folder'
 
-export function internalRows(
-  folder: InternalFolder,
-  root: string,
-  words: (path: string) => boolean,
-): Rows {
+export function internalRows(folder: InternalFolder, root: string, words: (path: string) => boolean): Rows {
   const base = normalise(root)
   const inSpace = (path: string): string => {
     const at = normalise(path)
@@ -96,10 +85,7 @@ export function internalRows(
       const entry = await folder.at(inSpace(path))
       return entry ? fileRow(normalise(path), entry) : undefined
     },
-    paths: async () =>
-      (await listing())
-        .filter(({ path, entry }) => !entry.key || words(path))
-        .map(({ path }) => path),
+    paths: async () => (await listing()).filter(({ path, entry }) => !entry.key || words(path)).map(({ path }) => path),
     each: async (visit) => {
       for (const row of await wordRows(() => true)) visit(row)
     },
@@ -126,10 +112,7 @@ export function internalRows(
       const entry = await folder.at(inSpace(path))
       return entry ? asset(normalise(path), entry) : undefined
     },
-    paths: async () =>
-      (await listing())
-        .filter(({ path, entry }) => entry.key && !words(path))
-        .map(({ path }) => path),
+    paths: async () => (await listing()).filter(({ path, entry }) => entry.key && !words(path)).map(({ path }) => path),
     put: (row) => folder.write(inSpace(row.path), fromBase64(row.data)),
     async remove(path) {
       if (words(path) || isKeep(path)) return

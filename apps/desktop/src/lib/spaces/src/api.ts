@@ -29,10 +29,7 @@ export async function newSpace(): Promise<Space | undefined> {
   return name ? madeSpace(name) : undefined
 }
 
-export async function madeSpace(
-  name: string,
-  made?: (space: Space) => void,
-): Promise<Space | undefined> {
+export async function madeSpace(name: string, made?: (space: Space) => void): Promise<Space | undefined> {
   const space = await workspace.addSpace(name)
   if (!space) return
   made?.(space)
@@ -89,12 +86,8 @@ export function spaceMenu(space: Space): MenuEntry[] {
 
   return trim([
     ...(theirs ? [] : [{ label: 'Rename', run: () => void renameSpace(space) }]),
-    ...(canWriteAt(space.root)
-      ? [{ label: 'Choose an icon', run: () => iconChoice.space(space.id) }]
-      : []),
-    ...(__EVEN_PLUGIN__
-      ? []
-      : [{ label: 'Settings', run: () => settingsWindow().show('space', space.root) }]),
+    ...(canWriteAt(space.root) ? [{ label: 'Choose an icon', run: () => iconChoice.space(space.id) }] : []),
+    ...(__EVEN_PLUGIN__ ? [] : [{ label: 'Settings', run: () => settingsWindow().show('space', space.root) }]),
     ...(canShare(space) ? [{ label: 'Share', run: () => void shareSpace(space) }] : []),
     ...(canPublish(space) ? [{ label: 'Publish', run: () => publishSpace(space) }] : []),
     ...(!__EVEN_PLUGIN__ && canTrustAgain(space)

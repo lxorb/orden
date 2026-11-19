@@ -1,11 +1,4 @@
-import {
-  added,
-  moved,
-  onPage,
-  pagesOf,
-  removed as pageRemoved,
-  settled,
-} from '@orden/markdown/pages'
+import { added, moved, onPage, pagesOf, removed as pageRemoved, settled } from '@orden/markdown/pages'
 import type { Canvas, CanvasNode, PageNode } from '@orden/markdown/canvas'
 import { Refused } from '../../agent-verbs/src/api'
 
@@ -48,10 +41,7 @@ export function readablePages(canvas: Canvas) {
 
 export function pageIn(canvas: Canvas, named: unknown): PageNode {
   const pages = pagesOf(canvas)
-  const found =
-    typeof named === 'number'
-      ? pages[Math.round(named) - 1]
-      : pages.find((page) => page.id === named)
+  const found = typeof named === 'number' ? pages[Math.round(named) - 1] : pages.find((page) => page.id === named)
   if (!found) throw new Refused('not_found', `there is no page ${String(named)}`)
 
   return found
@@ -67,9 +57,7 @@ export function placeOnPage(
     return { x: page.x + (x ?? MARGIN), y: page.y + (y ?? MARGIN) }
   }
 
-  const on = canvas.nodes.filter(
-    (node: CanvasNode) => node.type !== 'page' && pageNumberOf([page], node) !== null,
-  )
+  const on = canvas.nodes.filter((node: CanvasNode) => node.type !== 'page' && pageNumberOf([page], node) !== null)
   const lowest = on
     .map((node) => node.y + node.height + MARGIN)
     .reduce((high, one) => Math.max(high, one), page.y + MARGIN)
@@ -80,10 +68,7 @@ export function hasPages(canvas: Canvas): boolean {
   return pagesOf(canvas).length > 0
 }
 
-export function pageOperation(
-  canvas: Canvas,
-  op: Record<string, unknown>,
-): { canvas: Canvas; made?: string } | null {
+export function pageOperation(canvas: Canvas, op: Record<string, unknown>): { canvas: Canvas; made?: string } | null {
   switch (op.op) {
     case 'add_page': {
       const after = op.after === undefined ? null : pageIn(canvas, op.after).id

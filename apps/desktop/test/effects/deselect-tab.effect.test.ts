@@ -171,8 +171,7 @@ test('is a plane’s Duplicate while something on it is picked, and the tab’s 
     palette: {},
     onfind: () => undefined,
   }
-  const press = () =>
-    new KeyboardEvent('keydown', { key: 'd', code: 'KeyD', ctrlKey: true, cancelable: true })
+  const press = () => new KeyboardEvent('keydown', { key: 'd', code: 'KeyD', ctrlKey: true, cancelable: true })
 
   expect(run.keys(store, press(), view)).toBe(false)
   expect(store.canvas.nodes).toHaveLength(1)

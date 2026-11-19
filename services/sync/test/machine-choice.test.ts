@@ -20,9 +20,10 @@ let owner: string
 let hour = 0
 
 const machineRow = () =>
-  env.db
-    .prepare('select size, region, spec, price_month, price_hour, server_id from machines')
-    .get() as Record<string, unknown>
+  env.db.prepare('select size, region, spec, price_month, price_hour, server_id from machines').get() as Record<
+    string,
+    unknown
+  >
 
 const asked = () => door.asked.map((one) => one.headers.get('x-orden-machine'))
 
@@ -57,8 +58,7 @@ interface Shown {
 
 const types = () => call<Offered>(env, '/v2/online/types', { token: owner })
 const shownNow = () => call<Shown>(env, '/v2/online/machine', { token: owner })
-const choose = (body: Record<string, string>) =>
-  call(env, '/v2/online/machine/type', { token: owner, body })
+const choose = (body: Record<string, string>) => call(env, '/v2/online/machine/type', { token: owner, body })
 
 function ceiling(value: string) {
   env.db
@@ -210,10 +210,7 @@ describe('resizing a made machine', () => {
     const shown = await shownNow()
     expect(shown.json.machine.server).toMatchObject({ made: true, price: 14.27, hourly: 0.0248 })
     expect(shown.json.machine.server.spent).toBe(
-      spentOn(
-        { price_month: 14.27, price_hour: 0.0248, priced_at: Date.UTC(2026, 10, 1), spent: 0 },
-        Date.now(),
-      ),
+      spentOn({ price_month: 14.27, price_hour: 0.0248, priced_at: Date.UTC(2026, 10, 1), spent: 0 }, Date.now()),
     )
   })
 })

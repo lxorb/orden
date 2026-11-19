@@ -50,10 +50,7 @@ export function outsideCode(text: string, change: (words: string) => string): st
 
       if (fence !== null) {
         const closes =
-          mark !== undefined &&
-          mark.startsWith(fence.charAt(0)) &&
-          mark.length >= fence.length &&
-          line.trim() === mark
+          mark !== undefined && mark.startsWith(fence.charAt(0)) && mark.length >= fence.length && line.trim() === mark
         if (closes) fence = null
         return line
       }

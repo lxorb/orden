@@ -183,15 +183,11 @@ describe('bytes', () => {
     })
     expect(parseDataUri('data:,a%20b')?.mime).toBe('application/octet-stream')
     expect(parseDataUri('nope')).toBeNull()
-    expect(await sha256('')).toBe(
-      'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-    )
+    expect(await sha256('')).toBe('e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
   })
 
   test('a log line keeps no token', () => {
-    expect(tokensOut('Bearer abcdefghijkl and ghp_abcdefghijklmnop')).toBe(
-      'Bearer <token> and <token>',
-    )
+    expect(tokensOut('Bearer abcdefghijkl and ghp_abcdefghijklmnop')).toBe('Bearer <token> and <token>')
   })
 })
 

@@ -35,10 +35,7 @@ export function doublesOf(
     .map((item) => item.id)
 }
 
-export async function withoutDoubles(
-  device: TrashItem[],
-  account: readonly AccountNote[],
-): Promise<TrashItem[]> {
+export async function withoutDoubles(device: TrashItem[], account: readonly AccountNote[]): Promise<TrashItem[]> {
   const doubles = new Set(doublesOf(device, account, folderOfSpace))
   if (!doubles.size) return device
   for (const item of device) {

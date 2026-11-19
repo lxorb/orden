@@ -30,8 +30,7 @@ export async function laidOut(
   const stage = document.createElement('div')
   stage.dataset.theme = 'light'
   stage.setAttribute('aria-hidden', 'true')
-  stage.style.cssText =
-    'position:fixed;left:-100000px;top:0;width:0;height:0;visibility:hidden;pointer-events:none'
+  stage.style.cssText = 'position:fixed;left:-100000px;top:0;width:0;height:0;visibility:hidden;pointer-events:none'
   document.body.append(stage)
 
   const mounted: { card: TextCard; host: HTMLElement; done: () => void }[] = []

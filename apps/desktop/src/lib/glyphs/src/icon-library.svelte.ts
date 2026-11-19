@@ -1,11 +1,4 @@
-import {
-  type IconNode,
-  keyNamed,
-  loadIcons,
-  LUCIDE,
-  shapeFor,
-  type WrittenIcon,
-} from '../../ui-kit/src/api'
+import { type IconNode, keyNamed, loadIcons, LUCIDE, shapeFor, type WrittenIcon } from '../../ui-kit/src/api'
 import type { IconShape, LoadedSet } from '../../icons/src/api'
 import { startup } from '../../launch/src/api'
 
@@ -63,9 +56,7 @@ class IconLibrary {
       return found ? { kind: 'stroked', icon: found } : null
     }
 
-    return Object.hasOwn(this.loaded, icon.set)
-      ? (this.loaded[icon.set]?.shape(icon.name) ?? null)
-      : null
+    return Object.hasOwn(this.loaded, icon.set) ? (this.loaded[icon.set]?.shape(icon.name) ?? null) : null
   }
 
   setFor(icon: WrittenIcon | null): string | null {

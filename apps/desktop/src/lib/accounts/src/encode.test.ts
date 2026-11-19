@@ -14,23 +14,7 @@ function webp(chunks: [string, number[]][]): Uint8Array {
   return new Uint8Array([...ascii('RIFF'), ...le32(body.length + 4), ...ascii('WEBP'), ...body])
 }
 
-const GPS = [
-  ...ascii('Exif'),
-  0,
-  0,
-  ...ascii('MM'),
-  0,
-  42,
-  0,
-  0,
-  0,
-  8,
-  0,
-  1,
-  0x88,
-  0x25,
-  ...ascii('N'),
-]
+const GPS = [...ascii('Exif'), 0, 0, ...ascii('MM'), 0, 42, 0, 0, 0, 8, 0, 1, 0x88, 0x25, ...ascii('N')]
 
 function jpeg(segments: [number, number[]][]): Uint8Array {
   const body = segments.flatMap(([marker, bytes]) => [

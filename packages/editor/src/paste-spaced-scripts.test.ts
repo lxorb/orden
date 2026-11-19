@@ -22,9 +22,7 @@ describe('a pasted superscript or subscript holding a space', () => {
   })
 
   test('a clipped encyclopedia note reference keeps its superscript', () => {
-    const shown = readBack(
-      '<p>Text<sup class="reference"><a href="#cite_note-a">[note 1]</a></sup></p>',
-    )
+    const shown = readBack('<p>Text<sup class="reference"><a href="#cite_note-a">[note 1]</a></sup></p>')
     expect(shown).toMatch(/<sup><a href="#cite_note-a">\[note 1\]<\/a><\/sup>/)
     expect(shown).not.toContain('^')
   })

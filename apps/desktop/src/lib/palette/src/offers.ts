@@ -25,8 +25,7 @@ export function withOffers(
       (row.kind === 'tab' && row.tab.url !== null && row.tab.url === there),
   )
 
-  const offers: Row[] =
-    address && !goes ? [{ kind: 'address', url: address.url, address: address.shown }] : []
+  const offers: Row[] = address && !goes ? [{ kind: 'address', url: address.url, address: address.shown }] : []
   const written = /^(https?:\/\/|www\.)/i.test(term.trim())
   const out = written ? [...offers, ...found] : [...found, ...offers]
 

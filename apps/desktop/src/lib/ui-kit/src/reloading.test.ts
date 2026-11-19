@@ -17,9 +17,7 @@ describe('the entry a page starts from', () => {
   })
 
   test('is read in any attribute order and either quote', () => {
-    expect(entryOf(`<script src='/assets/index-a.js' type='module'></script>`)).toBe(
-      '/assets/index-a.js',
-    )
+    expect(entryOf(`<script src='/assets/index-a.js' type='module'></script>`)).toBe('/assets/index-a.js')
   })
 
   test('is nothing on a page with no module script', () => {
@@ -191,14 +189,8 @@ describe('a piece that did not arrive', () => {
   })
 
   test.each([
-    [
-      'the same build',
-      () => serve.mockImplementation(() => Promise.resolve(new Response(page(RUNNING)))),
-    ],
-    [
-      'a build a reload already went for',
-      () => storage.set('orden:reloaded-for', '/assets/index-new.js'),
-    ],
+    ['the same build', () => serve.mockImplementation(() => Promise.resolve(new Response(page(RUNNING))))],
+    ['a build a reload already went for', () => storage.set('orden:reloaded-for', '/assets/index-new.js')],
   ])('under %s, offers Reload and never reloads by itself', async (_, given) => {
     given()
     const { reloading } = await watching()
@@ -291,10 +283,7 @@ describe('an error thrown inside the first step after a piece arrived', () => {
 
 describe('a piece that did not arrive, as each engine says it', () => {
   test.each([
-    [
-      'Chromium',
-      new TypeError('Failed to fetch dynamically imported module: /assets/Palette-9f.js'),
-    ],
+    ['Chromium', new TypeError('Failed to fetch dynamically imported module: /assets/Palette-9f.js')],
     ['Firefox', new TypeError('error loading dynamically imported module: /assets/Palette-9f.js')],
     ['WebKit', new TypeError('Importing a module script failed.')],
     ['a stylesheet', new Error('Unable to preload CSS for /assets/Palette-9f.css')],

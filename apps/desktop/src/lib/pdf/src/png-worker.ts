@@ -4,10 +4,7 @@ interface Asked {
   as?: 'data' | 'bytes'
 }
 
-async function encoded(
-  picture: ImageBitmap,
-  as: Asked['as'],
-): Promise<string | ArrayBuffer | null> {
+async function encoded(picture: ImageBitmap, as: Asked['as']): Promise<string | ArrayBuffer | null> {
   const canvas = new OffscreenCanvas(picture.width, picture.height)
   const drawing = canvas.getContext('2d')
   if (!drawing) return null

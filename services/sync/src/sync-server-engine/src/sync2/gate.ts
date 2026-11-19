@@ -9,12 +9,7 @@ const VERSION = /^(\d+)\.(\d+)\.(\d+)(?:-(\d+))?$/
 function versionOf(text: string | null | undefined): number[] | null {
   const parts = VERSION.exec((text ?? '').trim())
   if (!parts) return null
-  return [
-    Number(parts[1]),
-    Number(parts[2]),
-    Number(parts[3]),
-    parts[4] === undefined ? Infinity : Number(parts[4]),
-  ]
+  return [Number(parts[1]), Number(parts[2]), Number(parts[3]), parts[4] === undefined ? Infinity : Number(parts[4])]
 }
 
 export function atLeastVersion(app: string | null | undefined, min: string): boolean {
@@ -42,11 +37,7 @@ export interface Account {
   version: 1 | 2
 }
 
-export async function accountBy(
-  env: Env,
-  by: 'email' | 'id',
-  value: string,
-): Promise<Account | null> {
+export async function accountBy(env: Env, by: 'email' | 'id', value: string): Promise<Account | null> {
   const row = await env.DB.prepare(
     `select id, email, sync_version from users where ${by === 'email' ? 'email' : 'id'} = ?`,
   )
@@ -149,8 +140,7 @@ export async function standing(env: Env, account: Account, judging: Judging): Pr
         lastUsedAt: one.last_used_at,
         allowed: deviceless === 'pass' || allow.has(one.id),
       }
-      if (!view.allowed)
-        blockers.push({ kind: 'session', id: one.id, name: one.name, why: 'no device' })
+      if (!view.allowed) blockers.push({ kind: 'session', id: one.id, name: one.name, why: 'no device' })
       return view
     })
 
@@ -159,16 +149,8 @@ export async function standing(env: Env, account: Account, judging: Judging): Pr
 
 export type Mover = 'admin' | 'hello' | 'everyone'
 
-export async function move(
-  env: Env,
-  account: Account,
-  to: 1 | 2,
-  why: Mover,
-  min: string | null,
-): Promise<boolean> {
-  const written = await env.DB.prepare(
-    'update users set sync_version = ? where id = ? and sync_version = ?',
-  )
+export async function move(env: Env, account: Account, to: 1 | 2, why: Mover, min: string | null): Promise<boolean> {
+  const written = await env.DB.prepare('update users set sync_version = ? where id = ? and sync_version = ?')
     .bind(to, account.id, account.version)
     .run()
   if (written.meta.changes === 0) return false

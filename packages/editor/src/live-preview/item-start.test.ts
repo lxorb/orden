@@ -25,10 +25,7 @@ function viewOf(doc: string, cursor: number) {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(cursor),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        livePreview(),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), livePreview()],
     }),
   )
   const view = new EditorView({ state, parent: document.body })

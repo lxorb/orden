@@ -106,9 +106,7 @@ test('a pointer written again is what the mark wears next', async () => {
 })
 
 const ROCKET = new Set(
-  (iconLibrary.shape('rocket') ?? []).flatMap(([, attrs]) =>
-    typeof attrs.d === 'string' ? [attrs.d] : [],
-  ),
+  (iconLibrary.shape('rocket') ?? []).flatMap(([, attrs]) => (typeof attrs.d === 'string' ? [attrs.d] : [])),
 )
 
 function wornBy(host: Element): string {

@@ -4,8 +4,7 @@ import '@orden/markdown/eager'
 vi.mock('mermaid', () => ({
   default: {
     initialize: () => undefined,
-    render: (id: string, code: string) =>
-      Promise.resolve({ svg: `<svg id="${id}"><text>${code}</text></svg>` }),
+    render: (id: string, code: string) => Promise.resolve({ svg: `<svg id="${id}"><text>${code}</text></svg>` }),
   },
 }))
 
@@ -14,8 +13,7 @@ const { renderNote } = await import('./render')
 const flow = '# Flow\n\n```mermaid\ngraph TD\nA-->B\n```\n'
 const snippet = '# Snippet\n\n```ts\nlet x = 1\n```\n'
 
-const readNote = (target: string) =>
-  Promise.resolve(target === 'Flow' ? flow : target === 'Snippet' ? snippet : null)
+const readNote = (target: string) => Promise.resolve(target === 'Flow' ? flow : target === 'Snippet' ? snippet : null)
 
 describe('fences inside a note embedded in an exported document', () => {
   test('a diagram is drawn, as it is in the note itself and in the reading view', async () => {

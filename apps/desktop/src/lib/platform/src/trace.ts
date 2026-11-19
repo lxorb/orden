@@ -52,8 +52,7 @@ export function sendTrace(): void {
 }
 
 function navigationSteps(): Step[] {
-  const entry = performance.getEntriesByType('navigation').at(0) as
-    PerformanceNavigationTiming | undefined
+  const entry = performance.getEntriesByType('navigation').at(0) as PerformanceNavigationTiming | undefined
   if (!entry) return []
 
   return [

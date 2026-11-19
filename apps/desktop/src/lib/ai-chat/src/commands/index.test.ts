@@ -169,10 +169,7 @@ describe('the menu', () => {
     expect(own[0]?.args).toBe('<who>')
     await run(rows, 'greet', 'Ada', panel)
     await run(rows, 'plain', '', panel)
-    expect(calls).toEqual([
-      'turn(open,"Say hello to Ada.",{"effort":"low","mode":"full"})',
-      'send("Plain.")',
-    ])
+    expect(calls).toEqual(['turn(open,"Say hello to Ada.",{"effort":"low","mode":"full"})', 'send("Plain.")'])
   })
 
   test('chooses an agent profile and an output style for the thread', async () => {
@@ -264,9 +261,7 @@ describe('the menu', () => {
     const rows = commands(panel)
     await run(rows, 'goal', '', panel)
     await run(rows, 'jobs', '', panel)
-    const lines = thread.turns.flatMap((turn) =>
-      turn.parts.map((part) => (part.kind === 'notice' ? part.code : '')),
-    )
+    const lines = thread.turns.flatMap((turn) => turn.parts.map((part) => (part.kind === 'notice' ? part.code : '')))
     expect(lines).toEqual(['command', 'command'])
   })
 })

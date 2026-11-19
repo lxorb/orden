@@ -39,15 +39,11 @@ export interface PlainOptions {
   asTheyAre?: boolean
 }
 
-export async function readPlain(
-  sources: readonly Source[],
-  options: PlainOptions = {},
-): Promise<ImportPlan> {
+export async function readPlain(sources: readonly Source[], options: PlainOptions = {}): Promise<ImportPlan> {
   const names = new Names()
   let html = 0
 
-  const note = (path: string) =>
-    options.asTheyAre ? /\.(md|markdown)$/i.test(path) : isNoteFile(path)
+  const note = (path: string) => (options.asTheyAre ? /\.(md|markdown)$/i.test(path) : isNoteFile(path))
 
   const target = (source: Source): string | null => {
     if (isJunk(source.path) || options.skip?.(source.path)) return null

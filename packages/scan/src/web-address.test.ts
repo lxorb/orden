@@ -3,11 +3,7 @@ import { webAddress } from './typed'
 import { droppedAddress, favicon, isWebAddress, keysOf, plainOrigin } from './web-address'
 
 test('the app’s own origins are refused with a trailing dot too', () => {
-  for (const url of [
-    'http://tauri.localhost./',
-    'https://orden.localhost../',
-    'http://IPC.localhost./',
-  ]) {
+  for (const url of ['http://tauri.localhost./', 'https://orden.localhost../', 'http://IPC.localhost./']) {
     expect(isWebAddress(url), url).toBe(false)
   }
 })
@@ -24,19 +20,14 @@ describe('what a web tab may open', () => {
 })
 
 test("a site's own picture is looked for at its root, and an address with no root has none", () => {
-  expect(favicon('https://pass.proton.me/onboarding?x=1')).toBe(
-    'https://pass.proton.me/favicon.ico',
-  )
+  expect(favicon('https://pass.proton.me/onboarding?x=1')).toBe('https://pass.proton.me/favicon.ico')
   expect(favicon('pass.proton.me/onboarding')).toBeNull()
   expect(favicon('about:blank')).toBeNull()
 })
 
 describe('what a page is kept under', () => {
   test('its origin and path, a query or a fragment being the same page', () => {
-    expect(keysOf('https://svelte.dev/docs?x=1#intro')).toEqual([
-      'https://svelte.dev/docs',
-      'https://svelte.dev',
-    ])
+    expect(keysOf('https://svelte.dev/docs?x=1#intro')).toEqual(['https://svelte.dev/docs', 'https://svelte.dev'])
     expect(keysOf('https://svelte.dev')).toEqual(['https://svelte.dev/', 'https://svelte.dev'])
   })
 
@@ -56,9 +47,7 @@ describe('a link dragged onto the strip from another app', () => {
   })
 
   test('opens an address written as plain text', () => {
-    expect(droppedAddress(drop({ 'text/plain': '  https://example.com/a  ' }))).toBe(
-      'https://example.com/a',
-    )
+    expect(droppedAddress(drop({ 'text/plain': '  https://example.com/a  ' }))).toBe('https://example.com/a')
   })
 
   test('opens nothing that is not a page on the web', () => {

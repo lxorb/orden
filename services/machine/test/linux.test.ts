@@ -221,13 +221,7 @@ describe.runIf(linux)('a session', () => {
   })
 
   test('a fork bomb is held at the process limit, and ending the session ends all of it', async () => {
-    const mine = spawnSync('ps', [
-      '-L',
-      '-u',
-      String(process.getuid?.()),
-      '-o',
-      'lwp=',
-    ]).stdout.toString()
+    const mine = spawnSync('ps', ['-L', '-u', String(process.getuid?.()), '-o', 'lwp=']).stdout.toString()
     const limit = mine.split('\n').filter(Boolean).length + 150
     const on = machine(limit)
     const one = session(on, 's_bomb')
@@ -408,9 +402,7 @@ describe.runIf(linux)('the machine', () => {
     const first = new Ordend(options)
     await first.receive({ t: 'open', session: 's_listed', cols: COLS, rows: ROWS })
     await first.receive({ t: 'in', session: 's_listed', data: bytes('sleep 600\r') })
-    await until(async () =>
-      (await first.list()).some((one) => one.session === 's_listed' && one.program === 'sleep'),
-    )
+    await until(async () => (await first.list()).some((one) => one.session === 's_listed' && one.program === 'sleep'))
     expect((await first.list()).find((one) => one.session === 's_listed')?.at).toBeGreaterThan(0)
     first.stop()
 
@@ -446,9 +438,7 @@ describe.runIf(linux)('the machine', () => {
       session: 's_busy',
       data: bytes('timeout 3 sh -c "while :; do :; done"; echo spun\r'),
     })
-    await until(() =>
-      frames.some((frame) => frame.t === 'out' && Buffer.from(frame.data).includes('spun\r\n')),
-    )
+    await until(() => frames.some((frame) => frame.t === 'out' && Buffer.from(frame.data).includes('spun\r\n')))
     const activity = ordend.activity()
     expect(activity.output).toBeGreaterThan(0)
     expect(activity.cpu).toBeGreaterThan(0.01)

@@ -52,8 +52,7 @@ describe('what is sent', () => {
 describe('a refusal, in OpenAI’s own words (recorded 2026-10-03)', () => {
   const unsupportedValue =
     "Unsupported value: 'max' is not supported with the 'gpt-5.4-mini' model. Supported values are: 'none', 'low', 'medium', 'high', and 'xhigh'."
-  const unsupportedParameter =
-    "Unsupported parameter: 'reasoning.effort' is not supported with this model."
+  const unsupportedParameter = "Unsupported parameter: 'reasoning.effort' is not supported with this model."
 
   test('a level the model does not take names the levels it does', () => {
     expect(refusesEffort(unsupportedValue, 'reasoning.effort')).toBe(true)
@@ -70,8 +69,6 @@ describe('a refusal, in OpenAI’s own words (recorded 2026-10-03)', () => {
   test('a refusal about something else is not about effort', () => {
     expect(refusesEffort('Incorrect API key provided.')).toBe(false)
     expect(refusesReasoning('Incorrect API key provided.')).toBe(false)
-    expect(
-      refusesReasoning("Unsupported parameter: 'reasoning.summary'", 'reasoning.summary'),
-    ).toBe(true)
+    expect(refusesReasoning("Unsupported parameter: 'reasoning.summary'", 'reasoning.summary')).toBe(true)
   })
 })

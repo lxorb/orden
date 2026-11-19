@@ -67,9 +67,7 @@ class Hovering {
   }
 
   restOn(tab: Tab, node: Element, focused = false) {
-    const { left, right, bottom } = (
-      node.closest('.tab')?.querySelector('.fill') ?? node
-    ).getBoundingClientRect()
+    const { left, right, bottom } = (node.closest('.tab')?.querySelector('.fill') ?? node).getBoundingClientRect()
     this.enter({ tab, box: { left, right, bottom }, focused })
   }
 
@@ -111,9 +109,7 @@ class Hovering {
 
   private may(): boolean {
     const own = this.uncover ? 1 : 0
-    return (
-      overlays.depth <= own && workspace.panes.dragging === null && workspace.panes.landing === null
-    )
+    return overlays.depth <= own && workspace.panes.dragging === null && workspace.panes.landing === null
   }
 
   private async show(aim: Aim) {
@@ -146,9 +142,7 @@ class Hovering {
     this.card = {
       id: tab.id,
       title: tab.shown,
-      where: web
-        ? siteOf(webPages().addressOf(tab.id) ?? tab.address)
-        : whereOf(tab.path, workspace.spaces),
+      where: web ? siteOf(webPages().addressOf(tab.id) ?? tab.address) : whereOf(tab.path, workspace.spaces),
       from: web ? fromOf(tab.path, tab.note.home, workspace.spaces, workspace.activeSpaceId) : null,
       still,
       x: at.x,

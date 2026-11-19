@@ -13,10 +13,7 @@ import { floorFor, paletteOf, sheetColour } from '../src/lib/theme-looks/src/wal
 
 const FLOOR = 1.5
 
-const TOKENS = readFileSync(
-  fileURLToPath(new URL('../../../packages/themes/src/tokens.css', import.meta.url)),
-  'utf8',
-)
+const TOKENS = readFileSync(fileURLToPath(new URL('../../../packages/themes/src/tokens.css', import.meta.url)), 'utf8')
 const TABS = readFileSync(join(import.meta.dirname, '../src/lib/tab-strip/src/Tabs.svelte'), 'utf8')
 
 const SCHEMES: Scheme[] = ['dark', 'light']
@@ -127,13 +124,7 @@ function glass(): Seen[] {
       const frame = frameFor(source, app, glassSides, paper)
       const ground = over(colour(frame.tint), frame.wash, paper)
       const text = glassSides[frame.scheme].text
-      seen.push(
-        weakest(
-          `glass, ${app}, ${String(source.colour)}`,
-          [ground],
-          builtInEdge(frame.scheme, text),
-        ),
-      )
+      seen.push(weakest(`glass, ${app}, ${String(source.colour)}`, [ground], builtInEdge(frame.scheme, text)))
     }
   }
   return seen
@@ -191,10 +182,7 @@ describe('the open tab', () => {
     expect(TABS).toContain('style:--lead="{lead}px"')
     expect(rule('.tabs.flush .tab.first .fill')).toMatch(/inset-inline-start: 0;/)
     expect(TABS).toMatch(/\.tabs\.flush \.tab\.first\.active \.fill::before \{\s+display: none;/)
-    const pane = readFileSync(
-      join(import.meta.dirname, '../src/lib/pane-tree/src/Pane.svelte'),
-      'utf8',
-    )
+    const pane = readFileSync(join(import.meta.dirname, '../src/lib/pane-tree/src/Pane.svelte'), 'utf8')
     expect(pane).toContain('const flush = $derived(flushFirst(pane.id))')
     expect(pane).toContain('class:straight={!stripped && flush}')
     expect(pane).toMatch(/\.pane\.straight \{\s+border-start-start-radius: 0;/)

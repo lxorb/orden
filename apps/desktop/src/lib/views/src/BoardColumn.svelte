@@ -61,8 +61,7 @@
     if (!box) return
     const top = index * height
     if (top < box.scrollTop) box.scrollTop = top
-    else if (top + height > box.scrollTop + box.clientHeight)
-      box.scrollTop = top + height - box.clientHeight
+    else if (top + height > box.scrollTop + box.clientHeight) box.scrollTop = top + height - box.clientHeight
     win.refresh()
   }
 

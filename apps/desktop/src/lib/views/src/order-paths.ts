@@ -63,24 +63,16 @@ export function movedWords(text: string, fenced: boolean, was: string, now: stri
   return after === text ? null : after
 }
 
-export async function orderMoved(
-  tree: Entry,
-  root: string,
-  from: string,
-  to: string,
-): Promise<void> {
+export async function orderMoved(tree: Entry, root: string, from: string, to: string): Promise<void> {
   const was = relativeTo(root, from)
   const now = relativeTo(root, to)
   if (!was || !now || was === now) return
   const files = baseFiles(tree).map((path) => ({ path: movedPath(path, from, to), fenced: false }))
-  const notes = links
-    .basesIn(root)
-    .map((path) => ({ path: movedPath(path, from, to), fenced: true }))
+  const notes = links.basesIn(root).map((path) => ({ path: movedPath(path, from, to), fenced: true }))
   for (const { path, fenced } of [...files, ...notes]) {
     const before = await noteText(workspace, path)
     if (!before?.includes(was)) continue
     const after = movedWords(before, fenced, was, now)
-    if (after !== null && after !== before)
-      await writeNoteText(workspace, path, before, after, { undoable: false })
+    if (after !== null && after !== before) await writeNoteText(workspace, path, before, after, { undoable: false })
   }
 }

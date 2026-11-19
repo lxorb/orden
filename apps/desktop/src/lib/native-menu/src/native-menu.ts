@@ -195,8 +195,7 @@ export function keystrokeOf(text: string): Keypress | null {
   if (!combination) return null
 
   const { key } = combination
-  const code =
-    Object.keys(PHYSICAL).find((one) => PHYSICAL[one] === key) ?? (key === ' ' ? 'Space' : key)
+  const code = Object.keys(PHYSICAL).find((one) => PHYSICAL[one] === key) ?? (key === ' ' ? 'Space' : key)
 
   return {
     key,
@@ -222,9 +221,7 @@ export function leftFullscreen(was: boolean, now: boolean, appOn: boolean): bool
 const FINDING = ['edit.find', 'edit.replace', 'edit.find-next', 'edit.find-previous']
 
 const SMALL = new Set(
-  'a an the and but for nor or so yet as at by from in into of off on onto out per to up via with'.split(
-    ' ',
-  ),
+  'a an the and but for nor or so yet as at by from in into of off on onto out per to up via with'.split(' '),
 )
 
 export function titled(text: string): string {
@@ -266,10 +263,7 @@ function claimer(): (accelerator: string | null) => string | null {
   }
 }
 
-export function chordFor(
-  keyFor: (command: string) => string | null,
-  command: string,
-): string | null {
+export function chordFor(keyFor: (command: string) => string | null, command: string): string | null {
   const key = keyFor(command)
   if (!key || !tapOf(key, 'mac')) return key
 
@@ -357,8 +351,7 @@ export function describeMenuBar(sources: MenuBarSources): MenuBar {
 
   const editRows = (rows: MenuRow[]): MenuRow[] => {
     const finding = rows.filter(
-      (row): row is MenuItem =>
-        row !== DIVIDER && !isSubmenu(row) && FINDING.includes(row.command ?? ''),
+      (row): row is MenuItem => row !== DIVIDER && !isSubmenu(row) && FINDING.includes(row.command ?? ''),
     )
     const first = finding[0]
     if (!first) return rows
@@ -458,11 +451,7 @@ export function changesBetween(before: NativeEntry[], after: NativeEntry[]): Cha
       }
       if (previous.accelerator !== next.accelerator) change.accelerator = next.accelerator
     }
-    if (
-      previous.kind === 'submenu' &&
-      next.kind === 'submenu' &&
-      previous.enabled !== next.enabled
-    ) {
+    if (previous.kind === 'submenu' && next.kind === 'submenu' && previous.enabled !== next.enabled) {
       change.enabled = next.enabled
     }
 

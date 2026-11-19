@@ -82,9 +82,7 @@ async function readFirefox(profile: BrowserProfile, name: string): Promise<Read 
   if (!bookmarks && backup) bookmarks = mozJson(await browserFile(profile, backup))
 
   if (!session && !bookmarks) return null
-  const engine = profile.files.includes(SEARCH)
-    ? mozillaEngine(mozJson(await browserFile(profile, SEARCH)))
-    : null
+  const engine = profile.files.includes(SEARCH) ? mozillaEngine(mozJson(await browserFile(profile, SEARCH))) : null
   return { sidebar: firefoxSidebar(session, bookmarks, name), engine, lost: [] }
 }
 
@@ -115,9 +113,7 @@ async function readChromium(profile: BrowserProfile, name: string): Promise<Read
   if (!session && !bookmarks && !account) return null
   const lost =
     !session && locked
-      ? [
-          `${BROWSER_NAMES[profile.browser]} keeps its open tabs locked, so only its bookmarks came.`,
-        ]
+      ? [`${BROWSER_NAMES[profile.browser]} keeps its open tabs locked, so only its bookmarks came.`]
       : []
   return {
     sidebar: chromiumSidebar(session, bookmarks, name, account),

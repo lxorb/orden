@@ -18,8 +18,7 @@ export function htmlBlockCard(html: string): string | null {
   })
 }
 
-const ACTS =
-  /<(?:script|iframe|frame|frameset|object|embed|applet|meta|base|link|portal)(?=[\s/>]|$)/i
+const ACTS = /<(?:script|iframe|frame|frameset|object|embed|applet|meta|base|link|portal)(?=[\s/>]|$)/i
 
 function namesScript(html: string): boolean {
   const decoded = html.replace(
@@ -34,9 +33,7 @@ function namesScript(html: string): boolean {
 }
 
 export function ownMarkup(html: string): string {
-  const carded = html
-    .replace(/<\/iframe\s*>/gi, '')
-    .replace(/<iframe\b[^>]*>/gi, (tag) => iframeCard(tag) ?? '')
+  const carded = html.replace(/<\/iframe\s*>/gi, '').replace(/<iframe\b[^>]*>/gi, (tag) => iframeCard(tag) ?? '')
 
   return ACTS.test(carded) || namesScript(carded) ? escape(html) : carded
 }

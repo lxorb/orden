@@ -16,16 +16,7 @@
   import { longPaste } from '../../ui-controls/src/api'
   import type { Provider } from '../../ai-providers/src/api'
   import type { Entry, Prefill } from './entry'
-  import {
-    carried,
-    chosen,
-    pastedLines,
-    piecesOf,
-    type Span,
-    suggestions,
-    tokenAt,
-    without,
-  } from './field'
+  import { carried, chosen, pastedLines, piecesOf, type Span, suggestions, tokenAt, without } from './field'
   import Glyph from './Glyph.svelte'
   import { priorityTone } from '../../tasks-model/src/api'
   import { dayWords, durationLabel } from './labels'
@@ -568,13 +559,7 @@
       >
         <Glyph icon={Flag} />
       </button>
-      <button
-        type="button"
-        class="control"
-        class:set={fields.tags.length > 0}
-        onclick={askTags}
-        aria-label="Labels"
-      >
+      <button type="button" class="control" class:set={fields.tags.length > 0} onclick={askTags} aria-label="Labels">
         <Glyph icon={Tag} />
         {#if fields.tags.length}<span>{fields.tags.length}</span>{/if}
       </button>

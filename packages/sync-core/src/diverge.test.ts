@@ -68,9 +68,7 @@ describe('diverge', () => {
 
     const result = diverge(base, local, remote, LOCAL_NEWER)
     expect(result.verdict).toBe('clean')
-    expect(result.resolution).toBe(
-      'First paragraph, edited here.\n\nSecond paragraph edited there.\n',
-    )
+    expect(result.resolution).toBe('First paragraph, edited here.\n\nSecond paragraph edited there.\n')
   })
 
   test('both fixed the same typo: clean, and the fix once, not thethe', () => {
@@ -124,22 +122,12 @@ describe('diverge', () => {
   test('the boundary is CONTESTED characters, inclusive', () => {
     const word = (length: number) => 'x'.repeat(length)
     const fits = Math.floor(CONTESTED / 3)
-    const small = diverge(
-      `a ${word(fits)} b`,
-      `a ${'y'.repeat(fits)} b`,
-      `a ${'z'.repeat(fits)} b`,
-      LOCAL_NEWER,
-    )
+    const small = diverge(`a ${word(fits)} b`, `a ${'y'.repeat(fits)} b`, `a ${'z'.repeat(fits)} b`, LOCAL_NEWER)
     expect(small.overlaps[0]?.size).toBeLessThanOrEqual(CONTESTED)
     expect(small.verdict).toBe('minor')
 
     const big = fits + 1
-    const large = diverge(
-      `a ${word(big)} b`,
-      `a ${'y'.repeat(big)} b`,
-      `a ${'z'.repeat(big)} b`,
-      LOCAL_NEWER,
-    )
+    const large = diverge(`a ${word(big)} b`, `a ${'y'.repeat(big)} b`, `a ${'z'.repeat(big)} b`, LOCAL_NEWER)
     expect(large.overlaps[0]?.size).toBeGreaterThan(CONTESTED)
     expect(large.verdict).toBe('diverged')
   })
@@ -192,10 +180,8 @@ describe('diverge', () => {
 
   test('the excerpt is the first contested passage of each side, the differences marked', () => {
     const base = 'Intro.\n\nWe should ship the release on Monday after the review.\n\nOutro.\n'
-    const local =
-      'Intro.\n\nLet us hold the release until every reviewer has signed off.\n\nOutro.\n'
-    const remote =
-      'Intro.\n\nThe release goes out Friday morning, whatever the review says.\n\nOutro.\n'
+    const local = 'Intro.\n\nLet us hold the release until every reviewer has signed off.\n\nOutro.\n'
+    const remote = 'Intro.\n\nThe release goes out Friday morning, whatever the review says.\n\nOutro.\n'
 
     const result = diverge(base, local, remote, LOCAL_NEWER)
     const shown = excerpt(base, local, remote, result.overlaps)
@@ -210,12 +196,9 @@ describe('diverge', () => {
   })
 
   test('the marks are whole words, and only the words that differ', () => {
-    const base =
-      'Intro.\n\nWe meet on the old bridge at noon with the whole team today.\n\nOutro.\n'
-    const local =
-      'Intro.\n\nWe meet on the new bridge at one with the whole team today.\n\nOutro.\n'
-    const remote =
-      'Intro.\n\nWe meet on the stone bridge at two with the whole team tomorrow.\n\nOutro.\n'
+    const base = 'Intro.\n\nWe meet on the old bridge at noon with the whole team today.\n\nOutro.\n'
+    const local = 'Intro.\n\nWe meet on the new bridge at one with the whole team today.\n\nOutro.\n'
+    const remote = 'Intro.\n\nWe meet on the stone bridge at two with the whole team tomorrow.\n\nOutro.\n'
 
     const shown = excerpt(base, local, remote, diverge(base, local, remote, LOCAL_NEWER).overlaps)
     const marked = (side: { text: string; marks: [number, number][] }) =>
@@ -229,8 +212,7 @@ describe('diverge', () => {
     const base = 'We ship on Monday after the review.\n\n- milk\n- eggs\n'
     const local = 'We ship on Monday after mk8z after the review.\n\n- milk milk the mk3z'
     const remote = 'We mk15z on eggs the ship on Monday after the mk17z mk27z plan milk'
-    const merged =
-      'We mk15z on eggs the ship on Monday after mk8z after the  milk the mk3zmk17z mk27z plan milk'
+    const merged = 'We mk15z on eggs the ship on Monday after mk8z after the  milk the mk3zmk17z mk27z plan milk'
 
     const result = diverge(base, local, remote, LOCAL_NEWER, merged)
     expect(result.verdict).toBe('minor')
@@ -276,9 +258,7 @@ describe('diverge', () => {
         expect(result.overlaps).toEqual([])
         if (result.broken === null) {
           expect(result.verdict).toBe('clean')
-          expect(result.resolution).toBe(
-            `${edited(first, mine)}${separator}${edited(second, theirs)}`,
-          )
+          expect(result.resolution).toBe(`${edited(first, mine)}${separator}${edited(second, theirs)}`)
         }
       }),
       { numRuns: 1000 },
@@ -303,10 +283,8 @@ describe('diverge', () => {
 
   test('a few words two devices each put back over a deletion are said once', () => {
     const base = '# Ideas\n\nA long paragraph review monday about mk3z plan on\n'
-    const local =
-      '# Ideas\n mk25z monday\nA long paragraph review monday mk4z we mk2z the mk36z we about what comes\n'
-    const remote =
-      '# Ideas\n\nA long paragraph review monday mk4z we mk2z the about mk37z what comes next.\n'
+    const local = '# Ideas\n mk25z monday\nA long paragraph review monday mk4z we mk2z the mk36z we about what comes\n'
+    const remote = '# Ideas\n\nA long paragraph review monday mk4z we mk2z the about mk37z what comes next.\n'
 
     const result = diverge(base, local, remote, REMOTE_NEWER, crdtMerge(base, local, remote))
     expect(result.verdict).not.toBe('clean')
@@ -333,10 +311,8 @@ describe('diverge', () => {
   test("the CRDT's merge stands where the text merge would say more twice than it does", () => {
     const base = 'We ship the monday after mk16z ship on Monday mk6z after mk13z the review.'
     const local = 'We ship the monday after mk16z ship on Monday mk6z after mk19z monday themk13z '
-    const remote =
-      'We ship the monday after mk16z ship on Monday mk6z after mk30z on mk13z the review. on mk24z'
-    const merged =
-      'We ship the monday after mk16z ship on Monday mk6z after mk19z monday mk30z on the on mk24zmk13z '
+    const remote = 'We ship the monday after mk16z ship on Monday mk6z after mk30z on mk13z the review. on mk24z'
+    const merged = 'We ship the monday after mk16z ship on Monday mk6z after mk19z monday mk30z on the on mk24zmk13z '
 
     const result = diverge(base, local, remote, REMOTE_NEWER, merged)
     expect(result.resolution?.split('mk13z').length).toBe(2)
@@ -398,18 +374,8 @@ describe('diverge', () => {
   })
 
   test.each([
-    [
-      'buy milk and eggs\n',
-      'buy milk and bread\n',
-      'buy milk and fresh eggs\n',
-      'buy milk and fresh bread\n',
-    ],
-    [
-      'Call Ann on Friday.\n',
-      'Call Ann on Monday.\n',
-      'Call Ann on next Friday.\n',
-      'Call Ann on next Monday.\n',
-    ],
+    ['buy milk and eggs\n', 'buy milk and bread\n', 'buy milk and fresh eggs\n', 'buy milk and fresh bread\n'],
+    ['Call Ann on Friday.\n', 'Call Ann on Monday.\n', 'Call Ann on next Friday.\n', 'Call Ann on next Monday.\n'],
     [
       '- [ ] Call Ann on Friday\n',
       '- [ ] Call Ann on Monday\n',
@@ -443,36 +409,28 @@ describe('diverge', () => {
 
   test.each([
     ['- [ ] milk\n', '- [x] milk\n', '- [ ] eggs\n- [x] milk\n', '- [ ] eggs\n- [x] milk\n'],
-    [
-      '- [ ] a\n- [ ] b\n',
-      '- [ ] a\n- [ ] new\n- [x] b\n',
-      '- [ ] a\n- [x] b\n',
-      '- [ ] a\n- [ ] new\n- [x] b\n',
-    ],
+    ['- [ ] a\n- [ ] b\n', '- [ ] a\n- [ ] new\n- [x] b\n', '- [ ] a\n- [x] b\n', '- [ ] a\n- [ ] new\n- [x] b\n'],
     [
       '- [ ] pay bike\n- [ ] call book\n',
       '- [ ] pay bike\n- [ ] rent buy\n- [x] call book\n',
       '- [x] pay bike\n- [x] call book\n',
       '- [x] pay bike\n- [ ] rent buy\n- [x] call book\n',
     ],
-  ])(
-    'a task added above one both ticked leaves its own box alone (%j)',
-    (base, local, remote, both) => {
-      const merged = crdtMerge(base, local, remote)
-      for (const [one, other] of [
-        [local, remote],
-        [remote, local],
-      ] as const) {
-        for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
-          for (const crdt of [undefined, merged]) {
-            const result = diverge(base, one, other, times, crdt)
-            expect(result.verdict).toBe('clean')
-            expect(result.resolution).toBe(both)
-          }
+  ])('a task added above one both ticked leaves its own box alone (%j)', (base, local, remote, both) => {
+    const merged = crdtMerge(base, local, remote)
+    for (const [one, other] of [
+      [local, remote],
+      [remote, local],
+    ] as const) {
+      for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+        for (const crdt of [undefined, merged]) {
+          const result = diverge(base, one, other, times, crdt)
+          expect(result.verdict).toBe('clean')
+          expect(result.resolution).toBe(both)
         }
       }
-    },
-  )
+    }
+  })
 
   test.each([
     ['Pay rent, call mum.\n', 'Pay rent, now call mum.\n', 'Pay rent,call mum.\n'],
@@ -489,36 +447,31 @@ describe('diverge', () => {
       'rain hard it on fell home so.\nmet the home.\n\nso fell so home cat dark.\n',
     ],
     ['- Call Bob', '- L1 task y\n- L2 Bob', '- R1 Call Bob\n- R2 task z'],
-  ])(
-    'a clean merge runs no two words together and says nothing twice (%j)',
-    (base, local, remote) => {
-      const wordsOf = (text: string) => text.match(/[\p{L}\p{N}]+/gu) ?? []
-      const count = (text: string) => {
-        const counts = new Map<string, number>()
-        for (const word of wordsOf(text)) counts.set(word, (counts.get(word) ?? 0) + 1)
-        return counts
-      }
-      const merged = crdtMerge(base, local, remote)
-      for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
-        for (const crdt of [undefined, merged]) {
-          const result = diverge(base, local, remote, times, crdt)
-          if (result.verdict !== 'clean') continue
-          const [before, mine, theirs] = [base, local, remote].map(count) as [
-            Map<string, number>,
-            Map<string, number>,
-            Map<string, number>,
-          ]
-          for (const [word, times] of count(result.resolution ?? '')) {
-            const most = Math.max(mine.get(word) ?? 0, theirs.get(word) ?? 0)
-            const both = Math.min(mine.get(word) ?? 0, theirs.get(word) ?? 0)
-            expect(times, word).toBeLessThanOrEqual(
-              most + Math.max(0, both - (before.get(word) ?? 0)),
-            )
-          }
+  ])('a clean merge runs no two words together and says nothing twice (%j)', (base, local, remote) => {
+    const wordsOf = (text: string) => text.match(/[\p{L}\p{N}]+/gu) ?? []
+    const count = (text: string) => {
+      const counts = new Map<string, number>()
+      for (const word of wordsOf(text)) counts.set(word, (counts.get(word) ?? 0) + 1)
+      return counts
+    }
+    const merged = crdtMerge(base, local, remote)
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      for (const crdt of [undefined, merged]) {
+        const result = diverge(base, local, remote, times, crdt)
+        if (result.verdict !== 'clean') continue
+        const [before, mine, theirs] = [base, local, remote].map(count) as [
+          Map<string, number>,
+          Map<string, number>,
+          Map<string, number>,
+        ]
+        for (const [word, times] of count(result.resolution ?? '')) {
+          const most = Math.max(mine.get(word) ?? 0, theirs.get(word) ?? 0)
+          const both = Math.min(mine.get(word) ?? 0, theirs.get(word) ?? 0)
+          expect(times, word).toBeLessThanOrEqual(most + Math.max(0, both - (before.get(word) ?? 0)))
         }
       }
-    },
-  )
+    }
+  })
 
   test.each([
     [
@@ -554,29 +507,26 @@ describe('diverge', () => {
     ['- [ ] Call Bob\n', '- [ ] Call Bob\n- [ ] Pay rent\n', '- [ ] Call Bob today\n'],
     ['- [ ] Call Bob', '- [ ] Call Bob\n- [ ] Pay rent', '- [ ] Call Bob today'],
     ['- [ ] Call Bob\n', '- [ ] Call Bob!\n- [ ] Pay rent\n', '- [x] Call Bob today\n'],
-  ])(
-    'words added to a line the other side broke there stay on their own line (%j)',
-    (base, local, remote) => {
-      const merged = crdtMerge(base, local, remote)
-      for (const [one, other] of [
-        [local, remote],
-        [remote, local],
-      ] as const) {
-        for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
-          for (const crdt of [undefined, merged]) {
-            const result = diverge(base, one, other, times, crdt)
-            if (result.verdict !== 'clean') continue
-            const words = new Set(base.match(/[\p{L}\p{N}]+/gu) ?? [])
-            const added = [...one.split('\n'), ...other.split('\n')].filter((line) =>
-              (line.match(/[\p{L}\p{N}]+/gu) ?? []).every((word) => !words.has(word)),
-            )
-            const lines = (result.resolution ?? '').split('\n')
-            for (const line of added) expect(lines).toContain(line)
-          }
+  ])('words added to a line the other side broke there stay on their own line (%j)', (base, local, remote) => {
+    const merged = crdtMerge(base, local, remote)
+    for (const [one, other] of [
+      [local, remote],
+      [remote, local],
+    ] as const) {
+      for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+        for (const crdt of [undefined, merged]) {
+          const result = diverge(base, one, other, times, crdt)
+          if (result.verdict !== 'clean') continue
+          const words = new Set(base.match(/[\p{L}\p{N}]+/gu) ?? [])
+          const added = [...one.split('\n'), ...other.split('\n')].filter((line) =>
+            (line.match(/[\p{L}\p{N}]+/gu) ?? []).every((word) => !words.has(word)),
+          )
+          const lines = (result.resolution ?? '').split('\n')
+          for (const line of added) expect(lines).toContain(line)
         }
       }
-    },
-  )
+    }
+  })
 
   test('a merge never says a word twice to keep to lines someone wrote (seed 7808)', () => {
     const base = 'mk12z\nreview mk23z\nmk33z review'
@@ -586,9 +536,7 @@ describe('diverge', () => {
     for (const times of [LOCAL_NEWER, REMOTE_NEWER, { local: 146, remote: 177 }]) {
       const result = diverge(base, local, remote, times, merged)
       if (result.resolution === null) continue
-      expect(result.resolution.match(/mk\d+z/g)?.filter((one) => one === 'mk12z')).toEqual([
-        'mk12z',
-      ])
+      expect(result.resolution.match(/mk\d+z/g)?.filter((one) => one === 'mk12z')).toEqual(['mk12z'])
     }
   })
 
@@ -610,25 +558,21 @@ describe('diverge', () => {
     ['- call Ann\n', '- L call Ann z\n- call Ann\n', '- R call Ann x\n'],
     ['alpha\n', 'L Book dentist z\n', 'R beta y\nalpha\nR Pay rent z\n'],
     ['Renew passport\n', '\n', 'R Renew passport z\nR alpha z\n'],
-  ])(
-    'lines added or rewritten on both sides around one line come out whole (%j)',
-    (base, local, remote) => {
-      for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
-        const result = diverge(base, local, remote, times)
-        if (result.verdict !== 'clean') continue
-        expect(cleanLinesAreWhole(base, local, remote, result.resolution ?? '')).toEqual({
-          missing: [],
-          extra: [],
-        })
-      }
-    },
-  )
+  ])('lines added or rewritten on both sides around one line come out whole (%j)', (base, local, remote) => {
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      const result = diverge(base, local, remote, times)
+      if (result.verdict !== 'clean') continue
+      expect(cleanLinesAreWhole(base, local, remote, result.resolution ?? '')).toEqual({
+        missing: [],
+        extra: [],
+      })
+    }
+  })
 
   test('a blank line one side took out and the other wrote in is settled as written', () => {
     const base = 'Intro.\n\nOutro.\n'
     const local = 'Intro.\nOutro.\n'
-    const remote =
-      'Intro.\nA line written into the blank one, long enough to be a sentence.\nOutro.\n'
+    const remote = 'Intro.\nA line written into the blank one, long enough to be a sentence.\nOutro.\n'
 
     for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
       const result = diverge(base, local, remote, times)
@@ -657,9 +601,7 @@ describe('diverge', () => {
         maxLength: 5,
         selector: ([item]) => item,
       })
-      .chain((list) =>
-        fc.tuple(fc.constant(list), sideOf(list.length), sideOf(list.length), fc.boolean()),
-      )
+      .chain((list) => fc.tuple(fc.constant(list), sideOf(list.length), sideOf(list.length), fc.boolean()))
 
     fc.assert(
       fc.property(tasks, ([list, mine, theirs, ends]) => {
@@ -667,8 +609,7 @@ describe('diverge', () => {
         const sideText = (side: typeof mine, tag: string) => {
           const lines: string[] = []
           list.forEach(([item, ticked], at) => {
-            if (side.does[at] !== 'drop')
-              lines.push(box(side.does[at] === 'tick' ? !ticked : ticked) + item)
+            if (side.does[at] !== 'drop') lines.push(box(side.does[at] === 'tick' ? !ticked : ticked) + item)
           })
           side.adds.forEach(([at, item, ticked], index) =>
             lines.splice(at % (lines.length + 1), 0, `${box(ticked)}${tag}${index} ${item}`),
@@ -805,8 +746,7 @@ describe('diverge', () => {
         const backward = diverge(base, remote, local, { local: other, remote: one })
 
         expect(backward.verdict).toBe(forward.verdict)
-        if (forward.resolution !== null)
-          expect(backward.resolution).toHaveLength(forward.resolution.length)
+        if (forward.resolution !== null) expect(backward.resolution).toHaveLength(forward.resolution.length)
       }),
       { numRuns: 2000 },
     )
@@ -854,12 +794,9 @@ describe('diverge', () => {
     const base = `${line()}\n`
     const pasted = (lines: string[], count: number) => `${lines.slice(0, count).join('\n')}\n`
 
-    expect(
-      growth(
-        (count) => diverge(base, pasted(local, count), pasted(remote, count), LOCAL_NEWER),
-        50,
-      ),
-    ).toBeLessThan(GROWS_AT_MOST)
+    expect(growth((count) => diverge(base, pasted(local, count), pasted(remote, count), LOCAL_NEWER), 50)).toBeLessThan(
+      GROWS_AT_MOST,
+    )
   })
 
   test('a word changed at each end of a hundred kilobytes is clean', () => {
@@ -880,12 +817,10 @@ describe('diverge', () => {
 describe('words typed in front of a word the other side wrote around', () => {
   const base = 'We ship on Monday after the review.\n\n- milk\n- eggs\n'
   const local = 'We ship on Monday the mk22z on after the review.\n\n- milk'
-  const remote =
-    'We ship on Monday review mk3z mk4z review on mk8z we after mk2z the review.\n\n- milk\n- eggs\n'
+  const remote = 'We ship on Monday review mk3z mk4z review on mk8z we after mk2z the review.\n\n- milk\n- eggs\n'
 
   test('stay in front of it, as the CRDT has them', () => {
-    const merged =
-      'We ship on Monday review mk3z mk4z review on mk8z we the mk22z on after mk2z the review.\n\n- milk'
+    const merged = 'We ship on Monday review mk3z mk4z review on mk8z we the mk22z on after mk2z the review.\n\n- milk'
     const { verdict, resolution } = diverge(base, local, remote, { local: 2, remote: 1 }, merged)
 
     expect(verdict).toBe('clean')

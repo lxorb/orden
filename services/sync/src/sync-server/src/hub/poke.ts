@@ -9,23 +9,12 @@ const REACHING = `select user_id as id from spaces where id = ?1
 
 type Later = Pick<ExecutionContext, 'waitUntil'>
 
-export function pokeSpace(
-  env: Env,
-  later: Later,
-  spaceId: string,
-  seq: number,
-  from?: string,
-): Promise<void> {
+export function pokeSpace(env: Env, later: Later, spaceId: string, seq: number, from?: string): Promise<void> {
   if (env.HUB) later.waitUntil(poking(env, spaceId, seq, from ?? ''))
   return Promise.resolve()
 }
 
-export async function pokeNow(
-  env: Env,
-  spaceId: string,
-  seq: number,
-  from?: string,
-): Promise<void> {
+export async function pokeNow(env: Env, spaceId: string, seq: number, from?: string): Promise<void> {
   if (env.HUB) await poking(env, spaceId, seq, from ?? '')
 }
 

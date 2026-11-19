@@ -58,8 +58,7 @@ feedback.post('/', async (context) => {
   const env = context.env
   const machine = machineOf(context.req)
   const allowed =
-    (machine === null ||
-      (await within(env, 'feedback-from', machine, FROM_ONE_MACHINE, AN_HOUR))) &&
+    (machine === null || (await within(env, 'feedback-from', machine, FROM_ONE_MACHINE, AN_HOUR))) &&
     (user === null || (await within(env, 'feedback-by', user.id, FROM_ONE_ACCOUNT, AN_HOUR))) &&
     (await within(env, 'feedback', 'all', ALL_IN_A_DAY, A_DAY)) &&
     (!pictures.length || (await within(env, 'feedback-pictured', 'all', PICTURED_IN_A_DAY, A_DAY)))
@@ -98,11 +97,7 @@ feedback.post('/', async (context) => {
 
   if (env.FEEDBACK_TO) {
     const from = user ? user.email : 'somebody signed out'
-    await mailer(env).send(
-      env.FEEDBACK_TO,
-      feedbackSubject(text),
-      feedbackMail({ from, text, version, platform, log }),
-    )
+    await mailer(env).send(env.FEEDBACK_TO, feedbackSubject(text), feedbackMail({ from, text, version, platform, log }))
   }
 
   return context.json({ ok: true, id, url: pageUrl(env, id, key) })
@@ -115,9 +110,7 @@ function pageUrl(env: Env, id: string, key: string): string {
 feedback.get('/images/:name', async (context) => {
   const name = context.req.param('name')
   if (!/^[0-9a-f]{64}$/.test(name)) return context.notFound()
-  const row = await context.env.DB.prepare(
-    'select feedback_id, type from feedback_images where name = ?',
-  )
+  const row = await context.env.DB.prepare('select feedback_id, type from feedback_images where name = ?')
     .bind(name)
     .first<{ feedback_id: string; type: string }>()
   if (!row) return context.notFound()
@@ -137,9 +130,7 @@ feedback.get('/:id/:key', async (context) => {
   const { id, key } = context.req.param()
   const env = context.env
   const row = /^[0-9a-f]{64}$/.test(key)
-    ? await env.DB.prepare(
-        'select text, created_at, issue_number, status_hash from feedback where id = ?',
-      )
+    ? await env.DB.prepare('select text, created_at, issue_number, status_hash from feedback where id = ?')
         .bind(id)
         .first<{
           text: string
@@ -172,13 +163,10 @@ export function feedbackSubject(text: string): string {
   return `Orden feedback: ${first.length > 60 ? `${first.slice(0, 59)}…` : first}`
 }
 
-export function feedbackMail(report: {
-  from: string
+export function feedbackMail(report: { from: string; text: string; version: string; platform: string; log: string }): {
   text: string
-  version: string
-  platform: string
-  log: string
-}): { text: string; html: string } {
+  html: string
+} {
   const about = `From ${report.from}, Orden ${report.version || 'unknown'}, ${report.platform || 'unknown'}`
   const log = report.log || '(no log)'
   return {

@@ -72,8 +72,7 @@ export function hashedOf(value: unknown): Hashed | null {
 const isWay = (value: unknown): value is Way => value === 'password' || value === 'device'
 export const lockable = (key: string) => insideItsSpace(key.replace(/^[A-Za-z]:/, '_'))
 
-export const fitted = (key: string) =>
-  key.length > 300 ? key.slice(0, 300).replace(/\/?[^/]*$/, '') : key
+export const fitted = (key: string) => (key.length > 300 ? key.slice(0, 300).replace(/\/?[^/]*$/, '') : key)
 
 export function protectedMap(value: unknown): Record<string, Way> {
   if (!isRecord(value)) return {}
@@ -111,9 +110,7 @@ const WAYS: Folding<Record<string, Way>> = {
 export const buried = () => import('./buried')
 
 const synced = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('nothing is protected in the Even Realities plugin'))
-    : import('./synced')
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('nothing is protected in the Even Realities plugin')) : import('./synced')
 
 interface Shut {
   folds: boolean
@@ -122,11 +119,7 @@ interface Shut {
 
 function originalName(part: string): string {
   let name = part
-  for (
-    let copy = foreignCopy(name);
-    copy !== null && copy.original !== name;
-    copy = foreignCopy(name)
-  ) {
+  for (let copy = foreignCopy(name); copy !== null && copy.original !== name; copy = foreignCopy(name)) {
     name = copy.original
   }
   return name
@@ -242,9 +235,7 @@ export class Protection {
 
   agentsMayAllOf(root?: string | null): boolean {
     return (root ? [root] : Object.keys(this.spaces)).every((one) =>
-      Object.entries(this.ways(one)).every(([key, way]) =>
-        unlocks.agentsMay([{ root: one, key, way }]),
-      ),
+      Object.entries(this.ways(one)).every(([key, way]) => unlocks.agentsMay([{ root: one, key, way }])),
     )
   }
 
@@ -315,8 +306,7 @@ export class Protection {
     const out = this.coveringAt(path)
     for (const original of originalsOf(path)) {
       for (const one of this.coveringAt(original)) {
-        if (!out.some((mine) => mine.key === one.key && samePath(mine.root, one.root)))
-          out.push(one)
+        if (!out.some((mine) => mine.key === one.key && samePath(mine.root, one.root))) out.push(one)
       }
     }
     return out
@@ -446,8 +436,7 @@ export class Protection {
       if (!went.length && left.length === held.length) return
       const space = this.ways(root)[SPACE]
       this.put(root, Object.fromEntries(space ? [...left, [SPACE, space]] : left))
-      if (went.length)
-        this.put(move.there, { ...this.ways(move.there), ...Object.fromEntries(went) })
+      if (went.length) this.put(move.there, { ...this.ways(move.there), ...Object.fromEntries(went) })
       return
     }
     let changed = false
@@ -490,10 +479,7 @@ export class Protection {
     if (!Object.keys(this.ways(root)).some(went) && !above) return
     const held = { ...(above && { [at]: above.way }), ...this.ways(root) }
     const rehomed = burying.bury(root, at, back, held)
-    this.put(
-      root,
-      Object.fromEntries(Object.entries(this.ways(root)).filter(([key]) => !went(key))),
-    )
+    this.put(root, Object.fromEntries(Object.entries(this.ways(root)).filter(([key]) => !went(key))))
     await rehomed
   }
 
@@ -546,11 +532,7 @@ export class Protection {
   }
 }
 
-export function noteBehind(tab: {
-  kind: string
-  path: string | null
-  behind?: string | null
-}): string | null {
+export function noteBehind(tab: { kind: string; path: string | null; behind?: string | null }): string | null {
   return tab.kind === 'view' ? null : (tab.path ?? tab.behind ?? null)
 }
 

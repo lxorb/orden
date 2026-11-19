@@ -37,17 +37,7 @@ import {
   type Ordering,
   type Outgoing,
 } from './records'
-import {
-  clear,
-  get,
-  put,
-  remove,
-  scan,
-  type Change,
-  type EntryRow,
-  type HeldRow,
-  type SyncStore,
-} from './store'
+import { clear, get, put, remove, scan, type Change, type EntryRow, type HeldRow, type SyncStore } from './store'
 import type { World } from './world'
 
 const CLIENTS = 'clients'
@@ -335,9 +325,7 @@ export class Core {
       }
       for (const id of wants.dirty) {
         const one = wants.get(id)
-        changes.push(
-          one ? put('meta', wantOneRow(space, id, one)) : remove('meta', wantOneKey(space, id)),
-        )
+        changes.push(one ? put('meta', wantOneRow(space, id, one)) : remove('meta', wantOneKey(space, id)))
       }
       wants.dirty.clear()
     }
@@ -349,11 +337,7 @@ export class Core {
       }
       for (const id of used.dirty) {
         const one = used.get(id)
-        changes.push(
-          one
-            ? put('meta', usedOneRow(space.id, id, one))
-            : remove('meta', usedOneKey(space.id, id)),
-        )
+        changes.push(one ? put('meta', usedOneRow(space.id, id, one)) : remove('meta', usedOneKey(space.id, id)))
       }
       used.dirty.clear()
     }
@@ -380,15 +364,7 @@ export class Core {
   }
 
   made(id: string, shape: Shape, epoch: number, confirmed?: Uint8Array, seq = 0): Doc {
-    const doc = Doc.fresh(
-      id,
-      shape,
-      epoch,
-      this.freshClient(),
-      () => this.world.now(),
-      confirmed,
-      seq,
-    )
+    const doc = Doc.fresh(id, shape, epoch, this.freshClient(), () => this.world.now(), confirmed, seq)
     this.generations.set(id, this.generation)
     this.adopt(doc)
     return doc
@@ -425,12 +401,7 @@ export class Core {
     this.numbers.delete(id)
     this.generations.delete(id)
     this.pinned.delete(id)
-    return [
-      remove('docs', id),
-      remove('written', id),
-      remove('meta', numbersKey(id)),
-      remove('meta', `${GEN}${id}`),
-    ]
+    return [remove('docs', id), remove('written', id), remove('meta', numbersKey(id)), remove('meta', `${GEN}${id}`)]
   }
 
   hasPending(id: string): boolean {

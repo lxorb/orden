@@ -57,10 +57,7 @@ describe('what a value is worth', () => {
 })
 
 describe('what goes onto the page', () => {
-  const settings = [
-    settingOf('blur', 'range "Blur" 0 40 18 px')!,
-    settingOf('paper', 'switch "Paper" on')!,
-  ]
+  const settings = [settingOf('blur', 'range "Blur" 0 40 18 px')!, settingOf('paper', 'switch "Paper" on')!]
 
   test('is every setting at once, so there is one thing to put on and take off', () => {
     expect(paintOf(settings, { blur: 30, paper: false }, 'dark')).toEqual({
@@ -90,10 +87,7 @@ describe('a theme that paints a setting’s tokens itself', () => {
     ['.frame { --accent: inherit; --accent-soft: red; }', true],
     [':root { --accent-soft: rgb(0 0 0 / 0.2); }', true],
     [':root { --accents-are-nice: 1; }', false],
-  ])(
-    '%j paints over it, by stating any one of its colours, not inheriting or a like name: %s',
-    (css, over) => {
-      expect(paintsOver(css, accent)).toBe(over)
-    },
-  )
+  ])('%j paints over it, by stating any one of its colours, not inheriting or a like name: %s', (css, over) => {
+    expect(paintsOver(css, accent)).toBe(over)
+  })
 })

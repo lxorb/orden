@@ -90,8 +90,7 @@ function roomOf(el: HTMLElement): Box {
   const style = getComputedStyle(el)
 
   return {
-    height:
-      style.boxSizing === 'border-box' ? `${el.getBoundingClientRect().height}px` : style.height,
+    height: style.boxSizing === 'border-box' ? `${el.getBoundingClientRect().height}px` : style.height,
     paddingTop: style.paddingTop,
     paddingBottom: style.paddingBottom,
     borderTopWidth: style.borderTopWidth,
@@ -113,8 +112,7 @@ function worthMoving(view: EditorView, range: FoldRange): boolean {
 
 function blockAt(view: EditorView, pos: number): HTMLElement | null {
   const at = view.domAtPos(pos)
-  let node: Node | null =
-    at.node === view.contentDOM ? (at.node.childNodes[at.offset] ?? null) : at.node
+  let node: Node | null = at.node === view.contentDOM ? (at.node.childNodes[at.offset] ?? null) : at.node
 
   while (node && node.parentNode !== view.contentDOM) node = node.parentNode
   return node instanceof HTMLElement ? node : null
@@ -174,20 +172,14 @@ const running = ViewPlugin.fromClass(
 
 let counted = 0
 
-export function shutFolds(
-  target: FoldTarget,
-  ranges: readonly FoldRange[],
-  caret: TransactionSpec = {},
-): void {
+export function shutFolds(target: FoldTarget, ranges: readonly FoldRange[], caret: TransactionSpec = {}): void {
   const view = target instanceof EditorView ? target : null
   const { ms, easing } = view ? movement(view) : { ms: 0, easing: '' }
 
   const moving = view && ms > 0 ? ranges.filter((range) => worthMoving(view, range)) : []
 
   if (!view || !moving.length) {
-    target.dispatch(
-      target.state.update({ effects: ranges.map((range) => foldEffect.of(range)), ...caret }),
-    )
+    target.dispatch(target.state.update({ effects: ranges.map((range) => foldEffect.of(range)), ...caret }))
     return
   }
 
@@ -236,9 +228,7 @@ export function openFolds(target: FoldTarget, ranges: readonly FoldRange[]): voi
   const { ms, easing } = movement(view)
   if (ms <= 0) return
 
-  const moves = ranges
-    .filter((range) => worthMoving(view, range))
-    .flatMap((range) => boxesOf(view, range))
+  const moves = ranges.filter((range) => worthMoving(view, range)).flatMap((range) => boxesOf(view, range))
   if (!moves.length) return
 
   const animations = animate(moves, false, ms, easing)

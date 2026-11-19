@@ -22,10 +22,7 @@ async function pasted(marked: string, text: string, html: string): Promise<strin
       EditorState.create({
         doc: marked.replace('|', ''),
         selection: { anchor: caret },
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          richPaste(),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), richPaste()],
       }),
     ),
   })
@@ -50,9 +47,7 @@ const MATHS = '$$'
 
 describe('LaTeX copied from a web page', () => {
   test('pasted into a maths block is written as copied', async () => {
-    await expect(pasted(`${MATHS}\n|\n${MATHS}`, TEX, PAGE)).resolves.toBe(
-      `${MATHS}\n${TEX}\n${MATHS}`,
-    )
+    await expect(pasted(`${MATHS}\n|\n${MATHS}`, TEX, PAGE)).resolves.toBe(`${MATHS}\n${TEX}\n${MATHS}`)
   })
 
   test('pasted into inline maths is written as copied', async () => {

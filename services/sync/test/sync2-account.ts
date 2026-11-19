@@ -26,9 +26,7 @@ export class WorkerAccount implements AccountAdapter {
 
   private async setUp() {
     const token = await signIn(this.env, 'sim@example.com')
-    this.space = (
-      await call(this.env, '/v1/spaces', { token, body: { name: 'Sim' } })
-    ).json.space.id
+    this.space = (await call(this.env, '/v1/spaces', { token, body: { name: 'Sim' } })).json.space.id
 
     const db = this.env.db
     let seq = 0
@@ -39,18 +37,7 @@ export class WorkerAccount implements AccountAdapter {
         `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash,
                             name, name_key, kind, epoch, epoch_base, doc_seq)
          values (?, ?, ?, ?, 1, 0, 0, ?, ?, ?, ?, 'note', 1, ?, ?)`,
-      ).run(
-        note.id,
-        this.space,
-        note.name,
-        seq,
-        note.text.length,
-        hash,
-        note.name,
-        nameKey(note.name),
-        hash,
-        seq,
-      )
+      ).run(note.id, this.space, note.name, seq, note.text.length, hash, note.name, nameKey(note.name), hash, seq)
       await this.env.NOTES.put(`spaces/${this.space}/${note.id}`, note.text)
     }
     db.prepare('insert into space_cursor (space_id, next) values (?, ?)').run(this.space, seq + 1)
@@ -84,10 +71,7 @@ export class WorkerAccount implements AccountAdapter {
     if (route === 'feed') {
       const { unframe } = await import('@orden/sync-core')
       const since = (unframe(body) as { since?: number } | null)?.since ?? 0
-      request = new Request(
-        `https://nibeditor.com/v2/spaces/${this.space}/feed?since=${String(since)}`,
-        { headers },
-      )
+      request = new Request(`https://nibeditor.com/v2/spaces/${this.space}/feed?since=${String(since)}`, { headers })
     } else {
       const path = route === 'ops' ? `/v2/spaces/${this.space}/ops` : `/v2/docs/${route}`
       request = new Request(`https://nibeditor.com${path}`, {
@@ -115,9 +99,7 @@ export class WorkerAccount implements AccountAdapter {
     await this.ready
     const db = this.env.db
     const folders = db
-      .prepare(
-        'select id, parent_id as parent, name, pos from folders where space_id = ? and deleted = 0',
-      )
+      .prepare('select id, parent_id as parent, name, pos from folders where space_id = ? and deleted = 0')
       .all(this.space) as { id: string; parent: string | null; name: string; pos: string | null }[]
     const notes = db
       .prepare('select * from notes where space_id = ? and deleted = 0')

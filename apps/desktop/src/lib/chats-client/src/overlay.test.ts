@@ -28,9 +28,7 @@ describe('the outbox drawn over the window', () => {
       isMain,
     )
     expect(messages.map((one) => [one.id, one.sending])).toEqual([['m1', false]])
-    expect(pending.map((one) => [one.id, one.body, one.sending, one.at])).toEqual([
-      ['m2', 'hello', true, 99_000],
-    ])
+    expect(pending.map((one) => [one.id, one.body, one.sending, one.at])).toEqual([['m2', 'hello', true, 99_000]])
   })
 
   test('an edit and a reaction are drawn over a placed message', async () => {

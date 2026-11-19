@@ -58,8 +58,7 @@ export interface Bounds {
   width: number
 }
 
-const clamp = (value: number, low: number, high: number): number =>
-  Math.min(Math.max(value, low), high)
+const clamp = (value: number, low: number, high: number): number => Math.min(Math.max(value, low), high)
 
 const lerp = (from: number, to: number, at: number): number => from + (to - from) * at
 
@@ -97,9 +96,7 @@ export function widthsFor(tabs: readonly Sized[], room: number | null): number[]
       : clamp((room - least) / (crossover - least), 0, 1)
 
   const widths = sizes.map((one) =>
-    Math.floor(
-      roomy ? lerp(one.crossover, one.preferred, share) : lerp(one.least, one.crossover, share),
-    ),
+    Math.floor(roomy ? lerp(one.crossover, one.preferred, share) : lerp(one.least, one.crossover, share)),
   )
 
   if (share <= 0 || share >= 1) return widths
@@ -117,12 +114,7 @@ export function widthsFor(tabs: readonly Sized[], room: number | null): number[]
 
 export const OPENED_LEAST = 160
 
-export function widened(
-  widths: readonly number[],
-  at: number,
-  room: number | null,
-  fit?: number,
-): number[] {
+export function widened(widths: readonly number[], at: number, room: number | null, fit?: number): number[] {
   const now = widths[at]
   if (now === undefined) return [...widths]
   const free = room === null ? 0 : Math.max(0, room - sum(widths))
@@ -197,12 +189,7 @@ function startIf(widths: readonly number[], from: number, to: number): number {
   return sum(moved(widths, from, to).slice(0, to))
 }
 
-export function nearestSlot(
-  widths: readonly number[],
-  from: number,
-  x: number,
-  current = from,
-): number {
+export function nearestSlot(widths: readonly number[], from: number, x: number, current = from): number {
   const low = 0
   const high = widths.length - 1
 
@@ -238,22 +225,14 @@ export interface Rect {
 }
 
 export function holds(strip: Rect, x: number, y: number, magnetism: number): boolean {
-  return (
-    x >= strip.left &&
-    x < strip.right &&
-    y >= strip.top - magnetism &&
-    y <= strip.bottom + magnetism
-  )
+  return x >= strip.left && x < strip.right && y >= strip.top - magnetism && y <= strip.bottom + magnetism
 }
 
 const CLOSING_SLOP = { below: 40, past: 60 } as const
 
 export function near(strip: Rect, x: number, y: number): boolean {
   return (
-    x >= strip.left &&
-    x <= strip.right + CLOSING_SLOP.past &&
-    y >= strip.top &&
-    y <= strip.bottom + CLOSING_SLOP.below
+    x >= strip.left && x <= strip.right + CLOSING_SLOP.past && y >= strip.top && y <= strip.bottom + CLOSING_SLOP.below
   )
 }
 

@@ -63,9 +63,7 @@ describe('a note deleted and another made at its name', () => {
     await workspace.loadTree()
     expect(docs.tracksOf(agent.id).size).toBe(0)
 
-    await docs.notes.editNote(agent, { path: 'n.md' }, [
-      { at: { quote: 'fresh' }, replace: 'FRESH' },
-    ])
+    await docs.notes.editNote(agent, { path: 'n.md' }, [{ at: { quote: 'fresh' }, replace: 'FRESH' }])
     const track = docs.tracksOf(agent.id).get('/s/n.md')
     const newId = track?.ids[0]
     if (!newId) throw new Error('no edit')

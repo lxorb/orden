@@ -52,9 +52,7 @@ class Account implements Describing {
       }
       this.sent.push([path, patch])
       const next = Object.fromEntries(
-        Object.entries({ ...this.held[path], ...patch }).filter(
-          (one): one is [string, string] => one[1] !== null,
-        ),
+        Object.entries({ ...this.held[path], ...patch }).filter((one): one is [string, string] => one[1] !== null),
       )
       this.held = Object.fromEntries(
         Object.entries({ ...this.held, [path]: next }).filter(([, one]) => Object.keys(one).length),

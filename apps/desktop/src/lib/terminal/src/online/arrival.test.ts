@@ -128,8 +128,8 @@ describe('an online terminal on its way to its screen', () => {
 
 describe('the refusal lines', () => {
   test('each refusal a wait can end with has its own line', () => {
-    const lines = (['list', 'allowance', 'budget', 'flag', 'gone', 'signed-out'] as const).map(
-      (why) => refusalWords(why),
+    const lines = (['list', 'allowance', 'budget', 'flag', 'gone', 'signed-out'] as const).map((why) =>
+      refusalWords(why),
     )
     expect(lines).toEqual([
       'Online terminals are not open to your account yet',

@@ -9,11 +9,7 @@ const world = vi.hoisted(() => ({
 
 vi.mock('../../ai-providers/src/api', () => ({
   ai: { providerFor: (feature: string) => (feature === 'ask' ? world.chosen : null) },
-  complete: (ask: {
-    provider: { id: string }
-    model: string
-    messages: { role: string; content: string }[]
-  }) => {
+  complete: (ask: { provider: { id: string }; model: string; messages: { role: string; content: string }[] }) => {
     world.asked.push({ provider: ask.provider.id, model: ask.model, messages: ask.messages })
     return Promise.resolve(` Answer from ${ask.provider.id}. `)
   },
@@ -53,9 +49,7 @@ describe('a question on the glasses', () => {
       expect(world.asked).toHaveLength(1)
       expect(world.asked[0]?.provider).toBe(`${kind}-1`)
       expect(world.asked[0]?.model).toBe(`${kind}-model`)
-      expect(world.asked[0]?.messages.at(-1)?.content).toContain(
-        'Trip.md: The train leaves at 9:40',
-      )
+      expect(world.asked[0]?.messages.at(-1)?.content).toContain('Trip.md: The train leaves at 9:40')
     })
   }
 

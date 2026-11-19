@@ -1,12 +1,5 @@
 import { type Context, Hono, type MiddlewareHandler } from 'hono'
-import {
-  readBody,
-  askHub,
-  newId,
-  now,
-  type Env,
-  type Variables,
-} from '../../../sync-server/src/api'
+import { readBody, askHub, newId, now, type Env, type Variables } from '../../../sync-server/src/api'
 import { reachedItem, reachedSpace } from '../../../sync-server-engine/src/api'
 import { askMachine } from './ask'
 import { audit } from './audit'
@@ -255,18 +248,14 @@ online.post('/terms', async (context) => {
   const file = await env.DB.prepare('select id, space_id from notes where id = ? and deleted = 0')
     .bind(term)
     .first<{ id: string; space_id: string }>()
-  const reached = file
-    ? ((await reachedSpace(env, who, file.space_id)) ?? (await reachedItem(env, who, file)))
-    : null
+  const reached = file ? ((await reachedSpace(env, who, file.space_id)) ?? (await reachedItem(env, who, file))) : null
   if (!file || !reached) return context.json({ error: NOT_FOUND }, 404)
   if (reached.role === 'read') return context.json(refused('role'), 403)
 
   const adopted = named ? await adopt(env, user.id, term, named) : null
   if (adopted) return context.json(adopted)
 
-  const had = await env.DB.prepare(
-    'select machine, session, user_id, ended_at from term_sessions where term = ?',
-  )
+  const had = await env.DB.prepare('select machine, session, user_id, ended_at from term_sessions where term = ?')
     .bind(term)
     .first<{ machine: string; session: string; user_id: string; ended_at: number | null }>()
   if (had?.user_id === user.id && had.ended_at === null) {
@@ -310,12 +299,7 @@ async function adopt(env: Env, userId: string, term: string, session: string) {
   return row && { v: 1, machine: row.machine, session: row.session }
 }
 
-async function makeSession(
-  context: Context<Online>,
-  env: Env,
-  userId: string,
-  term: string | null,
-): Promise<Response> {
+async function makeSession(context: Context<Online>, env: Env, userId: string, term: string | null): Promise<Response> {
   const machine = await ensureMachine(env, userId)
   const { results: live } = await env.DB.prepare(
     'select term from term_sessions where machine = ? and ended_at is null order by created_at',
@@ -424,9 +408,7 @@ online.patch('/terms/:term', async (context) => {
   const own = await ownSession(context.env, user.id, term)
   if (!own) return context.json({ error: NOT_FOUND }, 404)
 
-  await context.env.DB.prepare('update term_sessions set typing = ? where term = ?')
-    .bind(typing, term)
-    .run()
+  await context.env.DB.prepare('update term_sessions set typing = ? where term = ?').bind(typing, term).run()
   await audit(context.env, own.machine, 'typing', { who: user.id, detail: typing })
   await askMachine(context.env, own.machine, 'typing', {
     'x-orden-user': user.id,
@@ -459,9 +441,7 @@ online.delete('/terms/:term', async (context) => {
     return context.json({ ok: true })
   }
 
-  await context.env.DB.prepare('update term_sessions set ended_at = ? where term = ?')
-    .bind(now(), term)
-    .run()
+  await context.env.DB.prepare('update term_sessions set ended_at = ? where term = ?').bind(now(), term).run()
   await audit(context.env, own.machine, 'ended', { who: user.id })
   await askMachine(context.env, own.machine, 'end', {
     'x-orden-user': user.id,

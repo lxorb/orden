@@ -2,14 +2,7 @@ import { complete, ai } from '../../../ai-providers/src/api'
 import type { Message, Provider } from '../../../ai-providers/src/api'
 import { engineFor, type Setup } from '../chat/engine'
 import { keepThread } from '../chat/threads'
-import type {
-  Draft,
-  EngineEvent,
-  NoticeCode,
-  Thread,
-  Turn,
-  Usage,
-} from '../../../ai-providers/src/api'
+import type { Draft, EngineEvent, NoticeCode, Thread, Turn, Usage } from '../../../ai-providers/src/api'
 import { added } from '../chat/usage'
 import { instructionsFor } from './instructions'
 import type { Ended, Once, Panel } from './types'
@@ -89,8 +82,7 @@ export function hostOf(panel: Panel): Host {
   return {
     panel,
     provider: (thread) => providerOf(thread.provider),
-    turn: (thread, text, once) =>
-      panel.turn ? panel.turn(thread, text, once) : directTurn(thread, text, once),
+    turn: (thread, text, once) => (panel.turn ? panel.turn(thread, text, once) : directTurn(thread, text, once)),
     adopt(thread, open = false) {
       if (panel.adopt) panel.adopt(thread, open)
       else void keepThread(thread).catch(() => undefined)
@@ -101,9 +93,7 @@ export function hostOf(panel: Panel): Host {
         id: crypto.randomUUID(),
         role: 'model',
         at: Date.now(),
-        parts: [
-          { kind: 'notice', code, text, ...(threads.length ? { threads: [...threads] } : {}) },
-        ],
+        parts: [{ kind: 'notice', code, text, ...(threads.length ? { threads: [...threads] } : {}) }],
       })
       thread.updated = Date.now()
       if (panel.answered) panel.answered(thread)

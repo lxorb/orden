@@ -21,9 +21,7 @@ describe('the rows of a note', () => {
       ['task', 's', 'Plan.md'],
       ['task', 's', 'Plan.md'],
     ])
-    expect(found.filter((one) => one.kind === 'task').map((one) => one.anchor?.line)).toEqual([
-      2, 3,
-    ])
+    expect(found.filter((one) => one.kind === 'task').map((one) => one.anchor?.line)).toEqual([2, 3])
   })
 
   test('are only the note when it holds no task', () => {

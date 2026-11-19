@@ -74,9 +74,7 @@ function whole(text: string, provider: Provider): string {
     if (!Array.isArray(content)) return ''
     return content
       .map((one) =>
-        typeof one === 'object' &&
-        one !== null &&
-        typeof (one as { text?: unknown }).text === 'string'
+        typeof one === 'object' && one !== null && typeof (one as { text?: unknown }).text === 'string'
           ? (one as { text: string }).text
           : '',
       )

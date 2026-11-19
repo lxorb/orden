@@ -46,12 +46,7 @@ describe('the file list as one flat list of rows', () => {
   })
 
   test('and a folder nobody has written in shows all of what it holds', () => {
-    expect(shown('/s/Projects')).toEqual([
-      '/s/Work',
-      '/s/Projects',
-      '  /s/Projects/one.md',
-      '/s/Read me.md',
-    ])
+    expect(shown('/s/Projects')).toEqual(['/s/Work', '/s/Projects', '  /s/Projects/one.md', '/s/Read me.md'])
   })
 
   test('a shut note holds nothing open, however deep it goes', () => {
@@ -63,11 +58,7 @@ describe('the file list as one flat list of rows', () => {
   })
 
   test('a note at the top of the space is a row whatever it is called', () => {
-    const top = folder('/s/Notes', [
-      file('/s/Notes/Index.md'),
-      file('/s/Notes/Notes.md'),
-      file('/s/Notes/plan.md'),
-    ])
+    const top = folder('/s/Notes', [file('/s/Notes/Index.md'), file('/s/Notes/Notes.md'), file('/s/Notes/plan.md')])
 
     expect(flatRows(top, open()).map((one) => one.entry.path)).toEqual([
       '/s/Notes/Index.md',

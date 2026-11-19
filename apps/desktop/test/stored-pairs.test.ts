@@ -43,8 +43,7 @@ function audit(given: readonly { name: string; text: string }[]) {
   function keyOf(node: ts.Expression, file: string, depth = 0): string | null {
     if (depth > 6) return null
     if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text
-    if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node))
-      return keyOf(node.expression, file, depth + 1)
+    if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node)) return keyOf(node.expression, file, depth + 1)
     if (ts.isTemplateExpression(node)) {
       let out = node.head.text
       for (const span of node.templateSpans) {
@@ -54,9 +53,7 @@ function audit(given: readonly { name: string; text: string }[]) {
       return out
     }
     if (ts.isBinaryExpression(node) && node.operatorToken.kind === ts.SyntaxKind.PlusToken) {
-      return (
-        (keyOf(node.left, file, depth + 1) ?? '*') + (keyOf(node.right, file, depth + 1) ?? '*')
-      )
+      return (keyOf(node.left, file, depth + 1) ?? '*') + (keyOf(node.right, file, depth + 1) ?? '*')
     }
     if (ts.isIdentifier(node)) {
       const here = local.get(file)?.get(node.text)
@@ -73,10 +70,7 @@ function audit(given: readonly { name: string; text: string }[]) {
       node.expression.name.text === name &&
       node.expression.expression.getText() !== 'this')
 
-  const equality = [
-    ts.SyntaxKind.EqualsEqualsEqualsToken,
-    ts.SyntaxKind.ExclamationEqualsEqualsToken,
-  ]
+  const equality = [ts.SyntaxKind.EqualsEqualsEqualsToken, ts.SyntaxKind.ExclamationEqualsEqualsToken]
 
   function onlyCompared(read: ts.CallExpression): boolean {
     const held = read.parent
@@ -88,8 +82,7 @@ function audit(given: readonly { name: string; text: string }[]) {
     const look = (node: ts.Node) => {
       if (ts.isIdentifier(node) && node.text === name && node !== held.name) {
         const parent = node.parent
-        if (!ts.isBinaryExpression(parent) || !equality.includes(parent.operatorToken.kind))
-          only = false
+        if (!ts.isBinaryExpression(parent) || !equality.includes(parent.operatorToken.kind)) only = false
       }
       ts.forEachChild(node, look)
     }
@@ -105,10 +98,7 @@ function audit(given: readonly { name: string; text: string }[]) {
       if (!key) return
       const at = `${name}:${file.getLineAndCharacterOfPosition(node.getStart()).line + 1}`
       const known = keyOf(key, name)
-      const said =
-        known !== null && /[\w.:-]{3,}/.test(known.replace(/\*/g, ''))
-          ? known
-          : `${name}#${key.getText()}`
+      const said = known !== null && /[\w.:-]{3,}/.test(known.replace(/\*/g, '')) ? known : `${name}#${key.getText()}`
       uses.set(said, [...(uses.get(said) ?? []), { way, side, at }])
     }
     const visit = (node: ts.Node) => {
@@ -119,14 +109,8 @@ function audit(given: readonly { name: string; text: string }[]) {
           ts.isCallExpression(parent) &&
           (parent.expression.getText() === 'parsed' || parent.expression.getText() === 'JSON.parse')
         if (ts.isIdentifier(node.expression) && node.expression.text === 'keep' && key) {
-          if (
-            value &&
-            ts.isCallExpression(value) &&
-            value.expression.getText() === 'JSON.stringify'
-          )
-            stringified.push(
-              `${name}:${file.getLineAndCharacterOfPosition(node.getStart()).line + 1}`,
-            )
+          if (value && ts.isCallExpression(value) && value.expression.getText() === 'JSON.stringify')
+            stringified.push(`${name}:${file.getLineAndCharacterOfPosition(node.getStart()).line + 1}`)
           add(key, 'text', 'write', node)
         } else if (ts.isIdentifier(node.expression) && node.expression.text === 'keepJson') {
           add(key, 'json', 'write', node)
@@ -135,17 +119,14 @@ function audit(given: readonly { name: string; text: string }[]) {
         } else if (ts.isIdentifier(node.expression) && node.expression.text === 'storedText') {
           const compared =
             ts.isBinaryExpression(parent) &&
-            [
-              ts.SyntaxKind.EqualsEqualsEqualsToken,
-              ts.SyntaxKind.ExclamationEqualsEqualsToken,
-            ].includes(parent.operatorToken.kind)
-          if (!compared && !onlyCompared(node))
-            add(key, parsedAfter ? 'json' : 'text', 'read', node)
+            [ts.SyntaxKind.EqualsEqualsEqualsToken, ts.SyntaxKind.ExclamationEqualsEqualsToken].includes(
+              parent.operatorToken.kind,
+            )
+          if (!compared && !onlyCompared(node)) add(key, parsedAfter ? 'json' : 'text', 'read', node)
         } else if (called(node, 'getItem') && node.expression.getText().includes('Storage')) {
           add(key, parsedAfter ? 'json' : 'text', 'read', node)
         } else if (called(node, 'setItem') && node.expression.getText().includes('Storage')) {
-          const json =
-            value && ts.isCallExpression(value) && value.expression.getText() === 'JSON.stringify'
+          const json = value && ts.isCallExpression(value) && value.expression.getText() === 'JSON.stringify'
           add(key, json ? 'json' : 'text', 'write', node)
         }
       }
@@ -190,9 +171,7 @@ function audit(given: readonly { name: string; text: string }[]) {
   return { count: uses.size, stringified, wrong: [...new Set(wrong)].sort() }
 }
 
-const app = audit(
-  walk(SOURCE, code).map((path) => ({ name: path.slice(SOURCE.length + 1), text: scriptOf(path) })),
-)
+const app = audit(walk(SOURCE, code).map((path) => ({ name: path.slice(SOURCE.length + 1), text: scriptOf(path) })))
 
 describe('every key in storage', () => {
   test('is found where it is used', () => {

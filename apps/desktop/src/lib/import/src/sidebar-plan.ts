@@ -23,18 +23,12 @@ interface SidebarImport {
 
 const LONGEST_MARK = 64 * 1024
 
-export function sidebarImport(
-  session: Sidebar,
-  now: Date,
-  containers: string | null,
-): SidebarImport {
+export function sidebarImport(session: Sidebar, now: Date, containers: string | null): SidebarImport {
   const first = session.spaces[0]
   const homeOf = (tab: SidebarTab): string | undefined => {
     const own = session.spaces.find((space) => space.id === tab.space)
     const contained =
-      tab.essential && tab.container
-        ? session.spaces.find((space) => space.container === tab.container)
-        : undefined
+      tab.essential && tab.container ? session.spaces.find((space) => space.container === tab.container) : undefined
     return (own ?? contained ?? first)?.id
   }
 
@@ -48,10 +42,7 @@ export function sidebarImport(
         now,
       ),
     ),
-    lost:
-      containers && (container || session.spaces.some((space) => space.container > 0))
-        ? [containers]
-        : [],
+    lost: containers && (container || session.spaces.some((space) => space.container > 0)) ? [containers] : [],
   }
 }
 
@@ -79,11 +70,7 @@ function spacePlan(
   return plan
 }
 
-function rowsOf(
-  space: SidebarSpace,
-  folders: readonly SidebarFolder[],
-  tabs: readonly SidebarTab[],
-): Row[] {
+function rowsOf(space: SidebarSpace, folders: readonly SidebarFolder[], tabs: readonly SidebarTab[]): Row[] {
   const byId = new Map(folders.filter((one) => one.id).map((one) => [one.id, one]))
   const top: Row[] = []
   const made = new Map<string, Row[]>()
@@ -155,7 +142,6 @@ function nameIn(path: string): string {
 
 function shortcutOf(tab: SidebarTab, now: Date): string {
   const home = tab.home && isWebAddress(tab.home) ? tab.home : null
-  const mark =
-    tab.icon?.startsWith('data:image/') && tab.icon.length <= LONGEST_MARK ? tab.icon : null
+  const mark = tab.icon?.startsWith('data:image/') && tab.icon.length <= LONGEST_MARK ? tab.icon : null
   return writeShortcut(tab.url, tab.title, tab.added ?? now, home, mark)
 }

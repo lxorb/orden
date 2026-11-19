@@ -59,9 +59,7 @@ describe('the note on screen', () => {
   test('and is no note when one climbed back out of the space', async () => {
     open = { path: '/Work/../../etc/passwd', doc: 'root:x:0:0' }
 
-    expect((await refusal(noteFor({}))).message).toBe(
-      'no note of this space is open, so say which path',
-    )
+    expect((await refusal(noteFor({}))).message).toBe('no note of this space is open, so say which path')
   })
 
   test('is not asked for at all when the caller named a path', async () => {

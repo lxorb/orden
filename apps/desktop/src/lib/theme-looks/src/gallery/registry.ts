@@ -38,8 +38,7 @@ function paletteOf(value: unknown): Palette {
   for (const [token, one] of Object.entries(value)) {
     if (Object.keys(out).length >= MOST_TOKENS) break
     if (!/^--[a-z0-9-]+$/i.test(token)) continue
-    if (isString(one) && one.length <= LONGEST_VALUE && usablePaletteValue(one))
-      out[carriedToken(token)] = one
+    if (isString(one) && one.length <= LONGEST_VALUE && usablePaletteValue(one)) out[carriedToken(token)] = one
   }
 
   return out
@@ -69,14 +68,11 @@ function themeOf(value: unknown): StoreTheme | null {
     name: name.trim(),
     author: author.trim(),
     version,
-    description: isString(value.description)
-      ? value.description.trim().slice(0, LONGEST_SENTENCE)
-      : '',
+    description: isString(value.description) ? value.description.trim().slice(0, LONGEST_SENTENCE) : '',
     tags: (stringList(value.tags) ?? []).filter((tag) => /^[a-z0-9 -]{1,20}$/i.test(tag)),
     licence: isString(value.licence) ? value.licence.trim().slice(0, LONGEST_NAME) : '',
     variants,
-    updated:
-      isString(value.updated) && /^\d{4}-\d\d-\d\d$/.test(value.updated) ? value.updated : '',
+    updated: isString(value.updated) && /^\d{4}-\d\d-\d\d$/.test(value.updated) ? value.updated : '',
     palettes: { light: paletteOf(palettes.light), dark: paletteOf(palettes.dark) },
   }
 }

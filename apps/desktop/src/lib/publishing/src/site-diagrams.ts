@@ -1,11 +1,6 @@
 import type { Entry } from '@orden/contracts'
 import { codeBlocks } from '@orden/markdown'
-import {
-  DIAGRAM_SCHEMES,
-  type DiagramScheme,
-  diagramKey,
-  isDiagram,
-} from '@orden/markdown/diagrams'
+import { DIAGRAM_SCHEMES, type DiagramScheme, diagramKey, isDiagram } from '@orden/markdown/diagrams'
 import { api } from '../../accounts/src/api'
 import { drawDiagram } from '../../fences/src/api'
 import { keepJson, stored, invoke } from '../../platform/src/api'
@@ -63,8 +58,7 @@ export function asFile(svg: string): string | null {
   return out.length > BIGGEST ? null : `<?xml version="1.0" encoding="UTF-8"?>\n${out}`
 }
 
-const drawer = (code: string, language: string, scheme: DiagramScheme) =>
-  drawDiagram(code, language, scheme, 'page')
+const drawer = (code: string, language: string, scheme: DiagramScheme) => drawDiagram(code, language, scheme, 'page')
 
 export async function drawnBoth(
   spaceId: string,
@@ -91,9 +85,7 @@ const remembered = (spaceId: string) => `orden:diagrams:${spaceId}`
 function alreadySent(spaceId: string): Set<string> {
   const held = stored(remembered(spaceId))
 
-  return new Set(
-    Array.isArray(held) ? held.filter((one): one is string => typeof one === 'string') : [],
-  )
+  return new Set(Array.isArray(held) ? held.filter((one): one is string => typeof one === 'string') : [])
 }
 
 async function notesIn(root: string): Promise<string[]> {

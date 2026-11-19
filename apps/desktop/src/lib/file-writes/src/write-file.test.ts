@@ -45,13 +45,7 @@ afterEach(() => {
 describe('a file written', () => {
   test('in its turn, and said within it', async () => {
     await writeFile('/s/a.md', 'words')
-    expect(order).toEqual([
-      'turn /s/a.md',
-      'write_note',
-      'said',
-      'turn over /s/a.md',
-      'index /s/a.md',
-    ])
+    expect(order).toEqual(['turn /s/a.md', 'write_note', 'said', 'turn over /s/a.md', 'index /s/a.md'])
     expect(said).toEqual([{ kind: 'words', path: '/s/a.md', text: 'words' }])
   })
 
@@ -64,14 +58,7 @@ describe('a file written', () => {
 
   test('only if absent, looked for and written in one turn, and never over a note that is there', async () => {
     expect(await writeIfAbsent('/s/a.md', '')).toBe(true)
-    expect(order).toEqual([
-      'turn /s/a.md',
-      'path_exists',
-      'write_note',
-      'said',
-      'turn over /s/a.md',
-      'index /s/a.md',
-    ])
+    expect(order).toEqual(['turn /s/a.md', 'path_exists', 'write_note', 'said', 'turn over /s/a.md', 'index /s/a.md'])
     order.length = 0
     there = true
     expect(await writeIfAbsent('/s/a.md', '')).toBe(false)

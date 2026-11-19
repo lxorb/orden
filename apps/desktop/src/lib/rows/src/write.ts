@@ -13,14 +13,7 @@ import {
 } from '@orden/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@orden/markdown/edits'
 import { type Property, keyCalled, readProperties } from '@orden/markdown/properties'
-import {
-  type ListItem,
-  listItems,
-  listLines,
-  withItem,
-  writeList,
-  writeProperty,
-} from '@orden/markdown/property-edits'
+import { type ListItem, listItems, listLines, withItem, writeList, writeProperty } from '@orden/markdown/property-edits'
 import { writeTask } from '@orden/markdown/task-edits'
 import { readTask } from '@orden/markdown/task-line'
 import { changeOf } from '@orden/scan/search/replace'
@@ -34,12 +27,7 @@ export interface RowChange {
 
 export type ListChange = { add: string } | { remove: number }
 
-export async function writeRow(
-  ws: HoldsNotes,
-  path: string,
-  row: Row,
-  change: RowChange,
-): Promise<boolean> {
+export async function writeRow(ws: HoldsNotes, path: string, row: Row, change: RowChange): Promise<boolean> {
   const before = await noteText(ws, path)
   if (before === null) return false
 
@@ -158,9 +146,7 @@ function propertyEdit(text: string, key: string, value: Value): TextEdit | null 
       value.map(
         (one) =>
           kept(one) ??
-          (one === null || typeof one === 'number' || typeof one === 'boolean'
-            ? one
-            : (written(one) ?? '')),
+          (one === null || typeof one === 'number' || typeof one === 'boolean' ? one : (written(one) ?? '')),
       ),
     )
   }
@@ -200,8 +186,7 @@ function written(value: Value): string | null {
   if (hasKind(value, 'link')) {
     return value.display ? `[[${value.target}|${value.display}]]` : `[[${value.target}]]`
   }
-  if (hasKind(value, 'date'))
-    return value.time ? `${value.iso}T${value.time}${value.zone ?? ''}` : value.iso
+  if (hasKind(value, 'date')) return value.time ? `${value.iso}T${value.time}${value.zone ?? ''}` : value.iso
   if (hasKind(value, 'duration')) return `${Math.round(value.ms / 60_000)}m`
   return null
 }

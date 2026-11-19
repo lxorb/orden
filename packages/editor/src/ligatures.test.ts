@@ -19,9 +19,7 @@ function state(doc: string, cursor: number) {
 
 function shown(doc: string, cursor?: number): string[] {
   const full = cursor === undefined ? doc + PARK : doc
-  return ligaturesIn(state(full, cursor ?? full.length)).map(
-    (one) => `${full.slice(one.from, one.to)}${one.glyph}`,
-  )
+  return ligaturesIn(state(full, cursor ?? full.length)).map((one) => `${full.slice(one.from, one.to)}${one.glyph}`)
 }
 
 function shownInCode(doc: string): string[] {
@@ -43,12 +41,7 @@ describe('finding runs', () => {
   })
 
   test('knows the comparisons and the ellipsis', () => {
-    expect(findLigatures('a <= b >= c != d ... e').map((one) => one.glyph)).toEqual([
-      '≤',
-      '≥',
-      '≠',
-      '…',
-    ])
+    expect(findLigatures('a <= b >= c != d ... e').map((one) => one.glyph)).toEqual(['≤', '≥', '≠', '…'])
   })
 
   test('leaves what it has no glyph for', () => {

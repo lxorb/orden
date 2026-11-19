@@ -165,21 +165,19 @@ describe('a token acting for somebody', () => {
       body: { content: '# Wrong', baseVersion: 1 },
     })
 
-    const dry = await call<{ notes: number; paths: string[] }>(
-      env,
-      `/v1/spaces/${space}/rollback`,
-      { token: program, body: { at: before, dry: true } },
-    )
+    const dry = await call<{ notes: number; paths: string[] }>(env, `/v1/spaces/${space}/rollback`, {
+      token: program,
+      body: { at: before, dry: true },
+    })
 
     expect(dry.status).toBe(200)
     expect(dry.json.notes).toBe(1)
     expect(dry.json.paths).toEqual(['plan.md'])
 
-    const put = await call<{ notes: number; partial: boolean }>(
-      env,
-      `/v1/spaces/${space}/rollback`,
-      { token: program, body: { at: before } },
-    )
+    const put = await call<{ notes: number; partial: boolean }>(env, `/v1/spaces/${space}/rollback`, {
+      token: program,
+      body: { at: before },
+    })
 
     expect(put.status).toBe(200)
     expect(put.json.notes).toBe(1)
@@ -287,8 +285,7 @@ describe('a token, in an account that keeps notes from agents', () => {
       token,
       body: { protected: { Diary: 'password' } },
     })
-    key = (await call<ProgramView>(env, '/v1/mcp/token', { token, body: { readOnly: false } })).json
-      .token!
+    key = (await call<ProgramView>(env, '/v1/mcp/token', { token, body: { readOnly: false } })).json.token!
   })
 
   afterEach(() => env.close())
@@ -330,8 +327,7 @@ describe('a token, in an account that keeps notes from agents', () => {
   })
 
   test('is not let through by an id written with escapes', async () => {
-    const escaped = (id: string) =>
-      id.replace(/./g, (one) => `%${one.charCodeAt(0).toString(16).padStart(2, '0')}`)
+    const escaped = (id: string) => id.replace(/./g, (one) => `%${one.charCodeAt(0).toString(16).padStart(2, '0')}`)
 
     expect((await call(env, `/v1/notes/${escaped(diary)}`, { token: key })).status).toBe(404)
     expect(
@@ -343,13 +339,8 @@ describe('a token, in an account that keeps notes from agents', () => {
         })
       ).status,
     ).toBe(404)
-    for (const path of [
-      `/v1/spaces/${escaped(home)}/changes?since=0`,
-      `/v2/spaces/${escaped(home)}/feed`,
-    ]) {
-      expect(JSON.stringify((await call(env, path, { token: key })).json), path).not.toMatch(
-        /Diary|secret/,
-      )
+    for (const path of [`/v1/spaces/${escaped(home)}/changes?since=0`, `/v2/spaces/${escaped(home)}/feed`]) {
+      expect(JSON.stringify((await call(env, path, { token: key })).json), path).not.toMatch(/Diary|secret/)
     }
     expect((await call(env, `/v1/notes/${diary}`, { token })).json).toMatchObject({
       content: 'the secret words',

@@ -90,9 +90,7 @@ describe('a tag on a page', () => {
 
   test('a link on a surface that says where one goes, and words everywhere else', () => {
     const html = renderMarkdown('A #work/orden tag', { tagHref: (tag) => `#tag:${tag}` })
-    expect(html).toContain(
-      '<a class="tag" href="#tag:work/orden" data-tag="work/orden">#work/orden</a>',
-    )
+    expect(html).toContain('<a class="tag" href="#tag:work/orden" data-tag="work/orden">#work/orden</a>')
     expect(renderMarkdown('A #work tag', { escapeHtml: true })).toContain(
       '<span class="tag" data-tag="work">#work</span>',
     )
@@ -109,19 +107,13 @@ describe('a tag on a page', () => {
 })
 
 describe('a name a tag can be renamed to', () => {
-  test.each(['work', 'work/orden', 'a-b', 'a_b', 'Größe', '2024/q1', 'x2024'])(
-    '%s is one',
-    (name) => {
-      expect(isTagName(name)).toBe(true)
-    },
-  )
+  test.each(['work', 'work/orden', 'a-b', 'a_b', 'Größe', '2024/q1', 'x2024'])('%s is one', (name) => {
+    expect(isTagName(name)).toBe(true)
+  })
 
-  test.each(['2024', 'a.b', 'a,b', 'a!', 'a b', '', '#a', '/a', 'foo/', 'a//b'])(
-    '%j is none',
-    (name) => {
-      expect(isTagName(name)).toBe(false)
-    },
-  )
+  test.each(['2024', 'a.b', 'a,b', 'a!', 'a b', '', '#a', '/a', 'foo/', 'a//b'])('%j is none', (name) => {
+    expect(isTagName(name)).toBe(false)
+  })
 })
 
 describe('a long line of a table', () => {

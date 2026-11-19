@@ -6,8 +6,7 @@ export const SEARCH = 'https://www.google.com/search?q=%s'
 
 export const WORDS = '%s'
 
-const searchOn = (engine: string, words: string): string =>
-  engine.replaceAll(WORDS, encodeURIComponent(words))
+const searchOn = (engine: string, words: string): string => engine.replaceAll(WORDS, encodeURIComponent(words))
 
 const HOST =
   /^(?:localhost|\[[0-9a-f:.]+\]|\d{1,3}(?:\.\d{1,3}){3}|[^\s/?#@]+\.[^\s/?#@.]{2,}|[a-z\d-]+(?=:\d))(?::\d{1,5})?(?:[/?#]|$)/i
@@ -136,8 +135,7 @@ export function mayBeSecret(typed: string): boolean {
   return WORD_AND_WORD.test(said) || NAME_AT_HOST.test(said) || NAMES_A_SECRET.test(said)
 }
 
-const asTheEngineSays = (address: string): string =>
-  /[^ -~]/.test(address) ? new URL(address).href : address
+const asTheEngineSays = (address: string): string => (/[^ -~]/.test(address) ? new URL(address).href : address)
 
 export function typedAddress(typed: string): string | null {
   const said = typed.trim()

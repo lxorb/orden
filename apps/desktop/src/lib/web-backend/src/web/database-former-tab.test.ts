@@ -18,10 +18,7 @@ function opened(name: string, version: number) {
         db.createObjectStore(store, { keyPath: 'path' })
       }
       db.createObjectStore('meta')
-      db.createObjectStore('snapshots', { keyPath: 'id', autoIncrement: true }).createIndex(
-        'notePath',
-        'notePath',
-      )
+      db.createObjectStore('snapshots', { keyPath: 'id', autoIncrement: true }).createIndex('notePath', 'notePath')
     }
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error ?? new Error('not opened'))
@@ -36,9 +33,7 @@ test('a tab of an older version still open keeps its store, and this tab works i
   const old = await opened(FORMER_NAME, 2)
   await new Promise<void>((resolve) => {
     const writing = old.transaction('files', 'readwrite')
-    writing
-      .objectStore('files')
-      .put({ path: '/t/kept.md', content: '# kept', modified: 1, created: 1 })
+    writing.objectStore('files').put({ path: '/t/kept.md', content: '# kept', modified: 1, created: 1 })
     writing.oncomplete = () => resolve()
   })
 

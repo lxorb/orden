@@ -6,16 +6,7 @@ import { headingLevel } from '../headings'
 import { enclosing } from '../nodes'
 
 export type BlockKind =
-  | 'heading'
-  | 'paragraph'
-  | 'list'
-  | 'quote'
-  | 'code'
-  | 'table'
-  | 'math'
-  | 'front-matter'
-  | 'rule'
-  | 'block'
+  'heading' | 'paragraph' | 'list' | 'quote' | 'code' | 'table' | 'math' | 'front-matter' | 'rule' | 'block'
 
 export interface BlockSpan {
   from: number
@@ -150,9 +141,7 @@ export function blockAt(state: EditorState, pos: number): BlockSpan | null {
   const line = state.doc.lineAt(pos)
   const owner = ownLine(line.text) ? namedAbove(state, line) : null
   if (owner) return owner
-  const starting = blocksIn(state, line.from, line.to).find(
-    (span) => state.doc.lineAt(span.from).from === line.from,
-  )
+  const starting = blocksIn(state, line.from, line.to).find((span) => state.doc.lineAt(span.from).from === line.from)
   if (starting) return starting
 
   for (const node of enclosing(syntaxTree(state).resolveInner(pos, -1))) {

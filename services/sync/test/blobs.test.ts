@@ -21,10 +21,7 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-function upload(
-  contents: { bytes: Uint8Array; hash: string },
-  options: { token?: string; type?: string } = {},
-) {
+function upload(contents: { bytes: Uint8Array; hash: string }, options: { token?: string; type?: string } = {}) {
   return call(env, `/v1/blobs/${contents.hash}`, {
     method: 'PUT',
     token: options.token ?? token,
@@ -68,9 +65,7 @@ describe('storing an image', () => {
     const response = await upload(sized(4096))
 
     expect(response.status).not.toBe(500)
-    expect(
-      env.db.prepare('select hash from blobs where hash = ?').all(sized(4096).hash),
-    ).toHaveLength(1)
+    expect(env.db.prepare('select hash from blobs where hash = ?').all(sized(4096).hash)).toHaveLength(1)
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start + 4096)
   })
 
@@ -175,9 +170,7 @@ describe('bytes under a hash that is not theirs', () => {
     await call(env, `/v1/blobs/${key}`, {
       method: 'PUT',
       token: stranger,
-      raw: new TextEncoder().encode(
-        '<svg xmlns="http://www.w3.org/2000/svg"><text>no</text></svg>',
-      ),
+      raw: new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"><text>no</text></svg>'),
       headers: { 'content-type': 'image/svg+xml' },
     })
 
@@ -227,9 +220,7 @@ describe('bytes under a hash that is not theirs', () => {
     expect(drawn.status).toBe(201)
 
     const stranger = await signIn(env, 'c@d.dev')
-    const named = new TextEncoder().encode(
-      `nib/diagram/v1\n${space}\nmermaid\nlight\n${fence.code}`,
-    )
+    const named = new TextEncoder().encode(`nib/diagram/v1\n${space}\nmermaid\nlight\n${fence.code}`)
     for (const [route, type] of [
       ['/v1/blobs', 'text/javascript'],
       ['/v2/blobs', 'text/javascript'],
@@ -298,12 +289,8 @@ describe('serving what a site is dressed in', () => {
       body: { files: [{ path: 'publish.js', hash: sized(64).hash }] },
     })
 
-    expect(
-      (await call(env, `/i/${sized(64).hash}.js`, { host: 'field.nibeditor.com' })).status,
-    ).toBe(200)
-    expect(
-      (await call(env, `/i/${sized(64).hash}.js`, { host: 'other.nibeditor.com' })).status,
-    ).toBe(404)
+    expect((await call(env, `/i/${sized(64).hash}.js`, { host: 'field.nibeditor.com' })).status).toBe(200)
+    expect((await call(env, `/i/${sized(64).hash}.js`, { host: 'other.nibeditor.com' })).status).toBe(404)
     expect((await call(env, `/i/${sized(64).hash}.js`, { host: 'nibeditor.com' })).status).toBe(404)
     expect((await call(env, `/i/${sized(64).hash}.js`)).status).toBe(404)
   })
@@ -317,12 +304,8 @@ describe('serving what a site is dressed in', () => {
       body: { theme: { name: 'Paper', hash: sized(64).hash } },
     })
 
-    expect(
-      (await call(env, `/i/${sized(64).hash}.css`, { host: 'field.nibeditor.com' })).status,
-    ).toBe(200)
-    expect(
-      (await call(env, `/i/${sized(64).hash}.css`, { host: 'other.nibeditor.com' })).status,
-    ).toBe(404)
+    expect((await call(env, `/i/${sized(64).hash}.css`, { host: 'field.nibeditor.com' })).status).toBe(200)
+    expect((await call(env, `/i/${sized(64).hash}.css`, { host: 'other.nibeditor.com' })).status).toBe(404)
   })
 })
 
@@ -448,9 +431,7 @@ describe('giving an image back', () => {
       id: string
     }
     for (const hash of [picture.hash, paper]) {
-      expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([
-        { user_id: ownerId.id },
-      ])
+      expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([{ user_id: ownerId.id }])
     }
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
   })
@@ -532,15 +513,12 @@ describe('giving an image back', () => {
 
     expect(given.status).toBe(409)
     expect((await call(env, '/v1/usage', { token: owner })).json.used).toBe(ownerBefore)
-    expect(
-      env.db.prepare('select count(*) as n from blobs where hash = ?').get(picture.hash),
-    ).toEqual({ n: 1 })
+    expect(env.db.prepare('select count(*) as n from blobs where hash = ?').get(picture.hash)).toEqual({ n: 1 })
   })
 
   test('and deletes it when only its own notes show it', async () => {
-    const own = (
-      await call<{ space: { id: string } }>(env, '/v1/spaces', { token, body: { name: 'Mine' } })
-    ).json.space.id
+    const own = (await call<{ space: { id: string } }>(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json.space
+      .id
     const picture = sized(2048)
     await upload(picture)
     await call(env, `/v1/spaces/${own}/notes`, {
@@ -668,9 +646,7 @@ describe('a writer who deletes their account', () => {
     ).json.note.id
     const pdf = new TextEncoder().encode('%PDF-1.4\nthe lecture\n%%EOF\n')
     const paper = createHash('sha256').update(pdf).digest('hex')
-    expect((await upload({ bytes: pdf, hash: paper }, { type: 'application/pdf' })).status).toBe(
-      201,
-    )
+    expect((await upload({ bytes: pdf, hash: paper }, { type: 'application/pdf' })).status).toBe(201)
     await call(env, `/v1/notes/${lecture}/paper`, { method: 'PUT', token, body: { hash: paper } })
     expect((await call(env, `/v1/notes/${lecture}/paper`, { token: owner })).status).toBe(200)
 
@@ -687,8 +663,6 @@ describe('a writer who deletes their account', () => {
     const ownerId = env.db.prepare("select id from users where email = 'owner@b.dev'").get() as {
       id: string
     }
-    expect(env.db.prepare('select user_id from blobs where hash = ?').all(paper)).toEqual([
-      { user_id: ownerId.id },
-    ])
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(paper)).toEqual([{ user_id: ownerId.id }])
   })
 })

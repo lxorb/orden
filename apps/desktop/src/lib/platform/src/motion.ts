@@ -12,10 +12,7 @@ import {
 
 const STILL = '(prefers-reduced-motion: reduce)'
 
-const query =
-  typeof window !== 'undefined' && typeof window.matchMedia === 'function'
-    ? window.matchMedia(STILL)
-    : null
+const query = typeof window !== 'undefined' && typeof window.matchMedia === 'function' ? window.matchMedia(STILL) : null
 
 export const stillness = (): boolean => query?.matches ?? false
 

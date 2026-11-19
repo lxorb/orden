@@ -65,9 +65,7 @@ const GUEST_REACHABLE = `select sp.*, g.role as role
 
 function reachable(env: Env, who: Whoever, deleted: 0 | 1) {
   if (who.kind === 'guest') {
-    return env.DB.prepare(GUEST_REACHABLE)
-      .bind(who.guest.id, deleted, MOST_IN_ORDER)
-      .all<Space & { role: Role }>()
+    return env.DB.prepare(GUEST_REACHABLE).bind(who.guest.id, deleted, MOST_IN_ORDER).all<Space & { role: Role }>()
   }
 
   return env.DB.prepare(REACHABLE)
@@ -87,9 +85,7 @@ spaces.get('/', async (context) => {
 
   const once = await onceSharedAmong(context.env, own)
 
-  const together = results
-    .filter((one) => one.user_id !== mine || shared.has(one.id))
-    .map((one) => one.id)
+  const together = results.filter((one) => one.user_id !== mine || shared.has(one.id)).map((one) => one.id)
   const faces = mine ? await facesIn(context.env, mine, together) : new Map<string, string[]>()
 
   const gone = await reachable(context.env, who, 1)
@@ -104,14 +100,7 @@ spaces.get('/', async (context) => {
   return context.json({
     spaces: results.map((one) => {
       const view = {
-        ...presentSpace(
-          one,
-          context.env,
-          one.role,
-          shared.has(one.id),
-          held.get(one.id) ?? 0,
-          items.get(one.id) ?? [],
-        ),
+        ...presentSpace(one, context.env, one.role, shared.has(one.id), held.get(one.id) ?? 0, items.get(one.id) ?? []),
         people: faces.get(one.id) ?? [],
         onceShared: once.spaces.has(one.id),
         onceSharedItems: once.items.get(one.id) ?? [],
@@ -145,9 +134,7 @@ spaces.put('/order', async (context) => {
   if (body.problem) return context.json({ error: body.problem }, 400)
   if (!order) return context.json({ error: 'send an order' }, 400)
 
-  const { results } = await context.env.DB.prepare(
-    'select id from spaces where user_id = ? and deleted = 0 limit ?',
-  )
+  const { results } = await context.env.DB.prepare('select id from spaces where user_id = ? and deleted = 0 limit ?')
     .bind(user.id, MOST_IN_ORDER)
     .all<{ id: string }>()
 
@@ -196,15 +183,7 @@ spaces.patch('/:id', atLeast('write'), async (context) => {
      where id = ?7
      returning name, icon, tint`,
   )
-    .bind(
-      label,
-      icon === undefined ? 0 : 1,
-      icon ?? null,
-      tint === undefined ? 0 : 1,
-      tint ?? null,
-      now(),
-      space.id,
-    )
+    .bind(label, icon === undefined ? 0 : 1, icon ?? null, tint === undefined ? 0 : 1, tint ?? null, now(), space.id)
     .first<{ name: string; icon: string | null; tint: string | null }>()
   const held = written ?? { name: space.name, icon: space.icon, tint: space.tint }
 

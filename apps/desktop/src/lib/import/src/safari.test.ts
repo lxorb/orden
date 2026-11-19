@@ -14,13 +14,7 @@ function space(files: Partial<{ bookmarks: unknown; tabs: unknown; session: unkn
 describe("Safari's tabs, bookmarks and Reading List as Orden's", () => {
   test('puts the pinned tab first as an Essential, a tab group as a folder, the window’s own tabs at the top', () => {
     const { space: safari } = space({ tabs: TABS, bookmarks: BOOKMARKS })
-    expect(safari?.order['']).toEqual([
-      'Mail.url',
-      'Cars',
-      'Board.url',
-      'Bookmarks',
-      'Reading List',
-    ])
+    expect(safari?.order['']).toEqual(['Mail.url', 'Cars', 'Board.url', 'Bookmarks', 'Reading List'])
     expect(safari?.bookmarks).toEqual(['Mail.url'])
     expect(safari?.order.Cars).toEqual(['One.url', 'Two.url'])
   })

@@ -112,10 +112,7 @@ export class Engine implements AskedEngine {
     return this.core.store
   }
 
-  on<T extends keyof EngineEvents>(
-    type: T,
-    listener: (event: EngineEvents[T]) => void,
-  ): () => void {
+  on<T extends keyof EngineEvents>(type: T, listener: (event: EngineEvents[T]) => void): () => void {
     const listening: Set<(event: EngineEvents[T]) => void> = this.listeners[type]
     listening.add(listener)
     return () => listening.delete(listener)
@@ -140,9 +137,7 @@ export class Engine implements AskedEngine {
     let passed: Passed | null = null
     let failed: string | null = null
     try {
-      passed = await this.core.use(() =>
-        isLocal(space.id) ? localPass(this.core, space) : pass(this.core, space),
-      )
+      passed = await this.core.use(() => (isLocal(space.id) ? localPass(this.core, space) : pass(this.core, space)))
     } catch (error) {
       failed = error instanceof Error ? error.message : String(error)
       throw error
@@ -168,12 +163,7 @@ export class Engine implements AskedEngine {
     if (!space) return false
     if (space.outbox.some((one) => !waitsForBytes(this.core, space, one))) return true
     for (const entry of space.entries.values()) {
-      if (
-        this.core.hasPending(entry.id) &&
-        !this.core.isHeld(entry.id) &&
-        !resting(this.core, entry.id)
-      )
-        return true
+      if (this.core.hasPending(entry.id) && !this.core.isHeld(entry.id) && !resting(this.core, entry.id)) return true
     }
     return false
   }
@@ -402,12 +392,7 @@ export class Engine implements AskedEngine {
     return this.core.use(() => trim(this.core, budget, how))
   }
 
-  created(
-    path: string,
-    folder: boolean,
-    text?: string,
-    mergeable?: string,
-  ): Promise<string | null> {
+  created(path: string, folder: boolean, text?: string, mergeable?: string): Promise<string | null> {
     return this.core.use(() => this.oneAt(path, () => this.make(path, folder, text, mergeable)))
   }
 
@@ -426,18 +411,12 @@ export class Engine implements AskedEngine {
     }
   }
 
-  private async make(
-    path: string,
-    folder: boolean,
-    text?: string,
-    mergeable?: string,
-  ): Promise<string | null> {
+  private async make(path: string, folder: boolean, text?: string, mergeable?: string): Promise<string | null> {
     const placed = this.placed(path)
     if (!placed) return null
     const there = placed.space.at(placed.path)
     if (there) {
-      if (mergeable !== undefined)
-        await this.core.commit(mergeableAfter(placed.space, there, mergeable))
+      if (mergeable !== undefined) await this.core.commit(mergeableAfter(placed.space, there, mergeable))
       return null
     }
     if (folder && placed.space.folderAt(placed.path) !== undefined) return null
@@ -504,14 +483,7 @@ export class Engine implements AskedEngine {
       return
     }
     const entry = was?.space.at(was.path)
-    if (
-      !was ||
-      !now ||
-      !entry ||
-      was.space !== now.space ||
-      inForeignCopy(now.path) ||
-      (await this.heldPaper(to))
-    ) {
+    if (!was || !now || !entry || was.space !== now.space || inForeignCopy(now.path) || (await this.heldPaper(to))) {
       await run()
       return
     }
@@ -523,9 +495,7 @@ export class Engine implements AskedEngine {
       try {
         await run()
       } catch (error) {
-        await this.core.use(() =>
-          this.core.commit(intended(this.core, space, entry, was.path, name)),
-        )
+        await this.core.use(() => this.core.commit(intended(this.core, space, entry, was.path, name)))
         throw error
       }
       await this.core.use(() => this.core.commit(carried(space, was.path, now.path)))
@@ -538,8 +508,7 @@ export class Engine implements AskedEngine {
   private async leaving(was: Placed, run: () => Promise<void>): Promise<void> {
     const { space } = was
     const here = await this.core.use(() => this.bring(space, awayUnder(space, was.path)))
-    if (!here)
-      throw new Error(`${was.path} is not all on this device, and the account could not be reached`)
+    if (!here) throw new Error(`${was.path} is not all on this device, and the account could not be reached`)
     const release = this.handle(atOrUnder(space, was.path), [])
     try {
       await run()
@@ -674,12 +643,7 @@ export class Engine implements AskedEngine {
     await this.core.commit(await foldIn(this.core, placed.space, entry))
   }
 
-  keepLost(
-    id: string,
-    lost: { local: boolean; remote: boolean },
-    local: string,
-    remote: string,
-  ): Promise<void> {
+  keepLost(id: string, lost: { local: boolean; remote: boolean }, local: string, remote: string): Promise<void> {
     return this.core.use(async () => {
       const space = this.core.spaceOf(id)
       if (!space) return

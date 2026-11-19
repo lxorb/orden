@@ -11,10 +11,7 @@ vi.mock('../../src/lib/link-index/src/api', () => ({
     rootOf: () => '/space',
     websitesHere: new Map([
       ['Uni/Moodle.url', { address: 'https://moodle-app2.let.ethz.ch/my/', favicon: null }],
-      [
-        'Code/GitHub issues.url',
-        { address: 'https://github.com/lxorb/orden/issues', favicon: null },
-      ],
+      ['Code/GitHub issues.url', { address: 'https://github.com/lxorb/orden/issues', favicon: null }],
     ]),
     faviconOf: () => null,
     shortcutOf: () => null,

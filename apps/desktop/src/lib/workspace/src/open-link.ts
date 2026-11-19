@@ -32,9 +32,7 @@ export function placeFor(href: string, ask: TabAsk, pages = holdsPages()): LinkP
 }
 
 export function settingsPane(href: string): 'import' | null {
-  return !__EVEN_PLUGIN__ && /^(orden|nib):\/\/settings\/import\/?$/i.test(href.trim())
-    ? 'import'
-    : null
+  return !__EVEN_PLUGIN__ && /^(orden|nib):\/\/settings\/import\/?$/i.test(href.trim()) ? 'import' : null
 }
 
 export function followHref(href: string, press: LinkPress): void {

@@ -54,17 +54,12 @@ describe('a rule', () => {
     if (rule) expect(ruleText(rule)).toBe(canonical)
   })
 
-  test.each([
-    '',
-    'daily',
-    'every',
-    'every blue moon',
-    'every 0 days',
-    'every day until someday',
-    'every month on the',
-  ])('%j is not a rule', (text) => {
-    expect(parseRule(text)).toBeNull()
-  })
+  test.each(['', 'daily', 'every', 'every blue moon', 'every 0 days', 'every day until someday', 'every month on the'])(
+    '%j is not a rule',
+    (text) => {
+      expect(parseRule(text)).toBeNull()
+    },
+  )
 
   const YEARLY: Rule[] = [1, 2].flatMap((every) =>
     [[], [3], [4, 12]].flatMap((months) =>

@@ -34,14 +34,11 @@ describe('a few keys of a JSON object', () => {
   })
 
   test('look inside a value the same way, given where it is', () => {
-    const text =
-      '{"orden":{"version":1,"ink":[{"id":"s","points":[1,2,3]}],"icon":"pen","iconColor":"red"}}'
+    const text = '{"orden":{"version":1,"ink":[{"id":"s","points":[1,2,3]}],"icon":"pen","iconColor":"red"}}'
     const orden = skim(text, ['orden'])?.get('orden')
     const inner = orden && skim(text, ['icon', 'iconColor'], orden)
 
-    expect(
-      inner && Object.fromEntries([...inner].map(([key, at]) => [key, text.slice(at.from, at.to)])),
-    ).toEqual({
+    expect(inner && Object.fromEntries([...inner].map(([key, at]) => [key, text.slice(at.from, at.to)]))).toEqual({
       icon: '"pen"',
       iconColor: '"red"',
     })

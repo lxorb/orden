@@ -4,8 +4,7 @@ export const CHAT_EXTENSION = '.chat'
 
 const CHAT_ID = /^c_[0-9a-f]{32}$/
 
-export const isChatId = (value: unknown): value is string =>
-  typeof value === 'string' && CHAT_ID.test(value)
+export const isChatId = (value: unknown): value is string => typeof value === 'string' && CHAT_ID.test(value)
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -36,10 +35,6 @@ export function withIcon(pointer: Pointer, icon: string | null, iconColor: strin
 }
 
 export function chatText(pointer: Pointer): string {
-  const { v, chat, icon, iconColor } = withIcon(
-    pointer,
-    pointer.icon ?? null,
-    pointer.iconColor ?? null,
-  )
+  const { v, chat, icon, iconColor } = withIcon(pointer, pointer.icon ?? null, pointer.iconColor ?? null)
   return `${JSON.stringify({ v, chat, icon, iconColor })}\n`
 }

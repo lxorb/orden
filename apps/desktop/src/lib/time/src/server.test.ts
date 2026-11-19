@@ -4,9 +4,7 @@ import { accountServer } from './server'
 afterEach(() => vi.unstubAllGlobals())
 
 function answering(status: number, body: string, type = 'text/html') {
-  vi.stubGlobal('fetch', () =>
-    Promise.resolve(new Response(body, { status, headers: { 'content-type': type } })),
-  )
+  vi.stubGlobal('fetch', () => Promise.resolve(new Response(body, { status, headers: { 'content-type': type } })))
 }
 
 const CHANGE = [{ kind: 'span', id: 'a', value: { start: 1 } }]

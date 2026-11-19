@@ -31,10 +31,7 @@ async function keyFor(provider: Provider): Promise<string> {
   return await planToken()
 }
 
-async function headers(
-  provider: Provider,
-  extra: Record<string, string> = {},
-): Promise<Record<string, string>> {
+async function headers(provider: Provider, extra: Record<string, string> = {}): Promise<Record<string, string>> {
   if (!usable({ ...provider, model: provider.model || '-' })) {
     throw new Error('That provider is not set up yet.')
   }
@@ -68,11 +65,7 @@ async function refusalOf(response: Response, provider: Provider): Promise<Refuse
   return refusalIn(sseJson(text), response.status, provider)
 }
 
-export async function refusalIn(
-  body: unknown,
-  status: number,
-  provider: Provider,
-): Promise<Refused> {
+export async function refusalIn(body: unknown, status: number, provider: Provider): Promise<Refused> {
   const { param, code } = detailsIn(body)
   if (provider.kind === 'chatgpt') {
     const { planRefusal } = await chatgptPlan()
@@ -88,8 +81,7 @@ export async function refusalIn(
 }
 
 function detailsIn(body: unknown): { param: string; code: string } {
-  const error =
-    typeof body === 'object' && body !== null ? (body as { error?: unknown }).error : null
+  const error = typeof body === 'object' && body !== null ? (body as { error?: unknown }).error : null
   if (typeof error !== 'object' || error === null) return { param: '', code: '' }
   const { param, code, type } = error as { param?: unknown; code?: unknown; type?: unknown }
   return {

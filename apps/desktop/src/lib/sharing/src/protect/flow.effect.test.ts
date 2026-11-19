@@ -39,9 +39,7 @@ afterEach(() => {
 })
 
 function press(label: string) {
-  const button = [...document.querySelectorAll('button')].find(
-    (one) => one.textContent.trim() === label,
-  )
+  const button = [...document.querySelectorAll('button')].find((one) => one.textContent.trim() === label)
   if (!button) throw new Error(`no ${label} in ${document.body.textContent}`)
   button.click()
 }

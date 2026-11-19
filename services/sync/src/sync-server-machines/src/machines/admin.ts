@@ -52,8 +52,7 @@ onlineAdmin.post('/service', async (context) => {
   const ceiling = body.count('ceiling')
   if (body.problem) return context.json({ error: body.problem }, 400)
   if (on !== undefined) await setService(context.env, 'online', on ? 'on' : 'off')
-  if (ceiling !== undefined && ceiling >= 0)
-    await setService(context.env, 'ceiling', String(ceiling))
+  if (ceiling !== undefined && ceiling >= 0) await setService(context.env, 'ceiling', String(ceiling))
   const service = await serviceOf(context.env)
   return context.json({ online: service.on, ceiling: service.ceiling })
 })
@@ -62,8 +61,7 @@ onlineAdmin.post('/allow', async (context) => {
   const body = await readBody(context)
   const email = body.text('email', 320)
   const on = body.flag('online')
-  if (body.problem || !email || on === undefined)
-    return context.json({ error: 'email and online' }, 400)
+  if (body.problem || !email || on === undefined) return context.json({ error: 'email and online' }, 400)
 
   const user = await context.env.DB.prepare('select id from users where email = ?')
     .bind(email.toLowerCase())
@@ -161,9 +159,7 @@ onlineAdmin.post('/machines/:id/ssh', async (context) => {
   if (body.problem) return context.json({ error: body.problem }, 400)
   const key = given ? sshKeyOf(given) : null
   if (given && !key) return context.json({ error: 'not an SSH public key' }, 400)
-  const row = await context.env.DB.prepare('select id from machines where id = ?')
-    .bind(id)
-    .first<{ id: string }>()
+  const row = await context.env.DB.prepare('select id from machines where id = ?').bind(id).first<{ id: string }>()
   if (!row) return context.json({ error: NOT_FOUND }, 404)
   await context.env.DB.prepare('update machines set ssh_key = ? where id = ?').bind(key, id).run()
 

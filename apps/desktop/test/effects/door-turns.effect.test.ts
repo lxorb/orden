@@ -17,11 +17,7 @@ let played: Played[] = []
 
 beforeEach(() => {
   played = []
-  vi.spyOn(Element.prototype, 'animate').mockImplementation(function (
-    this: Element,
-    frames,
-    options,
-  ) {
+  vi.spyOn(Element.prototype, 'animate').mockImplementation(function (this: Element, frames, options) {
     const duration = typeof options === 'object' ? Number(options.duration ?? 0) : 0
     const one: Played = {
       node: this,

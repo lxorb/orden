@@ -5,49 +5,16 @@ export { finish, nextOccurrence, type OccurrenceOptions, skip, tick } from './oc
 export { answer, cellValue, groupName, orderId, placeOfKey, rowId } from './answer'
 export { readBase, writeBase } from './base-file'
 export { refusedPattern } from './expr/pattern'
-export {
-  type BuiltinName,
-  type BuiltinParams,
-  builtinView,
-  SMART_SORT,
-  isWhen,
-  WHEN,
-  WHEN_GROUPS,
-} from './builtins'
-export {
-  addDays,
-  addMonths,
-  dayNumber,
-  daysInMonth,
-  onClock,
-  rewritten,
-  todayOf,
-  weekday,
-} from './dates'
+export { type BuiltinName, type BuiltinParams, builtinView, SMART_SORT, isWhen, WHEN, WHEN_GROUPS } from './builtins'
+export { addDays, addMonths, dayNumber, daysInMonth, onClock, rewritten, todayOf, weekday } from './dates'
 export { nextDate, parseRule, ruleText } from './recurrence'
 export { DEFAULT_SUMMARIES } from './summaries'
 export { fromTodoist } from './todoist'
-export {
-  readRollup,
-  readReverse,
-  reverseFormula,
-  type Rollup,
-  rollupFormula,
-  ROLLUPS,
-  type RollupSpec,
-} from './rollup'
+export { readRollup, readReverse, reverseFormula, type Rollup, rollupFormula, ROLLUPS, type RollupSpec } from './rollup'
 export { idNumber, idRepairs, idText, nextId } from './ids'
 export { type ColourRule, colourExpression, colourRules } from './colour'
 export { fillTemplate, type Filling, repeatDue, withoutTemplateKeys } from './templates'
-export {
-  BUTTON,
-  type Button,
-  isButton,
-  type Press,
-  pressed,
-  readButtons,
-  withButton,
-} from './buttons'
+export { BUTTON, type Button, isButton, type Press, pressed, readButtons, withButton } from './buttons'
 export {
   type Automation,
   type Effect,

@@ -27,16 +27,9 @@ function asked(machine: string): string {
 }
 
 test.runIf(process.platform !== 'win32')('asks the origin its machine file names', () => {
-  expect(asked('ORDEN_ORIGIN=https://orden.so\n')).toContain(
-    'https://orden.so/v2/online/machine/current',
-  )
+  expect(asked('ORDEN_ORIGIN=https://orden.so\n')).toContain('https://orden.so/v2/online/machine/current')
 })
 
-test.runIf(process.platform !== 'win32')(
-  'a machine file written before the rename still names the origin',
-  () => {
-    expect(asked('NIB_ORIGIN=https://orden.so\n')).toContain(
-      'https://orden.so/v2/online/machine/current',
-    )
-  },
-)
+test.runIf(process.platform !== 'win32')('a machine file written before the rename still names the origin', () => {
+  expect(asked('NIB_ORIGIN=https://orden.so\n')).toContain('https://orden.so/v2/online/machine/current')
+})

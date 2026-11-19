@@ -120,8 +120,7 @@ describe('window permissions', () => {
 
 function desktopOnlyPlugins(): string[] {
   const cargo = read('../src-tauri/Cargo.toml')
-  const [, block] =
-    /\[target\.'cfg\(any\(target_os = "windows".*\n([\s\S]*?)(?:\n\[|$)/.exec(cargo) ?? []
+  const [, block] = /\[target\.'cfg\(any\(target_os = "windows".*\n([\s\S]*?)(?:\n\[|$)/.exec(cargo) ?? []
   if (block === undefined) throw new Error('no desktop-only dependencies in Cargo.toml')
 
   return [...block.matchAll(/^tauri-plugin-([a-z-]+)/gm)].map(([, name = '']) => name)
@@ -148,18 +147,14 @@ describe('writing an export', () => {
   })
 
   test('and the write is whole, which is what the plugin could not give it', () => {
-    expect(read('../src-tauri/crates/notes/src/notes.rs')).toContain(
-      'write_in_place(target, bytes)',
-    )
+    expect(read('../src-tauri/crates/notes/src/notes.rs')).toContain('write_in_place(target, bytes)')
     const paths = read('../src-tauri/crates/base/src/paths.rs')
     expect(paths).toContain('let copy = staged(target, bytes, false)?;')
     expect(paths).toContain('fs::rename(&copy, target)')
   })
 
   test('asks the desktop where to save, which needs the save dialog', () => {
-    expect(read('../src/lib/files-out/src/save.ts')).toContain(
-      "import('@tauri-apps/plugin-dialog')",
-    )
+    expect(read('../src/lib/files-out/src/save.ts')).toContain("import('@tauri-apps/plugin-dialog')")
     expect(capabilities.permissions).toContain('dialog:allow-save')
   })
 
@@ -183,9 +178,7 @@ describe('looking for a new version', () => {
   })
 
   test('downloads and installs through the plugin, which is granted both', () => {
-    expect(read('../src/lib/updates/src/updater.ts')).toContain(
-      "import('@tauri-apps/plugin-updater')",
-    )
+    expect(read('../src/lib/updates/src/updater.ts')).toContain("import('@tauri-apps/plugin-updater')")
     expect(capabilities.permissions).toContain('updater:allow-download')
     expect(capabilities.permissions).toContain('updater:allow-install')
   })
@@ -249,9 +242,7 @@ describe('phone permissions', () => {
     const plugins = desktopOnlyPlugins()
     expect(plugins).toContain('updater')
 
-    const wrong = mobile.permissions.filter((one) =>
-      plugins.some((plugin) => one.startsWith(`${plugin}:`)),
-    )
+    const wrong = mobile.permissions.filter((one) => plugins.some((plugin) => one.startsWith(`${plugin}:`)))
 
     expect(wrong, `granted to a build without the plugin: ${wrong.join(', ')}`).toEqual([])
   })

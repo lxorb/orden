@@ -44,11 +44,7 @@ function kindOf(value: string, quoted: boolean): PropertyKind {
   return 'text'
 }
 
-function linesOf(
-  source: string,
-  from: number,
-  to: number,
-): { text: string; from: number; to: number }[] {
+function linesOf(source: string, from: number, to: number): { text: string; from: number; to: number }[] {
   const out: { text: string; from: number; to: number }[] = []
   let at = from
 
@@ -166,10 +162,7 @@ export function keyCalled(rows: readonly Property[], key: string): Property | un
   return rows.find((one) => one.key === key) ?? rows.find((one) => one.key.toLowerCase() === wanted)
 }
 
-function quotes(
-  written: readonly string[],
-  list: boolean,
-): { quotedItems?: boolean[]; writtenItems?: string[] } {
+function quotes(written: readonly string[], list: boolean): { quotedItems?: boolean[]; writtenItems?: string[] } {
   const quoted = written.map(isQuoted)
   if (!quoted.includes(true)) return {}
   return list ? { quotedItems: quoted, writtenItems: [...written] } : { quotedItems: quoted }

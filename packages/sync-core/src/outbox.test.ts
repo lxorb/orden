@@ -83,9 +83,7 @@ describe('coalesce', () => {
     const moved = coalesce([mkdir('0', 'f', 'Work'), day('1'), move('2', 'd', 'f')])
     expect(moved).toEqual([mkdir('0', 'f', 'Work'), { ...create('1', 'd', '2026-09-30.md', 'f') }])
 
-    expect(coalesce([day('1'), rename('2', 'd', '2026-09-30.MD')])).toEqual([
-      { ...day('1'), name: '2026-09-30.MD' },
-    ])
+    expect(coalesce([day('1'), rename('2', 'd', '2026-09-30.MD')])).toEqual([{ ...day('1'), name: '2026-09-30.MD' }])
   })
 
   test('a rename or move of a note whose create has not gone folds into the create', () => {
@@ -176,12 +174,8 @@ function made(start: TreeState, choices: readonly Choice[]): Op[] {
 
   for (const [index, one] of choices.entries()) {
     const live = [...state.entries.values()].filter((entry) => !entry.deleted)
-    const folders = [
-      null,
-      ...live.filter((entry) => entry.kind === 'folder').map((entry) => entry.id),
-    ]
-    const pick = <T>(list: readonly T[], at: number): T | undefined =>
-      list[at % Math.max(1, list.length)]
+    const folders = [null, ...live.filter((entry) => entry.kind === 'folder').map((entry) => entry.id)]
+    const pick = <T>(list: readonly T[], at: number): T | undefined => list[at % Math.max(1, list.length)]
     const op = `o${String(index)}`
     const name = NAMES[('name' in one ? one.name : 0) % NAMES.length] ?? 'A.md'
 
@@ -230,10 +224,7 @@ function shape(state: TreeState) {
     .sort()
   const keys = [...state.entries.values()]
     .filter((entry) => !entry.deleted)
-    .map(
-      (entry) =>
-        `${entry.parent ?? ''}/${nameKey(entry.name).replace(/( \d+)+(?=\.[^.]*$|$)/, '')}`,
-    )
+    .map((entry) => `${entry.parent ?? ''}/${nameKey(entry.name).replace(/( \d+)+(?=\.[^.]*$|$)/, '')}`)
     .sort()
   return { alive, keys }
 }
@@ -247,11 +238,7 @@ function replay(start: TreeState, ops: readonly Op[]): TreeState {
 describe('coalesce property', () => {
   test("property: coalesced or not, one device's ops leave the same tree, in fewer ops", () => {
     const start = treeState()
-    applyOp(
-      start,
-      { op: 's1', t: 'mkdir', id: 'f', parent: null, name: 'Folder', seen: 0 },
-      { role: 'owner' },
-    )
+    applyOp(start, { op: 's1', t: 'mkdir', id: 'f', parent: null, name: 'Folder', seen: 0 }, { role: 'owner' })
     applyOp(
       start,
       { op: 's2', t: 'create', id: 'n', kind: 'note', parent: null, name: 'Note.md', seen: 0 },

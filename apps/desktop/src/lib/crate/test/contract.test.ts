@@ -56,9 +56,9 @@ describe('bytes on their way to a file', () => {
 
     expect(handed.map((one) => one.args)).toEqual([bytes, bytes, bytes])
     expect(handed.map((one) => one.options)).toEqual(
-      [{ kind: 'png' }, { host: 'pi', kind: 'png' }, { folder: '/a', under: 'b/c.bin' }].map(
-        (rest) => ({ headers: { 'Orden-Args': encodeURIComponent(JSON.stringify(rest)) } }),
-      ),
+      [{ kind: 'png' }, { host: 'pi', kind: 'png' }, { folder: '/a', under: 'b/c.bin' }].map((rest) => ({
+        headers: { 'Orden-Args': encodeURIComponent(JSON.stringify(rest)) },
+      })),
     )
   })
 

@@ -1,9 +1,4 @@
-import {
-  LanguageDescription,
-  LanguageSupport,
-  StreamLanguage,
-  type StreamParser,
-} from '@codemirror/language'
+import { LanguageDescription, LanguageSupport, StreamLanguage, type StreamParser } from '@codemirror/language'
 
 function streamMode(spec: {
   name: string

@@ -13,8 +13,7 @@ const { noteMenu } = await import('./note-menu')
 const { picker } = await import('../../export/src/api')
 const { workspace } = await import('../../workspace/src/api')
 
-const labels = (rows: readonly ({ label: string } | null)[]) =>
-  rows.map((row) => (row ? row.label : '-'))
+const labels = (rows: readonly ({ label: string } | null)[]) => rows.map((row) => (row ? row.label : '-'))
 
 describe("a note's dots", () => {
   test('hold the rows of the app menu that are about the note, in groups', async () => {

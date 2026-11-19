@@ -32,8 +32,7 @@ export function heldAtEdge(
   const x = width / 2 + (at.x - camera.x) * camera.scale
   const y = height / 2 + (at.y - camera.y) * camera.scale
 
-  const shown =
-    x >= -STILL_SHOWN && x <= width + STILL_SHOWN && y >= -STILL_SHOWN && y <= height + STILL_SHOWN
+  const shown = x >= -STILL_SHOWN && x <= width + STILL_SHOWN && y >= -STILL_SHOWN && y <= height + STILL_SHOWN
   if (shown) return null
 
   const left = Math.min(inset.left, width / 2)

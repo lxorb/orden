@@ -35,11 +35,7 @@ const { workspace } = await import('../../src/lib/workspace/src/api')
 const { anythingRuns } = await import('../../src/lib/parting/src/api')
 type Tab = import('../../src/lib/workspace/src/api').Tab
 const aiChat = await import('../../src/lib/ai-chat/src/api')
-await Promise.all([
-  aiChat.chatSends(),
-  import('../../src/lib/ai-providers/src/store.svelte'),
-  aiChat.chatStore(),
-])
+await Promise.all([aiChat.chatSends(), import('../../src/lib/ai-providers/src/store.svelte'), aiChat.chatStore()])
 
 function terminal(id: string, shown: string, program: string | null): Tab {
   setPty(id, `pty-${id}`)
@@ -57,9 +53,7 @@ function terminal(id: string, shown: string, program: string | null): Tab {
 const sheet = () => document.querySelector('[role="alertdialog"]')
 const names = () => [...document.querySelectorAll('.rows .name')].map((one) => one.textContent)
 const button = (words: string) =>
-  [...document.querySelectorAll<HTMLButtonElement>('.row button')].find(
-    (one) => one.textContent.trim() === words,
-  )
+  [...document.querySelectorAll<HTMLButtonElement>('.row button')].find((one) => one.textContent.trim() === words)
 
 let was: Tab[]
 
@@ -68,10 +62,7 @@ beforeEach(() => {
   asked.length = 0
   others = []
   quitAsk.warnWhen('running')
-  workspace.tabs = [
-    terminal('a', 'claude · orden', 'claude'),
-    terminal('b', 'PowerShell · orden', null),
-  ]
+  workspace.tabs = [terminal('a', 'claude · orden', 'claude'), terminal('b', 'PowerShell · orden', null)]
 })
 
 afterEach(() => {

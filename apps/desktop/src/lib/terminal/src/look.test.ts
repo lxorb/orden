@@ -13,10 +13,7 @@ function block(file: string, selector: string): Record<string, string> {
   if (at === -1) throw new Error(`no ${selector} in ${file}`)
   const body = css.slice(at, css.indexOf('\n}', at))
   return Object.fromEntries(
-    [...body.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((one): [string, string] => [
-      one[1] ?? '',
-      (one[2] ?? '').trim(),
-    ]),
+    [...body.matchAll(/(--[\w-]+):\s*([^;]+);/g)].map((one): [string, string] => [one[1] ?? '', (one[2] ?? '').trim()]),
   )
 }
 
@@ -83,21 +80,18 @@ function on(palette: Record<string, unknown>, name: string): number {
 }
 
 describe('a terminal in the theme', () => {
-  test.each(SCHEMES)(
-    'in %s, every hue and its bright half read on the ground, apart',
-    (_, tokens) => {
-      const palette = terminalPalette(tokens) as Record<string, unknown>
-      expect(palette.background).toBe(tokens.background)
-      for (const name of HUES) {
-        expect([name, on(palette, name) >= AA]).toEqual([name, true])
-        expect([bright(name), on(palette, bright(name)) >= AA]).toEqual([bright(name), true])
-        expect(palette[bright(name)]).not.toBe(palette[name])
-      }
-      expect(on(palette, 'brightBlack')).toBeGreaterThanOrEqual(3)
-      expect(on(palette, 'foreground')).toBeGreaterThanOrEqual(AA)
-      expect(palette.cursor).toBe(tokens.accent)
-    },
-  )
+  test.each(SCHEMES)('in %s, every hue and its bright half read on the ground, apart', (_, tokens) => {
+    const palette = terminalPalette(tokens) as Record<string, unknown>
+    expect(palette.background).toBe(tokens.background)
+    for (const name of HUES) {
+      expect([name, on(palette, name) >= AA]).toEqual([name, true])
+      expect([bright(name), on(palette, bright(name)) >= AA]).toEqual([bright(name), true])
+      expect(palette[bright(name)]).not.toBe(palette[name])
+    }
+    expect(on(palette, 'brightBlack')).toBeGreaterThanOrEqual(3)
+    expect(on(palette, 'foreground')).toBeGreaterThanOrEqual(AA)
+    expect(palette.cursor).toBe(tokens.accent)
+  })
 
   test('a theme whose hues are too pale for its ground has them moved until they read', () => {
     const pale: TerminalTokens = {
@@ -152,8 +146,6 @@ describe("the ground a terminal's open tab stands on", () => {
   test("is what the strip wears on a terminal's open tab", () => {
     const tabs = readFileSync(join(import.meta.dirname, '../../tab-strip/src/Tabs.svelte'), 'utf8')
     expect(tabs).toMatch(/\.tab\.onterminal \{\s*--tab-ground: var\(--terminal-paper,/)
-    expect(tabs).toContain(
-      "style:--terminal-paper={tab.kind === 'terminal' ? chrome.terminal : null}",
-    )
+    expect(tabs).toContain("style:--terminal-paper={tab.kind === 'terminal' ? chrome.terminal : null}")
   })
 })

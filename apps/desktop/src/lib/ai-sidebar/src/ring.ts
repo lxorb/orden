@@ -17,8 +17,7 @@ export function attachedIn(turns: readonly Turn[], since?: string): number {
   const from = since ? turns.findIndex((one) => one.id === since) + 1 : 0
   let sum = 0
   for (const turn of turns.slice(from)) {
-    if (turn.role === 'you' && turn.draft)
-      sum += estimate({ text: '', attachments: turn.draft.attachments })
+    if (turn.role === 'you' && turn.draft) sum += estimate({ text: '', attachments: turn.draft.attachments })
   }
   return sum
 }

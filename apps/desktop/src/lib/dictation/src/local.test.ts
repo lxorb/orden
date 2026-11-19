@@ -23,8 +23,7 @@ vi.mock('../../crate/src/native', () => ({
   },
 }))
 vi.mock('../../ui-kit/src/message', () => ({
-  message: (error: unknown, fallback: string) =>
-    error instanceof Error ? error.message : fallback,
+  message: (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback),
 }))
 vi.mock('../../platform/src/stored', () => ({
   storedText: (key: string) => world.stored.get(key) ?? null,

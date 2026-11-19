@@ -76,15 +76,7 @@ import { archiveEntry } from '../../row-menu/src/api'
 import { updates, ISSUES_URL, RELEASES_URL, SOURCE_URL } from '../../updates/src/api'
 import { modes, choices } from '../../modes/src/api'
 import { runEntry, shortcuts } from '../../shortcuts/src/api'
-import {
-  internal,
-  invoke,
-  isDesktop,
-  isNative,
-  openExternal,
-  isMarkdownPath,
-  samePath,
-} from '../../platform/src/api'
+import { internal, invoke, isDesktop, isNative, openExternal, isMarkdownPath, samePath } from '../../platform/src/api'
 import { exportSpace } from '../../web-backend/src/api'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../../theme-looks/src/api'
 import { theme } from '../../theme/src/api'
@@ -122,20 +114,20 @@ const entry = (id: string, view?: EditorView) => () =>
     fullscreen: () => void fullscreen.toggle(workspace.panes),
   })
 
-const keyed = (
-  id: string,
-  label: string,
-  key: string,
-  extra: Partial<Command> = {},
-  view?: EditorView,
-): Command => ({ id, label, hint: shortcuts.hint(key), run: entry(key, view), ...extra })
+const keyed = (id: string, label: string, key: string, extra: Partial<Command> = {}, view?: EditorView): Command => ({
+  id,
+  label,
+  hint: shortcuts.hint(key),
+  run: entry(key, view),
+  ...extra,
+})
 
-const commanded = (
-  id: string,
-  label: string,
-  command: string,
-  extra: Partial<Command> = {},
-): Command => ({ id, label, run: () => void runCommand(command), ...extra })
+const commanded = (id: string, label: string, command: string, extra: Partial<Command> = {}): Command => ({
+  id,
+  label,
+  run: () => void runCommand(command),
+  ...extra,
+})
 
 function importCommands(): Command[] {
   if (__EVEN_PLUGIN__) return []
@@ -149,9 +141,7 @@ function importCommands(): Command[] {
     commanded('import', 'Import', 'import.show'),
     { id: 'import-obsidian', label: 'Import from Obsidian', run: asked('import.obsidian') },
     commanded('import-notion', 'Import from Notion', 'import.notion'),
-    ...(isDesktop
-      ? [{ id: 'import-zen', label: 'Import from Zen', run: asked('import.zen') }]
-      : []),
+    ...(isDesktop ? [{ id: 'import-zen', label: 'Import from Zen', run: asked('import.zen') }] : []),
   ]
 }
 
@@ -242,8 +232,7 @@ function tabCommands(): Command[] {
     {
       id: 'rename',
       label: 'Rename',
-      disabled:
-        !tab || !workspace.canRenameFromTab(tab) || (tab.path !== null && !canWriteAt(tab.path)),
+      disabled: !tab || !workspace.canRenameFromTab(tab) || (tab.path !== null && !canWriteAt(tab.path)),
       run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
     },
     ...(tab && workspace.shownSpaces.length > 1
@@ -329,12 +318,7 @@ async function askWhichLayoutToDelete() {
 }
 
 function lineCommands(view?: EditorView): Command[] {
-  const row = (
-    id: string,
-    label: string,
-    command: (view: EditorView) => boolean,
-    writes = true,
-  ): Command => ({
+  const row = (id: string, label: string, command: (view: EditorView) => boolean, writes = true): Command => ({
     id,
     label,
     hint: shortcuts.hint(id),
@@ -454,8 +438,7 @@ function recorded(view?: EditorView): Block[] {
     id: row.id,
     label: () => row.label,
     apply: (target) => {
-      const ran =
-        target === view ? row : commandRows('record', target).find((one) => one.id === row.id)
+      const ran = target === view ? row : commandRows('record', target).find((one) => one.id === row.id)
       ran?.run()
     },
     ready: () => row.disabled !== true,
@@ -512,9 +495,7 @@ function moveCommand(): Command | null {
     id: 'move-note',
     label: 'Move this note',
     run: () =>
-      void prompt
-        .find({ title: 'Move to', options: [...targets] })
-        .then((into) => (into ? moved(into) : undefined)),
+      void prompt.find({ title: 'Move to', options: [...targets] }).then((into) => (into ? moved(into) : undefined)),
   }
 }
 
@@ -534,9 +515,7 @@ function spaceCommands(): Command[] {
           run: () => void workspace.showSpace(one.id),
         }))
       : []),
-    ...(canShare(space)
-      ? [{ id: 'share', label: 'Share this space', run: () => void shareSpace(space) }]
-      : []),
+    ...(canShare(space) ? [{ id: 'share', label: 'Share this space', run: () => void shareSpace(space) }] : []),
     ...(isDesktop && !__EVEN_PLUGIN__ && internal.routed?.('read_tree', { root: space.root })
       ? [
           {
@@ -582,9 +561,7 @@ export function appCommands(view?: EditorView): Command[] {
   const readOnly = space ? !canWriteAt(space.root) : false
 
   return without([
-    ...(unsaved
-      ? [{ id: 'save', label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(unsaved.id) }]
-      : []),
+    ...(unsaved ? [{ id: 'save', label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(unsaved.id) }] : []),
     { id: 'new', label: 'New note', hint: shortcuts.hint('app.new'), run: entry('app.new') },
     ...(__EVEN_PLUGIN__ ? [] : [keyed('quick-add', 'Add task', 'app.quick-add')]),
     ...commandRows('send', view),
@@ -606,9 +583,7 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: readOnly,
       run: () => void workspace.createPages(),
     },
-    ...(basesOn()
-      ? [commanded('new-database', 'New database', 'views.new-database', { disabled: readOnly })]
-      : []),
+    ...(basesOn() ? [commanded('new-database', 'New database', 'views.new-database', { disabled: readOnly })] : []),
     commanded('new-from-template', 'New note from template', 'views.pick-template', {
       disabled: readOnly,
     }),
@@ -766,30 +741,15 @@ export function appCommands(view?: EditorView): Command[] {
       disabled: workspace.active?.kind !== 'note',
     }),
     keyed('read-only', modes.readOnly ? 'Leave read-only' : 'Read-only', 'app.read-only', {}, view),
-    keyed(
-      'source',
-      modes.sourceIn(view) ? 'Leave source mode' : 'Source mode',
-      'app.source',
-      {},
-      view,
-    ),
+    keyed('source', modes.sourceIn(view) ? 'Leave source mode' : 'Source mode', 'app.source', {}, view),
     keyed('focus', modes.focus ? 'Leave focus mode' : 'Focus mode', 'app.focus', {}, view),
-    keyed(
-      'typewriter',
-      modes.typewriter ? 'Leave typewriter mode' : 'Typewriter mode',
-      'app.typewriter',
-      {},
-      view,
-    ),
+    keyed('typewriter', modes.typewriter ? 'Leave typewriter mode' : 'Typewriter mode', 'app.typewriter', {}, view),
     ...(viewport.touch
       ? []
       : [
-          keyed(
-            'full-window',
-            workspace.panes.fills === null ? 'Full window' : 'Leave full window',
-            'app.fill-tab',
-            { disabled: workspace.panes.fills === null && !workspace.activeTabId },
-          ),
+          keyed('full-window', workspace.panes.fills === null ? 'Full window' : 'Leave full window', 'app.fill-tab', {
+            disabled: workspace.panes.fills === null && !workspace.activeTabId,
+          }),
         ]),
     keyed('fullscreen', fullscreen.on ? 'Leave fullscreen' : 'Fullscreen', 'app.fullscreen'),
     ...(isDesktop
@@ -886,9 +846,7 @@ export function appCommands(view?: EditorView): Command[] {
       checked: palette.id === modes.codeTheme,
       run: () => modes.setCodeTheme(palette.id, view),
     })),
-    ...(isDesktop
-      ? [{ id: 'themes-folder', label: 'Open themes folder', run: () => void openThemesFolder() }]
-      : []),
+    ...(isDesktop ? [{ id: 'themes-folder', label: 'Open themes folder', run: () => void openThemesFolder() }] : []),
     ...(isNative
       ? [
           { id: 'custom-css', label: 'Edit custom CSS', run: () => void openCustomCss() },

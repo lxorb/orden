@@ -40,9 +40,7 @@ test('a plane drawn as a picture shows its PDF cards as their pages, at any size
   expect(picture).not.toBeNull()
   expect(picture?.hasAttribute('width')).toBe(false)
   expect(picture?.hasAttribute('height')).toBe(false)
-  expect(holder.querySelector('svg image')?.getAttribute('href')).toBe(
-    'data:image/png;base64,UEFHRQ==',
-  )
+  expect(holder.querySelector('svg image')?.getAttribute('href')).toBe('data:image/png;base64,UEFHRQ==')
   expect(picture?.textContent).not.toContain('Reading.pdf')
 })
 

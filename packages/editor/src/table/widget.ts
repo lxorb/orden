@@ -17,8 +17,7 @@ export const tableTracking = ViewPlugin.define((view) => {
     update(update) {
       if (!update.docChanged) return
       noteChanges(update.view, update.changes)
-      for (const table of live)
-        if (table.editor === update.view) table.track(update.changes, update.state.doc)
+      for (const table of live) if (table.editor === update.view) table.track(update.changes, update.state.doc)
     },
   }
 })
@@ -39,9 +38,7 @@ export class TableWidget extends OrdenWidget {
   }
 
   override eq(other: TableWidget) {
-    return (
-      other.source === this.source && other.from === this.from && other.writable === this.writable
-    )
+    return other.source === this.source && other.from === this.from && other.writable === this.writable
   }
 
   override ignoreEvent() {

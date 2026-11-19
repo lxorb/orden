@@ -54,12 +54,7 @@ function measured(
   return { value: numbers.length ? sum / numbers.length : 0 }
 }
 
-export function seriesOf(
-  answer: Answer,
-  settings: ChartSettings,
-  base: Base,
-  context: Context,
-): Point[] {
+export function seriesOf(answer: Answer, settings: ChartSettings, base: Base, context: Context): Point[] {
   let running = 0
   return answer.groups.map((group) => {
     const one = measured(group.rows, settings, base, context)
@@ -69,12 +64,7 @@ export function seriesOf(
   })
 }
 
-export function totalOf(
-  answer: Answer,
-  settings: ChartSettings,
-  base: Base,
-  context: Context,
-): Point {
+export function totalOf(answer: Answer, settings: ChartSettings, base: Base, context: Context): Point {
   const rows = everyRow(answer.groups)
   const one = measured(rows, settings, base, context)
   return { key: null, value: one.value, ...(one.day === undefined ? {} : { day: one.day }) }
@@ -92,10 +82,7 @@ export function linePath(fractions: readonly number[], width: number, height: nu
   if (!fractions.length) return ''
   const step = fractions.length > 1 ? width / (fractions.length - 1) : 0
   return fractions
-    .map(
-      (one, at) =>
-        `${at ? 'L' : 'M'}${(at * step).toFixed(1)} ${(height - one * height).toFixed(1)}`,
-    )
+    .map((one, at) => `${at ? 'L' : 'M'}${(at * step).toFixed(1)} ${(height - one * height).toFixed(1)}`)
     .join(' ')
 }
 

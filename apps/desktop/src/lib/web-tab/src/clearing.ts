@@ -49,11 +49,7 @@ export function reach(apart: readonly (string | null)[]): {
   return { stores: [null, ...new Set(own)], books: [webData.history()] }
 }
 
-export async function clearData(
-  asked: Asked,
-  apart: readonly (string | null)[],
-  now = Date.now(),
-): Promise<void> {
+export async function clearData(asked: Asked, apart: readonly (string | null)[], now = Date.now()): Promise<void> {
   const since = sinceFor(asked.range, now)
   const { stores, books } = reach(apart)
 

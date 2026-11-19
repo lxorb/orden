@@ -31,9 +31,7 @@ vi.mock('../../link-index/src/api', () => ({
     embedNote: (target: string) => {
       asked.embeds.push(target)
       const text = bodies[`${target}.md`]
-      return Promise.resolve(
-        text === undefined ? null : { text, escapeHtml: target.startsWith('Theirs') },
-      )
+      return Promise.resolve(text === undefined ? null : { text, escapeHtml: target.startsWith('Theirs') })
     },
   },
   notePicture: (src: string) => {
@@ -41,8 +39,8 @@ vi.mock('../../link-index/src/api', () => ({
     return `asset://${src}`
   },
   picturesOf:
-    (_path: string | null, _source: string, finish: (path: string) => string) =>
-    (src: string, wikilink: boolean) => (wikilink ? finish(`/space/att/${src}`) : null),
+    (_path: string | null, _source: string, finish: (path: string) => string) => (src: string, wikilink: boolean) =>
+      wikilink ? finish(`/space/att/${src}`) : null,
 }))
 
 const { readingHtml, unreadableHtml } = await import('./render')

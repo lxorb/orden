@@ -57,9 +57,7 @@ const KINDS: Record<string, Kind> = {
 
 const ORDER = Object.keys(KINDS)
 
-const FOLDED = new Set(
-  Object.values(KINDS).flatMap((one) => (one.option ? [`export-${one.option.id}`] : [])),
-)
+const FOLDED = new Set(Object.values(KINDS).flatMap((one) => (one.option ? [`export-${one.option.id}`] : [])))
 
 export interface Choice extends MenuItem {
   id: string
@@ -107,9 +105,7 @@ export function shelved(choices: readonly Choice[], first: string | null = null)
       icon: kind?.icon ?? FileCode,
       disabled: choice.disabled === true,
       option:
-        option && offered.has(`export-${option.id}`)
-          ? { label: option.label, command: `export-${option.id}` }
-          : null,
+        option && offered.has(`export-${option.id}`) ? { label: option.label, command: `export-${option.id}` } : null,
     }
     shelves.find((one) => one.id === (kind?.shelf ?? 'other'))?.tiles.push(tile)
   }

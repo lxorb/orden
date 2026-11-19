@@ -36,22 +36,12 @@ describe('two copies of a web note', () => {
   })
 
   test('come to the same file whichever side is ours', () => {
-    expect(settleShortcuts(PATH, OLDER, NEWER, true)).toBe(
-      settleShortcuts(PATH, NEWER, OLDER, false),
-    )
+    expect(settleShortcuts(PATH, OLDER, NEWER, true)).toBe(settleShortcuts(PATH, NEWER, OLDER, false))
   })
 
   test('leave the newer file exactly as written when the older adds nothing', () => {
-    const newer = file([
-      'URL=https://docs.dev/b',
-      'Title=Docs',
-      'Orden-Added=2026-09-01T00:00:00.000Z',
-    ])
-    const older = file([
-      'URL=https://docs.dev/a',
-      'Title=Docs',
-      'Orden-Added=2026-09-02T00:00:00.000Z',
-    ])
+    const newer = file(['URL=https://docs.dev/b', 'Title=Docs', 'Orden-Added=2026-09-01T00:00:00.000Z'])
+    const older = file(['URL=https://docs.dev/a', 'Title=Docs', 'Orden-Added=2026-09-02T00:00:00.000Z'])
 
     expect(settleShortcuts(PATH, older, newer, true)).toBe(newer)
   })

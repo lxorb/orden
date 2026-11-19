@@ -153,8 +153,7 @@ export async function invitedState(
     role,
     key: key === null ? null : await wrapVaultKey(box.key, key.pub, vault),
     keyVersion: box.row.keyVersion,
-    vouch:
-      role === 'manager' && owning && heir !== null ? await vouchFor(signer, vault, heir) : null,
+    vouch: role === 'manager' && owning && heir !== null ? await vouchFor(signer, vault, heir) : null,
     pin: {
       owner: owning ? signer.pub : await voucherOf(vault, signer.pub, mine, owners),
       vouch: mine,
@@ -162,23 +161,14 @@ export async function invitedState(
   })
 }
 
-async function voucherOf(
-  vault: string,
-  me: string,
-  vouch: string | null,
-  owners: readonly string[],
-): Promise<string> {
+async function voucherOf(vault: string, me: string, vouch: string | null, owners: readonly string[]): Promise<string> {
   for (const owner of owners) {
     if (await isVouched(vault, me, vouch, [owner])) return owner
   }
   throw new NotTrusted('Only the owner, or a manager the owner made, can do that.')
 }
 
-export async function confirmedMember(
-  sharing: Sharing,
-  vault: string,
-  person: Person,
-): Promise<void> {
+export async function confirmedMember(sharing: Sharing, vault: string, person: Person): Promise<void> {
   const box = heldVault(sharing.held, vault)
   const member = (await sharing.api.members(vault)).find((one) => one.email === person.email)
   if (!member || member.state === 'active') throw new Error('pass: no such invitation')
@@ -189,12 +179,7 @@ export async function confirmedMember(
   await sharing.api.giveKey(vault, person.email, wrapped, box.row.keyVersion)
 }
 
-export async function roleGiven(
-  sharing: Sharing,
-  vault: string,
-  email: string,
-  role: InvitedRole,
-): Promise<void> {
+export async function roleGiven(sharing: Sharing, vault: string, email: string, role: InvitedRole): Promise<void> {
   const to = emailOf(email)
   const signer = signerOf(sharing.held)
   const owners = await ownersHeld(sharing, vault)
@@ -232,10 +217,7 @@ export async function acceptedInvite(sharing: Sharing, invite: Invite): Promise<
   }
   const owner = await invitedOwnerOf(invite.vault, from, invite.pin)
   const key = await unwrapVaultKey(invite.key, sharing.held.opened.pair, invite.vault)
-  if (
-    owner === null ||
-    !(await isProven(invite.vault, invite.keyVersion, key, invite.proof, [owner]))
-  ) {
+  if (owner === null || !(await isProven(invite.vault, invite.keyVersion, key, invite.proof, [owner]))) {
     throw new NotTrusted('This invitation is not signed by the vault’s owner. Pass left it out.')
   }
   await sharing.api.accept(invite.vault, await acceptedOf(signer, invite.vault, owner))
@@ -289,8 +271,7 @@ async function wrappedToEveryone(
       throw new Error('pass: a member has no key to share with')
     }
     if ((await seenPerson(sharing.rows, member.email, key)) === 'changed') {
-      const owning =
-        member.role === 'owner' || (key.signPub !== null && owners.includes(key.signPub))
+      const owning = member.role === 'owner' || (key.signPub !== null && owners.includes(key.signPub))
       if (owning) throw new PersonChanged(member.email)
       continue
     }
@@ -327,10 +308,7 @@ async function rotationOf(
   next: Uint8Array<ArrayBuffer>,
   gone: string | null,
 ): Promise<{ sent: Rotation; renewed: Map<string, Renewed> }> {
-  const [members, rows] = await Promise.all([
-    sharing.api.members(vault),
-    sharing.api.allVaultItems(vault),
-  ])
+  const [members, rows] = await Promise.all([sharing.api.members(vault), sharing.api.allVaultItems(vault)])
   const owners = await ownersHeld(sharing, vault)
   const vouch = await vouchOf(sharing, vault, owners, members)
   const keyVersion = from.keyVersion + 1
@@ -406,12 +384,7 @@ async function itemRenewedLocally(
   }
 }
 
-async function rekeyedLocally(
-  sharing: Sharing,
-  vault: string,
-  was: KeyAt,
-  now: Rotated,
-): Promise<void> {
+async function rekeyedLocally(sharing: Sharing, vault: string, was: KeyAt, now: Rotated): Promise<void> {
   const { held, rows } = sharing
   const box = heldVault(held, vault)
   const from = box.key === was.key ? [box.key] : [box.key, was.key]
@@ -423,9 +396,7 @@ async function rekeyedLocally(
         meta: await sealVault(now.key, vault, await openVault(box.key, vault, box.row.meta)),
       }
     : { ...box.row, ...renewedRow, rev: now.rev, meta: now.meta }
-  const inside = (await rows.items()).filter(
-    (one) => one.vault === vault && !one.deleted && one.key !== '',
-  )
+  const inside = (await rows.items()).filter((one) => one.vault === vault && !one.deleted && one.key !== '')
   const items: ItemRow[] = []
   const versions: VersionRow[] = []
   const keys = new Map<string, Uint8Array<ArrayBuffer>>()
@@ -446,11 +417,7 @@ async function rekeyedLocally(
   }
 }
 
-async function rotatedVault(
-  sharing: Sharing,
-  vault: string,
-  gone: string | null = null,
-): Promise<number> {
+async function rotatedVault(sharing: Sharing, vault: string, gone: string | null = null): Promise<number> {
   let from = await startOf(sharing, vault)
   for (let tries = 0; tries < TRIES; tries++) {
     const next = newKey()
@@ -480,11 +447,7 @@ async function rotatedVault(
   throw new Error('pass: the vault kept changing while its key was renewed')
 }
 
-export async function removedMember(
-  sharing: Sharing,
-  vault: string,
-  email: string,
-): Promise<number> {
+export async function removedMember(sharing: Sharing, vault: string, email: string): Promise<number> {
   const owners = await ownersHeld(sharing, vault)
   await vouchOf(sharing, vault, owners, await sharing.api.members(vault))
   try {
@@ -507,8 +470,7 @@ async function backfilledVault(sharing: Sharing, vault: string, box: HeldVault):
   const { row } = box
   const pinned = await pinnedOwnerOf(signer.pub, vault, row.accepted ?? null)
   const owning = row.role === 'owner'
-  const proven =
-    !owning || (await isProven(vault, row.keyVersion, box.key, row.proof ?? null, [signer.pub]))
+  const proven = !owning || (await isProven(vault, row.keyVersion, box.key, row.proof ?? null, [signer.pub]))
   if (pinned !== null && proven) return false
   const owner = owning ? signer.pub : (pinned ?? (await ownerOfMembers(sharing, vault)))
   if (owner === null) return false

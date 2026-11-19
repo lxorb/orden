@@ -44,9 +44,7 @@ const keyOf = (space: string, path: string) => `${space}\n${path}`
 
 function before(one: Held, other: Held): boolean {
   const depth = (held: Held) => held.row.path.split('/').length
-  return (
-    depth(one) - depth(other) < 0 || (depth(one) === depth(other) && one.row.path < other.row.path)
-  )
+  return depth(one) - depth(other) < 0 || (depth(one) === depth(other) && one.row.path < other.row.path)
 }
 
 function aliasesOf(row: Row): string[] {
@@ -142,8 +140,7 @@ export function linkContext(rows: readonly Row[]): LinkContext {
   const look = () => (made ??= lookups(rows))
 
   return {
-    resolve: (target, from) =>
-      SCHEME.test(target) ? null : (reached(look(), target, from)?.path ?? null),
+    resolve: (target, from) => (SCHEME.test(target) ? null : (reached(look(), target, from)?.path ?? null)),
     row: (path, space) => look().byPath.get(keyOf(space, path)),
     backlinks: (row) => look().linking.get(keyOf(row.space, row.path)) ?? [],
   }

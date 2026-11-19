@@ -60,9 +60,7 @@ describe('the clearing', () => {
     visited.saw(book, 'new', 'https://new.example/page', 'New')
     const rows = visited
       .all(book)
-      .map((one) =>
-        one.url.includes('old') ? { ...one, last: NOW - 24 * HOUR } : { ...one, last: NOW },
-      )
+      .map((one) => (one.url.includes('old') ? { ...one, last: NOW - 24 * HOUR } : { ...one, last: NOW }))
     localStorage.setItem(book, JSON.stringify(rows))
     vi.resetModules()
     const fresh = await import('./clearing')

@@ -113,15 +113,13 @@ function sizeOf(part: unknown): number {
 function compileCall(node: Extract<Node, { type: 'call' }>, facts: Facts): Fn {
   const args = node.args.map((arg) => compileNode(arg, facts))
   const { callee } = node
-  if ((callee.type === 'name' || callee.type === 'member') && CLOCK.has(callee.name))
-    facts.clock = true
+  if ((callee.type === 'name' || callee.type === 'member') && CLOCK.has(callee.name)) facts.clock = true
 
   if (callee.type === 'name') {
     const name = callee.name
     if (!GLOBALS.has(name)) throw new BasesError(`There is no function ${name}()`, callee.at)
     if (name === 'file' || name === 'random' || READS_OTHERS.has(name)) facts.local = false
-    if (name === 'today' && !args.length)
-      return (scope) => ({ kind: 'date', iso: scope.context.today })
+    if (name === 'today' && !args.length) return (scope) => ({ kind: 'date', iso: scope.context.today })
     return (scope) => callGlobal(name, thunks(args, scope), scope)
   }
 
@@ -162,8 +160,7 @@ function compileNode(node: Node, facts: Facts): Fn {
     }
     case 'object': {
       const entries = node.entries.map(([key, value]) => [key, compileNode(value, facts)] as const)
-      return (scope) =>
-        Object.fromEntries(entries.map(([key, value]) => [key, settled(value(scope))]))
+      return (scope) => Object.fromEntries(entries.map(([key, value]) => [key, settled(value(scope))]))
     }
     case 'name':
       if (node.name === 'this') facts.local = false
@@ -194,8 +191,7 @@ function compileNode(node: Node, facts: Facts): Fn {
       return (scope) => {
         const value = argument(scope)
         if (typeof value === 'number') return sign * value
-        if (isDuration(value))
-          return { kind: 'duration', ms: sign * value.ms, months: sign * value.months }
+        if (isDuration(value)) return { kind: 'duration', ms: sign * value.ms, months: sign * value.months }
         if (value === null) return null
         throw new BasesError(`Cannot negate ${typeof value}`)
       }
@@ -244,9 +240,7 @@ function compileNode(node: Node, facts: Facts): Fn {
   }
 }
 
-export function formulaReader(
-  formulas: Record<string, string>,
-): (name: string, row: Row, scope: Scope) => Val {
+export function formulaReader(formulas: Record<string, string>): (name: string, row: Row, scope: Scope) => Val {
   const compiled = new Map<string, Compiled>()
   const cache = new WeakMap<Row, Map<string, Val>>()
   const running = new Set<string>()
@@ -276,11 +270,7 @@ export function formulaReader(
   }
 }
 
-export function scopeFor(
-  row: Row | null,
-  context: Context,
-  formulas: Record<string, string> = {},
-): Scope {
+export function scopeFor(row: Row | null, context: Context, formulas: Record<string, string> = {}): Scope {
   const read = formulaReader(formulas)
   const scope: Scope = {
     row,

@@ -55,9 +55,7 @@ describe('the file a website is written as', () => {
     const doc = writeShortcut('https://a.example', 'A', WHEN, null, null, own)
     expect(apartOf({ path: '/s/a.url', doc })).toBe(own)
     expect(apartOf({ path: '/s/a.url', doc, apart: null })).toBe(own)
-    expect(apartOf({ path: '/s/a.url', doc: writeShortcut('https://a.example', 'A', WHEN) })).toBe(
-      null,
-    )
+    expect(apartOf({ path: '/s/a.url', doc: writeShortcut('https://a.example', 'A', WHEN) })).toBe(null)
     expect(apartOf({ path: '/s/b.url', doc: '', apart: own })).toBeNull()
     expect(apartOf({ path: null, doc: '', apart: own })).toBe(own)
     expect(apartOf({ path: null, doc: '' })).toBeNull()
@@ -70,9 +68,7 @@ describe('the file a website is written as', () => {
     }
     const loose = '[InternetShortcut]\nURL=https://a.example\nnib-data= 3F9A0C17E2B4D685 '
     expect(readShortcut(loose)?.own).toBe('3f9a0c17e2b4d685')
-    expect(writeShortcut('https://a.example', 'A', WHEN, null, null, 'not an id')).not.toContain(
-      'Orden-Data',
-    )
+    expect(writeShortcut('https://a.example', 'A', WHEN, null, null, 'not an id')).not.toContain('Orden-Data')
   })
 
   test('keeps where the note points when the reading has moved on', () => {
@@ -157,9 +153,9 @@ describe('a shortcut a Mac wrote', () => {
   })
 
   test('comes back with its escapes undone', () => {
-    expect(
-      readWebloc('<dict><key>URL</key><string>https://a.example/?a=1&amp;b=2</string></dict>'),
-    ).toBe('https://a.example/?a=1&b=2')
+    expect(readWebloc('<dict><key>URL</key><string>https://a.example/?a=1&amp;b=2</string></dict>')).toBe(
+      'https://a.example/?a=1&b=2',
+    )
   })
 
   test('and is nothing when the plist says nothing this app can open', () => {

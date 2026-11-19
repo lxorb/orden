@@ -77,10 +77,7 @@ describe("Chromium's session file", () => {
       ),
     )
     if (read === null || read === 'locked') throw new Error('a session')
-    expect(read.windows[0]?.tabs.map((one) => one.url)).toEqual([
-      'https://b.example.com/',
-      'https://g.example.com/',
-    ])
+    expect(read.windows[0]?.tabs.map((one) => one.url)).toEqual(['https://b.example.com/', 'https://g.example.com/'])
   })
 
   test('reads as far as a file cut short goes', () => {

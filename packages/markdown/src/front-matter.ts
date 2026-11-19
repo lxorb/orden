@@ -1,14 +1,6 @@
 import { oneEdit, type TextEdit } from './edits'
 import { frontMatterLines, isKeyLine, valueClosesAt } from './front-matter-lines'
-import {
-  flowItem,
-  flowItems,
-  listItem,
-  scalar,
-  uncommented,
-  unquoted,
-  writtenListItem,
-} from './yaml'
+import { flowItem, flowItems, listItem, scalar, uncommented, unquoted, writtenListItem } from './yaml'
 
 export { oneLine } from './yaml'
 export { valueClosesAt }
@@ -46,10 +38,7 @@ export function frontMatterBlock(source: string): FrontMatterBlock | null {
 
 export const opensFrontMatter = (source: string): boolean => frontMatterLines(source) !== null
 
-export type FrontMatterRow = readonly [
-  key: string,
-  value: string | number | boolean | readonly string[],
-]
+export type FrontMatterRow = readonly [key: string, value: string | number | boolean | readonly string[]]
 
 export function writeFrontMatter(rows: readonly FrontMatterRow[]): string {
   if (!rows.length) return ''
@@ -174,10 +163,7 @@ function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine 
   return other
 }
 
-export function frontMatterEdits(
-  source: string,
-  keys: readonly (readonly [string, string | null])[],
-): TextEdit | null {
+export function frontMatterEdits(source: string, keys: readonly (readonly [string, string | null])[]): TextEdit | null {
   let after = source
 
   for (const [key, value] of keys) {
@@ -216,17 +202,14 @@ export function frontMatterEdit(
   if (value === null) {
     if (!line) return null
 
-    const rest =
-      source.slice(block.body.from, line.from) + source.slice(cutTo(source, line), block.body.to)
+    const rest = source.slice(block.body.from, line.from) + source.slice(cutTo(source, line), block.body.to)
     if (!rest.trim()) return { from: block.from, to: blankAfter(source, block.to), insert: '' }
 
     const to = cutTo(source, line)
     const left = frontMatterBlock(source.slice(0, line.from) + source.slice(to))
     if (left?.close !== block.close - (to - line.from)) {
       const end = source[line.value.to - 1] === '\r' ? line.value.to - 1 : line.value.to
-      return source.slice(line.value.from, end).trim()
-        ? { from: line.value.from, to: end, insert: '' }
-        : null
+      return source.slice(line.value.from, end).trim() ? { from: line.value.from, to: end, insert: '' } : null
     }
 
     return { from: line.from, to, insert: '' }

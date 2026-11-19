@@ -17,8 +17,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const readOnly = vi.hoisted(() => new Set<string>())
 vi.mock('../../sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../sharing/src/sharing.svelte')>()),
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 const { workspace } = await import('./api')
@@ -39,8 +38,7 @@ const folder = (path: string, children: Entry[]): Entry => ({
   children,
 })
 
-const kept = () =>
-  workspace.bookmarks.list.filter((one) => one.kind === 'note').map((one) => one.path)
+const kept = () => workspace.bookmarks.list.filter((one) => one.kind === 'note').map((one) => one.path)
 
 beforeEach(() => {
   sent.length = 0

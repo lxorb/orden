@@ -38,10 +38,7 @@
           <span class="user">{key.userName || key.userDisplayName || 'Passkey'}</span>
           <span class="meta"
             ><Facts
-              parts={[
-                key.rpName || key.rpId,
-                key.created ? localDate(key.created, { dateStyle: 'medium' }) : '',
-              ]}
+              parts={[key.rpName || key.rpId, key.created ? localDate(key.created, { dateStyle: 'medium' }) : '']}
             /></span
           >
         </span>

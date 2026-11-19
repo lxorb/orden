@@ -43,15 +43,13 @@ const BETWEEN_MARKS = new Set([
   'Wikilink',
 ])
 
-const afterLeadingMark = (node: SyntaxNode): boolean =>
-  headingLevel(node.name) !== null || node.name === 'Task'
+const afterLeadingMark = (node: SyntaxNode): boolean => headingLevel(node.name) !== null || node.name === 'Task'
 
 const isMark = (node: SyntaxNode) => node.name.endsWith('Mark') || node.name === 'TaskMarker'
 
 function inside(state: EditorState, node: SyntaxNode): Span | null {
   const marks: SyntaxNode[] = []
-  for (let child = node.firstChild; child; child = child.nextSibling)
-    if (isMark(child)) marks.push(child)
+  for (let child = node.firstChild; child; child = child.nextSibling) if (isMark(child)) marks.push(child)
 
   const [first, second] = marks
   if (BETWEEN_MARKS.has(node.name) && first && second) return { from: first.to, to: second.from }
@@ -127,8 +125,7 @@ export const expandSelection: StateCommand = ({ state, dispatch }) => {
   if (next.eq(state.selection)) return false
 
   const effects: StateEffect<unknown>[] = [grew.of(state.selection)]
-  if (state.field(growing, false) === undefined)
-    effects.unshift(StateEffect.appendConfig.of(growing))
+  if (state.field(growing, false) === undefined) effects.unshift(StateEffect.appendConfig.of(growing))
 
   dispatch(state.update({ selection: next, effects, scrollIntoView: true }))
   return true

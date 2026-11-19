@@ -1,11 +1,5 @@
 import { frame, unframe } from '@orden/sync-core'
-import {
-  indexAnswerOf,
-  type IndexItem,
-  searchAnswerOf,
-  type SearchAnswer,
-  type SearchRequest,
-} from '@orden/scan/wire'
+import { indexAnswerOf, type IndexItem, searchAnswerOf, type SearchAnswer, type SearchRequest } from '@orden/scan/wire'
 import type { Blobs, Replaced } from './files'
 import type { Account, Route } from './world'
 import { passing } from '../../platform/src/api'
@@ -32,8 +26,7 @@ function pathOf(route: Route, space: string, body: unknown): string {
     case 'ops':
       return `/v2/spaces/${at}/${route}`
     case 'feed': {
-      const since =
-        typeof body === 'object' && body !== null && 'since' in body ? Number(body.since) : 0
+      const since = typeof body === 'object' && body !== null && 'since' in body ? Number(body.since) : 0
       return `/v2/spaces/${at}/feed?since=${String(Number.isFinite(since) ? since : 0)}`
     }
     case 'pull':
@@ -76,13 +69,8 @@ export function accountOver(reaching: Reaching): Account {
       if (response.status !== FULL && passing(response.status)) return null
       if (!response.ok) {
         const said: unknown = await response.json().catch(() => null)
-        const error =
-          typeof said === 'object' && said !== null && 'error' in said ? String(said.error) : ''
-        throw new Refused(
-          response.status,
-          error || `request failed (${String(response.status)})`,
-          error !== '',
-        )
+        const error = typeof said === 'object' && said !== null && 'error' in said ? String(said.error) : ''
+        throw new Refused(response.status, error || `request failed (${String(response.status)})`, error !== '')
       }
       return unframe(new Uint8Array(await response.arrayBuffer()))
     },
@@ -97,9 +85,7 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
     headers.set('authorization', `Bearer ${token}`)
     headers.set('x-orden-device', reaching.device())
     try {
-      const response = await reaching.fetch(
-        new Request(`${reaching.base}${path}`, { ...init, headers }),
-      )
+      const response = await reaching.fetch(new Request(`${reaching.base}${path}`, { ...init, headers }))
       if (full && response.status === FULL) return response
       return passing(response.status) ? null : response
     } catch {
@@ -122,10 +108,7 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
       return response.status === FULL ? 'full' : response.ok
     },
     async down(space, id) {
-      const response = await send(
-        `/v2/files/${encodeURIComponent(space)}/${encodeURIComponent(id)}`,
-        { method: 'GET' },
-      )
+      const response = await send(`/v2/files/${encodeURIComponent(space)}/${encodeURIComponent(id)}`, { method: 'GET' })
       if (response === null) return null
       if (!response.ok) return 'gone'
       return new Uint8Array(await response.arrayBuffer())
@@ -138,19 +121,15 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
       })
       if (!response?.ok) return null
       const said: unknown = await response.json().catch(() => null)
-      const kept =
-        typeof said === 'object' && said !== null ? (said as { kept?: unknown }).kept : null
+      const kept = typeof said === 'object' && said !== null ? (said as { kept?: unknown }).kept : null
       return Array.isArray(kept) ? new Set(kept.filter((one) => typeof one === 'string')) : null
     },
     async replace(space, id, hash, base) {
-      const response = await send(
-        `/v2/files/${encodeURIComponent(space)}/${encodeURIComponent(id)}`,
-        {
-          method: 'PUT',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ hash, base }),
-        },
-      )
+      const response = await send(`/v2/files/${encodeURIComponent(space)}/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ hash, base }),
+      })
       if (response === null) return null
       if (response.status === 404 || response.status === 403) {
         const said: unknown = await response.json().catch(() => null)

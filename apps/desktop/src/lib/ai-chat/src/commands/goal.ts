@@ -10,8 +10,7 @@ const TURNS = 30
 export const IDLE = 3
 export const RETRIES = 3
 
-export type GoalAsk =
-  { do: 'status' } | { do: 'pause' | 'resume' | 'clear' } | { do: 'set'; condition: string }
+export type GoalAsk = { do: 'status' } | { do: 'pause' | 'resume' | 'clear' } | { do: 'set'; condition: string }
 
 export function goalAsk(args: string): GoalAsk {
   const said = args.trim()
@@ -31,11 +30,7 @@ export interface GoalRoad {
   now(): number
 }
 
-export function newGoal(
-  thread: Pick<Thread, 'usage' | 'autocompact'>,
-  condition: string,
-  now: number,
-): Goal {
+export function newGoal(thread: Pick<Thread, 'usage' | 'autocompact'>, condition: string, now: number): Goal {
   const tokens = compactsAt(thread.usage.window, thread.autocompact ?? 'auto')
   return {
     condition,
@@ -96,17 +91,14 @@ export async function pursue(
     let verdict: Verdict | null = null
     let error = ended.error ?? ''
     if (ended.stop !== 'error') {
-      verdict = await road
-        .evaluate(goal.condition, goal.started, signal)
-        .catch((thrown: unknown) => {
-          error = thrown instanceof Error ? thrown.message : String(thrown)
-          return null
-        })
+      verdict = await road.evaluate(goal.condition, goal.started, signal).catch((thrown: unknown) => {
+        error = thrown instanceof Error ? thrown.message : String(thrown)
+        return null
+      })
       if (stopped()) return goal.state
     }
     if (!verdict) {
-      if (fatal({ error, ...(ended.limit ? { limit: ended.limit } : {}) }))
-        return finish(goal, 'cleared', road, error)
+      if (fatal({ error, ...(ended.limit ? { limit: ended.limit } : {}) })) return finish(goal, 'cleared', road, error)
       if (++failed > RETRIES) return finish(goal, 'paused', road, error)
       road.changed()
       await road.wait(2_000 * 2 ** (failed - 1), signal)

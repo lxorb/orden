@@ -8,12 +8,7 @@ export class ClosingWidths {
   private order: readonly string[] = []
   private letGoOfListeners: (() => void) | null = null
 
-  hold(
-    widths: ReadonlyMap<string, number>,
-    order: readonly string[],
-    by: 'mouse' | 'touch',
-    rect: () => Rect | null,
-  ) {
+  hold(widths: ReadonlyMap<string, number>, order: readonly string[], by: 'mouse' | 'touch', rect: () => Rect | null) {
     if (this.widths) return
 
     this.widths = widths

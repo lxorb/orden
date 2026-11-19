@@ -107,11 +107,7 @@ describe('0022, the plaintext OpenAI key an older build stored', () => {
 
   test('is dropped, and the rest of the settings stay', () => {
     const database = upTo('0021_domain_proof.sql')
-    chose(
-      database,
-      'one',
-      '{"glassesKey":"sk-proj-secret","glassesModel":"gpt-6-astra","vim":true}',
-    )
+    chose(database, 'one', '{"glassesKey":"sk-proj-secret","glassesModel":"gpt-6-astra","vim":true}')
 
     database.exec(sql('0022_openai_key.sql'))
 
@@ -204,9 +200,7 @@ describe('0039, the account’s devices and web logins', () => {
 
   test('indexes what the hub’s door and the device list look for', () => {
     const database = upTo('0039_sync2_devices_web.sql')
-    expect(indexes(database, 'devices')).toEqual(
-      expect.arrayContaining(['devices_user', 'devices_session']),
-    )
+    expect(indexes(database, 'devices')).toEqual(expect.arrayContaining(['devices_user', 'devices_session']))
     database.close()
   })
 })
@@ -227,9 +221,11 @@ describe('0042, the answers a form took before they were measured', () => {
 
     database.exec(sql('0042_form_answer_bytes.sql'))
 
-    const rows = database
-      .prepare('select id, answers, bytes from form_answers order by id')
-      .all() as { id: string; answers: string; bytes: number }[]
+    const rows = database.prepare('select id, answers, bytes from form_answers order by id').all() as {
+      id: string
+      answers: string
+      bytes: number
+    }[]
     for (const row of rows) {
       expect(row.bytes, row.id).toBe(new TextEncoder().encode(row.answers).byteLength)
     }
@@ -291,18 +287,16 @@ describe('0063, what a note emptied for good still had sent to it', () => {
         `insert into form_answers (id, space_id, note_id, at, answers, bytes)
          values ('${note}', 'sp', '${note}', 1, '{}', 2)`,
       )
-      database.exec(
-        `insert into blog_paths (space_id, slug, note_id, at) values ('sp', '${note}', '${note}', 1)`,
-      )
+      database.exec(`insert into blog_paths (space_id, slug, note_id, at) values ('sp', '${note}', '${note}', 1)`)
     }
 
     database.exec(sql('0063_purged_answers.sql'))
 
     for (const table of ['form_answers', 'blog_paths']) {
-      expect(
-        database.prepare(`select note_id from ${table} order by note_id`).all(),
-        table,
-      ).toEqual([{ note_id: 'live' }, { note_id: 'trashed' }])
+      expect(database.prepare(`select note_id from ${table} order by note_id`).all(), table).toEqual([
+        { note_id: 'live' },
+        { note_id: 'trashed' },
+      ])
     }
     database.close()
   })
@@ -424,17 +418,14 @@ describe('0066, who could once write in a space', () => {
 describe('0087, the blobs already waiting to be let go of', () => {
   test('wait the whole grace from when it lands, not from when they were noted', () => {
     const database = upTo('0086_note_reminders_gone.sql')
-    database.exec(
-      `insert into unused_blobs (user_id, hash, since) values ('u', 'old', 1), ('u', 'new', 2)`,
-    )
+    database.exec(`insert into unused_blobs (user_id, hash, since) values ('u', 'old', 1), ('u', 'new', 2)`)
     const before = Date.now()
 
     database.exec(sql('0087_unused_blobs_grace.sql'))
 
     const rows = database.prepare('select since from unused_blobs').all() as { since: number }[]
     expect(rows).toHaveLength(2)
-    for (const row of rows)
-      expect(row.since).toBeGreaterThanOrEqual(Math.floor(before / 1000) * 1000)
+    for (const row of rows) expect(row.since).toBeGreaterThanOrEqual(Math.floor(before / 1000) * 1000)
     database.close()
   })
 })

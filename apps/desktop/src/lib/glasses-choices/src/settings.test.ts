@@ -28,8 +28,7 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 vi.stubGlobal('document', { documentElement: { style: { setProperty: () => undefined } } })
 
-const { glassesGroups, glassesSettings, glassesStamp, resetGlasses, wordFields } =
-  await import('./settings')
+const { glassesGroups, glassesSettings, glassesStamp, resetGlasses, wordFields } = await import('./settings')
 
 beforeEach(() => {
   localStorage.clear()

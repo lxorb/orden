@@ -19,10 +19,7 @@ function state(doc: string) {
   return parsed(
     EditorState.create({
       doc,
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        runPanels,
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), runPanels],
     }),
   )
 }
@@ -72,9 +69,7 @@ describe('finding the fence the caret is in', () => {
 
   test('reads a fence inside a list item whole, prefix and all', () => {
     const inList = '- item\n\n  ```js\n  let a = 1\n  a += 1\n  a\n  ```\n'
-    expect(runnableFenceAt(state(inList), inList.indexOf('a += 1'))?.code).toBe(
-      'let a = 1\na += 1\na',
-    )
+    expect(runnableFenceAt(state(inList), inList.indexOf('a += 1'))?.code).toBe('let a = 1\na += 1\na')
   })
 
   test('reads a fence inside a blockquote whole', () => {
@@ -109,9 +104,7 @@ describe('the panel state', () => {
 
   test('stays put when the text below it changes', () => {
     const { begun, from, to } = started()
-    const after = parsed(
-      begun.update({ changes: { from: begun.doc.length, insert: 'more\n' } }).state,
-    )
+    const after = parsed(begun.update({ changes: { from: begun.doc.length, insert: 'more\n' } }).state)
     expect(only(after)).toMatchObject({ from, to })
   })
 
@@ -190,9 +183,7 @@ describe('the panel state', () => {
 
   test('survives the language on the fence being retyped', () => {
     const { begun, from } = started()
-    const after = parsed(
-      begun.update({ changes: { from: from + 3, to: from + 5, insert: 'mjs' } }).state,
-    )
+    const after = parsed(begun.update({ changes: { from: from + 3, to: from + 5, insert: 'mjs' } }).state)
     expect(after.field(runPanels)).toHaveLength(1)
   })
 

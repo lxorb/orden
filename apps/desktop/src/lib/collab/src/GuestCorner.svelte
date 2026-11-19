@@ -52,17 +52,8 @@
 </script>
 
 <div class="guest-corner" data-covers bind:this={corner}>
-  <button
-    class="who"
-    title={name}
-    aria-label={name}
-    aria-haspopup="dialog"
-    aria-expanded={open}
-    onclick={toggle}
-  >
-    <span class="face orden-badge" style:--badge-fill={fill} aria-hidden="true"
-      >{initial(name)}</span
-    >
+  <button class="who" title={name} aria-label={name} aria-haspopup="dialog" aria-expanded={open} onclick={toggle}>
+    <span class="face orden-badge" style:--badge-fill={fill} aria-hidden="true">{initial(name)}</span>
   </button>
 
   {#if open}

@@ -30,10 +30,7 @@
   }
 
   function unpaused(site: string) {
-    pass.setSetting(
-      'paused',
-      Object.fromEntries(Object.entries(settings.paused).filter(([one]) => one !== site)),
-    )
+    pass.setSetting('paused', Object.fromEntries(Object.entries(settings.paused).filter(([one]) => one !== site)))
   }
 
   function added(event: SubmitEvent) {
@@ -94,12 +91,7 @@
     </div>
   {/each}
   <form class="add" onsubmit={added}>
-    <input
-      class="orden-field is-value"
-      placeholder="example.com"
-      aria-label="Site to exclude"
-      bind:value={typed}
-    />
+    <input class="orden-field is-value" placeholder="example.com" aria-label="Site to exclude" bind:value={typed} />
     <button class="orden-chip" type="submit" disabled={!typed.trim()}>Exclude</button>
   </form>
 </div>

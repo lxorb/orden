@@ -78,8 +78,7 @@ vi.mock('../src/lib/chats-client/src/http', async (importOriginal) => ({
 const readOnly = vi.hoisted(() => new Set<string>())
 vi.mock('../src/lib/sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/sharing/src/sharing.svelte')>()),
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 vi.mock('../src/lib/chats-client/src/store.svelte', async () => {

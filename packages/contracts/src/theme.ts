@@ -83,5 +83,4 @@ export const SCHEMES: readonly Scheme[] = ['dark', 'light']
 
 export const isScheme = (value: unknown): value is Scheme => value === 'dark' || value === 'light'
 
-export const isSchemeChoice = (value: unknown): value is SchemeChoice =>
-  value === 'system' || isScheme(value)
+export const isSchemeChoice = (value: unknown): value is SchemeChoice => value === 'system' || isScheme(value)

@@ -102,19 +102,15 @@ const codeHighlightStyle = (palette: CodePalette) =>
     { tag: tags.deleted, color: 'var(--danger)' },
   ])
 
-const paletteById = (id: string): CodePalette =>
-  CODE_PALETTES.find((palette) => palette.id === id) ?? FOLLOW
+const paletteById = (id: string): CodePalette => CODE_PALETTES.find((palette) => palette.id === id) ?? FOLLOW
 
 const codeTheme = new Compartment()
 
-const highlightingFor = once((id: string): Extension =>
-  syntaxHighlighting(codeHighlightStyle(paletteById(id))),
-)
+const highlightingFor = once((id: string): Extension => syntaxHighlighting(codeHighlightStyle(paletteById(id))))
 
 export const codeThemeExtension = (id = 'follow'): Extension => codeTheme.of(highlightingFor(id))
 
-export const codeThemeEffect = (id: string): StateEffect<unknown> =>
-  codeTheme.reconfigure(highlightingFor(id))
+export const codeThemeEffect = (id: string): StateEffect<unknown> => codeTheme.reconfigure(highlightingFor(id))
 
 export function setCodeTheme(view: EditorView, id: string) {
   view.dispatch({ effects: codeThemeEffect(id) })

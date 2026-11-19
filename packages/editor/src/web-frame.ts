@@ -52,8 +52,7 @@ function known(frame: HTMLIFrameElement, sandbox: string): string {
   }
 }
 
-export const framePermissions = (written: string | undefined): string =>
-  allowed(written, ALLOW, '; ')
+export const framePermissions = (written: string | undefined): string => allowed(written, ALLOW, '; ')
 
 function pageFrame(card: HTMLElement, title: string): HTMLIFrameElement | null {
   const source = framedPage(card.dataset.frame ?? '')
@@ -97,12 +96,7 @@ post()
 
 export const literal = (text: string): string => JSON.stringify(text).replace(/</g, '\\u003c')
 
-export function frameDocument(parts: {
-  head: string
-  block?: string
-  program: string
-  script: string
-}): string {
+export function frameDocument(parts: { head: string; block?: string; program: string; script: string }): string {
   const block =
     parts.block === undefined
       ? ''

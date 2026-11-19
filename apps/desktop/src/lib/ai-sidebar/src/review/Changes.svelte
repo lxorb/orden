@@ -34,10 +34,7 @@
   $effect(() => {
     if (!open) return
     list?.focus({ preventScroll: true })
-    const shown = setTimeout(
-      () => list?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }),
-      dur(150) + 20,
-    )
+    const shown = setTimeout(() => list?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), dur(150) + 20)
     return () => clearTimeout(shown)
   })
 
@@ -65,17 +62,12 @@
   {#each notes as note (`${note.agent}\n${note.path}`)}
     <div class="note" role="listitem">
       <div class="line">
-        <button
-          class="orden-row is-short name"
-          onclick={() => note.changes[0] && void review.show(note.changes[0])}
-        >
+        <button class="orden-row is-short name" onclick={() => note.changes[0] && void review.show(note.changes[0])}>
           <span class="orden-row-label">{titleOf(note.path)}</span>
           <Tally added={note.added} removed={note.removed} />
         </button>
         <span class="pair">
-          <button class="orden-chip is-quiet" onclick={() => void review.undo(note.changes)}
-            >Undo</button
-          >
+          <button class="orden-chip is-quiet" onclick={() => void review.undo(note.changes)}>Undo</button>
           <button class="orden-chip" onclick={() => review.keep(note.changes)}>Keep</button>
         </span>
       </div>
@@ -95,9 +87,7 @@
             <Tally added={change.added} removed={change.removed} />
           </button>
           <span class="pair">
-            <button class="orden-chip is-quiet" onclick={() => void review.undo([change])}
-              >Undo</button
-            >
+            <button class="orden-chip is-quiet" onclick={() => void review.undo([change])}>Undo</button>
             <button class="orden-chip" onclick={() => review.keep([change])}>Keep</button>
           </span>
         </div>
@@ -116,9 +106,7 @@
         </span>
       {/if}
       <span class="pair">
-        <button class="orden-chip is-quiet" onclick={() => void review.undoFiles(thread, [file])}
-          >Undo</button
-        >
+        <button class="orden-chip is-quiet" onclick={() => void review.undoFiles(thread, [file])}>Undo</button>
         <button class="orden-chip" onclick={() => review.keepFiles([file])}>Keep</button>
       </span>
     </div>

@@ -19,5 +19,4 @@ export function door<T>(load: () => Promise<T>): () => Promise<T> {
   }
 }
 
-const attempt = <T>(load: () => Promise<T>): Promise<T> =>
-  new Promise<T>((resolve) => resolve(load()))
+const attempt = <T>(load: () => Promise<T>): Promise<T> => new Promise<T>((resolve) => resolve(load()))

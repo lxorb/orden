@@ -2,8 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { previewOf } from './preview'
 
 const spaces = [{ id: 's1', name: 'Work', root: '/work' }]
-const words = (notes: Record<string, string>) => (path: string) =>
-  Promise.resolve(notes[path] ?? null)
+const words = (notes: Record<string, string>) => (path: string) => Promise.resolve(notes[path] ?? null)
 
 describe('the change a write that asked would make', () => {
   test('is the edit worked out the way the write works it out', async () => {

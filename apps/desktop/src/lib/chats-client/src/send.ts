@@ -10,10 +10,7 @@ import { store } from './view/source.svelte'
 
 const NEW = '\0new'
 
-export async function sendToChat(
-  note: string,
-  quote?: { text: string; heading?: string | null },
-): Promise<void> {
+export async function sendToChat(note: string, quote?: { text: string; heading?: string | null }): Promise<void> {
   if (!account.accountToken) {
     account.ask()
     return

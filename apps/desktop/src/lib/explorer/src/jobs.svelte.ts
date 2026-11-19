@@ -18,13 +18,10 @@ class Jobs {
   list = $state<Running[]>([])
   #hearing = door(() =>
     import('@tauri-apps/api/event').then(({ listen }) =>
-      listen<{ job: string; bytes: number; total: number; items: number; count: number }>(
-        PROGRESS,
-        ({ payload }) => {
-          const { job, bytes, total, items, count } = payload
-          this.change(job, { bytes, total, items, count })
-        },
-      ),
+      listen<{ job: string; bytes: number; total: number; items: number; count: number }>(PROGRESS, ({ payload }) => {
+        const { job, bytes, total, items, count } = payload
+        this.change(job, { bytes, total, items, count })
+      }),
     ),
   )
 

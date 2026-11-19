@@ -43,8 +43,7 @@ pane.getBoundingClientRect = () => {
 
 const tab = { id: 't', kind: 'note', paneId: 'p', canGoBack: true, canGoForward: false } as Tab
 const NONE = { left: false, right: false }
-const step = (dx: number, at: number) =>
-  heard({ tab, source: 'touch', dx, dy: 0, at, scrolls: NONE })
+const step = (dx: number, at: number) => heard({ tab, source: 'touch', dx, dy: 0, at, scrolls: NONE })
 
 describe('the arrow', () => {
   test('is out at the first step, where the fingers are, in the same turn', () => {

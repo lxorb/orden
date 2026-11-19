@@ -89,19 +89,13 @@ function writtenIn(block: Block, sideEdits: readonly Edit[]): number {
 }
 
 function deletedBy(words: Block, sideEdits: readonly Edit[]): Edit | null {
-  return (
-    sideEdits.find(
-      (edit) => edit.from <= words.from && edit.to >= words.to && !edit.insert.trim(),
-    ) ?? null
-  )
+  return sideEdits.find((edit) => edit.from <= words.from && edit.to >= words.to && !edit.insert.trim()) ?? null
 }
 
 function rewrittenBlocks(base: string, analysis: Analysis): Span[] {
   const out: Span[] = []
   const shared = (edit: Edit) =>
-    analysis.identical.some(
-      (one) => one.from === edit.from && one.to === edit.to && one.insert === edit.insert,
-    )
+    analysis.identical.some((one) => one.from === edit.from && one.to === edit.to && one.insert === edit.insert)
   const mine = analysis.local.filter((edit) => !shared(edit))
   const theirs = analysis.remote.filter((edit) => !shared(edit))
 
@@ -163,18 +157,10 @@ function brokenBy(local: string, remote: string, merges: readonly string[]): Bro
 }
 
 function distance(one: string, other: string): number {
-  return edits(one, other, 'operations').reduce(
-    (sum, edit) => sum + (edit.to - edit.from) + edit.insert.length,
-    0,
-  )
+  return edits(one, other, 'operations').reduce((sum, edit) => sum + (edit.to - edit.from) + edit.insert.length, 0)
 }
 
-function resolved(
-  base: string,
-  analysis: Analysis,
-  settle: (meeting: Meeting) => Settle,
-  merged: string,
-): string {
+function resolved(base: string, analysis: Analysis, settle: (meeting: Meeting) => Settle, merged: string): string {
   const order = new Map<number, Whose>()
   const write = () => written(base, analysis, { settle, first: (at) => order.get(at) ?? 'local' })
   let best = write()
@@ -230,8 +216,7 @@ function excess(references: readonly string[], merge: string): number {
     if (count < 2) continue
     over += Math.max(
       0,
-      count -
-        known.map((one) => one.get(run) ?? 0).reduce((high, one) => Math.max(high, one), -Infinity),
+      count - known.map((one) => one.get(run) ?? 0).reduce((high, one) => Math.max(high, one), -Infinity),
     )
   }
   return over
@@ -276,9 +261,7 @@ function putTwice(
     const inBase = before.get(word) ?? 0
     const inMine = ours.get(word) ?? 0
     const inTheirs = others.get(word) ?? 0
-    return (
-      inBase > 0 && inMine <= inBase && inTheirs <= inBase && count > Math.max(inMine, inTheirs)
-    )
+    return inBase > 0 && inMine <= inBase && inTheirs <= inBase && count > Math.max(inMine, inTheirs)
   })
 
   const theirInserts = edits(base, theirs, 'semantic')
@@ -309,13 +292,7 @@ function overlapOf(first: string, then: string): string | null {
   return null
 }
 
-export function diverge(
-  base: string,
-  local: string,
-  remote: string,
-  times: Times,
-  merged?: string,
-): Divergence {
+export function diverge(base: string, local: string, remote: string, times: Times, merged?: string): Divergence {
   const first = divergeOnce(base, local, remote, times, merged)
   if (first.resolution === null || !repeats([local, remote], first.resolution)) return first
 
@@ -338,19 +315,13 @@ function linesIn(text: string): Map<string, number> {
   return counts
 }
 
-function losesWords(
-  base: string,
-  sides: readonly string[],
-  before: string,
-  after: string,
-): boolean {
+function losesWords(base: string, sides: readonly string[], before: string, after: string): boolean {
   const old = wordsOf(base)
   const held = wordsOf(before)
   const kept = wordsOf(after)
   return sides.some((side) =>
     [...wordsOf(side)].some(
-      ([word, count]) =>
-        !old.has(word) && (kept.get(word) ?? 0) < Math.min(count, held.get(word) ?? 0),
+      ([word, count]) => !old.has(word) && (kept.get(word) ?? 0) < Math.min(count, held.get(word) ?? 0),
     ),
   )
 }
@@ -391,13 +362,7 @@ function cutsLines(base: string, sides: readonly string[], before: string, after
   )
 }
 
-function divergeOnce(
-  base: string,
-  local: string,
-  remote: string,
-  times: Times,
-  merged?: string,
-): Divergence {
+function divergeOnce(base: string, local: string, remote: string, times: Times, merged?: string): Divergence {
   const newer: Whose = times.local > times.remote ? 'local' : 'remote'
   const analysis = analyse(base, local, remote)
 
@@ -414,9 +379,7 @@ function divergeOnce(
   })
 
   for (const span of rewrittenBlocks(base, analysis)) {
-    const meeting = overlaps.find(
-      (overlap) => overlap.base.from < span.to && span.from < overlap.base.to,
-    )
+    const meeting = overlaps.find((overlap) => overlap.base.from < span.to && span.from < overlap.base.to)
     if (meeting) {
       meeting.asks ??= 'block'
       continue
@@ -434,10 +397,7 @@ function divergeOnce(
 
   const write = (settle: (meeting: Meeting) => Settle) =>
     merged === undefined
-      ? [
-          written(base, analysis, { settle }),
-          written(base, analysis, { settle, first: () => 'remote' }),
-        ]
+      ? [written(base, analysis, { settle }), written(base, analysis, { settle, first: () => 'remote' })]
       : [resolved(base, analysis, settle, merged)]
   let checked = write((meeting) => fuller(base, meeting) ?? newer)
   let settled: Divergence['settled'] = 'newer'

@@ -3,8 +3,7 @@ import { mono, pieces, RATE, resampled, wavOf } from './wav'
 
 function header(file: Uint8Array) {
   const view = new DataView(file.buffer, file.byteOffset, file.byteLength)
-  const text = (at: number, length: number) =>
-    String.fromCharCode(...file.subarray(at, at + length))
+  const text = (at: number, length: number) => String.fromCharCode(...file.subarray(at, at + length))
 
   return {
     riff: text(0, 4),

@@ -39,19 +39,15 @@ export const searchInWorker = async (
   onFound: (found: Found) => void,
   excluded: readonly string[] = [],
 ): Promise<void> => {
-  await (
-    await import('./web/search-client')
-  ).searchInWorker(root, query, terms, limit, onFound, excluded)
+  await (await import('./web/search-client')).searchInWorker(root, query, terms, limit, onFound, excluded)
 }
 
 export const warmSpace = async (root: string, heard: (warmth: Warmth) => void): Promise<void> => {
   ;(await import('./web/search-client')).warmSpace(root, heard)
 }
 
-export const internalInvoke = async <T>(
-  command: string,
-  args?: Record<string, unknown>,
-): Promise<T> => (await import('./internal/route')).internalInvoke<T>(command, args)
+export const internalInvoke = async <T>(command: string, args?: Record<string, unknown>): Promise<T> =>
+  (await import('./internal/route')).internalInvoke<T>(command, args)
 
 export const keptMounts = () => import('./internal/watch')
 
@@ -72,8 +68,7 @@ export const keepWorking = async (): Promise<void> => {
   await (await import('./internal/work')).keepWorking()
 }
 
-export const diskPathOf = async (path: string): Promise<string> =>
-  (await import('./internal/work')).diskPathOf(path)
+export const diskPathOf = async (path: string): Promise<string> => (await import('./internal/work')).diskPathOf(path)
 
 export const workingPath = async (path: string): Promise<string | null> =>
   (await import('./internal/work')).workingPath(path)
@@ -88,8 +83,7 @@ export const searchInternal = async (
   limit: number,
   onFound: (found: { hits: Hit[]; loose: FuzzyHit[] }) => void,
   excluded: readonly string[],
-): Promise<boolean> =>
-  (await import('./internal/search')).searchInternal(root, query, terms, limit, onFound, excluded)
+): Promise<boolean> => (await import('./internal/search')).searchInternal(root, query, terms, limit, onFound, excluded)
 
 export const warmInternal = async (root: string): Promise<Warmth | null> =>
   (await import('./internal/search')).warmInternal(root)

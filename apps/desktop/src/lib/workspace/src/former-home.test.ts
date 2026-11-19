@@ -35,10 +35,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 
 const { finishFormerHome, formerSaid, HOME_CARRIED } = await import('./former-home')
 
-const SCRIPT = readFileSync(
-  join(import.meta.dirname, '../../../../src-tauri/crates/carry/src/former.js'),
-  'utf8',
-)
+const SCRIPT = readFileSync(join(import.meta.dirname, '../../../../src-tauri/crates/carry/src/former.js'), 'utf8')
 
 interface Said {
   homes: { from: string; to: string }[]
@@ -114,10 +111,7 @@ function oldProfile({ base, join }: Profile) {
       },
     }),
   )
-  localStorage.setItem(
-    'orden:workspace',
-    JSON.stringify({ spaces: [{ root, name: 'Work' }], active: root }),
-  )
+  localStorage.setItem('orden:workspace', JSON.stringify({ spaces: [{ root, name: 'Work' }], active: root }))
   localStorage.setItem('orden:theme', 'dark')
 }
 
@@ -137,10 +131,7 @@ function startedAfterTheMove({ base, join }: Profile) {
       },
     }),
   )
-  localStorage.setItem(
-    'orden:workspace',
-    JSON.stringify({ spaces: [{ root, name: 'Work' }], active: root }),
-  )
+  localStorage.setItem('orden:workspace', JSON.stringify({ spaces: [{ root, name: 'Work' }], active: root }))
 }
 
 beforeEach(() => {
@@ -166,9 +157,7 @@ describe.each([
     for (const path of ['Projects/Plan.md', 'Lists/Groceries.md']) {
       expect(meta.itemsOf(now)[path]).toBeDefined()
     }
-    expect(meta.valueOf(profile.join(now, 'Projects', 'Plan.md'), 'done-on', now)).toBe(
-      'k3:20261101',
-    )
+    expect(meta.valueOf(profile.join(now, 'Projects', 'Plan.md'), 'done-on', now)).toBe('k3:20261101')
     expect(localStorage.getItem('orden:theme')).toBe('dark')
     expect(localStorage.getItem('orden:item-meta')).not.toContain('former.app.id')
     expect(asked).toContainEqual({ command: 'rehome_snapshots', args: profile.base })

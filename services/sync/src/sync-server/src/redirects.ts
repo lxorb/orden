@@ -18,8 +18,7 @@ export function sameRedirect(registered: string, given: string): boolean {
   if (registered === given) return true
   if (!LOOPBACK.test(registered) || !LOOPBACK.test(given)) return false
 
-  const withoutPort = (uri: string) =>
-    uri.replace(/^(http:\/\/(?:localhost|127\.0\.0\.1|\[::1\])):\d+/i, '$1')
+  const withoutPort = (uri: string) => uri.replace(/^(http:\/\/(?:localhost|127\.0\.0\.1|\[::1\])):\d+/i, '$1')
   return withoutPort(registered) === withoutPort(given)
 }
 

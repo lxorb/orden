@@ -3,8 +3,7 @@ import app from '../src'
 import { type Device, engineSpace, kit } from './engine-kit'
 import { signIn } from './harness'
 
-const picture = (seed: number) =>
-  new Uint8Array(Array.from({ length: 4096 }, (_, at) => (at * seed) % 251))
+const picture = (seed: number) => new Uint8Array(Array.from({ length: 4096 }, (_, at) => (at * seed) % 251))
 
 const { at, device, passed } = engineSpace()
 
@@ -148,10 +147,7 @@ describe('a file that is not a note, under v2', () => {
     await passed(laptop, desktop)
     expect(bytesAt(desktop, 'a.png')).toEqual(picture(3))
     expect(desktop.engine.held.notes).toHaveLength(0)
-    expect([...desktop.disk.bytes.keys()].sort()).toEqual([
-      `${desktop.root}/a.png`,
-      `${desktop.root}/b.png`,
-    ])
+    expect([...desktop.disk.bytes.keys()].sort()).toEqual([`${desktop.root}/a.png`, `${desktop.root}/b.png`])
   })
 
   test('deleted on one device, it is gone from the other', async () => {
@@ -418,12 +414,8 @@ describe('a file whose bytes the account lost', () => {
     const laptop = await device('laptop', { 'Trip/photo.png': picture(5) })
     await passed(laptop)
     const digest = await crypto.subtle.digest('SHA-256', picture(5))
-    const hash = [...new Uint8Array(digest)]
-      .map((one) => one.toString(16).padStart(2, '0'))
-      .join('')
-    expect(
-      at.env.db.prepare('select count(*) as many from blobs where hash = ?').get(hash),
-    ).toEqual({
+    const hash = [...new Uint8Array(digest)].map((one) => one.toString(16).padStart(2, '0')).join('')
+    expect(at.env.db.prepare('select count(*) as many from blobs where hash = ?').get(hash)).toEqual({
       many: 1,
     })
 
@@ -437,9 +429,7 @@ describe('a file whose bytes the account lost', () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(Date.now() + 7 * 60 * 60 * 1000)
     await passed(laptop)
-    expect(
-      at.env.db.prepare('select count(*) as many from blobs where hash = ?').get(hash),
-    ).toEqual({
+    expect(at.env.db.prepare('select count(*) as many from blobs where hash = ?').get(hash)).toEqual({
       many: 1,
     })
 

@@ -110,9 +110,7 @@ export function answerOf(reply: string, all: readonly Offer[]): Answer {
   const byId = new Map(all.map((one) => [one.id, one]))
   const listed = (value: unknown): unknown[] => (Array.isArray(value) ? value : [])
 
-  const show = [
-    ...new Set(listed(read.show).filter((one): one is string => typeof one === 'string')),
-  ]
+  const show = [...new Set(listed(read.show).filter((one): one is string => typeof one === 'string'))]
     .map((id) => byId.get(id))
     .filter((one): one is Offer => !!one)
     .slice(0, SHOWN_AT_MOST)

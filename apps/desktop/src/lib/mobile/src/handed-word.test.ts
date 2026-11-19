@@ -46,9 +46,7 @@ vi.mock('../../platform/src/api', async (original) => ({
       handed: () => '',
       shared: (word: string) => {
         said.asked.push(word)
-        return word
-          ? JSON.stringify({ items: [{ name: '', mime: 'text/plain', text: world.shared }] })
-          : ''
+        return word ? JSON.stringify({ items: [{ name: '', mime: 'text/plain', text: world.shared }] }) : ''
       },
       sharedDone: () => {
         world.done++

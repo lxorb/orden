@@ -3,11 +3,7 @@
   import { forkAt, switchBranch } from '../chat-parts'
   import type { ReviewPanel } from '../chat-parts'
 
-  const {
-    thread,
-    turn,
-    panel = null,
-  }: { thread: Thread; turn: string; panel?: ReviewPanel | null } = $props()
+  const { thread, turn, panel = null }: { thread: Thread; turn: string; panel?: ReviewPanel | null } = $props()
 
   const fork = $derived(forkAt(thread, turn))
 

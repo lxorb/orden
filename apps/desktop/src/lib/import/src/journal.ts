@@ -130,10 +130,7 @@ function entryOf(html: string, path: string): Entry {
   return {
     date,
     title: words(title?.inner ?? ''),
-    body: withMedia(
-      htmlToMarkdown(rest, { fileTargets: true, appTargets: true, plainTasks: true }),
-      html,
-    ),
+    body: withMedia(htmlToMarkdown(rest, { fileTargets: true, appTargets: true, plainTasks: true }), html),
     drawn: drawnCards(html),
   }
 }
@@ -189,9 +186,7 @@ function withMedia(markdown: string, html: string): string {
     missing.push(source)
   }
 
-  return [markdown, ...missing.map((source) => `![](${destination(source)})`)]
-    .filter(Boolean)
-    .join('\n\n')
+  return [markdown, ...missing.map((source) => `![](${destination(source)})`)].filter(Boolean).join('\n\n')
 }
 
 function drawnCards(html: string): number {

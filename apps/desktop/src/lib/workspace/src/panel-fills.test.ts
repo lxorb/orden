@@ -12,8 +12,7 @@ const tab = (kind: TabKind, more: Partial<Filling> = {}): Filling => ({
 
 describe('the panels a tab fills', () => {
   test('are every panel with no tab in front, which has nothing to tell them apart by', () => {
-    for (const panel of ['outline', 'links', 'tree', 'ask'] as const)
-      expect(fills(panel, null)).toBe(true)
+    for (const panel of ['outline', 'links', 'tree', 'ask'] as const) expect(fills(panel, null)).toBe(true)
   })
 
   test('and none this build does not have, which a window may have kept', () => {
@@ -46,9 +45,7 @@ describe('the panels a tab fills', () => {
   })
 
   test('take the Links beside what a note can link to', () => {
-    expect(
-      ['note', 'pdf', 'canvas', 'pages'].every((one) => fills('links', tab(one as TabKind))),
-    ).toBe(true)
+    expect(['note', 'pdf', 'canvas', 'pages'].every((one) => fills('links', tab(one as TabKind)))).toBe(true)
     expect(fills('links', tab('terminal'))).toBe(false)
     expect(fills('links', tab('web'))).toBe(false)
   })

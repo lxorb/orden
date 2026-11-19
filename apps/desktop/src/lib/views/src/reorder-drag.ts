@@ -21,13 +21,7 @@ export function reorderDrag(node: HTMLElement, start: Carry) {
     over?.row.classList.remove('is-above', 'is-below', 'is-before', 'is-after')
     over = next
     over?.row.classList.add(
-      over.after
-        ? carry.across
-          ? 'is-after'
-          : 'is-below'
-        : carry.across
-          ? 'is-before'
-          : 'is-above',
+      over.after ? (carry.across ? 'is-after' : 'is-below') : carry.across ? 'is-before' : 'is-above',
     )
   }
 
@@ -47,9 +41,7 @@ export function reorderDrag(node: HTMLElement, start: Carry) {
       lift()
     }
     event.preventDefault()
-    const row = document
-      .elementFromPoint(event.clientX, event.clientY)
-      ?.closest<HTMLElement>(`[data-${carry.among}]`)
+    const row = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>(`[data-${carry.among}]`)
     if (!row || row === carried()) {
       mark(null)
       return

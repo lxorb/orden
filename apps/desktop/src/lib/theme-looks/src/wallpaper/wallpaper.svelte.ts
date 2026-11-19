@@ -1,23 +1,9 @@
 import { sayNotice, type Scheme } from '@orden/contracts'
 import { accentColour, theme, type ThemeValue } from '../../../theme/src/api'
 import { chooseFiles, PICTURES } from '../../../ui-controls/src/api'
-import {
-  fileBytes,
-  forget,
-  heardElsewhere,
-  keepJson,
-  afterQuiet,
-  onceAFrame,
-} from '../../../platform/src/api'
+import { fileBytes, forget, heardElsewhere, keepJson, afterQuiet, onceAFrame } from '../../../platform/src/api'
 import { message } from '../../../ui-kit/src/api'
-import {
-  DARK_KEY,
-  type Held,
-  heldDark,
-  heldWallpaper,
-  WALLPAPER_KEY,
-  WALLPAPER_THEME,
-} from './held'
+import { DARK_KEY, type Held, heldDark, heldWallpaper, WALLPAPER_KEY, WALLPAPER_THEME } from './held'
 import { type Copy, forgetSource, keepSource, keptSource } from './kept'
 import { sharpBelow, sharpSide } from './pixels'
 import { copyOf, decode, type Drawable, made, sharp, type Tone, toneKey } from './render'
@@ -104,10 +90,7 @@ class Wallpaper {
     try {
       const original = await decode(picture)
       const ratio = window.devicePixelRatio || 1
-      const size: [number, number] = [
-        Math.round(original.width / ratio),
-        Math.round(original.height / ratio),
-      ]
+      const size: [number, number] = [Math.round(original.width / ratio), Math.round(original.height / ratio)]
       const copy = await copyOf(original)
       const source = await decode(copy)
       if (asking !== this.asked) return false
@@ -254,13 +237,7 @@ class Wallpaper {
     if (held && held.blur < sharpBelow(screenSide()) && copy === null) {
       const source = await this.sourceOf(slot)
       if (source) {
-        const made = await sharp(
-          source,
-          held.blur,
-          toneDial(),
-          screenSide(),
-          sharpLongest(held.blur, kept),
-        )
+        const made = await sharp(source, held.blur, toneDial(), screenSide(), sharpLongest(held.blur, kept))
         copy = made.picture
         this.sharpened[slot] = copy
       }
@@ -331,8 +308,7 @@ $effect.root(() => {
   }
   const sheet = onceAFrame(() => wallpaper.resheet())
 
-  const following = () =>
-    theme.id === WALLPAPER_THEME && theme.settings.some((one) => one.id === 'blur')
+  const following = () => theme.id === WALLPAPER_THEME && theme.settings.some((one) => one.id === 'blur')
   const changed = () => {
     let last: string | null = null
     return (now: string) => {

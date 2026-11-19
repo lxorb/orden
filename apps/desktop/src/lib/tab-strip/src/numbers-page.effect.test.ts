@@ -49,8 +49,7 @@ const key = (init: KeyboardEventInit) =>
 function tile(letter: string) {
   const button = document.createElement('button')
   button.dataset.essentialLetter = letter
-  button.getBoundingClientRect = () =>
-    ({ left: 10, right: 40, top: 10, bottom: 40, width: 30 }) as DOMRect
+  button.getBoundingClientRect = () => ({ left: 10, right: 40, top: 10, bottom: 40, width: 30 }) as DOMRect
   document.body.append(button)
 }
 

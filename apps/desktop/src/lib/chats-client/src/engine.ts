@@ -1,13 +1,6 @@
 import type { Event, Logged, Message, Meta, Who } from '@orden/chats'
 import { MOST_BEHIND } from '@orden/chats/limits'
-import {
-  type ChatList,
-  type ChatPoke,
-  eventOf,
-  type EventsPage,
-  type Results,
-  type StatePage,
-} from '@orden/chats/wire'
+import { type ChatList, type ChatPoke, eventOf, type EventsPage, type Results, type StatePage } from '@orden/chats/wire'
 import { roomDelay } from '../../platform/src/api'
 import type { CacheChange, CachedChat, ChatCache, OutboxRow } from './cache'
 import { foldAll, type Kept, type Lookup, marksOf } from './fold'
@@ -233,8 +226,7 @@ export class ChatEngine {
     const me = this.me()
     const fresh = events.filter((one) => one.seq > chat.seq)
     for (const event of fresh) {
-      if (event.kind === 'meta' && chat.row)
-        chat.row = { ...chat.row, meta: metaWith(chat.row.meta, event) }
+      if (event.kind === 'meta' && chat.row) chat.row = { ...chat.row, meta: metaWith(chat.row.meta, event) }
       if (event.author === me && chat.row) {
         chat.row = { ...chat.row, readSeq: Math.max(chat.row.readSeq, event.seq) }
       }
@@ -267,9 +259,7 @@ export class ChatEngine {
 
   pending(chat: string): readonly OutboxRow[] {
     const held = this.chats.get(chat)?.seq ?? 0
-    return this.outbox.filter(
-      (row) => row.chat === chat && !((this.placed.get(row.id) ?? Infinity) <= held),
-    )
+    return this.outbox.filter((row) => row.chat === chat && !((this.placed.get(row.id) ?? Infinity) <= held))
   }
 
   async queue(chat: string, event: Event): Promise<void> {
@@ -316,9 +306,7 @@ export class ChatEngine {
   }
 
   async flushAll(): Promise<void> {
-    await Promise.all(
-      [...new Set(this.outbox.map((row) => row.chat))].map((chat) => this.flush(chat)),
-    )
+    await Promise.all([...new Set(this.outbox.map((row) => row.chat))].map((chat) => this.flush(chat)))
   }
 
   private halted(): boolean {

@@ -17,15 +17,10 @@
       const style = getComputedStyle(at)
       const rooted = at === root
       let overflow = style.overflowX
-      if (rooted && overflow === 'visible' && document.body)
-        overflow = getComputedStyle(document.body).overflowX
+      if (rooted && overflow === 'visible' && document.body) overflow = getComputedStyle(document.body).overflowX
       const container = rooted || (overflow !== 'visible' && overflow !== 'clip')
-      const keeps =
-        container &&
-        (style.overscrollBehaviorX === 'contain' || style.overscrollBehaviorX === 'none')
-      const sideways = rooted
-        ? overflow !== 'hidden' && overflow !== 'clip'
-        : /auto|scroll|overlay/.test(overflow)
+      const keeps = container && (style.overscrollBehaviorX === 'contain' || style.overscrollBehaviorX === 'none')
+      const sideways = rooted ? overflow !== 'hidden' && overflow !== 'clip' : /auto|scroll|overlay/.test(overflow)
       const range = at.scrollWidth - at.clientWidth
       if (sideways && range > SLACK) {
         const rtl = style.direction === 'rtl'
@@ -55,10 +50,7 @@
   addEventListener(
     'scroll',
     function (event) {
-      const at =
-        event.target === document
-          ? document.scrollingElement || document.documentElement
-          : event.target
+      const at = event.target === document ? document.scrollingElement || document.documentElement : event.target
       if (!(at instanceof Element)) return
       const was = lefts.has(at) ? lefts.get(at) : 0
       lefts.set(at, at.scrollLeft)

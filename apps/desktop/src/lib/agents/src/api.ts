@@ -4,9 +4,7 @@ export { asking } from './ui/asking.svelte'
 export { default as Spark } from './ui/Spark.svelte'
 
 export const agentsUi = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no agents in the Even Realities plugin'))
-    : import('./ui/index')
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('no agents in the Even Realities plugin')) : import('./ui/index')
 
 export const agentStandIn = () => import('./settings/fake')
 

@@ -1,8 +1,7 @@
 import { chunks } from '../bound'
 import type { Env } from '../types'
 
-export type HubAsk =
-  'join' | 'poke' | 'revoke' | 'erase' | 'machine' | 'terms' | 'chat' | 'ai' | 'pass' | 'settings'
+export type HubAsk = 'join' | 'poke' | 'revoke' | 'erase' | 'machine' | 'terms' | 'chat' | 'ai' | 'pass' | 'settings'
 
 export const HUB_AWAY = 'sync is not answering - try again'
 
@@ -20,9 +19,7 @@ export async function askHub(
   for (let asked = 0; asked < 2; asked++) {
     try {
       const hub = namespace.get(namespace.idFromName(id))
-      return await hub.fetch(
-        new Request(`https://hub.invalid/${ask}`, { headers: { ...headers, 'x-orden-hub': ask } }),
-      )
+      return await hub.fetch(new Request(`https://hub.invalid/${ask}`, { headers: { ...headers, 'x-orden-hub': ask } }))
     } catch {
       // A reset object: the loop asks the one that replaced it.
     }

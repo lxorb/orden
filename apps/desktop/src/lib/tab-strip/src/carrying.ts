@@ -24,9 +24,7 @@ function landingAt(x: number, y: number, tabId: string, paneId: string): Landing
   const id = box?.dataset.pane
   if (!box || !id) return null
 
-  const zone = zoneAt(box.getBoundingClientRect(), x, y, (side) =>
-    workspace.canLand(side, id, tabId),
-  )
+  const zone = zoneAt(box.getBoundingClientRect(), x, y, (side) => workspace.canLand(side, id, tabId))
   if (zone === 'middle' && under?.closest('[data-chat-drop]')) return null
   return zone === 'middle' && id === paneId ? null : { kind: 'pane', paneId: id, zone }
 }
@@ -90,8 +88,7 @@ export function droppedOnList(tabId: string): void {
   else void workspace.copyOwn(tab.note, folder)
 }
 
-const easeOut = () =>
-  getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim() || 'ease-out'
+const easeOut = () => getComputedStyle(document.documentElement).getPropertyValue('--ease-out').trim() || 'ease-out'
 
 export function flyHome(
   find: () => readonly [HTMLElement | null | undefined, Bounds | undefined],

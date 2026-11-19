@@ -17,14 +17,7 @@ import {
   workspace,
 } from '../../workspace/src/api'
 import { modes } from '../../modes/src/api'
-import {
-  commandRows,
-  commandRowsLoaded,
-  searching,
-  runCommand,
-  settingsWindow,
-  showQuickAdd,
-} from '@orden/contracts'
+import { commandRows, commandRowsLoaded, searching, runCommand, settingsWindow, showQuickAdd } from '@orden/contracts'
 import { chatsOn, hiddenKinds, passOn, timeOn } from '../../gates/src/api'
 import { stepSpace, toggleSpacePicker } from '../../spaces/src/api'
 import { closeWindow, invoke, isDesktop } from '../../platform/src/api'
@@ -112,23 +105,11 @@ function app(
   return { id, label: said(label), category, scope: 'app', key, run, ...extra }
 }
 
-function panel(
-  category: Category,
-  id: string,
-  label: Label,
-  key: string | null,
-  extra: Extra = {},
-): Shortcut {
+function panel(category: Category, id: string, label: Label, key: string | null, extra: Extra = {}): Shortcut {
   return { id, label: said(label), category, scope: 'panel', key, contextual: true, ...extra }
 }
 
-function fixed(
-  id: string,
-  label: string,
-  key: string | null,
-  why: string,
-  extra: Extra = {},
-): Shortcut {
+function fixed(id: string, label: string, key: string | null, why: string, extra: Extra = {}): Shortcut {
   return {
     id,
     label: said(label),
@@ -287,14 +268,9 @@ const APP_ENTRIES: Shortcut[] = [
     if (hiddenKinds.offers('note')) workspace.openBlank()
   }),
   app('file', 'app.new-kind', 'New tab', 'Mod-t', () => workspace.newTab()),
-  app(
-    'file',
-    'app.new-window',
-    'New window',
-    null,
-    () => void invoke('new_window').catch(() => undefined),
-    { desktop: true },
-  ),
+  app('file', 'app.new-window', 'New window', null, () => void invoke('new_window').catch(() => undefined), {
+    desktop: true,
+  }),
   app(
     'file',
     'app.new-private',
@@ -325,13 +301,7 @@ const APP_ENTRIES: Shortcut[] = [
   app('view', 'app.forward', 'Forward', 'Alt-ArrowRight', () => workspace.goForward(), {
     mac: 'Ctrl-]',
   }),
-  app(
-    'file',
-    'app.reopen',
-    'Reopen closed tab',
-    'Mod-Shift-t',
-    () => void workspace.reopenClosed(),
-  ),
+  app('file', 'app.reopen', 'Reopen closed tab', 'Mod-Shift-t', () => void workspace.reopenClosed()),
   app(
     'file',
     'app.close-right',
@@ -340,22 +310,9 @@ const APP_ENTRIES: Shortcut[] = [
     () => closeAroundActive('right'),
   ),
   app('file', 'app.close-all', 'Close all tabs', null, () => closeAroundActive('all')),
-  app(
-    'file',
-    'app.duplicate-tab',
-    'Duplicate tab',
-    null,
-    () => void runCommand('app.duplicate-tab'),
-  ),
+  app('file', 'app.duplicate-tab', 'Duplicate tab', null, () => void runCommand('app.duplicate-tab')),
   app('file', 'app.settings', 'Settings', 'Mod-,', () => settingsWindow().show()),
-  app(
-    'file',
-    'app.keys',
-    'Keyboard shortcuts',
-    'Mod-Shift-/',
-    () => settingsWindow().show('shortcuts'),
-    { mac: null },
-  ),
+  app('file', 'app.keys', 'Keyboard shortcuts', 'Mod-Shift-/', () => settingsWindow().show('shortcuts'), { mac: null }),
   app('file', 'app.print', 'Print', 'Mod-p', () => void runCommand('app.print')),
   ...EXPORT_KEYS.map((id) =>
     app(
@@ -366,22 +323,12 @@ const APP_ENTRIES: Shortcut[] = [
       () => void runExport(id),
     ),
   ),
-  app(
-    'view',
-    'app.next-note',
-    'Next note',
-    'Mod-Tab',
-    (context) => cycleTab(1, true, context.held),
-    { mac: 'Ctrl-Tab' },
-  ),
-  app(
-    'view',
-    'app.previous-note',
-    'Previous note',
-    'Mod-Shift-Tab',
-    (context) => cycleTab(-1, true, context.held),
-    { mac: 'Ctrl-Shift-Tab' },
-  ),
+  app('view', 'app.next-note', 'Next note', 'Mod-Tab', (context) => cycleTab(1, true, context.held), {
+    mac: 'Ctrl-Tab',
+  }),
+  app('view', 'app.previous-note', 'Previous note', 'Mod-Shift-Tab', (context) => cycleTab(-1, true, context.held), {
+    mac: 'Ctrl-Shift-Tab',
+  }),
   app('view', 'app.next-note.alt', 'Next note', 'Mod-PageDown', () => cycleTab(1), {
     mac: 'Mod-Shift-]',
     alias: true,
@@ -393,16 +340,10 @@ const APP_ENTRIES: Shortcut[] = [
   app('view', 'app.move-tab-left', 'Move tab left', 'Mod-Shift-PageUp', () => moveTab(-1)),
   app('view', 'app.move-tab-right', 'Move tab right', 'Mod-Shift-PageDown', () => moveTab(1)),
   app('view', 'app.deselect-tab', 'Deselect tab', 'Mod-d', () => workspace.deselect()),
-  app('view', 'app.deselect-all', 'Deselect all tabs', 'Mod-Shift-d', () =>
-    workspace.deselectAll(),
-  ),
+  app('view', 'app.deselect-all', 'Deselect all tabs', 'Mod-Shift-d', () => workspace.deselectAll()),
   panel('view', 'tabs.rename', 'Rename', 'F2'),
-  app('view', 'pane.split-right', 'Split right', 'Mod-Alt-ArrowRight', () =>
-    workspace.split('row'),
-  ),
-  app('view', 'pane.split-down', 'Split down', 'Mod-Alt-ArrowDown', () =>
-    workspace.split('column'),
-  ),
+  app('view', 'pane.split-right', 'Split right', 'Mod-Alt-ArrowRight', () => workspace.split('row')),
+  app('view', 'pane.split-down', 'Split down', 'Mod-Alt-ArrowDown', () => workspace.split('column')),
   app(
     'view',
     'pane.move-tab',
@@ -422,25 +363,13 @@ const APP_ENTRIES: Shortcut[] = [
     ),
   ),
   app('view', 'app.tab-overview', 'Tabs', 'Alt Alt', () => toggleTabOverview()),
-  app('view', 'app.palette', 'Command palette', 'Shift Shift', (context) =>
-    context.palette(undefined, context.tapped),
-  ),
-  app(
-    'view',
-    'app.palette.alt',
-    'Command palette',
-    null,
-    (context) => context.palette(undefined, context.tapped),
-    { alias: true },
-  ),
-  app(
-    'view',
-    'app.palette.open',
-    'Command palette',
-    'Mod-o',
-    (context) => context.palette(undefined, context.tapped),
-    { alias: true },
-  ),
+  app('view', 'app.palette', 'Command palette', 'Shift Shift', (context) => context.palette(undefined, context.tapped)),
+  app('view', 'app.palette.alt', 'Command palette', null, (context) => context.palette(undefined, context.tapped), {
+    alias: true,
+  }),
+  app('view', 'app.palette.open', 'Command palette', 'Mod-o', (context) => context.palette(undefined, context.tapped), {
+    alias: true,
+  }),
   app('view', 'app.commands', 'Commands', 'Mod-Shift-p', (context) => context.palette('commands')),
   app('view', 'app.commands.alt', 'Commands', null, (context) => context.palette('commands'), {
     alias: true,
@@ -448,16 +377,12 @@ const APP_ENTRIES: Shortcut[] = [
   app('file', 'app.quick-add', 'Add task', 'Ctrl-Alt-Space', () => showQuickAdd()),
   panel('file', 'tasks.quick-add', 'Add task', 'q', { alias: true }),
   app('view', 'app.sidebar', 'Left sidebar', 'Mod-Shift-l', () => workspace.toggleSidebar()),
-  app('view', 'app.right-sidebar', 'Right sidebar', 'Mod-Alt-b', () =>
-    workspace.toggleSidebar('right'),
-  ),
+  app('view', 'app.right-sidebar', 'Right sidebar', 'Mod-Alt-b', () => workspace.toggleSidebar('right')),
   app('view', 'app.files', 'Files', 'Mod-Shift-e', () => revealPanel('tree')),
   app('panel', 'app.reveal', 'Show in the file list', null, () => workspace.revealNote()),
   app('panel', 'app.fold-list', 'Collapse the file list', null, () => workspace.foldList()),
   app('view', 'app.outline', 'Outline', 'Mod-Shift-o', () => revealPanel('outline')),
-  app('view', 'app.search', 'Search this space', 'Mod-Shift-f', (context) =>
-    searching()?.fromView(context.view),
-  ),
+  app('view', 'app.search', 'Search this space', 'Mod-Shift-f', (context) => searching()?.fromView(context.view)),
   app(
     'view',
     'app.refresh',
@@ -472,13 +397,7 @@ const APP_ENTRIES: Shortcut[] = [
   ...(__EVEN_PLUGIN__
     ? []
     : [
-        app(
-          'paragraph',
-          'app.handwriting',
-          'Handwriting',
-          null,
-          () => void runCommand('app.handwriting'),
-        ),
+        app('paragraph', 'app.handwriting', 'Handwriting', null, () => void runCommand('app.handwriting')),
         {
           id: 'app.tasks',
           label: () => 'Todos',
@@ -518,39 +437,19 @@ const APP_ENTRIES: Shortcut[] = [
     () => void runCommand('app.ask-selection'),
     { shown: () => !__EVEN_PLUGIN__ },
   ),
-  app(
-    'view',
-    'app.quick-question',
-    'Quick question',
-    'Mod Mod',
-    () => void runCommand('app.quick-question'),
-  ),
+  app('view', 'app.quick-question', 'Quick question', 'Mod Mod', () => void runCommand('app.quick-question')),
   app('view', 'app.reload', 'Reload Orden', 'Mod-r', () => location.reload()),
   app('view', 'app.scratchpad', 'Scratchpad', 'Mod-n', () => void runCommand('app.scratchpad')),
-  app(
-    'view',
-    'app.scratchpad.alt',
-    'Scratchpad',
-    'Mod-Shift-x',
-    () => void runCommand('app.scratchpad'),
-    { alias: true },
-  ),
-  app(
-    'view',
-    'agents.stop',
-    'Stop agents',
-    'Mod-Alt-Shift-k',
-    () => void runCommand('agents.stop'),
-    { mac: 'Mod-Ctrl-Alt-k', desktop: true, shown: () => !__EVEN_PLUGIN__ },
-  ),
+  app('view', 'app.scratchpad.alt', 'Scratchpad', 'Mod-Shift-x', () => void runCommand('app.scratchpad'), {
+    alias: true,
+  }),
+  app('view', 'agents.stop', 'Stop agents', 'Mod-Alt-Shift-k', () => void runCommand('agents.stop'), {
+    mac: 'Mod-Ctrl-Alt-k',
+    desktop: true,
+    shown: () => !__EVEN_PLUGIN__,
+  }),
   app('view', 'app.region-next', 'Next section', 'F6', () => void stepRegionFocus(1)),
-  app(
-    'view',
-    'app.region-previous',
-    'Previous section',
-    'Shift-F6',
-    () => void stepRegionFocus(-1),
-  ),
+  app('view', 'app.region-previous', 'Previous section', 'Shift-F6', () => void stepRegionFocus(-1)),
   app('view', 'space.previous', 'Previous space', 'Mod-Shift-,', () => stepSpace(-1)),
   app('view', 'space.next', 'Next space', 'Mod-Shift-.', () => stepSpace(1)),
   app('view', 'space.switcher', 'Spaces', 'Mod-Space', toggleSpacePicker, {
@@ -582,23 +481,13 @@ const APP_ENTRIES: Shortcut[] = [
   app('view', 'app.focus', 'Focus mode', 'F8', (context) => modes.toggleFocus(context.view), {
     mac: 'Mod-Ctrl-o',
   }),
-  app(
-    'view',
-    'app.typewriter',
-    'Typewriter mode',
-    'F9',
-    (context) => modes.toggleTypewriter(context.view),
-    { mac: 'Mod-Ctrl-t' },
-  ),
+  app('view', 'app.typewriter', 'Typewriter mode', 'F9', (context) => modes.toggleTypewriter(context.view), {
+    mac: 'Mod-Ctrl-t',
+  }),
   app('view', 'app.reading', 'Reading', 'Mod-e', () => workspace.toggleReading()),
-  app(
-    'view',
-    'app.read-only',
-    'Read-only',
-    'F10',
-    (context) => modes.toggleReadOnly(context.view),
-    { mac: 'Mod-Ctrl-r' },
-  ),
+  app('view', 'app.read-only', 'Read-only', 'F10', (context) => modes.toggleReadOnly(context.view), {
+    mac: 'Mod-Ctrl-r',
+  }),
   {
     id: 'app.fullscreen',
     label: () => 'Fullscreen',
@@ -616,27 +505,9 @@ const APP_ENTRIES: Shortcut[] = [
     () => void import('../../tab-fill/src/api').then((one) => one.toggleFill()),
     { mac: 'Mod-Ctrl-Shift-f' },
   ),
-  app(
-    'view',
-    'app.zoom-in',
-    'Zoom in',
-    'Mod-=',
-    () => workspace.zoomPage('in') || modes.stepZoom(1),
-  ),
-  app(
-    'view',
-    'app.zoom-out',
-    'Zoom out',
-    'Mod--',
-    () => workspace.zoomPage('out') || modes.stepZoom(-1),
-  ),
-  app(
-    'view',
-    'app.zoom-reset',
-    'Actual size',
-    'Mod-0',
-    () => workspace.zoomPage('reset') || modes.resetZoom(),
-  ),
+  app('view', 'app.zoom-in', 'Zoom in', 'Mod-=', () => workspace.zoomPage('in') || modes.stepZoom(1)),
+  app('view', 'app.zoom-out', 'Zoom out', 'Mod--', () => workspace.zoomPage('out') || modes.stepZoom(-1)),
+  app('view', 'app.zoom-reset', 'Actual size', 'Mod-0', () => workspace.zoomPage('reset') || modes.resetZoom()),
 ]
 
 const LAST = 8
@@ -794,9 +665,7 @@ const AI_ENTRIES: Shortcut[] = (
 
 const FIELD_ENTRIES: Shortcut[] = [panel('edit', 'field.dictate', 'Dictate', 'Alt-v')]
 
-CANVAS_ENTRIES.push(
-  panel('canvas', 'canvas.delete.alt', 'Delete what is picked', 'Backspace', { alias: true }),
-)
+CANVAS_ENTRIES.push(panel('canvas', 'canvas.delete.alt', 'Delete what is picked', 'Backspace', { alias: true }))
 
 let cycling: typeof import('../../tab-cycle/src/api') | null = null
 
@@ -841,12 +710,7 @@ export const FIXED_ENTRIES: Shortcut[] = [
   ),
   fixed('fixed.delete', 'Deleting a character', null, 'Backspace and Delete belong to the text.'),
   fixed('fixed.newline', 'New line', 'Enter', 'Enter closes a code block and carries a list on.'),
-  fixed(
-    'fixed.tab',
-    'Indent with Tab',
-    'Tab',
-    'Tab moves on through the app as well as indenting.',
-  ),
+  fixed('fixed.tab', 'Indent with Tab', 'Tab', 'Tab moves on through the app as well as indenting.'),
   fixed('fixed.escape', 'Escape', 'Escape', 'Escape closes whatever is open.'),
   fixed(
     'fixed.lists',

@@ -18,10 +18,7 @@ describe('the strip', () => {
 })
 
 describe('the tag tree’s twist', () => {
-  const css = readFileSync(
-    join(import.meta.dirname, '../src/lib/search/src/TagTree.svelte'),
-    'utf8',
-  )
+  const css = readFileSync(join(import.meta.dirname, '../src/lib/search/src/TagTree.svelte'), 'utf8')
 
   test('is pressed a step wider than it is drawn, on the row’s whole height', () => {
     const rule = /\.twist::before \{([^}]*)\}/.exec(css)?.[1] ?? ''

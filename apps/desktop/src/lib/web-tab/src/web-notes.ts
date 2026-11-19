@@ -54,11 +54,7 @@ export function webNoteCandidates(
 
 const built = new WeakMap<Websites, { root: string; candidates: Candidate<WebNote>[] }>()
 
-export function webNotesOf(
-  websites: Websites,
-  root: string,
-  worth: (key: string) => number,
-): Candidate<WebNote>[] {
+export function webNotesOf(websites: Websites, root: string, worth: (key: string) => number): Candidate<WebNote>[] {
   const kept = built.get(websites)
   if (kept?.root === root) return kept.candidates
 
@@ -67,11 +63,7 @@ export function webNotesOf(
   return candidates
 }
 
-export function webNotesFor(
-  typed: string,
-  candidates: readonly Candidate<WebNote>[],
-  most = WEB_NOTES,
-): WebNote[] {
+export function webNotesFor(typed: string, candidates: readonly Candidate<WebNote>[], most = WEB_NOTES): WebNote[] {
   if (!typed.trim()) return []
   return ranked(typed, candidates, most)
 }
@@ -79,9 +71,7 @@ export function webNotesFor(
 export function leads(note: WebNote, typed: string, used: boolean): boolean {
   const asked = foldName(typed.trim())
   if (!asked) return false
-  return (
-    used || foldName(note.title).startsWith(asked) || foldName(hostOf(note.shown)).startsWith(asked)
-  )
+  return used || foldName(note.title).startsWith(asked) || foldName(hostOf(note.shown)).startsWith(asked)
 }
 
 export interface Opening {

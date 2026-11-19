@@ -102,9 +102,7 @@ export function scanShortcut(path: string, content: string): ScannedNote {
   }
 }
 
-const noteTags = (content: string): string[] => [
-  ...new Set(tagsIn(content).map((tag) => tag.slice(1).toLowerCase())),
-]
+const noteTags = (content: string): string[] => [...new Set(tagsIn(content).map((tag) => tag.slice(1).toLowerCase()))]
 
 function contextAt(text: string, at: number): string {
   const from = text.lastIndexOf('\n', at) + 1

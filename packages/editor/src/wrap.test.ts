@@ -11,11 +11,7 @@ beforeAll(async () => {
   await loadCompletion()
 })
 
-function type(
-  doc: string,
-  selection: { anchor: number; head: number },
-  character: string,
-): EditorState {
+function type(doc: string, selection: { anchor: number; head: number }, character: string): EditorState {
   let state = parsed(
     EditorState.create({
       doc,
@@ -106,9 +102,7 @@ describe('a mark typed over a selection', () => {
 
 describe('a mark typed over words that start or end with inline code', () => {
   test('words ending in a code span are wrapped, not replaced by the mark', () => {
-    expect(typeOver('Then run `npm i` again', 'run `npm i`', '*')).toBe(
-      'Then *«run `npm i`»* again',
-    )
+    expect(typeOver('Then run `npm i` again', 'run `npm i`', '*')).toBe('Then *«run `npm i`»* again')
   })
 
   test('words starting with a code span are wrapped, not replaced by the mark', () => {

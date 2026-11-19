@@ -40,10 +40,7 @@ beforeEach(() => localStorage.clear())
 
 describe('reading every space back', () => {
   test('keeps each value as its store reads it, with the account it was folded into', () => {
-    localStorage.setItem(
-      KEY,
-      JSON.stringify({ '/a': { n: 1, account: 'acc' }, '/b': { n: 'two', account: 7 } }),
-    )
+    localStorage.setItem(KEY, JSON.stringify({ '/a': { n: 1, account: 'acc' }, '/b': { n: 'two', account: 7 } }))
 
     const read = readSpaces(KEY, (one) => ({ n: typeof one.n === 'number' ? one.n : 0 }))
 

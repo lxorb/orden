@@ -24,9 +24,7 @@ interface Held {
 }
 
 async function held(env: Env, userId: string): Promise<Held> {
-  const { results } = await env.DB.prepare(
-    'select seq, body from pad_updates where user_id = ? order by seq',
-  )
+  const { results } = await env.DB.prepare('select seq, body from pad_updates where user_id = ? order by seq')
     .bind(userId)
     .all<{ seq: number; body: string }>()
 

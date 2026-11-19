@@ -1,10 +1,5 @@
 import { plainWords } from '@orden/markdown/escapes'
-import {
-  frontMatterBlock,
-  frontMatterKeys,
-  type FrontMatterRow,
-  writeFrontMatter,
-} from '@orden/markdown/front-matter'
+import { frontMatterBlock, frontMatterKeys, type FrontMatterRow, writeFrontMatter } from '@orden/markdown/front-matter'
 import { TAG_NAME } from '@orden/markdown/tags'
 
 export interface Meta {
@@ -77,10 +72,7 @@ function withMeta(note: string, close: number, meta: Meta): string {
 }
 
 export function titleHeading(title: string): string {
-  const words = plainWords(title.replace(/\s+/g, ' ').trim()).replace(
-    /(^|[\s(])#(?=[^\s#])/g,
-    '$1\\#',
-  )
+  const words = plainWords(title.replace(/\s+/g, ' ').trim()).replace(/(^|[\s(])#(?=[^\s#])/g, '$1\\#')
   return `# ${words.replace(/(^|\s)(#+)$/, '$1\\$2')}`
 }
 
@@ -165,8 +157,7 @@ function instantOf(value: string): number | null {
   const found = STAMP.exec(value.trim())
   if (!found) return null
 
-  const [, year, month, day, hour, minute, second = '0', fraction = '0', sign, hours, minutes] =
-    found
+  const [, year, month, day, hour, minute, second = '0', fraction = '0', sign, hours, minutes] = found
   if (!dayFrom(Number(year), Number(month), Number(day))) return null
   const east = sign ? (sign === '-' ? -1 : 1) * (Number(hours) * 60 + Number(minutes ?? 0)) : 0
   const moment = Date.UTC(
@@ -181,8 +172,7 @@ function instantOf(value: string): number | null {
   return Number.isNaN(moment) ? null : moment
 }
 
-const STAMP =
-  /^(\d{4})-?(\d{2})-?(\d{2})T(\d{2}):?(\d{2})(?::?(\d{2})(?:[.,](\d+))?)?(?:Z|([+-])(\d{2}):?(\d{2})?)$/i
+const STAMP = /^(\d{4})-?(\d{2})-?(\d{2})T(\d{2}):?(\d{2})(?::?(\d{2})(?:[.,](\d+))?)?(?:Z|([+-])(\d{2}):?(\d{2})?)$/i
 
 function dayAt(when: Date): string | null {
   if (Number.isNaN(when.getTime())) return null

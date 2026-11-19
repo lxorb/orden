@@ -27,10 +27,7 @@ test('keeps the page, the offset and the trail against the note', () => {
   expect(said?.url).toBe('https://svelte.dev/docs/svelte/what-are-runes')
   expect(said?.y).toBe(1840)
   expect(said?.at).toBe(1)
-  expect(said?.trail).toEqual([
-    'https://svelte.dev/docs',
-    'https://svelte.dev/docs/svelte/what-are-runes',
-  ])
+  expect(said?.trail).toEqual(['https://svelte.dev/docs', 'https://svelte.dev/docs/svelte/what-are-runes'])
 })
 
 test('a note written twice keeps what was written last', () => {

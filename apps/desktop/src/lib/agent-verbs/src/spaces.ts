@@ -1,12 +1,5 @@
 import { threadSpaceOf } from '../../automation/src/api'
-import {
-  insideOnly,
-  insideSpace,
-  namesByShortName,
-  nameOf,
-  relativeTo,
-  spaceHolding,
-} from '../../platform/src/api'
+import { insideOnly, insideSpace, namesByShortName, nameOf, relativeTo, spaceHolding } from '../../platform/src/api'
 import { canWriteAt, reachedAs, reachedByOthersIn } from '../../sharing/src/api'
 import type { Tab } from '../../documents/src/api'
 import { type Space, workspace } from '../../workspace/src/api'
@@ -66,8 +59,7 @@ export function placeOf(call: Call): Place {
   const id = threadSpaceOf(call.caller)
   if (!id) return placeFor(call, null)
   const home = workspace.spaces.find((one) => one.id === id)
-  if (!home)
-    throw new Refused('no_such_space', 'the space this thread works in is gone: say which space')
+  if (!home) throw new Refused('no_such_space', 'the space this thread works in is gone: say which space')
   if (!reaches(call, home)) {
     throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
   }

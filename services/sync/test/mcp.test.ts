@@ -112,9 +112,7 @@ describe('handing out a token', () => {
 
 describe('the connector', () => {
   test('refuses a caller with no token', async () => {
-    expect(
-      (await call(env, '/mcp', { body: { jsonrpc: '2.0', id: 1, method: 'ping' } })).status,
-    ).toBe(401)
+    expect((await call(env, '/mcp', { body: { jsonrpc: '2.0', id: 1, method: 'ping' } })).status).toBe(401)
   })
 
   test('refuses a token that was never issued', async () => {
@@ -162,9 +160,7 @@ describe('reading notes through it', () => {
   })
 
   test('reads a note', async () => {
-    expect(
-      await tool(await connector(), 'read_note', { space: 'Work', path: 'plan.md' }),
-    ).toContain('Ship the thing.')
+    expect(await tool(await connector(), 'read_note', { space: 'Work', path: 'plan.md' })).toContain('Ship the thing.')
   })
 
   test('searches across the account', async () => {
@@ -274,9 +270,7 @@ describe('what a tool is given', () => {
     const key = await connector()
 
     expect(await tool(key, 'list_notes', { space: 5 })).toContain('name or an id')
-    expect(await tool(key, 'read_note', { space: 'Work', path: { a: 1 } })).toContain(
-      'not a note path',
-    )
+    expect(await tool(key, 'read_note', { space: 'Work', path: { a: 1 } })).toContain('not a note path')
     expect(await tool(key, 'search_notes', { query: [] })).toContain('has to be text')
   })
 
@@ -289,9 +283,7 @@ describe('what a tool is given', () => {
 
     expect((await call(env, '/mcp', { token: key, body: [] })).status).toBe(400)
     expect((await call(env, '/mcp', { token: key, body: null })).status).toBe(400)
-    expect((await call(env, '/mcp', { token: key, body: { jsonrpc: '2.0', id: 1 } })).status).toBe(
-      400,
-    )
+    expect((await call(env, '/mcp', { token: key, body: { jsonrpc: '2.0', id: 1 } })).status).toBe(400)
   })
 
   test('an id that is not one is answered as none', async () => {
@@ -319,9 +311,7 @@ describe('writing through it', () => {
 
   test('creates a note when the token allows it', async () => {
     const key = await connector(false)
-    expect(
-      await tool(key, 'write_note', { space: 'Work', path: 'new.md', content: 'hello' }),
-    ).toContain('Saved')
+    expect(await tool(key, 'write_note', { space: 'Work', path: 'new.md', content: 'hello' })).toContain('Saved')
 
     expect(await tool(key, 'read_note', { space: 'Work', path: 'new.md' })).toBe('hello')
   })
@@ -432,9 +422,7 @@ describe('writing through it', () => {
     })
 
     expect(await tool(otherKey.json.token, 'list_spaces')).toBe('Notes')
-    expect(
-      await tool(otherKey.json.token, 'read_note', { space: 'Work', path: 'plan.md' }),
-    ).toContain('No space')
+    expect(await tool(otherKey.json.token, 'read_note', { space: 'Work', path: 'plan.md' })).toContain('No space')
   })
 })
 
@@ -585,18 +573,14 @@ describe('a wikilink by name with namesakes', () => {
     const other = await tool(key, 'list_backlinks', { space: 'Work', path: 'B/Plan.md' })
     expect(other).toContain('A/Index.md:1')
     expect(other).toContain('Z/Index.md:1')
-    expect(await tool(key, 'list_backlinks', { space: 'Work', path: 'A/Plan.md' })).toContain(
-      'Nothing links to',
-    )
+    expect(await tool(key, 'list_backlinks', { space: 'Work', path: 'A/Plan.md' })).toContain('Nothing links to')
   })
 
   test('names in either form of an accent are one name', async () => {
     await addNote('Cafe\u0301.md', '# cafe\n')
     await addNote('Index.md', 'see [[Caf\u00e9]]\n')
     const key = await connector()
-    expect(await tool(key, 'list_backlinks', { space: 'Work', path: 'Cafe\u0301.md' })).toContain(
-      'Index.md:1',
-    )
+    expect(await tool(key, 'list_backlinks', { space: 'Work', path: 'Cafe\u0301.md' })).toContain('Index.md:1')
   })
 })
 
@@ -615,9 +599,7 @@ describe('lists past the most read', () => {
     filler(1000)
     const key = await connector()
     expect(await tool(key, 'list_notes', { space: 'Work' })).toMatch(/stopped/i)
-    expect(await tool(key, 'list_backlinks', { space: 'Work', path: 'plan.md' })).toMatch(
-      /stopped/i,
-    )
+    expect(await tool(key, 'list_backlinks', { space: 'Work', path: 'plan.md' })).toMatch(/stopped/i)
   })
 })
 

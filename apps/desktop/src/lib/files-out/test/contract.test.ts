@@ -1,15 +1,6 @@
 import { providePort } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
-import {
-  claimName,
-  fileNameFor,
-  localSources,
-  SHEET_POLICY,
-  showLabel,
-  stemOf,
-  swapSources,
-  zipOf,
-} from '../src/api'
+import { claimName, fileNameFor, localSources, SHEET_POLICY, showLabel, stemOf, swapSources, zipOf } from '../src/api'
 
 describe('names', () => {
   test('a file name takes the extension in place of the note ending', () => {
@@ -29,17 +20,13 @@ describe('names', () => {
 describe('the writers', () => {
   test('find the pictures a page reads from disk and leave the web ones alone', () => {
     expect(
-      localSources(
-        '<img src="a.png"><img src="https://orden.so/b.png"><img src="data:image/png;base64,AA">',
-      ),
+      localSources('<img src="a.png"><img src="https://orden.so/b.png"><img src="data:image/png;base64,AA">'),
     ).toEqual(['a.png'])
   })
 
   test('swap the pictures asked for and leave the page alone when none are', () => {
     const page = '<img src="a.png"><img src="b.png">'
-    expect(swapSources(page, new Map([['a.png', 'data:x']]))).toBe(
-      '<img src="data:x"><img src="b.png">',
-    )
+    expect(swapSources(page, new Map([['a.png', 'data:x']]))).toBe('<img src="data:x"><img src="b.png">')
     expect(swapSources(page, new Map())).toBe(page)
   })
 

@@ -25,12 +25,7 @@ export interface Due {
   ms: number
 }
 
-export function dueOf(
-  goals: readonly Goal[],
-  spans: readonly Span[],
-  now: number,
-  told: ReadonlySet<string>,
-): Due[] {
+export function dueOf(goals: readonly Goal[], spans: readonly Span[], now: number, told: ReadonlySet<string>): Due[] {
   const out: Due[] = []
   for (const goal of goals) {
     const key = `goal:${goal.id}:${startOf(goal.per, now)}`

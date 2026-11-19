@@ -35,13 +35,9 @@ describe('the mirror of the crate agent verbs', () => {
     )
     const scopes = crate('grants.rs')
     const scopeOf = (variant: string | null) =>
-      variant === null
-        ? null
-        : new RegExp(`rename = "([a-z.]+)"\\)\\]\\s*${variant},`).exec(scopes)?.[1]
+      variant === null ? null : new RegExp(`rename = "([a-z.]+)"\\)\\]\\s*${variant},`).exec(scopes)?.[1]
 
-    expect(Object.fromEntries(rows.map(([verb, variant]) => [verb, scopeOf(variant)]))).toEqual(
-      AGENT_WINDOW_VERBS,
-    )
+    expect(Object.fromEntries(rows.map(([verb, variant]) => [verb, scopeOf(variant)]))).toEqual(AGENT_WINDOW_VERBS)
   })
 
   it('hears on the event the crate emits on', () => {
@@ -49,13 +45,8 @@ describe('the mirror of the crate agent verbs', () => {
   })
 
   it('names the commands the crate registers for the window', () => {
-    const registered = readFileSync(
-      fileURLToPath(new URL('../../../../src-tauri/src/lib.rs', import.meta.url)),
-      'utf8',
-    )
-    const named = [...registered.matchAll(/agents?(?:_web)?::(?:[a-z]+::)?(agents_[a-z_]+),/g)].map(
-      (one) => one[1],
-    )
+    const registered = readFileSync(fileURLToPath(new URL('../../../../src-tauri/src/lib.rs', import.meta.url)), 'utf8')
+    const named = [...registered.matchAll(/agents?(?:_web)?::(?:[a-z]+::)?(agents_[a-z_]+),/g)].map((one) => one[1])
     expect(named).toEqual([...AGENT_COMMANDS])
   })
 

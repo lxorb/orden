@@ -129,10 +129,7 @@ export function tiltOf(event: Felt): { tiltX: number; tiltY: number } {
 
 const LEVEL = { tiltX: 0, tiltY: 0 }
 
-export function penFelt(
-  event: Reported & Felt,
-  traits: PenTraits,
-): { pressure: number; tiltX: number; tiltY: number } {
+export function penFelt(event: Reported & Felt, traits: PenTraits): { pressure: number; tiltX: number; tiltY: number } {
   const pen = event.pointerType === 'pen'
   const said = pen && traits.force === 'flat' ? 0 : event.pressure
 
@@ -157,9 +154,7 @@ export function outlineOf(stroke: InkStroke, finished = true): Point[] {
     streamline: style.streamline,
     simulatePressure: false,
     last: finished,
-    ...(style.taper && !dot
-      ? { start: { taper }, end: { taper } }
-      : { start: { cap: true }, end: { cap: true } }),
+    ...(style.taper && !dot ? { start: { taper }, end: { taper } } : { start: { cap: true }, end: { cap: true } }),
   })
 
   return ring.map(([x, y]) => ({ x, y }))
@@ -292,8 +287,7 @@ function steering(came: InkPoint | undefined, from: InkPoint, to: InkPoint): Ink
   const inY = from.y - came.y
   const outX = to.x - from.x
   const outY = to.y - from.y
-  const along =
-    (inX * outX + inY * outY) / Math.max(TINY, Math.hypot(inX, inY) * Math.hypot(outX, outY))
+  const along = (inX * outX + inY * outY) / Math.max(TINY, Math.hypot(inX, inY) * Math.hypot(outX, outY))
 
   return along < STRAIGHT_ENOUGH ? mirrored(from, to) : came
 }
@@ -304,15 +298,8 @@ function mirrored(from: InkPoint, to: InkPoint): InkPoint {
 
 const TINY = 1e-6
 
-function curved(
-  before: InkPoint,
-  from: InkPoint,
-  to: InkPoint,
-  after: InkPoint,
-  share: number,
-): InkPoint {
-  const span = (a: InkPoint, b: InkPoint) =>
-    Math.max(TINY, Math.sqrt(Math.hypot(b.x - a.x, b.y - a.y)))
+function curved(before: InkPoint, from: InkPoint, to: InkPoint, after: InkPoint, share: number): InkPoint {
+  const span = (a: InkPoint, b: InkPoint) => Math.max(TINY, Math.sqrt(Math.hypot(b.x - a.x, b.y - a.y)))
   const first = span(before, from)
   const middle = span(from, to)
   const last = span(to, after)
@@ -386,8 +373,7 @@ export function inkPath(ring: readonly Point[]): string {
 
   traceInk(ring, {
     moveTo: (x, y) => out.push(`M${round(x)} ${round(y)}`),
-    quadraticCurveTo: (cx, cy, x, y) =>
-      out.push(`Q${round(cx)} ${round(cy)} ${round(x)} ${round(y)}`),
+    quadraticCurveTo: (cx, cy, x, y) => out.push(`Q${round(cx)} ${round(cy)} ${round(x)} ${round(y)}`),
     closePath: () => out.push('Z'),
   })
 
@@ -550,12 +536,7 @@ export function nearStroke(stroke: InkStroke, point: Point, reach: number): bool
   return false
 }
 
-function underCircle(
-  from: Point,
-  to: Point,
-  centre: Point,
-  radius: number,
-): { enters: number; leaves: number } | null {
+function underCircle(from: Point, to: Point, centre: Point, radius: number): { enters: number; leaves: number } | null {
   const dx = to.x - from.x
   const dy = to.y - from.y
   const fx = from.x - centre.x
@@ -596,9 +577,7 @@ export function rubbedPath(from: Point, to: Point, reach: number): Point[] {
   const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / step))
 
   return Array.from({ length: steps }, (_unused, step) =>
-    step + 1 === steps
-      ? to
-      : { x: from.x + (dx * (step + 1)) / steps, y: from.y + (dy * (step + 1)) / steps },
+    step + 1 === steps ? to : { x: from.x + (dx * (step + 1)) / steps, y: from.y + (dy * (step + 1)) / steps },
   )
 }
 
@@ -686,11 +665,7 @@ export function insidePolygon(polygon: readonly Point[], point: Point): boolean 
   return inside
 }
 
-export function strokesInLasso(
-  strokes: readonly InkStroke[],
-  lasso: readonly Point[],
-  partly = false,
-): string[] {
+export function strokesInLasso(strokes: readonly InkStroke[], lasso: readonly Point[], partly = false): string[] {
   if (lasso.length < 3) return []
 
   return strokes
@@ -785,8 +760,7 @@ export function assisted(stroke: InkStroke): Assisted | null {
   const mean = radii.reduce((sum, one) => sum + one, 0) / radii.length
   if (mean === 0) return null
 
-  const spread =
-    Math.sqrt(radii.reduce((sum, one) => sum + (one - mean) ** 2, 0) / radii.length) / mean
+  const spread = Math.sqrt(radii.reduce((sum, one) => sum + (one - mean) ** 2, 0) / radii.length) / mean
 
   return spread <= ROUND ? 'ellipse' : 'rectangle'
 }

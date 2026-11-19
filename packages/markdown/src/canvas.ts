@@ -20,8 +20,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const isString = (value: unknown): value is string => typeof value === 'string'
 
-const isNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
+const isNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
 
 interface NodeBase {
   id: string
@@ -104,20 +103,11 @@ export interface CanvasEdge {
   label?: string
 }
 
-export const INK_TOOLS = [
-  'pen',
-  'fountain',
-  'pencil',
-  'marker',
-  'highlighter',
-  'brush',
-  'calligraphy',
-] as const
+export const INK_TOOLS = ['pen', 'fountain', 'pencil', 'marker', 'highlighter', 'brush', 'calligraphy'] as const
 
 export type InkTool = (typeof INK_TOOLS)[number]
 
-export const isInkTool = (value: unknown): value is InkTool =>
-  INK_TOOLS.some((one) => one === value)
+export const isInkTool = (value: unknown): value is InkTool => INK_TOOLS.some((one) => one === value)
 
 export interface InkPoint {
   x: number
@@ -169,8 +159,7 @@ function colourOf(value: unknown): CanvasColour | undefined {
 export const FURTHEST = 1e9
 const held = (value: number): number => Math.min(FURTHEST, Math.max(-FURTHEST, value))
 
-const pixels = (value: unknown, fallback: number): number =>
-  isNumber(value) ? held(Math.round(value)) : fallback
+const pixels = (value: unknown, fallback: number): number => (isNumber(value) ? held(Math.round(value)) : fallback)
 
 export const DEFAULT_WIDTH = 250
 export const DEFAULT_HEIGHT = 60
@@ -183,11 +172,7 @@ function colour(value: unknown): { color?: CanvasColour } {
   return found === undefined ? {} : { color: found }
 }
 
-const placed = (
-  value: Record<string, unknown>,
-  width = DEFAULT_WIDTH,
-  height = DEFAULT_HEIGHT,
-) => ({
+const placed = (value: Record<string, unknown>, width = DEFAULT_WIDTH, height = DEFAULT_HEIGHT) => ({
   x: pixels(value.x, 0),
   y: pixels(value.y, 0),
   width: Math.max(1, pixels(value.width, width)),
@@ -220,9 +205,7 @@ function readNode(value: unknown): CanvasNode | null {
         ...base,
         type: 'file',
         file: value.file,
-        ...(isString(value.subpath) && value.subpath.startsWith('#')
-          ? { subpath: value.subpath }
-          : {}),
+        ...(isString(value.subpath) && value.subpath.startsWith('#') ? { subpath: value.subpath } : {}),
       }
     case 'link':
       if (!isString(value.url) || !value.url) return null
@@ -265,8 +248,7 @@ export function edgeOf(value: unknown, nodes: ReadonlySet<string>): CanvasEdge |
   }
 }
 
-const or = (value: number, otherwise: number): number =>
-  Number.isFinite(value) ? value : otherwise
+const or = (value: number, otherwise: number): number => (Number.isFinite(value) ? value : otherwise)
 
 export function packed(points: readonly InkPoint[]): number[] {
   const out: number[] = []
@@ -477,9 +459,7 @@ export function holdsCanvas(text: string): boolean {
   if (!isRecord(parsed)) return false
   const { nodes, edges } = parsed
   if (nodes === undefined && edges === undefined) return false
-  return (
-    (nodes === undefined || Array.isArray(nodes)) && (edges === undefined || Array.isArray(edges))
-  )
+  return (nodes === undefined || Array.isArray(nodes)) && (edges === undefined || Array.isArray(edges))
 }
 
 function apart(file: Record<string, unknown>): Record<string, unknown> {
@@ -572,9 +552,7 @@ export function canvasIn(text: string): Canvas | null {
   const seen = new Set<string>()
   firstOfEach(file.edges, (entry) => edgeOf(entry, ids), seen, edges)
 
-  const order = Array.isArray(own.order)
-    ? own.order.filter((id): id is string => isString(id) && !!id)
-    : []
+  const order = Array.isArray(own.order) ? own.order.filter((id): id is string => isString(id) && !!id) : []
 
   if (Array.isArray(own.pages)) {
     const paged = new Map<string, { paper: Paper; pattern: Pattern }>()
@@ -715,17 +693,13 @@ function listed(texts: readonly string[], depth: number): string[] {
   return out
 }
 
-const isIndex = (key: string): boolean =>
-  /^(?:0|[1-9]\d{0,9})$/.test(key) && Number(key) < 2 ** 32 - 1
+const isIndex = (key: string): boolean => /^(?:0|[1-9]\d{0,9})$/.test(key) && Number(key) < 2 ** 32 - 1
 
 function timeLines(times: Record<string, number>): string[] {
   const keys = Object.keys(times).sort()
   const first = keys.filter(isIndex)
   const ordered = first.length
-    ? [
-        ...first.sort((one, other) => Number(one) - Number(other)),
-        ...keys.filter((key) => !isIndex(key)),
-      ]
+    ? [...first.sort((one, other) => Number(one) - Number(other)), ...keys.filter((key) => !isIndex(key))]
     : keys
 
   const out = ['{\n']
@@ -753,21 +727,16 @@ function ownRuns(canvas: Canvas): string[][] {
   let numbered = -1
   const cards = canvas.nodes
     .filter((node) => node.type !== 'shape')
-    .map((node) =>
-      isPage(node) ? printed(writtenNode(asSpecNode(node, ++numbered)), 2) : cardText(node),
-    )
+    .map((node) => (isPage(node) ? printed(writtenNode(asSpecNode(node, ++numbered)), 2) : cardText(node)))
   const edges = canvas.edges.map(edgeText)
   const order = shapes.length ? canvas.nodes.map((node) => node.id) : []
-  const words = canvas.nodes
-    .filter((node) => node.type === 'text' && node.bare)
-    .map((node) => node.id)
+  const words = canvas.nodes.filter((node) => node.type === 'text' && node.bare).map((node) => node.id)
   const locked = canvas.nodes.filter((node) => node.locked).map((node) => node.id)
   const at = Object.keys(canvas.at).length ? timeLines(canvas.at) : null
   const gone = Object.keys(canvas.gone).length ? timeLines(canvas.gone) : null
   const moved = canvas.moved && Object.keys(canvas.moved).length ? timeLines(canvas.moved) : null
   const icon = canvas.icon ? `,\n\t\t"icon": ${JSON.stringify(canvas.icon)}` : ''
-  const tint =
-    canvas.icon && canvas.iconColor ? `,\n\t\t"iconColor": ${JSON.stringify(canvas.iconColor)}` : ''
+  const tint = canvas.icon && canvas.iconColor ? `,\n\t\t"iconColor": ${JSON.stringify(canvas.iconColor)}` : ''
   const owned =
     icon !== '' ||
     [pages, canvas.ink, shapes, order, words, locked].some((list) => list.length > 0) ||
@@ -815,11 +784,7 @@ export const writeCanvas = (canvas: Canvas): string =>
 
 export const blankCanvas = (): string => writeCanvas(emptyCanvas())
 
-export function canvasIconEdit(
-  text: string,
-  name: string | null,
-  tint: string | null = null,
-): TextEdit | null {
+export function canvasIconEdit(text: string, name: string | null, tint: string | null = null): TextEdit | null {
   if (text.trim() && !isCanvasJson(text)) return null
 
   const canvas = readCanvas(text)

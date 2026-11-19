@@ -12,8 +12,7 @@ export interface Item {
 export const ICONS: Record<string, string> = {
   general:
     'M2 4h2.4M7.6 4H14M2 8h4.4M9.6 8H14M2 12h6.4M11.6 12H14M4.4 4a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M6.4 8a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M8.4 12a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0',
-  space:
-    'M3 2.5h10a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5zM5 6h6M5 9h4',
+  space: 'M3 2.5h10a.5.5 0 0 1 .5.5v10a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5V3a.5.5 0 0 1 .5-.5zM5 6h6M5 9h4',
   editor: 'M2 12.6l1.6-.4 8-8a1.4 1.4 0 0 0-2-2l-8 8zM2 14.2h12',
   kinds: 'M2.5 2.5h4.5v4.5H2.5zM9 2.5h4.5v4.5H9zM2.5 9h4.5v4.5H2.5zM11.25 9v4.5M9 11.25h4.5',
   shortcuts: 'M2 4.5h12v7H2zM4.4 7h.01M6.9 7h.01M9.4 7h.01M11.9 7h.01M5.4 9.4h5.2',
@@ -28,13 +27,11 @@ export const ICONS: Record<string, string> = {
   agents:
     'M4.5 6h7a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 11.5v-4A1.5 1.5 0 0 1 4.5 6zM8 6V3.6M8 3.4h.01M6.2 9.3v.4M9.8 9.3v.4',
   sync: 'M13.2 7a5.3 5.3 0 0 0-9.1-2.6L2.8 5.7M2.8 9a5.3 5.3 0 0 0 9.1 2.6l1.3-1.3M2.8 3v2.7h2.7M13.2 13v-2.7h-2.7',
-  trash:
-    'M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8M6.5 7v4M9.5 7v4',
+  trash: 'M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8M6.5 7v4M9.5 7v4',
   export: 'M8 10.5V2.5M5 5.5L8 2.5l3 3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10',
   import: 'M8 2.5v8M5 7.5l3 3 3-3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10',
   remote: 'M3 2.5h10v4.5H3zM3 9h10v4.5H3zM5.5 4.75h.01M5.5 11.25h.01',
-  experimental:
-    'M6.5 2h3M7 2v4.2L3.2 12.6a1 1 0 0 0 .9 1.4h7.8a1 1 0 0 0 .9-1.4L9 6.2V2M4.6 10h6.8',
+  experimental: 'M6.5 2h3M7 2v4.2L3.2 12.6a1 1 0 0 0 .9 1.4h7.8a1 1 0 0 0 .9-1.4L9 6.2V2M4.6 10h6.8',
   online: 'M11.7 12.7H6a4.7 4.7 0 1 1 4.5-6h1.2a3 3 0 1 1 0 6zM5 7.7l1.3 1.2L5 10.1M8 10h2',
 }
 
@@ -46,16 +43,12 @@ export function sectionGroups(): Item[][] {
       { id: 'editor', label: 'Editor' },
       { id: 'kinds', label: 'Note types' },
       { id: 'shortcuts', label: 'Shortcuts' },
-      ...(viewport.touch || modes.mobileSeen
-        ? [{ id: 'mobile' as SettingsSectionId, label: 'Mobile' }]
-        : []),
+      ...(viewport.touch || modes.mobileSeen ? [{ id: 'mobile' as SettingsSectionId, label: 'Mobile' }] : []),
       { id: 'spelling', label: 'Spelling' },
       { id: 'markdown', label: 'Markdown' },
       { id: 'appearance', label: 'Appearance' },
       { id: 'ai', label: 'AI' },
-      ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder
-        ? [{ id: 'remote' as SettingsSectionId, label: 'Remote' }]
-        : []),
+      ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder ? [{ id: 'remote' as SettingsSectionId, label: 'Remote' }] : []),
       ...(!__EVEN_PLUGIN__ && account.user && modes.coder
         ? [{ id: 'online' as SettingsSectionId, label: 'Online terminal' }]
         : []),

@@ -10,9 +10,7 @@ function urlOf(text: string): URL | null {
   if (trimmed === '' || (!SCHEME.test(trimmed) && OTHER_SCHEME.test(trimmed))) return null
   try {
     const url = new URL(SCHEME.test(trimmed) ? trimmed : `https://${trimmed}`)
-    return (url.protocol === 'https:' || url.protocol === 'http:') && url.hostname !== ''
-      ? url
-      : null
+    return (url.protocol === 'https:' || url.protocol === 'http:') && url.hostname !== '' ? url : null
   } catch {
     return null
   }
@@ -75,7 +73,5 @@ export function isSecurePage(url: string): boolean {
   if (page.protocol === 'https:') return true
   if (page.protocol !== 'http:') return false
   const host = page.hostname
-  return (
-    host === 'localhost' || host.endsWith('.localhost') || host === '127.0.0.1' || host === '[::1]'
-  )
+  return host === 'localhost' || host.endsWith('.localhost') || host === '127.0.0.1' || host === '[::1]'
 }

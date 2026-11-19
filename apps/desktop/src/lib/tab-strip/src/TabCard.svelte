@@ -5,9 +5,7 @@
   import { SpaceMark } from '../../marks/src/api'
   import type { Shown } from './hover-card.svelte'
 
-  const {
-    hovering,
-  }: { hovering: { readonly card: Shown | null; readonly facts: readonly (readonly string[])[] } } =
+  const { hovering }: { hovering: { readonly card: Shown | null; readonly facts: readonly (readonly string[])[] } } =
     $props()
 
   const card = $derived(hovering.card)

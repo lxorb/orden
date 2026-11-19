@@ -16,8 +16,7 @@ function worldWith(waiting: FileWaiting[], put: FileApi['put']) {
   const kept = new Map<string, unknown>([['files-waiting', waiting]])
   const sent: string[] = []
   const rows = {
-    items: () =>
-      Promise.resolve(waiting.map((one) => ({ id: one.item, vault: 'v', deleted: false }))),
+    items: () => Promise.resolve(waiting.map((one) => ({ id: one.item, vault: 'v', deleted: false }))),
     read: (key: string) => Promise.resolve(kept.get(key)),
     keep: (key: string, value: unknown) => {
       kept.set(key, value)
@@ -61,9 +60,7 @@ describe('an attachment the account will not take now', () => {
   })
 
   test('that is refused for good is let go', async () => {
-    const { world, rows } = worldWith([waiting('a')], () =>
-      Promise.reject(new FileRefused(413, 'too big', true)),
-    )
+    const { world, rows } = worldWith([waiting('a')], () => Promise.reject(new FileRefused(413, 'too big', true)))
     await expect(pushedFiles(world)).resolves.toBe('sent')
     expect(await waitingFiles(rows)).toEqual([])
   })
@@ -78,9 +75,7 @@ describe('an attachment the account will not take now', () => {
 
   test('that the account refuses for good through the network is let go', async () => {
     vi.stubGlobal('fetch', () =>
-      Promise.resolve(
-        Response.json({ error: 'your role in this vault does not allow that' }, { status: 403 }),
-      ),
+      Promise.resolve(Response.json({ error: 'your role in this vault does not allow that' }, { status: 403 })),
     )
     const real = fileApi('https://orden.so', 't')
     const { world, rows } = worldWith([waiting('a')], (...args) => real.put(...args))
@@ -101,9 +96,7 @@ describe('a file part sent to the account', () => {
       'fetch',
       (_url: string, init: RequestInit) =>
         new Promise((_done, refuse) => {
-          init.signal?.addEventListener('abort', () =>
-            refuse(new DOMException('aborted', 'AbortError')),
-          )
+          init.signal?.addEventListener('abort', () => refuse(new DOMException('aborted', 'AbortError')))
         }),
     )
     const asked = fileApi('https://orden.so', 't').put('v', 'i', 'f', 0, 1, new Uint8Array(BYTES))

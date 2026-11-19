@@ -11,14 +11,9 @@ export interface ClipOrigin {
 const LONGEST_TITLE = 300
 export const UNTITLED = 'Untitled'
 
-export const clipTitle = (title: string): string =>
-  oneLine(title).slice(0, LONGEST_TITLE).trim() || UNTITLED
+export const clipTitle = (title: string): string => oneLine(title).slice(0, LONGEST_TITLE).trim() || UNTITLED
 
-export function clipFrontMatter(
-  origin: ClipOrigin,
-  clipped: Date,
-  more: readonly FrontMatterRow[] = [],
-): string {
+export function clipFrontMatter(origin: ClipOrigin, clipped: Date, more: readonly FrontMatterRow[] = []): string {
   return writeFrontMatter([
     ['source', origin.url],
     ['title', origin.title],
@@ -44,8 +39,7 @@ export function clipNoteText(
 ): string {
   const title = clipTitle(origin.title)
   const words = markdown.trim()
-  const body =
-    origin.kind === 'link' || words === '' ? `<${origin.url}>` : withoutRepeatedTitle(words, title)
+  const body = origin.kind === 'link' || words === '' ? `<${origin.url}>` : withoutRepeatedTitle(words, title)
 
   return `${clipFrontMatter({ ...origin, title }, clipped, more)}\n\n# ${asWords(title)}\n\n${body}\n`
 }

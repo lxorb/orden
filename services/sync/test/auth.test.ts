@@ -191,9 +191,7 @@ describe('verifying a code', () => {
     await requestCode('a@b.dev')
 
     const answers = await Promise.all(
-      Array.from({ length: 10 }, () =>
-        call(env, '/v1/auth/verify', { body: { email: 'a@b.dev', code: '000000' } }),
-      ),
+      Array.from({ length: 10 }, () => call(env, '/v1/auth/verify', { body: { email: 'a@b.dev', code: '000000' } })),
     )
 
     expect(answers.filter((one) => one.status === 400)).toHaveLength(5)
@@ -280,9 +278,7 @@ describe('two sign-ins arriving together', () => {
 
     await call(env, '/v1/auth/verify', { body: { email: 'both@b.dev', code } })
 
-    const spaces = env.db
-      .prepare("select count(*) as many from spaces where name = 'Notes'")
-      .get() as { many: number }
+    const spaces = env.db.prepare("select count(*) as many from spaces where name = 'Notes'").get() as { many: number }
     expect(spaces.many).toBe(0)
   })
 })
@@ -292,9 +288,7 @@ describe('a body that is not what it should be', () => {
 
   test('is refused where an address was expected', async () => {
     expect((await call(env, '/v1/auth/code', { body: { email: 12 } })).status).toBe(400)
-    expect((await call(env, '/v1/auth/code', { body: { email: { at: 'b.dev' } } })).status).toBe(
-      400,
-    )
+    expect((await call(env, '/v1/auth/code', { body: { email: { at: 'b.dev' } } })).status).toBe(400)
     expect((await call(env, '/v1/auth/code', { body: [] })).status).toBe(400)
     expect((await call(env, '/v1/auth/code', { body: null })).status).toBe(400)
   })
@@ -318,12 +312,8 @@ describe('a body that is not what it should be', () => {
   test('is refused where a name was expected', async () => {
     const token = await signIn(env, 'a@b.dev')
 
-    expect((await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 5 } })).status).toBe(
-      400,
-    )
-    expect(
-      (await call(env, '/v1/me', { method: 'PATCH', token, raw: '{', headers: JSON_TYPE })).status,
-    ).toBe(400)
+    expect((await call(env, '/v1/me', { method: 'PATCH', token, body: { name: 5 } })).status).toBe(400)
+    expect((await call(env, '/v1/me', { method: 'PATCH', token, raw: '{', headers: JSON_TYPE })).status).toBe(400)
   })
 })
 

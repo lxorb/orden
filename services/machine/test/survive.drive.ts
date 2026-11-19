@@ -30,8 +30,7 @@ describe.runIf(URL)('a program on the machine', () => {
       ),
     })
     await until(() => ticks(link.text(SESSION)).length >= 3, 120_000)
-    if (process.env.ORDEND_SURVIVE_CGROUP)
-      expect(link.text(SESSION)).toContain(`/ordend/${SESSION}`)
+    if (process.env.ORDEND_SURVIVE_CGROUP) expect(link.text(SESSION)).toContain(`/ordend/${SESSION}`)
     console.log(/holder-kb=\s*\d+/.exec(link.text(SESSION))?.[0])
 
     for (const restart of ['the link', ...RESTARTS]) {

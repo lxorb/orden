@@ -108,12 +108,7 @@ export async function trim(core: Core, budget: number, how: LettingGo): Promise<
   return went
 }
 
-async function letGo(
-  core: Core,
-  space: SpaceState,
-  entry: EntryRow,
-  how: LettingGo,
-): Promise<boolean> {
+async function letGo(core: Core, space: SpaceState, entry: EntryRow, how: LettingGo): Promise<boolean> {
   const full = core.world.join(space.row.root, entry.local_path)
   const run = () => lettingGo(core, space, entry, how, full)
   return how.turn ? await how.turn(full, run) : await run()
@@ -129,8 +124,7 @@ async function lettingGo(
   if (!mayLetGo(core, space, entry)) return false
   if (core.world.join(space.row.root, entry.local_path) !== full) return false
   const text = await core.world.disk.read(full)
-  if (text !== null && (await core.world.digest(unixLines(text))) !== entry.written_hash)
-    return false
+  if (text !== null && (await core.world.digest(unixLines(text))) !== entry.written_hash) return false
   if (how.leaving) {
     const docSeq = core.numbers.get(entry.id)?.pulled ?? 0
     if (text !== null) {
@@ -148,9 +142,7 @@ async function lettingGo(
 
   const numbers = core.numbers.get(entry.id)
   const changes = core.forgetChanges(entry.id)
-  core
-    .wanted(space.id)
-    .set(entry.id, { docSeq: numbers?.pulled ?? 0, epoch: core.epochs.get(entry.id) ?? 1 })
+  core.wanted(space.id).set(entry.id, { docSeq: numbers?.pulled ?? 0, epoch: core.epochs.get(entry.id) ?? 1 })
   space.keeping.going.add(entry.local_path)
   space.keeping.used.delete(entry.id)
   entry.local_path = ''

@@ -43,8 +43,7 @@ export const isImageId = (value: unknown): value is string =>
 
 export const socketPath = (term: string): string => `/v2/online/${encodeURIComponent(term)}/socket`
 
-export type Refusal =
-  'gone' | 'role' | 'list' | 'allowance' | 'budget' | 'off' | 'flag' | 'sessions' | 'rate' | 'large'
+export type Refusal = 'gone' | 'role' | 'list' | 'allowance' | 'budget' | 'off' | 'flag' | 'sessions' | 'rate' | 'large'
 
 export const REFUSALS: readonly Refusal[] = [
   'gone',
@@ -61,15 +60,7 @@ export const REFUSALS: readonly Refusal[] = [
 
 export type DownReason = SleepReason | 'flag' | 'stopped' | 'restart'
 
-const DOWN_REASONS: readonly DownReason[] = [
-  'idle',
-  'allowance',
-  'budget',
-  'off',
-  'flag',
-  'stopped',
-  'restart',
-]
+const DOWN_REASONS: readonly DownReason[] = ['idle', 'allowance', 'budget', 'off', 'flag', 'stopped', 'restart']
 
 const MACHINE_STATES: readonly MachineState[] = ['asleep', 'starting', 'awake', 'stopping']
 
@@ -214,11 +205,9 @@ const isId = (value: unknown): value is string =>
 const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 
-const isCells = (value: unknown): value is number =>
-  isCount(value) && value >= 1 && value <= MOST_CELLS
+const isCells = (value: unknown): value is number => isCount(value) && value >= 1 && value <= MOST_CELLS
 
-const isTime = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
+const isTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)
 
 const isShort = (value: unknown): value is string | null =>
   value === null || (typeof value === 'string' && value.length <= LONGEST_TITLE)
@@ -226,20 +215,17 @@ const isShort = (value: unknown): value is string | null =>
 const isCode = (value: unknown): value is number | null =>
   value === null || (typeof value === 'number' && Number.isSafeInteger(value))
 
-const isScreen = (value: unknown): value is string =>
-  typeof value === 'string' && value.length <= MOST_SCREEN
+const isScreen = (value: unknown): value is string => typeof value === 'string' && value.length <= MOST_SCREEN
 
 const isStatus = (value: unknown): value is number => isCount(value) && value <= 999
 
 const isPathOrNone = (value: unknown): value is string | null =>
-  value === null ||
-  (typeof value === 'string' && value.startsWith('/') && value.length <= LONGEST_TITLE)
+  value === null || (typeof value === 'string' && value.startsWith('/') && value.length <= LONGEST_TITLE)
 
 const isPart = (value: unknown): value is string =>
   typeof value === 'string' && value.length <= MOST_INPUT && /^[A-Za-z0-9+/]*={0,2}$/.test(value)
 
-const oneOf = <T>(list: readonly T[], value: unknown): value is T =>
-  list.some((one) => one === value)
+const oneOf = <T>(list: readonly T[], value: unknown): value is T => list.some((one) => one === value)
 
 function parsed(raw: string): unknown {
   try {
@@ -267,14 +253,11 @@ function screenOf(
 function sessionNowOf(value: unknown): SessionNow | null {
   if (!isRecord(value)) return null
   const { session, program, title, alive, at } = value
-  if (!isId(session) || !isShort(program) || !isShort(title) || typeof alive !== 'boolean')
-    return null
+  if (!isId(session) || !isShort(program) || !isShort(title) || typeof alive !== 'boolean') return null
   return at === null || isCount(at) ? { session, program, title, alive, at } : null
 }
 
-function programOf(
-  value: Fields,
-): { name: string | null; title: string | null; mark: string | null } | null {
+function programOf(value: Fields): { name: string | null; title: string | null; mark: string | null } | null {
   const { name, title, mark } = value
   if (!isShort(name) || !isShort(title) || !(mark === null || isId(mark))) return null
   return { name, title, mark }
@@ -316,13 +299,9 @@ export function clientFrameOf(raw: string): ClientFrame | null {
     case 'leave':
       return { t: value.t }
     case 'in':
-      return typeof value.data === 'string' && value.data.length <= MOST_INPUT
-        ? { t: 'in', data: value.data }
-        : null
+      return typeof value.data === 'string' && value.data.length <= MOST_INPUT ? { t: 'in', data: value.data } : null
     case 'size':
-      return isCells(value.cols) && isCells(value.rows)
-        ? { t: 'size', cols: value.cols, rows: value.rows }
-        : null
+      return isCells(value.cols) && isCells(value.rows) ? { t: 'size', cols: value.cols, rows: value.rows } : null
     case 'start':
     case 'resume':
       return { t: value.t }
@@ -338,10 +317,7 @@ export function clientFrameOf(raw: string): ClientFrame | null {
   }
 }
 
-type SessionFrame = Extract<
-  ServerFrame,
-  { t: 'screen' | 'program' | 'ended' | 'browse' | 'called' | 'image' }
->
+type SessionFrame = Extract<ServerFrame, { t: 'screen' | 'program' | 'ended' | 'browse' | 'called' | 'image' }>
 
 function sessionFrameOf(value: Fields): SessionFrame | null | undefined {
   switch (value.t) {
@@ -362,9 +338,7 @@ function sessionFrameOf(value: Fields): SessionFrame | null | undefined {
         ? { t: 'called', url: value.url, status: value.status }
         : null
     case 'image':
-      return isImageId(value.id) && isPathOrNone(value.path)
-        ? { t: 'image', id: value.id, path: value.path }
-        : null
+      return isImageId(value.id) && isPathOrNone(value.path) ? { t: 'image', id: value.id, path: value.path } : null
     default:
       return undefined
   }
@@ -392,9 +366,7 @@ export function serverFrameOf(raw: string): ServerFrame | null {
       return { t: 'people', people }
     }
     case 'typed':
-      return isId(value.who) && isCount(value.seq)
-        ? { t: 'typed', who: value.who, seq: value.seq }
-        : null
+      return isId(value.who) && isCount(value.seq) ? { t: 'typed', who: value.who, seq: value.seq } : null
     case 'machine': {
       const { state, reason } = value
       if (!oneOf(MACHINE_STATES, state)) return null
@@ -424,8 +396,7 @@ export function serverFrameOf(raw: string): ServerFrame | null {
 export function machineFrameOf(bytes: Uint8Array): MachineFrame | null {
   const value = unframe(bytes)
   if (!isRecord(value)) return null
-  if (value.t === 'sleep' || value.t === 'ping' || value.t === 'restart' || value.t === 'list')
-    return { t: value.t }
+  if (value.t === 'sleep' || value.t === 'ping' || value.t === 'restart' || value.t === 'list') return { t: value.t }
 
   const { session } = value
   if (!isId(session)) return null

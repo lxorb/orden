@@ -26,10 +26,7 @@ async function timed(typed: string): Promise<{ ms: number; shown: number }> {
     EditorState.create({
       doc: typed,
       selection: EditorSelection.cursor(typed.length),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        noteIndex.of(index),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), noteIndex.of(index)],
     }),
   )
   const started = performance.now()

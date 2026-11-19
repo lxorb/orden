@@ -126,9 +126,7 @@ rooms.get('/:noteId', async (context) => {
       'x-orden-login': hash,
       'x-orden-epoch': String(allowed.epoch ?? 0),
       'x-orden-v2': offers(offered, ROOM_V2_NAMES) ? 'yes' : 'no',
-      'x-orden-device-id': allowed.guest
-        ? `guest:${allowed.guest}`
-        : (allowed.bound ?? `session:${hash.slice(0, 16)}`),
+      'x-orden-device-id': allowed.guest ? `guest:${allowed.guest}` : (allowed.bound ?? `session:${hash.slice(0, 16)}`),
     },
     context.req.header('cf-ray') ?? null,
   )
@@ -156,10 +154,7 @@ export const ROOM_PATIENCE = 15_000
 
 export const ROOM_LATE = Symbol('the room did not answer in time')
 
-async function inTime(
-  answer: Promise<Response>,
-  patience: number,
-): Promise<Response | typeof ROOM_LATE> {
+async function inTime(answer: Promise<Response>, patience: number): Promise<Response | typeof ROOM_LATE> {
   let late: (value: typeof ROOM_LATE) => void = () => undefined
   const waited = new Promise<typeof ROOM_LATE>((settle) => {
     late = settle
@@ -276,9 +271,7 @@ export async function roomsRevoked(
     if (!results.length) return
 
     await Promise.all(
-      results.map(({ note_id: noteId }) =>
-        tell(namespace, noteId, { 'x-orden-revoked': who, 'x-orden-role': role }),
-      ),
+      results.map(({ note_id: noteId }) => tell(namespace, noteId, { 'x-orden-revoked': who, 'x-orden-role': role })),
     )
 
     if (results.length < MOST_OPEN) return
@@ -322,18 +315,13 @@ async function tell(
   }
 }
 
-export async function closeRooms(
-  env: Env,
-  open: readonly { note_id: string; who: string }[],
-): Promise<void> {
+export async function closeRooms(env: Env, open: readonly { note_id: string; who: string }[]): Promise<void> {
   const namespace = env.ROOMS
   if (!namespace) return
 
   for (const round of chunks(open, MOST_OPEN)) {
     await Promise.all(
-      round.map((one) =>
-        tell(namespace, one.note_id, { 'x-orden-revoked': one.who, 'x-orden-role': 'none' }),
-      ),
+      round.map((one) => tell(namespace, one.note_id, { 'x-orden-revoked': one.who, 'x-orden-role': 'none' })),
     )
   }
 }
@@ -344,9 +332,7 @@ export async function eraseRooms(env: Env, noteIds: readonly string[]): Promise<
 
   const emptied: string[] = []
   for (const round of chunks(noteIds, MOST_OPEN)) {
-    const heard = await Promise.all(
-      round.map((noteId) => tell(namespace, noteId, { 'x-orden-erase': 'yes' })),
-    )
+    const heard = await Promise.all(round.map((noteId) => tell(namespace, noteId, { 'x-orden-erase': 'yes' })))
     emptied.push(...round.filter((_, at) => heard[at]))
   }
 

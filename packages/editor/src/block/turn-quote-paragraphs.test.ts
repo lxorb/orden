@@ -28,9 +28,7 @@ const twoParagraphs = 'before\n\n> First words.\n>\n> Second words.\n\nafter'
 
 describe('Turn into on a quote of two paragraphs', () => {
   test('into paragraph leaves no bare quote mark between them', () => {
-    expect(turned(twoParagraphs, 'First', 'paragraph')).toBe(
-      'before\n\nFirst words.\n\nSecond words.\n\nafter',
-    )
+    expect(turned(twoParagraphs, 'First', 'paragraph')).toBe('before\n\nFirst words.\n\nSecond words.\n\nafter')
   })
 
   test('into heading leaves no bare quote mark under it', () => {

@@ -40,12 +40,7 @@ function under(base: Base, key: string): Base {
   return isFields(base) ? base[key] : undefined
 }
 
-function pickedList(
-  base: Base,
-  mine: Fields[],
-  theirs: Fields[],
-  mineWins: boolean,
-): Picked<Fields[]> {
+function pickedList(base: Base, mine: Fields[], theirs: Fields[], mineWins: boolean): Picked<Fields[]> {
   const was = base === UNKNOWN ? null : byId(isListById(base) ? base : [])
   const ours = byId(mine)
   const yours = byId(theirs)
@@ -81,12 +76,7 @@ function picked(base: Base, mine: unknown, theirs: unknown, mineWins: boolean): 
   return { value: mineWins ? mine : theirs, clashed: true }
 }
 
-function pickedContent(
-  base: Content | null,
-  mine: Content,
-  theirs: Content,
-  mineWins: boolean,
-): Picked<Content> {
+function pickedContent(base: Content | null, mine: Content, theirs: Content, mineWins: boolean): Picked<Content> {
   if (mine.kind !== theirs.kind) return { value: mineWins ? mine : theirs, clashed: true }
   const was: Base = base?.kind === mine.kind ? base : UNKNOWN
   const one = pickedFields(was, mine as unknown as Fields, theirs as unknown as Fields, mineWins)

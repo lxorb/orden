@@ -23,9 +23,7 @@ function chosenOf(body: unknown): string[] {
 
   const out: string[] = []
   for (const family of FAMILIES) {
-    const found = ids
-      .filter((id) => id.endsWith(`-${family}`) || id === family)
-      .sort((a, b) => a.length - b.length)
+    const found = ids.filter((id) => id.endsWith(`-${family}`) || id === family).sort((a, b) => a.length - b.length)
     const first = found[0]
     if (first !== undefined) out.push(first)
   }
@@ -73,7 +71,5 @@ export async function modelsFor(env: Env, userId: string, key: string): Promise<
 }
 
 export async function forgetModels(env: Env, userId: string): Promise<void> {
-  await env.DB.prepare('delete from cached where scope = ? and key = ?')
-    .bind('models', userId)
-    .run()
+  await env.DB.prepare('delete from cached where scope = ? and key = ?').bind('models', userId).run()
 }

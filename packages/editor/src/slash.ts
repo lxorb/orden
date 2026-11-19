@@ -22,16 +22,15 @@ function inCode(context: CompletionContext): boolean {
   return enclosingNamed(at, VERBATIM) !== null
 }
 
-const insert =
-  (block: SlashBlock) => (view: EditorView, _completion: Completion, from: number, to: number) => {
-    view.dispatch({
-      changes: { from: from - 1, to },
-      selection: { anchor: from - 1 },
-      userEvent: 'input.complete',
-    })
+const insert = (block: SlashBlock) => (view: EditorView, _completion: Completion, from: number, to: number) => {
+  view.dispatch({
+    changes: { from: from - 1, to },
+    selection: { anchor: from - 1 },
+    userEvent: 'input.complete',
+  })
 
-    block.run(view)
-  }
+  block.run(view)
+}
 
 export function slashCompletions(context: CompletionContext): CompletionResult | null {
   const blocks = rows()

@@ -1,12 +1,5 @@
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import {
-  blockIdOf,
-  blockSpan,
-  blockSpanAt,
-  headingRows,
-  lines,
-  slugify,
-} from '@orden/markdown/links'
+import { blockIdOf, blockSpan, blockSpanAt, headingRows, lines, slugify } from '@orden/markdown/links'
 import { taskAt } from '@orden/markdown/tasks'
 import { isRecord } from '../../platform/src/api'
 import { DocError } from './problem'
@@ -84,11 +77,7 @@ export function readAnchor(value: unknown): Anchor {
   if (value.start === true) return { start: true }
   if (value.end === true) return { end: true }
 
-  throw new DocError(
-    'bad_anchor',
-    value,
-    'an anchor is one of quote, heading, block, task, selection, start and end',
-  )
+  throw new DocError('bad_anchor', value, 'an anchor is one of quote, heading, block, task, selection, start and end')
 }
 
 export interface Selected {
@@ -232,15 +221,10 @@ function under(heading: HeadingAt, wanted: readonly string[]): boolean {
 function headingsNamed(headings: readonly HeadingAt[], named: string): HeadingAt[] {
   const wanted = steps(named)
   const whole = named.trim()
-  return headings.filter(
-    (heading) => under(heading, wanted) || (wanted.length > 1 && names(whole, heading.title)),
-  )
+  return headings.filter((heading) => under(heading, wanted) || (wanted.length > 1 && names(whole, heading.title)))
 }
 
-export function headingAnchor(
-  headings: readonly HeadingAt[],
-  heading: HeadingAt,
-): { heading: string; nth?: number } {
+export function headingAnchor(headings: readonly HeadingAt[], heading: HeadingAt): { heading: string; nth?: number } {
   const path = headingPath(heading)
   const found = headingsNamed(headings, path)
   const nth = found.indexOf(heading) + 1
@@ -256,9 +240,7 @@ function section(anchor: Extract<Anchor, { heading: string }>, text: string): Pl
 
 function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): Place {
   const rows = [...lines(text)]
-  const marked = rows.filter(
-    (row) => !row.matter && (row.code ? row.fenceName : blockIdOf(row.text)) === anchor.block,
-  )
+  const marked = rows.filter((row) => !row.matter && (row.code ? row.fenceName : blockIdOf(row.text)) === anchor.block)
   const row = one(marked, anchor, undefined)
 
   const alone = row.text.trim() === `^${anchor.block}`
@@ -267,9 +249,7 @@ function blockNamed(anchor: Extract<Anchor, { block: string }>, text: string): P
   const end = alone ? row : (rows[span.last] ?? row)
   const apart = alone && row.line > 0 && !rows[row.line - 1]?.text.trim()
   const indent = leadOf(start.text)
-  const keep = alone
-    ? `${apart ? '\n\n' : '\n'}${leadOf(row.text)}^${anchor.block}`
-    : ` ^${anchor.block}`
+  const keep = alone ? `${apart ? '\n\n' : '\n'}${leadOf(row.text)}^${anchor.block}` : ` ^${anchor.block}`
   return {
     from: start.from,
     to: end.from + end.text.length,

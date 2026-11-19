@@ -22,9 +22,7 @@
 
   const rows = $derived(
     choices.map((choice) =>
-      typeof choice === 'string'
-        ? { key: choice, choice, member: null }
-        : { key: choice.who, choice, member: choice },
+      typeof choice === 'string' ? { key: choice, choice, member: null } : { key: choice.who, choice, member: choice },
     ),
   )
 </script>
@@ -48,9 +46,7 @@
       }}
     >
       {#if row.member}
-        <span class="orden-row-mark"
-          ><Avatar face={faceOf(row.member.who, members, space)} size={20} /></span
-        >
+        <span class="orden-row-mark"><Avatar face={faceOf(row.member.who, members, space)} size={20} /></span>
         <span class="orden-row-label">{nameOf(row.member.who, members, space)}</span>
         {#if row.member.nick && row.member.nick !== row.member.name}
           <span class="orden-row-meta">{row.member.name}</span>

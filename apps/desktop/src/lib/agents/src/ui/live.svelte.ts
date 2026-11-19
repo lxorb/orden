@@ -97,9 +97,7 @@ export function started(source: Source = crate): Activity {
         for (const one of now) {
           if (told.has(one.id)) continue
           told.add(one.id)
-          notify(activity.nameOf(one.agent), one.summary, questionTag(one.id), () =>
-            openAgentSession(one.agent),
-          )
+          notify(activity.nameOf(one.agent), one.summary, questionTag(one.id), () => openAgentSession(one.agent))
         }
         for (const id of told) {
           if (now.some((one) => one.id === id)) continue
@@ -112,9 +110,7 @@ export function started(source: Source = crate): Activity {
     const pairing = $derived(activity.seen.approvals.some((one) => one.category === 'pairing'))
     $effect(() => {
       if (!pairing) return
-      const bubble = untrack(() =>
-        mount(PairingBubble, { target: document.body, props: { activity } }),
-      )
+      const bubble = untrack(() => mount(PairingBubble, { target: document.body, props: { activity } }))
       return () => void unmount(bubble, { outro: true })
     })
   })

@@ -108,8 +108,7 @@
           dy="0.36em"
           text-anchor="middle"
           fill={mark.ink}
-          font-size={mark.letters.length > 2 ? 7.5 : mark.letters.length > 1 ? 10 : 13}
-          >{mark.letters}</text
+          font-size={mark.letters.length > 2 ? 7.5 : mark.letters.length > 1 ? 10 : 13}>{mark.letters}</text
         >
       </svg>
       <span class="words">
@@ -127,13 +126,7 @@
 <div class="card padded">
   <div class="orden-setting">
     <span class="name">{file?.name ?? 'No file chosen'}</span>
-    <input
-      class="picker"
-      type="file"
-      {accept}
-      bind:this={picker}
-      onchange={(event) => void chosen(event)}
-    />
+    <input class="picker" type="file" {accept} bind:this={picker} onchange={(event) => void chosen(event)} />
     <button class="orden-chip" type="button" onclick={() => picker?.click()}>Choose a file</button>
   </div>
   {#if sealed && !imported}
@@ -166,16 +159,12 @@
     {#each imported.vaults as vault, index (index)}
       <div class="orden-setting">
         <span class="name">{vault.name}</span>
-        <span class="text meta"
-          >{vault.items.length === 1 ? '1 item' : `${vault.items.length} items`}</span
-        >
+        <span class="text meta">{vault.items.length === 1 ? '1 item' : `${vault.items.length} items`}</span>
       </div>
     {/each}
     {#if imported.skipped.length}
       <p class="meta">
-        {imported.skipped.length === 1
-          ? '1 item cannot be read'
-          : `${imported.skipped.length} items cannot be read`}
+        {imported.skipped.length === 1 ? '1 item cannot be read' : `${imported.skipped.length} items cannot be read`}
       </p>
     {/if}
     <div class="orden-setting">
@@ -191,12 +180,7 @@
       />
     </div>
     <div class="buttons">
-      <button
-        class="orden-button"
-        type="button"
-        disabled={busy || counted === 0}
-        onclick={() => void brought()}
-      >
+      <button class="orden-button" type="button" disabled={busy || counted === 0} onclick={() => void brought()}>
         {counted === 1 ? 'Import 1 item' : `Import ${counted} items`}
       </button>
     </div>

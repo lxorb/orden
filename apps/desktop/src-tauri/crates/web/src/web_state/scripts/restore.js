@@ -34,10 +34,7 @@ globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
       case 'k': {
         const [, format, key, algorithm, usages] = encoded
         const data = format === 'raw' ? bytes(key) : key
-        into.set(
-          encoded,
-          await crypto.subtle.importKey(format, data, algorithmFrom(algorithm), true, usages),
-        )
+        into.set(encoded, await crypto.subtle.importKey(format, data, algorithmFrom(algorithm), true, usages))
         return
       }
       case 'o':
@@ -169,9 +166,7 @@ globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
           const [, name, message, stack] = encoded
           const Kind = globalThis[name]
           const out =
-            typeof Kind === 'function' && Kind.prototype instanceof Error
-              ? new Kind(message)
-              : new Error(message)
+            typeof Kind === 'function' && Kind.prototype instanceof Error ? new Kind(message) : new Error(message)
           if (out.name !== name) own(out, 'name', name)
           Object.defineProperty(out, 'stack', {
             value: stack,
@@ -213,10 +208,7 @@ globalThis.ordenRestore = async function ordenRestore(op, argsJson) {
   function deleted(name) {
     return new Promise((resolve, reject) => {
       const request = indexedDB.deleteDatabase(name)
-      const late = setTimeout(
-        () => reject(new Error(`${name} is held open by a page of the site`)),
-        5000,
-      )
+      const late = setTimeout(() => reject(new Error(`${name} is held open by a page of the site`)), 5000)
       request.onsuccess = () => {
         clearTimeout(late)
         resolve()

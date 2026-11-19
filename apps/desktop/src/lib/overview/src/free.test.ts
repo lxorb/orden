@@ -12,8 +12,7 @@ const at = (id: string, x: number, y: number, paneId = 'p'): Slot => ({
   h: 120,
 })
 
-const clear = (all: readonly Slot[]) =>
-  all.every((a, i) => all.every((b, j) => i === j || !overlaps(a, b)))
+const clear = (all: readonly Slot[]) => all.every((a, i) => all.every((b, j) => i === j || !overlaps(a, b)))
 
 test('a window let go on others keeps its place, and they are pushed out of its way', () => {
   const windows = [at('a', 0, 0), at('b', 240, 0), at('c', 480, 0), at('held', 220, 20)]
@@ -67,8 +66,7 @@ test('a window is never pushed onto the name under another, however much room th
     for (const other of after) {
       if (one === other) continue
       const beside = one.x + one.w <= other.x || other.x + other.w <= one.x
-      if (!beside && other.y >= one.y)
-        expect(other.y).toBeGreaterThanOrEqual(one.y + one.h + named - 1)
+      if (!beside && other.y >= one.y) expect(other.y).toBeGreaterThanOrEqual(one.y + one.h + named - 1)
     }
   }
   expect(after.every((a, i) => after.every((b, j) => i === j || !overlaps(a, b, named)))).toBe(true)
@@ -80,15 +78,12 @@ test('a held window pushes only the windows of the cell it is in, so a cell of o
   const over = { x: 880, y: 10, w: 200, h: 120 }
   const inA = roomFor(windows, new Map([['held', over]]), (id) => cell(id) === 'a')
   expect(inA.find((one) => one.id === 'b1')).toEqual(windows[2])
-  const box = (key: string) =>
-    around(inA.filter((one) => one.id !== 'held' && cell(one.id) === key)) ?? over
+  const box = (key: string) => around(inA.filter((one) => one.id !== 'held' && cell(one.id) === key)) ?? over
   const cells = ['a', 'b'].map((key) => ({ key, box: box(key) }))
   expect(cellAt(cells, 'a', 980, 60)).toBe('b')
   const inB = roomFor(windows, new Map([['held', over]]), (id) => cell(id) === 'b')
   expect(inB.find((one) => one.id === 'b1')).not.toEqual(windows[2])
-  expect(inB.filter((one) => cell(one.id) === 'a' && one.id !== 'held')).toEqual(
-    windows.slice(0, 2),
-  )
+  expect(inB.filter((one) => cell(one.id) === 'a' && one.id !== 'held')).toEqual(windows.slice(0, 2))
   expect(clear(inB.filter((one) => one.id !== 'a1' && one.id !== 'a2'))).toBe(true)
 })
 
@@ -117,8 +112,7 @@ test('windows each kept where they were put are moved apart where they lie on ea
 test('new windows opened among windows kept where they were let go never lie on any of them', () => {
   const kept: Slot[] = []
   for (let row = 0; row < 3; row++)
-    for (let column = 0; column < 4; column++)
-      kept.push(at(`k${row}${column}`, column * 228, row * 180))
+    for (let column = 0; column < 4; column++) kept.push(at(`k${row}${column}`, column * 228, row * 180))
   const still = new Set(kept.map((one) => one.id))
   const fresh = [at('n0', 120, 90), at('n1', 330, 100), at('n2', 560, 250), at('n3', 100, 20)]
   const after = settled([...kept, ...fresh], still, 0, false)

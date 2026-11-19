@@ -101,9 +101,7 @@ describe('the todos, with Orden closed', () => {
       done: true,
       priority: 1,
     })
-    expect((await json(key, 'list_tasks', {})).todos.map((one) => one.title)).toEqual([
-      'Post the letter',
-    ])
+    expect((await json(key, 'list_tasks', {})).todos.map((one) => one.title)).toEqual(['Post the letter'])
     expect((await json(key, 'list_tasks', { done: true })).total).toBe(2)
     expect(await read(key, 'Inbox.md')).not.toContain('Call the bank')
     const rows = env.db.prepare('select id, fields from inbox_items').all() as {
@@ -117,9 +115,7 @@ describe('the todos, with Orden closed', () => {
     const key = await connector()
     const id = (await json(key, 'add_task', { title: 'Call the bank' })).id as string
     const ahead = `${(Date.now() + 86_400_000).toString(36).padStart(9, '0')}-0000-phone`
-    env.db
-      .prepare('update inbox_items set stamps = json_set(stamps, ?, ?) where id = ?')
-      .run('$.done', ahead, id)
+    env.db.prepare('update inbox_items set stamps = json_set(stamps, ?, ?) where id = ?').run('$.done', ahead, id)
 
     expect(await json(key, 'update_task', { id, done: true })).toMatchObject({ done: true })
     expect((await json(key, 'list_tasks', { done: true })).todos[0]).toMatchObject({
@@ -127,8 +123,7 @@ describe('the todos, with Orden closed', () => {
       done: true,
     })
     const stamps = JSON.parse(
-      (env.db.prepare('select stamps from inbox_items where id = ?').get(id) as { stamps: string })
-        .stamps,
+      (env.db.prepare('select stamps from inbox_items where id = ?').get(id) as { stamps: string }).stamps,
     ) as Record<string, string>
     expect((stamps.done ?? '') > ahead).toBe(true)
   })
@@ -139,21 +134,15 @@ describe('the todos, with Orden closed', () => {
 
     const said = await tool(key, 'update_task', { id, description: '€'.repeat(8000) })
     expect(said).toMatch(/too large/)
-    expect((await json(key, 'list_tasks', {})).todos).toMatchObject([
-      { id, title: 'Call the bank' },
-    ])
-    expect(await tool(key, 'add_task', { title: 'Big', description: '€'.repeat(8000) })).toMatch(
-      /too large/,
-    )
+    expect((await json(key, 'list_tasks', {})).todos).toMatchObject([{ id, title: 'Call the bank' }])
+    expect(await tool(key, 'add_task', { title: 'Big', description: '€'.repeat(8000) })).toMatch(/too large/)
     expect((await json(key, 'list_tasks', {})).todos).toHaveLength(1)
   })
 
   test('refused in sentences: a token that only reads, a todo that is gone, a bad day, no title', async () => {
     expect(await tool(await connector(true), 'add_task', { title: 'No' })).toMatch(/only read/)
     const key = await connector()
-    expect(await tool(key, 'update_task', { id: 'nothing', done: true })).toBe(
-      'There is no todo nothing.',
-    )
+    expect(await tool(key, 'update_task', { id: 'nothing', done: true })).toBe('There is no todo nothing.')
     expect(await tool(key, 'add_task', { title: 'Soon', deadline: 'tomorrow' })).toBe(
       'deadline is a day as YYYY-MM-DD.',
     )
@@ -198,13 +187,7 @@ describe('the todos, with Orden closed', () => {
   })
 })
 
-const BOOKS = [
-  'filters: file.inFolder("Books")',
-  'views:',
-  '  - type: table',
-  '    name: All',
-  '',
-].join('\n')
+const BOOKS = ['filters: file.inFolder("Books")', 'views:', '  - type: table', '    name: All', ''].join('\n')
 
 describe('bases, with Orden closed', () => {
   test('refused while databases are off, and the base left as it was', async () => {
@@ -254,10 +237,7 @@ describe('bases, with Orden closed', () => {
     try {
       env.db.prepare("update users set zone = 'Asia/Tokyo'").run()
       for (const [path, content] of [
-        [
-          'Templates/Book.md',
-          '---\nstatus: new\nrepeat: every day\n---\n# {{title}}\n\nAdded {{date}} at {{time}}\n',
-        ],
+        ['Templates/Book.md', '---\nstatus: new\nrepeat: every day\n---\n# {{title}}\n\nAdded {{date}} at {{time}}\n'],
         ['Templates/Shelf.md', '# {{title}} on the shelf\n'],
       ]) {
         await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
@@ -281,9 +261,7 @@ describe('bases, with Orden closed', () => {
       await basesTurned(true)
       const key = await connector()
       await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: 'Emma' })
-      expect(await read(key, 'Books/Emma.md')).toBe(
-        '---\nstatus: new\n---\n# Emma\n\nAdded 2026-10-08 at 05:00\n',
-      )
+      expect(await read(key, 'Books/Emma.md')).toBe('---\nstatus: new\n---\n# Emma\n\nAdded 2026-10-08 at 05:00\n')
       await tool(key, 'add_row', {
         space: 'Work',
         base: 'Books.base',
@@ -301,10 +279,7 @@ describe('bases, with Orden closed', () => {
       token,
       body: { path: 'Templates/Book.md', content: '# {{title}}\n' },
     })
-    await baseFile(
-      'Books.base',
-      ['filters: file.inFolder("Books")', 'orden:', '  template: "[[book]]"', ''].join('\n'),
-    )
+    await baseFile('Books.base', ['filters: file.inFolder("Books")', 'orden:', '  template: "[[book]]"', ''].join('\n'))
     await basesTurned(true)
     const key = await connector()
     await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: 'Emma' })
@@ -340,18 +315,10 @@ describe('bases, with Orden closed', () => {
     await basesTurned(true)
     const key = await connector()
 
-    expect(
-      await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: '.Secret' }),
-    ).toMatch(/is hidden/)
-    expect(
-      await tool(key, 'write_note', { space: 'Work', path: '.hidden/x.md', content: 'hi' }),
-    ).not.toMatch(/^Saved/)
-    expect(
-      await tool(key, 'write_note', { space: 'Work', path: 'a/.b.md', content: 'hi' }),
-    ).not.toMatch(/^Saved/)
-    expect(await tool(key, 'list_notes', { space: 'Work' })).not.toMatch(
-      /\.Secret|\.hidden|\.b\.md/,
-    )
+    expect(await tool(key, 'add_row', { space: 'Work', base: 'Books.base', title: '.Secret' })).toMatch(/is hidden/)
+    expect(await tool(key, 'write_note', { space: 'Work', path: '.hidden/x.md', content: 'hi' })).not.toMatch(/^Saved/)
+    expect(await tool(key, 'write_note', { space: 'Work', path: 'a/.b.md', content: 'hi' })).not.toMatch(/^Saved/)
+    expect(await tool(key, 'list_notes', { space: 'Work' })).not.toMatch(/\.Secret|\.hidden|\.b\.md/)
   })
 
   test('a base filtered by tag finds the notes tagged in their front matter', async () => {
@@ -380,9 +347,7 @@ describe('bases, with Orden closed', () => {
     ]) {
       await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content } })
     }
-    env.db
-      .prepare(`update notes set meta = ? where path = 'People/Ada.md'`)
-      .run('{"cover":"ada.png"}')
+    env.db.prepare(`update notes set meta = ? where path = 'People/Ada.md'`).run('{"cover":"ada.png"}')
     await basesTurned(true)
     const key = await connector(true)
     const answer = await json(key, 'query_base', {
@@ -472,14 +437,7 @@ describe('a base over more notes than are read', () => {
           `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, kind)
            values (?, ?, ?, ?, 1, 1, 0, ?, ?, 'note')`,
         )
-        .run(
-          `r${at}`,
-          space,
-          `rows/r${String(at).padStart(4, '0')}.md`,
-          1000 + at,
-          text.length,
-          hash,
-        )
+        .run(`r${at}`, space, `rows/r${String(at).padStart(4, '0')}.md`, 1000 + at, text.length, hash)
     }
     await basesTurned(true)
 

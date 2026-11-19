@@ -5,9 +5,7 @@ describe('a thought put on the end', () => {
   test('is one blank line under what was there, however it ended', () => {
     expect(joined('a number to call', 'the answer')).toBe('a number to call\n\nthe answer\n')
     expect(joined('a number to call\n', 'the answer')).toBe('a number to call\n\nthe answer\n')
-    expect(joined('a number to call\n\n\n\n', 'the answer\n')).toBe(
-      'a number to call\n\nthe answer\n',
-    )
+    expect(joined('a number to call\n\n\n\n', 'the answer\n')).toBe('a number to call\n\nthe answer\n')
   })
 
   test('is the whole of an empty scratchpad, and nothing is nothing', () => {

@@ -17,11 +17,7 @@ export interface Drawing {
   close(): void
 }
 
-export function fitWithin(
-  width: number,
-  height: number,
-  edge: number,
-): { width: number; height: number } {
+export function fitWithin(width: number, height: number, edge: number): { width: number; height: number } {
   const scale = Math.min(1, edge / Math.max(width, height, 1))
   return {
     width: Math.max(1, Math.round(width * scale)),
@@ -30,9 +26,7 @@ export function fitWithin(
 }
 
 export function writtenAs(type: string): PictureType {
-  return type === 'image/jpeg' || type === 'image/heic' || type === 'image/heif'
-    ? 'image/jpeg'
-    : 'image/png'
+  return type === 'image/jpeg' || type === 'image/heic' || type === 'image/heif' ? 'image/jpeg' : 'image/png'
 }
 
 export function picturesAmong(files: Iterable<File>): File[] {
@@ -49,10 +43,7 @@ function tries(type: PictureType): { edge: number; type: PictureType; quality: n
   ]
 }
 
-export async function redrawn(
-  file: Blob,
-  drawing: Drawing,
-): Promise<{ blob: Blob; type: PictureType } | null> {
+export async function redrawn(file: Blob, drawing: Drawing): Promise<{ blob: Blob; type: PictureType } | null> {
   const size = await drawing.open(file).catch(() => null)
   if (!size) return null
   try {
@@ -80,11 +71,7 @@ export function pageSheet(width: number, height: number): Sheet {
     context: canvas.getContext('2d'),
     blob: (type, quality) =>
       new Promise<Blob>((resolve, reject) => {
-        canvas.toBlob(
-          (blob) => (blob ? resolve(blob) : reject(new Error('not written'))),
-          type,
-          quality,
-        )
+        canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('not written'))), type, quality)
       }),
   }
 }

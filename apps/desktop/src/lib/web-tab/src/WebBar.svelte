@@ -87,8 +87,7 @@
     const was = page.keyboard
     page.keyboard = null
     if (focused && (was === 'address' || (started && !page.seen))) take()
-    else if (focused && was === 'page' && isDesktop)
-      void invoke('keyboard_back', { tab }).catch(() => undefined)
+    else if (focused && was === 'page' && isDesktop) void invoke('keyboard_back', { tab }).catch(() => undefined)
     page.seen = true
 
     const key = (event: KeyboardEvent) => {
@@ -175,19 +174,13 @@
 
   <button
     class="orden-glyph"
-    title={page.loading
-      ? shortcuts.tooltip('Stop', 'web.stop')
-      : shortcuts.tooltip('Reload', 'web.reload')}
+    title={page.loading ? shortcuts.tooltip('Stop', 'web.stop') : shortcuts.tooltip('Reload', 'web.reload')}
     aria-label={page.loading ? 'Stop' : 'Reload'}
     onclick={(event) => onstep(page.loading ? 'stop' : 'reload', event)}
     use:middleOpens={(event) => onstep('reload', event)}
   >
     {#key page.loading}
-      <svg
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-        in:scale={{ start: 0.6, duration: dur(120), easing: cubicOut }}
-      >
+      <svg viewBox="0 0 24 24" aria-hidden="true" in:scale={{ start: 0.6, duration: dur(120), easing: cubicOut }}>
         {#each page.loading ? X : RotateCw as [tag, attrs], index (index)}
           <svelte:element this={tag} {...attrs} />
         {/each}
@@ -221,8 +214,7 @@
     {book}
     address={resting}
     held={page}
-    onenter={(said: string, aside: boolean, typed: string) =>
-      onaddress(meantBy(said, page.url), aside, typed)}
+    onenter={(said: string, aside: boolean, typed: string) => onaddress(meantBy(said, page.url), aside, typed)}
     onnote={page.inPrivate ? undefined : onnote}
     {ontyping}
   />
@@ -245,12 +237,7 @@
     >
       <Glyph icon={ArrowDownToLine} />
       {#if progress !== null}
-        <svg
-          class="ring"
-          class:sweeping={progress === 'unknown'}
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
+        <svg class="ring" class:sweeping={progress === 'unknown'} viewBox="0 0 24 24" aria-hidden="true">
           <circle
             cx="12"
             cy="12"

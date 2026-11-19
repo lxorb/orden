@@ -84,12 +84,7 @@ export function noteNames(keys: readonly Value[]): NoteNames {
   return counts
 }
 
-export function groupLabel(
-  property: string | undefined,
-  value: Value,
-  today: string,
-  names?: NoteNames,
-): string {
+export function groupLabel(property: string | undefined, value: Value, today: string, names?: NoteNames): string {
   if (property === 'formula.overdue') return value === true ? 'Overdue' : 'Today'
   if (value === 'overdue') return 'Overdue'
   if (isWhen(property)) {
@@ -108,8 +103,7 @@ export function groupLabel(
   if ((property === 'file.path' || property === 'file.basename') && typeof value === 'string')
     return noteLabel(value, names)
   const day = dayIn(value)
-  if (day !== null && (typeof value !== 'string' || value.length === 10))
-    return dayWords(day, today)
+  if (day !== null && (typeof value !== 'string' || value.length === 10)) return dayWords(day, today)
   return groupName(value)
 }
 

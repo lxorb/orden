@@ -40,9 +40,7 @@
       <span class="digits">{asking.digits}</span>
     </p>
     <div class="rows">
-      <button class="orden-button is-quiet" onclick={() => void vault.deny(asking.id)}>
-        Don’t allow
-      </button>
+      <button class="orden-button is-quiet" onclick={() => void vault.deny(asking.id)}> Don’t allow </button>
       <button class="orden-button" onclick={() => void vault.allow(asking.id)}>Allow</button>
     </div>
   </div>

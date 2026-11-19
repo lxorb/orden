@@ -10,17 +10,8 @@ vi.stubGlobal('localStorage', {
   clear: () => held.clear(),
 })
 
-const {
-  forgetAccount,
-  forgetHome,
-  homeOf,
-  keepHomes,
-  leaveSpaces,
-  leftBy,
-  leftByAnother,
-  leftGone,
-  leftMoved,
-} = await import('../src/api')
+const { forgetAccount, forgetHome, homeOf, keepHomes, leaveSpaces, leftBy, leftByAnother, leftGone, leftMoved } =
+  await import('../src/api')
 
 describe('the spaces this device left', () => {
   test('are marked with the account that left them, and the first mark stays', () => {

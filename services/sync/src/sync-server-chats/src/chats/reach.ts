@@ -76,11 +76,7 @@ export async function reachChat(env: Env, who: Whoever, chat: string): Promise<R
   return reachedOf(row)
 }
 
-export async function reachAs(
-  env: Env,
-  person: { id: string; guest: boolean },
-  chat: string,
-): Promise<Reached | null> {
+export async function reachAs(env: Env, person: { id: string; guest: boolean }, chat: string): Promise<Reached | null> {
   const row = await env.DB.prepare(`${reached(PERSON_ME, '?3')} ${PICKED}`)
     .bind(person.id, person.guest ? 1 : 0, chat)
     .first<Row>()

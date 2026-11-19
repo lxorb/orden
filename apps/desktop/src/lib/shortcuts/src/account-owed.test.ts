@@ -36,9 +36,7 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
       saveSettings: (_token: string, patch: unknown) => {
         world.saved.push(patch)
         if (world.refusing) return Promise.reject(new original.ApiError(413, 'too big'))
-        return world.failing
-          ? Promise.reject(new Error('offline'))
-          : Promise.resolve({ settings: {} })
+        return world.failing ? Promise.reject(new Error('offline')) : Promise.resolve({ settings: {} })
       },
     },
   }
@@ -56,10 +54,7 @@ async function relaunched() {
   vi.resetModules()
   world.leaving = []
   world.unowned = []
-  const [{ shortcuts }, { toolbar }] = await Promise.all([
-    import('./shortcuts.svelte'),
-    import('./toolbar.svelte'),
-  ])
+  const [{ shortcuts }, { toolbar }] = await Promise.all([import('./shortcuts.svelte'), import('./toolbar.svelte')])
   shortcuts.restore()
   toolbar.restore()
   return { shortcuts, toolbar }

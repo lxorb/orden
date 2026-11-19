@@ -14,11 +14,9 @@ const spaces: Space[] = [
   { id: 'a', name: 'Archive', root: '/Archive' },
 ]
 
-const where = (moving: string) =>
-  moveTargets({ moving, tree, spaces, here: '/Notes' }).map((one) => one.id)
+const where = (moving: string) => moveTargets({ moving, tree, spaces, here: '/Notes' }).map((one) => one.id)
 
-const labels = (moving: string) =>
-  moveTargets({ moving, tree, spaces, here: '/Notes' }).map((one) => one.label)
+const labels = (moving: string) => moveTargets({ moving, tree, spaces, here: '/Notes' }).map((one) => one.label)
 
 describe('moving a note', () => {
   test('offers every row of the space, and every other space', () => {
@@ -240,10 +238,7 @@ describe('whether a drop would move anything', () => {
 })
 
 describe('a path written with backslashes, as a desktop hands them over', () => {
-  const windows = folder('C:\\Orden\\Notes', [
-    folder('C:\\Orden\\Notes\\Work'),
-    note('C:\\Orden\\Notes\\loose.md'),
-  ])
+  const windows = folder('C:\\Orden\\Notes', [folder('C:\\Orden\\Notes\\Work'), note('C:\\Orden\\Notes\\loose.md')])
 
   test('finds the folder it sits in all the same', () => {
     const offered = moveTargets({

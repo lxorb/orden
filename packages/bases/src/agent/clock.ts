@@ -27,13 +27,5 @@ export function wallClock(now: Date, zone?: string): Date {
   if (!zone) return now
   const parts = partsOf(now, zone)
   const at = (key: string) => Number(parts[key])
-  return new Date(
-    at('year'),
-    at('month') - 1,
-    at('day'),
-    at('hour'),
-    at('minute'),
-    at('second'),
-    now.getMilliseconds(),
-  )
+  return new Date(at('year'), at('month') - 1, at('day'), at('hour'), at('minute'), at('second'), now.getMilliseconds())
 }

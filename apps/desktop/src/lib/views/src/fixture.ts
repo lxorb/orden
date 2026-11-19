@@ -1,11 +1,4 @@
-import {
-  type FileInfo,
-  noteValues,
-  type Row,
-  type TaskRow,
-  taskHash,
-  type Value,
-} from '@orden/bases'
+import { type FileInfo, noteValues, type Row, type TaskRow, taskHash, type Value } from '@orden/bases'
 import { readTask } from '@orden/markdown/task-line'
 
 function fileAt(path: string, extra: Partial<FileInfo> = {}): FileInfo {

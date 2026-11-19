@@ -9,12 +9,8 @@ const ROWS = 12
 function stream(): Uint8Array {
   const parts: string[] = ['\x1b]0;build\x07']
   for (let i = 0; i < 40; i++) {
-    parts.push(
-      `\x1b[1;3${String(i % 8)}m${String(i)}\x1b[0m line \x1b[38;5;${String(i * 5)}m256\x1b[0m `,
-    )
-    parts.push(
-      `\x1b[38;2;${String(i)};100;200mtrue\x1b[48;2;10;20;${String(i)}mcolour\x1b[0m 漢字 ✓\r\n`,
-    )
+    parts.push(`\x1b[1;3${String(i % 8)}m${String(i)}\x1b[0m line \x1b[38;5;${String(i * 5)}m256\x1b[0m `)
+    parts.push(`\x1b[38;2;${String(i)};100;200mtrue\x1b[48;2;10;20;${String(i)}mcolour\x1b[0m 漢字 ✓\r\n`)
   }
   parts.push('a long line that wraps past the edge of the screen and on '.repeat(2), '\r\n')
   parts.push('\x1b[4munder\x1b[24m \x1b[3mitalic\x1b[23m \x1b[9mstruck\x1b[29m $ vim\r\n')
@@ -88,9 +84,6 @@ test('a wrapped line stays wrapped for a joiner', async () => {
   const joiner = terminal(COLS, ROWS)
   await written(joiner, serialized)
   const rows = Math.ceil((address.length + 2) / COLS)
-  const wrapped = Array.from(
-    { length: rows + 1 },
-    (_, y) => joiner.buffer.active.getLine(y)?.isWrapped,
-  )
+  const wrapped = Array.from({ length: rows + 1 }, (_, y) => joiner.buffer.active.getLine(y)?.isWrapped)
   expect(wrapped).toEqual([false, ...Array.from({ length: rows - 1 }, () => true), false])
 })

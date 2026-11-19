@@ -124,12 +124,7 @@ export function leftPage(tab: string): void {
   if (overOn === tab) tell(tab, 'leave', 0, 0)
 }
 
-export function droppedOnPage(
-  tab: string,
-  hole: HTMLElement,
-  event: DragEvent,
-  zoom: number,
-): void {
+export function droppedOnPage(tab: string, hole: HTMLElement, event: DragEvent, zoom: number): void {
   if (!carried(event) || !told || !inMiddle(hole, event)) return
   event.preventDefault()
   const at = pointOf(hole, event, zoom)

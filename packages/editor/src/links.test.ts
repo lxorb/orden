@@ -16,13 +16,10 @@ describe('what a link target is to a browser', () => {
     expect(hrefOf('www.x.dev')).toBe('https://www.x.dev')
   })
 
-  test.each([
-    'orden://open?path=Plan',
-    'orden://settings/account',
-    'notes/other.md',
-    '#heading',
-    '',
-  ])('%j belongs to the app or the note', (link) => expect(hrefOf(link)).toBeNull())
+  test.each(['orden://open?path=Plan', 'orden://settings/account', 'notes/other.md', '#heading', ''])(
+    '%j belongs to the app or the note',
+    (link) => expect(hrefOf(link)).toBeNull(),
+  )
 })
 
 describe('an address written the ways markdown lets it be', () => {

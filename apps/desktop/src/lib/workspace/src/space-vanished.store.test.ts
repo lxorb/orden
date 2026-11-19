@@ -23,10 +23,8 @@ const { Disk, memoryStorage } = await import('../../../../test/disk')
 disk.current = new Disk()
 vi.stubGlobal('localStorage', memoryStorage())
 
-const shown = (ws: {
-  panes: { all: { id: string }[] }
-  tabsIn(pane: string): { path: string | null }[]
-}) => ws.panes.all.flatMap((one) => ws.tabsIn(one.id).map((tab) => tab.path))
+const shown = (ws: { panes: { all: { id: string }[] }; tabsIn(pane: string): { path: string | null }[] }) =>
+  ws.panes.all.flatMap((one) => ws.tabsIn(one.id).map((tab) => tab.path))
 
 const WORK = { id: 'work', name: 'Work', root: '/spaces/Work' }
 const FOOD = { id: 'food', name: 'Food', root: '/spaces/Food' }

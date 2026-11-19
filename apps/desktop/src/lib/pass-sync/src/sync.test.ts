@@ -60,9 +60,13 @@ describe('the Pass API on the device', () => {
   test('hands back a refusal with what the account holds now', async () => {
     const current = { vault: 'v', id: 'i', rev: 3 }
     const { api } = fake(() => ({ status: 409, body: { error: 'stale', current } }))
-    expect(
-      await api.putItem('vault-01', 'item-001', { rev: 1, key: 'a', body: 'b', keyVersion: 1 }),
-    ).toEqual({ ok: false, status: 409, error: 'stale', current, keyVersion: null })
+    expect(await api.putItem('vault-01', 'item-001', { rev: 1, key: 'a', body: 'b', keyVersion: 1 })).toEqual({
+      ok: false,
+      status: 409,
+      error: 'stale',
+      current,
+      keyVersion: null,
+    })
   })
 
   test('hands back the newer key version', async () => {
@@ -87,23 +91,25 @@ describe('the Pass API on the device', () => {
 
   test('tells a missing vault from an account without Pass', async () => {
     const { api } = fake(() => ({ status: 404, body: { error: 'no such vault' } }))
-    expect(
-      await api.putItem('v', 'i', { rev: 1, key: 'a', body: 'b', keyVersion: 1 }),
-    ).toMatchObject({ ok: false, status: 404, error: 'no such vault' })
+    expect(await api.putItem('v', 'i', { rev: 1, key: 'a', body: 'b', keyVersion: 1 })).toMatchObject({
+      ok: false,
+      status: 404,
+      error: 'no such vault',
+    })
   })
 
   test('throws when the server fails, so nothing is marked sent', async () => {
     const { api } = fake(() => ({ status: 503, body: { error: 'down' } }))
-    await expect(
-      api.putItem('v', 'i', { rev: 1, key: 'a', body: 'b', keyVersion: 1 }),
-    ).rejects.toBeInstanceOf(Refused)
+    await expect(api.putItem('v', 'i', { rev: 1, key: 'a', body: 'b', keyVersion: 1 })).rejects.toBeInstanceOf(Refused)
   })
 
   test('hands back an account out of space as a refusal, so the sync still pulls', async () => {
     const { api } = fake(() => ({ status: 507, body: { error: 'out of space' } }))
-    expect(
-      await api.putItem('v', 'i', { rev: 1, key: 'a', body: 'b', keyVersion: 1 }),
-    ).toMatchObject({ ok: false, status: 507, error: 'out of space' })
+    expect(await api.putItem('v', 'i', { rev: 1, key: 'a', body: 'b', keyVersion: 1 })).toMatchObject({
+      ok: false,
+      status: 507,
+      error: 'out of space',
+    })
   })
 
   test('refuses changes it cannot read', async () => {
@@ -127,10 +133,7 @@ describe('the Pass API on the device', () => {
         ? { status: 200, body: { items: [row('item-0001')], more: true } }
         : { status: 200, body: { items: [row('item-0002')], more: false } },
     )
-    expect((await api.allVaultItems('vault-01')).map((one) => one.id)).toEqual([
-      'item-0001',
-      'item-0002',
-    ])
+    expect((await api.allVaultItems('vault-01')).map((one) => one.id)).toEqual(['item-0001', 'item-0002'])
     expect(seen[1]?.url).toBe('https://orden.test/v2/pass/vaults/vault-01/items?after=item-0001')
   })
 })

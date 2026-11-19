@@ -1,17 +1,6 @@
 <script lang="ts">
   import { blank } from '@orden/pass/envelope'
-  import type {
-    Alias,
-    Card,
-    Content,
-    Custom,
-    FieldKind,
-    Identity,
-    Item,
-    Login,
-    SshKey,
-    Wifi,
-  } from '@orden/pass/types'
+  import type { Alias, Card, Content, Custom, FieldKind, Identity, Item, Login, SshKey, Wifi } from '@orden/pass/types'
   import { normalizeUrl } from '@orden/pass/urls'
   import { untrack } from 'svelte'
   import { Cross, message } from '../../ui-kit/src/api'
@@ -48,8 +37,7 @@
   let removing = $state.raw<string[]>([])
   let aliasAsk = $state.raw<AliasAsk | null>(null)
 
-  const keyOf = () =>
-    JSON.stringify([draft, vault, folder, adding.map((one) => one.name), removing])
+  const keyOf = () => JSON.stringify([draft, vault, folder, adding.map((one) => one.name), removing])
 
   $effect.pre(() => {
     const now = ui.editing
@@ -187,21 +175,11 @@
     {#if error}<p class="pass-wrong" role="alert">{error}</p>{/if}
 
     <EditCard>
-      <EditField
-        label="Title"
-        bind:value={draft.title}
-        big
-        placeholder="Untitled"
-        oninput={touched}
-      />
+      <EditField label="Title" bind:value={draft.title} big placeholder="Untitled" oninput={touched} />
     </EditCard>
 
     {#if draft.kind === 'login'}
-      <LoginEdit
-        {ui}
-        bind:content={() => draft as Login, (next: Login) => (draft = next)}
-        oninput={touched}
-      />
+      <LoginEdit {ui} bind:content={() => draft as Login, (next: Login) => (draft = next)} oninput={touched} />
     {:else if draft.kind === 'alias'}
       <AliasEdit
         bind:content={() => draft as Alias, (next: Alias) => (draft = next)}
@@ -210,33 +188,19 @@
         oninput={touched}
       />
     {:else if draft.kind === 'card'}
-      <CardEdit
-        bind:content={() => draft as Card, (next: Card) => (draft = next)}
-        oninput={touched}
-      />
+      <CardEdit bind:content={() => draft as Card, (next: Card) => (draft = next)} oninput={touched} />
     {:else if draft.kind === 'identity'}
-      <IdentityEdit
-        bind:content={() => draft as Identity, (next: Identity) => (draft = next)}
-        oninput={touched}
-      />
+      <IdentityEdit bind:content={() => draft as Identity, (next: Identity) => (draft = next)} oninput={touched} />
     {:else if draft.kind === 'custom' || draft.kind === 'ssh' || draft.kind === 'wifi'}
       <OtherEdit
         {ui}
-        bind:content={
-          () => draft as Custom | SshKey | Wifi, (next: Custom | SshKey | Wifi) => (draft = next)
-        }
+        bind:content={() => draft as Custom | SshKey | Wifi, (next: Custom | SshKey | Wifi) => (draft = next)}
         oninput={touched}
       />
     {/if}
 
     <EditCard>
-      <EditField
-        label="Note"
-        icon={FIELD_ICONS.note}
-        bind:value={draft.note}
-        kind="multiline"
-        oninput={touched}
-      />
+      <EditField label="Note" icon={FIELD_ICONS.note} bind:value={draft.note} kind="multiline" oninput={touched} />
     </EditCard>
 
     {#if draft.fields.length}

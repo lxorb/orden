@@ -1,10 +1,5 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import {
-  EditorSelection,
-  EditorState,
-  type StateCommand,
-  type Transaction,
-} from '@codemirror/state'
+import { EditorSelection, EditorState, type StateCommand, type Transaction } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { indentItems, outdentItems } from './list-keys'
@@ -29,9 +24,9 @@ describe('Tab and Shift-Tab on a list item that holds a quote', () => {
   })
 
   test('Tab takes a callout along with its task', () => {
-    expect(
-      pressed(indentItems, '- [ ] a\n- [ ] b\n  > [!note] Why\n  > Because\n- [ ] c', '- [ ] b'),
-    ).toBe('- [ ] a\n  - [ ] b\n    > [!note] Why\n    > Because\n- [ ] c')
+    expect(pressed(indentItems, '- [ ] a\n- [ ] b\n  > [!note] Why\n  > Because\n- [ ] c', '- [ ] b')).toBe(
+      '- [ ] a\n  - [ ] b\n    > [!note] Why\n    > Because\n- [ ] c',
+    )
   })
 
   test('Shift-Tab twice keeps the quote a quote of its item, not code', () => {

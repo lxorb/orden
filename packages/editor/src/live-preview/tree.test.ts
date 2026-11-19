@@ -5,18 +5,14 @@ import { expect, test } from 'vitest'
 import { parsed } from '../../test/parsed'
 
 function dump(doc: string): string {
-  const state = parsed(
-    EditorState.create({ doc, extensions: [markdown({ base: markdownLanguage })] }),
-  )
+  const state = parsed(EditorState.create({ doc, extensions: [markdown({ base: markdownLanguage })] }))
   const out: string[] = []
 
   syntaxTree(state).iterate({
     enter: (node) => {
       let indent = 0
       for (let parent = node.node.parent; parent; parent = parent.parent) indent++
-      out.push(
-        `${'  '.repeat(indent)}${node.name} ${JSON.stringify(doc.slice(node.from, node.to))}`,
-      )
+      out.push(`${'  '.repeat(indent)}${node.name} ${JSON.stringify(doc.slice(node.from, node.to))}`)
     },
   })
 
@@ -86,8 +82,7 @@ test('html', () => {
 })
 
 test('blocks', () => {
-  expect(dump('# H\n\n> q\n\n---\n\n```js\nx\n```\n\n| a | b |\n| - | - |\n| 1 | 2 |\n'))
-    .toMatchInlineSnapshot(`
+  expect(dump('# H\n\n> q\n\n---\n\n```js\nx\n```\n\n| a | b |\n| - | - |\n| 1 | 2 |\n')).toMatchInlineSnapshot(`
     "Document "# H\\n\\n> q\\n\\n---\\n\\n\`\`\`js\\nx\\n\`\`\`\\n\\n| a | b |\\n| - | - |\\n| 1 | 2 |\\n"
       ATXHeading1 "# H"
         HeaderMark "#"

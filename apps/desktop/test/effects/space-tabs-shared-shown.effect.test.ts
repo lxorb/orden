@@ -27,8 +27,7 @@ const FOOD = '/spaces/Home/Food.md'
 
 async function run() {
   const { workspace } = await import('../../src/lib/workspace/src/api')
-  const onScreen = () =>
-    workspace.panes.all.flatMap((one) => workspace.tabsIn(one.id).map((tab) => tab.name))
+  const onScreen = () => workspace.panes.all.flatMap((one) => workspace.tabsIn(one.id).map((tab) => tab.name))
   return { workspace, onScreen }
 }
 

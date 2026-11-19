@@ -10,9 +10,7 @@ describe('the module stands on its own', () => {
     const reached = readdirSync(SRC)
       .filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
       .flatMap((name) =>
-        [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '([^']*)'/g)].map(
-          (found) => found[1],
-        ),
+        [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '([^']*)'/g)].map((found) => found[1]),
       )
     expect([...new Set(reached)].sort()).toEqual(['./verbs', '@orden/contracts'])
   })

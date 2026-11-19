@@ -27,9 +27,7 @@ function rejected(error: unknown): boolean {
 }
 
 function statusOf(error: unknown): number | null {
-  return error instanceof Error && 'status' in error && typeof error.status === 'number'
-    ? error.status
-    : null
+  return error instanceof Error && 'status' in error && typeof error.status === 'number' ? error.status : null
 }
 
 class Session {
@@ -251,10 +249,7 @@ class Session {
   }
 
   private async heldBy(token: string): Promise<string | null> {
-    const who = await Promise.race([
-      api.me(token).catch(() => null),
-      waited(ASK_BEFORE_LEAVING).then(() => null),
-    ])
+    const who = await Promise.race([api.me(token).catch(() => null), waited(ASK_BEFORE_LEAVING).then(() => null)])
     return who?.user ? who.user.id : who?.guest ? `guest:${who.guest.id}` : null
   }
 
@@ -339,8 +334,7 @@ class Session {
 
     const who = await api.rename(token, name)
     if (this.token !== token) return
-    if (who.user)
-      this.user = this.user?.id === who.user.id ? { ...this.user, ...who.user } : who.user
+    if (who.user) this.user = this.user?.id === who.user.id ? { ...this.user, ...who.user } : who.user
     if (who.guest) this.guest = who.guest
   }
 

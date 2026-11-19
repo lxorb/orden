@@ -12,9 +12,7 @@ export async function mayDelete(paths: readonly string[]): Promise<boolean> {
   if (!one) return true
   const many = full.length > 1
   return prompt.confirm({
-    title: many
-      ? `Delete ${String(full.length)} chats with messages?`
-      : `Delete ${one.name ?? 'this chat'}?`,
+    title: many ? `Delete ${String(full.length)} chats with messages?` : `Delete ${one.name ?? 'this chat'}?`,
     detail: `${many ? 'They hold' : 'It holds'} messages. Deleting takes ${many ? 'them' : 'it'} out of the space into Recently deleted, and the messages are kept with the chat.`,
     confirmLabel: 'Delete',
     danger: true,

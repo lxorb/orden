@@ -252,8 +252,7 @@ describe('a space two people write in', () => {
     const link = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1]
     if (!link) throw new Error('no link was made')
 
-    return (await call(env, `/v1/join/${link}`, { method: 'POST', body: { device: 'Windows' } }))
-      .json.token
+    return (await call(env, `/v1/join/${link}`, { method: 'POST', body: { device: 'Windows' } })).json.token
   }
 
   async function put(hash: string, as: string, path: string) {

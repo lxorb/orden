@@ -20,15 +20,7 @@ import { BaseWidget } from '../live-preview/render'
 import { OrdenWidget } from '../live-preview/widget'
 import { renderNote } from './preview'
 import type { LinkSpan } from './at'
-import {
-  type FileDrawing,
-  jumpFor,
-  type NoteIndex,
-  noteIndex,
-  noteOpener,
-  resolveFile,
-  resolveLink,
-} from './notes'
+import { type FileDrawing, jumpFor, type NoteIndex, noteIndex, noteOpener, resolveFile, resolveLink } from './notes'
 
 const MOST_EMBEDDED = 40_000
 const EMBED_MAX = 512
@@ -42,11 +34,7 @@ const LONE_EMBED = /^!\[\[[^[\]]+\]\]$/
 function standsApart(state: EditorState, line: Line, below: boolean): boolean {
   const text = line.text.trim()
   if (text === '' || LONE_EMBED.test(text)) return true
-  for (
-    let node: SyntaxNode | null = syntaxTree(state).resolve(line.from, 1);
-    node;
-    node = node.parent
-  ) {
+  for (let node: SyntaxNode | null = syntaxTree(state).resolve(line.from, 1); node; node = node.parent) {
     if (OWN_BLOCK.test(node.name) || (below && OPENS_BELOW.test(node.name))) {
       return node.from <= line.from && node.to >= line.to
     }
@@ -201,15 +189,11 @@ export function drawnAsLink(state: EditorState, link: LinkSpan): boolean {
   return path !== null && isTabFile(path)
 }
 
-export function embedWidget(
-  state: EditorState,
-  link: LinkSpan,
-): EmbedWidget | EmbedFileWidget | BaseWidget {
+export function embedWidget(state: EditorState, link: LinkSpan): EmbedWidget | EmbedFileWidget | BaseWidget {
   const index = state.facet(noteIndex)
   const kind = embedKind(link.target)
 
-  if (kind === 'base' && index.mountBase)
-    return new BaseWidget({ target: link.target, view: link.heading }, index)
+  if (kind === 'base' && index.mountBase) return new BaseWidget({ target: link.target, view: link.heading }, index)
 
   if (kind === 'pdf' || kind === 'canvas')
     return new EmbedFileWidget(link, kind, resolveFile(index, link.target, link.kind))
@@ -228,9 +212,7 @@ export class EmbedImageWidget extends OrdenWidget {
 
   override eq(other: EmbedImageWidget) {
     return (
-      other.address === this.address &&
-      other.link.target === this.link.target &&
-      other.link.alias === this.link.alias
+      other.address === this.address && other.link.target === this.link.target && other.link.alias === this.link.alias
     )
   }
 

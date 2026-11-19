@@ -19,8 +19,7 @@ describe('the icon picker', () => {
           icon: {
             worn: (tab: string) => worn.get(tab)?.[0] ?? null,
             tint: (tab: string) => worn.get(tab)?.[1] ?? null,
-            wear: (tab: string, icon: string | null, colour: string | null) =>
-              void worn.set(tab, [icon, colour]),
+            wear: (tab: string, icon: string | null, colour: string | null) => void worn.set(tab, [icon, colour]),
           },
         }),
       ),

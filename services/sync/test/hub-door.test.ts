@@ -80,9 +80,7 @@ describe('the hub door', () => {
     expect(asked?.headers.get('x-orden-guest')).toBe('no')
     expect(asked?.headers.get('x-orden-session')).toBe(
       (
-        env.db
-          .prepare('select id from sessions where user_id = ?')
-          .get(userId('a@example.com')) as {
+        env.db.prepare('select id from sessions where user_id = ?').get(userId('a@example.com')) as {
           id: string
         }
       ).id,
@@ -143,20 +141,15 @@ describe('the hub door', () => {
 
   test('lets a guest in to a hub of its own', async () => {
     const owner = await session('owner@example.com')
-    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Shared' } })).json
-      .space.id
+    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Shared' } })).json.space.id
     const link = await call<{ link: { url: string } }>(env, `/v1/spaces/${space}/share/link`, {
       method: 'PUT',
       token: owner,
       body: { role: 'read', mode: 'open' },
     })
-    const joined = await call(
-      env,
-      `/v1/join/${/\/join\/([a-f0-9]+)/.exec(link.json.link.url)?.[1] ?? ''}`,
-      {
-        method: 'POST',
-      },
-    )
+    const joined = await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(link.json.link.url)?.[1] ?? ''}`, {
+      method: 'POST',
+    })
     const guest = joined.json.token
 
     const answer = await knock([subprotocol(guest), `nib.device.${DEVICE}`])

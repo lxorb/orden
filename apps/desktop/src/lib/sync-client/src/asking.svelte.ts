@@ -81,9 +81,7 @@ class Asking {
   private readonly paths = $derived(new Set(this.held.map((note) => note.path)))
 
   private readonly here = $derived(
-    this.held.find(
-      (note) => note.path === workspace().activePath && !workspace().locked(note.path),
-    ) ?? null,
+    this.held.find((note) => note.path === workspace().activePath && !workspace().locked(note.path)) ?? null,
   )
 
   readonly asked: Held | null = $derived(this.here?.id === this.open ? this.here : null)

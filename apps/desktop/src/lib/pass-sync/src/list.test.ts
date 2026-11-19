@@ -60,16 +60,8 @@ const ITEMS: Item[] = [
     { ...blank('card'), title: 'Visa', number: '4111 1111 1111 1234', code: '987' },
     { folder: 'money', created: 200 },
   ),
-  item(
-    'diary',
-    { ...blank('note'), title: 'Diary', note: '\n  Dear diary\nsecond line zebra' },
-    { created: 400 },
-  ),
-  item(
-    'alias',
-    { ...blank('alias'), title: 'Shop', address: 'shop.x7@alias.dev' },
-    { created: 50 },
-  ),
+  item('diary', { ...blank('note'), title: 'Diary', note: '\n  Dear diary\nsecond line zebra' }, { created: 400 }),
+  item('alias', { ...blank('alias'), title: 'Shop', address: 'shop.x7@alias.dev' }, { created: 50 }),
   item('id', { ...blank('identity'), title: 'Me', values: { fullName: 'Emil V' } }),
   item('wifi', { ...blank('wifi'), title: 'Home wifi', ssid: 'Castle', password: 'castle-key' }),
   item('ssh', { ...blank('ssh'), title: 'Server', publicKey: 'ssh-ed25519 AAAA me@x' }),
@@ -125,8 +117,7 @@ describe('the type filter', () => {
 })
 
 describe('the search', () => {
-  const found = (query: string) =>
-    ids(listed(ITEMS, VAULTS, { kind: 'all' }, 'all', 'title', query).rows)
+  const found = (query: string) => ids(listed(ITEMS, VAULTS, { kind: 'all' }, 'all', 'title', query).rows)
 
   test('reads titles, usernames, emails, hosts, aliases, a card’s last four and a note’s first line', () => {
     expect(found('MAIL')).toEqual(['mail'])
@@ -172,8 +163,7 @@ describe('pinned and sorted', () => {
     expect(order('title')).toEqual(['bank', 'mail', 'visa'])
     expect(order('newest')).toEqual(['bank', 'mail', 'visa'])
     expect(order('oldest')).toEqual(['mail', 'bank', 'visa'])
-    const all = (sort: 'title' | 'oldest') =>
-      ids(listed(ITEMS, VAULTS, { kind: 'all' }, 'all', sort, '').rows)
+    const all = (sort: 'title' | 'oldest') => ids(listed(ITEMS, VAULTS, { kind: 'all' }, 'all', sort, '').rows)
     expect(all('title').slice(0, 3)).toEqual(['bank', 'diary', 'given'])
     expect(all('oldest')[0]).toBe('alias')
   })

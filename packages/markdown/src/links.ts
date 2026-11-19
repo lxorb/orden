@@ -37,8 +37,7 @@ interface MarkdownLink {
   to: number
 }
 
-const isImageOpen = (line: string, open: number): boolean =>
-  line[open - 1] === '!' && line[open - 2] !== '\\'
+const isImageOpen = (line: string, open: number): boolean => line[open - 1] === '!' && line[open - 2] !== '\\'
 
 export function labelEnds(line: string): Map<number, number> {
   const ends = new Map<number, number>()
@@ -176,16 +175,13 @@ const ending = (pattern: RegExp) => (target: string) => pattern.test(target.trim
 export const isPdfTarget = ending(/\.pdf$/i)
 export const isCanvasTarget = ending(/\.canvas$/i)
 
-export const isBaseTarget = (target: string): boolean =>
-  /\.base$/i.test(target.split('#')[0]?.trim() ?? '')
+export const isBaseTarget = (target: string): boolean => /\.base$/i.test(target.split('#')[0]?.trim() ?? '')
 
 export const isChatTarget = (target: string): boolean => /\.chat$/i.test(target)
 
-export const isApplicationTarget = (target: string | null): boolean =>
-  target !== null && /\.application$/i.test(target)
+export const isApplicationTarget = (target: string | null): boolean => target !== null && /\.application$/i.test(target)
 
-export const isTermTarget = (target: string | null): boolean =>
-  target !== null && /\.term$/i.test(target)
+export const isTermTarget = (target: string | null): boolean => target !== null && /\.term$/i.test(target)
 
 export const isPagesTarget = ending(/\.pages$/i)
 export const isWebTarget = ending(/\.(url|webloc)$/i)
@@ -204,8 +200,7 @@ const EMBEDS: readonly [EmbedKind, (target: string) => boolean][] = [
   ['base', isBaseTarget],
 ]
 
-export const embedKind = (target: string): EmbedKind | null =>
-  EMBEDS.find(([, is]) => is(target))?.[0] ?? null
+export const embedKind = (target: string): EmbedKind | null => EMBEDS.find(([, is]) => is(target))?.[0] ?? null
 
 export const isTabFile = (target: string): boolean =>
   [isPdfTarget, isCanvasTarget, isPagesTarget, isWebTarget, isBaseTarget].some((is) => is(target))
@@ -386,17 +381,13 @@ function defined(line: string, offset: number, at: number, found: FoundLink[], l
   if (!said || written === undefined || (!loose && !isNoteTarget(written))) return
 
   const open = line.indexOf('[')
-  const link = markdownFound(
-    written,
-    offset + line.indexOf(written, open + (said[1]?.length ?? 0) + 3),
-    {
-      alias: said[1] ?? null,
-      embed: false,
-      from: offset + open,
-      to: offset + line.trimEnd().length,
-      line: at,
-    },
-  )
+  const link = markdownFound(written, offset + line.indexOf(written, open + (said[1]?.length ?? 0) + 3), {
+    alias: said[1] ?? null,
+    embed: false,
+    from: offset + open,
+    to: offset + line.trimEnd().length,
+    line: at,
+  })
   if (link) found.push(link)
 }
 
@@ -527,13 +518,7 @@ export function* lines(text: string): Generator<Row> {
 
 export const rowsOf = (text: string): Row[] => [...lines(text)]
 
-function collect(
-  line: string,
-  offset: number,
-  lineOf: (at: number) => number,
-  found: FoundLink[],
-  loose = false,
-) {
+function collect(line: string, offset: number, lineOf: (at: number) => number, found: FoundLink[], loose = false) {
   if (!line.includes('[')) return
   const ends = line.includes('](') ? labelEnds(line) : new Map<number, number>()
   let after: { label: number; to: number } | null = null
@@ -592,8 +577,7 @@ const UTF8 = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true })
 const WRITTEN = /\\([!-/:-@[-`{-~])|(?:%[0-9A-Fa-f]{2})+/g
 const STRICT_UTF8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true })
 
-const bytesOf = (run: string): Uint8Array =>
-  Uint8Array.from(run.slice(1).split('%'), (hex) => Number.parseInt(hex, 16))
+const bytesOf = (run: string): Uint8Array => Uint8Array.from(run.slice(1).split('%'), (hex) => Number.parseInt(hex, 16))
 
 export function decodeTarget(target: string): string {
   try {
@@ -633,8 +617,7 @@ const CLOSING_HASHES = /[ \t]+#+[ \t]*$/
 export const isHeading = (line: string): boolean => HEADING.test(line)
 
 export function headingText(written: string): string {
-  const line =
-    written.includes('%%') || written.includes('<!--') ? stripLine(written, null).text : written
+  const line = written.includes('%%') || written.includes('<!--') ? stripLine(written, null).text : written
   const found = HEADING_LINE.exec(line)
   if (found === null) return line.trim()
 
@@ -713,10 +696,7 @@ export function headingRows(text: string): HeadingRow[] {
 
 export const headingsOf = (text: string): string[] => headingRows(text).map((one) => one.text)
 
-export function sectionOf(
-  source: string,
-  link: Pick<Wikilink, 'heading' | 'block'>,
-): string | null {
+export function sectionOf(source: string, link: Pick<Wikilink, 'heading' | 'block'>): string | null {
   if (link.block !== null) return blockSection(source, link.block)?.text ?? null
   if (link.heading !== null) return headingSection(source, link.heading)
   return source
@@ -777,10 +757,7 @@ export function blockAround(rows: readonly Row[], at: number): { start: number; 
   return { start, end }
 }
 
-export function sectionLine(
-  source: string,
-  link: Pick<Wikilink, 'heading' | 'block'>,
-): number | null {
+export function sectionLine(source: string, link: Pick<Wikilink, 'heading' | 'block'>): number | null {
   return link.block === null ? null : (blockSection(source, link.block)?.from ?? null)
 }
 
@@ -810,9 +787,7 @@ function unindented(block: string[], lines: readonly string[], first: number, in
       .join('\n')
       .trimEnd()
   }
-  const least = block
-    .filter((line) => line.trim())
-    .reduce((most, line) => Math.min(most, indentOf(line)), Infinity)
+  const least = block.filter((line) => line.trim()).reduce((most, line) => Math.min(most, indentOf(line)), Infinity)
   return least >= 4 ? outOfItem(block, itemColumn(lines, first)) : block.join('\n').trimEnd()
 }
 
@@ -843,20 +818,14 @@ export function heldBlocks(rows: readonly Lined[]): Map<number, Held> {
   for (let at = 0; at < rows.length; at++) {
     const row = rows[at]
     if (!row || row.code || row.matter) continue
-    const found = OPENERS.map((kind) => ({ kind, match: kind.opens.exec(row.text) })).find(
-      (one) => one.match,
-    )
+    const found = OPENERS.map((kind) => ({ kind, match: kind.opens.exec(row.text) })).find((one) => one.match)
     if (!found?.match) continue
     const tag = (found.match[1] ?? '').toLowerCase()
     const key = `${found.kind.opens.source}${tag}`
     const rest = row.text.slice(found.match.index + found.match[0].length)
     if (missing.has(key) || (found.match[0].includes('<') && found.kind.closes(rest, tag))) continue
     let last = at + 1
-    while (
-      last < rows.length &&
-      !rows[last]?.matter &&
-      !found.kind.closes(rows[last]?.text ?? '', tag)
-    ) {
+    while (last < rows.length && !rows[last]?.matter && !found.kind.closes(rows[last]?.text ?? '', tag)) {
       last++
     }
     if (last >= rows.length || rows[last]?.matter) {
@@ -917,8 +886,7 @@ export function layoutOf(rows: readonly Lined[]): Layout {
     const row = rows[at]
     const blank = (row?.text.trim() ?? '') === ''
     goesOn[at] =
-      row?.code === true &&
-      (!blank || (next !== -1 && rows[next]?.code === true && runOf[next] === runOf[at]))
+      row?.code === true && (!blank || (next !== -1 && rows[next]?.code === true && runOf[next] === runOf[at]))
     if (!blank) next = at
   }
   return { held: heldBlocks(rows), goesOn, runOf, unclosed }
@@ -1014,8 +982,7 @@ function looseListStart(rows: readonly Lined[], first: number, blocks: Map<numbe
     const above = itemLines(rows, up, blocks)
     if (!above || above.indent < item.indent) break
     if (above.indent > item.indent) continue
-    if (above.last < start - 1 && rows.slice(above.last + 1, start).some((one) => one.text.trim()))
-      break
+    if (above.last < start - 1 && rows.slice(above.last + 1, start).some((one) => one.text.trim())) break
     start = above.first
   }
   return start
@@ -1095,9 +1062,7 @@ export function itemLines(
       }
       break
     }
-    if (
-      next.code ? next.text.trim() !== '' && depth(last + 1) < content : depth(last + 1) <= indent
-    ) {
+    if (next.code ? next.text.trim() !== '' && depth(last + 1) < content : depth(last + 1) <= indent) {
       break
     }
     last++
@@ -1147,9 +1112,7 @@ export function itemColumn(lines: readonly string[], at: number): number {
 }
 
 function outOfItem(block: readonly string[], column: number): string {
-  const least = block
-    .filter((line) => line.trim())
-    .reduce((most, line) => Math.min(most, indentOf(line)), Infinity)
+  const least = block.filter((line) => line.trim()).reduce((most, line) => Math.min(most, indentOf(line)), Infinity)
   const cut = least >= column && least < column + 4 ? least : column
   return block
     .map((line) => withoutColumns(line, cut))
@@ -1317,8 +1280,7 @@ export function blocksOf(text: string): NoteBlock[] {
     const holding = blocks.get(row.line)
     const inside = holding !== undefined && holding.first !== row.line
     const closed = blocks.get(row.line - 1)
-    const bound =
-      holding?.first === row.line ? holding : closed?.last === row.line - 1 ? closed : null
+    const bound = holding?.first === row.line ? holding : closed?.last === row.line - 1 ? closed : null
     const before = rows[row.line - 1]
     const turns = row.line > 0 && quoted[row.line] !== quoted[row.line - 1]
     const coded = !!before && !inside && row.code !== before.code
@@ -1366,16 +1328,12 @@ const ANCHOR_OPEN = '\uE0F0'
 const ANCHOR_CLOSE = '\uE0F1'
 const TABLE_RULE = /^\s*\|?[\s:|-]+\|?\s*$/
 
-export function blockIdsAnchored(
-  text: string,
-  holds: (line: number, words: string) => boolean,
-): string {
+export function blockIdsAnchored(text: string, holds: (line: number, words: string) => boolean): string {
   return replacingBlockIds(text, (kept, _length, row, id) => {
     const words = kept.slice(kept.lastIndexOf('\n') + 1)
     if (row.code || !holds(row.line, words) || TABLE_RULE.test(words)) return kept
     const mark = `${ANCHOR_OPEN}${id}${ANCHOR_CLOSE}`
-    const after = (held: string) =>
-      /\|\s*$/.test(held) ? held.replace(/\|\s*$/, `${mark} |`) : `${held} ${mark}`
+    const after = (held: string) => (/\|\s*$/.test(held) ? held.replace(/\|\s*$/, `${mark} |`) : `${held} ${mark}`)
     if (words.trim() !== '') return after(kept)
     const start = kept.length - words.length - 1
     const above = start < 0 ? '' : kept.slice(kept.lastIndexOf('\n', start - 1) + 1, start)
@@ -1402,10 +1360,7 @@ export function blockAnchorsDrawn(html: string): string {
     .replace(new RegExp(mark, 'g'), (_, id: string) => anchor(id))
 }
 
-function replacingBlockIds(
-  text: string,
-  by: (kept: string, length: number, row: Row, id: string) => string,
-): string {
+function replacingBlockIds(text: string, by: (kept: string, length: number, row: Row, id: string) => string): string {
   let out = ''
   let at = 0
 

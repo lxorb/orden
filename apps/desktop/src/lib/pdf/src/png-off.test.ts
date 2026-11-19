@@ -29,17 +29,14 @@ class Away {
 
 vi.stubGlobal('Worker', Away)
 vi.stubGlobal('OffscreenCanvas', Object)
-vi.stubGlobal('createImageBitmap', (canvas: { width: number }) =>
-  Promise.resolve({ width: canvas.width }),
-)
+vi.stubGlobal('createImageBitmap', (canvas: { width: number }) => Promise.resolve({ width: canvas.width }))
 
 const { pngData } = await import('./png-off')
 
 function canvas(width: number) {
   return {
     width,
-    toBlob: (done: (png: Blob) => void) =>
-      done(new Blob([new Uint8Array([1, 2])], { type: 'image/png' })),
+    toBlob: (done: (png: Blob) => void) => done(new Blob([new Uint8Array([1, 2])], { type: 'image/png' })),
   } as unknown as HTMLCanvasElement
 }
 
@@ -79,11 +76,7 @@ test('a picture drawn for its bytes is drawn off the page and encoded by the wor
   vi.stubGlobal('OffscreenCanvas', Sheet)
   const { pngDrawn } = await import('./png-off')
 
-  const png = await pngDrawn(
-    9,
-    4,
-    async () => (drawing) => drawing.drawImage({} as ImageBitmap, 0, 0),
-  )
+  const png = await pngDrawn(9, 4, async () => (drawing) => drawing.drawImage({} as ImageBitmap, 0, 0))
 
   expect(drawn).toEqual([9])
   expect(png).toEqual(new Uint8Array([9]))

@@ -125,11 +125,7 @@
 
 {#if open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div
-    class="orden-scrim scrim"
-    transition:fade={{ duration: LAYER.fade }}
-    onclick={() => (open = false)}
-  ></div>
+  <div class="orden-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={() => (open = false)}></div>
 
   <div
     class="orden-screen is-centred is-steady sheet"
@@ -149,10 +145,7 @@
           {:else if row.version}
             {@const version = row.version}
             <li>
-              <button
-                class:active={selected?.at === version.at}
-                onclick={() => (selected = version)}
-              >
+              <button class:active={selected?.at === version.at} onclick={() => (selected = version)}>
                 <span>{when(version.at, 'medium')}</span>
                 {#if version.by}
                   <em>{version.by}</em>
@@ -192,9 +185,7 @@
         {/if}
 
         {#if canWriteIn(previewOf?.note)}
-          <button class="orden-button" onclick={() => void restore()}>
-            Restore this version
-          </button>
+          <button class="orden-button" onclick={() => void restore()}> Restore this version </button>
         {/if}
       </div>
     {/if}

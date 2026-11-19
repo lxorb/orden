@@ -42,9 +42,7 @@ function opened(file: string) {
     },
     () => undefined,
   )
-  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
-    new DOMRect(0, 0, 800, 600),
-  )
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 800, 600))
   const tab = new Tab(note, 'pane')
   tab.camera = { x: 0, y: 0, scale: 1 }
   const target = document.body.appendChild(document.createElement('div'))

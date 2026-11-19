@@ -1,9 +1,4 @@
-import {
-  type AgentAnswer,
-  type AgentCaller as Caller,
-  agentRefusal,
-  type AgentScope as Scope,
-} from '@orden/contracts'
+import { type AgentAnswer, type AgentCaller as Caller, agentRefusal, type AgentScope as Scope } from '@orden/contracts'
 import { isRecord } from '../../platform/src/api'
 
 export type { AgentAnswer, Caller }
@@ -32,8 +27,7 @@ export function callerOf(told: unknown, thread?: unknown): Caller {
   const grant = isRecord(told) ? told : {}
   const id = typeof grant.id === 'string' && grant.id ? grant.id : 'agent'
   const builtIn = grant.built_in === true
-  const threadOf =
-    builtIn && typeof thread === 'string' && /^[\w-]{1,80}$/.test(thread) ? { thread } : {}
+  const threadOf = builtIn && typeof thread === 'string' && /^[\w-]{1,80}$/.test(thread) ? { thread } : {}
   return {
     agent: {
       id,
@@ -45,9 +39,7 @@ export function callerOf(told: unknown, thread?: unknown): Caller {
       programs: texts(grant.programs),
       sites: isRecord(grant.sites)
         ? Object.fromEntries(
-            Object.entries(grant.sites).filter(
-              (pair): pair is [string, string] => typeof pair[1] === 'string',
-            ),
+            Object.entries(grant.sites).filter((pair): pair is [string, string] => typeof pair[1] === 'string'),
           )
         : {},
     },
@@ -55,11 +47,8 @@ export function callerOf(told: unknown, thread?: unknown): Caller {
   }
 }
 
-export const fullPermissions = (grant: { mode?: string } | null | undefined): boolean =>
-  grant?.mode === 'autonomous'
+export const fullPermissions = (grant: { mode?: string } | null | undefined): boolean => grant?.mode === 'autonomous'
 
 export function holds(caller: Caller, scope: Scope): boolean {
-  return (
-    caller.agent === null || fullPermissions(caller.agent) || caller.agent.scopes.includes(scope)
-  )
+  return caller.agent === null || fullPermissions(caller.agent) || caller.agent.scopes.includes(scope)
 }

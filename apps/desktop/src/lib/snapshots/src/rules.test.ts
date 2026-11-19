@@ -48,13 +48,7 @@ describe('what the sweep keeps', () => {
   })
 
   test('and one for each of the hours there were', () => {
-    const versions = [
-      hoursAgo(48),
-      hoursAgo(48) + MINUTE,
-      hoursAgo(47),
-      hoursAgo(47) + MINUTE,
-      hoursAgo(46),
-    ]
+    const versions = [hoursAgo(48), hoursAgo(48) + MINUTE, hoursAgo(47), hoursAgo(47) + MINUTE, hoursAgo(46)]
 
     expect(kept(versions)).toEqual([hoursAgo(48) + MINUTE, hoursAgo(47) + MINUTE, hoursAgo(46)])
   })

@@ -120,8 +120,7 @@ export async function readHeld(path: string): Promise<void> {
   forget(path)
 }
 
-const rowsOf = (space: string, path: string): readonly Row[] =>
-  rows.of(space).filter((row) => row.path === path)
+const rowsOf = (space: string, path: string): readonly Row[] => rows.of(space).filter((row) => row.path === path)
 
 function numbering(path: string) {
   const space = spaceHolding(workspace.spaces, path)
@@ -237,8 +236,7 @@ export function heard(
 const MAKING = 'orden:repeat-templates'
 const MAKING_PATIENCE = 60_000
 
-export const repeatTemplates = (): Promise<void> =>
-  inTurn(() => MAKING, makeRepeats, MAKING_PATIENCE)
+export const repeatTemplates = (): Promise<void> => inTurn(() => MAKING, makeRepeats, MAKING_PATIENCE)
 
 async function makeRepeats() {
   const space = workspace.activeSpace
@@ -248,12 +246,7 @@ async function makeRepeats() {
   for (const row of rows.of(space.name)) {
     if (row.kind !== 'note' || typeof row.note.repeat !== 'string') continue
     const path = insideSpace(space.root, row.path)
-    if (
-      within(folder, path, space.root) === null ||
-      workspace.documentAt(path) ||
-      protection.locked(path)
-    )
-      continue
+    if (within(folder, path, space.root) === null || workspace.documentAt(path) || protection.locked(path)) continue
     const template = await workspace.noteText(path)
     if (template === null) continue
     const note = { ...row.note }
@@ -263,8 +256,7 @@ async function makeRepeats() {
     const due = repeatDue(note, today)
     if (!due) continue
 
-    const said =
-      typeof row.note.folder === 'string' ? row.note.folder.trim().replace(/^\/+|\/+$/g, '') : ''
+    const said = typeof row.note.folder === 'string' ? row.note.folder.trim().replace(/^\/+|\/+$/g, '') : ''
     const inside = said ? insideOnly(said) : ''
     if (inside === null) continue
     const to = inside ? insideSpace(space.root, inside) : space.root

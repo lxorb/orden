@@ -13,8 +13,7 @@ vi.mock('./store', async (importOriginal) => {
       said.push(`open ${id}`)
       const { MemoryStore } = await import('./memory-store')
       await new Promise((settle) => setTimeout(settle, 5))
-      const kept =
-        (stores.get(id) as InstanceType<typeof MemoryStore> | undefined) ?? new MemoryStore(id)
+      const kept = (stores.get(id) as InstanceType<typeof MemoryStore> | undefined) ?? new MemoryStore(id)
       stores.set(id, kept)
       const store = kept.open()
       return {
@@ -211,9 +210,7 @@ describe('the engine kept signed out', () => {
     await runner.startLocal()
 
     const local = stores.get('local') as InstanceType<typeof MemoryStore>
-    const [ids, from] = await local
-      .open()
-      .read([get('meta', 'carried:/Notes'), get('meta', 'from:/Notes')])
+    const [ids, from] = await local.open().read([get('meta', 'carried:/Notes'), get('meta', 'from:/Notes')])
     expect(JSON.parse(String(ids?.value))).toEqual({ 'Plan.md': id })
     expect(JSON.parse(String(from?.value))).toEqual({ account: 'u3', ids: [id] })
     await runner.stop()

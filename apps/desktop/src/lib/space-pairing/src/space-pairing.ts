@@ -1,27 +1,13 @@
 import type { SyncPairing } from '@orden/contracts'
 import { account, api } from '../../accounts/src/api'
-import {
-  forgetHome,
-  homeOf,
-  keepHomes,
-  leaveSpaces,
-  leftByAnother,
-} from '../../left-spaces/src/api'
+import { forgetHome, homeOf, keepHomes, leaveSpaces, leftByAnother } from '../../left-spaces/src/api'
 import { forgetSeedSpace, seedSpaceRoot } from '../../seeded/src/api'
 import { untouchedSeedSpace } from './seed-space'
 import { planSpaces } from './space-plan'
 import { mendSharedCopies } from './shared-copies'
 import { samePath, invoke, isNative } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
-import {
-  endsOwed,
-  holder,
-  iconOwed,
-  orderSent,
-  sendIcon,
-  settleEnds,
-  settleNames,
-} from '../../space-owed/src/api'
+import { endsOwed, holder, iconOwed, orderSent, sendIcon, settleEnds, settleNames } from '../../space-owed/src/api'
 
 const inTheAir = new WeakMap<SyncPairing, Promise<void>>()
 
@@ -129,8 +115,7 @@ async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
     }
   }
 
-  if (seeded !== null && pairing.pairs().some((one) => samePath(one.root, seeded)))
-    forgetSeedSpace()
+  if (seeded !== null && pairing.pairs().some((one) => samePath(one.root, seeded))) forgetSeedSpace()
 
   const paired = () => pairing.pairs()
   for (const space of plan.adopt) {
@@ -139,8 +124,7 @@ async function pairOnce(token: string, pairing: SyncPairing): Promise<void> {
       shared(space.id) ||
       workspace.spaces.some(
         (one) =>
-          one.name === space.name &&
-          (theirs(one.root) || paired().some((pair) => samePath(pair.root, one.root))),
+          one.name === space.name && (theirs(one.root) || paired().some((pair) => samePath(pair.root, one.root))),
       )
 
     const root = await workspace.adoptSpace(space.name, taken, space.id)

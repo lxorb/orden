@@ -7,12 +7,7 @@ import { sweepChats } from '../src/sync-server-chats/src/chats/sweep'
 import { sweepLeftovers } from '../src/sync-server-engine/src/leftovers'
 import { saveNote } from '../src/sync-server-engine/src/notes'
 import { purgeExpired } from '../src/sync-server-engine/src/trash'
-import {
-  DEVICES_COUNT_FOR,
-  GRACE,
-  NIGHTLY,
-  sweepUnused,
-} from '../src/sync-server-engine/src/unused'
+import { DEVICES_COUNT_FOR, GRACE, NIGHTLY, sweepUnused } from '../src/sync-server-engine/src/unused'
 import type { Note } from '../src/sync-server/src/types'
 import { sweepVersions } from '../src/sync-server/src/versions'
 import { call, joined, type ShareView, signIn, type TestEnv, testEnv } from './harness'
@@ -34,9 +29,7 @@ beforeEach(async () => {
 afterEach(() => env.close())
 
 async function heldInARoom(path: string, text: string, typed: string): Promise<string> {
-  const id = (
-    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content: text } })
-  ).json.note.id
+  const id = (await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content: text } })).json.note.id
   await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
 
   const doc = new Y.Doc()
@@ -55,8 +48,7 @@ async function heldInARoom(path: string, text: string, typed: string): Promise<s
 
 async function anotherAccount(): Promise<{ token: string; space: string }> {
   const other = await signIn(env, 'other@example.com')
-  const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Mine' } })).json
-    .space.id
+  const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Mine' } })).json.space.id
   await call(env, `/v2/spaces/${theirs}/prepare`, { token: other, method: 'POST' })
   return { token: other, space: theirs }
 }
@@ -78,9 +70,7 @@ describe('a space purged from Recently deleted', () => {
     expect(kept(id)).toBeGreaterThan(0)
 
     await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
-    expect((await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })).status).toBe(
-      200,
-    )
+    expect((await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })).status).toBe(200)
     return id
   }
 
@@ -122,13 +112,9 @@ describe('a space purged from Recently deleted', () => {
 
   test('writes down the bodies of its notes’ versions', async () => {
     const id = await purged()
-    const listed = env.db
-      .prepare("select what from leftovers where what like 'versions/%'")
-      .all() as { what: string }[]
+    const listed = env.db.prepare("select what from leftovers where what like 'versions/%'").all() as { what: string }[]
     expect(listed.length).toBeGreaterThan(0)
-    expect(
-      env.db.prepare('select count(*) as many from note_versions where note_id = ?').get(id),
-    ).toEqual({ many: 0 })
+    expect(env.db.prepare('select count(*) as many from note_versions where note_id = ?').get(id)).toEqual({ many: 0 })
   })
 
   test('takes away who it was shared with, and a guest that was in nothing else', async () => {
@@ -144,18 +130,15 @@ describe('a space purged from Recently deleted', () => {
     await purged()
 
     for (const table of ['space_members', 'space_links', 'space_requests', 'guest_members']) {
-      expect(
-        env.db.prepare(`select count(*) as many from ${table} where space_id = ?`).get(space),
-        table,
-      ).toEqual({ many: 0 })
+      expect(env.db.prepare(`select count(*) as many from ${table} where space_id = ?`).get(space), table).toEqual({
+        many: 0,
+      })
     }
     expect((await call(env, '/v1/me', { token: guest.json.token })).status).toBe(401)
   })
 
   test('ends its chats', async () => {
-    env.db
-      .prepare("insert into chats (id, space_id, created_at) values ('c_space', ?, 1)")
-      .run(space)
+    env.db.prepare("insert into chats (id, space_id, created_at) values ('c_space', ?, 1)").run(space)
     await purged()
 
     expect(env.db.prepare("select ended_at from chats where id = 'c_space'").get()).not.toEqual({
@@ -207,9 +190,7 @@ describe('a note purged from Recently deleted', () => {
 
   test('ends the chat its file opened, then and at the nightly sweep', async () => {
     const id = await heldInARoom('Talk.md', 'one\n', 'x')
-    env.db
-      .prepare("insert into chats (id, space_id, file_id, created_at) values ('c_file', ?, ?, 1)")
-      .run(space, id)
+    env.db.prepare("insert into chats (id, space_id, file_id, created_at) values ('c_file', ?, ?, 1)").run(space, id)
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
     await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
 
@@ -270,9 +251,7 @@ describe('a room erased while its object lives', () => {
     const memory = () => (room as unknown as { state: { doc: Y.Doc } }).state.doc
     expect(memory().getText(TEXT).toJSON()).toContain('TOP SECRET')
 
-    const erased = await room.fetch(
-      new Request('https://room/', { headers: { 'x-orden-erase': 'yes' } }),
-    )
+    const erased = await room.fetch(new Request('https://room/', { headers: { 'x-orden-erase': 'yes' } }))
     expect(erased.status).toBe(204)
     expect(first.closed).toBe(true)
     expect(memory().getText(TEXT).toJSON()).toBe('')
@@ -317,9 +296,8 @@ describe('a note restored and purged at once', () => {
   }
 
   async function deletedOnV1(path: string): Promise<string> {
-    const id = (
-      await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content: 'KEEP ME' } })
-    ).json.note.id
+    const id = (await call(env, `/v1/spaces/${space}/notes`, { token, body: { path, content: 'KEEP ME' } })).json.note
+      .id
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
     return id
   }
@@ -347,11 +325,10 @@ describe('a note restored and purged at once', () => {
     const id = await deleted('Both.md')
     beforeNextBatch(() => call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token }))
 
-    const answer = await call<{ results: Record<string, unknown>[] }>(
-      env,
-      `/v2/spaces/${space}/ops`,
-      { token, body: { ops: [{ op: 'back', t: 'restore', id, seen: 1_000_000 }] } },
-    )
+    const answer = await call<{ results: Record<string, unknown>[] }>(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: { ops: [{ op: 'back', t: 'restore', id, seen: 1_000_000 }] },
+    })
 
     expect(answer.status).toBe(200)
     expect(answer.json.results[0]).toMatchObject({ refused: 'gone' })
@@ -382,11 +359,10 @@ describe('a note restored and purged at once', () => {
     const id = await deleted('Both.md')
     await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
 
-    const answer = await call<{ results: Record<string, unknown>[] }>(
-      env,
-      `/v2/spaces/${space}/ops`,
-      { token, body: { ops: [{ op: 'back', t: 'restore', id, seen: 1_000_000 }] } },
-    )
+    const answer = await call<{ results: Record<string, unknown>[] }>(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: { ops: [{ op: 'back', t: 'restore', id, seen: 1_000_000 }] },
+    })
 
     expect(answer.json.results[0]).toMatchObject({ refused: 'gone' })
     expect(row(id)).toMatchObject({ deleted: 1, hash: '' })
@@ -453,13 +429,7 @@ describe('a purge the database fails part way', () => {
       id,
       at,
     )
-    run(
-      'insert into blog_paths (space_id, slug, note_id, at) values (?, ?, ?, ?)',
-      space,
-      `old-${id}`,
-      id,
-      at,
-    )
+    run('insert into blog_paths (space_id, slug, note_id, at) values (?, ?, ?, ?)', space, `old-${id}`, id, at)
     run(
       `insert into space_members (space_id, email, item, role, created_at) values (?, 'm@example.com', ?, 'read', ?)`,
       space,
@@ -509,8 +479,7 @@ describe('a purge the database fails part way', () => {
 
   const versionOf = (id: string) => createHash('sha256').update(id).digest('hex')
 
-  const count = (sql: string, ...args: string[]) =>
-    (env.db.prepare(sql).get(...args) as { held: number }).held
+  const count = (sql: string, ...args: string[]) => (env.db.prepare(sql).get(...args) as { held: number }).held
 
   const remaining = (id: string) => ({
     search: count('select count(*) as held from note_search where note_id = ?', id),
@@ -526,10 +495,7 @@ describe('a purge the database fails part way', () => {
     guests: count('select count(*) as held from guests where id = ?', `guest-${id}`),
     chats: count('select count(*) as held from chats where file_id = ? and ended_at is null', id),
     once: count('select count(*) as held from once_shared where item = ?', id),
-    terms: count(
-      'select count(*) as held from term_sessions where term = ? and ended_at is null',
-      id,
-    ),
+    terms: count('select count(*) as held from term_sessions where term = ? and ended_at is null', id),
   })
 
   const nothing = {
@@ -562,8 +528,7 @@ describe('a purge the database fails part way', () => {
         named ||= args.some((one) => typeof one === 'string' && one.includes(only ?? ''))
         return bind(...args)
       }
-      statement.run = (...args: []) =>
-        down && named ? Promise.reject(new Error('D1 is not answering')) : run(...args)
+      statement.run = (...args: []) => (down && named ? Promise.reject(new Error('D1 is not answering')) : run(...args))
       return statement
     }
     return () => {
@@ -599,9 +564,7 @@ describe('a purge the database fails part way', () => {
 
     expect(first.status).toBe(500)
     expect(env.db.prepare('select hash, size from notes where id = ?').get(id)).toEqual(before)
-    expect(
-      (await call(env, '/v1/trash', { token })).json.notes.map((one: { id: string }) => one.id),
-    ).toEqual([id])
+    expect((await call(env, '/v1/trash', { token })).json.notes.map((one: { id: string }) => one.id)).toEqual([id])
     expect((await env.NOTES.get(`spaces/${space}/${id}`))?.size).toBe(body)
     expect(await env.NOTES.get(`versions/${versionOf(id)}`)).not.toBe(null)
     expect(remaining(id)).toEqual(whole)
@@ -611,9 +574,12 @@ describe('a purge the database fails part way', () => {
 
     expect(second.status).toBe(200)
     expect(remaining(id)).toEqual(nothing)
-    expect(
-      env.db.prepare('select deleted, deleted_at, hash, size from notes where id = ?').get(id),
-    ).toEqual({ deleted: 1, deleted_at: null, hash: '', size: 0 })
+    expect(env.db.prepare('select deleted, deleted_at, hash, size from notes where id = ?').get(id)).toEqual({
+      deleted: 1,
+      deleted_at: null,
+      hash: '',
+      size: 0,
+    })
     expect(env.keys()).not.toContain(`spaces/${space}/${id}`)
     expect(env.keys()).not.toContain(`versions/${versionOf(id)}`)
     expect(count('select count(*) as held from leftovers where what = ?', `rooms/${id}`)).toBe(1)
@@ -624,14 +590,11 @@ describe('a purge the database fails part way', () => {
   })
 
   describe('its words, which are not worth holding the rest up for', () => {
-    const wordsLeft = (id: string) =>
-      count('select count(*) as held from leftovers where what = ?', `words/${id}`)
+    const wordsLeft = (id: string) => count('select count(*) as held from leftovers where what = ?', `words/${id}`)
 
     test('go with it when they can, and leave nothing to come back for', async () => {
       const id = await held()
-      expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(
-        200,
-      )
+      expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
       expect(remaining(id)).toEqual(nothing)
       expect(wordsLeft(id)).toBe(0)
     })
@@ -640,9 +603,7 @@ describe('a purge the database fails part way', () => {
       const id = await held()
       const recovered = failing(/delete from note_search/)
 
-      expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(
-        200,
-      )
+      expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
       expect(env.db.prepare('select deleted_at, hash from notes where id = ?').get(id)).toEqual({
         deleted_at: null,
         hash: '',
@@ -700,9 +661,7 @@ describe('a purge the database fails part way', () => {
     expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
 
     expect(widest).toBeLessThanOrEqual(2_000_000)
-    expect(
-      count('select count(*) as held from unused_blobs where hash like ?', '0%'),
-    ).toBeGreaterThan(39_000)
+    expect(count('select count(*) as held from unused_blobs where hash like ?', '0%')).toBeGreaterThan(39_000)
   })
 
   test('whatever is past the transaction comes back at the sweep', async () => {
@@ -798,9 +757,7 @@ describe('a v1 note deleted again', () => {
     ).json.note.id
   }
   const row = (id: string) =>
-    env.db
-      .prepare('select deleted, deleted_at, version, name_key from notes where id = ?')
-      .get(id) as {
+    env.db.prepare('select deleted, deleted_at, version, name_key from notes where id = ?').get(id) as {
       deleted: number
       deleted_at: number | null
       version: number
@@ -827,9 +784,7 @@ describe('a v1 note deleted again', () => {
 
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
     expect(row(id)).toEqual(before)
-    expect(
-      (await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })).status,
-    ).toBe(404)
+    expect((await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })).status).toBe(404)
   })
 })
 
@@ -856,19 +811,15 @@ describe('an id made by another space', () => {
     })
     await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
 
-    const made = await call<{ results: Record<string, unknown>[] }>(
-      env,
-      `/v2/spaces/${space}/ops`,
-      {
-        token,
-        body: {
-          ops: [
-            { op: 'theirs', t: 'mkdir', id: folder, parent: null, name: 'Theirs', seen: 0 },
-            { op: 'fine', t: 'mkdir', id: 'folder-fine', parent: null, name: 'Fine', seen: 0 },
-          ],
-        },
+    const made = await call<{ results: Record<string, unknown>[] }>(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: {
+        ops: [
+          { op: 'theirs', t: 'mkdir', id: folder, parent: null, name: 'Theirs', seen: 0 },
+          { op: 'fine', t: 'mkdir', id: 'folder-fine', parent: null, name: 'Fine', seen: 0 },
+        ],
       },
-    )
+    })
     expect(made.status).toBe(200)
     expect(made.json.results[0]).toMatchObject({ refused: 'gone' })
     expect(made.json.results[1]).toMatchObject({ id: 'folder-fine' })
@@ -934,9 +885,7 @@ describe('what a purge stops paying for', () => {
       body: { ops: [{ op: 'd1', t: 'delete', id: 'file_1', seen: 999 }] },
     })
     await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
-    expect((await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })).status).toBe(
-      200,
-    )
+    expect((await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })).status).toBe(200)
 
     expect(await used()).toBe(before)
     expect(env.keys()).not.toContain(`blobs/${hash}`)
@@ -1009,8 +958,7 @@ describe('what a purge stops paying for', () => {
 
   test('reads the unread notes once for everything a sweep asks about', async () => {
     const other = await signIn(env, 'other@example.com')
-    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Big' } })).json
-      .space.id
+    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Big' } })).json.space.id
     await joined(env, other, theirs, 'owner@example.com', 'write', { as: token })
     for (let at = 0; at < 260; at++) {
       env.db
@@ -1062,8 +1010,7 @@ describe('a picture nothing shows any more', () => {
   }
   const holds = (hash: string) =>
     (env.db.prepare('select count(*) as n from blobs where hash = ?').get(hash) as { n: number }).n
-  const listed = () =>
-    (env.db.prepare('select count(*) as n from unused_blobs').get() as { n: number }).n
+  const listed = () => (env.db.prepare('select count(*) as n from unused_blobs').get() as { n: number }).n
   const shows = async (path: string, hash: string): Promise<string> =>
     (
       await call(env, `/v1/spaces/${space}/notes`, {
@@ -1076,8 +1023,7 @@ describe('a picture nothing shows any more', () => {
     env.db.prepare('update notes set deleted_at = 1 where id = ?').run(id)
     await purgeExpired(env, Date.now())
   }
-  const daysAgo = (many: number) =>
-    env.db.prepare('update unused_blobs set since = since - ?').run(many * DAY)
+  const daysAgo = (many: number) => env.db.prepare('update unused_blobs set since = since - ?').run(many * DAY)
 
   test('stays the night its last note goes, and goes once the grace has passed', async () => {
     const hash = await picture('one')
@@ -1141,8 +1087,7 @@ describe('a picture nothing shows any more', () => {
   }
   const versionsGone = () => sweepVersions(env, Date.now() + 2 * GRACE)
   const owner = () =>
-    (env.db.prepare('select user_id from spaces where id = ?').get(space) as { user_id: string })
-      .user_id
+    (env.db.prepare('select user_id from spaces where id = ?').get(space) as { user_id: string }).user_id
   const phoneSeen = (at: number) =>
     env.db
       .prepare(

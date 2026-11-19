@@ -29,11 +29,7 @@
   import ShareSheet from './ShareSheet.svelte'
   import VaultSheet from './VaultSheet.svelte'
 
-  const {
-    tab,
-    focused = false,
-    corner,
-  }: { tab: Tab | null; focused?: boolean; corner?: Snippet<[PassUi]> } = $props()
+  const { tab, focused = false, corner }: { tab: Tab | null; focused?: boolean; corner?: Snippet<[PassUi]> } = $props()
 
   const ui = new PassUi(untrack(() => tab))
 
@@ -117,8 +113,7 @@
 
   const shows = $derived.by(() => {
     if (columns === 3) return { side: true, list: !wide, item: true }
-    if (columns === 2)
-      return { side: true, list: step !== 'item' && !wide, item: step === 'item' || wide }
+    if (columns === 2) return { side: true, list: step !== 'item' && !wide, item: step === 'item' || wide }
     return {
       side: step === 'side',
       list: step === 'list' && !wide,
@@ -154,13 +149,7 @@
 {/snippet}
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-  class="pass"
-  bind:clientWidth={width}
-  onkeydown={onkey}
-  data-region="editor"
-  data-columns={columns}
->
+<div class="pass" bind:clientWidth={width} onkeydown={onkey} data-region="editor" data-columns={columns}>
   {#if pass.state === 'locked'}
     <PassLock {focused} />
   {:else if recovery !== null}
@@ -170,11 +159,7 @@
   {:else if pass.state === 'new'}
     <Setup onmade={(code: string) => (recovery = code)} />
   {:else if pass.mustChangePassword}
-    <Gate
-      icon={KeyRound}
-      title="Choose a new Pass password"
-      line="You opened Pass with your recovery key."
-    >
+    <Gate icon={KeyRound} title="Choose a new Pass password" line="You opened Pass with your recovery key.">
       <ChangePassword ondone={() => undefined} />
     </Gate>
   {:else}
@@ -187,10 +172,7 @@
       {#if shows.list}
         <div class="column list" class:is-flagged={flagged}>
           {#if flagged && ui.flag}
-            <PassList
-              {ui}
-              heading={{ title: flagName(ui.flag), ids: ui.flagged, back: () => (ui.flag = null) }}
-            />
+            <PassList {ui} heading={{ title: flagName(ui.flag), ids: ui.flagged, back: () => (ui.flag = null) }} />
           {:else}
             <PassList {ui} stepped={columns === 1} />
           {/if}

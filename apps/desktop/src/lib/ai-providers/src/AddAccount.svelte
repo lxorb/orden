@@ -26,9 +26,7 @@
   const hint = $derived(road ? ROAD_HINTS[road] : '')
   const brand = $derived(makers.find((one) => one.id === maker) ?? null)
 
-  const ready = $derived(
-    !!road && !busy && (road === 'compatible' ? !!baseUrl.trim() : !keyed(road) || !!typed.trim()),
-  )
+  const ready = $derived(!!road && !busy && (road === 'compatible' ? !!baseUrl.trim() : !keyed(road) || !!typed.trim()))
 
   $effect(() => {
     if (open) return
@@ -111,12 +109,7 @@
       {#if road === 'compatible'}
         <label class="field">
           <span>Name</span>
-          <input
-            class="orden-field"
-            bind:value={name}
-            placeholder={KIND_NAMES.compatible}
-            spellcheck="false"
-          />
+          <input class="orden-field" bind:value={name} placeholder={KIND_NAMES.compatible} spellcheck="false" />
         </label>
         <label class="field">
           <span>Base URL</span>

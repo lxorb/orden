@@ -82,11 +82,7 @@ export function snapMove(moving: Box, others: readonly Box[], reach = REACH): Sn
   }
 }
 
-export function snapPoint(
-  at: { x: number; y: number },
-  others: readonly Box[],
-  reach = REACH,
-): Snap {
+export function snapPoint(at: { x: number; y: number }, others: readonly Box[], reach = REACH): Snap {
   const guides: Guide[] = []
 
   const across = nearestOf(at.x, at.y, others, reach, acrossOf, downOf)
@@ -132,12 +128,7 @@ function nearestOf(
   return best
 }
 
-export function snapResize(
-  box: Box,
-  handle: HandleId,
-  others: readonly Box[],
-  reach = REACH,
-): Snap {
+export function snapResize(box: Box, handle: HandleId, others: readonly Box[], reach = REACH): Snap {
   const edgeX = handle.includes('w') ? box.x : handle.includes('e') ? box.x + box.width : null
   const edgeY = handle.includes('n') ? box.y : handle.includes('s') ? box.y + box.height : null
 
@@ -160,12 +151,7 @@ export function snapResize(
   return { dx, dy, guides }
 }
 
-function nearestStop(
-  at: number,
-  others: readonly Box[],
-  reach: number,
-  axis: (box: Box) => Span,
-): number | null {
+function nearestStop(at: number, others: readonly Box[], reach: number, axis: (box: Box) => Span): number | null {
   let best: number | null = null
   let nearby = reach
 

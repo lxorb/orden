@@ -10,10 +10,7 @@ export interface SetextEdit {
 
 const UNDERLINE = /^[ \t>]*(?:[-*+]|\d+[.)])?[ \t]*(?:=+|-+)[ \t]*$/m
 
-const withSetext = parser.configure([
-  GFM,
-  ...ordenMarkdownExtensions.filter((one) => one !== NoSetextHeadings),
-])
+const withSetext = parser.configure([GFM, ...ordenMarkdownExtensions.filter((one) => one !== NoSetextHeadings)])
 
 const LEVEL: Readonly<Record<string, number>> = { SetextHeading1: 1, SetextHeading2: 2 }
 
@@ -39,10 +36,7 @@ export function setextEdits(text: string): SetextEdit[] {
       const level = LEVEL[node.name]
       if (!level) return true
 
-      if (
-        level === 2 &&
-        /^[ \t>]*-[ \t]*$/.test(text.slice(text.lastIndexOf('\n', node.to - 1) + 1, node.to))
-      ) {
+      if (level === 2 && /^[ \t>]*-[ \t]*$/.test(text.slice(text.lastIndexOf('\n', node.to - 1) + 1, node.to))) {
         return false
       }
 
@@ -57,7 +51,6 @@ export function setextEdits(text: string): SetextEdit[] {
 
 export function withoutSetext(text: string): string {
   let out = text
-  for (const edit of setextEdits(text).reverse())
-    out = out.slice(0, edit.from) + edit.insert + out.slice(edit.to)
+  for (const edit of setextEdits(text).reverse()) out = out.slice(0, edit.from) + edit.insert + out.slice(edit.to)
   return out
 }

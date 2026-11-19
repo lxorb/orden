@@ -6,8 +6,7 @@
   import Glyph from './Glyph.svelte'
   import { VAULT_ICON_MARKS, vaultColour } from '../../pass-sync/src/api'
 
-  const { color, icon, mark }: { color: VaultColor; icon: VaultIcon; mark?: string | undefined } =
-    $props()
+  const { color, icon, mark }: { color: VaultColor; icon: VaultIcon; mark?: string | undefined } = $props()
 
   const ink = $derived(vaultColour(color, theme.current))
   const chosen = $derived(mark ? readIcon(mark) : null)

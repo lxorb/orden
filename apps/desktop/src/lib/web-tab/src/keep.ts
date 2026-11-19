@@ -64,9 +64,7 @@ export function keepNow(path: string) {
 async function writeFile(kept: Kept, home: string | null, icon: string | null): Promise<void> {
   if (!canWriteAt(kept.path)) return
   const text = kept.text()
-  const content = /\.webloc$/i.test(kept.path.trim())
-    ? aimWebloc(text, kept.url)
-    : shortcutFor(kept, text, home, icon)
+  const content = /\.webloc$/i.test(kept.path.trim()) ? aimWebloc(text, kept.url) : shortcutFor(kept, text, home, icon)
   if (content === text) return
 
   kept.wrote(content)

@@ -32,8 +32,7 @@ export interface Span {
   device: string | null
 }
 
-const isTime = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value) && value >= 0
+const isTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0
 
 const textOr = (value: unknown, longest: number, otherwise = ''): string =>
   typeof value === 'string' ? value.slice(0, longest) : otherwise
@@ -114,8 +113,7 @@ export interface Rule {
 
 export function ruleOf(id: string, value: Record<string, unknown>): Rule | null {
   const activity = idOr(value.activity)
-  const old =
-    typeof value.space === 'string' ? 'space' : typeof value.site === 'string' ? 'site' : null
+  const old = typeof value.space === 'string' ? 'space' : typeof value.site === 'string' ? 'site' : null
   const lane = LANES.find((one) => one === value.lane) ?? old
   const place = textOr(value.place ?? (lane ? value[lane] : null), 253)
   if (!activity || !lane || !place) return null

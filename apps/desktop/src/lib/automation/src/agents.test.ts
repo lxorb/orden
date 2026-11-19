@@ -33,15 +33,7 @@ describe('an agent at the dispatcher', () => {
   test('reaches every agent row with the scope the crate names for it, and no other', async () => {
     for (const [verb, scope] of Object.entries(AGENT_WINDOW_VERBS)) {
       reached.length = 0
-      const others = [
-        'context',
-        'notes.read',
-        'notes.write',
-        'tree',
-        'workspace',
-        'settings',
-        'terminal',
-      ]
+      const others = ['context', 'notes.read', 'notes.write', 'tree', 'workspace', 'settings', 'terminal']
       const without = others.filter((one) => one !== scope)
 
       const refused = await dispatch(verb, {}, [], 'here', agentHolding(...without))
@@ -105,9 +97,7 @@ describe('an agent at the dispatcher', () => {
     expect(await dispatch('read_note', { path: 'a.md' }, [], 'here', garbled)).toMatchObject({
       code: 'not_granted',
     })
-    expect(callerOf({ id: 'x', scopes: ['notes.read'], mode: 'whatever' }).agent?.mode).toBe(
-      'confirm',
-    )
+    expect(callerOf({ id: 'x', scopes: ['notes.read'], mode: 'whatever' }).agent?.mode).toBe('confirm')
     expect(reached).toEqual([])
   })
 
@@ -121,13 +111,7 @@ describe('an agent at the dispatcher', () => {
 
   test('the command line keeps its own bookmarks verb, and an agent gets the agent one', async () => {
     reached.length = 0
-    const theirs = await dispatch(
-      'bookmarks',
-      { op: 'list' },
-      [],
-      'here',
-      agentHolding('workspace'),
-    )
+    const theirs = await dispatch('bookmarks', { op: 'list' }, [], 'here', agentHolding('workspace'))
     expect(theirs).toMatchObject({ status: 'ok', result: { ran: 'bookmarks' } })
     expect(reached).toEqual([{ name: 'bookmarks', agent: 'claude-code' }])
 

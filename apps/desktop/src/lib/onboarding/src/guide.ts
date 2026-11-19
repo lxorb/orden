@@ -16,14 +16,7 @@ export interface Came {
   terminals: boolean
 }
 
-const MARKDOWN_LIKE: ReadonlySet<string> = new Set([
-  'obsidian',
-  'markdown',
-  'logseq',
-  'bear',
-  'roam',
-  'notion',
-])
+const MARKDOWN_LIKE: ReadonlySet<string> = new Set(['obsidian', 'markdown', 'logseq', 'bear', 'roam', 'notion'])
 
 const MOST = 5
 
@@ -127,8 +120,7 @@ export function shownBox(found: Element | null, room: { width: number; height: n
   if (!found) return null
   const box = found.getBoundingClientRect()
   if (box.width < 1 || box.height < 1) return null
-  if (box.right <= 0 || box.bottom <= 0 || box.left >= room.width || box.top >= room.height)
-    return null
+  if (box.right <= 0 || box.bottom <= 0 || box.left >= room.width || box.top >= room.height) return null
   return { x: box.left, y: box.top, width: box.width, height: box.height }
 }
 

@@ -70,9 +70,7 @@ export async function firstPass(
   const matched: Matched[] = []
   const claimed = new Set<string>()
 
-  const untold = Object.entries(v1?.untold ?? {}).filter(
-    ([id, one]) => v1?.notes[one.from]?.id === id,
-  )
+  const untold = Object.entries(v1?.untold ?? {}).filter(([id, one]) => v1?.notes[one.from]?.id === id)
   const left = new Set(untold.map(([, one]) => one.from))
   const away = new Set(untold.map(([id]) => id))
   const byTracked = (path: string): EntryRow | null => {
@@ -111,9 +109,7 @@ export async function firstPass(
       changes.push(...core.entryChanges([gone]))
       continue
     }
-    const entry = listed.dir
-      ? byPlace(listed.path, true)
-      : (byTracked(listed.path) ?? byPlace(listed.path, false))
+    const entry = listed.dir ? byPlace(listed.path, true) : (byTracked(listed.path) ?? byPlace(listed.path, false))
     if (!entry) {
       strays.push(listed)
       continue
@@ -131,9 +127,7 @@ export async function firstPass(
     return id !== undefined && !core.entry(id) && !claimed.has(id) ? { id } : {}
   }
   const depth = (path: string) => path.split('/').length
-  for (const stray of strays
-    .filter((one) => one.dir)
-    .sort((a, b) => depth(a.path) - depth(b.path))) {
+  for (const stray of strays.filter((one) => one.dir).sort((a, b) => depth(a.path) - depth(b.path))) {
     if (space.folderAt(stray.path) !== undefined) continue
     const folder = { path: stray.path, folder: true, ...idOf(stray.path) }
     changes.push(...(await made(core, space, folder)).changes)
@@ -152,8 +146,7 @@ export async function firstPass(
   const needs: Matched[] = []
   for (const one of matched) {
     const digest = await world.digest(one.file)
-    const seeds =
-      one.item.epochBase === digest && (one.tracked === undefined || one.tracked.hash === digest)
+    const seeds = one.item.epochBase === digest && (one.tracked === undefined || one.tracked.hash === digest)
     if (seeds) {
       seed(core, space, one, changes)
     } else if (one.tracked?.hash !== digest) {
@@ -304,13 +297,7 @@ function send(core: Core, space: SpaceState, op: Op): Change[] {
 function seed(core: Core, space: SpaceState, one: Matched, changes: Change[]) {
   const shape = shapeOf(one.entry.kind) ?? 'words'
   const epoch = one.item.epoch ?? 1
-  const doc = core.made(
-    one.entry.id,
-    shape,
-    epoch,
-    seedOf(shape, one.entry.id, epoch, one.file),
-    one.file ? 1 : 0,
-  )
+  const doc = core.made(one.entry.id, shape, epoch, seedOf(shape, one.entry.id, epoch, one.file), one.file ? 1 : 0)
   core.wanted(space.id).set(one.entry.id, { docSeq: one.item.docSeq ?? 0, epoch })
   changes.push(...core.docChanges(doc))
 }
@@ -345,9 +332,7 @@ async function reconcile(
   } else if (one.tracked?.hash === remoteDigest) {
     take(local)
   } else {
-    const ancestor = one.tracked
-      ? ((await core.world.ancestor?.(one.entry.id, one.tracked.hash)) ?? null)
-      : null
+    const ancestor = one.tracked ? ((await core.world.ancestor?.(one.entry.id, one.tracked.hash)) ?? null) : null
     if (ancestor !== null) {
       const times = { local: core.world.now(), remote: 0 }
       const judged = judge(shape, ancestor, local, remote, times)

@@ -10,15 +10,11 @@ const UNIT = 'a [b](c) '
 function viewOf(count: number): EditorView {
   const doc = UNIT.repeat(count)
   const hidden: Ranged<Decoration>[] = [Decoration.mark({ class: 'whole' }).range(0, doc.length)]
-  for (let at = 0; at < doc.length; at += UNIT.length)
-    hidden.push(Decoration.replace({}).range(at + 5, at + 8))
+  for (let at = 0; at < doc.length; at += UNIT.length) hidden.push(Decoration.replace({}).range(at + 5, at + 8))
   const view = new EditorView({
     state: EditorState.create({
       doc,
-      extensions: [
-        EditorView.lineWrapping,
-        EditorView.decorations.of(Decoration.set(hidden, true)),
-      ],
+      extensions: [EditorView.lineWrapping, EditorView.decorations.of(Decoration.set(hidden, true))],
     }),
     parent: document.body,
   })

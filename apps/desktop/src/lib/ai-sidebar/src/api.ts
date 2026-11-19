@@ -1,9 +1,7 @@
 import { partView } from '../../ui-kit/src/api'
 
 export const loadChatPanel = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no AI panel in the Even Realities plugin'))
-    : import('./ChatPanel.svelte')
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('no AI panel in the Even Realities plugin')) : import('./ChatPanel.svelte')
 
 export const loadQuickQuestion = () =>
   __EVEN_PLUGIN__

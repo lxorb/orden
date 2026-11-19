@@ -14,9 +14,7 @@ export async function sweepChats(env: Env, at: number): Promise<number> {
     .bind(at)
     .run()
 
-  const { results } = await env.DB.prepare(
-    'select id from chats where ended_at is not null and ended_at < ? limit ?',
-  )
+  const { results } = await env.DB.prepare('select id from chats where ended_at is not null and ended_at < ? limit ?')
     .bind(at - KEPT_FOR, AT_A_TIME)
     .all<{ id: string }>()
   if (!results.length) return 0

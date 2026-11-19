@@ -151,21 +151,11 @@ describe('a task changed', () => {
       undefined,
       context.today,
     )
-    expect(edited.text.split('\n')[1]).toBe(
-      '- [ ] Call the bank [time:: 16:00] #admin ⏫ 📅 2026-10-05',
-    )
+    expect(edited.text.split('\n')[1]).toBe('- [ ] Call the bank [time:: 16:00] #admin ⏫ 📅 2026-10-05')
   })
 
   test('ticked: its open sub-task with it', () => {
-    const edited = editedTask(
-      NOTE,
-      'Home',
-      'Errands.md',
-      anchor('Call the bank'),
-      {},
-      true,
-      context.today,
-    )
+    const edited = editedTask(NOTE, 'Home', 'Errands.md', anchor('Call the bank'), {}, true, context.today)
     const lines = edited.text.split('\n')
     expect(lines[1]).toContain('[x]')
     expect(lines[1]).not.toContain('✅')
@@ -174,15 +164,7 @@ describe('a task changed', () => {
   })
 
   test('a recurring one writes its next occurrence above, and says where', () => {
-    const edited = editedTask(
-      NOTE,
-      'Home',
-      'Errands.md',
-      anchor('Water the plants'),
-      {},
-      true,
-      context.today,
-    )
+    const edited = editedTask(NOTE, 'Home', 'Errands.md', anchor('Water the plants'), {}, true, context.today)
     const lines = edited.text.split('\n')
     expect(lines[4]).toBe('- [ ] Water the plants 🔁 every 3 days 📅 2026-10-06')
     expect(lines[5]).toBe('- [x] Water the plants 🔁 every 3 days 📅 2026-10-03')
@@ -212,15 +194,7 @@ describe('a task changed', () => {
     )
     expect(edited.text.split('\n')[9]).toBe('- [ ] Renew the gym 🔺 📅 2026-10-20')
     expect(() =>
-      editedTask(
-        '# Empty\n',
-        'Home',
-        'Errands.md',
-        anchor('Renew the gym'),
-        {},
-        true,
-        context.today,
-      ),
+      editedTask('# Empty\n', 'Home', 'Errands.md', anchor('Renew the gym'), {}, true, context.today),
     ).toThrow('not in the note any more')
   })
 
@@ -244,12 +218,11 @@ describe('lists', () => {
   })
 
   test("Todoist's filter, on top of a view or alone", () => {
-    expect(listTasks(rows, { filter: '#admin' }, context).tasks.map((one) => one.text)).toEqual([
+    expect(listTasks(rows, { filter: '#admin' }, context).tasks.map((one) => one.text)).toEqual(['Call the bank'])
+    expect(listTasks(rows, { filter: 'p2 | no date' }, context).tasks.map((one) => one.text)).toEqual([
       'Call the bank',
+      'Find the card',
     ])
-    expect(
-      listTasks(rows, { filter: 'p2 | no date' }, context).tasks.map((one) => one.text),
-    ).toEqual(['Call the bank', 'Find the card'])
   })
 
   test('a limit of nothing answers no tasks, and the total', () => {
@@ -298,9 +271,7 @@ describe('lists', () => {
 
   test("words like tomorrow read from the wall clock of the account's zone", () => {
     const wall = wallClock(new Date('2026-10-04T23:30:00Z'), 'Pacific/Auckland')
-    expect([wall.getFullYear(), wall.getMonth() + 1, wall.getDate(), wall.getHours()]).toEqual([
-      2026, 10, 5, 12,
-    ])
+    expect([wall.getFullYear(), wall.getMonth() + 1, wall.getDate(), wall.getHours()]).toEqual([2026, 10, 5, 12])
     expect(taskLine(quickWords(['en'], wall)('Call mum tomorrow').fields)).toContain('2026-10-06')
   })
 })
@@ -323,9 +294,7 @@ describe('bases', () => {
     expect(rowPlace(base).template).toBe('Templates/Book')
     expect(rowPlace(base, 'Shelf').template).toBe('Templates/Shelf')
     expect(rowPlace(base, 'Elsewhere').template).toBe('Templates/Book')
-    expect(rowPlace(readBase('views:\n  - type: table\n    name: All\n'))).not.toHaveProperty(
-      'template',
-    )
+    expect(rowPlace(readBase('views:\n  - type: table\n    name: All\n'))).not.toHaveProperty('template')
     expect(
       filledTemplate(
         '---\nstatus: new\nrepeat: every day\n---\n# {{title}}\nAdded {{date}} at {{time}}, due {{date+1w}}\n',
@@ -336,9 +305,9 @@ describe('bases', () => {
   })
 
   test('properties written, taken away, a list as a list', () => {
-    expect(
-      withProperties('Words', { status: 'done', pages: 3, read: true, tags: ['a', 'b'] }),
-    ).toBe('---\nstatus: done\npages: 3\nread: true\ntags: [a, b]\n---\nWords')
+    expect(withProperties('Words', { status: 'done', pages: 3, read: true, tags: ['a', 'b'] })).toBe(
+      '---\nstatus: done\npages: 3\nread: true\ntags: [a, b]\n---\nWords',
+    )
     expect(withProperties('---\nstatus: done\n---\nWords', { status: null })).toBe('Words')
     expect(() => withProperties('', { 'a: b': 1 })).toThrow(AgentError)
   })
@@ -374,8 +343,7 @@ describe('bases', () => {
     expect(base.views).toHaveLength(1)
     expect(editedBase(edited, [{ op: 'remove_view', name: 'Board' }]).views).toHaveLength(1)
     expect(() => editedBase(base, [{ op: 'rename' }])).toThrow(AgentError)
-    const views = (n: number) =>
-      Array.from({ length: n }, (_, at) => ({ op: 'add_view', name: `V${String(at)}` }))
+    const views = (n: number) => Array.from({ length: n }, (_, at) => ({ op: 'add_view', name: `V${String(at)}` }))
     expect(editedBase(base, views(500)).views).toHaveLength(501)
     expect(() => editedBase(base, views(501))).toThrow('at most 500 ops')
   })
@@ -442,31 +410,19 @@ describe('a base edited where Orden could not read it', () => {
 
 describe('a new row of a base', () => {
   test('keeps the tags its template has, beside the ones the base needs and the ones asked for', () => {
-    const base = readBase(
-      'filters: file.hasTag("reading")\nviews:\n  - type: table\n    name: All\n',
-    )
-    const template = filledTemplate(
-      '---\ntags: [book, fiction]\nstatus: new\n---\n# {{title}}\n',
-      'Dune',
-      {
-        today: '2026-11-15',
-        now: '2026-11-15T10:00:00',
-      },
-    )
+    const base = readBase('filters: file.hasTag("reading")\nviews:\n  - type: table\n    name: All\n')
+    const template = filledTemplate('---\ntags: [book, fiction]\nstatus: new\n---\n# {{title}}\n', 'Dune', {
+      today: '2026-11-15',
+      now: '2026-11-15T10:00:00',
+    })
     const text = rowWords(template, rowPlace(base).properties, { tags: ['#sci-fi'] })
-    expect(text).toMatch(
-      /tags: \[book, fiction, reading, sci-fi\]|book[\s\S]*fiction[\s\S]*reading[\s\S]*sci-fi/,
-    )
+    expect(text).toMatch(/tags: \[book, fiction, reading, sci-fi\]|book[\s\S]*fiction[\s\S]*reading[\s\S]*sci-fi/)
     expect(text).toContain('status: new')
   })
 
   test('is answered by its own path and space, whatever its properties are called', () => {
     const base = readBase('views:\n  - type: table\n    name: All\n')
-    const rows = rowsOfText(
-      'Home',
-      'Courses/Rust.md',
-      '---\npath: beginner\nspace: Mars\n---\nbody\n',
-    )
+    const rows = rowsOfText('Home', 'Courses/Rust.md', '---\npath: beginner\nspace: Mars\n---\nbody\n')
     const out = queryBase(base, undefined, rows, clockOf(new Date(), 'UTC'))
     expect(out.groups[0]?.rows[0]).toMatchObject({ path: 'Courses/Rust.md', space: 'Home' })
   })

@@ -108,12 +108,7 @@ function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | nu
   } else if (g.other.has(word())) {
     rule.every = 2
     index++
-  } else if (
-    (counted ?? nth) !== undefined &&
-    unitNext &&
-    unitNext !== 'minute' &&
-    unitNext !== 'hour'
-  ) {
+  } else if ((counted ?? nth) !== undefined && unitNext && unitNext !== 'minute' && unitNext !== 'hour') {
     rule.every = counted ?? nth ?? 1
     index++
   }
@@ -167,12 +162,7 @@ function germanRule(words: readonly Word[], at: number, g: Grammar): Repeat | nu
   return { end: index, rule }
 }
 
-export function repeatAt(
-  words: readonly Word[],
-  at: number,
-  g: Grammar,
-  clock: Clock,
-): Repeat | null {
+export function repeatAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): Repeat | null {
   const part = g.every.has(bare(words[at])) ? g.partsOfDay[bare(words[at + 1])] : undefined
   if (part) {
     const later = timeInPart(words, at + 2, g, part)

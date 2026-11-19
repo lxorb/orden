@@ -26,15 +26,7 @@ export function glassSettings(): ThemeSetting[] {
       initial: true,
       paint: () => ({}),
     },
-    rangeSetting(
-      'tint',
-      'Tint',
-      'How strongly the frame is coloured.',
-      0,
-      100,
-      Math.round(DIALS.strength * 100),
-      '%',
-    ),
+    rangeSetting('tint', 'Tint', 'How strongly the frame is coloured.', 0, 100, Math.round(DIALS.strength * 100), '%'),
     {
       id: 'pair',
       label: 'Tint colour',

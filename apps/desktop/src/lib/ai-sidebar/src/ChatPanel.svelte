@@ -29,9 +29,7 @@
   const bound = $derived(!tab || (tab.address ?? null) === (chat.head?.kept ? chat.head.id : null))
   const shown = $derived(bound || turning || chat.host === host)
   const front = $derived(
-    !!tab &&
-      workspace.panes.focusedId === tab.paneId &&
-      workspace.panes.at(tab.paneId)?.activeTabId === tab.id,
+    !!tab && workspace.panes.focusedId === tab.paneId && workspace.panes.at(tab.paneId)?.activeTabId === tab.id,
   )
 
   $effect(() => {
@@ -63,10 +61,8 @@
   })
 
   const BACK = 'M8 3.2L4.7 6.5 8 9.8'
-  const RAIL =
-    'M2.6 2.2h7.8a1 1 0 0 1 1 1v6.6a1 1 0 0 1-1 1H2.6a1 1 0 0 1-1-1V3.2a1 1 0 0 1 1-1zM5 2.2v8.6'
-  const NEW =
-    'M10.9 6.9v3.1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.1a1 1 0 0 1 1-1h3.1M9.3 1.8l1.9 1.9-4.6 4.6-2.5.6.6-2.5z'
+  const RAIL = 'M2.6 2.2h7.8a1 1 0 0 1 1 1v6.6a1 1 0 0 1-1 1H2.6a1 1 0 0 1-1-1V3.2a1 1 0 0 1 1-1zM5 2.2v8.6'
+  const NEW = 'M10.9 6.9v3.1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.1a1 1 0 0 1 1-1h3.1M9.3 1.8l1.9 1.9-4.6 4.6-2.5.6.6-2.5z'
 
   function toggleRail() {
     railed = !railed
@@ -77,9 +73,7 @@
     const thread = chat.thread
     menu.show(event, [
       { label: 'Rename', asks: true, run: () => void chat.rename() },
-      ...(thread
-        ? [{ label: 'Follow', checked: following(thread), run: () => toggleFollow(thread) }]
-        : []),
+      ...(thread ? [{ label: 'Follow', checked: following(thread), run: () => toggleFollow(thread) }] : []),
       { label: 'Branch', run: () => chat.branch() },
       { label: 'Save as a note', run: () => void chat.exportThread() },
       ...(wide ? [] : [{ label: 'Open in new tab', run: chatToTab }]),
@@ -177,12 +171,7 @@
         {/if}
         <span class="gap"></span>
         {#if wide && !railed}
-          {@render glyph(
-            shortcuts.tooltip('New chat', 'ai.new'),
-            'New chat',
-            () => chat.newThread(),
-            NEW,
-          )}
+          {@render glyph(shortcuts.tooltip('New chat', 'ai.new'), 'New chat', () => chat.newThread(), NEW)}
         {/if}
       </header>
     {/if}

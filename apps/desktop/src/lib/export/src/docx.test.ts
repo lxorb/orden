@@ -21,12 +21,7 @@ function png(width: number, height: number): Uint8Array {
     return [...length, ...bytes, 0, 0, 0, 0]
   }
 
-  const be = (value: number) => [
-    (value >>> 24) & 0xff,
-    (value >>> 16) & 0xff,
-    (value >>> 8) & 0xff,
-    value & 0xff,
-  ]
+  const be = (value: number) => [(value >>> 24) & 0xff, (value >>> 16) & 0xff, (value >>> 8) & 0xff, value & 0xff]
 
   return new Uint8Array([
     0x89,
@@ -184,10 +179,7 @@ describe('the document part', () => {
     wellFormed(rels)
 
     const declared = new Map(
-      [...rels.matchAll(/Id="([^"]+)"[^>]*?Target="([^"]+)"/g)].map(([, id = '', target = '']) => [
-        id,
-        target,
-      ]),
+      [...rels.matchAll(/Id="([^"]+)"[^>]*?Target="([^"]+)"/g)].map(([, id = '', target = '']) => [id, target]),
     )
 
     const used = [...document_.matchAll(/r:(?:id|embed)="([^"]+)"/g)].map(([, id = '']) => id)
@@ -342,21 +334,19 @@ test('lists nested deeper than Word counts are written, each item numbered at a 
   const deep = (marker: string) =>
     Array.from({ length: 12 }, (_, at) => `${'    '.repeat(at)}${marker} item ${at}`).join('\n')
   const source = `${deep('-')}\n\nWords.\n\n${deep('1.')}\n\n> ${deep('-').replace(/\n/g, '\n> ')}\n`
-  const xml = await JSZip.loadAsync(await toDocx(documentOf(source, 'N.md'), [], PAPER)).then(
-    (one) => one.file('word/document.xml')!.async('string'),
+  const xml = await JSZip.loadAsync(await toDocx(documentOf(source, 'N.md'), [], PAPER)).then((one) =>
+    one.file('word/document.xml')!.async('string'),
   )
 
   wellFormed(xml)
   expect(count(xml, /item 11/g)).toBe(3)
-  const levels = [...xml.matchAll(/<w:ilvl w:val="(\d+)"\/>/g)].map(([, level = '']) =>
-    Number(level),
-  )
+  const levels = [...xml.matchAll(/<w:ilvl w:val="(\d+)"\/>/g)].map(([, level = '']) => Number(level))
   expect(levels).toHaveLength(36)
   expect(Math.max(...levels)).toBe(8)
 
-  const numbering = await JSZip.loadAsync(
-    await toDocx(documentOf(deep('1.'), 'N.md'), [], PAPER),
-  ).then((one) => one.file('word/numbering.xml')!.async('string'))
+  const numbering = await JSZip.loadAsync(await toDocx(documentOf(deep('1.'), 'N.md'), [], PAPER)).then((one) =>
+    one.file('word/numbering.xml')!.async('string'),
+  )
   for (const level of [5, 6, 7, 8]) expect(numbering).toContain(`w:lvlText w:val="%${level + 1}."`)
 })
 
@@ -364,10 +354,7 @@ const EMU = 9525
 
 async function mediaParts(): Promise<Uint8Array[]> {
   const targets = new Map(
-    [...rels.matchAll(/Id="([^"]+)"[^>]*?Target="([^"]+)"/g)].map(([, id = '', target = '']) => [
-      id,
-      target,
-    ]),
+    [...rels.matchAll(/Id="([^"]+)"[^>]*?Target="([^"]+)"/g)].map(([, id = '', target = '']) => [id, target]),
   )
 
   const used = [...document_.matchAll(/<a:blip r:embed="([^"]+)"/g)].map(([, id = '']) => id)
@@ -382,9 +369,10 @@ async function mediaParts(): Promise<Uint8Array[]> {
 }
 
 function extents(): number[][] {
-  return [...document_.matchAll(/<wp:extent cx="(\d+)" cy="(\d+)"\/>/g)].map(
-    ([, cx = '0', cy = '0']) => [Number(cx) / EMU, Number(cy) / EMU],
-  )
+  return [...document_.matchAll(/<wp:extent cx="(\d+)" cy="(\d+)"\/>/g)].map(([, cx = '0', cy = '0']) => [
+    Number(cx) / EMU,
+    Number(cy) / EMU,
+  ])
 }
 
 describe('pictures', () => {
@@ -455,9 +443,7 @@ describe('a note with nothing much in it', () => {
   })
 
   test('takes its title from the file when the note names none', async () => {
-    const bare = await JSZip.loadAsync(
-      await toDocx(documentOf('words\n', 'Untitled.md'), [], PAPER),
-    )
+    const bare = await JSZip.loadAsync(await toDocx(documentOf('words\n', 'Untitled.md'), [], PAPER))
     const core = await bare.file('docProps/core.xml')!.async('string')
 
     expect(core).toContain('Untitled')
@@ -525,11 +511,7 @@ describe('characters XML cannot carry', () => {
   test('a picture is still found by what the note wrote', async () => {
     const doc = documentOf('![cat](a.png)\n', 'Note.md')
     const zip = await JSZip.loadAsync(
-      await toDocx(
-        doc,
-        [{ src: 'a.png', name: 'a\u0001.png', mime: 'image/png', bytes: LOCAL }],
-        PAPER,
-      ),
+      await toDocx(doc, [{ src: 'a.png', name: 'a\u0001.png', mime: 'image/png', bytes: LOCAL }], PAPER),
     )
     const xml = await zip.file('word/document.xml')?.async('string')
     expect(xml).toContain('<pic:pic')

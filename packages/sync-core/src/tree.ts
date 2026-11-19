@@ -98,23 +98,14 @@ function holdsName(state: TreeState, parent: string | null, key: string, except:
   if (!holders) return false
   for (const entry of holders) {
     const there =
-      state.entries.get(entry.id) === entry &&
-      !entry.deleted &&
-      entry.parent === parent &&
-      nameKey(entry.name) === key
+      state.entries.get(entry.id) === entry && !entry.deleted && entry.parent === parent && nameKey(entry.name) === key
     if (!there) holders.delete(entry)
     else if (entry.id !== except) return true
   }
   return false
 }
 
-function freeName(
-  state: TreeState,
-  parent: string | null,
-  wanted: string,
-  kind: EntryKind,
-  except: string,
-): string {
+function freeName(state: TreeState, parent: string | null, wanted: string, kind: EntryKind, except: string): string {
   const free = (candidate: string) => !holdsName(state, parent, nameKey(candidate), except)
   const first = (name: string): string =>
     kind === 'folder'
@@ -152,8 +143,7 @@ function taken(state: TreeState, entry: TreeEntry, device: string | undefined) {
 
 function stamped(state: TreeState, entry: TreeEntry, device: string | undefined, seen?: number) {
   const place = placing(entry)
-  const unseen =
-    seen !== undefined && place.seq > seen && place.by !== undefined && place.by !== device
+  const unseen = seen !== undefined && place.seq > seen && place.by !== undefined && place.by !== device
   entry.seq = tick(state)
   if (unseen) {
     if (place.by !== undefined) entry.by = place.by
@@ -228,29 +218,19 @@ function writtenSince(entry: TreeEntry, seen: number, device: string | undefined
 
 function placing(entry: TreeEntry): { seq: number; by: string | undefined } {
   const wordsLast = entry.seq === entry.docSeq && entry.placedSeq !== undefined
-  return wordsLast
-    ? { seq: entry.placedSeq ?? entry.seq, by: entry.placedBy }
-    : { seq: entry.seq, by: entry.by }
+  return wordsLast ? { seq: entry.placedSeq ?? entry.seq, by: entry.placedBy } : { seq: entry.seq, by: entry.by }
 }
 
 function changedSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
   const place = placing(entry)
   const byOther = device === undefined || place.by !== device
-  return (
-    (place.seq > seen && byOther) ||
-    writtenSince(entry, seen, device) ||
-    othersAfter(entry, seen, device)
-  )
+  return (place.seq > seen && byOther) || writtenSince(entry, seen, device) || othersAfter(entry, seen, device)
 }
 
 function othersSince(entry: TreeEntry, seen: number, device: string | undefined): boolean {
   const place = placing(entry)
   const byOther = place.by !== undefined && (device === undefined || place.by !== device)
-  return (
-    (place.seq > seen && byOther) ||
-    writtenSince(entry, seen, device) ||
-    othersAfter(entry, seen, device)
-  )
+  return (place.seq > seen && byOther) || writtenSince(entry, seen, device) || othersAfter(entry, seen, device)
 }
 
 class Rules {
@@ -259,14 +239,7 @@ class Rules {
     private readonly device: string | undefined,
   ) {}
 
-  made(
-    op: Op,
-    id: string,
-    kind: EntryKind,
-    parent: string | null,
-    wanted: string,
-    pos?: string,
-  ): OpResult {
+  made(op: Op, id: string, kind: EntryKind, parent: string | null, wanted: string, pos?: string): OpResult {
     const { state, device } = this
     const existing = state.entries.get(id)
     if (existing) return existing.deleted ? { op: op.op, refused: 'gone' } : placement(op, existing)
@@ -385,9 +358,7 @@ class Rules {
     if (othersSince(entry, op.seen, device)) return { op: op.op, refused: 'edited' }
 
     const inside = under(state, entry.id).filter((one) => !one.deleted)
-    const changed = new Set(
-      inside.filter((one) => changedSince(one, op.seen, device)).map((one) => one.id),
-    )
+    const changed = new Set(inside.filter((one) => changedSince(one, op.seen, device)).map((one) => one.id))
     const cameWith = (one: TreeEntry): boolean => {
       for (let at: string | null = one.id; at !== null && at !== entry.id;) {
         if (changed.has(at)) return true
@@ -471,9 +442,7 @@ export function applyOp(state: TreeState, op: Op, context: OpContext): OpResult 
   if (before) return before
 
   const result: OpResult =
-    context.role === 'read'
-      ? { op: op.op, refused: 'role' }
-      : new Rules(state, context.device).applied(op)
+    context.role === 'read' ? { op: op.op, refused: 'role' } : new Rules(state, context.device).applied(op)
   state.done.set(op.op, result)
   return result
 }

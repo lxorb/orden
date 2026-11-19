@@ -106,12 +106,7 @@ export function bearWords(text: string, from = '', notes: NoteIndex = EMPTY): st
 }
 
 function encoded(path: string): string {
-  return path
-    .replace(/%/g, '%25')
-    .replace(/ /g, '%20')
-    .replace(/\(/g, '%28')
-    .replace(/\)/g, '%29')
-    .replace(/#/g, '%23')
+  return path.replace(/%/g, '%25').replace(/ /g, '%20').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/#/g, '%23')
 }
 
 interface NoteIndex {
@@ -136,9 +131,7 @@ function noteIndex(sources: readonly Source[], infos: ReadonlyMap<string, Info>)
     const named = (bundle ?? source.path).split('/').pop() ?? ''
     const title = named.replace(/\.(textbundle|md|markdown|txt)$/i, '').toLowerCase()
     if (!byTitle.has(title)) byTitle.set(title, source.path)
-    notes.push(
-      (bundle ?? source.path).replace(/\.(textbundle|md|markdown|txt)$/i, '').toLowerCase(),
-    )
+    notes.push((bundle ?? source.path).replace(/\.(textbundle|md|markdown|txt)$/i, '').toLowerCase())
   }
 
   return {
@@ -218,9 +211,7 @@ function infoOf(infos: ReadonlyMap<string, Info>, path: string): Info | undefine
 }
 
 const record = (value: unknown): Record<string, unknown> | null =>
-  value && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : null
+  value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null
 
 function text(value: unknown): string | null {
   return typeof value === 'string' && value ? value : null

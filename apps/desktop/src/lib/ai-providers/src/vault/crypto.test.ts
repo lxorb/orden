@@ -1,8 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { commitment, digits as pairing, newNonce } from '../pairing'
 
-const digits = (...parts: [string, string, string, string]) =>
-  pairing('nib ai vault digits', ...parts)
+const digits = (...parts: [string, string, string, string]) => pairing('nib ai vault digits', ...parts)
 import { authOf, fingerprint, idOf, newDeviceKey, newVaultKey, open, seal, unwrap } from './crypto'
 import { wrap } from './crypto'
 
@@ -63,9 +62,7 @@ describe('the vault’s keys', () => {
     expect(await open(key, sealed)).toBe('{"keys":{"anthropic":"sk-ant"}}')
     await expect(open(newVaultKey(), sealed)).rejects.toThrow()
     const bytes = atob(sealed)
-    const changed = btoa(
-      bytes.slice(0, -1) + String.fromCharCode(bytes.charCodeAt(bytes.length - 1) ^ 1),
-    )
+    const changed = btoa(bytes.slice(0, -1) + String.fromCharCode(bytes.charCodeAt(bytes.length - 1) ^ 1))
     await expect(open(key, changed)).rejects.toThrow()
   })
 

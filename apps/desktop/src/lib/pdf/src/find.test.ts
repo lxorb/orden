@@ -33,9 +33,7 @@ describe("a page's runs, read from the PDF", () => {
   ]
 
   test('a line that ends is kept apart from the next by a line break', () => {
-    expect(textOfRuns(runsOfItems(items))).toBe(
-      'the end of a field.\nLine 52\nends in a space last',
-    )
+    expect(textOfRuns(runsOfItems(items))).toBe('the end of a field.\nLine 52\nends in a space last')
   })
 
   test('so a match does not run across two lines, and a phrase across them is found', () => {
@@ -51,10 +49,7 @@ describe("a page's runs, read from the PDF", () => {
 
   test('and each run starts where its span does, the space after it', () => {
     const runs = runsOfItems(items)
-    const words = wordsOfRuns(
-      runs,
-      divs(...items.flatMap((one) => ('str' in one ? [one.str || null] : []))),
-    )
+    const words = wordsOfRuns(runs, divs(...items.flatMap((one) => ('str' in one ? [one.str || null] : []))))
 
     expect(words.pieces.map((piece) => piece.at)).toEqual([0, 20, 28, 44])
   })
@@ -149,9 +144,7 @@ describe('the words a hit covers on the page', () => {
 
   test('a word inside one run covers that run alone', () => {
     const at = text.indexOf('second')
-    expect(spansOver(pieces, at, 6).map(({ node, from, to }) => node.data.slice(from, to))).toEqual(
-      ['second'],
-    )
+    expect(spansOver(pieces, at, 6).map(({ node, from, to }) => node.data.slice(from, to))).toEqual(['second'])
   })
 
   test('nothing is covered past the last run', () => {

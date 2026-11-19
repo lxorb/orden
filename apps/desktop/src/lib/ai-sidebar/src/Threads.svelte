@@ -29,9 +29,7 @@
     const words = chat.listQuery.toLowerCase().split(/\s+/).filter(Boolean)
     return chat.heads.filter((one) => matches(one, words))
   })
-  const archived = $derived(
-    found.filter((one) => stateIn(one) === 'archived').sort((a, b) => b.updated - a.updated),
-  )
+  const archived = $derived(found.filter((one) => stateIn(one) === 'archived').sort((a, b) => b.updated - a.updated))
   const active = $derived(ordered(found, chat.states, chat.unread))
   const shownArchived = $derived(archivedShown ? archived : [])
   const rows = $derived([...active, ...shownArchived])
@@ -76,11 +74,7 @@
     } else if (event.key === 'Enter') {
       event.preventDefault()
       if (one) void chat.openThread(one.id)
-    } else if (
-      event.key === 'Delete' &&
-      one &&
-      !deletesTyped(event.currentTarget as HTMLInputElement)
-    ) {
+    } else if (event.key === 'Delete' && one && !deletesTyped(event.currentTarget as HTMLInputElement)) {
       event.preventDefault()
       if (event.shiftKey) void chat.remove(one.id)
       else toggleArchived(one)
@@ -117,11 +111,7 @@
 <div class="threads" in:fly={{ y: rail ? 0 : -6, duration: dur(150), easing: cubicOut }}>
   <div class="top">
     {#if rail}
-      <button
-        class="new"
-        title={shortcuts.tooltip('New chat', 'ai.new')}
-        onclick={() => chat.newThread()}
-      >
+      <button class="new" title={shortcuts.tooltip('New chat', 'ai.new')} onclick={() => chat.newThread()}>
         <svg viewBox="0 0 13 13" aria-hidden="true"
           ><path
             d="M10.9 6.9v3.1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.1a1 1 0 0 1 1-1h3.1M9.3 1.8l1.9 1.9-4.6 4.6-2.5.6.6-2.5z"

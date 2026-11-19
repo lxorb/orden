@@ -12,16 +12,11 @@ type Inside = MarkdownParser & {
   inlineTable?: readonly (readonly Inline[])[]
 }
 
-const Context = InlineContext as unknown as new (
-  parser: MarkdownParser,
-  text: string,
-  offset: number,
-) => InlineContext
+const Context = InlineContext as unknown as new (parser: MarkdownParser, text: string, offset: number) => InlineContext
 
 const parsers: Record<string, MarkdownParser> = {
   orden: ordenMarkdownParser,
-  editor: markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }).language
-    .parser as MarkdownParser,
+  editor: markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }).language.parser as MarkdownParser,
 }
 
 const PIECES = [
@@ -94,10 +89,7 @@ function random(seed: number): () => number {
 function texts(count: number, seed: number): string[] {
   const next = random(seed)
   return Array.from({ length: count }, () =>
-    Array.from(
-      { length: 1 + Math.floor(next() * 40) },
-      () => PIECES[Math.floor(next() * PIECES.length)],
-    ).join(''),
+    Array.from({ length: 1 + Math.floor(next() * 40) }, () => PIECES[Math.floor(next() * PIECES.length)]).join(''),
   )
 }
 
@@ -125,9 +117,7 @@ describe.each(Object.entries(parsers))('the %s parser', (_name, parser) => {
           if (parse.triggers.includes(String.fromCharCode(next))) continue
           const cx = new Context(parser, text, 0)
           const result = parse(cx, next, pos)
-          expect(result, `${inside.inlineNames[index]} at ${pos} of ${JSON.stringify(text)}`).toBe(
-            -1,
-          )
+          expect(result, `${inside.inlineNames[index]} at ${pos} of ${JSON.stringify(text)}`).toBe(-1)
         }
       })
     }
@@ -137,8 +127,7 @@ describe.each(Object.entries(parsers))('the %s parser', (_name, parser) => {
     const every = Object.create(parser) as Inside
     const all = inside.inlineParsers.filter((parse): parse is Inline => Boolean(parse))
     Object.defineProperty(every, 'inlineTable', { value: Array.from({ length: 129 }, () => all) })
-    for (const text of texts(600, 5))
-      expect(shape(parser, text), JSON.stringify(text)).toBe(shape(every, text))
+    for (const text of texts(600, 5)) expect(shape(parser, text), JSON.stringify(text)).toBe(shape(every, text))
   })
 })
 

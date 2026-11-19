@@ -19,9 +19,7 @@ vi.mock('./http', async (importOriginal) => ({
   listChats: async () => {
     const { chatRow } = await import('./test-account')
     return {
-      chats: account.chats.map((id) =>
-        chatRow(id, { space: 'space-1', role: 'owner', members: 1 }),
-      ),
+      chats: account.chats.map((id) => chatRow(id, { space: 'space-1', role: 'owner', members: 1 })),
     }
   },
   eventsOf: () => Promise.resolve(null),
@@ -31,9 +29,7 @@ vi.mock('./http', async (importOriginal) => ({
 vi.mock('./pointers', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./pointers')>()),
   findPointers: () =>
-    Promise.resolve(
-      new Map([...disk.pointers].map(([path, chat]) => [chat, { root: '/space', path }])),
-    ),
+    Promise.resolve(new Map([...disk.pointers].map(([path, chat]) => [chat, { root: '/space', path }]))),
   readPointer: (path: string) => Promise.resolve(disk.pointers.get(path) ?? null),
 }))
 

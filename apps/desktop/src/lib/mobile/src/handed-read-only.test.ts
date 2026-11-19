@@ -37,8 +37,7 @@ vi.mock('../../platform/src/api', async (original) => ({
   method: (name: string) =>
     ({
       handed: () => '',
-      shared: () =>
-        JSON.stringify({ items: [{ name: '', mime: 'text/plain', text: world.shared }] }),
+      shared: () => JSON.stringify({ items: [{ name: '', mime: 'text/plain', text: world.shared }] }),
       sharedDone: () => {
         world.done++
       },

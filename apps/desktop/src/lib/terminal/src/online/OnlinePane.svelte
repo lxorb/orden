@@ -33,8 +33,7 @@
 
   const when = (stamp: number) => localDate(stamp, { dateStyle: 'short', timeStyle: 'short' })
 
-  const detail = (row: SessionRow) =>
-    [row.file, row.at === null ? null : when(row.at)].filter((one) => one !== null)
+  const detail = (row: SessionRow) => [row.file, row.at === null ? null : when(row.at)].filter((one) => one !== null)
 
   async function open(path: string) {
     const space = spaceHolding(workspace.spaces, path)
@@ -73,9 +72,7 @@
 
   const offers = $derived(machine.offers)
 
-  const choosable = $derived(
-    offers !== null && (!known?.machine || known.machine.host === 'hetzner'),
-  )
+  const choosable = $derived(offers !== null && (!known?.machine || known.machine.host === 'hetzner'))
 
   const running = $derived((sessions.list ?? []).filter((one) => one.alive === true).length)
 
@@ -102,9 +99,7 @@
   const time = (used: number, limit: number) => `${hours(used)} / ${hours(limit)} h`
   const room = (used: number, limit: number) => `${bytes(used)} / ${bytes(limit)}`
 
-  const diskMeter = $derived(
-    disk ? [meter('Disk', diskShare(disk), room(disk.used, disk.total), diskNear(disk))] : [],
-  )
+  const diskMeter = $derived(disk ? [meter('Disk', diskShare(disk), room(disk.used, disk.total), diskNear(disk))] : [])
 
   const meters = $derived.by(() => {
     if (server) return diskMeter
@@ -120,11 +115,7 @@
   })
 
   const refusal = $derived(
-    machine.known?.allowed === false
-      ? refusalWords('list')
-      : machine.refused
-        ? refusalWords(machine.refused)
-        : null,
+    machine.known?.allowed === false ? refusalWords('list') : machine.refused ? refusalWords(machine.refused) : null,
   )
 </script>
 
@@ -136,8 +127,7 @@
           Machine
           {#if summary}
             <small class="summary"><Facts parts={summary.about} /></small>
-            {#if summary.cost.length}<small class="summary"><Facts parts={summary.cost} /></small
-              >{/if}
+            {#if summary.cost.length}<small class="summary"><Facts parts={summary.cost} /></small>{/if}
           {/if}
         </span>
         <div class="row">
@@ -147,15 +137,13 @@
               class="orden-chip"
               aria-expanded={machine.picking}
               disabled={state === 'starting' || state === 'stopping'}
-              onclick={() => (machine.picking = !machine.picking)}
-              >{about?.made ? 'Change' : 'Choose'}</button
+              onclick={() => (machine.picking = !machine.picking)}>{about?.made ? 'Change' : 'Choose'}</button
             >
           {/if}
           <button
             class="orden-chip"
             disabled={machine.busy || state === 'stopping' || (server && state === 'starting')}
-            onclick={() => void machine.startStop(!awake)}
-            >{awake ? (server ? 'Restart' : 'Stop') : 'Start'}</button
+            onclick={() => void machine.startStop(!awake)}>{awake ? (server ? 'Restart' : 'Stop') : 'Start'}</button
           >
         </div>
       </div>

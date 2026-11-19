@@ -76,6 +76,5 @@ providePort('sync.api', {
 })
 
 providePort('sync.pairing', {
-  pairSpaces: async (token, pairing) =>
-    (await import('./space-pairing/src/api')).pairSpaces(token, pairing),
+  pairSpaces: async (token, pairing) => (await import('./space-pairing/src/api')).pairSpaces(token, pairing),
 })

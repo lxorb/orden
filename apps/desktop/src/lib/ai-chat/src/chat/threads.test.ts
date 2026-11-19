@@ -18,15 +18,12 @@ vi.mock('../../../platform/src/tauri', () => ({
       case 'ai_thread_read':
         return disk.get(key)?.body ?? null
       case 'ai_threads_list':
-        return [...disk.entries()]
-          .filter(([at]) => at.startsWith(`${String(args.space)}/`))
-          .map(([, one]) => one.head)
+        return [...disk.entries()].filter(([at]) => at.startsWith(`${String(args.space)}/`)).map(([, one]) => one.head)
       case 'ai_thread_delete':
         disk.delete(key)
         return null
       case 'ai_threads_forget':
-        for (const at of [...disk.keys()])
-          if (at.startsWith(`${String(args.space)}/`)) disk.delete(at)
+        for (const at of [...disk.keys()]) if (at.startsWith(`${String(args.space)}/`)) disk.delete(at)
         return null
       default:
         throw new Error(command)
@@ -370,9 +367,7 @@ describe('whether anybody is answering is asked, not read off the clock', () => 
     inFile(thread)
     expect(await claimAnswer(thread.id)).toBe(true)
     onTestFinished(() => unclaimAnswer(thread.id))
-    const stop = other.hear('thread-answering?', (said) =>
-      other.say('thread-answering', { id: said.id }),
-    )
+    const stop = other.hear('thread-answering?', (said) => other.say('thread-answering', { id: said.id }))
     const named: unknown[] = []
     const stopNamed = other.hear('thread-fields', (said) => named.push(said.fields))
     const reading = readThread('work', thread.id)

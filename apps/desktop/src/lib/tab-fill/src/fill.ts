@@ -29,10 +29,7 @@ async function fill(tabId?: string): Promise<void> {
     going = false
   }
 
-  if (
-    workspace.panes.focusedId !== pane ||
-    !mayFill(workspace.panes.focused.activeTabId, viewport.touch)
-  ) {
+  if (workspace.panes.focusedId !== pane || !mayFill(workspace.panes.focused.activeTabId, viewport.touch)) {
     chromeStays()
     return
   }

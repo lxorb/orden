@@ -81,16 +81,13 @@ describe('a launch scan', () => {
 
   test('nothing under a folder that would not list is a delete', async () => {
     listing.answer = () =>
-      Promise.resolve([
-        { path: `${ROOT}/shut`, dir: true, size: 0, mtime: 0, id: null, unlisted: true },
-      ])
+      Promise.resolve([{ path: `${ROOT}/shut`, dir: true, size: 0, mtime: 0, id: null, unlisted: true }])
     const removed = await scanIt(false)
     expect(removed.mock.calls).toEqual([[`${ROOT}/gone.md`]])
   })
 
   test('a folder that listed empty, and an answer that a file is gone, still are', async () => {
-    listing.answer = () =>
-      Promise.resolve([{ path: `${ROOT}/shut`, dir: true, size: 0, mtime: 0, id: null }])
+    listing.answer = () => Promise.resolve([{ path: `${ROOT}/shut`, dir: true, size: 0, mtime: 0, id: null }])
     const removed = await scanIt(false)
     expect(removed.mock.calls).toEqual([[`${ROOT}/shut/inside.md`], [`${ROOT}/gone.md`]])
   })
@@ -323,10 +320,7 @@ describe('a note another program moves', () => {
       [`${ROOT}/.trash/Diary.md`],
       2,
     )
-    expect(done).toEqual([
-      `copied ${ROOT}/Diary.md ${ROOT}/.trash/Diary.md`,
-      `removed ${ROOT}/Diary.md`,
-    ])
+    expect(done).toEqual([`copied ${ROOT}/Diary.md ${ROOT}/.trash/Diary.md`, `removed ${ROOT}/Diary.md`])
   })
 
   test('over a second note gives that note the lock before the first is let go of', async () => {

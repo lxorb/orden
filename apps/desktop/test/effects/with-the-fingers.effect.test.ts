@@ -72,17 +72,13 @@ function easing(element: Element, top: Element): string[] {
     if (animation && !/^none\b/.test(animation.trim())) found.push(`${what} plays ${animation}`)
   }
   for (const one of element.querySelectorAll('*')) look(one)
-  for (let at: Element | null = element; at && at !== top.parentElement; at = at.parentElement)
-    look(at)
+  for (let at: Element | null = element; at && at !== top.parentElement; at = at.parentElement) look(at)
   return found
 }
 
 describe('reading what a transition eases', () => {
   test('names what it eases, and `all` where it names nothing', () => {
-    expect(eased('transform var(--dur-instant) var(--ease-out), color 1s')).toEqual([
-      'transform',
-      'color',
-    ])
+    expect(eased('transform var(--dur-instant) var(--ease-out), color 1s')).toEqual(['transform', 'color'])
     expect(eased('0.2s cubic-bezier(0.3, 1, 0.3, 1) scale')).toEqual(['scale'])
     expect(eased('1s ease')).toEqual(['all'])
     expect(eased('none')).toEqual([])
@@ -162,28 +158,25 @@ describe('a drawer under the thumb', () => {
     ['narrow', 'left', 'open'],
     ['narrow', 'right', ''],
     ['narrow', 'right', 'open'],
-  ])(
-    '%s, the %s drawer, %s: still settling from the last drag or not, nothing eases',
-    (width, side, open) => {
-      const host = document.createElement('div')
-      host.setAttribute('data-drawer', '')
-      if (width === 'narrow') host.setAttribute('data-narrow', '')
-      const layer = side === 'right' ? 'panels right' : 'panels'
-      for (const settling of ['', 'settling']) {
-        const at = `held dragging ${open} ${settling}`
-        host.innerHTML = `<div class="${layer} ${at}"></div>
+  ])('%s, the %s drawer, %s: still settling from the last drag or not, nothing eases', (width, side, open) => {
+    const host = document.createElement('div')
+    host.setAttribute('data-drawer', '')
+    if (width === 'narrow') host.setAttribute('data-narrow', '')
+    const layer = side === 'right' ? 'panels right' : 'panels'
+    for (const settling of ['', 'settling']) {
+      const at = `held dragging ${open} ${settling}`
+      host.innerHTML = `<div class="${layer} ${at}"></div>
         <div class="document ${side === 'left' ? at : ''}"><div class="scrim ${at}"></div></div>`
-        document.body.append(host)
-        const moving = [host.querySelector('.panels'), host.querySelector('.scrim')]
-        if (side === 'left') moving.push(host.querySelector('.document'))
-        for (const one of moving) {
-          if (!one) throw new Error('no layer')
-          expect(easing(one, one), settling || 'not settling').toEqual([])
-        }
-        host.remove()
+      document.body.append(host)
+      const moving = [host.querySelector('.panels'), host.querySelector('.scrim')]
+      if (side === 'left') moving.push(host.querySelector('.document'))
+      for (const one of moving) {
+        if (!one) throw new Error('no layer')
+        expect(easing(one, one), settling || 'not settling').toEqual([])
       }
-    },
-  )
+      host.remove()
+    }
+  })
 })
 
 describe("the pull's mark", () => {

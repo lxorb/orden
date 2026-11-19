@@ -7,10 +7,8 @@ function explorer() {
   return port.ok ? port.value : null
 }
 
-export const showLabel = (
-  system: string = platform(),
-  ours = explorer()?.offered() ?? false,
-): string => (system === 'macos' && !ours ? 'Show in Finder' : 'Show in folder')
+export const showLabel = (system: string = platform(), ours = explorer()?.offered() ?? false): string =>
+  system === 'macos' && !ours ? 'Show in Finder' : 'Show in folder'
 
 export async function reveal(path: string, how: { system?: boolean } = {}): Promise<void> {
   if (!isDesktop || __EVEN_PLUGIN__) return

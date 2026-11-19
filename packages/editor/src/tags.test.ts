@@ -25,10 +25,7 @@ function state(doc: string, at: number, space = index()): EditorState {
   const built = EditorState.create({
     doc,
     selection: EditorSelection.cursor(at),
-    extensions: [
-      markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-      noteIndex.of(space),
-    ],
+    extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), noteIndex.of(space)],
   })
 
   return built.update({}).state
@@ -37,8 +34,7 @@ function state(doc: string, at: number, space = index()): EditorState {
 const rowsAt = (doc: string, at = doc.length, space = index()): CompletionResult | null =>
   tagCompletions(new CompletionContext(state(doc, at, space), at, false))
 
-const labels = (found: CompletionResult | null): string[] =>
-  (found?.options ?? []).map((one) => one.label)
+const labels = (found: CompletionResult | null): string[] => (found?.options ?? []).map((one) => one.label)
 
 describe('a hash in the middle of a line', () => {
   test.each([
@@ -59,9 +55,7 @@ describe('a hash in the middle of a line', () => {
     expect(labels(found)).toEqual(['work', 'work/ink', 'work/ink/canvas'])
   })
 
-  test.each([['C#'], ['https://orden.dev/#read'], ['#work orden']])('%j', (input) =>
-    expect(rowsAt(input)).toBeNull(),
-  )
+  test.each([['C#'], ['https://orden.dev/#read'], ['#work orden']])('%j', (input) => expect(rowsAt(input)).toBeNull())
 
   test('offers nothing until the app has said what the tags are', () => {
     expect(rowsAt('Filed under #', 13, index([]))).toBeNull()
@@ -86,9 +80,7 @@ describe('where the characters are not prose', () => {
     ['[a](note.md#work', 16],
   ])('%j', (input, extra) => expect(rowsAt(input, extra)).toBeNull())
 
-  test.each([['[[Plan#'], ['[[Plan#wo'], ['[[#']])('%j', (input) =>
-    expect(rowsAt(input)).toBeNull(),
-  )
+  test.each([['[[Plan#'], ['[[Plan#wo'], ['[[#']])('%j', (input) => expect(rowsAt(input)).toBeNull())
 })
 
 describe('the front matter', () => {
@@ -111,10 +103,7 @@ describe('the front matter', () => {
       ['reading'],
     ],
     [
-      rowsAt(
-        '---\ntags: [work, re\n---\n\nwords\n',
-        '---\ntags: [work, re\n---\n\nwords\n'.indexOf('re') + 2,
-      ),
+      rowsAt('---\ntags: [work, re\n---\n\nwords\n', '---\ntags: [work, re\n---\n\nwords\n'.indexOf('re') + 2),
       ['reading'],
     ],
   ])('%j', (input, wanted) => expect(labels(input)).toEqual(wanted))

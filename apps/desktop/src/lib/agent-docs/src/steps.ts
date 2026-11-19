@@ -22,8 +22,7 @@ function touches(change: ChangeSet, ranges: readonly Range[]): boolean {
   let met = false
   change.iterChangedRanges((from, to) => {
     for (const range of ranges) {
-      if (from === to ? range.from < from && from < range.to : from < range.to && range.from < to)
-        met = true
+      if (from === to ? range.from < from && from < range.to : from < range.to && range.from < to) met = true
     }
   })
   return met

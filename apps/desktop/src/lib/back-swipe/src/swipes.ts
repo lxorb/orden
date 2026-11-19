@@ -201,9 +201,7 @@ export function heard(step: Heard): void {
   one.heardAt = now
   one.scrolls = step.scrolls
   clearTimeout(quiet)
-  quiet = one.told
-    ? setTimeout(() => end('dropped'), HOLD)
-    : setTimeout(() => end('lifted', step.at + QUIET), QUIET)
+  quiet = one.told ? setTimeout(() => end('dropped'), HOLD) : setTimeout(() => end('lifted', step.at + QUIET), QUIET)
   if (one.swallowed) return
 
   const turn: Turn = {
@@ -379,8 +377,7 @@ function moved(event: TouchEvent) {
 
 function released(event: TouchEvent) {
   finger = null
-  if (live?.source === 'touch')
-    end(event.type === 'touchcancel' ? 'dropped' : 'lifted', event.timeStamp)
+  if (live?.source === 'touch') end(event.type === 'touchcancel' ? 'dropped' : 'lifted', event.timeStamp)
 }
 
 export interface Said {
@@ -397,8 +394,7 @@ function readSaid(value: unknown): Said | null {
   if (typeof value !== 'object' || value === null) return null
   const said = value as Record<string, unknown>
   const { tab, kind, dx, dy, at, left, right } = said
-  if (typeof tab !== 'string' || (kind !== 'wheel' && kind !== 'touch' && kind !== 'lift'))
-    return null
+  if (typeof tab !== 'string' || (kind !== 'wheel' && kind !== 'touch' && kind !== 'lift')) return null
   if (typeof dx !== 'number' || typeof dy !== 'number' || typeof at !== 'number') return null
   return { tab, kind, dx, dy, at, left: left === true, right: right === true }
 }

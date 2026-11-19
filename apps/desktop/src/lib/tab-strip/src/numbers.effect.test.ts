@@ -104,8 +104,7 @@ describe("an Essential's letter", () => {
 })
 
 describe('Alt held', () => {
-  const pointer = (name: string, altKey: boolean) =>
-    dispatchEvent(new PointerEvent(name, { altKey, bubbles: true }))
+  const pointer = (name: string, altKey: boolean) => dispatchEvent(new PointerEvent(name, { altKey, bubbles: true }))
 
   test('stays through other keys and the pointer, and goes as Alt is let go of', () => {
     tile('N')

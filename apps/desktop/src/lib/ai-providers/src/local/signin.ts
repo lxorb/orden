@@ -31,9 +31,7 @@ export function loginLine(
   const quoted = windows ? `"${program}"` : posix(program)
   const line = [quoted, (out ? LOGOUT : LOGIN)[kind]].filter(Boolean).join(' ')
   if (!home) return line
-  return windows
-    ? `set "${HOME_VARIABLE[kind]}=${home}" && ${line}`
-    : `${HOME_VARIABLE[kind]}=${posix(home)} ${line}`
+  return windows ? `set "${HOME_VARIABLE[kind]}=${home}" && ${line}` : `${HOME_VARIABLE[kind]}=${posix(home)} ${line}`
 }
 
 const SAYS_POSIX = /^(?:ba|z|da|k|mk)?sh$|^fish$/
@@ -48,33 +46,19 @@ export function signingShell<T extends { id: string }>(
   return chosen && posix(chosen) ? chosen : (list.find(posix) ?? chosen)
 }
 
-export async function signIn(
-  kind: LocalKind,
-  program: string,
-  home: string | null = null,
-): Promise<boolean> {
+export async function signIn(kind: LocalKind, program: string, home: string | null = null): Promise<boolean> {
   return await typeInTerminal(kind, program, false, home)
 }
 
-export async function signOut(
-  kind: LocalKind,
-  program: string,
-  home: string | null = null,
-): Promise<boolean> {
+export async function signOut(kind: LocalKind, program: string, home: string | null = null): Promise<boolean> {
   return await typeInTerminal(kind, program, true, home)
 }
 
-async function typeInTerminal(
-  kind: LocalKind,
-  program: string,
-  out: boolean,
-  home: string | null,
-): Promise<boolean> {
+async function typeInTerminal(kind: LocalKind, program: string, out: boolean, home: string | null): Promise<boolean> {
   const terminal = portOf('terminal.lines')
   if (!terminal.ok) return false
   const windows = platform() === 'windows'
-  return await terminal.value.typeIn(
-    `${loginLine(kind, program, windows, out, home)}\r`,
-    (list, chosen) => signingShell(list, chosen, windows),
+  return await terminal.value.typeIn(`${loginLine(kind, program, windows, out, home)}\r`, (list, chosen) =>
+    signingShell(list, chosen, windows),
   )
 }

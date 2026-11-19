@@ -99,15 +99,13 @@ describe("a note's cover in the editor", () => {
 
 describe("the cover's stylesheets", () => {
   const sheet = (name: string) =>
-    readFileSync(
-      fileURLToPath(new URL(`../../themes/src/${name}`, import.meta.url)),
-      'utf8',
-    ).replace(/\/\*[\s\S]*?\*\//g, '')
+    readFileSync(fileURLToPath(new URL(`../../themes/src/${name}`, import.meta.url)), 'utf8').replace(
+      /\/\*[\s\S]*?\*\//g,
+      '',
+    )
 
   function body(css: string, selector: string): string {
-    const found = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(
-      (match) => (match[1] ?? '').trim() === selector,
-    )
+    const found = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((match) => (match[1] ?? '').trim() === selector)
     return found.map((match) => match[2] ?? '').join(';')
   }
 

@@ -67,14 +67,7 @@ import { drawScale, loading, PDF_TO_CSS, pdfjs } from '../../pdf/src/api'
 const NUDGE = 1
 
 export const run = {
-  connect(
-    store: CanvasStore,
-    from: string,
-    fromSide: Side,
-    to: string,
-    toSide: Side | 'auto',
-    head = true,
-  ) {
+  connect(store: CanvasStore, from: string, fromSide: Side, to: string, toSide: Side | 'auto', head = true) {
     const target = store.canvas.nodes.find((node) => node.id === to)
     const source = store.canvas.nodes.find((node) => node.id === from)
     if (!target || !source) return
@@ -283,9 +276,7 @@ export const run = {
         return below === null ? box : { ...box, y: snapped(below) }
       }
       const made: string[] = await (
-        isPdfFile(file)
-          ? run.dropPdf(store, file, spot, notePath)
-          : run.dropImage(store, file, spot, notePath)
+        isPdfFile(file) ? run.dropPdf(store, file, spot, notePath) : run.dropImage(store, file, spot, notePath)
       ).catch((error: unknown) => {
         busy.failed(`${file.name}: ${error instanceof Error ? error.message : String(error)}`)
         return []
@@ -298,12 +289,7 @@ export const run = {
     if (ids.length > 1) store.pickAll(ids)
   },
 
-  async dropImage(
-    store: CanvasStore,
-    file: File,
-    where: Spot,
-    notePath: string | null,
-  ): Promise<string[]> {
+  async dropImage(store: CanvasStore, file: File, where: Spot, notePath: string | null): Promise<string[]> {
     if (store.readOnly) return []
     const label = 'Storing the image'
     const stored = await busy
@@ -315,20 +301,14 @@ export const run = {
     if (!stored) return []
 
     const root = canvasRoot(store)
-    const relative =
-      accountAddress(stored) ?? (root && notePath ? spaceRelative(root, notePath, stored) : stored)
+    const relative = accountAddress(stored) ?? (root && notePath ? spaceRelative(root, notePath, stored) : stored)
     if (!relative) return []
     const size = await pictureSize(file)
 
     return [putFile(store, relative, spotted(where, size.width, size.height))]
   },
 
-  async dropPdf(
-    store: CanvasStore,
-    file: File,
-    where: Spot,
-    notePath: string | null,
-  ): Promise<string[]> {
+  async dropPdf(store: CanvasStore, file: File, where: Spot, notePath: string | null): Promise<string[]> {
     if (!notePath || store.readOnly) return []
 
     const bytes = new Uint8Array(await file.arrayBuffer())
@@ -394,16 +374,12 @@ export const run = {
             }
             await page.render({ canvas, canvasContext: context, viewport }).promise
             page.cleanup()
-            const blob = await new Promise<Blob | null>((resolve) =>
-              canvas.toBlob(resolve, 'image/png'),
-            )
+            const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
             if (!blob) continue
 
-            const image = new File(
-              [blob],
-              `${file.name.replace(/\.pdf$/i, '')}-page-${number}.png`,
-              { type: 'image/png' },
-            )
+            const image = new File([blob], `${file.name.replace(/\.pdf$/i, '')}-page-${number}.png`, {
+              type: 'image/png',
+            })
             const stored = await storeImage(image, notePath)
             if (!stored) continue
             const relative = accountAddress(stored) ?? spaceRelative(root, notePath, stored)
@@ -521,10 +497,7 @@ export const run = {
       return true
     }
 
-    if (
-      shortcuts.pressed('canvas.delete', event) ||
-      shortcuts.pressed('canvas.delete.alt', event)
-    ) {
+    if (shortcuts.pressed('canvas.delete', event) || shortcuts.pressed('canvas.delete.alt', event)) {
       if (!store.picked.length) return false
 
       run.remove(store)
@@ -673,9 +646,7 @@ async function askLabel(store: CanvasStore, id: string) {
   if (store.readOnly) return
   const node = store.canvas.nodes.find((one) => one.id === id)
   const was =
-    node?.type === 'group'
-      ? (node.label ?? '')
-      : (store.canvas.edges.find((one) => one.id === id)?.label ?? '')
+    node?.type === 'group' ? (node.label ?? '') : (store.canvas.edges.find((one) => one.id === id)?.label ?? '')
 
   const answer = await prompt.ask({ title: 'Name this', value: was, confirmLabel: 'Save' })
   if (answer !== null) store.edit(withLabel(store.canvas, id, answer))
@@ -744,12 +715,7 @@ const canvasRoot = (store: CanvasStore): string | null => workspace.rootHolding(
 
 export async function place(store: CanvasStore, tool: PutTool, at: Point, putting: Putting) {
   const size = ownSize(tool)
-  await putDown(
-    store,
-    tool,
-    tool === 'words' ? wordsAt(at) : placedAt(at, size.width, size.height),
-    putting,
-  )
+  await putDown(store, tool, tool === 'words' ? wordsAt(at) : placedAt(at, size.width, size.height), putting)
 }
 
 export function wordsAt(at: Point): Box {
@@ -757,24 +723,11 @@ export function wordsAt(at: Point): Box {
   return { x: Math.round(at.x), y: Math.round(at.y - height / 2), width, height }
 }
 
-export async function pull(
-  store: CanvasStore,
-  tool: PutTool,
-  from: Point,
-  to: Point,
-  putting: Putting,
-) {
+export async function pull(store: CanvasStore, tool: PutTool, from: Point, to: Point, putting: Putting) {
   await putDown(store, tool, rectBetween(from, to), putting, from, to)
 }
 
-async function putDown(
-  store: CanvasStore,
-  tool: PutTool,
-  box: Box,
-  putting: Putting,
-  from?: Point,
-  to?: Point,
-) {
+async function putDown(store: CanvasStore, tool: PutTool, box: Box, putting: Putting, from?: Point, to?: Point) {
   if (store.readOnly) return
   if (isShape(tool)) {
     const corner = from ?? { x: box.x, y: box.y }
@@ -873,9 +826,7 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
       ? [
           { label: 'Duplicate', run: () => run.duplicate(store) },
           { label: 'Delete', danger: true, run: () => run.remove(store) },
-          ...(onCard
-            ? [{ label: 'Turn into a note', run: () => void run.toNote(store, view.path) }]
-            : []),
+          ...(onCard ? [{ label: 'Turn into a note', run: () => void run.toNote(store, view.path) }] : []),
           { label: 'Group', run: () => run.group(store) },
           ...(onFrame ? [{ label: 'Ungroup', run: () => run.ungroup(store) }] : []),
           ...(onNode ? [{ label: 'Lock', run: () => run.lock(store) }] : []),
@@ -897,9 +848,7 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
     [
       { label: 'Find on the canvas', run: view.onfind },
       { label: 'Fit the canvas', run: () => store.fit(view.width, view.height) },
-      ...(turnOf(store.camera)
-        ? [{ label: 'Turn upright', run: () => void upright(store, view) }]
-        : []),
+      ...(turnOf(store.camera) ? [{ label: 'Turn upright', run: () => void upright(store, view) }] : []),
       ...(picked
         ? [
             {

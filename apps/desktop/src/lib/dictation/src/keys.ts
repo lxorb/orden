@@ -37,9 +37,7 @@ export function dictating(field: Field, owner: Dictates) {
         altKey: event.altKey,
       }
       void voice.finish().then(() => {
-        field.dispatchEvent(
-          new KeyboardEvent('keydown', { ...again, bubbles: true, cancelable: true }),
-        )
+        field.dispatchEvent(new KeyboardEvent('keydown', { ...again, bubbles: true, cancelable: true }))
       })
     }
   }

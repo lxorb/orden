@@ -44,16 +44,7 @@
   import { land as landSpring, resting as sprung, SHARE, spring, step } from './spring'
   import { keptAt, readsBefore, roomFor, settled, stripLanding, stripPlace } from './free'
   import { meets, packed, pushedAside } from './pack'
-  import {
-    around,
-    type Box,
-    type Laid,
-    lay,
-    seamPath,
-    seamsAmong,
-    type Slot,
-    WIDEST,
-  } from './layout'
+  import { around, type Box, type Laid, lay, seamPath, seamsAmong, type Slot, WIDEST } from './layout'
   import { marked, shownBox, tabCopyOf } from './mirror'
   import { walk, wayOf } from './walk'
   import WindowFace from './WindowFace.svelte'
@@ -74,10 +65,7 @@
   const roomTop = $derived((barBottom > 0 ? barBottom : ROW) + MARGIN / 2)
   let panes = $state<Record<string, { w: number; h: number }>>({})
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written as the layer comes up, read once a frame
-  const panesAsWindows = new Map<
-    string,
-    { node: HTMLElement; box: DOMRect; head: number; corners: Corners }
-  >()
+  const panesAsWindows = new Map<string, { node: HTMLElement; box: DOMRect; head: number; corners: Corners }>()
   let asPanes = $state<Record<string, true>>({})
   let tabsAsDrawn = $state<Record<string, HTMLElement>>({})
   let ridersDrawn = $state<Record<string, HTMLElement>>({})
@@ -90,9 +78,7 @@
   })
 
   const spaceKey = $derived(workspace.activeSpaceId ?? 'global')
-  const room = $derived<Box>(
-    places.at(spaceKey) ?? { x: 0, y: 0, w: screenRoom.w, h: screenRoom.h },
-  )
+  const room = $derived<Box>(places.at(spaceKey) ?? { x: 0, y: 0, w: screenRoom.w, h: screenRoom.h })
 
   let camera = $state<Camera>({ x: 0, y: 0, zoom: 1 })
   let unmoved = false
@@ -276,9 +262,7 @@
 
   function apartAll() {
     const taken: Outline[] = []
-    const order = [...cellBoxes].sort(
-      (a, b) => Number(b.key === spaceKey) - Number(a.key === spaceKey),
-    )
+    const order = [...cellBoxes].sort((a, b) => Number(b.key === spaceKey) - Number(a.key === spaceKey))
     for (const { key } of order) {
       const outline = outlineAt(key)
       if (!outline) continue
@@ -315,14 +299,11 @@
     const box = held?.box
     if (!held || !box) return boxes
     boxes.set(held.id, box)
-    for (const one of held.with)
-      boxes.set(one.id, { x: box.x + one.dx, y: box.y + one.dy, w: one.w, h: one.h })
+    for (const one of held.with) boxes.set(one.id, { x: box.x + one.dx, y: box.y + one.dy, w: one.w, h: one.h })
     return boxes
   })
 
-  const heldIds = $derived<ReadonlySet<string>>(
-    new Set(held ? [held.id, ...held.with.map((one) => one.id)] : []),
-  )
+  const heldIds = $derived<ReadonlySet<string>>(new Set(held ? [held.id, ...held.with.map((one) => one.id)] : []))
 
   const gridCells = $derived(
     shownKeys.flatMap((key) => {
@@ -352,9 +333,7 @@
 
   const cellOf = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- made afresh by the derived, never changed after
-    const map = new Map(
-      gridCells.flatMap((one) => one.slots.map((slot) => [slot.id, one.key] as const)),
-    )
+    const map = new Map(gridCells.flatMap((one) => one.slots.map((slot) => [slot.id, one.key] as const)))
     const landing = held?.landing
     if (landing?.kind === 'space') for (const id of heldIds) map.set(id, landing.key)
     return map
@@ -363,8 +342,7 @@
   const slots = $derived.by((): Slot[] => {
     const id = held?.id
     const key = id ? cellOf.get(id) : undefined
-    const made =
-      heldBoxes.size && id ? roomFor(resting, heldBoxes, (one) => cellOf.get(one) === key) : resting
+    const made = heldBoxes.size && id ? roomFor(resting, heldBoxes, (one) => cellOf.get(one) === key) : resting
     if (!Object.keys(aside).length) return made
     return made.map((slot) => {
       const by = offsetOf(cellOf.get(slot.id) ?? '')
@@ -398,12 +376,8 @@
 
   const cellBoxes = $derived<Cell[]>(
     gridCells.map((one) => {
-      const inside = resting.filter(
-        (slot) => cellOf.get(slot.id) === one.key && !heldIds.has(slot.id),
-      )
-      const from = resting.filter(
-        (slot) => heldIds.has(slot.id) && one.slots.some((own) => own.id === slot.id),
-      )
+      const inside = resting.filter((slot) => cellOf.get(slot.id) === one.key && !heldIds.has(slot.id))
+      const from = resting.filter((slot) => heldIds.has(slot.id) && one.slots.some((own) => own.id === slot.id))
       const lying = around(inside) ?? around(from)
       return { key: one.key, box: lying ? captioned(lying) : standIn(placeOf(one.key)) }
     }),
@@ -442,10 +416,7 @@
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const flights = new Map<string, Flight>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
-  const elements = new Map<
-    string,
-    { window: HTMLElement; face: HTMLElement; chip: HTMLElement; ring: HTMLElement }
-  >()
+  const elements = new Map<string, { window: HTMLElement; face: HTMLElement; chip: HTMLElement; ring: HTMLElement }>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const captions = new Map<string, HTMLElement>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
@@ -470,12 +441,7 @@
     if (workspace.panes.at(tab.paneId)?.activeTabId === tab.id) {
       const laidOut = panesAsWindows.get(tab.id)
       const box = laidOut
-        ? new DOMRect(
-            laidOut.box.x,
-            laidOut.box.y + laidOut.head,
-            laidOut.box.width,
-            laidOut.box.height - laidOut.head,
-          )
+        ? new DOMRect(laidOut.box.x, laidOut.box.y + laidOut.head, laidOut.box.width, laidOut.box.height - laidOut.head)
         : shownBox(tab.paneId)
       if (box && box.width > 0) {
         rides(tab.id, box)
@@ -550,10 +516,7 @@
 
   function tick(now: number) {
     frameAsked = 0
-    if (
-      !started &&
-      ((unready > 0 && now - entered < READY) || (!stood && now - entered < STANDS))
-    ) {
+    if (!started && ((unready > 0 && now - entered < READY) || (!stood && now - entered < STANDS))) {
       last = now
       frameAsked = requestAnimationFrame(tick)
       return
@@ -619,9 +582,7 @@
         "header[data-chrome='top'] :is(button, [role='button']), [data-side-toggle], [data-pane]:has(> .card > .here)",
       ),
     ]
-    slides = [
-      ...document.querySelectorAll<HTMLElement>("[data-chrome='start'], [data-chrome='end']"),
-    ]
+    slides = [...document.querySelectorAll<HTMLElement>("[data-chrome='start'], [data-chrome='end']")]
     bar = document.querySelector<HTMLElement>("header[data-chrome='top']")
   }
 
@@ -643,10 +604,7 @@
     const pose = flights.get(id)?.pose
     if (!home || !pose || home.alpha < 0.5) return null
     const off =
-      Math.abs(pose.x - home.x) +
-      Math.abs(pose.y - home.y) +
-      Math.abs(pose.w - home.w) +
-      Math.abs(pose.h - home.h)
+      Math.abs(pose.x - home.x) + Math.abs(pose.y - home.y) + Math.abs(pose.w - home.w) + Math.abs(pose.h - home.h)
     return off * camera.zoom
   }
 
@@ -684,8 +642,7 @@
     const pose = flight.pose
     const styles = drawn(pose, slot.w, slot.h, corner, camera)
     const home = started ? (out ? null : fromHome(id)) : 0
-    if (home !== null && home < NEAR)
-      styles.window.opacity = String(Number(styles.window.opacity) * (home / NEAR))
+    if (home !== null && home < NEAR) styles.window.opacity = String(Number(styles.window.opacity) * (home / NEAR))
     Object.assign(parts.window.style, styles.window)
     Object.assign(parts.face.style, styles.face)
     Object.assign(parts.chip.style, styles.chip)
@@ -696,10 +653,7 @@
     paintRider(id, home)
     if (started) movePane(id, pose)
     const off =
-      Math.abs(pose.x - slot.x) +
-      Math.abs(pose.y - slot.y) +
-      Math.abs(pose.w - slot.w) +
-      Math.abs(pose.h - slot.h)
+      Math.abs(pose.x - slot.x) + Math.abs(pose.y - slot.y) + Math.abs(pose.w - slot.w) + Math.abs(pose.h - slot.h)
     const near = Math.max(0, 1 - off / CAPTION_NEAR) * Math.max(0, 1 - pose.tab * 3) * pose.alpha
     const caption = captions.get(id)
     if (caption) caption.style.opacity = String(near)
@@ -773,14 +727,7 @@
     })
   })
 
-  const PANE_STYLES = [
-    'transform',
-    'transform-origin',
-    'clip-path',
-    'opacity',
-    'z-index',
-    'pointer-events',
-  ]
+  const PANE_STYLES = ['transform', 'transform-origin', 'clip-path', 'opacity', 'z-index', 'pointer-events']
 
   function putBack(node: HTMLElement) {
     for (const name of PANE_STYLES) node.style.removeProperty(name)
@@ -849,8 +796,7 @@
       unmoved = true
       const kept = places.camera
       const front =
-        slots.find((one) => one.id === workspace.activeTabId) ??
-        cellBoxes.find((one) => one.key === spaceKey)?.box
+        slots.find((one) => one.id === workspace.activeTabId) ?? cellBoxes.find((one) => one.key === spaceKey)?.box
       if (kept && (!front || isOnView(kept, front, screenRoom))) {
         camera = kept
         unmoved = false
@@ -1070,8 +1016,7 @@
     }
   }
 
-  let pressed: { id: string; x: number; y: number; pointer: number; whole: string | null } | null =
-    null
+  let pressed: { id: string; x: number; y: number; pointer: number; whole: string | null } | null = null
   let dragged = false
 
   function down(event: PointerEvent, id: string) {
@@ -1087,9 +1032,7 @@
       return
     }
     if (event.ctrlKey || event.metaKey) {
-      chosen = chosen.includes(tab.id)
-        ? chosen.filter((one) => one !== tab.id)
-        : [...chosen, tab.id]
+      chosen = chosen.includes(tab.id) ? chosen.filter((one) => one !== tab.id) : [...chosen, tab.id]
       return
     }
     open(tab)
@@ -1100,9 +1043,7 @@
     if (whole)
       return [
         id,
-        ...resting
-          .filter((one) => cellOf.get(one.id) === whole && one.id !== id)
-          .map((one) => one.id),
+        ...resting.filter((one) => cellOf.get(one.id) === whole && one.id !== id).map((one) => one.id),
       ].filter(lying)
     if (chosen.includes(id)) return [id, ...chosen.filter((one) => one !== id)].filter(lying)
     chosen = []
@@ -1137,9 +1078,7 @@
             : [],
         with: ids.slice(1).flatMap((one) => {
           const slot = resting.find((lying) => lying.id === one)
-          return slot && first
-            ? [{ id: one, dx: slot.x - first.x, dy: slot.y - first.y, w: slot.w, h: slot.h }]
-            : []
+          return slot && first ? [{ id: one, dx: slot.x - first.x, dy: slot.y - first.y, w: slot.w, h: slot.h }] : []
         }),
         whole: pressed.whole,
       }
@@ -1217,16 +1156,12 @@
     else if (box) {
       void settleApart(hand.from, false)
       const own = lying.filter((one) => cellOf.get(one.id) === spaceKey)
-      const strip = ids.every((one) => cellOf.get(one) === spaceKey)
-        ? stripLanding(own, hand.id, box)
-        : null
+      const strip = ids.every((one) => cellOf.get(one) === spaceKey) ? stripLanding(own, hand.id, box) : null
       const order = own
         .filter((one) => ids.includes(one.id))
         .sort(readsBefore)
         .map((one) => one.id)
-      if (strip)
-        for (const id of order)
-          drop([id], { kind: 'strip', paneId: strip.paneId, before: strip.before })
+      if (strip) for (const id of order) drop([id], { kind: 'strip', paneId: strip.paneId, before: strip.before })
     }
     aimAll()
   }
@@ -1244,9 +1179,7 @@
     if (!mine) return
     const movers = itself
       ? [key]
-      : [...outlines]
-          .filter(([other, one]) => other !== key && meets(one, mine, CELLS_APART))
-          .map(([other]) => other)
+      : [...outlines].filter(([other, one]) => other !== key && meets(one, mine, CELLS_APART)).map(([other]) => other)
     for (const mover of movers) {
       const outline = outlines.get(mover)
       if (!outline) continue
@@ -1321,19 +1254,14 @@
     const working = workspace.activeTabId
     workspace.moveTab(id, landing.paneId, into)
     const paneOf = (tab: string | null) => workspace.tabs.find((one) => one.id === tab)?.paneId
-    for (const [pane, front] of fronts)
-      if (front && paneOf(front) === pane) workspace.panes.activate(pane, front)
+    for (const [pane, front] of fronts) if (front && paneOf(front) === pane) workspace.panes.activate(pane, front)
     if (working && paneOf(working)) workspace.activate(working)
   }
 
   function keyed(event: KeyboardEvent) {
     if (overlays.depth > layers) return
     const undo = shortcuts.pressed('edit.undo', event)
-    if (
-      undo ||
-      shortcuts.pressed('edit.redo', event) ||
-      shortcuts.pressed('edit.redo.alt', event)
-    ) {
+    if (undo || shortcuts.pressed('edit.redo', event) || shortcuts.pressed('edit.redo.alt', event)) {
       event.preventDefault()
       void (undo ? workspace.undoFileAction() : workspace.redoFileAction())
       return
@@ -1365,13 +1293,7 @@
   function zooming(now: number) {
     const goal = zoomGoal
     if (!goal) return (zoomFrame = 0)
-    camera = eased(
-      camera,
-      goal.zoom,
-      goal.at,
-      Math.min(1 / 30, Math.max(0, (now - zoomLast) / 1000)),
-      goal.ease,
-    )
+    camera = eased(camera, goal.zoom, goal.at, Math.min(1 / 30, Math.max(0, (now - zoomLast) / 1000)), goal.ease)
     zoomLast = now
     if (camera.zoom === goal.zoom) {
       zoomGoal = null
@@ -1447,8 +1369,7 @@
     for (const name of document.querySelectorAll<HTMLElement>('[data-space-name]')) {
       const box = name.getBoundingClientRect()
       const { clientX: x, clientY: y } = point
-      if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom)
-        return name.dataset.spaceName ?? null
+      if (x >= box.left && x <= box.right && y >= box.top && y <= box.bottom) return name.dataset.spaceName ?? null
     }
     return null
   }
@@ -1507,10 +1428,7 @@
     if (touching.size === 2 && first && second) {
       const before: [Point, Point] = [first[1], second[1]]
       touching.set(event.pointerId, now)
-      const after: [Point, Point] = [
-        touching.get(first[0]) ?? first[1],
-        touching.get(second[0]) ?? second[1],
-      ]
+      const after: [Point, Point] = [touching.get(first[0]) ?? first[1], touching.get(second[0]) ?? second[1]]
       camera = pinched(camera, before, after)
       return
     }
@@ -1612,9 +1530,7 @@
           label="Spaces"
         />
       {/if}
-      <button class="orden-button is-quiet tidy" type="button" onclick={() => void tidy()}
-        >Tidy up</button
-      >
+      <button class="orden-button is-quiet tidy" type="button" onclick={() => void tidy()}>Tidy up</button>
     </div>
 
     {#each windows as { slot, tab } (tab.id)}
@@ -1655,9 +1571,7 @@
           {#if tabsAsDrawn[tab.id]}
             <span class="chip-copy" use:holdingTab={tabsAsDrawn[tab.id]}></span>
           {:else}
-            <span class="chip-inner"
-              ><TabMark {tab} /><span class="chip-name">{tab.shown}</span></span
-            >
+            <span class="chip-inner"><TabMark {tab} /><span class="chip-name">{tab.shown}</span></span>
           {/if}
         </span>
         <span class="ring" style:--overview-line={1 / camera.zoom} aria-hidden="true"></span>
@@ -1677,11 +1591,7 @@
         <Cross />
       </button>
       {#if ridersDrawn[tab.id]}
-        <span
-          class="rider"
-          class:is-front={tab.id === workspace.activeTabId}
-          aria-hidden="true"
-          use:riding={tab.id}
+        <span class="rider" class:is-front={tab.id === workspace.activeTabId} aria-hidden="true" use:riding={tab.id}
         ></span>
       {/if}
     {/each}

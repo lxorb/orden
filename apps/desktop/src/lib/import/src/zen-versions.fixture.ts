@@ -2,12 +2,7 @@ const HOME = '{d12f5e21-86dc-4ab6-aa68-5179e3c6578d}'
 const WORK = '{90bb2d5f-4e6e-4d01-80cf-84d545dda229}'
 const DOCS = '1793911194239-60'
 
-function tab(
-  id: string,
-  url: string,
-  title: string,
-  said: Record<string, unknown> = {},
-): Record<string, unknown> {
+function tab(id: string, url: string, title: string, said: Record<string, unknown> = {}): Record<string, unknown> {
   const pinned = said.pinned === true
   return {
     entries: [

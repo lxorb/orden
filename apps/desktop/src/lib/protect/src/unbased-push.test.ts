@@ -10,9 +10,7 @@ const server = vi.hoisted(() => ({
 }))
 
 const merged = (held: Ways, base: Ways, sent: Ways) => {
-  const out = Object.fromEntries(
-    Object.entries(held).filter(([key]) => !(key in base) || key in sent),
-  )
+  const out = Object.fromEntries(Object.entries(held).filter(([key]) => !(key in base) || key in sent))
   for (const [key, way] of Object.entries(sent)) if (base[key] !== way) out[key] = way
   return out
 }
@@ -26,9 +24,7 @@ vi.mock('../../accounts/src/api', () => ({
         server.puts.push({
           body,
           land: () => {
-            server.held = body.base
-              ? merged(server.held, body.base, body.protected)
-              : body.protected
+            server.held = body.base ? merged(server.held, body.base, body.protected) : body.protected
             resolve({ password: null, spaces: { s1: server.held } })
           },
         })

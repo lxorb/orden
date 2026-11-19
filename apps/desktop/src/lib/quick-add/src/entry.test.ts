@@ -20,9 +20,7 @@ describe('the line', () => {
           remind: [{ before: 30 }],
         }),
       ),
-    ).toEqual([
-      '- [ ] Call mum [time:: 16:00] [remind:: 30m] #family 🔺 🔁 every week on Sunday 🛫 2026-10-08',
-    ])
+    ).toEqual(['- [ ] Call mum [time:: 16:00] [remind:: 30m] #family 🔺 🔁 every week on Sunday 🛫 2026-10-08'])
   })
 
   test('with its description indented under it', () => {
@@ -48,15 +46,11 @@ describe('where it goes', () => {
   })
 
   test('one more item of the list the note ends in', () => {
-    expect(placed('# Inbox\n\n- [ ] Pay rent\n', TASK).after).toBe(
-      '# Inbox\n\n- [ ] Pay rent\n- [ ] Call mum\n',
-    )
+    expect(placed('# Inbox\n\n- [ ] Pay rent\n', TASK).after).toBe('# Inbox\n\n- [ ] Pay rent\n- [ ] Call mum\n')
   })
 
   test('after a task with a description under it, still the same list', () => {
-    expect(placed('- [ ] Pay rent\n  by Friday\n', TASK).after).toBe(
-      '- [ ] Pay rent\n  by Friday\n- [ ] Call mum\n',
-    )
+    expect(placed('- [ ] Pay rent\n  by Friday\n', TASK).after).toBe('- [ ] Pay rent\n  by Friday\n- [ ] Call mum\n')
   })
 
   test('a list of its own after a paragraph', () => {
@@ -69,16 +63,13 @@ describe('where it goes', () => {
   test("at the end of a heading's section, the next heading left alone", () => {
     const note = '# Errands\n- [ ] Pay rent\n\n## Calls\n- [ ] Bank\n\n## Later\nwords\n'
     expect(placed(note, TASK, 'calls')).toEqual({
-      after:
-        '# Errands\n- [ ] Pay rent\n\n## Calls\n- [ ] Bank\n- [ ] Call mum\n\n## Later\nwords\n',
+      after: '# Errands\n- [ ] Pay rent\n\n## Calls\n- [ ] Bank\n- [ ] Call mum\n\n## Later\nwords\n',
       line: '- [ ] Call mum',
     })
   })
 
   test('under a heading with nothing under it yet', () => {
-    expect(placed('## Calls\n## Later\n', TASK, 'Calls').after).toBe(
-      '## Calls\n- [ ] Call mum\n## Later\n',
-    )
+    expect(placed('## Calls\n## Later\n', TASK, 'Calls').after).toBe('## Calls\n- [ ] Call mum\n## Later\n')
   })
 
   test('a heading the note does not have, made at its end', () => {

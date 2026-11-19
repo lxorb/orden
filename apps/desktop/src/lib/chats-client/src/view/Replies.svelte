@@ -91,9 +91,7 @@
     <Glyph name="replies" />
     <span class="title">Replies</span>
     <span class="count">{localNumber(replies.messages.length)}</span>
-    <button type="button" class="orden-glyph" aria-label="Close" onclick={onclose}
-      ><Glyph name="close" /></button
-    >
+    <button type="button" class="orden-glyph" aria-label="Close" onclick={onclose}><Glyph name="close" /></button>
   </header>
   <div class="list orden-scrolls" bind:this={scroller}>
     {#snippet row(message: Shown, head: boolean, pending: boolean, arrivedAfter: number)}
@@ -111,8 +109,7 @@
         {canPost}
         inReplies
         onreply={() => composer?.focus()}
-        onreact={(message: Message, from: HTMLElement) =>
-          onpicker(from, (emoji) => page.react(message, emoji))}
+        onreact={(message: Message, from: HTMLElement) => onpicker(from, (emoji) => page.react(message, emoji))}
         onmenu={showMenu}
         {onfiles}
       />

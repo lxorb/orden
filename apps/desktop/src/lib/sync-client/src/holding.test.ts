@@ -149,9 +149,7 @@ describe('a note', () => {
 describe('a note this browser keeps no words of', () => {
   test('is held by the account, with nothing here to read', async () => {
     const { keptAway } = await import('../../away/src/api')
-    keptAway.keep([{ id: 'n1', path: '/Notes/away.md', size: 4, modified: 1 }], () =>
-      Promise.resolve(false),
-    )
+    keptAway.keep([{ id: 'n1', path: '/Notes/away.md', size: 4, modified: 1 }], () => Promise.resolve(false))
     try {
       expect(await runner.holds('/Notes/away.md')).toBe(true)
     } finally {

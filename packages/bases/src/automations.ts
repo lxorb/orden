@@ -19,13 +19,10 @@ export interface Automation {
 
 type Plain = Record<string, unknown>
 
-const isPlain = (value: unknown): value is Plain =>
-  value !== null && typeof value === 'object' && !Array.isArray(value)
+const isPlain = (value: unknown): value is Plain => value !== null && typeof value === 'object' && !Array.isArray(value)
 
 const word = (value: unknown): string | undefined =>
-  typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
-    ? String(value)
-    : undefined
+  typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : undefined
 
 const KNOWN = ['when', 'set', 'move', 'notify', 'off']
 
@@ -49,9 +46,7 @@ export function readAutomations(base: Base): Automation[] {
     const automation: Automation = {
       when,
       set: isPlain(one.set)
-        ? Object.fromEntries(
-            Object.entries(one.set).map(([key, value]) => [key, word(value) ?? '']),
-          )
+        ? Object.fromEntries(Object.entries(one.set).map(([key, value]) => [key, word(value) ?? '']))
         : {},
       kept: Object.fromEntries(Object.entries(one).filter(([key]) => !KNOWN.includes(key))),
     }
@@ -95,8 +90,7 @@ function wordsOf(value: Value | undefined): string[] {
   return [text(value).toLowerCase()]
 }
 
-const matches = (value: Value | undefined, is: string): boolean =>
-  wordsOf(value).includes(is.trim().toLowerCase())
+const matches = (value: Value | undefined, is: string): boolean => wordsOf(value).includes(is.trim().toLowerCase())
 
 function triggered(when: Trigger, before: Row | undefined, after: Row): boolean {
   if ('added' in when) return before === undefined
@@ -125,26 +119,19 @@ export function fired(
   for (const automation of automations) {
     if (automation.off || !triggered(automation.when, before, after)) continue
     effect ??= { set: {}, notify: [] }
-    for (const [key, words] of Object.entries(automation.set))
-      effect.set[key] = settled(fill(words))
+    for (const [key, words] of Object.entries(automation.set)) effect.set[key] = settled(fill(words))
     if (automation.move !== undefined) effect.move = fill(automation.move)
     if (automation.notify !== undefined) effect.notify.push(fill(automation.notify))
   }
   return effect
 }
 
-export function rowsInBase(
-  base: Base,
-  rows: readonly Row[],
-  context: Context,
-): { rows: Row[]; partial: boolean } {
+export function rowsInBase(base: Base, rows: readonly Row[], context: Context): { rows: Row[]; partial: boolean } {
   const { value, partial } = refusing(() => rows.filter((row) => inBase(base, row, context)))
   return { rows: value, partial }
 }
 
 export function inBase(base: Base, row: Row, context: Context): boolean {
   if (row.kind !== 'note') return false
-  return underGuard(base.guarded, () =>
-    compileFilters(base.filters).test(scopeFor(row, context, base.formulas)),
-  )
+  return underGuard(base.guarded, () => compileFilters(base.filters).test(scopeFor(row, context, base.formulas)))
 }

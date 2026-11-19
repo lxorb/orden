@@ -31,17 +31,13 @@ export function messageMenu(
     DIVIDER,
     { label: 'Copy', run: () => void copyText(message.body) },
     { label: 'Copy link', run: () => void page.copyLink(message) },
-    ...(may(role, 'pin', posting)
-      ? [{ label: message.pinned ? 'Unpin' : 'Pin', run: () => page.pin(message) }]
-      : []),
+    ...(may(role, 'pin', posting) ? [{ label: message.pinned ? 'Unpin' : 'Pin', run: () => page.pin(message) }] : []),
     { label: 'Save', checked: page.isSaved(message), run: () => page.save(message) },
     { label: 'Add as task', run: () => page.addAsTask(message) },
     ...(canKeep ? [{ label: 'Save as note', run: () => void page.saveAsNote(message) }] : []),
     { label: 'Mark unread', run: () => page.markUnread(message) },
     DIVIDER,
-    ...(mine && may(role, 'edit-own', posting) && !message.poll
-      ? [{ label: 'Edit', run: gestures.edit }]
-      : []),
+    ...(mine && may(role, 'edit-own', posting) && !message.poll ? [{ label: 'Edit', run: gestures.edit }] : []),
     ...removing,
   ]
 }

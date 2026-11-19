@@ -117,23 +117,16 @@ async function idsLeftBehind(entry: Entry, path: string) {
     const at = path + note.path.slice(entry.path.length)
     const text = await invoke<string | null>('read_note', { path: at }).catch(() => null)
     const words = text === null ? null : withoutIds(at, text)
-    if (words !== null)
-      await invoke('write_note', { path: at, content: words }).catch(() => undefined)
+    if (words !== null) await invoke('write_note', { path: at, content: words }).catch(() => undefined)
   }
 }
 
 function partsOf(file: PickedFile): string[] {
   const inside = (file.webkitRelativePath ?? '').trim()
-  return (inside.length ? inside : file.name)
-    .split(/[\\/]/)
-    .filter((part) => part && part !== '.' && part !== '..')
+  return (inside.length ? inside : file.name).split(/[\\/]/).filter((part) => part && part !== '.' && part !== '..')
 }
 
-export async function bringIn(
-  ws: Copies,
-  files: readonly PickedFile[],
-  into: string,
-): Promise<string[]> {
+export async function bringIn(ws: Copies, files: readonly PickedFile[], into: string): Promise<string[]> {
   const landed = new Map<string, Copied>()
 
   try {

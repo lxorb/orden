@@ -28,11 +28,7 @@ function viewOf(doc: string) {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(doc.length),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        folding(),
-        livePreview(),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), folding(), livePreview()],
     }),
   )
   state = withFolds(state, [])
@@ -50,8 +46,7 @@ describe('a folded block with words drawn on its first line', () => {
   })
 
   test('a folded item with a who chip shows the chip once', () => {
-    const doc =
-      'intro\n\n- call the shop [by:: Ann]\n  - ask about hours\n  - ask about price\n\nafter'
+    const doc = 'intro\n\n- call the shop [by:: Ann]\n  - ask about hours\n  - ask about price\n\nafter'
     const view = viewOf(doc)
     const head = view.state.doc.line(3)
     const range = foldable(view.state, head.from, head.to)

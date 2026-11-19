@@ -62,10 +62,7 @@ export class Attachments {
 
   addRef(ref: FileRef): void {
     const id = (made += 1)
-    this.list = [
-      ...this.list,
-      { id, name: ref.name, type: ref.type, size: ref.size, thumb: null, ref, failed: false },
-    ]
+    this.list = [...this.list, { id, name: ref.name, type: ref.type, size: ref.size, thumb: null, ref, failed: false }]
   }
 
   remove(id: number): void {

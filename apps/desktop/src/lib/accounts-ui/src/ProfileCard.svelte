@@ -43,10 +43,7 @@
     const room = 8
     const left = Math.min(Math.max(room, shown.at.left), window.innerWidth - width - room)
     const below = shown.at.bottom + gap
-    const top =
-      below + height + room > window.innerHeight
-        ? Math.max(room, shown.at.top - gap - height)
-        : below
+    const top = below + height + room > window.innerHeight ? Math.max(room, shown.at.top - gap - height) : below
     return { left, top }
   })
 

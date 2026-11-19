@@ -44,17 +44,15 @@ beforeEach(() => {
 
 describe('a setting chosen from a list that can grow', () => {
   test('takes one of the choices it has now', async () => {
-    const answer = await writeSetting(
-      call('write_setting', { key: 'appearance.style', value: 'wallpaper' }),
-    )
+    const answer = await writeSetting(call('write_setting', { key: 'appearance.style', value: 'wallpaper' }))
     expect(answer).toMatchObject({ ok: true, result: { changed: true, value: 'wallpaper' } })
     expect(world.style).toBe('wallpaper')
   })
 
   test('refuses what is not among them, and names them when read', async () => {
-    await expect(
-      writeSetting(call('write_setting', { key: 'appearance.style', value: 'Wallpaper' })),
-    ).rejects.toThrow(/default, wallpaper|"default", "wallpaper"/)
+    await expect(writeSetting(call('write_setting', { key: 'appearance.style', value: 'Wallpaper' }))).rejects.toThrow(
+      /default, wallpaper|"default", "wallpaper"/,
+    )
     expect(world.style).toBe('default')
 
     const read = await readSetting(call('read_setting', { key: 'appearance.style' }))

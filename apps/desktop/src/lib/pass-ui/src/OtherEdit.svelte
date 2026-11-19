@@ -17,9 +17,7 @@
   }: { ui: PassUi; content: Custom | SshKey | Wifi; oninput: () => void } = $props()
   /* eslint-enable prefer-const, @typescript-eslint/no-useless-default-assignment */
 
-  const securities = $derived(
-    WIFI_SECURITY.map((security) => ({ value: security, label: securityLabel(security) })),
-  )
+  const securities = $derived(WIFI_SECURITY.map((security) => ({ value: security, label: securityLabel(security) })))
 
   let canGenerate = $state(false)
   let generating = $state(false)
@@ -95,12 +93,7 @@
   {#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
 {:else if content.kind === 'wifi'}
   <EditCard>
-    <EditField
-      label="Network name"
-      icon={FIELD_ICONS.network}
-      bind:value={content.ssid}
-      {oninput}
-    />
+    <EditField label="Network name" icon={FIELD_ICONS.network} bind:value={content.ssid} {oninput} />
     <PasswordField {ui} label="Password" bind:value={content.password} onchange={oninput} />
     <div class="security orden-edit-row">
       <span class="label">Security</span>

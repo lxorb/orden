@@ -47,9 +47,7 @@ test('a paper found on more than one page shows a row for each page', () => {
 test('ticking a task in the results names the task it showed, so a note edited since ticks that task or none', async () => {
   const ticks = vi.spyOn(workspace, 'toggleTaskAt').mockResolvedValue(false)
   const into = panel()
-  search.found = [
-    { path: '/space/List.md', name: 'List.md', line: 3, text: '- [ ] buy milk', ranges: [] },
-  ]
+  search.found = [{ path: '/space/List.md', name: 'List.md', line: 3, text: '- [ ] buy milk', ranges: [] }]
   flushSync()
 
   into.querySelector<HTMLInputElement>('input.orden-checkbox')?.click()

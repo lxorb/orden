@@ -37,9 +37,7 @@ function enterThenType(view: EditorView, words: string): string {
 describe('Enter at the end of a folded code fence opening line inside a quote', () => {
   test('keeps the new line inside the callout, which stays one callout', () => {
     const view = folded('> [!tip] Install\n> ```sh\n> npm i\n> ```\n> Then run it.', '> ```sh')
-    expect(enterThenType(view, 'Done.')).toBe(
-      '> [!tip] Install\n> ```sh\n> npm i\n> ```\n> Done.\n> Then run it.',
-    )
+    expect(enterThenType(view, 'Done.')).toBe('> [!tip] Install\n> ```sh\n> npm i\n> ```\n> Done.\n> Then run it.')
   })
 
   test('keeps the new line inside a plain quote', () => {

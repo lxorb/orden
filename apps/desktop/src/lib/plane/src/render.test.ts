@@ -18,8 +18,7 @@ vi.mock('../../link-index/src/api', async () => {
   }
 })
 
-const { cardHtml, fileShown, fileSource, fileUrl, keptByAccount, pageOfFile } =
-  await import('./render')
+const { cardHtml, fileShown, fileSource, fileUrl, keptByAccount, pageOfFile } = await import('./render')
 
 const HOSTILE = '<img src=x onerror="alert(1)"> and <u>more</u>'
 
@@ -56,8 +55,7 @@ describe('a card on the plane', () => {
 })
 
 describe('a picture in a card', () => {
-  const sources = (html: string) =>
-    [...html.matchAll(/<img [^>]*src="([^"]*)"/g)].map((one) => one[1])
+  const sources = (html: string) => [...html.matchAll(/<img [^>]*src="([^"]*)"/g)].map((one) => one[1])
 
   test('is found beside the plane, as a note finds its pictures', () => {
     const [src] = sources(cardHtml('![a](pictures/a.png)\n', '/space/Board.canvas', true))

@@ -78,8 +78,7 @@ test('no control holds another, which a screen reader cannot reach and a press r
   const found = files.flatMap((file) => {
     const tree = parse(readFileSync(file, 'utf8'), { modern: true })
     return [...nested(tree.fragment, null)].map(
-      ([outer, inner]) =>
-        `${file.slice(SRC.length).replaceAll('\\', '/')}: ${named(inner)} in ${named(outer)}`,
+      ([outer, inner]) => `${file.slice(SRC.length).replaceAll('\\', '/')}: ${named(inner)} in ${named(outer)}`,
     )
   })
 

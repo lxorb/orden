@@ -59,10 +59,7 @@
       <Select
         label="Automations"
         value={'added' in when ? ADDED : when.property}
-        options={[
-          { value: ADDED, label: 'Row added' },
-          ...keys.map((one) => ({ value: one, label: one })),
-        ]}
+        options={[{ value: ADDED, label: 'Row added' }, ...keys.map((one) => ({ value: one, label: one }))]}
         onchange={(next: string) =>
           change(at, {
             ...automation,
@@ -91,8 +88,7 @@
         class="orden-glyph"
         title="Remove"
         aria-label="Remove"
-        onclick={() => write(automations.filter((_, index) => index !== at))}
-        ><Cross small /></button
+        onclick={() => write(automations.filter((_, index) => index !== at))}><Cross small /></button
       >
     </div>
 

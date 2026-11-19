@@ -40,10 +40,7 @@ export function markMentions(root: HTMLElement, callable: readonly Callable[]): 
   }
 }
 
-function firstCall(
-  value: string,
-  labels: readonly Callable[],
-): { at: number; length: number; me: boolean } | null {
+function firstCall(value: string, labels: readonly Callable[]): { at: number; length: number; me: boolean } | null {
   for (let at = value.indexOf('@'); at !== -1; at = value.indexOf('@', at + 1)) {
     if (at > 0 && /[\p{L}\p{N}_]/u.test(value.charAt(at - 1))) continue
     const written = value.slice(at + 1).toLowerCase()

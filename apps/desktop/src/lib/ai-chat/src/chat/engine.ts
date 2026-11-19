@@ -30,15 +30,7 @@ import { Refused, wasStopped } from './request'
 import { responses } from './responses'
 import { type Adjusted, round } from './round'
 import { crateTools, type Tools } from './tools'
-import {
-  baseEffort,
-  type Call,
-  errorText,
-  modelTurn,
-  stepsOf,
-  type Step,
-  youTurn,
-} from './transcript'
+import { baseEffort, type Call, errorText, modelTurn, stepsOf, type Step, youTurn } from './transcript'
 import { added, estimate, shouldCompact } from './usage'
 import type { ToolDef, Wire } from './wire'
 
@@ -64,8 +56,7 @@ if (typeof addEventListener === 'function') {
 }
 
 const CITE = 'Name the note or page each claim comes from as a [[wikilink]] or its address.'
-const PARTLY =
-  'Change part of a note with edit_note rather than write_note: they may be typing in it.'
+const PARTLY = 'Change part of a note with edit_note rather than write_note: they may be typing in it.'
 const MATHS =
   'Write maths as $…$ inline and $$…$$ on lines of their own, and a subscript or superscript outside maths as H~2~O and x^2^.'
 
@@ -123,14 +114,11 @@ function lastModel(thread: Thread): string {
 
 function given<T extends { tools: ToolDef[] }>(thread: Thread, listing: T): T {
   const out = thread.without
-  return out?.length
-    ? { ...listing, tools: listing.tools.filter((one) => !out.includes(one.name)) }
-    : listing
+  return out?.length ? { ...listing, tools: listing.tools.filter((one) => !out.includes(one.name)) } : listing
 }
 
 function failRunning(turn: Turn): void {
-  for (const part of turn.parts)
-    if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
+  for (const part of turn.parts) if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
 }
 
 function keptOut(name: string): ToolOutput {
@@ -245,9 +233,7 @@ export function createApiEngine(setup: Setup): Engine {
         model = { ...model, efforts }
         listed.set(
           provider.id,
-          (listed.get(provider.id) ?? []).map((one) =>
-            one.id === model.id ? { ...one, efforts } : one,
-          ),
+          (listed.get(provider.id) ?? []).map((one) => (one.id === model.id ? { ...one, efforts } : one)),
         )
       }
       if (change.toolsRefused) {
@@ -312,10 +298,7 @@ export function createApiEngine(setup: Setup): Engine {
         addedNow = [...addedNow, ...result.answer.messages]
 
         const { ending, calls } = result.answer
-        if (
-          ending === 'end' &&
-          !turn.parts.some((part) => part.kind === 'text' || part.kind === 'tool')
-        ) {
+        if (ending === 'end' && !turn.parts.some((part) => part.kind === 'text' || part.kind === 'tool')) {
           throw new Error('The model did not answer.')
         }
         if (ending === 'pause') continue
@@ -378,9 +361,7 @@ export function createApiEngine(setup: Setup): Engine {
     signal: AbortSignal,
   ): Promise<{ call: Call; output: ToolOutput }[]> {
     const written = (call: Call, output: ToolOutput) => {
-      const index = turn.parts.findIndex(
-        (one, at) => at >= from && one.kind === 'tool' && one.id === call.id,
-      )
+      const index = turn.parts.findIndex((one, at) => at >= from && one.kind === 'tool' && one.id === call.id)
       const part = turn.parts[index]
       if (part?.kind !== 'tool') return
       const done: Part = {
@@ -402,8 +383,7 @@ export function createApiEngine(setup: Setup): Engine {
         let output = await ask()
         for (let asked = 0; output.approval && asked < MOST_ASKS; asked++) {
           const approval = output.approval
-          if (always(thread, call.name, output.category, output.site))
-            await answers.answer(approval, true)
+          if (always(thread, call.name, output.category, output.site)) await answers.answer(approval, true)
           else {
             written(call, output)
             if (!(await answers.answered(approval, signal))) {
@@ -475,10 +455,7 @@ const localEngines: Partial<Record<LocalKind, (setup: Setup) => Promise<Engine>>
   codex: loadLocal('codex'),
 }
 
-export function registerLocalEngine(
-  kind: LocalKind,
-  load: (setup: Setup) => Promise<Engine>,
-): void {
+export function registerLocalEngine(kind: LocalKind, load: (setup: Setup) => Promise<Engine>): void {
   localEngines[kind] = load
   localBuilt.delete(kind)
 }

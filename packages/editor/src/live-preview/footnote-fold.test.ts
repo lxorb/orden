@@ -38,10 +38,7 @@ describe('jumping back from a footnote into a folded section', () => {
       EditorState.create({
         doc,
         selection: EditorSelection.cursor(doc.length),
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          folding(),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), folding()],
       }),
     )
     const view = new EditorView({ state, parent: document.body })

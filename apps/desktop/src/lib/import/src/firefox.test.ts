@@ -62,9 +62,7 @@ describe("Firefox's tabs and bookmarks as Orden's", () => {
     expect(space?.order['Bookmarks/Bookmarks toolbar/Work']).toEqual(['Board.url'])
     expect(space?.order['Bookmarks/Bookmarks menu']).toEqual(['Recipes.url'])
     const paths = space?.files.map((one) => one.path) ?? []
-    expect(paths.some((path) => path.includes('Nothing') || path.includes('bookmarklet'))).toBe(
-      false,
-    )
+    expect(paths.some((path) => path.includes('Nothing') || path.includes('bookmarklet'))).toBe(false)
     expect(paths.some((path) => path.includes('Settings') || path.includes('Secret'))).toBe(false)
   })
 
@@ -98,9 +96,7 @@ describe("Firefox's tabs and bookmarks as Orden's", () => {
           title: 'Bookmarks Toolbar',
           root: 'toolbarFolder',
           type: 'text/x-moz-place-container',
-          children: [
-            { title: 'Getting Started', type: 'text/x-moz-place', uri: 'http://start.example/' },
-          ],
+          children: [{ title: 'Getting Started', type: 'text/x-moz-place', uri: 'http://start.example/' }],
         },
         {
           title: 'Tags',
@@ -118,9 +114,7 @@ describe("Firefox's tabs and bookmarks as Orden's", () => {
     }
     const [space] = planned(null, older).spaces
     expect(space?.order.Bookmarks).toEqual(['Bookmarks toolbar', 'Bookmarks menu'])
-    expect(space?.order['Bookmarks/Bookmarks menu/Mozilla Firefox']).toEqual([
-      'Help and Tutorials.url',
-    ])
+    expect(space?.order['Bookmarks/Bookmarks menu/Mozilla Firefox']).toEqual(['Help and Tutorials.url'])
     expect(space?.order['Bookmarks/Bookmarks toolbar']).toEqual(['Getting Started.url'])
   })
 
@@ -165,17 +159,14 @@ describe('a Firefox tab', () => {
           tabs: [
             {
               ...page('https://mail.example.com/', 'Mail'),
-              image:
-                'moz-remote-image://?url=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgo%3D&width=16&height=16',
+              image: 'moz-remote-image://?url=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgo%3D&width=16&height=16',
             },
           ],
         },
       ],
     }
     const mail = planned(wrapped, null).spaces[0]?.files[0]
-    expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe(
-      'data:image/png;base64,iVBORw0KGgo=',
-    )
+    expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe('data:image/png;base64,iVBORw0KGgo=')
   })
 
   test('pinned in two windows is one Essential, one web note', () => {

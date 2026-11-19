@@ -95,9 +95,7 @@ describe('what happened in a stretch', () => {
   })
 
   test('shows busy time nobody said anything about, once it lasts a quarter of an hour', () => {
-    expect(unsaid(spans, day, 0, DAY, DAY)).toEqual([
-      { from: 3 * HOUR, to: 4 * HOUR, active: 60 * 30 * 1000 },
-    ])
+    expect(unsaid(spans, day, 0, DAY, DAY)).toEqual([{ from: 3 * HOUR, to: 4 * HOUR, active: 60 * 30 * 1000 }])
     expect(unsaid(spans, minutes(5 * HOUR, 5 * HOUR + 10 * MINUTE), 0, DAY, DAY)).toEqual([])
   })
 

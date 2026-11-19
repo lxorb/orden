@@ -159,9 +159,7 @@ export async function runCommand(call: Call): Promise<AgentAnswer> {
 
   const id = need(call, 'id')
   await commandRowsLoaded()
-  const found: Command | undefined = appCommands(views.of(workspace.panes.focusedId)).find(
-    (one) => one.id === id,
-  )
+  const found: Command | undefined = appCommands(views.of(workspace.panes.focusedId)).find((one) => one.id === id)
   if (!found) throw new Refused('no_such_command', `there is no command called ${id}`)
   if (found.disabled === true) throw new Refused('failed', `${id} cannot run just now`)
   if (id.startsWith('protect.')) {

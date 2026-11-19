@@ -23,9 +23,7 @@ describe('the tree, walked at random on five devices', () => {
 
   test.each([
     ...[528, 558].map((seed) => [seed, 'order'] as const),
-    ...[226, 1402, 4561, 5244, 5352, 3175, 3900, 2316, 23652].map(
-      (seed) => [seed, 'tree'] as const,
-    ),
+    ...[226, 1402, 4561, 5244, 5352, 3175, 3900, 2316, 23652].map((seed) => [seed, 'tree'] as const),
   ])(
     'seed %i of the %s on many devices reads every note as the account does and keeps every word',
     async (seed, mix) => {

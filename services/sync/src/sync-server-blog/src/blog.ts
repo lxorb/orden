@@ -99,9 +99,7 @@ interface Page {
 function pages(listed: readonly Page[]): Map<string, string> {
   const byName = new Map<string, string>()
 
-  const ordered = [...listed].sort(
-    (one, other) => other.note.path.split('/').length - one.note.path.split('/').length,
-  )
+  const ordered = [...listed].sort((one, other) => other.note.path.split('/').length - one.note.path.split('/').length)
 
   for (const page of ordered) {
     const whole = nameOf(page.note.path)
@@ -126,9 +124,7 @@ function blobUrl(file: SpaceFile): string {
 function fileUrls(files: readonly SpaceFile[]): Map<string, string> {
   const byName = new Map<string, string>()
 
-  const ordered = [...files].sort(
-    (one, other) => other.path.split('/').length - one.path.split('/').length,
-  )
+  const ordered = [...files].sort((one, other) => other.path.split('/').length - one.path.split('/').length)
 
   for (const file of ordered) {
     const url = blobUrl(file)
@@ -169,12 +165,7 @@ function toFile(file: SpaceFile, url: URL): Response {
   return Response.redirect(new URL(blobUrl(file), url).toString(), 302)
 }
 
-export async function publishesFile(
-  env: Env,
-  space: Space,
-  file: SpaceFile,
-  request: Request,
-): Promise<boolean> {
+export async function publishesFile(env: Env, space: Space, file: SpaceFile, request: Request): Promise<boolean> {
   const site = readSite(space.site)
   if ((await shutFor(env, space.user_id))(space.id, file.path)) return false
   if (!space.blog_note) {
@@ -286,9 +277,7 @@ function withByline(html: string, author: string | null): string {
   const byline = `<p class="by">by ${escape(author)}</p>`
   const heading = /^\s*<h1\b[^>]*>[\s\S]*?<\/h1>/.exec(html)
 
-  return heading
-    ? html.slice(0, heading[0].length) + byline + html.slice(heading[0].length)
-    : byline + html
+  return heading ? html.slice(0, heading[0].length) + byline + html.slice(heading[0].length) : byline + html
 }
 
 function sheet(body: string, kind = 'text/css'): Response {
@@ -393,10 +382,7 @@ const MOST_LISTED = 2000
 
 function titleOf(page: Page): string {
   return (
-    page.front.title ??
-    page.front.heading ??
-    page.note.path.replace(MARKDOWN, '').split('/').pop() ??
-    page.note.path
+    page.front.title ?? page.front.heading ?? page.note.path.replace(MARKDOWN, '').split('/').pop() ?? page.note.path
   )
 }
 
@@ -461,11 +447,7 @@ function favicon(space: Space, site: Site): Response {
   })
 }
 
-function pictureAt(
-  said: string | undefined,
-  files: Map<string, string>,
-  origin: string,
-): string | undefined {
+function pictureAt(said: string | undefined, files: Map<string, string>, origin: string): string | undefined {
   if (!said) return undefined
 
   const written =
@@ -534,9 +516,7 @@ function graphOf(pages: readonly Page[], only?: Set<string>): string {
 
       const key = from < to ? `${from}-${to}` : `${to}-${from}`
       if (seen.has(key)) {
-        const held = edges.find(
-          (one) => (one.a === from && one.b === to) || (one.a === to && one.b === from),
-        )
+        const held = edges.find((one) => (one.a === from && one.b === to) || (one.a === to && one.b === from))
         if (held) held.both = true
         continue
       }
@@ -567,9 +547,7 @@ export function asIsland(json: string): string {
 function graphBody(pages: readonly Page[], here: string, only?: Set<string>): string {
   const shown = only ? pages.filter((one) => only.has(one.slug)) : pages
 
-  const rows = shown
-    .map((one) => `<li><a href="/${escape(one.slug)}">${escape(titleOf(one))}</a></li>`)
-    .join('')
+  const rows = shown.map((one) => `<li><a href="/${escape(one.slug)}">${escape(titleOf(one))}</a></li>`).join('')
 
   return (
     `<div class="graph" data-here="${escape(here)}">` +
@@ -603,11 +581,7 @@ function near(pages: readonly Page[], page: Page): Set<string> {
 
 const MOST_DIAGRAMS = 24
 
-async function heldBlobs(
-  env: Env,
-  userId: string,
-  hashes: readonly string[],
-): Promise<Set<string>> {
+async function heldBlobs(env: Env, userId: string, hashes: readonly string[]): Promise<Set<string>> {
   if (!hashes.length) return new Set<string>()
 
   const found = await askInChunks(hashes, async (chunk) => {
@@ -639,9 +613,7 @@ async function diagramsIn(env: Env, space: Space, source: string): Promise<Map<s
     })),
   )
 
-  const held = await heldBlobs(env, space.user_id, [
-    ...new Set(named.flatMap((one) => [one.light, one.dark])),
-  ])
+  const held = await heldBlobs(env, space.user_id, [...new Set(named.flatMap((one) => [one.light, one.dark]))])
 
   const drawn = new Map<string, string>()
   for (const { fence, light, dark } of named) {
@@ -675,13 +647,7 @@ function fencesOf(noteId: string, url: URL, request: Request, drawn: ReadonlyMap
   }
 }
 
-async function takeAnswer(
-  env: Env,
-  space: Space,
-  site: Site,
-  request: Request,
-  noteId: string,
-): Promise<Response> {
+async function takeAnswer(env: Env, space: Space, site: Site, request: Request, noteId: string): Promise<Response> {
   const back = (where: string) =>
     new Response(null, {
       status: 303,
@@ -701,9 +667,7 @@ async function takeAnswer(
   if (!note) return new Response('Not found', { status: 404 })
 
   const front = readFront(note.front)
-  const shown = space.blog_note
-    ? note.path === space.blog_note
-    : publishes(site.rules, note.path, front)
+  const shown = space.blog_note ? note.path === space.blog_note : publishes(site.rules, note.path, front)
   if (!shown || (await shutFor(env, space.user_id))(space.id, note.path))
     return new Response('Not found', { status: 404 })
 
@@ -735,12 +699,7 @@ async function takeAnswer(
   return back(`${where}?sent=${encodeURIComponent(note.id)}`)
 }
 
-export async function serveBlog(
-  env: Env,
-  space: Space,
-  url: URL,
-  request: Request,
-): Promise<Response> {
+export async function serveBlog(env: Env, space: Space, url: URL, request: Request): Promise<Response> {
   const site = readSite(space.site)
   const answer = await served(env, space, url, request, site)
   if (!site.password) return answer
@@ -750,13 +709,7 @@ export async function serveBlog(
   return new Response(answer.body, { status: answer.status, headers })
 }
 
-async function served(
-  env: Env,
-  space: Space,
-  url: URL,
-  request: Request,
-  site: Site,
-): Promise<Response> {
+async function served(env: Env, space: Space, url: URL, request: Request, site: Site): Promise<Response> {
   if (url.pathname === PAGE_CSS_PATH) return sheet(PAGE_CSS)
   if (url.pathname === MATH_CSS_PATH) return sheet(MATH_CSS)
   if (url.pathname === SITE_JS_PATH) return sheet(SITE_JS, 'text/javascript')
@@ -914,11 +867,7 @@ async function served(
       date: newest?.date,
     }))
 
-    return sitemap([
-      { url: `${url.origin}/`, title: heading, updated: space.updated_at },
-      ...written,
-      ...both,
-    ])
+    return sitemap([{ url: `${url.origin}/`, title: heading, updated: space.updated_at }, ...written, ...both])
   }
 
   if (slug === 'feed.xml' || slug === 'rss.xml') {
@@ -950,10 +899,7 @@ async function served(
       const tags = held.front.tags ?? []
       const path = held.note.path.toLowerCase()
 
-      return (
-        one.tags.every((tag) => tags.includes(tag)) &&
-        one.folders.every((folder) => path.includes(folder))
-      )
+      return one.tags.every((tag) => tags.includes(tag)) && one.folders.every((folder) => path.includes(folder))
     })
 
     return page(
@@ -1037,9 +983,7 @@ async function served(
     const moved = was ? pageList.find((one) => one.note.id === was) : null
     if (moved) return Response.redirect(new URL(`/${moved.slug}`, url).toString(), 301)
 
-    const before = pageList.find((one) =>
-      legacyPathsOf(one.note.path, one.front).includes(decodedSlug),
-    )
+    const before = pageList.find((one) => legacyPathsOf(one.note.path, one.front).includes(decodedSlug))
     if (before) return Response.redirect(new URL(`/${before.slug}`, url).toString(), 301)
 
     return missing()
@@ -1084,22 +1028,17 @@ async function served(
 
   const here = listed(found)
 
-  return page(
-    head,
-    `<p class="back"><a href="/">← ${escape(heading)}</a></p>${withByline(rendered, author)}`,
-    env,
-    {
-      shell: {
-        bar: bar(around),
-        left: aside(around, found.slug),
-        right: contents(headings),
-        under: `${underneath(around, here)}${
-          all.length > 2 ? graphBody(pageList, found.slug, near(pageList, found)) : ''
-        }`,
-        theme,
-        own,
-        counter: counting,
-      },
+  return page(head, `<p class="back"><a href="/">← ${escape(heading)}</a></p>${withByline(rendered, author)}`, env, {
+    shell: {
+      bar: bar(around),
+      left: aside(around, found.slug),
+      right: contents(headings),
+      under: `${underneath(around, here)}${
+        all.length > 2 ? graphBody(pageList, found.slug, near(pageList, found)) : ''
+      }`,
+      theme,
+      own,
+      counter: counting,
     },
-  )
+  })
 }

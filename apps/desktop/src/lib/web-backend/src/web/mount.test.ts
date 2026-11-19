@@ -28,8 +28,7 @@ function kept(): Kept {
         for (const row of sorted(held)) visit(row)
         return Promise.resolve()
       },
-      between: (from, to) =>
-        Promise.resolve(sorted(held).filter((row) => row.path >= from && row.path <= to)),
+      between: (from, to) => Promise.resolve(sorted(held).filter((row) => row.path >= from && row.path <= to)),
       put: (row) => Promise.resolve(void held.set(row.path, row)),
       write: (path, content, at) => {
         const created = held.get(path)?.created ?? at
@@ -49,10 +48,7 @@ function kept(): Kept {
       remove: (path) => Promise.resolve(void pictures.delete(path)),
     },
     stats: {
-      holds: (path) =>
-        Promise.resolve(
-          listing().some((row) => row.path === path || row.path.startsWith(`${path}/`)),
-        ),
+      holds: (path) => Promise.resolve(listing().some((row) => row.path === path || row.path.startsWith(`${path}/`))),
       all: () => Promise.resolve(listing()),
       learn: () => Promise.resolve(),
     },

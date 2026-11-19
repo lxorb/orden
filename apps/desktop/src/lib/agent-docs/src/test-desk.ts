@@ -1,11 +1,4 @@
-import {
-  agentsOf,
-  documentOf,
-  EditorState,
-  type EditorView,
-  remoteCarets,
-  undoEdit,
-} from '@orden/editor'
+import { agentsOf, documentOf, EditorState, type EditorView, remoteCarets, undoEdit } from '@orden/editor'
 import { applied, type Change } from '@orden/scan/search/replace'
 import { NoteDoc } from '../../documents/src/api'
 import type { Keeping } from '../../workspace/src/api'
@@ -142,10 +135,7 @@ export function deskWith(notes: Record<string, string>, open: readonly string[] 
     shut: (path: string) => shut.add(`${SPACE.root}/${path}`),
     open: opened,
     draft: (tab: string, text: string): Pane => {
-      const note = new NoteDoc(
-        { kind: 'note', path: null, name: 'Untitled', text, dirty: false },
-        () => undefined,
-      )
+      const note = new NoteDoc({ kind: 'note', path: null, name: 'Untitled', text, dirty: false }, () => undefined)
       drafts.set(tab, note)
       return new Pane(note, 0)
     },

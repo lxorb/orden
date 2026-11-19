@@ -120,12 +120,7 @@ export async function sendMade(
   return waiting
 }
 
-export async function settleFiles(
-  core: Core,
-  space: SpaceState,
-  alive: () => boolean,
-  room: Room,
-): Promise<boolean> {
+export async function settleFiles(core: Core, space: SpaceState, alive: () => boolean, room: Room): Promise<boolean> {
   const blobs = core.world.blobs
   if (!blobs) return true
   const wanted = space.paths()
@@ -226,12 +221,7 @@ export async function settleFiles(
   return true
 }
 
-export async function recoverLost(
-  core: Core,
-  space: SpaceState,
-  alive: () => boolean,
-  room: Room,
-): Promise<boolean> {
+export async function recoverLost(core: Core, space: SpaceState, alive: () => boolean, room: Room): Promise<boolean> {
   const blobs = core.world.blobs
   if (!blobs?.have || core.world.now() - space.lostCheckedAt < LOST_EVERY) return true
   space.lostCheckedAt = core.world.now()
@@ -250,9 +240,7 @@ export async function recoverLost(
   )
   for (let from = 0; from < inStep.length; from += ASKED_AT_ONCE) {
     const batch = inStep.slice(from, from + ASKED_AT_ONCE)
-    const kept = await blobs.have(space.id, [
-      ...new Set(batch.map((entry) => entry.file_key ?? '')),
-    ])
+    const kept = await blobs.have(space.id, [...new Set(batch.map((entry) => entry.file_key ?? ''))])
     if (!alive()) return false
     if (kept === null) return true
     for (const entry of batch) {
@@ -300,9 +288,7 @@ async function taken(
   core.refusedBytes.set(entry.id, { at: core.world.now(), hash, full })
   if (full) room.full = true
   if (before?.hash !== hash || before.full !== full) {
-    const failed = full
-      ? `no room on the account for ${entry.name}`
-      : `the account would not take ${entry.name}`
+    const failed = full ? `no room on the account for ${entry.name}` : `the account would not take ${entry.name}`
     const row = { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed }
     await core.commit([put('log', row)])
   }
@@ -319,17 +305,10 @@ export function waitsForBytes(core: Core, space: SpaceState, one: Outboxed): boo
 }
 
 function waitingCreate(space: SpaceState, id: string): boolean {
-  return space.outbox.some(
-    (one) => one.record.t === 'op' && one.record.op.t === 'create' && one.record.op.id === id,
-  )
+  return space.outbox.some((one) => one.record.t === 'op' && one.record.op.t === 'create' && one.record.op.id === id)
 }
 
-export async function claimed(
-  core: Core,
-  space: SpaceState,
-  entry: EntryRow,
-  path: string,
-): Promise<boolean> {
+export async function claimed(core: Core, space: SpaceState, entry: EntryRow, path: string): Promise<boolean> {
   entry.local_path = path
   const here = await readBytes(core, space, entry)
   if (!here || typeof here === 'string' || here.hash !== entry.file_key) {

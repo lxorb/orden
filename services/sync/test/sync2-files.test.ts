@@ -159,9 +159,7 @@ describe('a file replaced', () => {
     for (const one of versions) await upload(one)
     const placed = await place('picture.bin', await hashOf(versions[0] ?? bytes(0)))
     const id = (placed.results[0] as { id: string }).id
-    const seen = (
-      await call<{ cursor: number }>(env, `/v2/spaces/${space}/feed?since=0`, { token })
-    ).json.cursor
+    const seen = (await call<{ cursor: number }>(env, `/v2/spaces/${space}/feed?since=0`, { token })).json.cursor
 
     for (const [as, at] of [
       [other, 1],
@@ -203,8 +201,7 @@ describe('a file replaced', () => {
 
 describe('the bytes an editor names', () => {
   async function elsewhere(): Promise<string> {
-    const other = (await call(env, '/v1/spaces', { token, body: { name: 'Private' } })).json.space
-      .id
+    const other = (await call(env, '/v1/spaces', { token, body: { name: 'Private' } })).json.space.id
     await call(env, `/v2/spaces/${other}/prepare`, { token, method: 'POST' })
     const data = bytes(256, 11)
     await upload(data, 'application/pdf')
@@ -256,13 +253,10 @@ describe('the bytes an editor names', () => {
     await place('ours.bin', await hashOf(data))
     const editor = await invited(env, token, space, 'editor@example.com', 'write')
 
-    expect((await place('ours again.bin', await hashOf(data), editor)).results[0]).toHaveProperty(
-      'id',
-    )
+    expect((await place('ours again.bin', await hashOf(data), editor)).results[0]).toHaveProperty('id')
     const other = bytes(64, 15)
     await upload(other, 'application/octet-stream', editor)
-    const id = ((await place('swap.bin', await hashOf(other), editor)).results[0] as { id: string })
-      .id
+    const id = ((await place('swap.bin', await hashOf(other), editor)).results[0] as { id: string }).id
     const answer = await call(env, `/v2/files/${space}/${id}`, {
       method: 'PUT',
       token: editor,
@@ -414,8 +408,6 @@ describe('the bytes an account keeps, asked', () => {
 
     const many = Array.from({ length: 91 }, (_, at) => at.toString(16).padStart(64, '0'))
     expect((await call(env, '/v2/blobs/have', { token, body: { hashes: many } })).status).toBe(400)
-    expect(
-      (await call(env, '/v2/blobs/have', { token, body: { hashes: ['not a hash'] } })).status,
-    ).toBe(400)
+    expect((await call(env, '/v2/blobs/have', { token, body: { hashes: ['not a hash'] } })).status).toBe(400)
   })
 })

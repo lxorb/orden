@@ -23,8 +23,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
 const { links, notePicture } = await import('../../src/lib/link-index/src/api')
 const { startup } = await import('../../src/lib/launch/src/api')
 
-const frames = () =>
-  new Promise<void>((go) => requestAnimationFrame(() => requestAnimationFrame(() => go())))
+const frames = () => new Promise<void>((go) => requestAnimationFrame(() => requestAnimationFrame(() => go())))
 
 function opened(doc: string): { view: EditorView; parent: HTMLElement } {
   const parent = document.createElement('div')

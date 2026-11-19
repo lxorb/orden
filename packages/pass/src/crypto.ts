@@ -60,11 +60,7 @@ export async function sealBytes(
   const additionalData = contextOf('orden pass 1', label, context)
   const sealing = await aesKey(key)
   const nonce = randomBytes(NONCE)
-  const sealed = await subtle().encrypt(
-    { name: 'AES-GCM', iv: nonce, additionalData },
-    sealing,
-    plainBytes(plain),
-  )
+  const sealed = await subtle().encrypt({ name: 'AES-GCM', iv: nonce, additionalData }, sealing, plainBytes(plain))
   return joined(nonce, new Uint8Array(sealed))
 }
 
@@ -147,11 +143,7 @@ export async function subkey(
   return new Uint8Array(bits)
 }
 
-export type Stretcher = (
-  secret: string,
-  salt: Uint8Array,
-  params: KdfParams,
-) => Promise<Uint8Array<ArrayBuffer>>
+export type Stretcher = (secret: string, salt: Uint8Array, params: KdfParams) => Promise<Uint8Array<ArrayBuffer>>
 
 let stretcher: Stretcher | null = null
 
@@ -159,11 +151,7 @@ export function useStretcher(next: Stretcher | null): void {
   stretcher = next
 }
 
-export async function stretch(
-  secret: string,
-  salt: Uint8Array,
-  params: KdfParams,
-): Promise<Uint8Array<ArrayBuffer>> {
+export async function stretch(secret: string, salt: Uint8Array, params: KdfParams): Promise<Uint8Array<ArrayBuffer>> {
   const checked = kdfParamsIn(params)
   if (checked === null) throw new WrongSecret('pass: key stretching parameters out of range')
   if (salt.length < SALT_MIN) throw new WrongSecret('pass: salt too short')

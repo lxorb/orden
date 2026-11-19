@@ -30,9 +30,7 @@
     easing: cubicOut,
   }}
 >
-  <span class="mark" aria-hidden="true"
-    ><Icon icon={null} fallback={one.icon ?? MARKS[one.mark]} /></span
-  >
+  <span class="mark" aria-hidden="true"><Icon icon={null} fallback={one.icon ?? MARKS[one.mark]} /></span>
   <span class="orden-row-label">{one.label()}</span>
   {#if letter}
     <kbd aria-hidden="true">{letter.toUpperCase()}</kbd>

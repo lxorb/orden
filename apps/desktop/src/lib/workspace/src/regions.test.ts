@@ -5,17 +5,7 @@ const WINDOW = ['editor', 'list', 'status', 'panels', 'foot', 'tabs', 'space']
 
 describe('the order', () => {
   test('runs down the sidebar and then across the note', () => {
-    expect([...REGIONS]).toEqual([
-      'space',
-      'panels',
-      'list',
-      'foot',
-      'tabs',
-      'notices',
-      'editor',
-      'status',
-      'right',
-    ])
+    expect([...REGIONS]).toEqual(['space', 'panels', 'list', 'foot', 'tabs', 'notices', 'editor', 'status', 'right'])
   })
 
   test('knows a region from anything else on the page', () => {

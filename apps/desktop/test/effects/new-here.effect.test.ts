@@ -233,9 +233,7 @@ test('in a new tab, leaves the keyboard where it was and says which tab the choi
   const made = makers()
   const chosen: string[] = []
   vi.spyOn(workspace, 'chosenOn').mockImplementation((id) => void chosen.push(id))
-  vi.spyOn(workspace, 'showing').mockReturnValue({ id: 'new-tab' } as ReturnType<
-    typeof workspace.showing
-  >)
+  vi.spyOn(workspace, 'showing').mockReturnValue({ id: 'new-tab' } as ReturnType<typeof workspace.showing>)
   here('new-tab')
 
   expect(target.contains(document.activeElement)).toBe(false)

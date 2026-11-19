@@ -135,18 +135,10 @@ describe('tasks-model contract', () => {
   })
 
   test('"only this space" keeps the todos of the open space and the ones with no space stay out', () => {
-    const all = [
-      todo({ id: 'a', space: 'home' }),
-      todo({ id: 'b', space: 'work' }),
-      todo({ id: 'c', space: null }),
-    ]
+    const all = [todo({ id: 'a', space: 'home' }), todo({ id: 'b', space: 'work' }), todo({ id: 'c', space: null })]
     const filter = { onlySpace: true, space: 'home', label: null, today: TODAY }
     expect(shownTodos(all, filter).map((t) => t.id)).toEqual(['a'])
-    expect(shownTodos(all, { ...filter, onlySpace: false }).map((t) => t.id)).toEqual([
-      'a',
-      'b',
-      'c',
-    ])
+    expect(shownTodos(all, { ...filter, onlySpace: false }).map((t) => t.id)).toEqual(['a', 'b', 'c'])
   })
 
   test('a label exists only while a shown todo carries it, and within the open space when asked', () => {
@@ -155,17 +147,11 @@ describe('tasks-model contract', () => {
       todo({ id: 'b', space: 'work', labels: ['meeting'] }),
       todo({ id: 'c', space: 'work', labels: ['old'], done: true, doneAt: NOON - 86_400_000 * 3 }),
     ]
-    expect(labelsOf(all, { onlySpace: false, space: null, today: TODAY })).toEqual([
-      'errand',
-      'meeting',
-      'Urgent',
-    ])
+    expect(labelsOf(all, { onlySpace: false, space: null, today: TODAY })).toEqual(['errand', 'meeting', 'Urgent'])
     expect(labelsOf(all, { onlySpace: true, space: 'work', today: TODAY })).toEqual(['meeting'])
-    expect(
-      shownTodos(all, { onlySpace: false, space: null, label: 'meeting', today: TODAY }).map(
-        (t) => t.id,
-      ),
-    ).toEqual(['b'])
+    expect(shownTodos(all, { onlySpace: false, space: null, label: 'meeting', today: TODAY }).map((t) => t.id)).toEqual(
+      ['b'],
+    )
   })
 
   test('a todo with a start date after today stays out of the way until that day', () => {
@@ -300,11 +286,7 @@ describe('tasks-model contract', () => {
 
 describe('a priority', () => {
   test('is drawn in its own tone from the first to the third, and plain after', () => {
-    expect([1, 2, 3].map(priorityTone)).toEqual([
-      'var(--canvas-1)',
-      'var(--canvas-2)',
-      'var(--canvas-5)',
-    ])
+    expect([1, 2, 3].map(priorityTone)).toEqual(['var(--canvas-1)', 'var(--canvas-2)', 'var(--canvas-5)'])
     expect(priorityTone(4)).toBeUndefined()
   })
 

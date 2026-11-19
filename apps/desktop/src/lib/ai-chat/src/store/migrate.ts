@@ -11,12 +11,7 @@ function sourceIn(value: unknown): Source | null {
   return isString(path) && isString(name) && typeof line === 'number' ? { path, name, line } : null
 }
 
-export function threadFromAsk(
-  turns: unknown,
-  space: string,
-  provider: string,
-  model: string,
-): Thread | null {
+export function threadFromAsk(turns: unknown, space: string, provider: string, model: string): Thread | null {
   if (!Array.isArray(turns)) return null
   const thread = newThread(space, provider, model)
   let at = Date.now() - turns.length

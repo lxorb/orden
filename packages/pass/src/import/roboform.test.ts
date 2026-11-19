@@ -30,8 +30,7 @@ describe('parseRoboForm', () => {
   })
 
   it('takes the folder from the name when there is no folder column', () => {
-    const items =
-      parseRoboForm('Name,Url,Login,Pwd\n/Work/Mail,https://m.com,u,p\n').vaults[0]?.items ?? []
+    const items = parseRoboForm('Name,Url,Login,Pwd\n/Work/Mail,https://m.com,u,p\n').vaults[0]?.items ?? []
     expect(items[0]).toMatchObject({ folder: 'Work', content: { title: 'Mail' } })
   })
 })

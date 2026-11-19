@@ -63,8 +63,7 @@
   function onPaste(event: ClipboardEvent) {
     const text = longPaste(event)
     if (text === null) return
-    if (text.length > 2_000_000)
-      quick.refuse('Text was not added: a chat takes pictures, and text files up to 2 MB.')
+    if (text.length > 2_000_000) quick.refuse('Text was not added: a chat takes pictures, and text files up to 2 MB.')
     else quick.take('Text', text)
   }
 
@@ -91,8 +90,7 @@
     const from = workspace.panelTab?.path ?? null
     quick.close()
     if (elsewhere) followHref(href, event)
-    else
-      followNote({ path: href, target: href, heading: null, block: null, page: null }, event, from)
+    else followNote({ path: href, target: href, heading: null, block: null, page: null }, event, from)
   }
 
   const pictures = new SvelteSet<string>()
@@ -101,9 +99,7 @@
     const from = untrack(() => workspace.panelTab?.path ?? null)
     return answerHtml(text, {
       resolveLink: (link) => {
-        const found = link.target
-          ? links.targetOf(from, { kind: 'wikilink', target: link.target })
-          : null
+        const found = link.target ? links.targetOf(from, { kind: 'wikilink', target: link.target }) : null
         return found === null ? null : { href: found }
       },
       copy: 'Copy code',
@@ -172,9 +168,7 @@
       {/if}
       {#if quick.running}
         <button class="go" title="Stop" aria-label="Stop" onclick={() => quick.stop()}>
-          <svg viewBox="0 0 13 13"
-            ><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg
-          >
+          <svg viewBox="0 0 13 13"><rect class="square" x="4" y="4" width="5" height="5" rx="0.8" /></svg>
         </button>
       {:else}
         <button
@@ -251,8 +245,7 @@
               aria-label="Add to note"
               onclick={() => void quick.addToNote(dollarMaths(done.text))}
             >
-              <svg viewBox="0 0 13 13"><path d="M6.5 2v6.5M3.8 5.8l2.7 2.7 2.7-2.7M2.5 11h8" /></svg
-              >
+              <svg viewBox="0 0 13 13"><path d="M6.5 2v6.5M3.8 5.8l2.7 2.7 2.7-2.7M2.5 11h8" /></svg>
             </button>
           {/if}
           <button
@@ -281,19 +274,10 @@
 {/snippet}
 
 {#if quick.open && docked}
-  <section
-    class="side"
-    aria-label="Side chat"
-    transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}
-  >
+  <section class="side" aria-label="Side chat" transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
     <header class="head">
       <span class="name">Side chat</span>
-      <button
-        class="drop"
-        title="Hide"
-        aria-label="Hide the side chat"
-        onclick={() => quick.close()}
-      >
+      <button class="drop" title="Hide" aria-label="Hide the side chat" onclick={() => quick.close()}>
         <Cross small />
       </button>
     </header>
@@ -308,11 +292,7 @@
   </div>
 {:else if quick.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div
-    class="orden-scrim scrim"
-    transition:fade={{ duration: LAYER.fade }}
-    onclick={() => quick.close()}
-  ></div>
+  <div class="orden-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={() => quick.close()}></div>
   <div
     class="orden-screen quick"
     use:trap

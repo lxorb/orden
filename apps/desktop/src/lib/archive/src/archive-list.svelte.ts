@@ -21,9 +21,7 @@ class ArchiveList {
   }
 
   unfold(path: string) {
-    this.unfolded = this.isUnfolded(path)
-      ? this.unfolded.filter((one) => one !== path)
-      : [...this.unfolded, path]
+    this.unfolded = this.isUnfolded(path) ? this.unfolded.filter((one) => one !== path) : [...this.unfolded, path]
   }
 
   private setOpen(open: boolean) {

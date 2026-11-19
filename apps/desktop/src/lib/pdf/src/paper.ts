@@ -84,15 +84,10 @@ export function sharpness(width: number, height: number, wanted: number): number
 
 export function drawScale(width: number, height: number, density: number): number {
   const area = width * height * density * density
-  return sharpness(
-    width,
-    height,
-    area > MOST_PIXELS ? density * Math.sqrt(MOST_PIXELS / area) : density,
-  )
+  return sharpness(width, height, area > MOST_PIXELS ? density * Math.sqrt(MOST_PIXELS / area) : density)
 }
 
-export const densityFor = (onScreen: number): number =>
-  DENSITIES.find((one) => onScreen <= one) ?? SHARP
+export const densityFor = (onScreen: number): number => DENSITIES.find((one) => onScreen <= one) ?? SHARP
 
 export function paperOf(
   at: PaperAt,
@@ -189,8 +184,7 @@ export async function outlineOf(at: PaperAt): Promise<PdfHeading[]> {
   return opened ? await readOutline(opened.doc) : []
 }
 
-export const paperPathOf = async (at: PaperAt): Promise<string | null> =>
-  (await heldOf(at)?.place) ?? null
+export const paperPathOf = async (at: PaperAt): Promise<string | null> => (await heldOf(at)?.place) ?? null
 
 export interface PaperView {
   transform: Transform
@@ -245,9 +239,7 @@ function heldOf(at: PaperAt): Held | null {
   return made
 }
 
-async function opened(
-  at: PaperAt,
-): Promise<{ pdf: OpenPdf; path: string | null; copy?: Uint8Array }> {
+async function opened(at: PaperAt): Promise<{ pdf: OpenPdf; path: string | null; copy?: Uint8Array }> {
   const places = paperPlaces(at.file, at.note, at.root)
   let last: unknown = new Error(`${at.file} is nowhere this space can read`)
 
@@ -337,9 +329,7 @@ async function draw(one: Held, number: number, density: number): Promise<Paper |
 function awayOf(one: Held): Promise<number | null> {
   one.away ??= one
     .bytes()
-    .then(async (bytes) =>
-      bytes && !one.gone ? ((await paperAway())?.openAway(bytes) ?? null) : null,
-    )
+    .then(async (bytes) => (bytes && !one.gone ? ((await paperAway())?.openAway(bytes) ?? null) : null))
     .catch(() => null)
   return one.away
 }
@@ -365,11 +355,7 @@ async function rendered(
   return await drawnHere(page, asked, signal)
 }
 
-async function drawnHere(
-  page: PDFPageProxy,
-  asked: AwayDraw,
-  signal?: AbortSignal,
-): Promise<ImageBitmap | null> {
+async function drawnHere(page: PDFPageProxy, asked: AwayDraw, signal?: AbortSignal): Promise<ImageBitmap | null> {
   const sheet = sheetOf(asked.width, asked.height)
   const ctx = sheet?.getContext('2d') ?? null
   if (!sheet || !ctx || signal?.aborted) {
@@ -398,9 +384,7 @@ async function drawnHere(
   }
   if (signal?.aborted) return null
 
-  return 'transferToImageBitmap' in sheet
-    ? sheet.transferToImageBitmap()
-    : await createImageBitmap(sheet)
+  return 'transferToImageBitmap' in sheet ? sheet.transferToImageBitmap() : await createImageBitmap(sheet)
 }
 
 export interface Part {
@@ -429,11 +413,7 @@ export async function closeUpOf(
   const wide = part.width * whole.width
   const tall = part.height * whole.height
   const wanted = across / whole.width
-  const scale = sharpness(
-    wide,
-    tall,
-    Math.min(wanted, Math.sqrt(CLOSE_PIXELS / Math.max(1, wide * tall))),
-  )
+  const scale = sharpness(wide, tall, Math.min(wanted, Math.sqrt(CLOSE_PIXELS / Math.max(1, wide * tall))))
   const image = await rendered(
     one,
     page,
@@ -534,8 +514,7 @@ export async function wordsInto(
 let offscreen: boolean | undefined
 
 function sheetOf(width: number, height: number): HTMLCanvasElement | OffscreenCanvas | null {
-  offscreen ??=
-    typeof OffscreenCanvas === 'function' && !!new OffscreenCanvas(1, 1).getContext('2d')
+  offscreen ??= typeof OffscreenCanvas === 'function' && !!new OffscreenCanvas(1, 1).getContext('2d')
   if (offscreen) return new OffscreenCanvas(width, height)
   if (typeof document === 'undefined') return null
 

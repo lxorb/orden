@@ -33,8 +33,7 @@ class Choices {
     if (isRecord(saved)) {
       this.page = {
         paper: PAPER_SIZES.find((one) => one === saved.paper) ?? DEFAULT_PAGE_SETUP.paper,
-        orientation:
-          ORIENTATIONS.find((one) => one === saved.orientation) ?? DEFAULT_PAGE_SETUP.orientation,
+        orientation: ORIENTATIONS.find((one) => one === saved.orientation) ?? DEFAULT_PAGE_SETUP.orientation,
         margin: isString(saved.margin) ? saved.margin : DEFAULT_PAGE_SETUP.margin,
         header: isString(saved.header) ? saved.header : DEFAULT_PAGE_SETUP.header,
         footer: isString(saved.footer) ? saved.footer : DEFAULT_PAGE_SETUP.footer,

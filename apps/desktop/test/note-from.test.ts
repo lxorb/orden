@@ -46,8 +46,7 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
 
 vi.mock('../src/lib/sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../src/lib/sharing/src/sharing.svelte')>()),
-  canWriteAt: (path: string) =>
-    !(share.readOnly && (path === '/space' || path.startsWith('/space/'))),
+  canWriteAt: (path: string) => !(share.readOnly && (path === '/space' || path.startsWith('/space/'))),
 }))
 
 vi.stubGlobal('localStorage', memoryStorage())

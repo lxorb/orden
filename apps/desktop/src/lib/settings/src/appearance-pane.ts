@@ -52,8 +52,7 @@ function themeField(setting: ThemeSetting, owner = theme.id): Field {
   const worn = () => owner === theme.id
   const drawer = setting.shared === true ? SHARED : owner
   const get = () => (worn() ? theme.values[setting.id] : theme.keptFor(drawer, setting.id))
-  const put = (value: ThemeValue) =>
-    worn() ? theme.set(setting.id, value) : theme.setFor(drawer, setting.id, value)
+  const put = (value: ThemeValue) => (worn() ? theme.set(setting.id, value) : theme.setFor(drawer, setting.id, value))
   const common = {
     label,
     hint: setting.hint,
@@ -164,9 +163,7 @@ function pictureField(): Field {
 }
 
 function ownFields(): Field[] {
-  return theme.settings
-    .filter((one) => one.own === true && (one.when?.() ?? true))
-    .map((one) => themeField(one))
+  return theme.settings.filter((one) => one.own === true && (one.when?.() ?? true)).map((one) => themeField(one))
 }
 
 export function appearancePane(): Pane {

@@ -53,8 +53,7 @@ export function settled<T extends Box & { id: string }>(
 }
 
 function spotFor(one: Box, placed: readonly Box[], under: number): { x: number; y: number } {
-  const free = (x: number, y: number) =>
-    placed.every((other) => clearOf({ ...one, x, y }, other, under) === null)
+  const free = (x: number, y: number) => placed.every((other) => clearOf({ ...one, x, y }, other, under) === null)
   if (free(one.x, one.y)) return { x: one.x, y: one.y }
   let best = { x: one.x, y: one.y }
   let far = Number.POSITIVE_INFINITY
@@ -155,18 +154,13 @@ export function stripLanding(
   return { paneId, before: after?.id ?? null }
 }
 
-export const overlaps = (a: Box, b: Box, named = 0): boolean =>
-  clearOf(a, b, Math.max(APART_Y, named)) !== null
+export const overlaps = (a: Box, b: Box, named = 0): boolean => clearOf(a, b, Math.max(APART_Y, named)) !== null
 
 export function keptAt<T extends Box>(slot: T, box: Box): T {
   return { ...slot, x: box.x, y: box.y, w: box.w, h: (box.w * slot.h) / Math.max(slot.w, 1) }
 }
 
-export function stripPlace(
-  strip: readonly string[],
-  id: string,
-  before: string | null,
-): number | null {
+export function stripPlace(strip: readonly string[], id: string, before: string | null): number | null {
   const back = strip.filter((one) => one !== id)
   const found = before === null ? -1 : back.indexOf(before)
   const into = found < 0 ? back.length : found

@@ -87,12 +87,9 @@ const EVENTS: Event[] = [
 const wired = (value: unknown): unknown => JSON.parse(JSON.stringify(value))
 
 describe('events', () => {
-  it.each(EVENTS.map((event) => [event.kind, event] as const))(
-    'a %s reads back as it was sent',
-    (_, event) => {
-      expect(eventOf(wired(event))).toEqual(event)
-    },
-  )
+  it.each(EVENTS.map((event) => [event.kind, event] as const))('a %s reads back as it was sent', (_, event) => {
+    expect(eventOf(wired(event))).toEqual(event)
+  })
 
   it('drops fields it does not know', () => {
     expect(eventOf({ kind: 'delete', id: 'e', target: 'm', admin: true })).toEqual({
@@ -104,9 +101,7 @@ describe('events', () => {
   })
 
   it('names each mention once', () => {
-    expect(
-      eventOf({ kind: 'post', id: 'e', message: 'm', body: 'hi', mentions: ['here', 'here'] }),
-    ).toMatchObject({
+    expect(eventOf({ kind: 'post', id: 'e', message: 'm', body: 'hi', mentions: ['here', 'here'] })).toMatchObject({
       mentions: ['here'],
     })
   })
@@ -117,10 +112,7 @@ describe('events', () => {
     ['an id with a space', { kind: 'delete', id: 'e 1', target: 'm' }],
     ['an id past 64', { kind: 'delete', id: 'e'.repeat(65), target: 'm' }],
     ['a post of nothing', { kind: 'post', id: 'e', message: 'm', body: '  ' }],
-    [
-      'words past the limit',
-      { kind: 'post', id: 'e', message: 'm', body: 'x'.repeat(MOST_BODY + 1) },
-    ],
+    ['words past the limit', { kind: 'post', id: 'e', message: 'm', body: 'x'.repeat(MOST_BODY + 1) }],
     [
       'too many files',
       {
@@ -131,10 +123,7 @@ describe('events', () => {
         files: Array.from({ length: MOST_FILES + 1 }, () => PICTURE),
       },
     ],
-    [
-      'a file with no hash',
-      { kind: 'post', id: 'e', message: 'm', body: 'x', files: [{ ...PICTURE, hash: 'nope' }] },
-    ],
+    ['a file with no hash', { kind: 'post', id: 'e', message: 'm', body: 'x', files: [{ ...PICTURE, hash: 'nope' }] }],
     [
       'a file past 2 GB',
       {
@@ -179,14 +168,8 @@ describe('events', () => {
         preview: { url: 'file:///etc/passwd', title: 'x' },
       },
     ],
-    [
-      'also to the chat without a parent',
-      { kind: 'post', id: 'e', message: 'm', body: 'x', alsoToChat: true },
-    ],
-    [
-      'a mention of a name',
-      { kind: 'post', id: 'e', message: 'm', body: 'x', mentions: ['Lucile'] },
-    ],
+    ['also to the chat without a parent', { kind: 'post', id: 'e', message: 'm', body: 'x', alsoToChat: true }],
+    ['a mention of a name', { kind: 'post', id: 'e', message: 'm', body: 'x', mentions: ['Lucile'] }],
     ['a reaction of nothing', { kind: 'react', id: 'e', target: 'm', emoji: ' ', on: true }],
     ['a reaction with a space', { kind: 'react', id: 'e', target: 'm', emoji: '👍 👍', on: true }],
     ['a pin with no answer', { kind: 'pin', id: 'e', target: 'm' }],
@@ -319,12 +302,9 @@ describe('the socket', () => {
     { t: 'profile', who: 'user:lucile' },
   ]
 
-  it.each(server.map((frame) => [frame.t, frame] as const))(
-    'carries the object’s %s',
-    (_, frame) => {
-      expect(serverFrameOf(text(frame))).toEqual(frame)
-    },
-  )
+  it.each(server.map((frame) => [frame.t, frame] as const))('carries the object’s %s', (_, frame) => {
+    expect(serverFrameOf(text(frame))).toEqual(frame)
+  })
 
   it.each([
     'not json',
@@ -381,9 +361,7 @@ describe('HTTP', () => {
   }
 
   it('lists chats, leaving out a row that does not read', () => {
-    expect(
-      chatListOf(wired({ chats: [row, { ...row, id: 'nope' }, { ...row, role: 'admin' }] })),
-    ).toEqual({
+    expect(chatListOf(wired({ chats: [row, { ...row, id: 'nope' }, { ...row, role: 'admin' }] }))).toEqual({
       chats: [row],
     })
     expect(chatListOf({ chats: 'all' })).toBeNull()

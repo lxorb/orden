@@ -83,15 +83,12 @@ const isSize = (value: unknown, most: number): value is number =>
 export function viewOf(value: unknown): View | null {
   if (!isRecord(value)) return null
   const { width, height, dpr, hz } = value
-  if (!isSize(width, 16_384) || !isSize(height, 16_384) || !isSize(dpr, 8) || !isSize(hz, 500))
-    return null
+  if (!isSize(width, 16_384) || !isSize(height, 16_384) || !isSize(dpr, 8) || !isSize(hz, 500)) return null
   return { width, height, dpr, hz }
 }
 
 function signalOf(value: Fields): { t: 'signal'; data: string } | null {
-  return typeof value.data === 'string' && value.data.length <= MOST_SIGNAL
-    ? { t: 'signal', data: value.data }
-    : null
+  return typeof value.data === 'string' && value.data.length <= MOST_SIGNAL ? { t: 'signal', data: value.data } : null
 }
 
 function runOf(value: Fields): { t: 'run'; what: 'start' | 'stop' | 'restart' } | null {
@@ -103,12 +100,7 @@ function stateOf(value: Fields): StateFrame | null {
   const { state, code, why } = value
   if (!APP_STATES.some((one) => one === state)) return null
   const known = state as AppState
-  if (!(
-    code === undefined ||
-    code === null ||
-    (typeof code === 'number' && Number.isSafeInteger(code))
-  ))
-    return null
+  if (!(code === undefined || code === null || (typeof code === 'number' && Number.isSafeInteger(code)))) return null
   const reason = NOT_STARTED.find((one) => one === why)
   return {
     t: 'state',
@@ -169,8 +161,7 @@ export function toViewerOf(raw: string): RelayToViewer | null {
     case 'held': {
       const { by, since, taken } = value
       if (typeof by !== 'string' || by.length > 1024) return null
-      if (typeof since !== 'number' || !Number.isFinite(since) || typeof taken !== 'boolean')
-        return null
+      if (typeof since !== 'number' || !Number.isFinite(since) || typeof taken !== 'boolean') return null
       return { t: 'held', by, since, taken }
     }
     case 'hold':
@@ -183,9 +174,7 @@ export function toViewerOf(raw: string): RelayToViewer | null {
       return stateOf(value)
     case 'refused': {
       const { error } = value
-      return error === 'gone' || error === 'rate' || error === 'large'
-        ? { t: 'refused', error }
-        : null
+      return error === 'gone' || error === 'rate' || error === 'large' ? { t: 'refused', error } : null
     }
     default:
       return null
@@ -217,8 +206,7 @@ export function toHostOf(raw: string): RelayToHost | null {
 export const APP_EXTENSION = '.application'
 
 export type AppRun =
-  | { kind: 'installed'; id: string; name: string }
-  | { kind: 'path'; path: string; args: string[]; cwd: string | null }
+  { kind: 'installed'; id: string; name: string } | { kind: 'path'; path: string; args: string[]; cwd: string | null }
 
 export interface AppFile {
   v: 1
@@ -234,14 +222,11 @@ const isText = (value: unknown, most = LONGEST): value is string =>
 function runOfFile(value: unknown): AppRun | null {
   if (!isRecord(value)) return null
   if (value.kind === 'installed') {
-    return isText(value.id) && isText(value.name, 200)
-      ? { kind: 'installed', id: value.id, name: value.name }
-      : null
+    return isText(value.id) && isText(value.name, 200) ? { kind: 'installed', id: value.id, name: value.name } : null
   }
   if (value.kind !== 'path' || !isText(value.path)) return null
   const args = value.args ?? []
-  if (!Array.isArray(args) || args.length > 256 || !args.every((one) => typeof one === 'string'))
-    return null
+  if (!Array.isArray(args) || args.length > 256 || !args.every((one) => typeof one === 'string')) return null
   const cwd = value.cwd ?? null
   if (!(cwd === null || isText(cwd))) return null
   return { kind: 'path', path: value.path, args, cwd }
@@ -329,8 +314,7 @@ export function fromHostOf(data: string): FromHost | null {
   const value = parsed(data)
   if (!isRecord(value)) return null
   if (typeof value.answer === 'string') return { answer: value.answer }
-  if (typeof value.cannot === 'string')
-    return { cannot: NO_PICTURE.find((one) => one === value.cannot) ?? null }
+  if (typeof value.cannot === 'string') return { cannot: NO_PICTURE.find((one) => one === value.cannot) ?? null }
   return null
 }
 
@@ -375,11 +359,9 @@ export function usageOf(value: unknown): Usage | null {
   return { cpu, memory, ...(isTime(gpu) ? { gpu } : {}) }
 }
 
-const isTime = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value) && value >= 0
+const isTime = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0
 
-export type PointerShape =
-  { t: 'pointer'; png: string; x: number; y: number } | { t: 'pointer'; hidden: true }
+export type PointerShape = { t: 'pointer'; png: string; x: number; y: number } | { t: 'pointer'; hidden: true }
 
 const POINTER_PNG = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/
 
@@ -392,9 +374,7 @@ export function fromPictureOf(data: unknown): FromPicture | null {
   if (!isRecord(value)) return null
   if (value.t === 'clipboard') {
     const { text } = value
-    return typeof text === 'string' && text.length <= MOST_CLIPBOARD
-      ? { t: 'clipboard', text }
-      : null
+    return typeof text === 'string' && text.length <= MOST_CLIPBOARD ? { t: 'clipboard', text } : null
   }
   if (value.t === 'pong') {
     const { at, began, now, encoder, hardware } = value

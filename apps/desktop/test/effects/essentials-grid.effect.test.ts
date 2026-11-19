@@ -31,9 +31,7 @@ test('an account that chose the list look sees its Essentials as the grid, in th
   const drawn = mount(Bookmarks, { target, props: { onsearch: () => undefined } })
   flushSync()
 
-  const tiles = [...target.querySelectorAll('.tiles li [aria-label]')].map((one) =>
-    one.getAttribute('aria-label'),
-  )
+  const tiles = [...target.querySelectorAll('.tiles li [aria-label]')].map((one) => one.getAttribute('aria-label'))
   expect(tiles).toEqual(['Cherry', 'Apple', 'Banana'])
   expect(target.querySelector('ul.list')).toBeNull()
   expect(localStorage.getItem('orden:essentials-look')).toBeNull()

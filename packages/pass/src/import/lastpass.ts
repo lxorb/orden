@@ -123,9 +123,7 @@ function lastPassExpiry(value: string): string {
 function rest(fields: NoteFields, used: readonly string[]): Field[] {
   return [...fields.values]
     .filter(([key, value]) => !used.includes(key) && !SKIPPED_KEYS.has(key) && value.trim() !== '')
-    .map(([key, value]) =>
-      fieldOf(key, value, /password|passphrase|pin|security code/i.test(key) ? 'hidden' : 'text'),
-    )
+    .map(([key, value]) => fieldOf(key, value, /password|passphrase|pin|security code/i.test(key) ? 'hidden' : 'text'))
 }
 
 function noteContent(title: string, fields: NoteFields): Content {

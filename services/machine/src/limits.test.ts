@@ -27,13 +27,7 @@ test('as root, a shell runs as the user, under the process limit, as a login she
 test('as anybody else, it runs as them, still under the limit', () => {
   expect(shellCommand('/bin/zsh', null, 64, () => true)).toEqual({
     file: '/bin/sh',
-    args: [
-      '-c',
-      '/usr/bin/prlimit --nproc=64 --pid $$ 2>/dev/null; exec "$@"',
-      'orden-shell',
-      '/bin/zsh',
-      '-l',
-    ],
+    args: ['-c', '/usr/bin/prlimit --nproc=64 --pid $$ 2>/dev/null; exec "$@"', 'orden-shell', '/bin/zsh', '-l'],
   })
 })
 
@@ -44,10 +38,7 @@ test('where the tools are missing, the shell runs plainly rather than not at all
 test('the user is read from the password file', () => {
   const dir = mkdtempSync(join(tmpdir(), 'ordend-passwd-'))
   const passwd = join(dir, 'passwd')
-  writeFileSync(
-    passwd,
-    'root:x:0:0:root:/root:/bin/bash\nnib:x:1000:1000::/home/nib:/usr/bin/fish\n',
-  )
+  writeFileSync(passwd, 'root:x:0:0:root:/root:/bin/bash\nnib:x:1000:1000::/home/nib:/usr/bin/fish\n')
   expect(userOf('nib', passwd)).toEqual({ ...NIB, shell: '/usr/bin/fish' })
   expect(userOf('nobody', passwd)).toBeNull()
   expect(userOf('nib', join(dir, 'missing'))).toBeNull()

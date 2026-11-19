@@ -1,13 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  hidesPasswords,
-  isPassSecret,
-  mayEdit,
-  mayHandOn,
-  mayManage,
-  pass,
-  PIN_TRIES,
-} from '../src/api'
+import { hidesPasswords, isPassSecret, mayEdit, mayHandOn, mayManage, pass, PIN_TRIES } from '../src/api'
 
 describe('the module stands on its own', () => {
   test('the api loads with the vault locked and nothing listening', () => {

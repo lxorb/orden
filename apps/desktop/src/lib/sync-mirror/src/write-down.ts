@@ -10,8 +10,7 @@ export class NotWritten extends Error {
 }
 
 export async function writeDown(path: string, content: string, was?: string | null) {
-  const previous =
-    was === undefined ? await invoke<string>('read_note', { path }).catch(() => null) : was
+  const previous = was === undefined ? await invoke<string>('read_note', { path }).catch(() => null) : was
 
   if (previous !== null && previous !== content && previous.trim()) {
     await invoke('snapshot_note', { path, content: previous }).catch(() => undefined)

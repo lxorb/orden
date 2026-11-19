@@ -67,9 +67,7 @@ describe('what a reader protected', () => {
     await ways('s1', { Plans: 'password', Diary: 'password' })
     const answer = await since('s1', { Plans: 'password' }, { Plans: 'password', Taxes: 'device' })
     const merged = { Plans: 'password', Diary: 'password', Taxes: 'device' }
-    expect((answer.json as unknown as { spaces: Record<string, unknown> }).spaces.s1).toEqual(
-      merged,
-    )
+    expect((answer.json as unknown as { spaces: Record<string, unknown> }).spaces.s1).toEqual(merged)
     expect((await read()).json.spaces).toEqual({ s1: merged })
   })
 

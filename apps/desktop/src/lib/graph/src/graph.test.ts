@@ -3,18 +3,13 @@ import { buildGraph, type NoteGraph, without, worthAGraph } from './graph'
 import { neighbourhood, neighbours, signature } from './walk'
 import { scanNote, type ScannedNote } from '@orden/scan/note'
 
-const scan = (notes: Record<string, string>) =>
-  Object.entries(notes).map(([path, content]) => scanNote(path, content))
+const scan = (notes: Record<string, string>) => Object.entries(notes).map(([path, content]) => scanNote(path, content))
 
 function graphOf(scanned: ScannedNote[]): NoteGraph {
-  const byName = new Map(
-    scanned.map((note) => [note.name.toLowerCase(), note.path] as const).reverse(),
-  )
+  const byName = new Map(scanned.map((note) => [note.name.toLowerCase(), note.path] as const).reverse())
 
   return buildGraph(scanned, (_from, link) => {
-    const wanted = (link.target.split('/').pop() ?? link.target)
-      .replace(/\.(md|markdown)$/i, '')
-      .toLowerCase()
+    const wanted = (link.target.split('/').pop() ?? link.target).replace(/\.(md|markdown)$/i, '').toLowerCase()
     return byName.get(wanted) ?? null
   })
 }
@@ -149,8 +144,7 @@ describe('the space as a graph', () => {
 })
 
 describe('the files a space embeds', () => {
-  const withFiles = (notes: Record<string, string>) =>
-    buildGraph(scan(notes), () => null, { attachments: true })
+  const withFiles = (notes: Record<string, string>) => buildGraph(scan(notes), () => null, { attachments: true })
 
   test('are nodes of their own, joined to the notes that embed them', () => {
     const graph = withFiles({ 'One.md': 'a picture: ![[shot.png]] and ![](assets/other.png)' })
@@ -173,14 +167,7 @@ describe('the files a space embeds', () => {
       'One.md': '![[shot.png]] ![[paper.pdf]] ![[voice.m4a]] ![[clip.mp4]] ![[Board.canvas]]',
     })
 
-    expect(named(graph).sort()).toEqual([
-      'Board.canvas',
-      'One',
-      'clip.mp4',
-      'paper.pdf',
-      'shot.png',
-      'voice.m4a',
-    ])
+    expect(named(graph).sort()).toEqual(['Board.canvas', 'One', 'clip.mp4', 'paper.pdf', 'shot.png', 'voice.m4a'])
     expect(
       graph.nodes
         .filter((node) => node.attachment)
@@ -378,9 +365,7 @@ describe('the signature of a graph', () => {
 
     expect(signature(space({ ...notes, 'More.md': '# More' }))).not.toBe(whole)
     expect(signature(space({ 'Plan.md': 'see [[Ink]]', 'Ink.md': '# Ink' }))).not.toBe(whole)
-    expect(
-      signature(space({ 'Plan.md': 'see [[Ink]]', 'Ink.md': '# Ink', 'Lonely.md': '# Lonely' })),
-    ).not.toBe(whole)
+    expect(signature(space({ 'Plan.md': 'see [[Ink]]', 'Ink.md': '# Ink', 'Lonely.md': '# Lonely' }))).not.toBe(whole)
   })
 
   test('differs when a link is made or broken, and not when a word is written', () => {
@@ -405,8 +390,7 @@ describe('the neighbours of a node', () => {
   test('are the nodes one link away and nothing else', () => {
     const graph = held()
     const at = (name: string) => graph.nodes.findIndex((node) => node.name === name)
-    const names = (node: number) =>
-      [...neighbours(graph, node)].map((one) => graph.nodes[one]?.name).sort()
+    const names = (node: number) => [...neighbours(graph, node)].map((one) => graph.nodes[one]?.name).sort()
 
     expect(names(at('Hub'))).toEqual(['One', 'Three', 'Two'])
     expect(names(at('One'))).toEqual(['Hub'])

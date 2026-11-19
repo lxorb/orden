@@ -22,8 +22,7 @@ function tokens(schema: string): [string, string | null][] {
   return out
 }
 
-const typeOf = (schema: string, text: string) =>
-  tokens(schema).find(([token]) => token === text)?.[1]
+const typeOf = (schema: string, text: string) => tokens(schema).find(([token]) => token === text)?.[1]
 
 describe('highlighting a prisma fence', () => {
   test.each([
@@ -56,7 +55,6 @@ describe('highlighting a prisma fence', () => {
   })
 
   test('always moves forward, whatever it is given', () => {
-    for (const line of ['', '   ', '{}', '@', '//', '"unclosed', '「」', '?'])
-      expect(() => tokens(line)).not.toThrow()
+    for (const line of ['', '   ', '{}', '@', '//', '"unclosed', '「」', '?']) expect(() => tokens(line)).not.toThrow()
   })
 })

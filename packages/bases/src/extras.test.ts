@@ -44,9 +44,7 @@ describe('unique ids', () => {
     let ids: Record<string, string> = Object.fromEntries(paths.map((path) => [path, 'BUG-45']))
     const seenOn = (device: 'A' | 'B') => [
       ...bugs,
-      ...paths.map((path) =>
-        noteRow(path, { id: ids[path] ?? '' }, { ctime: ctimes[device][path as 'Bugs/X.md'] }),
-      ),
+      ...paths.map((path) => noteRow(path, { id: ids[path] ?? '' }, { ctime: ctimes[device][path as 'Bugs/X.md'] })),
     ]
 
     for (let round = 0; round < 3; round++) {
@@ -92,10 +90,7 @@ describe('unique ids', () => {
       'T',
       false,
     )
-    expect(repairs.map((one) => one.row.path)).toEqual([
-      'Projects copy/X.md',
-      'Trip copy/Trip copy.md',
-    ])
+    expect(repairs.map((one) => one.row.path)).toEqual(['Projects copy/X.md', 'Trip copy/Trip copy.md'])
   })
 
   test('a name ending in a dot or a space comes before its copy', () => {
@@ -120,9 +115,7 @@ describe('unique ids', () => {
     }
     let ids: Record<string, string> = { X: 'BUG-45', Y: 'BUG-45', Z: 'BUG-45' }
     const seenOn = (device: 'linux' | 'mac') =>
-      (['X', 'Y', 'Z'] as const).map((note) =>
-        noteRow(spelled[device][note], { id: ids[note] ?? '' }, { ctime: 1 }),
-      )
+      (['X', 'Y', 'Z'] as const).map((note) => noteRow(spelled[device][note], { id: ids[note] ?? '' }, { ctime: 1 }))
     const noteOf = (device: 'linux' | 'mac', path: string) =>
       (['X', 'Y', 'Z'] as const).find((note) => spelled[device][note] === path)
 
@@ -133,8 +126,7 @@ describe('unique ids', () => {
         out.map((one) => [noteOf(device, one.row.path), one.id])
       expect(named('linux', linux)).toEqual(named('mac', mac))
       const next = { ...ids }
-      for (const [note, id] of [...named('linux', linux), ...named('mac', mac)])
-        if (note && id) next[note] = id
+      for (const [note, id] of [...named('linux', linux), ...named('mac', mac)]) if (note && id) next[note] = id
       ids = next
     }
     expect(new Set(Object.values(ids)).size).toBe(3)
@@ -241,17 +233,13 @@ describe('templates', () => {
         '# {{title}}\n{{date}} {{time}} {{date:dddd D MMMM}} {{ date+7d }} {{date-1w:YYYY/MM/DD}} {{date+1M}} {{other}}',
         filling,
       ),
-    ).toBe(
-      '# Weekly review\n2026-10-05 09:30 Monday 5 October 2026-10-12 2026/09/28 2026-11-05 {{other}}',
-    )
+    ).toBe('# Weekly review\n2026-10-05 09:30 Monday 5 October 2026-10-12 2026/09/28 2026-11-05 {{other}}')
   })
 
   test("a template's own keys never reach the note", () => {
-    expect(
-      withoutTemplateKeys(
-        '---\nrepeat: every Monday\nmade: 2026-09-28\ntags: [review]\n---\n# x\n',
-      ),
-    ).toBe('---\ntags: [review]\n---\n# x\n')
+    expect(withoutTemplateKeys('---\nrepeat: every Monday\nmade: 2026-09-28\ntags: [review]\n---\n# x\n')).toBe(
+      '---\ntags: [review]\n---\n# x\n',
+    )
     expect(withoutTemplateKeys('---\nrepeat: every day\n---\n# x\n')).toBe('# x\n')
   })
 
@@ -278,9 +266,7 @@ describe('templates', () => {
     expect(daily?.missed).toHaveLength(400)
     expect(daily?.missed[0]).toBe('2025-08-31')
     expect(daily?.missed.at(-1)).toBe('2026-10-04')
-    expect(
-      repeatDue({ repeat: 'every week on Monday', made: '0001-01-01' }, '2026-10-05')?.day,
-    ).toBe('2026-10-05')
+    expect(repeatDue({ repeat: 'every week on Monday', made: '0001-01-01' }, '2026-10-05')?.day).toBe('2026-10-05')
   })
 })
 
@@ -336,9 +322,7 @@ describe('buttons', () => {
       ...done,
       set: { status: 'Shipped' },
     })
-    expect(readButtons(withButton(base, 'Done', null)).map((one) => one.name)).toEqual([
-      'Follow up',
-    ])
+    expect(readButtons(withButton(base, 'Done', null)).map((one) => one.name)).toEqual(['Follow up'])
   })
 })
 

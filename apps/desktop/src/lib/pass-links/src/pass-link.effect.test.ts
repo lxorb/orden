@@ -106,9 +106,7 @@ describe('the secure link page', () => {
     await vi.waitFor(() => expect(buttonIn(password, 'Copied')).toBeDefined())
 
     const code = fieldOf('totp')
-    await vi.waitFor(() =>
-      expect(code?.querySelector('.link-value')?.textContent).toMatch(/^\d{3} \d{3}$/),
-    )
+    await vi.waitFor(() => expect(code?.querySelector('.link-value')?.textContent).toMatch(/^\d{3} \d{3}$/))
     expect(code?.textContent).not.toContain('JBSWY3DPEHPK3PXP')
   })
 
@@ -121,9 +119,7 @@ describe('the secure link page', () => {
 
   test('says so when there is no such link', async () => {
     const { hash } = await sealedFor(login)
-    expect(await shownLink(mounted(), worldAt(hash, json({ error: 'no' }, 404)).world)).toBe(
-      'missing',
-    )
+    expect(await shownLink(mounted(), worldAt(hash, json({ error: 'no' }, 404)).world)).toBe('missing')
     expect(root.textContent).toContain('There is no such link')
   })
 
@@ -151,15 +147,12 @@ describe('the secure link page', () => {
   test.each([
     ['busy', 429],
     ['offline', 503],
-  ] as const)(
-    'keeps the key in the address when %s, so reloading opens it',
-    async (shown, status) => {
-      const { hash } = await sealedFor(login)
-      const seen = worldAt(hash, json({ error: 'not now' }, status))
-      expect(await shownLink(mounted(), seen.world)).toBe(shown)
-      expect(seen.replaced).toEqual([])
-    },
-  )
+  ] as const)('keeps the key in the address when %s, so reloading opens it', async (shown, status) => {
+    const { hash } = await sealedFor(login)
+    const seen = worldAt(hash, json({ error: 'not now' }, status))
+    expect(await shownLink(mounted(), seen.world)).toBe(shown)
+    expect(seen.replaced).toEqual([])
+  })
 
   test('says it was the last view', async () => {
     const { hash, answer } = await sealedFor({ ...blank('note'), title: 'Plan', note: 'x' }, 0)

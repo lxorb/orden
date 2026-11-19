@@ -27,16 +27,7 @@ export type RenderedValue =
   { kind: 'image'; src: string } | { kind: 'icon'; name: string } | { kind: 'html'; html: string }
 
 export type Value =
-  | null
-  | boolean
-  | number
-  | string
-  | DateValue
-  | DurationValue
-  | LinkValue
-  | RenderedValue
-  | Value[]
-  | ValueRecord
+  null | boolean | number | string | DateValue | DurationValue | LinkValue | RenderedValue | Value[] | ValueRecord
 
 export interface ValueRecord {
   [key: string]: Value

@@ -1,13 +1,6 @@
 <script lang="ts">
   import KindCard from './KindCard.svelte'
-  import {
-    fitsWhole,
-    groupOf,
-    kindLines,
-    offeredKinds,
-    type NewKindRow,
-    showOthers,
-  } from './new-kinds'
+  import { fitsWhole, groupOf, kindLines, offeredKinds, type NewKindRow, showOthers } from './new-kinds'
   import { kindOfLetter, letterIsOurs } from './new-kind-keys'
   import { overlays, roving } from '../../ui-kit/src/api'
   import { viewport } from '../../ui-kit/src/api'
@@ -21,9 +14,7 @@
   let room = $state({ width: 0, height: 0 })
   let card = $state({ width: 0, height: 0, gap: 0 })
 
-  const whole = $derived(
-    lines.length === kinds.length || fitsWhole(lines, room, card, viewport.touch),
-  )
+  const whole = $derived(lines.length === kinds.length || fitsWhole(lines, room, card, viewport.touch))
   const shown = $derived(whole ? lines : [lines.flatMap((line) => groupOf(line) ?? [])])
 
   function measure(here: HTMLElement) {

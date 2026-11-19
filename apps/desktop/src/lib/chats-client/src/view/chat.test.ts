@@ -14,9 +14,7 @@ describe('a chat open in a tab', () => {
     const kinds = page.items.map((item) => item.kind)
     expect(kinds).toContain('new')
     const after = page.items.slice(kinds.indexOf('new') + 1)
-    expect(after.some((item) => item.kind === 'message' && item.message.author === LUCILE)).toBe(
-      true,
-    )
+    expect(after.some((item) => item.kind === 'message' && item.message.author === LUCILE)).toBe(true)
     page.close()
   })
 

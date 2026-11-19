@@ -1,13 +1,4 @@
-export const ITEM_KINDS = [
-  'login',
-  'alias',
-  'card',
-  'note',
-  'identity',
-  'custom',
-  'ssh',
-  'wifi',
-] as const
+export const ITEM_KINDS = ['login', 'alias', 'card', 'note', 'identity', 'custom', 'ssh', 'wifi'] as const
 
 export type ItemKind = (typeof ITEM_KINDS)[number]
 
@@ -101,16 +92,7 @@ export interface Note extends Common {
 }
 
 export const IDENTITY_FIELDS = {
-  personal: [
-    'fullName',
-    'email',
-    'phone',
-    'firstName',
-    'middleName',
-    'lastName',
-    'birthdate',
-    'gender',
-  ],
+  personal: ['fullName', 'email', 'phone', 'firstName', 'middleName', 'lastName', 'birthdate', 'gender'],
   address: ['organization', 'street', 'floor', 'zip', 'city', 'state', 'country', 'county'],
   contact: [
     'ssn',

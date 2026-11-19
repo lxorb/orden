@@ -3,17 +3,7 @@ import FileIcon from 'lucide/dist/esm/icons/file.mjs'
 import { calm, dur, stillness } from '../../platform/src/api'
 import { said } from '../../ui-kit/src/api'
 import { lastPress, type Origin, type Press } from './api'
-import {
-  cornerOf,
-  flightMs,
-  framesOf,
-  landing,
-  middleOf,
-  startOf,
-  type Box,
-  type Glyph,
-  type Point,
-} from './path'
+import { cornerOf, flightMs, framesOf, landing, middleOf, startOf, type Box, type Glyph, type Point } from './path'
 
 const SIZE = 28
 const AT_ONCE = 5
@@ -63,9 +53,7 @@ const pagesInWindow = (): boolean => document.querySelector('.webbar') !== null
 const engineCuts = (): boolean => pagesInWindow() && webPages().cuts
 
 function pageOf(tab: string, cuts: boolean): Point | null {
-  const glyph = [...document.querySelectorAll<HTMLElement>(GLYPHS)].find(
-    (one) => one.dataset.tab === tab,
-  )
+  const glyph = [...document.querySelectorAll<HTMLElement>(GLYPHS)].find((one) => one.dataset.tab === tab)
   const pane = shown(glyph?.closest('[data-pane]'))
   if (!glyph || !pane) return null
   const bar = shown(glyph.closest('.webbar'))
@@ -155,11 +143,7 @@ const settled = (): Promise<void> =>
     requestAnimationFrame(() => requestAnimationFrame(() => done()))
   })
 
-export async function started(
-  name: string,
-  from: Origin,
-  press: Press | null = lastPress(),
-): Promise<void> {
+export async function started(name: string, from: Origin, press: Press | null = lastPress()): Promise<void> {
   said.say(`Downloading ${name}`)
   const element = shown(from.element)
   await settled()
@@ -182,9 +166,7 @@ export async function started(
   }
 
   const page = from.tab
-    ? (pageOf(from.tab, cuts) ??
-      (target?.tab ? pageOf(target.tab, cuts) : null) ??
-      middleOf(areaOf()))
+    ? (pageOf(from.tab, cuts) ?? (target?.tab ? pageOf(target.tab, cuts) : null) ?? middleOf(areaOf()))
     : null
   const start = startOf({
     element,

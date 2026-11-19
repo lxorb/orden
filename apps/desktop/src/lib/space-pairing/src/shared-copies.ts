@@ -140,9 +140,7 @@ export async function mendSharedCopies(
 ): Promise<void> {
   const pairs = pairing
     .pairs()
-    .filter((one) =>
-      before.some((was) => was.spaceId === one.spaceId && samePath(was.root, one.root)),
-    )
+    .filter((one) => before.some((was) => was.spaceId === one.spaceId && samePath(was.root, one.root)))
   const listed = (id: string) => account.spaces.find((one) => one.id === id)
   const named = (root: string) => workspace.spaces.find((one) => samePath(one.root, root))?.name
 

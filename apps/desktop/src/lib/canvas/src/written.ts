@@ -15,10 +15,7 @@ export function written(runs: readonly (readonly string[])[]): Written {
   return { runs, sizes: texts.map((text) => text.length), text: texts.join('') }
 }
 
-export function changesBetween(
-  before: Written,
-  after: readonly (readonly string[])[],
-): Replacement[] | null {
+export function changesBetween(before: Written, after: readonly (readonly string[])[]): Replacement[] | null {
   if (before.runs.length !== after.length) return null
 
   const out: Replacement[] = []
@@ -47,8 +44,7 @@ function runChanges(was: readonly string[], now: readonly string[], base: number
     if (at === since.at && !insert) return
 
     const last = out.at(-1)
-    if (last?.to === since.at)
-      out[out.length - 1] = { ...last, to: at, insert: last.insert + insert }
+    if (last?.to === since.at) out[out.length - 1] = { ...last, to: at, insert: last.insert + insert }
     else out.push({ from: since.at, to: at, insert })
   }
 

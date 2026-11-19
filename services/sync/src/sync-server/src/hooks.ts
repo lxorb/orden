@@ -13,9 +13,7 @@ export interface Session {
   user: { id: string; email: string; name: string | null; [more: string]: unknown }
 }
 
-type CodeSent =
-  | { ok: true; resendIn: number }
-  | { error: string; status: 400 | 429 | 503; retryAfter: number | null }
+type CodeSent = { ok: true; resendIn: number } | { error: string; status: 400 | 429 | 503; retryAfter: number | null }
 
 interface AccountHooks {
   whoever(env: Env, header: string | undefined): Promise<Whoever | null>
@@ -33,13 +31,7 @@ interface ChatHooks {
     ask: 'held-files' | 'profile',
     headers?: Record<string, string>,
   ): Promise<Response | null>
-  chatsRevoked(
-    env: Env,
-    spaceId: string,
-    who: string,
-    role: RevokedRole,
-    item?: string,
-  ): Promise<void>
+  chatsRevoked(env: Env, spaceId: string, who: string, role: RevokedRole, item?: string): Promise<void>
   closeChats(env: Env, open: readonly { chat_id: string; who: string }[]): Promise<void>
   eraseChats(env: Env, chats: readonly string[]): Promise<string[]>
   linkPointer(env: Env, note: Note, content: string): Promise<void>
@@ -50,13 +42,7 @@ interface MachineHooks {
   endTerms(env: Env, terms: readonly string[], who: string | null): Promise<void>
   endingTerm(env: Env, term: string, at: number): D1PreparedStatement
   tellEnded(env: Env, ended: readonly Ended[], who: string | null): Promise<void>
-  machinesRevoked(
-    env: Env,
-    spaceId: string,
-    who: string | null,
-    role: RevokedRole,
-    item?: string,
-  ): Promise<void>
+  machinesRevoked(env: Env, spaceId: string, who: string | null, role: RevokedRole, item?: string): Promise<void>
   machinesSignedOut(env: Env, who: string, logins: readonly string[]): Promise<void>
 }
 
@@ -84,9 +70,6 @@ export function wire(hooks: Hooks): void {
 }
 
 export function hooks(): Hooks {
-  if (!wired)
-    throw new Error(
-      'sync-server: wire the accounts, blog, chats, feedback, machines and pass hooks first',
-    )
+  if (!wired) throw new Error('sync-server: wire the accounts, blog, chats, feedback, machines and pass hooks first')
   return wired
 }

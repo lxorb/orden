@@ -36,27 +36,11 @@ export const firstVisiting = () => import('./first-visit.svelte')
 
 export const loadUndoToast = () => import('./UndoToast.svelte')
 
-export {
-  focusEditor,
-  focusList,
-  intoSide,
-  openAgentSession,
-  openSpaces,
-  revealPanel,
-  stepRegionFocus,
-} from './focus'
+export { focusEditor, focusList, intoSide, openAgentSession, openSpaces, revealPanel, stepRegionFocus } from './focus'
 
 export { hasStatusBar } from './regions'
 
-export {
-  followHref,
-  followNote,
-  followNoteFrom,
-  MIDDLE,
-  openHref,
-  opensLink,
-  webHref,
-} from './open-link'
+export { followHref, followNote, followNoteFrom, MIDDLE, openHref, opensLink, webHref } from './open-link'
 
 export { alone, swipeOpens } from './alone.svelte'
 

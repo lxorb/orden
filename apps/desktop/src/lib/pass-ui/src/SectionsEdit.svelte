@@ -23,13 +23,7 @@
 {#each sections as section (section.id)}
   <div class="section">
     <div class="head orden-edit-row">
-      <input
-        class="name"
-        bind:value={section.name}
-        placeholder="Section name"
-        aria-label="Section name"
-        {oninput}
-      />
+      <input class="name" bind:value={section.name} placeholder="Section name" aria-label="Section name" {oninput} />
       <button
         type="button"
         class="orden-glyph"
@@ -53,9 +47,7 @@
     />
   </div>
 {/each}
-<button type="button" class="orden-button is-quiet is-soft add" onclick={addSection}>
-  Add section
-</button>
+<button type="button" class="orden-button is-quiet is-soft add" onclick={addSection}> Add section </button>
 
 <style>
   .section {

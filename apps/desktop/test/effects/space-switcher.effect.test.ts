@@ -80,11 +80,7 @@ test('a press on the header opens the switcher, and a row in it changes space', 
   expect(list()?.getAttribute('aria-label')).toBe('Spaces')
   expect(mark()?.getAttribute('aria-expanded')).toBe('true')
   const rows = [...(list()?.querySelectorAll<HTMLButtonElement>('.orden-row') ?? [])]
-  expect(rows.map((one) => one.querySelector('.orden-row-label')?.textContent)).toEqual([
-    'VIS',
-    'Journal',
-    'New space',
-  ])
+  expect(rows.map((one) => one.querySelector('.orden-row-label')?.textContent)).toEqual(['VIS', 'Journal', 'New space'])
   expect(rows[0]?.classList.contains('is-on')).toBe(true)
 
   rows[1]?.click()

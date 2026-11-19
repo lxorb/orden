@@ -23,9 +23,7 @@ function sources(): string[] {
 
   return listed
     .split('\0')
-    .filter(
-      (path) => path && !path.startsWith(SKIP) && !NOT_OURS.some((one) => path.startsWith(one)),
-    )
+    .filter((path) => path && !path.startsWith(SKIP) && !NOT_OURS.some((one) => path.startsWith(one)))
     .filter((path) => EXTENSIONS.some((extension) => path.endsWith(extension)))
     .filter((path) => existsSync(join(ROOT, path)))
 }

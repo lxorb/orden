@@ -42,9 +42,7 @@
     return out
   })
   const passed = $derived(Math.max(1, days.filter((one) => one.whole > 0).length))
-  const longest = $derived(
-    days.map((one) => one.whole).reduce((high, one) => Math.max(high, one), 1),
-  )
+  const longest = $derived(days.map((one) => one.whole).reduce((high, one) => Math.max(high, one), 1))
   const seen = $derived(piecesIn(spans, from, to, now))
   const groups = $derived(
     (
@@ -57,8 +55,7 @@
       .map(([lane, label]) => ({ lane, label, list: placesOf(seen, lane).slice(0, 8) }))
       .filter((one) => one.list.length),
   )
-  const most = (list: readonly Place[]) =>
-    list.map((one) => one.ms).reduce((high, one) => Math.max(high, one), 1)
+  const most = (list: readonly Place[]) => list.map((one) => one.ms).reduce((high, one) => Math.max(high, one), 1)
 
   const madeOfText = (activity: string | null): string[] =>
     (['site', 'app'] as const)
@@ -111,11 +108,9 @@
         {
           label: 'Rename',
           run: () =>
-            void prompt
-              .ask({ title: 'Rename', value: activity.name, confirmLabel: 'Rename' })
-              .then((next) => {
-                if (next?.trim()) time.changeActivity(activity.id, { name: next })
-              }),
+            void prompt.ask({ title: 'Rename', value: activity.name, confirmLabel: 'Rename' }).then((next) => {
+              if (next?.trim()) time.changeActivity(activity.id, { name: next })
+            }),
         },
         ...ACCENTS.map((accent) => ({
           label: accent.name,
@@ -165,9 +160,7 @@
             <span style:flex-grow={total.ms} style:background={tintOf(total.activity)}></span>
           {/each}
         </span>
-        <span class="day"
-          >{localDate(one.day, days.length > 7 ? { day: 'numeric' } : { weekday: 'short' })}</span
-        >
+        <span class="day">{localDate(one.day, days.length > 7 ? { day: 'numeric' } : { weekday: 'short' })}</span>
       </button>
     {/each}
   </div>
@@ -195,14 +188,10 @@
               {#if made.length}<span class="made"><Facts line parts={made} /></span>{/if}
             </span>
             <span class="bar"
-              ><span
-                style:width="{(total.ms / (goal?.ms ?? whole)) * 100}%"
-                style:--tint={tintOf(total.activity)}
+              ><span style:width="{(total.ms / (goal?.ms ?? whole)) * 100}%" style:--tint={tintOf(total.activity)}
               ></span></span
             >
-            <span class="orden-row-meta"
-              >{length(total.ms)}{goal ? ` / ${length(goal.ms)}` : ''}</span
-            >
+            <span class="orden-row-meta">{length(total.ms)}{goal ? ` / ${length(goal.ms)}` : ''}</span>
           </button>
         </li>
       {/each}
@@ -226,13 +215,10 @@
               >
                 <span class="dot" style:background={placeTint(place.key)}></span>
                 <span class="orden-row-label" dir="auto">{place.name}</span>
-                {#if rule}<span class="counted" style:color={tintOf(rule.activity)}
-                    >{nameOf(rule.activity, '')}</span
+                {#if rule}<span class="counted" style:color={tintOf(rule.activity)}>{nameOf(rule.activity, '')}</span
                   >{/if}
                 <span class="bar"
-                  ><span
-                    style:width="{(place.ms / most(group.list)) * 100}%"
-                    style:--tint={placeTint(place.key)}
+                  ><span style:width="{(place.ms / most(group.list)) * 100}%" style:--tint={placeTint(place.key)}
                   ></span></span
                 >
                 <span class="orden-row-meta">{length(place.ms)}</span>

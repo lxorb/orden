@@ -51,13 +51,7 @@
             }}
           />
         </div>
-        <button
-          type="button"
-          class="orden-glyph"
-          aria-label="Remove"
-          title="Remove"
-          onclick={() => remove(at)}
-        >
+        <button type="button" class="orden-glyph" aria-label="Remove" title="Remove" onclick={() => remove(at)}>
           <Cross />
         </button>
       </div>

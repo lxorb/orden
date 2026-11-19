@@ -3,11 +3,7 @@ import { applied } from '@orden/scan/search/replace'
 import { plan, readEdits } from './edits'
 import { DocError } from './problem'
 
-function edited(
-  text: string,
-  edits: unknown,
-  selected: { from: number; to: number } | null = null,
-) {
+function edited(text: string, edits: unknown, selected: { from: number; to: number } | null = null) {
   return applied(text, plan(readEdits(edits), text, selected).edits)
 }
 
@@ -15,23 +11,16 @@ describe('an edit', () => {
   test('replaces, inserts or deletes at what its anchor names', () => {
     const text = 'The plan is simple.'
     expect(edited(text, [{ at: { quote: 'simple' }, replace: 'late' }])).toBe('The plan is late.')
-    expect(edited(text, [{ at: { quote: 'plan' }, insert_before: 'new ' }])).toBe(
-      'The new plan is simple.',
-    )
-    expect(edited(text, [{ at: { quote: 'simple' }, insert_after: ' enough' }])).toBe(
-      'The plan is simple enough.',
-    )
+    expect(edited(text, [{ at: { quote: 'plan' }, insert_before: 'new ' }])).toBe('The new plan is simple.')
+    expect(edited(text, [{ at: { quote: 'simple' }, insert_after: ' enough' }])).toBe('The plan is simple enough.')
     expect(edited(text, [{ at: { quote: ' simple' }, delete: true }])).toBe('The plan is.')
   })
 
   test('does exactly one thing', () => {
-    expect(() => readEdits([{ at: { end: true }, replace: 'a', insert_after: 'b' }])).toThrow(
-      'exactly one of',
-    )
+    expect(() => readEdits([{ at: { end: true }, replace: 'a', insert_after: 'b' }])).toThrow('exactly one of')
     expect(() => readEdits([{ at: { end: true } }])).toThrow(DocError)
     expect(() => readEdits([])).toThrow('at least one edit')
-    const many = (n: number) =>
-      Array.from({ length: n }, () => ({ at: { end: true }, delete: true }))
+    const many = (n: number) => Array.from({ length: n }, () => ({ at: { end: true }, delete: true }))
     expect(readEdits(many(500))).toHaveLength(500)
     expect(() => readEdits(many(501))).toThrow('at most 500 edits')
   })
@@ -47,26 +36,20 @@ describe('a block right below the front matter or a fence', () => {
     expect(edited(text, [{ at: { block: 'idea' }, replace: 'New words' }])).toBe(
       '---\ntags: [keep]\nstatus: open\n---\nNew words ^idea\n\nAfter\n',
     )
-    expect(edited(text, [{ at: { block: 'idea' }, delete: true }])).toContain(
-      '---\ntags: [keep]\nstatus: open\n---\n',
-    )
+    expect(edited(text, [{ at: { block: 'idea' }, delete: true }])).toContain('---\ntags: [keep]\nstatus: open\n---\n')
   })
 
   test('named by an id in its words leaves a fence right above or below it', () => {
-    expect(
-      edited('```\ncode\n```\nThe idea here ^idea\n', [
-        { at: { block: 'idea' }, replace: 'New words' },
-      ]),
-    ).toBe('```\ncode\n```\nNew words ^idea\n')
-    expect(
-      edited('The idea here ^idea\n```\ncode\n```\n', [{ at: { block: 'idea' }, delete: true }]),
-    ).toBe('```\ncode\n```\n')
+    expect(edited('```\ncode\n```\nThe idea here ^idea\n', [{ at: { block: 'idea' }, replace: 'New words' }])).toBe(
+      '```\ncode\n```\nNew words ^idea\n',
+    )
+    expect(edited('The idea here ^idea\n```\ncode\n```\n', [{ at: { block: 'idea' }, delete: true }])).toBe(
+      '```\ncode\n```\n',
+    )
   })
 
   test('named by an id on its own line under a fence is the fence, not the words above it', () => {
-    expect(
-      edited('Intro:\n```\ncode\n```\n\n^snip\n', [{ at: { block: 'snip' }, delete: true }]),
-    ).toBe('Intro:\n')
+    expect(edited('Intro:\n```\ncode\n```\n\n^snip\n', [{ at: { block: 'snip' }, delete: true }])).toBe('Intro:\n')
   })
 
   test('named by an id on its own line is the block above it, a table or a fence', () => {
@@ -75,9 +58,7 @@ describe('a block right below the front matter or a fence', () => {
     expect(edited(table, [{ at: { block: 'table' }, replace: '| c |\n| - |\n| 3 |' }])).toBe(
       '| c |\n| - |\n| 3 |\n\n^table\n\nAfter\n',
     )
-    expect(edited('```\ncode\n```\n^snip\n', [{ at: { block: 'snip' }, replace: 'new' }])).toBe(
-      'new\n^snip\n',
-    )
+    expect(edited('```\ncode\n```\n^snip\n', [{ at: { block: 'snip' }, replace: 'new' }])).toBe('new\n^snip\n')
   })
 })
 
@@ -121,9 +102,9 @@ describe('what goes in beside a line or a paragraph', () => {
   })
 
   test('after a section is a paragraph before the next heading', () => {
-    expect(
-      edited('# A\nbody\n\n# B\nmore\n', [{ at: { heading: 'A' }, insert_after: 'Added.' }]),
-    ).toBe('# A\nbody\n\nAdded.\n\n# B\nmore\n')
+    expect(edited('# A\nbody\n\n# B\nmore\n', [{ at: { heading: 'A' }, insert_after: 'Added.' }])).toBe(
+      '# A\nbody\n\nAdded.\n\n# B\nmore\n',
+    )
   })
 
   test('before a section is a paragraph after what came before it', () => {
@@ -133,29 +114,25 @@ describe('what goes in beside a line or a paragraph', () => {
   })
 
   test('at the end is a paragraph, and the note still ends with its line break', () => {
-    expect(edited('last line\n', [{ at: { end: true }, insert_after: 'P.S.' }])).toBe(
-      'last line\n\nP.S.\n',
-    )
+    expect(edited('last line\n', [{ at: { end: true }, insert_after: 'P.S.' }])).toBe('last line\n\nP.S.\n')
     expect(edited('', [{ at: { end: true }, insert_after: 'first' }])).toBe('first')
   })
 
   test('at the start comes after the front matter, apart from what follows', () => {
-    expect(
-      edited('---\ntags: a\n---\n# Title\n', [{ at: { start: true }, insert_before: 'Summary' }]),
-    ).toBe('---\ntags: a\n---\nSummary\n\n# Title\n')
+    expect(edited('---\ntags: a\n---\n# Title\n', [{ at: { start: true }, insert_before: 'Summary' }])).toBe(
+      '---\ntags: a\n---\nSummary\n\n# Title\n',
+    )
   })
 
   test('a block replaced keeps its name, so links to it still arrive', () => {
-    expect(
-      edited('x\n\nthe idea ^idea\n\ny', [{ at: { block: 'idea' }, replace: 'a better idea' }]),
-    ).toBe('x\n\na better idea ^idea\n\ny')
+    expect(edited('x\n\nthe idea ^idea\n\ny', [{ at: { block: 'idea' }, replace: 'a better idea' }])).toBe(
+      'x\n\na better idea ^idea\n\ny',
+    )
   })
 
   test('a block named on a list item is that item alone', () => {
     const list = 'Steps:\n\n- Buy milk\n- Pay rent ^p\n  by Friday\n- Call mum\n\nAfter.\n'
-    expect(edited(list, [{ at: { block: 'p' }, delete: true }])).toBe(
-      'Steps:\n\n- Buy milk\n- Call mum\n\nAfter.\n',
-    )
+    expect(edited(list, [{ at: { block: 'p' }, delete: true }])).toBe('Steps:\n\n- Buy milk\n- Call mum\n\nAfter.\n')
     expect(edited(list, [{ at: { block: 'p' }, replace: '- Pay rent and water' }])).toBe(
       'Steps:\n\n- Buy milk\n- Pay rent and water ^p\n- Call mum\n\nAfter.\n',
     )
@@ -183,42 +160,30 @@ describe('what goes in beside a line or a paragraph', () => {
 
   test('a block next to front matter, maths, indented code or a heading is that block alone', () => {
     expect(
-      edited('---\ntitle: Plan\n---\nFirst para ^p\n\nMore\n', [
-        { at: { block: 'p' }, replace: 'New first' },
-      ]),
+      edited('---\ntitle: Plan\n---\nFirst para ^p\n\nMore\n', [{ at: { block: 'p' }, replace: 'New first' }]),
     ).toBe('---\ntitle: Plan\n---\nNew first ^p\n\nMore\n')
     expect(
-      edited('Intro\n\n$$\na\n\nb\n$$\n\n^m\n\n# Next\n\ntext\n', [
-        { at: { block: 'm' }, replace: '$$\nc\n$$' },
-      ]),
+      edited('Intro\n\n$$\na\n\nb\n$$\n\n^m\n\n# Next\n\ntext\n', [{ at: { block: 'm' }, replace: '$$\nc\n$$' }]),
     ).toBe('Intro\n\n$$\nc\n$$\n\n^m\n\n# Next\n\ntext\n')
     expect(
-      edited('Intro\n\n    code line\n\n| a | b |\n|---|---|\n\n^t\n\nAfter\n', [
-        { at: { block: 't' }, delete: true },
-      ]),
+      edited('Intro\n\n    code line\n\n| a | b |\n|---|---|\n\n^t\n\nAfter\n', [{ at: { block: 't' }, delete: true }]),
     ).toContain('    code line')
-    expect(
-      edited('Intro\n## Goals ^g\nShip it.\n\nAfter\n', [{ at: { block: 'g' }, delete: true }]),
-    ).toContain('Intro')
+    expect(edited('Intro\n## Goals ^g\nShip it.\n\nAfter\n', [{ at: { block: 'g' }, delete: true }])).toContain('Intro')
   })
 
   test('a paragraph over maths, and a pre, are each edited alone', () => {
+    expect(edited('Intro ^i\n$$\na\n\nb\n$$\n\nAfter\n', [{ at: { block: 'i' }, delete: true }])).toContain(
+      '$$\na\n\nb\n$$',
+    )
     expect(
-      edited('Intro ^i\n$$\na\n\nb\n$$\n\nAfter\n', [{ at: { block: 'i' }, delete: true }]),
-    ).toContain('$$\na\n\nb\n$$')
-    expect(
-      edited('<pre>\nx <b>y</b>\n\nz\n</pre>\n\n^p\n\nAfter\n', [
-        { at: { block: 'p' }, replace: '<pre>\nw\n</pre>' },
-      ]),
+      edited('<pre>\nx <b>y</b>\n\nz\n</pre>\n\n^p\n\nAfter\n', [{ at: { block: 'p' }, replace: '<pre>\nw\n</pre>' }]),
     ).toBe('<pre>\nw\n</pre>\n\n^p\n\nAfter\n')
   })
 
   test('a code block named on its closing fence is found and replaced whole', () => {
-    expect(
-      edited('a\n\n```\nx\n``` ^abc123\n\nb\n', [
-        { at: { block: 'abc123' }, replace: '```\ny\n```' },
-      ]),
-    ).toBe('a\n\n```\ny\n``` ^abc123\n\nb\n')
+    expect(edited('a\n\n```\nx\n``` ^abc123\n\nb\n', [{ at: { block: 'abc123' }, replace: '```\ny\n```' }])).toBe(
+      'a\n\n```\ny\n``` ^abc123\n\nb\n',
+    )
   })
 
   test('a deleted task takes its line with it', () => {
@@ -227,17 +192,11 @@ describe('what goes in beside a line or a paragraph', () => {
   })
 
   test('a deleted section leaves no hole', () => {
-    expect(edited('# A\none\n\n# B\ntwo\n\n# C\n', [{ at: { heading: 'B' }, delete: true }])).toBe(
-      '# A\none\n\n# C\n',
-    )
-    expect(edited('# A\none\n\n# B\ntwo\n', [{ at: { heading: 'B' }, delete: true }])).toBe(
-      '# A\none\n',
-    )
+    expect(edited('# A\none\n\n# B\ntwo\n\n# C\n', [{ at: { heading: 'B' }, delete: true }])).toBe('# A\none\n\n# C\n')
+    expect(edited('# A\none\n\n# B\ntwo\n', [{ at: { heading: 'B' }, delete: true }])).toBe('# A\none\n')
   })
 
   test('the reader’s selection is words like a quote', () => {
-    expect(edited('abcdef', [{ at: { selection: true }, replace: 'X' }], { from: 1, to: 3 })).toBe(
-      'aXdef',
-    )
+    expect(edited('abcdef', [{ at: { selection: true }, replace: 'X' }], { from: 1, to: 3 })).toBe('aXdef')
   })
 })

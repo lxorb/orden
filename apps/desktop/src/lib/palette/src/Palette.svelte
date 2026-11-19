@@ -140,19 +140,13 @@
   const writing = $derived(workspace.active?.kind === 'note' ? view : undefined)
 
   const wantsHeadings = $derived(mode === 'headings' || (mode === 'everything' && term.length >= 3))
-  const headings = $derived(
-    open && wantsHeadings && writing ? scanHeadings(writing.state.doc.toString()) : [],
-  )
+  const headings = $derived(open && wantsHeadings && writing ? scanHeadings(writing.state.doc.toString()) : [])
   const headingRows = $derived(headingCandidates(headings, mode === 'headings'))
 
-  const taken = $derived(
-    new Set(workspace.files.map((one) => relativeTo(root ?? '', one.path).toLowerCase())),
-  )
+  const taken = $derived(new Set(workspace.files.map((one) => relativeTo(root ?? '', one.path).toLowerCase())))
 
   const makes = $derived(
-    mode === 'everything' && root && hiddenKinds.offers('note') && canWriteAt(root)
-      ? makeable(term, taken)
-      : null,
+    mode === 'everything' && root && hiddenKinds.offers('note') && canWriteAt(root) ? makeable(term, taken) : null,
   )
 
   const address = $derived.by(() => {
@@ -230,10 +224,7 @@
     if (!term) return browsed?.rows ?? []
     if (found.only) return found.rows
 
-    return [
-      ...withOffers(ranked(term, [...offered, ...headingRows]), term, address, makes),
-      ...found.rows,
-    ]
+    return [...withOffers(ranked(term, [...offered, ...headingRows]), term, address, makes), ...found.rows]
   })
 
   function label(row: Row): string {
@@ -307,8 +298,7 @@
 
   const dimmed = (row: Row) => row.kind === 'command' && row.command.disabled === true
 
-  const tabOf = (row: Extract<Row, { kind: 'tab' }>) =>
-    workspace.tabs.find((one) => one.id === row.tab.id)
+  const tabOf = (row: Extract<Row, { kind: 'tab' }>) => workspace.tabs.find((one) => one.id === row.tab.id)
 
   const unsavedTab = (row: Extract<Row, { kind: 'tab' }>) => {
     const tab = tabOf(row)
@@ -394,8 +384,7 @@
       if (root) void notices().then((one) => one.openInstructions(root))
     },
     make: (note) => {
-      if (root)
-        void workspace.createNote(note.folder ? joinPath(root, note.folder) : root, note.name)
+      if (root) void workspace.createNote(note.folder ? joinPath(root, note.folder) : root, note.name)
     },
     goto: (line) => ongoto?.(line),
     openHost: (id) => paletteKind('hosts').open(id),
@@ -597,10 +586,7 @@
               >
               {#if row.kind === 'tab' && unsavedTab(row)}<UnsavedDot />{/if}
               {#if where}<span class="where"
-                  >{#if typeof where === 'string'}{where}{:else}<Facts
-                      line
-                      parts={where}
-                    />{/if}</span
+                  >{#if typeof where === 'string'}{where}{:else}<Facts line parts={where} />{/if}</span
                 >{/if}
               {#if row.kind === 'setting' && row.setting.switched() !== null}
                 <span class="flip" aria-hidden="true"

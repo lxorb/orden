@@ -52,11 +52,9 @@ const heardOf = (value: unknown): value is Heard => {
   )
 }
 
-const byStart = (one: Span, other: Span) =>
-  one.start - other.start || one.id.localeCompare(other.id)
+const byStart = (one: Span, other: Span) => one.start - other.start || one.id.localeCompare(other.id)
 
-const byOrder = (one: Activity, other: Activity) =>
-  one.order - other.order || one.name.localeCompare(other.name)
+const byOrder = (one: Activity, other: Activity) => one.order - other.order || one.name.localeCompare(other.name)
 
 export class TimeStore {
   activities = $state.raw<Activity[]>([])
@@ -267,8 +265,7 @@ export class TimeStore {
       if (goal.activity === id) rows.push(this.write('goal', goal.id, null))
     }
     for (const span of this.spans) {
-      if (span.activity === id)
-        rows.push(this.write('span', span.id, spanValue({ ...span, activity: null })))
+      if (span.activity === id) rows.push(this.write('span', span.id, spanValue({ ...span, activity: null })))
     }
     this.written(rows)
   }
@@ -353,9 +350,7 @@ export class TimeStore {
 
   everything(): TimeRecord[] {
     return KINDS.flatMap((kind) =>
-      this.ledger
-        .live(kind)
-        .flatMap((row) => (row.value ? [{ kind, id: row.id, value: row.value }] : [])),
+      this.ledger.live(kind).flatMap((row) => (row.value ? [{ kind, id: row.id, value: row.value }] : [])),
     )
   }
 

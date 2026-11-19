@@ -32,8 +32,7 @@ const inSpace = (todo: Todo, filter: SpaceFilter): boolean =>
 
 const started = (todo: Todo, today: string): boolean => todo.start === null || todo.start <= today
 
-const hasLabel = (todo: Todo, label: string | null): boolean =>
-  label === ALL_LABELS || todo.labels.includes(label)
+const hasLabel = (todo: Todo, label: string | null): boolean => label === ALL_LABELS || todo.labels.includes(label)
 
 const stillShown = (todo: Todo, today: string): boolean =>
   !todo.done || (todo.doneAt !== null && dayOf(todo.doneAt) === today)
@@ -49,10 +48,7 @@ export const shownTodos = (todos: readonly Todo[], filter: Filter): Todo[] =>
 
 const byName = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' })
 
-export function labelsOf(
-  todos: readonly Todo[],
-  filter: SpaceFilter & Pick<Filter, 'today'>,
-): string[] {
+export function labelsOf(todos: readonly Todo[], filter: SpaceFilter & Pick<Filter, 'today'>): string[] {
   const seen = new Set<string>()
   for (const todo of todos) {
     if (!inSpace(todo, filter) || !stillShown(todo, filter.today)) continue
@@ -101,9 +97,7 @@ export function groupedByLabel(todos: readonly Todo[]): Group[] {
       else groups.set(label, [todo])
     }
   }
-  const out: Group[] = [...groups]
-    .sort(([a], [b]) => byName(a, b))
-    .map(([label, held]) => ({ label, todos: held }))
+  const out: Group[] = [...groups].sort(([a], [b]) => byName(a, b)).map(([label, held]) => ({ label, todos: held }))
   if (unlabeled.length) out.push({ label: null, todos: unlabeled })
   return out
 }

@@ -25,11 +25,7 @@ function sharedBefore(noteId: string): string | null {
   return kept && Date.now() - kept.at < REMEMBERED ? kept.words : null
 }
 
-async function writtenAs(
-  words: string,
-  hash: string,
-  digest: (text: string) => Promise<string>,
-): Promise<boolean> {
+async function writtenAs(words: string, hash: string, digest: (text: string) => Promise<string>): Promise<boolean> {
   if ((await digest(words)) === hash) return true
   return words.includes('\n') && (await digest(words.replace(/\r?\n/g, '\r\n'))) === hash
 }
@@ -97,10 +93,7 @@ export class Room extends JoinedRoom {
 
     const asked = note.text.toString()
     const asksRoom = this.text.toJSON()
-    const [mine, theirs] = await Promise.all([
-      writtenAs(asked, hash, digest),
-      writtenAs(asksRoom, hash, digest),
-    ])
+    const [mine, theirs] = await Promise.all([writtenAs(asked, hash, digest), writtenAs(asksRoom, hash, digest)])
     if (!this.holds()) return undefined
 
     return {
@@ -129,9 +122,7 @@ export class Room extends JoinedRoom {
       return false
     }
 
-    return await this.settleAgainst(
-      answer === 'take' ? { mine: true, theirs: false } : { mine: false, theirs: true },
-    )
+    return await this.settleAgainst(answer === 'take' ? { mine: true, theirs: false } : { mine: false, theirs: true })
   }
 
   protected showPresent() {

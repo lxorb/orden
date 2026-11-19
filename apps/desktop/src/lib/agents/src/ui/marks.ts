@@ -23,12 +23,7 @@ export function wornAt(seen: Seen, now: number, colourOf: ColourOf): Record<stri
   return worn
 }
 
-function stateOf(
-  seen: Seen,
-  agent: string,
-  at: number,
-  now: number,
-): 'acting' | 'stopped' | 'none' {
+function stateOf(seen: Seen, agent: string, at: number, now: number): 'acting' | 'stopped' | 'none' {
   const stoppedAt = seen.halted[agent] ?? seen.stopped
   if (stoppedAt !== null) {
     return at + ACTIVE_FOR > stoppedAt ? 'stopped' : 'none'

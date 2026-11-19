@@ -22,9 +22,7 @@ describe('the addresses a note can show rather than link to', () => {
 
   test('and never youtube.com itself, which sets a cookie to be watched; a timestamp is where it starts; a page of a provider that is not a thing to show is a link', () => {
     expect(frame('https://youtu.be/dQw4w9WgXcQ')).toContain('youtube-nocookie.com')
-    expect(frame('https://youtu.be/abc?t=90')).toBe(
-      'https://www.youtube-nocookie.com/embed/abc?start=90',
-    )
+    expect(frame('https://youtu.be/abc?t=90')).toBe('https://www.youtube-nocookie.com/embed/abc?start=90')
     expect(frame('https://youtu.be/abc?t=1m30s')).toContain('start=90')
     expect(frame('https://youtu.be/abc?t=1h')).toContain('start=3600')
     expect(webEmbed('https://www.youtube.com/@somebody')).toBe(null)
@@ -49,16 +47,10 @@ describe('the addresses a note can show rather than link to', () => {
       'https://platform.twitter.com/embed/Tweet.html?id=1234567890',
     )
     expect(frame('https://twitter.com/orden/status/1234567890')).toContain('id=1234567890')
-    expect(frame('https://open.spotify.com/track/abc123')).toBe(
-      'https://open.spotify.com/embed/track/abc123',
-    )
-    expect(frame('https://open.spotify.com/intl-de/album/abc123')).toBe(
-      'https://open.spotify.com/embed/album/abc123',
-    )
+    expect(frame('https://open.spotify.com/track/abc123')).toBe('https://open.spotify.com/embed/track/abc123')
+    expect(frame('https://open.spotify.com/intl-de/album/abc123')).toBe('https://open.spotify.com/embed/album/abc123')
     expect(frame('https://soundcloud.com/artist/track')).toContain('w.soundcloud.com/player/?url=')
-    expect(frame('https://www.figma.com/design/abc/Name')).toContain(
-      'figma.com/embed?embed_host=orden',
-    )
+    expect(frame('https://www.figma.com/design/abc/Name')).toContain('figma.com/embed?embed_host=orden')
     expect(frame('https://codepen.io/someone/pen/abcDEF')).toBe(
       'https://codepen.io/someone/embed/abcDEF?default-tab=result',
     )
@@ -70,14 +62,10 @@ describe('the addresses a note can show rather than link to', () => {
   })
 
   test('nothing a link wrote reaches a frame address unchecked', () => {
-    expect(frame('https://youtu.be/abc?x=1/../../evil')).toBe(
-      'https://www.youtube-nocookie.com/embed/abc',
-    )
+    expect(frame('https://youtu.be/abc?x=1/../../evil')).toBe('https://www.youtube-nocookie.com/embed/abc')
     expect(webEmbed('https://www.loom.com/share/abc%2f..%2fevil')).toBe(null)
     expect(webEmbed('https://codepen.io/a/pen/b?c=d#e')).not.toBe(null)
-    expect(frame('https://codepen.io/a/pen/b?c=d#e')).toBe(
-      'https://codepen.io/a/embed/b?default-tab=result',
-    )
+    expect(frame('https://codepen.io/a/pen/b?c=d#e')).toBe('https://codepen.io/a/embed/b?default-tab=result')
   })
 
   test('every row asks for a sandbox, and none for more than it needs', () => {
@@ -156,9 +144,7 @@ describe('the broad list, for the places nobody wrote a row for by hand', () => 
       expect(framed, address).not.toContain('%2f')
       expect(new URL(framed).hostname, address).not.toBe('example.test')
     }
-    expect(frame('https://www.tiktok.com/@orden/video/1?a=b#c')).toBe(
-      'https://www.tiktok.com/embed/v2/1',
-    )
+    expect(frame('https://www.tiktok.com/@orden/video/1?a=b#c')).toBe('https://www.tiktok.com/embed/v2/1')
   })
 })
 
@@ -210,13 +196,9 @@ describe('the card an <iframe> a note wrote becomes', () => {
   })
 
   test('takes the room the tag asked for, when it asked for a sane amount', () => {
-    expect(iframeCard('<iframe src="https://x.test/a" height="240"></iframe>')).toContain(
-      '--embed-height: 240px',
-    )
+    expect(iframeCard('<iframe src="https://x.test/a" height="240"></iframe>')).toContain('--embed-height: 240px')
     for (const height of ['', ' height="4"', ' height="99999"', ' height="50%"']) {
-      expect(iframeCard(`<iframe src="https://x.test/a"${height}></iframe>`), height).toContain(
-        'embed-wide',
-      )
+      expect(iframeCard(`<iframe src="https://x.test/a"${height}></iframe>`), height).toContain('embed-wide')
     }
   })
 

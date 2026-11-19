@@ -7,10 +7,7 @@ export interface SpaceChats {
   chats: ChatEntry[]
 }
 
-export function bySpace(
-  chats: readonly ChatEntry[],
-  spaces: readonly { root: string; name: string }[],
-): SpaceChats[] {
+export function bySpace(chats: readonly ChatEntry[], spaces: readonly { root: string; name: string }[]): SpaceChats[] {
   const groups = spaces
     .map((space) => ({
       key: space.root,
@@ -19,7 +16,5 @@ export function bySpace(
     }))
     .filter((group) => group.chats.length)
   const elsewhere = chats.filter((one) => !groups.some((group) => samePath(group.key, one.root)))
-  return elsewhere.length
-    ? [...groups, { key: '', name: 'Other spaces', chats: elsewhere }]
-    : groups
+  return elsewhere.length ? [...groups, { key: '', name: 'Other spaces', chats: elsewhere }] : groups
 }

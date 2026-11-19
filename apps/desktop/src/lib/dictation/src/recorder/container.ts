@@ -30,8 +30,7 @@ export function bestContainer(): string | null {
 }
 
 export function canRecordHere(): boolean {
-  const devices: MediaDevices | undefined =
-    typeof navigator === 'undefined' ? undefined : navigator.mediaDevices
+  const devices: MediaDevices | undefined = typeof navigator === 'undefined' ? undefined : navigator.mediaDevices
 
   return !!devices && bestContainer() !== null
 }

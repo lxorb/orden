@@ -60,12 +60,10 @@ vi.mock('../../protect/src/api', () => ({
   buried: async () => ({ waits: () => waiting }),
   protection: {
     agentsMay: (path: string) => !shut.has(path),
-    agentsMayAll: (path: string) =>
-      ![...shut].some((one) => one === path || one.startsWith(`${path}/`)),
+    agentsMayAll: (path: string) => ![...shut].some((one) => one === path || one.startsWith(`${path}/`)),
     agentsMayAllOf: (root?: string | null) =>
       ![...shut].some((one) => !root || one === root || one.startsWith(`${root}/`)),
-    ways: (root: string) =>
-      root === '/s/Home' ? { Journal: 'device' } : { 'Diary.md': 'password' },
+    ways: (root: string) => (root === '/s/Home' ? { Journal: 'device' } : { 'Diary.md': 'password' }),
   },
 }))
 

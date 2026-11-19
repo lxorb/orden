@@ -112,11 +112,7 @@ describe('the machines to choose from', () => {
   test('are filtered by CPU kind and architecture', () => {
     expect(names(picksOf(OFFERS, 'nbg1', 'price', 'dedicated', 'any', null))).toEqual(['ccx33'])
     expect(names(picksOf(OFFERS, 'nbg1', 'price', 'any', 'arm', null))).toEqual(['cax31'])
-    expect(names(picksOf(OFFERS, 'nbg1', 'price', 'shared', 'x86', null))).toEqual([
-      'cx23',
-      'cx43',
-      'cx53',
-    ])
+    expect(names(picksOf(OFFERS, 'nbg1', 'price', 'shared', 'x86', null))).toEqual(['cx23', 'cx43', 'cx53'])
   })
 
   test('for a made machine, a smaller disk or the other architecture cannot be chosen', () => {
@@ -126,9 +122,7 @@ describe('the machines to choose from', () => {
     expect(of('cax31')?.blocked).toBe('arch')
     expect(of('cx43')).toMatchObject({ blocked: null, current: true })
     expect(of('cx53')?.blocked).toBeNull()
-    expect(
-      picksOf(OFFERS, 'nbg1', 'price', 'any', 'any', { ...SERVER, made: false })[0],
-    ).toMatchObject({
+    expect(picksOf(OFFERS, 'nbg1', 'price', 'any', 'any', { ...SERVER, made: false })[0]).toMatchObject({
       blocked: null,
     })
   })
@@ -136,15 +130,11 @@ describe('the machines to choose from', () => {
   test('start in the machine’s own place, else Nuremberg, Falkenstein, or the first offered', () => {
     expect(placeOf(OFFERS, { ...SERVER, location: 'hel1' })).toBe('hel1')
     expect(placeOf(OFFERS, null)).toBe('nbg1')
-    expect(
-      placeOf({ ...OFFERS, locations: [{ name: 'ash', city: 'Ashburn', country: 'US' }] }, null),
-    ).toBe('ash')
+    expect(placeOf({ ...OFFERS, locations: [{ name: 'ash', city: 'Ashburn', country: 'US' }] }, null)).toBe('ash')
   })
 
   test('read from the server as sent, and nothing from a server that has none', () => {
-    expect(offersOf({ currency: 'EUR', locations: OFFERS.locations, types: OFFERS.types })).toEqual(
-      OFFERS,
-    )
+    expect(offersOf({ currency: 'EUR', locations: OFFERS.locations, types: OFFERS.types })).toEqual(OFFERS)
     expect(offersOf({ error: 'not found' })).toBeNull()
     expect(refitOf(new ApiError(409, 'no', { error: 'disk' }))).toBe('disk')
     expect(refitOf(new Error('offline'))).toBe('other')
@@ -168,35 +158,23 @@ describe('resizing, asked first', () => {
     expect(asked.title).toBe('Resize to CX53?')
     expect(asked.detail).toContain('starts again. It is away for about 5 minutes')
     expect(asked.detail).toContain('The disk grows from 160 GB to 320 GB and cannot shrink again')
-    expect(asked.detail).toContain(
-      `${eur(14.27)} a month now, ${eur(27.95)} after: ${eur(13.68)} more a month.`,
-    )
+    expect(asked.detail).toContain(`${eur(14.27)} a month now, ${eur(27.95)} after: ${eur(13.68)} more a month.`)
 
     const same = pick('ccx33')
     if (!same) throw new Error('no ccx33')
     expect(askedOf({ ...SERVER, diskGb: 240 }, same, 'EUR').detail).toContain(
       'The disk stays 240 GB; a smaller disk cannot be chosen.',
     )
-    expect(askedOf({ ...SERVER, price: 80 }, same, 'EUR').detail).toContain(
-      `${eur(4.53)} less a month.`,
-    )
+    expect(askedOf({ ...SERVER, price: 80 }, same, 'EUR').detail).toContain(`${eur(4.53)} less a month.`)
   })
 })
 
 describe('the machine’s summary', () => {
   test('is its facts and its cost, laid out apart, with no dot or bullet between them', () => {
     const { about, cost } = summaryOf(SERVER)
-    expect(about).toEqual([
-      'CX43',
-      'Nuremberg',
-      '8\u00a0vCPU',
-      '16\u00a0GB\u00a0RAM',
-      '160\u00a0GB\u00a0disk',
-    ])
+    expect(about).toEqual(['CX43', 'Nuremberg', '8\u00a0vCPU', '16\u00a0GB\u00a0RAM', '160\u00a0GB\u00a0disk'])
     expect(cost).toEqual([kept(`${eur(14.27)} a month`), kept(`${eur(3.1)} this month`)])
     for (const part of [...about, ...cost]) expect(part).not.toMatch(/[·•‧∙⋅]/)
-    expect(summaryOf({ ...SERVER, made: false, spent: null }).cost).toEqual([
-      kept(`${eur(14.27)} a month`),
-    ])
+    expect(summaryOf({ ...SERVER, made: false, spent: null }).cost).toEqual([kept(`${eur(14.27)} a month`)])
   })
 })

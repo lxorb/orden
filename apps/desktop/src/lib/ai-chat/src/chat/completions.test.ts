@@ -42,10 +42,7 @@ describe('a recorded stream of calls', () => {
     const answer = reader.answer()
     expect(answer.ending).toBe('tool')
     expect(answer.calls.map((one) => one.args)).toEqual([{ path: 'Birds.md' }, { path: 'Fish.md' }])
-    expect(reader.parts.map((one) => (one.kind === 'tool' ? one.verb : one.kind))).toEqual([
-      'read_note',
-      'read_note',
-    ])
+    expect(reader.parts.map((one) => (one.kind === 'tool' ? one.verb : one.kind))).toEqual(['read_note', 'read_note'])
     expect(heard.filter((one) => one.usage).at(-1)?.usage).toMatchObject({
       input: 51,
       output: 47,

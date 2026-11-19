@@ -12,10 +12,7 @@ function stateOf(doc: string): EditorState {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(doc.length),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        trustedMarkup(false),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), trustedMarkup(false)],
     }),
   )
 }
@@ -42,8 +39,7 @@ const leadOf = (text: string) => /^ */.exec(text)?.[0].length ?? 0
 
 describe('indentation inside a quote or callout in Live Preview', () => {
   test('code in a callout keeps its own indentation', () => {
-    const doc =
-      '> [!example] Python\n> ```py\n> def total(items):\n>     return sum(items)\n> ```\n\nafter'
+    const doc = '> [!example] Python\n> ```py\n> def total(items):\n>     return sum(items)\n> ```\n\nafter'
     const shown = shownLines(doc)
     expect(shown[2]).toBe('def total(items):')
     expect(shown[3]).toBe('    return sum(items)')

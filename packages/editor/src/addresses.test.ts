@@ -43,9 +43,7 @@ function cell(source: string): string {
 
 describe('a www address with an at sign in its path', () => {
   test('in a table cell opens the page, not a mail', () => {
-    expect(renderMarkdown('see www.youtube.com/@mkbhd now')).toContain(
-      'href="http://www.youtube.com/@mkbhd"',
-    )
+    expect(renderMarkdown('see www.youtube.com/@mkbhd now')).toContain('href="http://www.youtube.com/@mkbhd"')
     expect(cell('see www.youtube.com/@mkbhd now')).toBe(
       'see <a href="https://www.youtube.com/@mkbhd">www.youtube.com/@mkbhd</a> now',
     )
@@ -79,11 +77,7 @@ describe('a www address with a colon in its path', () => {
 
 describe('a link written with its address between angle brackets', () => {
   test('in a table cell can be followed, as in the note', () => {
-    expect(linkMarks('see [a](<https://x.com/a b>) now')).toEqual([
-      { text: 'a', href: 'https://x.com/a b' },
-    ])
-    expect(cell('see [a](<https://x.com/a b>) now')).toBe(
-      'see <a href="https://x.com/a b">a</a> now',
-    )
+    expect(linkMarks('see [a](<https://x.com/a b>) now')).toEqual([{ text: 'a', href: 'https://x.com/a b' }])
+    expect(cell('see [a](<https://x.com/a b>) now')).toBe('see <a href="https://x.com/a b">a</a> now')
   })
 })

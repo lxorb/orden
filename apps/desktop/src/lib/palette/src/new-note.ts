@@ -13,9 +13,7 @@ export function noteToMake(term: string): NoteToMake | null {
   const last = parts.pop()
   if (last === undefined) return null
 
-  const folders = parts.every(
-    (part) => nameFault({ typed: part, extension: '', taken: [] }) === null,
-  )
+  const folders = parts.every((part) => nameFault({ typed: part, extension: '', taken: [] }) === null)
   if (!folders || nameFault({ typed: last, extension: '.md', taken: [] })) return null
 
   return { folder: parts.join('/'), name: nameToWrite(last, '.md') }

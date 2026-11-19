@@ -18,9 +18,7 @@ function note(title: string, content: string, extra = ''): string {
 
 describe('a Tomboy note', () => {
   test('becomes a note with its dates', async () => {
-    const plan = await readTomboy([
-      file('abc.note', note('Start Here', 'Start Here\n\nSome words')),
-    ])
+    const plan = await readTomboy([file('abc.note', note('Start Here', 'Start Here\n\nSome words'))])
 
     const text = noteAt(plan, 'Start Here.md')
     expect(text).toContain('date: 2026-01-02')
@@ -32,10 +30,7 @@ describe('a Tomboy note', () => {
 
   test('a notebook is a folder and a tag is a tag', async () => {
     const plan = await readTomboy([
-      file(
-        'abc.note',
-        note('Plan', 'Words', '<tags><tag>system:notebook:Work</tag><tag>urgent</tag></tags>'),
-      ),
+      file('abc.note', note('Plan', 'Words', '<tags><tag>system:notebook:Work</tag><tag>urgent</tag></tags>')),
     ])
 
     expect(plan.files[0]?.path).toBe('Work/Plan.md')
@@ -47,9 +42,7 @@ describe('a Tomboy note', () => {
       'Tickets $5-$10, wait ~5 min or ~10, <bold>format is %%d</bold> and <monospace>$x ~y %%z</monospace>\nrest',
       (title) => `[[${title}]]`,
     )
-    expect(markdown).toBe(
-      'Tickets \\$5-\\$10, wait \\~5 min or \\~10, **format is %\\%d** and `$x ~y %%z`\nrest',
-    )
+    expect(markdown).toBe('Tickets \\$5-\\$10, wait \\~5 min or \\~10, **format is %\\%d** and `$x ~y %%z`\nrest')
     expect(renderMarkdown(markdown)).toBe(
       '<p>Tickets $5-$10, wait ~5 min or ~10, <strong>format is %%d</strong> and <code>$x ~y %%z</code>\nrest</p>\n',
     )
@@ -66,25 +59,15 @@ describe('a Tomboy note', () => {
 
 describe("Tomboy's own markup", () => {
   test('is the emphasis markdown has words for', () => {
-    expect(
-      tomboyMarkdown('<bold>a</bold> <italic>b</italic> <strikethrough>c</strikethrough>'),
-    ).toBe('**a** *b* ~~c~~')
-    expect(tomboyMarkdown('<highlight>lit</highlight> and <monospace>code</monospace>')).toBe(
-      '==lit== and `code`',
-    )
+    expect(tomboyMarkdown('<bold>a</bold> <italic>b</italic> <strikethrough>c</strikethrough>')).toBe('**a** *b* ~~c~~')
+    expect(tomboyMarkdown('<highlight>lit</highlight> and <monospace>code</monospace>')).toBe('==lit== and `code`')
   })
 
   test('a list is a list, however deep', () => {
     const content =
       'Before<list><list-item dir="ltr">one<list><list-item dir="ltr">under</list-item></list></list-item><list-item dir="ltr">two</list-item></list>'
 
-    expect(tomboyMarkdown(content).split('\n')).toEqual([
-      'Before',
-      '',
-      '- one',
-      '  - under',
-      '- two',
-    ])
+    expect(tomboyMarkdown(content).split('\n')).toEqual(['Before', '', '- one', '  - under', '- two'])
   })
 
   test('a tag it does not know keeps its words', () => {
@@ -95,9 +78,7 @@ describe("Tomboy's own markup", () => {
     const tag = tomboyMarkdown('a &lt;<size:large>img src=x onerror=alert(1)&gt;</size:large> b')
     expect(tag).not.toMatch(/(?<!\\)<img/)
 
-    const percent = tomboyMarkdown(
-      '50%<size:large>%d</size:large> kept 50%<size:large>%</size:large> end',
-    )
+    const percent = tomboyMarkdown('50%<size:large>%d</size:large> kept 50%<size:large>%</size:large> end')
     expect(percent).not.toMatch(/(?<!\\)%%/)
     expect(percent).toContain('kept')
 
@@ -130,46 +111,23 @@ describe("Tomboy's own markup", () => {
     const content =
       'Before\n\n<list><list-item dir="ltr">one\n<list><list-item dir="ltr">under\n</list-item></list></list-item><list-item dir="ltr">two</list-item></list>\n\nAfter'
 
-    expect(tomboyMarkdown(content).split('\n')).toEqual([
-      'Before',
-      '',
-      '- one',
-      '  - under',
-      '- two',
-      '',
-      'After',
-    ])
+    expect(tomboyMarkdown(content).split('\n')).toEqual(['Before', '', '- one', '  - under', '- two', '', 'After'])
   })
 
   test('tomboy-ng writes every item as a list of its own, which is still one list', () => {
     const content =
       'From here:\n<list><list-item dir="ltr">one</list-item></list>\n<list><list-item dir="ltr">two</list-item></list>\nAfter'
 
-    expect(tomboyMarkdown(content).split('\n')).toEqual([
-      'From here:',
-      '',
-      '- one',
-      '- two',
-      '',
-      'After',
-    ])
+    expect(tomboyMarkdown(content).split('\n')).toEqual(['From here:', '', '- one', '- two', '', 'After'])
   })
 
   test('the spaces in front of an item are not taken for code', () => {
-    expect(tomboyMarkdown('<list><list-item dir="ltr">    spaced</list-item></list>')).toBe(
-      '- spaced',
-    )
+    expect(tomboyMarkdown('<list><list-item dir="ltr">    spaced</list-item></list>')).toBe('- spaced')
   })
 
   test('a long list is read once rather than once per item', () => {
-    const items = Array.from(
-      { length: 20000 },
-      (_, at) => `<list-item dir="ltr"><bold>item ${at}</bold>\n</list-item>`,
-    )
-    const said = linearly(
-      (count) => tomboyMarkdown(`<list>${items.slice(0, count).join('')}</list>`),
-      20000,
-    )
+    const items = Array.from({ length: 20000 }, (_, at) => `<list-item dir="ltr"><bold>item ${at}</bold>\n</list-item>`)
+    const said = linearly((count) => tomboyMarkdown(`<list>${items.slice(0, count).join('')}</list>`), 20000)
 
     expect(said.split('\n')).toHaveLength(20000)
   })
@@ -202,17 +160,12 @@ describe('links between Tomboy notes', () => {
     ])
 
     expect(plan.files.map((one) => one.path)).toContain('ZugFerd factur-x #4343.md')
-    expect(noteAt(plan, 'Index.md')).toContain(
-      'See [ZugFerd / factur-x #4343](ZugFerd%20factur-x%20%234343.md)',
-    )
+    expect(noteAt(plan, 'Index.md')).toContain('See [ZugFerd / factur-x #4343](ZugFerd%20factur-x%20%234343.md)')
   })
 
   test('keep a tag in the title as words where the link is a markdown one', async () => {
     const plan = await readTomboy([
-      file(
-        'b.note',
-        note('Index', 'See <link:internal>&lt;img src=y onerror=alert(2)&gt;#</link:internal>'),
-      ),
+      file('b.note', note('Index', 'See <link:internal>&lt;img src=y onerror=alert(2)&gt;#</link:internal>')),
     ])
 
     const text = noteAt(plan, 'Index.md')
@@ -280,9 +233,7 @@ describe('what is not a Tomboy note', () => {
 
 describe('what a Tomboy note says about itself', () => {
   test('a title Tomboy drew underlined is still not said twice', async () => {
-    const plan = await readTomboy([
-      file('a.note', note('Help', '<underline>Help</underline>\n\nWords')),
-    ])
+    const plan = await readTomboy([file('a.note', note('Help', '<underline>Help</underline>\n\nWords'))])
 
     expect(noteAt(plan, 'Help.md').match(/Help/g)).toHaveLength(1)
   })

@@ -22,9 +22,7 @@ vi.mock('../../src/lib/windows/src/api', async (importOriginal) => ({
 }))
 
 Element.prototype.getBoundingClientRect = function box(this: Element): DOMRect {
-  const rect = this.isConnected
-    ? { x: 0, y: 40, width: 800, height: 560 }
-    : { x: 0, y: 0, width: 0, height: 0 }
+  const rect = this.isConnected ? { x: 0, y: 40, width: 800, height: 560 } : { x: 0, y: 0, width: 0, height: 0 }
   return {
     ...rect,
     top: rect.y,
@@ -109,9 +107,7 @@ async function cycle(times: number): Promise<void> {
 }
 
 function builds(ids: readonly string[]): number[] {
-  return ids.map(
-    (id) => asked.filter((one) => one.command === 'web_open' && one.args.tab === id).length,
-  )
+  return ids.map((id) => asked.filter((one) => one.command === 'web_open' && one.args.tab === id).length)
 }
 
 test('going round ten web tabs twice builds each page once and closes none', async () => {

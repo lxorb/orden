@@ -26,8 +26,7 @@ function walkInto(
 
 function caretX(view: EditorView): Landing {
   const { head, goalColumn } = view.state.selection.main
-  if (goalColumn !== undefined)
-    return { x: view.contentDOM.getBoundingClientRect().left + goalColumn }
+  if (goalColumn !== undefined) return { x: view.contentDOM.getBoundingClientRect().left + goalColumn }
 
   const coords = view.coordsAtPos(head)
   return coords ? { x: coords.left } : 'start'

@@ -12,11 +12,7 @@ export async function zipOf(entries: readonly Entry[]): Promise<Uint8Array> {
   const zip = new JSZip()
 
   for (const entry of entries) {
-    zip.file(
-      entry.path,
-      entry.body,
-      (entry.stored ?? PACKED.test(entry.path)) ? { compression: 'STORE' } : {},
-    )
+    zip.file(entry.path, entry.body, (entry.stored ?? PACKED.test(entry.path)) ? { compression: 'STORE' } : {})
   }
 
   return zip.generateAsync({ type: 'uint8array', compression: 'DEFLATE' })

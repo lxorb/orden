@@ -107,9 +107,7 @@ export function graphSettingsOf(value: unknown): GraphSettings {
     groups: groupsOf(value.groups),
     spread: held(value.spread, LEAST_SPREAD, MOST_SPREAD, DEFAULT_GRAPH.spread),
     gather: isBoolean(value.gather) ? value.gather : DEFAULT_GRAPH.gather,
-    distance: Math.round(
-      held(value.distance, LEAST_DISTANCE, MOST_DISTANCE, DEFAULT_GRAPH.distance),
-    ),
+    distance: Math.round(held(value.distance, LEAST_DISTANCE, MOST_DISTANCE, DEFAULT_GRAPH.distance)),
     push: Math.round(held(value.push, LEAST_PUSH, MOST_PUSH, DEFAULT_GRAPH.push)),
     arrows: isBoolean(value.arrows) ? value.arrows : DEFAULT_GRAPH.arrows,
     sized: isBoolean(value.sized) ? value.sized : DEFAULT_GRAPH.sized,
@@ -217,13 +215,7 @@ export class SpaceGraphSettings {
     const account = graphSettingsOf(theirs)
     const kept = this.spaces[root]
     const unsent = kept?.sent === false && kept.account === accountId
-    const met = meet(
-      kept,
-      accountId,
-      kept?.settings ?? DEFAULT_GRAPH,
-      account,
-      unsent ? UNSENT : SETTINGS,
-    )
+    const met = meet(kept, accountId, kept?.settings ?? DEFAULT_GRAPH, account, unsent ? UNSENT : SETTINGS)
     if (!met) return
 
     this.spaces = {

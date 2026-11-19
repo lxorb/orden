@@ -11,9 +11,9 @@ test('a note added in a group carries the group’s value, a truth or a date as 
   expect(groupProperties({ property: 'note.size', key: 3 })).toEqual({ size: 3 })
   expect(groupProperties({ property: 'note.done', key: true })).toEqual({ done: true })
   expect(groupProperties({ property: 'note.done', key: false })).toEqual({ done: false })
-  expect(
-    groupProperties({ property: 'note.due', key: { kind: 'date', iso: '2026-03-05' } }),
-  ).toEqual({ due: '2026-03-05' })
+  expect(groupProperties({ property: 'note.due', key: { kind: 'date', iso: '2026-03-05' } })).toEqual({
+    due: '2026-03-05',
+  })
 })
 
 test('a group of no value, or of a field that is not the note’s, gives nothing', () => {

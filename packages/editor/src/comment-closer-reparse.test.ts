@@ -60,10 +60,9 @@ afterEach(() => {
 describe('typing at the end of the line above the closing %% of a comment spanning paragraph lines', () => {
   test('reads as a fresh parse of the note', () => {
     const doc = `${NOTE.slice(0, LINE_END)}x${NOTE.slice(LINE_END)}`
-    const fragments = TreeFragment.applyChanges(
-      TreeFragment.addTree(ordenMarkdownParser.parse(NOTE)),
-      [{ fromA: LINE_END, toA: LINE_END, fromB: LINE_END, toB: LINE_END + 1 }],
-    )
+    const fragments = TreeFragment.applyChanges(TreeFragment.addTree(ordenMarkdownParser.parse(NOTE)), [
+      { fromA: LINE_END, toA: LINE_END, fromB: LINE_END, toB: LINE_END + 1 },
+    ])
     expect(comments(ordenMarkdownParser.parse(doc, fragments), doc)).toEqual(
       comments(ordenMarkdownParser.parse(doc), doc),
     )

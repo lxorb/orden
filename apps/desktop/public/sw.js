@@ -39,9 +39,7 @@ const FOREVER = 'public, max-age=31536000, immutable'
 const EVERY_TIME = 'no-cache'
 
 self.addEventListener('install', () => self.skipWaiting())
-self.addEventListener('activate', (event) =>
-  event.waitUntil(Promise.all([self.clients.claim(), keepFirstPage()])),
-)
+self.addEventListener('activate', (event) => event.waitUntil(Promise.all([self.clients.claim(), keepFirstPage()])))
 
 const BUILT = '/assets/'
 const CODE = 'orden-code-'
@@ -193,9 +191,7 @@ async function builds() {
 
 async function buildOf(text) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-  return [...new Uint8Array(digest).slice(0, 8)]
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
+  return [...new Uint8Array(digest).slice(0, 8)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
 
 function withoutSearch(request) {

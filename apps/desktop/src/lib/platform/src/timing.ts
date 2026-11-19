@@ -6,12 +6,7 @@ export interface Later {
   flush(): void
 }
 
-function later(
-  ask: (fire: () => void) => void,
-  stop: () => void,
-  waiting: () => boolean,
-  run: () => void,
-): Later {
+function later(ask: (fire: () => void) => void, stop: () => void, waiting: () => boolean, run: () => void): Later {
   const fire = () => {
     stop()
     run()
@@ -24,11 +19,7 @@ function later(
   })
 }
 
-export function afterQuiet(
-  run: () => void,
-  ms: number | (() => number),
-  atMost = Number.POSITIVE_INFINITY,
-): Later {
+export function afterQuiet(run: () => void, ms: number | (() => number), atMost = Number.POSITIVE_INFINITY): Later {
   let timer: ReturnType<typeof setTimeout> | undefined
   let since: number | undefined
   const stop = () => {

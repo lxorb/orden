@@ -54,11 +54,7 @@ export async function storeAttachment(file: File, notePath: string | null): Prom
   return written
 }
 
-export function storeBeside(
-  bytes: ArrayBuffer,
-  notePath: string,
-  name: string,
-): Promise<string | null> {
+export function storeBeside(bytes: ArrayBuffer, notePath: string, name: string): Promise<string | null> {
   const folder = attachmentFolder(modes.attachments, notePath, workspace.rootHolding(notePath))
 
   return invoke<string>('save_asset', {

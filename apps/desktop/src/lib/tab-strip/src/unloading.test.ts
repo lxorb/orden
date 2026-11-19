@@ -69,9 +69,7 @@ describe('the setting', () => {
     const [one] = three()
     const rows = labels(one)
 
-    expect(rows).toEqual(
-      expect.arrayContaining(['Unload tab', 'Unload other tabs', 'Unload tabs to the right']),
-    )
+    expect(rows).toEqual(expect.arrayContaining(['Unload tab', 'Unload other tabs', 'Unload tabs to the right']))
     expect(rows.indexOf('Unload tabs to the right')).toBeLessThan(rows.indexOf('Close'))
   })
 })

@@ -32,10 +32,7 @@
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written once a frame, never rendered
   const kept = new Map<string, Kept>()
 
-  function boxesOf(
-    key: string,
-    hand: { key: string; boxes: readonly Box[] } | null,
-  ): readonly Box[] {
+  function boxesOf(key: string, hand: { key: string; boxes: readonly Box[] } | null): readonly Box[] {
     const own = inside(key)
     return hand?.key === key ? [...own, ...hand.boxes] : own
   }
@@ -113,22 +110,12 @@
 
 <svg class="cells" width="1" height="1" aria-hidden="true">
   {#each cells as cell (cell.key)}
-    <path
-      class="bubble"
-      class:is-on={cell.on}
-      style:--tint={cell.tint ?? 'var(--accent)'}
-      use:drawn={cell.key}
-    />
+    <path class="bubble" class:is-on={cell.on} style:--tint={cell.tint ?? 'var(--accent)'} use:drawn={cell.key} />
   {/each}
 </svg>
 {#each cells as cell (cell.key)}
-  <span
-    class="name"
-    class:is-on={cell.on}
-    data-space-name={cell.key}
-    aria-hidden="true"
-    use:named={cell.key}
-    dir="auto">{cell.name}</span
+  <span class="name" class:is-on={cell.on} data-space-name={cell.key} aria-hidden="true" use:named={cell.key} dir="auto"
+    >{cell.name}</span
   >
 {/each}
 

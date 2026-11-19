@@ -8,8 +8,7 @@ export const BOOT_PATIENCE = 3 * 60_000
 
 type Waiting = 'connecting' | 'starting' | 'restoring'
 
-export type Status =
-  { waiting: Waiting } | { failed: string; gone?: true } | { held: string; taken: boolean }
+export type Status = { waiting: Waiting } | { failed: string; gone?: true } | { held: string; taken: boolean }
 
 interface Clock {
   after(ms: number, run: () => void): () => void
@@ -33,8 +32,7 @@ export function statusLine(status: Status): string {
 }
 
 function downWords(reason: DownReason | undefined): string {
-  const refused =
-    reason === 'allowance' || reason === 'budget' || reason === 'off' || reason === 'flag'
+  const refused = reason === 'allowance' || reason === 'budget' || reason === 'off' || reason === 'flag'
   return (refused ? refusalWords(reason) : null) ?? 'Your machine could not start'
 }
 
@@ -53,8 +51,7 @@ export class Arrival {
 
   get status(): Status {
     if (this.holder !== null) return { held: heldLine(this.holder), taken: this.holder.taken }
-    if (this.failure !== null)
-      return this.gone ? { failed: this.failure, gone: true } : { failed: this.failure }
+    if (this.failure !== null) return this.gone ? { failed: this.failure, gone: true } : { failed: this.failure }
     if (this.relinking) return { waiting: 'connecting' }
     if (this.linked && this.state === 'starting') return { waiting: 'starting' }
     if (this.linked && this.booted) return { waiting: 'restoring' }

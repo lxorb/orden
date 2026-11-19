@@ -105,11 +105,7 @@
 
     {#snippet foot()}
       <button class="orden-button is-quiet" onclick={onclose}>Cancel</button>
-      <button
-        class="orden-button is-danger"
-        disabled={busy || !(history || site || cache)}
-        onclick={() => void go()}
-      >
+      <button class="orden-button is-danger" disabled={busy || !(history || site || cache)} onclick={() => void go()}>
         Delete data
       </button>
     {/snippet}

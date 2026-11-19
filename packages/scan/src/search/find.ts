@@ -30,10 +30,7 @@ export function placesIn(words: Words, query: string): number[] {
   return scan((words.folded ??= fold(words.text)), fold(query))
 }
 
-export function locate(
-  pieces: readonly Piece[],
-  offset: number,
-): { piece: Piece; into: number } | null {
+export function locate(pieces: readonly Piece[], offset: number): { piece: Piece; into: number } | null {
   let low = 0
   let high = pieces.length - 1
   let found: Piece | null = null

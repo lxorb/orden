@@ -18,8 +18,7 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'App.svelte .notices': 'the row itself; each card in it is a layer of the registry',
   'App.svelte .notices.over': 'the same row, over a drawer: see .notices and .panels',
   'App.svelte .notices.above': 'the same row, over the tab overview: see .notices',
-  'App.svelte .panels':
-    'fixed only as a drawer, which is a phone or a tablet, and those build no native page',
+  'App.svelte .panels': 'fixed only as a drawer, which is a phone or a tablet, and those build no native page',
   'App.svelte .panels.right': 'the right drawer: see .panels',
   'App.svelte .scrim': 'the drawers’ scrim, shown only where there are drawers: see .panels',
   'lib/ui-controls/src/Select.svelte .sheet': 'a touch screen only, and over its own .orden-scrim',
@@ -38,16 +37,11 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
   'lib/overview/src/Overview.svelte .rider':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
-  'lib/overview/src/Overview.svelte .window.is-front':
-    'the same, stacked over its neighbours: see .window',
-  'lib/overview/src/Overview.svelte .window.is-held':
-    'the same, stacked over its neighbours: see .window',
-  'lib/overview/src/Overview.svelte .closer.is-front':
-    'the same, stacked over its neighbours: see .closer',
-  'lib/overview/src/Overview.svelte .closer.is-held':
-    'the same, stacked over its neighbours: see .closer',
-  'lib/overview/src/Overview.svelte .rider.is-front':
-    'the same, stacked over its neighbours: see .rider',
+  'lib/overview/src/Overview.svelte .window.is-front': 'the same, stacked over its neighbours: see .window',
+  'lib/overview/src/Overview.svelte .window.is-held': 'the same, stacked over its neighbours: see .window',
+  'lib/overview/src/Overview.svelte .closer.is-front': 'the same, stacked over its neighbours: see .closer',
+  'lib/overview/src/Overview.svelte .closer.is-held': 'the same, stacked over its neighbours: see .closer',
+  'lib/overview/src/Overview.svelte .rider.is-front': 'the same, stacked over its neighbours: see .rider',
   'lib/even/src/Glasses.svelte .frame': 'the glasses’ plugin, which places no page',
   'lib/tab-strip/src/TabChip.svelte .chip':
     'the tab carried out of a strip, which hangs only while a drag is over the panes - and a drag covers all of every page (`coverOf` in WebTab.svelte)',
@@ -154,9 +148,7 @@ function layersOfTheWindow(): Found[] {
       for (const classes of subjects(prelude)) {
         if (classes.length === 0) continue
         const key = `${file} .${classes.join('.')}`
-        const hits = all.filter((one) =>
-          classes.every((name) => classesOf(one.node).includes(name)),
-        )
+        const hits = all.filter((one) => classes.every((name) => classesOf(one.node).includes(name)))
         found.push({
           key,
           file,
@@ -205,8 +197,7 @@ const PLACED_INSIDE: Record<string, string> = {
   'lib/web-tab/src/WebDownloads.svelte .downloads': 'under a web tab’s bar: see WebSite',
   'lib/web-tab/src/WebExtensionPopup.svelte .popup.sized': 'under a web tab’s bar: see WebSite',
   'lib/web-tab/src/WebExtensions.svelte .extensions': 'under a web tab’s bar: see WebSite',
-  'lib/web-tab/src/WebSite.svelte .site':
-    'under a web tab’s bar, inside the tab it is about, which it never leaves',
+  'lib/web-tab/src/WebSite.svelte .site': 'under a web tab’s bar, inside the tab it is about, which it never leaves',
 }
 
 test('every bubble is placed in the window, where nothing that holds it can cut it', () => {
@@ -231,20 +222,14 @@ test('every bubble is placed in the window, where nothing that holds it can cut 
       const bodies = placing
         .filter((rule) =>
           rule.subjects.some(
-            (subject) =>
-              subject.some((one) => own.includes(one)) &&
-              subject.every((one) => classes.includes(one)),
+            (subject) => subject.some((one) => own.includes(one)) && subject.every((one) => classes.includes(one)),
           ),
         )
         .map((rule) => rule.body)
       if (bodies.some((body) => /position:\s*absolute/.test(body))) cut.push(`${key}: absolute`)
-      else if (!bodies.some((body) => /position:\s*fixed/.test(body)))
-        cut.push(`${key}: not placed in the window`)
-      const hung = (node.attributes ?? []).some(
-        (one) => one.type === 'UseDirective' && one.name === 'hang',
-      )
-      if (hung && !bodies.some((body) => /position:\s*fixed/.test(body)))
-        cut.push(`${key}: hung, but not fixed`)
+      else if (!bodies.some((body) => /position:\s*fixed/.test(body))) cut.push(`${key}: not placed in the window`)
+      const hung = (node.attributes ?? []).some((one) => one.type === 'UseDirective' && one.name === 'hang')
+      if (hung && !bodies.some((body) => /position:\s*fixed/.test(body))) cut.push(`${key}: hung, but not fixed`)
     }
   }
   expect(bubbles.length).toBeGreaterThan(12)

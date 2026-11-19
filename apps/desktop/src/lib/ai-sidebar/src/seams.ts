@@ -29,10 +29,7 @@ export function commandIn(text: string): { name: string; args: string } | null {
   return found ? { name: found[1] ?? '', args: (found[2] ?? '').trim() } : null
 }
 
-export function rowNamed(
-  rows: readonly PanelCommand[],
-  name: string,
-): { row: PanelCommand; typed?: string } | null {
+export function rowNamed(rows: readonly PanelCommand[], name: string): { row: PanelCommand; typed?: string } | null {
   const want = name.toLowerCase()
   const own = rows.find((one) => one.name === want)
   if (own) return { row: own }

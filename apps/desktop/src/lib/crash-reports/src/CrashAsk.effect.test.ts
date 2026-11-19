@@ -29,9 +29,7 @@ const box = () => target.querySelector<HTMLInputElement>('input[type="checkbox"]
 const usageBox = () => target.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')[1]
 
 function goOn() {
-  const button = [...target.querySelectorAll('button')].find(
-    (one) => one.textContent.trim() === 'Continue',
-  )
+  const button = [...target.querySelectorAll('button')].find((one) => one.textContent.trim() === 'Continue')
   if (!button) throw new Error('no Continue')
   button.click()
   flushSync()
@@ -116,15 +114,12 @@ describe('the crash report question', () => {
   test.each([
     [ASKED, 'true', true],
     [SENDING, 'false', false],
-  ])(
-    'is not asked of someone already told or who chose in Settings (%s)',
-    async (key, value, on) => {
-      localStorage.setItem(key, value)
-      const { due, crashReports } = await launch()
-      expect(due).toBe(false)
-      crashReports.ask()
-      expect(crashReports.asking).toBe(false)
-      expect(crashReports.on).toBe(on)
-    },
-  )
+  ])('is not asked of someone already told or who chose in Settings (%s)', async (key, value, on) => {
+    localStorage.setItem(key, value)
+    const { due, crashReports } = await launch()
+    expect(due).toBe(false)
+    crashReports.ask()
+    expect(crashReports.asking).toBe(false)
+    expect(crashReports.on).toBe(on)
+  })
 })

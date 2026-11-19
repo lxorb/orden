@@ -52,9 +52,7 @@ export function stopsOf(value: unknown, scheme: Scheme, accent: string, scrim: R
   const own = typeof value === 'string' ? OWN.exec(value) : null
   if (own) {
     const picked = [own[1], own[2]].map((one) => rgbOf(one ?? '') ?? scrim)
-    const worn = picked.map((one) =>
-      scheme === 'dark' && luminance(one) > TOO_LIGHT ? over(one, DEEP, scrim) : one,
-    )
+    const worn = picked.map((one) => (scheme === 'dark' && luminance(one) > TOO_LIGHT ? over(one, DEEP, scrim) : one))
     return [worn[0] ?? scrim, worn[1] ?? scrim]
   }
 

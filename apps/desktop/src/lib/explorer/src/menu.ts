@@ -90,9 +90,7 @@ export function rowMenu(view: ExplorerView, entry: Entry): MenuEntry[] {
         ]
       : []),
     { label: 'Copy path', run: () => void copyText(paths.join('\n')) },
-    ...(entry.folder && !places.isPinned(path)
-      ? [{ label: 'Pin to Places', run: () => places.pin(path) }]
-      : []),
+    ...(entry.folder && !places.isPinned(path) ? [{ label: 'Pin to Places', run: () => places.pin(path) }] : []),
     ...(writes
       ? [
           DIVIDER,

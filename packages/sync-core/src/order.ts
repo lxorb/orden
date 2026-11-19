@@ -20,8 +20,7 @@ export function between(before: string | null, after: string | null): string {
   let upper = after
   for (let at = 0; ; at++) {
     const low = before !== null && at < before.length ? DIGITS.indexOf(before[at] ?? '0') : 0
-    const high =
-      upper !== null && at < upper.length ? DIGITS.indexOf(upper[at] ?? '0') : DIGITS.length
+    const high = upper !== null && at < upper.length ? DIGITS.indexOf(upper[at] ?? '0') : DIGITS.length
     if (high - low > 1) return out + (DIGITS[Math.floor((low + high) / 2)] ?? '')
     out += DIGITS[low] ?? '0'
     if (high - low === 1) upper = null

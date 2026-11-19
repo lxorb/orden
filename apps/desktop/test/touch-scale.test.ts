@@ -118,9 +118,7 @@ describe('the touch scale', () => {
       for (const rule of rules(one.style)) {
         if (!forTouch(rule.selector)) continue
 
-        for (const [, property, size] of rule.body.matchAll(
-          /(min-height|height|font-size):\s*([\d.]+)px/g,
-        )) {
+        for (const [, property, size] of rule.body.matchAll(/(min-height|height|font-size):\s*([\d.]+)px/g)) {
           const pixels = Number(size)
           const tooBig = property === 'font-size' ? pixels >= BODY_SIZE : pixels >= FINGER_HEIGHT
           if (tooBig) offenders.push(`${one.name}: ${rule.selector} { ${property}: ${size}px }`)
@@ -128,10 +126,7 @@ describe('the touch scale', () => {
       }
     }
 
-    expect(
-      offenders,
-      `these size themselves instead of reading the scale:\n${offenders.join('\n')}`,
-    ).toEqual([])
+    expect(offenders, `these size themselves instead of reading the scale:\n${offenders.join('\n')}`).toEqual([])
   })
 
   test('the row scale is restated from the touch scale, in one block', () => {
@@ -154,9 +149,7 @@ describe('the touch scale', () => {
       return !one || !(scale.test(one.style) || one.text.includes('orden-row'))
     })
 
-    expect(missing, `these draw a touch surface without the scale: ${missing.join(', ')}`).toEqual(
-      [],
-    )
+    expect(missing, `these draw a touch surface without the scale: ${missing.join(', ')}`).toEqual([])
   })
 
   test('a tree row is a row, and its marks are drawn at the row', () => {

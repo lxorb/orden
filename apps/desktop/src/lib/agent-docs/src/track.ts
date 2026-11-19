@@ -170,10 +170,7 @@ export class Track {
     return back.ids
   }
 
-  putBackClosed(
-    words: string,
-    token: string,
-  ): { edits: Replacement[]; ids: string[]; refused: () => void } | null {
+  putBackClosed(words: string, token: string): { edits: Replacement[]; ids: string[]; refused: () => void } | null {
     this.catchUp(null, words)
     const refused = this.saved()
     const back = this.takenBack.get(token)

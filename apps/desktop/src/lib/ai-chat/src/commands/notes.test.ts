@@ -48,16 +48,12 @@ describe('a note as a command', () => {
       body: 'Short.',
     })
     expect(rolesOf('n.md', '# Just a note\n\ncommand: no')).toEqual([])
-    expect(
-      rolesOf('m.md', '---\nmode: sideways\neffort: huge\ncommand: x\n---\n')[0],
-    ).not.toHaveProperty('mode')
+    expect(rolesOf('m.md', '---\nmode: sideways\neffort: huge\ncommand: x\n---\n')[0]).not.toHaveProperty('mode')
   })
 
   test('takes its arguments in every way Claude Code writes them', () => {
     const body = (text: string) => ({ body: text, arguments: ['project', 'week'] })
-    expect(expand(body('Summarize $project for week $week.'), 'orden 40')).toBe(
-      'Summarize orden for week 40.',
-    )
+    expect(expand(body('Summarize $project for week $week.'), 'orden 40')).toBe('Summarize orden for week 40.')
     expect(expand(body('All: $ARGUMENTS'), ' a "b c" ')).toBe('All: a "b c"')
     expect(expand(body('$ARGUMENTS[0] then $ARGUMENTS[1]'), 'a "b c"')).toBe('a then b c')
     expect(expand(body('$1 and $2'), 'x y')).toBe('x and y')

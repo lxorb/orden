@@ -49,9 +49,7 @@ function numbered(prefix: string, key: string): number {
 }
 
 function inOrder<T>(prefix: string, held: Map<string, T>): T[] {
-  return [...held.entries()]
-    .sort(([a], [b]) => numbered(prefix, a) - numbered(prefix, b))
-    .map(([, value]) => value)
+  return [...held.entries()].sort(([a], [b]) => numbered(prefix, a) - numbered(prefix, b)).map(([, value]) => value)
 }
 
 function logKey(at: number): string {

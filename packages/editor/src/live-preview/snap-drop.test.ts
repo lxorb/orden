@@ -10,12 +10,8 @@ function stateOf(doc: string, dragged: string): EditorState {
   return parsed(
     EditorState.create({
       doc,
-      selection:
-        from < 0 ? EditorSelection.cursor(0) : EditorSelection.range(from, from + dragged.length),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        dropSpacing,
-      ],
+      selection: from < 0 ? EditorSelection.cursor(0) : EditorSelection.range(from, from + dragged.length),
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), dropSpacing],
     }),
   )
 }
@@ -79,12 +75,7 @@ describe('a word dragged between words', () => {
       'four',
       '- one **two** three four\n'.indexOf('** three'),
     ],
-    [
-      '- one **two** three four\n',
-      '- one **two** three four\n',
-      'one',
-      '- one **two** three four\n'.indexOf('two'),
-    ],
+    ['- one **two** three four\n', '- one **two** three four\n', 'one', '- one **two** three four\n'.indexOf('two')],
     ['a **two** b\n', 'a b **two**\n', 'b', 'a **'.length],
   ])('%j', (input, wanted, extra, last) => expect(moved(input, extra, last)).toBe(wanted))
 

@@ -141,9 +141,7 @@ describe('the stylesheet a page is served with', () => {
   })
 
   test('reads light or dark from the reader', () => {
-    expect(PAGE_CSS).toContain(
-      "@media (prefers-color-scheme:dark){:root:not([data-theme='light']){",
-    )
+    expect(PAGE_CSS).toContain("@media (prefers-color-scheme:dark){:root:not([data-theme='light']){")
     expect(PAGE_CSS).toContain('@media print{:root,')
     expect(PAGE_CSS).toContain(':root{color-scheme:light;--bg:#fbfcfd')
   })
@@ -401,9 +399,7 @@ describe('a diagram the app drew', () => {
   test('is dressed by the sheet, in both schemes and on paper', () => {
     expect(PAGE_CSS).toContain('#write .diagram img{max-width:100%;height:auto}')
     expect(PAGE_CSS).toContain("#write .diagram img[data-scheme='dark']{display:none}")
-    expect(PAGE_CSS).toContain(
-      ":root[data-theme='dark'] #write .diagram img[data-scheme='dark']{display:inline}",
-    )
+    expect(PAGE_CSS).toContain(":root[data-theme='dark'] #write .diagram img[data-scheme='dark']{display:inline}")
     expect(PAGE_CSS.indexOf(":root[data-theme='dark'] #write .diagram")).toBeGreaterThan(
       PAGE_CSS.indexOf('@media (prefers-color-scheme:dark)'),
     )

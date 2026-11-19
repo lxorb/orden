@@ -161,9 +161,7 @@ function recorded() {
   const served = new Map<string, number>()
   const get: Fetch = (url, init) => {
     asked.push({ url, auth: init.headers.Authorization ?? '' })
-    const path = url
-      .replace('https://api.todoist.com/api/v1', '')
-      .replace(/[?&](limit|cursor|since|until)=[^&]*/g, '')
+    const path = url.replace('https://api.todoist.com/api/v1', '').replace(/[?&](limit|cursor|since|until)=[^&]*/g, '')
     const key = Object.keys(RECORDED).find((one) => one === path || one === path.replace(/\?$/, ''))
     const pages = key ? RECORDED[key] : undefined
     const at = served.get(path) ?? 0
@@ -184,11 +182,7 @@ describe('from the account', () => {
   test('every project a note, in its parent', async () => {
     const { get, asked } = recorded()
     const plan = planOf(await readTodoistAccount(get, 'secret', { completed: true, now: NOW }))
-    expect(plan.files.map((one) => one.path)).toEqual([
-      'Inbox.md',
-      'Work/Work.md',
-      'Work/Thesis.md',
-    ])
+    expect(plan.files.map((one) => one.path)).toEqual(['Inbox.md', 'Work/Work.md', 'Work/Thesis.md'])
     expect(plan.inbox).toBe('Inbox.md')
     expect(asked.every((one) => one.auth === 'Bearer secret')).toBe(true)
     expect(asked.some((one) => one.url.includes('cursor=c1'))).toBe(true)
@@ -227,9 +221,7 @@ describe('from the account', () => {
 
   test('a token Todoist does not take says so, and nothing is planned', async () => {
     const { get } = recorded()
-    await expect(readTodoistAccount(get, 'wrong')).rejects.toThrow(
-      'Todoist did not take that token.',
-    )
+    await expect(readTodoistAccount(get, 'wrong')).rejects.toThrow('Todoist did not take that token.')
   })
 
   const ANSWERED: Record<string, unknown> = {
@@ -319,9 +311,7 @@ describe('from the account', () => {
   })
 
   test('a done task is done though it does not say checked, and kept though its project was not read', async () => {
-    const plan = planOf(
-      await readTodoistAccount(answering, 'secret', { completed: true, now: NOW }),
-    )
+    const plan = planOf(await readTodoistAccount(answering, 'secret', { completed: true, now: NOW }))
     const kept = plan.files.find((one) => one.path === 'Todoist.md')
     expect(kept?.kind === 'note' ? kept.text : '').toBe('- [x] Pack the boxes ✅ 2026-10-01\n')
   })
@@ -498,9 +488,7 @@ describe('a broken answer', () => {
       tasks: [task('A', 'B'), task('B', 'A'), task('C', 'C'), task('D', 'A')],
     })
     const note = plan.files[0]
-    expect(note?.kind === 'note' ? note.text : '').toBe(
-      ['- [ ] A', '  - [ ] B', '  - [ ] D', '- [ ] C', ''].join('\n'),
-    )
+    expect(note?.kind === 'note' ? note.text : '').toBe(['- [ ] A', '  - [ ] B', '  - [ ] D', '- [ ] C', ''].join('\n'))
   })
 
   test('an answer that is not JSON is Todoist not being reached', async () => {
@@ -510,9 +498,7 @@ describe('a broken answer', () => {
         status: 200,
         json: () => Promise.reject(new SyntaxError('Unexpected token <')),
       })
-    await expect(readTodoistAccount(page, 'secret')).rejects.toThrow(
-      'Todoist could not be reached.',
-    )
+    await expect(readTodoistAccount(page, 'secret')).rejects.toThrow('Todoist could not be reached.')
   })
 })
 
@@ -556,9 +542,7 @@ describe('words that look like something else', () => {
     const img = '<img src=https://t.example/p.gif>'
     const plan = planOf({
       projects: [{ id: 'p', name: 'Lists', inbox: false, about: [`About ${img}`] }],
-      sections: [
-        { id: 's', project: 'p', name: 'Room <style>body{}</style>', order: 1, about: [img] },
-      ],
+      sections: [{ id: 's', project: 'p', name: 'Room <style>body{}</style>', order: 1, about: [img] }],
       tasks: [
         {
           id: 't',

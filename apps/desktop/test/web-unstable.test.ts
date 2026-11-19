@@ -60,14 +60,10 @@ esac
   chmodSync(join(dir, 'pnpm'), 0o755)
   const output = join(dir, 'output')
   writeFileSync(output, '')
-  const run = spawnSync(
-    'bash',
-    ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script('live')],
-    {
-      env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, GITHUB_OUTPUT: output },
-      encoding: 'utf8',
-    },
-  )
+  const run = spawnSync('bash', ['--noprofile', '--norc', '-eo', 'pipefail', '-c', script('live')], {
+    env: { ...process.env, PATH: `${dir}:${process.env.PATH}`, GITHUB_OUTPUT: output },
+    encoding: 'utf8',
+  })
   const main = /^main=(\S*)/m.exec(readFileSync(output, 'utf8'))?.[1] ?? ''
   return { status: run.status, out: `${run.stdout}${run.stderr}`, main }
 }

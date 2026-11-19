@@ -78,9 +78,7 @@ describe('ending a device', () => {
   test('takes the web key wrapped to it, and only that one', async () => {
     const laptop = await computer(env, running, 'keys@example.com', 'Laptop')
     const desktop = await computer(env, running, 'keys@example.com', 'Desktop')
-    const wrap = env.db.prepare(
-      `insert into web_keys (user_id, device_id, wrapped, generation) values (?, ?, 'w', 1)`,
-    )
+    const wrap = env.db.prepare(`insert into web_keys (user_id, device_id, wrapped, generation) values (?, ?, 'w', 1)`)
     wrap.run(laptop.user, laptop.id)
     wrap.run(desktop.user, desktop.id)
 
@@ -90,9 +88,9 @@ describe('ending a device', () => {
     })
     expect(ended.status).toBe(200)
 
-    expect(
-      env.db.prepare('select device_id as device from web_keys where user_id = ?').all(laptop.user),
-    ).toEqual([{ device: desktop.id }])
+    expect(env.db.prepare('select device_id as device from web_keys where user_id = ?').all(laptop.user)).toEqual([
+      { device: desktop.id },
+    ])
   })
 
   test('is what ending its session from the sessions list does', async () => {
@@ -106,11 +104,9 @@ describe('ending a device', () => {
     expect(ended.status).toBe(200)
 
     expect(laptop.socket.closedWith?.code).toBe(1008)
-    expect(
-      env.db
-        .prepare('select revoked_at is not null as ended from devices where id = ?')
-        .get(laptop.id),
-    ).toEqual({ ended: 1 })
+    expect(env.db.prepare('select revoked_at is not null as ended from devices where id = ?').get(laptop.id)).toEqual({
+      ended: 1,
+    })
   })
 
   test('is what ending every other session does, and signing out', async () => {
@@ -162,19 +158,17 @@ describe('ending a device', () => {
     })
 
     expect(late.closedWith?.code).toBe(1008)
-    expect(
-      env.db
-        .prepare('select revoked_at is not null as ended from devices where id = ?')
-        .get(laptop.id),
-    ).toEqual({ ended: 1 })
+    expect(env.db.prepare('select revoked_at is not null as ended from devices where id = ?').get(laptop.id)).toEqual({
+      ended: 1,
+    })
   })
 
   test('is what signing out does to a socket that never said hello', async () => {
     const token = await signIn(env, 'quiet@example.com')
     const user = (await call(env, '/v1/me', { token })).json.user.id
-    const { id: session } = env.db
-      .prepare('select id from sessions where token_hash = ?')
-      .get(await sha256(token)) as { id: string }
+    const { id: session } = env.db.prepare('select id from sessions where token_hash = ?').get(await sha256(token)) as {
+      id: string
+    }
     const socket = connect(running.of(user).hub, { device: 'device-quiet', who: user, session })
 
     await call(env, '/v1/auth/signout', { method: 'POST', token })
@@ -183,8 +177,7 @@ describe('ending a device', () => {
 
   test('is what a guest signing out does, to that one sign-in', async () => {
     const owner = await signIn(env, 'host@example.com')
-    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Shared' } })).json
-      .space.id
+    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Shared' } })).json.space.id
     const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
       method: 'PUT',
       token: owner,

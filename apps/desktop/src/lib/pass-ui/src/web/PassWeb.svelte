@@ -55,9 +55,7 @@
     {/key}
   {:else}
     <Gate icon={KeyRound} title="Orden Pass">
-      <button class="orden-button" type="button" onclick={() => (account.open = true)}>
-        Sign in
-      </button>
+      <button class="orden-button" type="button" onclick={() => (account.open = true)}> Sign in </button>
     </Gate>
   {/if}
 </main>

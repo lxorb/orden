@@ -40,11 +40,7 @@ export function todoServer(token: string): TodoServer | null {
       })
       if (MISSING.has(status)) return false
       if (status >= 400) throw new Error(`the todos could not be sent (${status})`)
-      return (
-        typeof body === 'object' &&
-        body !== null &&
-        typeof (body as Record<string, unknown>).cursor === 'number'
-      )
+      return typeof body === 'object' && body !== null && typeof (body as Record<string, unknown>).cursor === 'number'
     },
   }
 }

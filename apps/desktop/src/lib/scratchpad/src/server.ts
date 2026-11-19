@@ -2,8 +2,7 @@ import { padTradeOf, padWire } from '@orden/sync-core'
 import { ApiError, request } from '../../accounts/src/api'
 import type { PadServer } from './sync'
 
-const missing = (error: unknown): boolean =>
-  error instanceof ApiError && (error.status === 404 || error.status === 405)
+const missing = (error: unknown): boolean => error instanceof ApiError && (error.status === 404 || error.status === 405)
 
 export function accountPad(token: string): PadServer {
   return {

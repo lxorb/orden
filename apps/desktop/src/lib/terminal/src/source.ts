@@ -83,11 +83,7 @@ export class PtySource implements Source {
       else if (!isRecord(message)) return
       else if (isNumber(message.exit)) said({ exit: message.exit })
       else if (typeof message.writer === 'boolean') said({ writer: message.writer })
-      else if (
-        typeof message.screen === 'string' &&
-        isNumber(message.cols) &&
-        isNumber(message.rows)
-      )
+      else if (typeof message.screen === 'string' && isNumber(message.cols) && isNumber(message.rows))
         said({ screen: message.screen, cols: message.cols, rows: message.rows, restored: null })
     }
     const spawned = await invoke<unknown>('pty_spawn', {

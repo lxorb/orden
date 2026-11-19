@@ -12,9 +12,7 @@
   const base = $derived(live.base)
   let made = $state<string | undefined>(undefined)
   const target = $derived(made ?? column)
-  const editing = $derived(
-    target?.startsWith('formula.') && base ? (base.formulas[target.slice(8)] ?? null) : null,
-  )
+  const editing = $derived(target?.startsWith('formula.') && base ? (base.formulas[target.slice(8)] ?? null) : null)
   const was = $derived(editing === null ? null : readRollup(editing))
 
   const relations = $derived([
@@ -65,10 +63,7 @@
 
   function write() {
     if (!relation || !base) return
-    const spec =
-      property && calc !== 'count'
-        ? { relation, property, calc }
-        : { relation, calc: 'count' as const }
+    const spec = property && calc !== 'count' ? { relation, property, calc } : { relation, calc: 'count' as const }
     const source = rollupFormula(spec)
     const old = target?.startsWith('formula.') && editing !== null ? target.slice(8) : null
     if (old !== null && (was === null || old !== autoName(was))) {
@@ -83,11 +78,7 @@
         ? [...live.columns, `formula.${name}`]
         : live.columns.map((one) => (one === `formula.${old}` ? `formula.${name}` : one))
     kit.change((one, at) =>
-      setColumns(
-        setFormula(old === null ? one : setFormula(one, old, null), name, source),
-        at,
-        columns,
-      ),
+      setColumns(setFormula(old === null ? one : setFormula(one, old, null), name, source), at, columns),
     )
   }
 </script>

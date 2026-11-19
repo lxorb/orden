@@ -5,11 +5,7 @@
 
   try {
     const picked = wanted ? window.getSelection() : null
-    const chosen =
-      picked !== null &&
-      !picked.isCollapsed &&
-      picked.rangeCount > 0 &&
-      picked.toString().trim() !== ''
+    const chosen = picked !== null && !picked.isCollapsed && picked.rangeCount > 0 && picked.toString().trim() !== ''
 
     const root = document.documentElement.cloneNode(false)
     const head = document.head ? document.head.cloneNode(true) : document.createElement('head')

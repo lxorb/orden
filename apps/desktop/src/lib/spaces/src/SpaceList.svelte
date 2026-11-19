@@ -44,13 +44,7 @@
       oncontextmenu={(event) => about?.(event, space)}
       use:longPress={(event) => about?.(event, space)}
     >
-      <SpaceRow
-        {space}
-        place={at}
-        typed={typing.typed}
-        held={typing.held}
-        on={space.id === workspace.activeSpaceId}
-      />
+      <SpaceRow {space} place={at} typed={typing.typed} held={typing.held} on={space.id === workspace.activeSpaceId} />
     </button>
 
     {#if about}

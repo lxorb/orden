@@ -12,8 +12,7 @@ vi.stubGlobal('localStorage', {
   clear: () => held.clear(),
 })
 
-const { firstVisiting, isHiddenTabs, movingOf, notices, ownerOf, spacesFor, workspace } =
-  await import('../src/api')
+const { firstVisiting, isHiddenTabs, movingOf, notices, ownerOf, spacesFor, workspace } = await import('../src/api')
 
 const HERE = join(import.meta.dirname, '..')
 const LIB = join(HERE, '..')
@@ -47,9 +46,7 @@ describe('the workspace', () => {
     const second = workspace.active
     expect([first?.name, second?.name]).toEqual(['Plan', 'Notes'])
     expect(workspace.activeTabId).toBe(second?.id)
-    expect(workspace.tabs.map((one) => one.id)).toEqual(
-      expect.arrayContaining([first?.id, second?.id]),
-    )
+    expect(workspace.tabs.map((one) => one.id)).toEqual(expect.arrayContaining([first?.id, second?.id]))
   })
 })
 
@@ -89,9 +86,7 @@ describe('where tabs may move', () => {
 
   test('a file in one space is offered every other space it may be written to', () => {
     const where = { spaces, activeSpaceId: 'home' }
-    expect(spacesFor([tab('/notes/Home/a.md')], where, () => true).map((one) => one.id)).toEqual([
-      'work',
-    ])
+    expect(spacesFor([tab('/notes/Home/a.md')], where, () => true).map((one) => one.id)).toEqual(['work'])
   })
 
   test('nowhere, when the file itself may not be written', () => {
@@ -102,11 +97,7 @@ describe('where tabs may move', () => {
 
   test('nowhere, with only one space', () => {
     expect(
-      spacesFor(
-        [tab('/notes/Home/a.md')],
-        { spaces: spaces.slice(0, 1), activeSpaceId: 'home' },
-        () => true,
-      ),
+      spacesFor([tab('/notes/Home/a.md')], { spaces: spaces.slice(0, 1), activeSpaceId: 'home' }, () => true),
     ).toEqual([])
   })
 
@@ -119,12 +110,6 @@ describe('where tabs may move', () => {
 
 describe('the hidden tabs choice', () => {
   test('hidden tabs run, pause or ask, and nothing else', () => {
-    expect(['run', 'pause', 'ask', 'sleep', 1].map(isHiddenTabs)).toEqual([
-      true,
-      true,
-      true,
-      false,
-      false,
-    ])
+    expect(['run', 'pause', 'ask', 'sleep', 1].map(isHiddenTabs)).toEqual([true, true, true, false, false])
   })
 })

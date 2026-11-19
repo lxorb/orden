@@ -66,10 +66,7 @@ async function remoteBytes(src: string): Promise<{ mime: string; bytes: Uint8Arr
 
 export type Resolve = (src: string) => string
 
-export async function readPictures(
-  sources: readonly string[],
-  resolve?: Resolve,
-): Promise<Picture[]> {
+export async function readPictures(sources: readonly string[], resolve?: Resolve): Promise<Picture[]> {
   const read = await Promise.all(
     sources.map(async (src): Promise<Omit<Picture, 'name'> | null> => {
       const inline = parseDataUri(src)
@@ -100,10 +97,6 @@ export async function readPictures(
 }
 
 export const inlinePictures = (html: string, pictures: readonly Picture[]): string =>
-  swapSources(
-    html,
-    new Map(pictures.map((one) => [one.src, `data:${one.mime};base64,${toBase64(one.bytes)}`])),
-  )
+  swapSources(html, new Map(pictures.map((one) => [one.src, `data:${one.mime};base64,${toBase64(one.bytes)}`])))
 
-export const sourcesIn = (html: string): string[] =>
-  sourcesOf(html, (src) => !src.startsWith('data:'))
+export const sourcesIn = (html: string): string[] => sourcesOf(html, (src) => !src.startsWith('data:'))

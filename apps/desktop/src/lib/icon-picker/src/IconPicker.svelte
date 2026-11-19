@@ -130,18 +130,10 @@
         ? []
         : [
             { head: 'Web icons' },
-            ...(siteRow.length
-              ? runs(siteRow.map((one) => one.name))
-              : [{ note: 'Sites you visit will appear here' }]),
+            ...(siteRow.length ? runs(siteRow.map((one) => one.name)) : [{ note: 'Sites you visit will appear here' }]),
           ]
 
-    return [
-      ...web,
-      ...held.groups.flatMap((group) => [
-        { head: group.label },
-        ...runs(group.names.filter(shows)),
-      ]),
-    ]
+    return [...web, ...held.groups.flatMap((group) => [{ head: group.label }, ...runs(group.names.filter(shows))])]
   })
 
   const words = $derived.by(() => {
@@ -292,11 +284,7 @@
 
 {#if target}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div
-    class="orden-scrim scrim"
-    transition:fade={{ duration: LAYER.fade }}
-    onclick={() => iconChoice.close()}
-  ></div>
+  <div class="orden-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={() => iconChoice.close()}></div>
 
   <div
     class="orden-screen sheet"

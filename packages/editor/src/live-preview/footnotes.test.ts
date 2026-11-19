@@ -8,13 +8,7 @@ import { ordenMarkdownExtensions } from '../markdown/extensions'
 import { definitionOf, definitionWords, followFootnote, footnoteAt } from './footnotes'
 import { livePreview } from '.'
 
-const NOTE = [
-  'First[^a] and again[^a], then[^2].',
-  '',
-  '[^a]: What a says.',
-  '[^2]: **Bold** words.',
-  '',
-].join('\n')
+const NOTE = ['First[^a] and again[^a], then[^2].', '', '[^a]: What a says.', '[^2]: **Bold** words.', ''].join('\n')
 
 const SECOND = NOTE.indexOf('[^a]', NOTE.indexOf('[^a]') + 1)
 
@@ -34,10 +28,7 @@ function viewOf(doc: string, cursor = doc.length) {
       EditorState.create({
         doc,
         selection: EditorSelection.cursor(cursor),
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          livePreview(),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), livePreview()],
       }),
     ),
   })

@@ -16,10 +16,7 @@ export interface PadDisk {
 
 export interface PadText {
   now(): Promise<string>
-  takeIn(
-    change: (now: string) => readonly Edit[],
-    settle: (after: string) => Promise<void>,
-  ): Promise<void>
+  takeIn(change: (now: string) => readonly Edit[], settle: (after: string) => Promise<void>): Promise<void>
 }
 
 type InTurn = <T>(name: string, run: () => Promise<T>) => Promise<T>

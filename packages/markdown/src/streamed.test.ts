@@ -19,10 +19,7 @@ const SPELLINGS: [string, string][] = [
   ['`\\(x\\)` and \\(y\\)', '`\\(x\\)` and $y$'],
   ['```tex\n\\[x\\]\n```\n\\(y\\)', '```tex\n\\[x\\]\n```\n$y$'],
   ['- item\n  ```\n  \\(x\\)\n  ```', '- item\n  ```\n  \\(x\\)\n  ```'],
-  [
-    '$$\n\\begin{pmatrix} a \\\\[2pt] b \\end{pmatrix}\n$$',
-    '$$\n\\begin{pmatrix} a \\\\[2pt] b \\end{pmatrix}\n$$',
-  ],
+  ['$$\n\\begin{pmatrix} a \\\\[2pt] b \\end{pmatrix}\n$$', '$$\n\\begin{pmatrix} a \\\\[2pt] b \\end{pmatrix}\n$$'],
   ['a \\) b \\] c \\* d', 'a \\) b \\] c \\* d'],
   ['Already $x$ and $$y$$.', 'Already $x$ and $$y$$.'],
   ['Press the ` key.\n\nThen \\(x\\)', 'Press the ` key.\n\nThen $x$'],

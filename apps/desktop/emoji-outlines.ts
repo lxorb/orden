@@ -89,10 +89,7 @@ export function notoOutlines(): Record<string, string> {
   const fontFiles = resolve(dirname(require.resolve('@fontsource/noto-emoji/LICENSE')), 'files')
   const groups = require('unicode-emoji-json/data-by-group.json') as EmojiGroup[]
   const set = require('@iconify-json/fluent-emoji-high-contrast/icons.json') as Iconify
-  const chars = require('@iconify-json/fluent-emoji-high-contrast/chars.json') as Record<
-    string,
-    string
-  >
+  const chars = require('@iconify-json/fluent-emoji-high-contrast/chars.json') as Record<string, string>
   const fonts = readdirSync(fontFiles)
     .filter((name) => name.endsWith('-400-normal.woff2'))
     .sort()
@@ -122,7 +119,6 @@ export function emojiOutlines() {
   return {
     name: 'orden-emoji-outlines',
     resolveId: (source: string) => (source === NOTO_OUTLINES ? RESOLVED : null),
-    load: (id: string) =>
-      id === RESOLVED ? `export default ${JSON.stringify(notoOutlines())}\n` : null,
+    load: (id: string) => (id === RESOLVED ? `export default ${JSON.stringify(notoOutlines())}\n` : null),
   }
 }

@@ -1,11 +1,4 @@
-import {
-  metaOf,
-  metaPatchOf,
-  patched,
-  sameMeta,
-  type ItemMeta,
-  type MetaPatch,
-} from '@orden/sync-core'
+import { metaOf, metaPatchOf, patched, sameMeta, type ItemMeta, type MetaPatch } from '@orden/sync-core'
 import {
   insideItsSpace,
   movedTo,
@@ -232,8 +225,7 @@ export class ItemMetaStore {
     const sent = waiting.filter(([at]) => !left.includes(at))
     const unsent = Object.fromEntries(
       Object.entries(after.unsent).filter(
-        ([at, patch]) =>
-          !sent.some(([one, was]) => one === at && JSON.stringify(was) === JSON.stringify(patch)),
+        ([at, patch]) => !sent.some(([one, was]) => one === at && JSON.stringify(was) === JSON.stringify(patch)),
       ),
     )
     this.spaces = { ...this.spaces, [root]: { ...after, unsent } }

@@ -49,9 +49,7 @@ export function followDrawers(host: HTMLElement): () => void {
 
     if (fullscreen.on) return
 
-    const atEdge = [drawer, rightDrawer].some(
-      (one) => one.there && fromEdge(touch.clientX, one.sign) <= edge,
-    )
+    const atEdge = [drawer, rightDrawer].some((one) => one.there && fromEdge(touch.clientX, one.sign) <= edge)
     const under = document.elementFromPoint(touch.clientX, touch.clientY)
     if (ownsGesture(under, host, atEdge)) return
 
@@ -150,9 +148,7 @@ export function followDrawers(host: HTMLElement): () => void {
 
     const settled = settleOpen(one.at ?? 0, width, velocity)
     const remaining = Math.abs((one.at ?? 0) - (settled ? width : 0))
-    one.settle = dur(
-      Math.round(SETTLE_MIN + (SETTLE_MAX - SETTLE_MIN) * (width ? remaining / width : 0)),
-    )
+    one.settle = dur(Math.round(SETTLE_MIN + (SETTLE_MAX - SETTLE_MIN) * (width ? remaining / width : 0)))
     one.at = null
     claimed = false
     candidate = false
@@ -181,9 +177,7 @@ export function followDrawers(host: HTMLElement): () => void {
 }
 
 function edgeWidth(): number {
-  const width = Number.parseFloat(
-    getComputedStyle(document.documentElement).getPropertyValue('--swipe-edge'),
-  )
+  const width = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--swipe-edge'))
 
   return Number.isFinite(width) ? width : Number.POSITIVE_INFINITY
 }

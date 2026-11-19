@@ -44,9 +44,7 @@ describe('parseDashlane', () => {
         totp: totpOf('JBSWY3DPEHPK3PXP'),
       },
     })
-    expect(byTitle.get('GitHub')?.content.fields.map((f) => [f.name, f.value])).toEqual([
-      ['Username 2', 'alt'],
-    ])
+    expect(byTitle.get('GitHub')?.content.fields.map((f) => [f.name, f.value])).toEqual([['Username 2', 'alt']])
     expect(byTitle.get('Bank')?.content).toMatchObject({ username: 'jörg', note: 'two\nlines' })
     expect(byTitle.get('Wi-Fi')?.content).toMatchObject({
       kind: 'note',
@@ -61,9 +59,7 @@ describe('parseDashlane', () => {
       code: '123',
     })
     expect(byTitle.get('Checking')?.content.kind).toBe('note')
-    expect(
-      byTitle.get('Checking')?.content.fields.find((f) => f.name === 'Account number'),
-    ).toMatchObject({
+    expect(byTitle.get('Checking')?.content.fields.find((f) => f.name === 'Account number')).toMatchObject({
       kind: 'hidden',
       value: '000123456',
     })

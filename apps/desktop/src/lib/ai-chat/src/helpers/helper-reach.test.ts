@@ -57,20 +57,13 @@ describe('a helper of an agent whose grant is narrowed', () => {
       ]).map((one) => one.provider.id)
     const both = ['claude-code', 'codex']
     expect(offered({ sites: { 'bank.example': 'deny' } }, {})).toEqual(['claude-code'])
-    expect(
-      offered({ sites: { 'bank.example': 'deny' } }, { sites: { 'bank.example': 'deny' } }),
-    ).toEqual(both)
+    expect(offered({ sites: { 'bank.example': 'deny' } }, { sites: { 'bank.example': 'deny' } })).toEqual(both)
     expect(offered({ sites: { 'mail.example': 'agent-store' } }, {})).toEqual(['claude-code'])
     expect(
-      offered(
-        { sites: { 'bank.example': 'deny' } },
-        { sites: { 'bank.example': 'deny', 'my.bank.example': 'allow' } },
-      ),
+      offered({ sites: { 'bank.example': 'deny' } }, { sites: { 'bank.example': 'deny', 'my.bank.example': 'allow' } }),
     ).toEqual(['claude-code'])
     expect(offered({}, { sites: { 'bank.example': 'deny' } })).toEqual(both)
-    expect(offered({ scripts: ['docs.example'] }, { scripts: ['bank.example'] })).toEqual([
-      'claude-code',
-    ])
+    expect(offered({ scripts: ['docs.example'] }, { scripts: ['bank.example'] })).toEqual(['claude-code'])
     expect(offered({ scripts: ['docs.example'] }, { scripts: ['a.docs.example'] })).toEqual(both)
     expect(offered({ mode: 'confirm' }, { mode: 'unsupervised' })).toEqual(['claude-code'])
     expect(offered({}, { mode: 'autonomous' })).toEqual(['claude-code'])
@@ -106,9 +99,7 @@ describe('a helper of an agent whose grant is narrowed', () => {
       message: 'not here',
     })
     await expect(run(client('unsupervised'))).rejects.toThrow('grant is narrower')
-    await expect(run(client('autonomous', { 'bank.example': 'deny' }))).rejects.toThrow(
-      'grant is narrower',
-    )
+    await expect(run(client('autonomous', { 'bank.example': 'deny' }))).rejects.toThrow('grant is narrower')
     asked.length = 0
   })
 

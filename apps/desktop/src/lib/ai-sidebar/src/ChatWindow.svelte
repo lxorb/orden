@@ -61,8 +61,7 @@
     const height = where.row || LEAST
     const top = offsetOf(index, rows) + (box.scrollTop - where.top)
     if (top < box.scrollTop) box.scrollTop = top
-    else if (top + height > box.scrollTop + box.clientHeight)
-      box.scrollTop = top + height - box.clientHeight
+    else if (top + height > box.scrollTop + box.clientHeight) box.scrollTop = top + height - box.clientHeight
     where.refresh()
   }
 

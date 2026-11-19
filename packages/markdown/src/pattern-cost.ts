@@ -83,9 +83,7 @@ export function patternJudge(longest = 2000, widest = 30) {
 
   function apart(firsts: readonly (string | null)[]): boolean {
     return firsts.every(
-      (one, at) =>
-        one !== null &&
-        firsts.slice(at + 1).every((other) => other !== null && !sameLetter(one, other)),
+      (one, at) => one !== null && firsts.slice(at + 1).every((other) => other !== null && !sameLetter(one, other)),
     )
   }
 
@@ -94,9 +92,7 @@ export function patternJudge(longest = 2000, widest = 30) {
     return told.every(
       (one, at) =>
         one !== '' &&
-        told
-          .slice(at + 1)
-          .every((other) => other !== '' && !one.startsWith(other) && !other.startsWith(one)),
+        told.slice(at + 1).every((other) => other !== '' && !one.startsWith(other) && !other.startsWith(one)),
     )
   }
 
@@ -182,8 +178,7 @@ export function patternJudge(longest = 2000, widest = 30) {
     }
 
     function nextLine(letters: string | null, ahead: Ahead): boolean {
-      const breaks = (head: string | null) =>
-        head !== null && (trades('\\n', head) || trades('\\r', head))
+      const breaks = (head: string | null) => head !== null && (trades('\\n', head) || trades('\\r', head))
       return !trades(letters, '\\n') && ahead.heads.some(breaks)
     }
 
@@ -193,8 +188,7 @@ export function patternJudge(longest = 2000, widest = 30) {
       }
       const overlaps = !ahead.heads.length || ahead.heads.some((head) => trades(letters, head))
       const [head] = ahead.heads
-      const given =
-        ahead.last && overlaps && letters !== null && head ? `(?!${head})(?:${letters})` : letters
+      const given = ahead.last && overlaps && letters !== null && head ? `(?!${head})(?:${letters})` : letters
       const reach = Math.min(reachOf(given, overlaps), Math.log(Math.max(2, most - least)))
       if (overlaps) traded?.()
       const own = overlaps && reach === NOTE ? reach + TAKING_NOTE : reach
@@ -247,10 +241,7 @@ export function patternJudge(longest = 2000, widest = 30) {
             return after
           }
           if (shape.most - shape.least > counted) {
-            const most =
-              shape.of.kind === 'letter' && shape.most - shape.least <= MOST_BOUNDED
-                ? shape.most
-                : Infinity
+            const most = shape.of.kind === 'letter' && shape.most - shape.least <= MOST_BOUNDED ? shape.most : Infinity
             return run(shape.letters, shape.least, ahead, most)
           }
           let after = ahead
@@ -374,9 +365,7 @@ export function patternJudge(longest = 2000, widest = 30) {
             branches.map((one) => one.lead),
             fold,
           ))
-      const open = branches
-        .map((one) => one.open)
-        .reduce((high, one) => Math.max(high, one), -Infinity)
+      const open = branches.map((one) => one.open).reduce((high, one) => Math.max(high, one), -Infinity)
       return {
         ...PLAIN,
         open,
@@ -432,16 +421,12 @@ export function patternJudge(longest = 2000, widest = 30) {
       const next = String.fromCodePoint(source.codePointAt(at) ?? 0)
       at += next.length
 
-      if (/[1-9]/.test(next) || (next === 'k' && source[at] === '<'))
-        return backrefs ? REFUSED : single()
+      if (/[1-9]/.test(next) || (next === 'k' && source[at] === '<')) return backrefs ? REFUSED : single()
       if (next === 'b' || next === 'B') return { ...ZERO }
 
       if (next === 'x' || next === 'u') {
-        const braced =
-          unicode && next === 'u' ? /^\{([0-9a-f]+)\}/i.exec(source.slice(at, at + 12)) : null
-        const plain = (next === 'x' ? /^[0-9a-f]{2}/i : /^[0-9a-f]{4}/i).exec(
-          source.slice(at, at + 4),
-        )
+        const braced = unicode && next === 'u' ? /^\{([0-9a-f]+)\}/i.exec(source.slice(at, at + 12)) : null
+        const plain = (next === 'x' ? /^[0-9a-f]{2}/i : /^[0-9a-f]{4}/i).exec(source.slice(at, at + 4))
         const found = braced ?? plain
         if (!found) return single(next, source.slice(begin, at), next)
         at += found[0].length
@@ -518,12 +503,7 @@ export function patternJudge(longest = 2000, widest = 30) {
       let most: number
       if (counted) {
         least = Number(counted[1])
-        most =
-          counted[2] === undefined
-            ? least
-            : counted[3]
-              ? Number(counted[3])
-              : Number.POSITIVE_INFINITY
+        most = counted[2] === undefined ? least : counted[3] ? Number(counted[3]) : Number.POSITIVE_INFINITY
         at += counted[0].length
       } else {
         least = mark === '+' ? 1 : 0
@@ -671,12 +651,7 @@ export function patternJudge(longest = 2000, widest = 30) {
     }
   }
 
-  function startsElsewhere(
-    flags: string,
-    shape: Shape,
-    writes: readonly string[],
-    marks: readonly string[],
-  ): number {
+  function startsElsewhere(flags: string, shape: Shape, writes: readonly string[], marks: readonly string[]): number {
     const { letters, empty } = opensWith(shape)
     if (empty) return NOTE
     const takes = (letter: string | null, samples: readonly string[]) => {
@@ -690,8 +665,7 @@ export function patternJudge(longest = 2000, widest = 30) {
     }
     if (letters.some((letter) => takes(letter, writes))) return NOTE
     const runs = runsOf(shape)
-    const opensRun = (letter: string | null) =>
-      letter === null || runs.some((run) => !setsApart(letter, run, flags))
+    const opensRun = (letter: string | null) => letter === null || runs.some((run) => !setsApart(letter, run, flags))
     return letters.some((letter) => takes(letter, marks) && opensRun(letter)) ? NOTE : LINE
   }
 
@@ -709,10 +683,7 @@ export function patternJudge(longest = 2000, widest = 30) {
       const first = leadingRun(shape)
       const wider = first ? reachOfLetters(first, flags, true) - reachOfLetters(first, flags) : 0
       const tried = Math.log(ways)
-      if (
-        startsOf(source, flags, lead, shape) + aheadOf(shape, flags).rest + wider + tried >
-        MOST_REACH
-      ) {
+      if (startsOf(source, flags, lead, shape) + aheadOf(shape, flags).rest + wider + tried > MOST_REACH) {
         return true
       }
       const latin = startsOf(source, flags, lead, shape)
@@ -723,8 +694,7 @@ export function patternJudge(longest = 2000, widest = 30) {
           (anchored || (rare && !leadRuns(lead, shape, flags, [...writes, ...marks]))
             ? Math.min(latin, startsElsewhere(flags, shape, writes, marks))
             : startsElsewhere(flags, shape, writes, marks)) +
-            aheadOf(shape, flags, OPEN_END, undefined, (letters) => reachIn(letters, flags, writes))
-              .rest +
+            aheadOf(shape, flags, OPEN_END, undefined, (letters) => reachIn(letters, flags, writes)).rest +
             tried >
           MOST_REACH,
       )
@@ -753,12 +723,7 @@ function judgeFor(longest: number, widest: number): (source: string, flags: stri
   return held
 }
 
-export function searchBacktracksWildly(
-  source: string,
-  fold: boolean,
-  longest = 0,
-  widest = 0,
-): boolean {
+export function searchBacktracksWildly(source: string, fold: boolean, longest = 0, widest = 0): boolean {
   const flags = fold ? 'i' : ''
   const wild = judgeFor(longest, widest)
   try {

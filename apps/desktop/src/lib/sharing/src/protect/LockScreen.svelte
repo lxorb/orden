@@ -79,8 +79,7 @@
   {/if}
   {#if (wrong || !password) && !device}
     <p class="note">
-      Forgot it? The file is still in the space’s folder, and another device can remove the
-      protection.
+      Forgot it? The file is still in the space’s folder, and another device can remove the protection.
     </p>
   {/if}
   <p class="note">Protected, not encrypted: this only keeps it from being opened by accident.</p>

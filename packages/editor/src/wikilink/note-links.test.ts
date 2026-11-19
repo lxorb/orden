@@ -15,8 +15,7 @@ const index: NoteIndex = {
 }
 
 const wikilink = (target: LinkWrite) => `[[${target.name}]]`
-const markdown = (target: LinkWrite) =>
-  `[${target.name}](${target.path ?? ''} from ${target.from ?? ''})`
+const markdown = (target: LinkWrite) => `[${target.name}](${target.path ?? ''} from ${target.from ?? ''})`
 
 describe('noteLinks', () => {
   test.each([
@@ -30,12 +29,7 @@ describe('noteLinks', () => {
   ])('%j', (input, wanted, extra, last) => expect(noteLinks(input, extra, last)).toEqual(wanted))
 
   test.each([
-    [
-      { ...index, files: ['image.png', 'Trips/image.png'] },
-      '![[Trips/image.png]]',
-      ['Trips/image.png'],
-      wikilink,
-    ],
+    [{ ...index, files: ['image.png', 'Trips/image.png'] }, '![[Trips/image.png]]', ['Trips/image.png'], wikilink],
     [index, '![[cat.png]]', ['pics/cat.png'], wikilink],
     [
       { ...index, files: ['a/pic.png', 'a/b/pic.png', 'b/pic.png', 'c/d.png'] },
@@ -49,12 +43,7 @@ describe('noteLinks', () => {
       ['b/pic.png'],
       wikilink,
     ],
-    [
-      { ...index, files: ['a/pic.png', 'a/b/pic.png', 'b/pic.png', 'c/d.png'] },
-      '![[d.png]]',
-      ['c/d.png'],
-      wikilink,
-    ],
+    [{ ...index, files: ['a/pic.png', 'a/b/pic.png', 'b/pic.png', 'c/d.png'] }, '![[d.png]]', ['c/d.png'], wikilink],
   ])('%j', (input, wanted, extra, last) => expect(noteLinks(input, extra, last)).toBe(wanted))
 
   test('a note or file at the top whose name one beside the note shares is linked from the top', () => {

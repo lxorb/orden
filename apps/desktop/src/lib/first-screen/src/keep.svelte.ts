@@ -1,13 +1,5 @@
 import { documentOf, type EditorView } from '@orden/editor'
-import {
-  KEY,
-  type Kept,
-  type Level,
-  type Look,
-  NAMED,
-  RENAMED,
-  wordsHash,
-} from './first-screen.svelte'
+import { KEY, type Kept, type Level, type Look, NAMED, RENAMED, wordsHash } from './first-screen.svelte'
 import { keep } from '../../platform/src/api'
 import { views } from '../../panes/src/api'
 import type { Tab } from '../../documents/src/api'
@@ -105,9 +97,7 @@ function sized(style: string | null, rect: DOMRect | undefined): string {
 }
 
 function levelOf(element: Element): Level {
-  const className = [...element.classList]
-    .filter((one) => one !== 'cm-focused' && one !== 'rise')
-    .join(' ')
+  const className = [...element.classList].filter((one) => one !== 'cm-focused' && one !== 'rise').join(' ')
   return {
     tag: element.localName,
     className: className.replaceAll(NAMED, RENAMED),
@@ -156,9 +146,7 @@ function screenOf(view: EditorView): Kept | null {
 
   const top = first.getBoundingClientRect().top - parseFloat(getComputedStyle(first).marginTop)
   const atTop = view.lineBlockAtHeight(scroller.top - view.documentTop)
-  const look: Look = Object.fromEntries(
-    LOOKED_AT.map((name) => [name, style.getPropertyValue(name)]),
-  )
+  const look: Look = Object.fromEntries(LOOKED_AT.map((name) => [name, style.getPropertyValue(name)]))
   look.left = `${String(Math.round(content.left - outer.left))}px`
 
   return {

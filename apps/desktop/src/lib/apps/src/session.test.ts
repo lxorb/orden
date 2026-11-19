@@ -31,8 +31,7 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
   return {
     ...original,
     api: new Proxy(original.api, {
-      get: (target, name, receiver) =>
-        name === 'me' ? me : (Reflect.get(target, name, receiver) as unknown),
+      get: (target, name, receiver) => (name === 'me' ? me : (Reflect.get(target, name, receiver) as unknown)),
     }),
   }
 })
@@ -79,9 +78,7 @@ function world(
     devices: () => Promise.resolve(state.devices),
     look: () => {
       state.looked += 1
-      return Promise.resolve(
-        state.looks.length > 1 ? (state.looks.shift() ?? 'open') : (state.looks[0] ?? 'open'),
-      )
+      return Promise.resolve(state.looks.length > 1 ? (state.looks.shift() ?? 'open') : (state.looks[0] ?? 'open'))
     },
     link: (_app, heard): Linked => {
       const one = { heard, said: [] as unknown[], closed: false }
@@ -363,23 +360,15 @@ describe('an application file read', () => {
   })
 
   test('names the reason in what the read was refused with', async () => {
-    expect(
-      unreadOf(new Error('that note is not on this device, and the account could not be reached')),
-    ).toBe('away')
-    expect(unreadOf('could not read C:\\A\\GIMP.application: Access is denied. (os error 5)')).toBe(
-      'denied',
-    )
-    expect(unreadOf('could not read /s/GIMP.application: Permission denied (os error 13)')).toBe(
-      'denied',
-    )
+    expect(unreadOf(new Error('that note is not on this device, and the account could not be reached'))).toBe('away')
+    expect(unreadOf('could not read C:\\A\\GIMP.application: Access is denied. (os error 5)')).toBe('denied')
+    expect(unreadOf('could not read /s/GIMP.application: Permission denied (os error 13)')).toBe('denied')
     expect(
       unreadOf(
         'could not read C:\\A\\GIMP.application: The process cannot access the file because it is being used by another process. (os error 32)',
       ),
     ).toBe('locked')
-    expect(
-      unreadOf('could not read /s/GIMP.application: No such file or directory (os error 2)'),
-    ).toBe('missing')
+    expect(unreadOf('could not read /s/GIMP.application: No such file or directory (os error 2)')).toBe('missing')
     expect(unreadOf(new Error('no such note'))).toBe('missing')
     expect(unreadOf('something else')).toBe('unread')
     expect(unreadOf('that note is too large')).toBeNull()

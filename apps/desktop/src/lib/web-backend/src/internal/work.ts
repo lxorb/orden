@@ -207,9 +207,7 @@ export class Mirror {
       ...work.keys(),
       ...Object.keys(this.seen).filter((rel) => !only || only.has(rel)),
     ])
-    const files = [...paths].filter(
-      (rel) => !(store.get(rel)?.dir ?? work.get(rel)?.dir ?? this.seen[rel]?.dir),
-    )
+    const files = [...paths].filter((rel) => !(store.get(rel)?.dir ?? work.get(rel)?.dir ?? this.seen[rel]?.dir))
     for (const rel of files.sort()) await this.file(rel, store.get(rel), work.get(rel))
 
     const left = new Set<string>()
@@ -229,17 +227,12 @@ export class Mirror {
       const stamp = await this.disk.stamp(rel)
       const path = joinPath(this.disk.root, rel)
       if (stamp) out.push({ path, dir: false, id: null, ...stamp })
-      else if (await this.disk.isDir(rel))
-        out.push({ path, dir: true, id: null, size: 0, mtime: 0 })
+      else if (await this.disk.isDir(rel)) out.push({ path, dir: true, id: null, size: 0, mtime: 0 })
     }
     return out
   }
 
-  private async file(
-    rel: string,
-    store: { modified: number } | undefined,
-    work: Stamp | undefined,
-  ): Promise<void> {
+  private async file(rel: string, store: { modified: number } | undefined, work: Stamp | undefined): Promise<void> {
     const was = this.seen[rel]
     const workChanged = work?.size !== was?.size || work?.mtime !== was?.mtime || !was
     const storeChanged = store?.modified !== was?.modified || !was
@@ -421,9 +414,7 @@ function crateDisk(folder: string): WorkDisk {
     isDir: async (rel) => !(await stamp(rel)) && (await taken(at(rel))),
     mkdir: (rel) => crate('create_folder', { path: at(rel) }),
     remove: (rel, dir) =>
-      crate<undefined>(dir ? 'remove_empty_folder' : 'delete_note', { path: at(rel) }).catch(
-        () => undefined,
-      ),
+      crate<undefined>(dir ? 'remove_empty_folder' : 'delete_note', { path: at(rel) }).catch(() => undefined),
     async rename(from, to) {
       await crate('rename_note', { from: at(from), to: at(to) })
       return stamp(to)
@@ -432,8 +423,7 @@ function crateDisk(folder: string): WorkDisk {
       await watchWorking(root, heard)
       return () => void unwatchWorking(root).catch(() => undefined)
     },
-    loadSeen: () =>
-      crate<string>('read_note', { path: joinPath(folder, WORK_KEPT) }).catch(() => null),
+    loadSeen: () => crate<string>('read_note', { path: joinPath(folder, WORK_KEPT) }).catch(() => null),
     saveSeen: (text) =>
       crate<undefined>('write_bytes', {
         path: joinPath(folder, WORK_KEPT),

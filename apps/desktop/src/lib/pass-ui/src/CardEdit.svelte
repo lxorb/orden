@@ -62,14 +62,7 @@
     inputmode="numeric"
     {oninput}
   />
-  <EditField
-    label="PIN"
-    icon={FIELD_ICONS.pin}
-    bind:value={content.pin}
-    kind="hidden"
-    inputmode="numeric"
-    {oninput}
-  />
+  <EditField label="PIN" icon={FIELD_ICONS.pin} bind:value={content.pin} kind="hidden" inputmode="numeric" {oninput} />
 </EditCard>
 
 <style>

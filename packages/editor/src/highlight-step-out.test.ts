@@ -24,10 +24,7 @@ function pressed(command: ReturnType<typeof toggleHighlight>, state: EditorState
 
 function typed(state: EditorState, words: string): EditorState {
   const at = state.selection.main.head
-  return parsed(
-    state.update({ changes: { from: at, insert: words }, selection: { anchor: at + words.length } })
-      .state,
-  )
+  return parsed(state.update({ changes: { from: at, insert: words }, selection: { anchor: at + words.length } }).state)
 }
 
 describe('highlight pressed, words typed, highlight pressed again', () => {

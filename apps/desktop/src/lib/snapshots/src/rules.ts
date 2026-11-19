@@ -17,11 +17,7 @@ export function keepDays(value: unknown): number {
   return KEEP_DAYS.find((one) => one === value) ?? DEFAULT_DAYS
 }
 
-export function staleSnapshots(
-  taken: readonly number[],
-  now: number,
-  days: number = DEFAULT_DAYS,
-): number[] {
+export function staleSnapshots(taken: readonly number[], now: number, days: number = DEFAULT_DAYS): number[] {
   const stale: number[] = []
   const newestOfHour = new Map<number, number>()
 

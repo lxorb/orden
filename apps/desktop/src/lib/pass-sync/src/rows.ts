@@ -1,14 +1,6 @@
 import type { Opened } from '@orden/pass/keys'
 import { newKey } from '@orden/pass/crypto'
-import {
-  openItem,
-  openVault,
-  openVersion,
-  sealedRevOf,
-  sealItem,
-  sealVersion,
-  unwrapVaultKey,
-} from '@orden/pass/keys'
+import { openItem, openVault, openVersion, sealedRevOf, sealItem, sealVersion, unwrapVaultKey } from '@orden/pass/keys'
 import type { Content, Envelope, Folder, Item, Vault, VaultMeta } from '@orden/pass/types'
 import { log } from '../../platform/src/api'
 import { attachmentsUnder } from './item-keys'
@@ -106,10 +98,7 @@ export function tombstoneOf(row: ItemRow, at: number): ItemRow {
 export function withMade(items: readonly Item[], made: readonly Item[]): Item[] {
   const byId = new Map(made.map((item) => [item.id, item]))
   const known = new Set(items.map((item) => item.id))
-  return [
-    ...items.map((item) => byId.get(item.id) ?? item),
-    ...made.filter((item) => !known.has(item.id)),
-  ]
+  return [...items.map((item) => byId.get(item.id) ?? item), ...made.filter((item) => !known.has(item.id))]
 }
 
 export function without(items: readonly Item[], ids: Iterable<string>): Item[] {
@@ -123,9 +112,7 @@ export function folderFor(folders: Folder[], path: string | null): string | null
   for (const name of path.split('/').map((one) => one.trim())) {
     if (name === '') continue
     const under: string | null = parent
-    const found: Folder | undefined = folders.find(
-      (one) => one.parent === under && one.name === name,
-    )
+    const found: Folder | undefined = folders.find((one) => one.parent === under && one.name === name)
     const folder: Folder = found ?? { id: newId(), name, parent: under }
     if (!found) folders.push(folder)
     parent = folder.id
@@ -133,9 +120,7 @@ export function folderFor(folders: Folder[], path: string | null): string | null
   return parent
 }
 
-export async function openAll(
-  opened: Opened,
-): Promise<{ held: Held; vaults: Vault[]; items: Item[] }> {
+export async function openAll(opened: Opened): Promise<{ held: Held; vaults: Vault[]; items: Item[] }> {
   const held = emptyHeld(opened)
   const [vaultRows, itemRows] = await Promise.all([readVaults(), readItems()])
   const vaults: Vault[] = []
@@ -210,11 +195,7 @@ export function heldVault(held: Held, id: string): HeldVault {
   return box
 }
 
-export async function sealPuts(
-  held: Held,
-  puts: readonly Put[],
-  current: readonly Item[],
-): Promise<Sealed> {
+export async function sealPuts(held: Held, puts: readonly Put[], current: readonly Item[]): Promise<Sealed> {
   const at = Date.now()
   const before = new Map(current.map((item) => [item.id, item]))
   const items: ItemRow[] = []
@@ -229,13 +210,9 @@ export async function sealPuts(
     const moved = was !== undefined && was.row.vault !== vault
     const prior = fresh || (was && !moved) ? null : await readItem(vault, id)
     const renewed = moved ? newKey() : null
-    const envelope =
-      moved && renewed ? await attachmentsUnder(put.envelope, id, [was.key], renewed) : put.envelope
+    const envelope = moved && renewed ? await attachmentsUnder(put.envelope, id, [was.key], renewed) : put.envelope
     const rev = Math.max(prior?.rev ?? 0, was?.row.rev ?? 0) + 1
-    const last = Math.max(
-      sealedRevOf(prior?.body ?? '') ?? 0,
-      sealedRevOf(was?.row.body ?? '') ?? 0,
-    )
+    const last = Math.max(sealedRevOf(prior?.body ?? '') ?? 0, sealedRevOf(was?.row.body ?? '') ?? 0)
     const sealing = { keyVersion: box.row.keyVersion, rev: Math.max(rev, last + 1) }
     const sealed = await sealItem(box.key, vault, id, envelope, sealing, renewed ?? was?.key)
     const row: ItemRow = {

@@ -25,8 +25,7 @@ vi.mock('./native', () => ({
   },
 }))
 
-const { fileIdentity, listingOf, newsOf, scanSpace, unwatchSpaces, watchSpaces } =
-  await import('./space-watch')
+const { fileIdentity, listingOf, newsOf, scanSpace, unwatchSpaces, watchSpaces } = await import('./space-watch')
 
 beforeEach(() => {
   bridge.sent = []

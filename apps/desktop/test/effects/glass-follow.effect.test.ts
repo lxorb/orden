@@ -10,9 +10,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   isDesktop: false,
   isNative: false,
   invoke: (command: string) =>
-    Promise.resolve(
-      command === 'list_themes' ? [] : command === 'read_custom_css' ? '' : undefined,
-    ),
+    Promise.resolve(command === 'list_themes' ? [] : command === 'read_custom_css' ? '' : undefined),
 }))
 
 vi.mock('@orden/themes/glass', () => ({
@@ -262,12 +260,8 @@ test('the next launch opens on the pair it was left on', async () => {
 
 test('the shell, the bar and the open tab ease the colour rather than jump to it', () => {
   const source = (path: string) => readFileSync(resolve(path), 'utf8')
-  expect(source('src/App.svelte')).toMatch(
-    /background: var\(--shell-ground\);\s*transition: background var\(--dur-/,
-  )
+  expect(source('src/App.svelte')).toMatch(/background: var\(--shell-ground\);\s*transition: background var\(--dur-/)
   expect(source('src/lib/web-tab/src/WebBar.svelte')).toMatch(/background-color var\(--dur-/)
-  expect(source('src/lib/tab-strip/src/Tabs.svelte')).toMatch(
-    /transition:\s+--tab-ground var\(--dur-/,
-  )
+  expect(source('src/lib/tab-strip/src/Tabs.svelte')).toMatch(/transition:\s+--tab-ground var\(--dur-/)
   expect(source('../../packages/themes/src/glass.css')).toMatch(/@property --tab-ground/)
 })

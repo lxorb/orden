@@ -2,16 +2,7 @@
   import { groupName } from '@orden/bases'
   import { localNumber } from '../../platform/src/api'
   import { Select } from '../../ui-controls/src/api'
-  import {
-    CHART_KINDS,
-    donutPaths,
-    heights,
-    linePath,
-    MEASURES,
-    seriesOf,
-    settingsOf,
-    totalOf,
-  } from './chart'
+  import { CHART_KINDS, donutPaths, heights, linePath, MEASURES, seriesOf, settingsOf, totalOf } from './chart'
   import { toneColour } from './chips'
   import { displayName, knownProperties, toneOf } from './columns'
   import { setOrdenOption } from './edit'
@@ -27,14 +18,10 @@
   const property = $derived(view?.groupBy?.property)
 
   const points = $derived(
-    live.answer && settings && live.base
-      ? seriesOf(live.answer, settings, live.base, live.context)
-      : [],
+    live.answer && settings && live.base ? seriesOf(live.answer, settings, live.base, live.context) : [],
   )
   const total = $derived(
-    live.answer && settings && live.base
-      ? totalOf(live.answer, settings, live.base, live.context)
-      : null,
+    live.answer && settings && live.base ? totalOf(live.answer, settings, live.base, live.context) : null,
   )
   const fractions = $derived(heights(points))
 
@@ -48,10 +35,7 @@
   ]
   const tone = (at: number) => {
     const key = points[at]?.key
-    const own =
-      live.base && property && typeof key === 'string'
-        ? toneColour(toneOf(live.base, property, key))
-        : null
+    const own = live.base && property && typeof key === 'string' ? toneColour(toneOf(live.base, property, key)) : null
     return own ?? TONES[at % TONES.length] ?? 'var(--accent)'
   }
 
@@ -63,12 +47,9 @@
     return one.day ? dayWords(one.day, live.today) : localNumber(Math.round(one.value * 100) / 100)
   }
 
-  const set = (key: string, value: unknown) =>
-    kit.change((base, at) => setOrdenOption(base, at, key, value))
+  const set = (key: string, value: unknown) => kit.change((base, at) => setOrdenOption(base, at, key, value))
 
-  const numeric = $derived(
-    live.base ? knownProperties(live.base, view?.orden.rows ?? 'notes', live.rows) : [],
-  )
+  const numeric = $derived(live.base ? knownProperties(live.base, view?.orden.rows ?? 'notes', live.rows) : [])
 
   const W = 640
   const H = 260
@@ -121,9 +102,7 @@
 
   {#if settings?.kind === 'number'}
     <div class="number">
-      {total?.day
-        ? dayWords(total.day, live.today)
-        : localNumber(Math.round((total?.value ?? 0) * 100) / 100)}
+      {total?.day ? dayWords(total.day, live.today) : localNumber(Math.round((total?.value ?? 0) * 100) / 100)}
     </div>
   {:else if settings?.kind === 'donut'}
     <div class="donut">
@@ -131,16 +110,12 @@
         {#each donutPaths( points.map((one) => one.value), 100, 62 ) as path, at (at)}
           <path d={path} fill={tone(at)}><title>{label(at)}: {said(at)}</title></path>
         {/each}
-        <text class="middle" x="0" y="8" text-anchor="middle"
-          >{localNumber(live.answer?.total ?? 0)}</text
-        >
+        <text class="middle" x="0" y="8" text-anchor="middle">{localNumber(live.answer?.total ?? 0)}</text>
       </svg>
       <ul class="legend">
         {#each points as point, at (groupName(point.key))}
           <li>
-            <span class="swatch" style:background={tone(at)}></span>{label(at)}<span class="value"
-              >{said(at)}</span
-            >
+            <span class="swatch" style:background={tone(at)}></span>{label(at)}<span class="value">{said(at)}</span>
           </li>
         {/each}
       </ul>
@@ -161,11 +136,7 @@
         <div class="hbar">
           <span class="name">{label(at)}</span>
           <span class="track"
-            ><span
-              class="fill"
-              style:width={`${(fractions[at] ?? 0) * 100}%`}
-              style:background={tone(at)}
-            ></span></span
+            ><span class="fill" style:width={`${(fractions[at] ?? 0) * 100}%`} style:background={tone(at)}></span></span
           >
           <span class="value">{said(at)}</span>
         </div>
@@ -176,22 +147,11 @@
       {#each points as point, at (groupName(point.key))}
         {@const step = W / Math.max(1, points.length)}
         {@const tall = (fractions[at] ?? 0) * (H - 16)}
-        <rect
-          x={at * step + step * 0.18}
-          y={H - tall}
-          width={step * 0.64}
-          height={tall}
-          rx="3"
-          fill={tone(at)}
-        >
+        <rect x={at * step + step * 0.18} y={H - tall} width={step * 0.64} height={tall} rx="3" fill={tone(at)}>
           <title>{label(at)}: {said(at)}</title>
         </rect>
-        <text class="tick" x={at * step + step / 2} y={H + 18} text-anchor="middle"
-          >{label(at)}</text
-        >
-        <text class="tick value" x={at * step + step / 2} y={H - tall - 5} text-anchor="middle"
-          >{said(at)}</text
-        >
+        <text class="tick" x={at * step + step / 2} y={H + 18} text-anchor="middle">{label(at)}</text>
+        <text class="tick value" x={at * step + step / 2} y={H - tall - 5} text-anchor="middle">{said(at)}</text>
       {/each}
     </svg>
   {/if}

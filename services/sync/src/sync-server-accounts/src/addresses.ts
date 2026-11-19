@@ -59,25 +59,21 @@ async function takenBy(env: Env, email: string, userId: string): Promise<boolean
 }
 
 async function shown(env: Env, userId: string) {
-  const user = await env.DB.prepare('select email from users where id = ?')
-    .bind(userId)
-    .first<{ email: string }>()
+  const user = await env.DB.prepare('select email from users where id = ?').bind(userId).first<{ email: string }>()
   return { email: user?.email ?? '', second: await secondOf(env, userId) }
 }
 
 function asPrimary(env: Env, userId: string, from: string, to: string, keep: boolean) {
   return env.DB.batch([
     env.DB.prepare('delete from user_addresses where user_id = ? and email = ?').bind(userId, to),
-    env.DB.prepare('update users set email = ?3 where id = ?1 and email = ?2').bind(
-      userId,
-      from,
-      to,
-    ),
+    env.DB.prepare('update users set email = ?3 where id = ?1 and email = ?2').bind(userId, from, to),
     ...(keep
       ? [
-          env.DB.prepare(
-            'insert into user_addresses (email, user_id, created_at) values (?, ?, ?)',
-          ).bind(from, userId, now()),
+          env.DB.prepare('insert into user_addresses (email, user_id, created_at) values (?, ?, ?)').bind(
+            from,
+            userId,
+            now(),
+          ),
         ]
       : []),
     ...movedAddress(env, from, to),
@@ -88,9 +84,7 @@ async function moved(env: Env, user: User, to: string, keep: boolean): Promise<v
   await asPrimary(env, user.id, user.email, to, keep)
 
   const token = randomToken()
-  await env.DB.prepare(
-    'insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)',
-  )
+  await env.DB.prepare('insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)')
     .bind(UNDO, await sha256(token), `${user.id}:${user.email}:${to}`, now() + UNDO_FOR)
     .run()
   const said = addressMovedMessage(to, `${env.APP_ORIGIN}/v1/account/undo/${token}`)
@@ -142,10 +136,7 @@ addresses.post('/', async (context) => {
 
   const checked = await checkCode(env, email, code)
   if ('error' in checked) return context.json({ error: checked.error }, checked.status)
-  if (
-    (await asksForSecond(env, user.id)) &&
-    !(await accepted(env, user.id, second, machineOf(context.req)))
-  ) {
+  if ((await asksForSecond(env, user.id)) && !(await accepted(env, user.id, second, machineOf(context.req)))) {
     return context.json({ error: WRONG_CODE }, 400)
   }
   if (!(await spendCode(env, email))) return context.json({ error: TOOK_TOO_LONG }, 400)
@@ -155,9 +146,11 @@ addresses.post('/', async (context) => {
     else {
       await env.DB.batch([
         env.DB.prepare('delete from user_addresses where user_id = ?').bind(user.id),
-        env.DB.prepare(
-          'insert into user_addresses (email, user_id, created_at) values (?, ?, ?)',
-        ).bind(email, user.id, now()),
+        env.DB.prepare('insert into user_addresses (email, user_id, created_at) values (?, ?, ?)').bind(
+          email,
+          user.id,
+          now(),
+        ),
         ...movedAddress(env, email, user.email),
       ])
     }
@@ -198,9 +191,7 @@ function page(said: string, form = false): string {
 }
 
 async function undoFor(env: Env, token: string) {
-  const held = await env.DB.prepare(
-    'select value from cached where scope = ? and key = ? and until > ?',
-  )
+  const held = await env.DB.prepare('select value from cached where scope = ? and key = ? and until > ?')
     .bind(UNDO, await sha256(token), now())
     .first<{ value: string }>()
   const [userId, was, to] = held?.value.split(':') ?? []
@@ -237,13 +228,8 @@ addressUndo.post('/:token', async (context) => {
     return context.html(page(`${undo.was} belongs to another account now.`), 409)
   }
   await env.DB.batch([
-    env.DB.prepare('delete from cached where scope = ? and key = ?').bind(
-      UNDO,
-      await sha256(token),
-    ),
+    env.DB.prepare('delete from cached where scope = ? and key = ?').bind(UNDO, await sha256(token)),
     env.DB.prepare('delete from sessions where user_id = ?').bind(undo.userId),
   ])
-  return context.html(
-    page(`Your Orden account signs in with ${undo.was} again. Every device was signed out.`),
-  )
+  return context.html(page(`Your Orden account signs in with ${undo.was} again. Every device was signed out.`))
 })

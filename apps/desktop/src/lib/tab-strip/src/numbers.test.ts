@@ -2,9 +2,7 @@ import { describe, expect, test } from 'vitest'
 import { AltHold, numerals, type Stroke } from './numbers'
 
 const SHIPPED: Record<string, string> = {
-  ...Object.fromEntries(
-    Array.from({ length: 8 }, (_, at) => [`app.note-${at + 1}.alt`, `Alt-${at + 1}`]),
-  ),
+  ...Object.fromEntries(Array.from({ length: 8 }, (_, at) => [`app.note-${at + 1}.alt`, `Alt-${at + 1}`])),
   'app.note-ninth': 'Alt-9',
   'app.note-9.alt': 'Alt-0',
 }
@@ -21,20 +19,7 @@ describe('the numbers on the tabs', () => {
   })
 
   test('past nine, the ninth wears 9 and the ones after it nothing but the last', () => {
-    expect(numerals(12, shipped, 'win')).toEqual([
-      '1',
-      '2',
-      '3',
-      '4',
-      '5',
-      '6',
-      '7',
-      '8',
-      '9',
-      null,
-      null,
-      '0',
-    ])
+    expect(numerals(12, shipped, 'win')).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', null, null, '0'])
   })
 
   test('with exactly nine, the ninth is the last and wears 0', () => {

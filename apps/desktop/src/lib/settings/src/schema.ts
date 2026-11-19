@@ -16,8 +16,7 @@ export type Schema = Record<string, SettingSchema>
 function settingOf(field: Field): SettingSchema | null {
   if (!field.key) return null
   const about = { description: field.hint }
-  const initial =
-    'initial' in field && field.initial !== undefined ? { default: field.initial } : {}
+  const initial = 'initial' in field && field.initial !== undefined ? { default: field.initial } : {}
   if (field.member !== undefined) {
     if (field.kind !== 'switch') return null
     return {
@@ -52,8 +51,7 @@ function settingOf(field: Field): SettingSchema | null {
 }
 
 function gathered(one: SettingSchema, other: SettingSchema, key: string): SettingSchema {
-  if (one.type !== 'list' || other.type !== 'list')
-    throw new Error(`settings key ${key} is used twice`)
+  if (one.type !== 'list' || other.type !== 'list') throw new Error(`settings key ${key} is used twice`)
   const defaults = [
     ...((one.default as string[] | undefined) ?? []),
     ...((other.default as string[] | undefined) ?? []),

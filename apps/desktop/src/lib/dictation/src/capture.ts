@@ -10,10 +10,7 @@ export interface Capture {
   stop(): void
 }
 
-export async function capture(
-  heard: (samples: Float32Array) => void,
-  full: () => void,
-): Promise<Capture> {
+export async function capture(heard: (samples: Float32Array) => void, full: () => void): Promise<Capture> {
   const stream = await openMicrophone()
   try {
     return await listening(stream, heard, full)

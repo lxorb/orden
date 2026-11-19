@@ -48,9 +48,7 @@ beforeAll(() => {
     const left = tab ? NAMES.indexOf(tab) * 100 - scrolled : -10_000
     return DOMRect.fromRect({ x: left, y: 0, width: tab ? 24 : 20_000, height: 24 })
   })
-  vi.spyOn(Element.prototype, 'getClientRects').mockImplementation(
-    () => [DOMRect.fromRect()] as unknown as DOMRectList,
-  )
+  vi.spyOn(Element.prototype, 'getClientRects').mockImplementation(() => [DOMRect.fromRect()] as unknown as DOMRectList)
 })
 
 beforeEach(() => {
@@ -127,9 +125,7 @@ test('stay through three digits, each put where the tabs are once its tab is in 
     press(digit, { altKey: true })
     expect(worn(), digit).toEqual(['1', '2', '0'])
     wait(FRAME)
-    window.dispatchEvent(
-      new KeyboardEvent('keyup', { key: digit, code: `Digit${digit}`, altKey: true }),
-    )
+    window.dispatchEvent(new KeyboardEvent('keyup', { key: digit, code: `Digit${digit}`, altKey: true }))
     flushSync()
     expect(drawn(), digit).toEqual(['1', '2', '0'])
     expect(numbers.worn[0]?.x, digit).toBe(24 - 10 * (at + 1))

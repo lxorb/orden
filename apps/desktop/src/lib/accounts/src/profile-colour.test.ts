@@ -22,9 +22,7 @@ describe('the colour beside a person', () => {
 
   test('has no picker in the profile, and the avatar takes it from the account', () => {
     expect(read('../../accounts-ui/src/ProfileRows.svelte')).not.toMatch(/Swatches|accent/)
-    expect(read('../../accounts-ui/src/Avatar.svelte')).toContain(
-      'accentFor(face.key ?? face.name, theme.current)',
-    )
+    expect(read('../../accounts-ui/src/Avatar.svelte')).toContain('accentFor(face.key ?? face.name, theme.current)')
     expect(read('../../collab/src/who.ts')).toContain('accentIdFor(user.id)')
   })
 })

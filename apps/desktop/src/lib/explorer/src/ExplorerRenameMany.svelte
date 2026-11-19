@@ -6,11 +6,7 @@
   import { clashing, renamedAll } from './renaming'
   import type { ExplorerView } from './view.svelte'
 
-  const {
-    view,
-    paths,
-    onclose,
-  }: { view: ExplorerView; paths: readonly string[]; onclose: () => void } = $props()
+  const { view, paths, onclose }: { view: ExplorerView; paths: readonly string[]; onclose: () => void } = $props()
 
   let find = $state('')
   let replace = $state('')
@@ -19,9 +15,7 @@
   const names = $derived(paths.map((one) => nameOf(one)))
   const next = $derived(renamedAll(names, { find, replace, numbered }))
   const listed = $derived(
-    paths.map((one) =>
-      view.search ? (within(view.search.root, one) ?? nameOf(one)) : nameOf(one),
-    ),
+    paths.map((one) => (view.search ? (within(view.search.root, one) ?? nameOf(one)) : nameOf(one))),
   )
   const clashes = $derived(clashing(listed, next, view.names, !inASpace(view.listing?.path ?? '')))
   const changed = $derived(next.some((name, at) => name !== names[at]))
@@ -39,11 +33,7 @@
 
   function onkey(event: KeyboardEvent) {
     if (event.key === 'Escape') onclose()
-    else if (
-      event.key === 'Enter' &&
-      event.target instanceof HTMLInputElement &&
-      event.target.type === 'text'
-    )
+    else if (event.key === 'Enter' && event.target instanceof HTMLInputElement && event.target.type === 'text')
       void apply()
     else return
     event.preventDefault()
@@ -51,24 +41,11 @@
   }
 </script>
 
-<div
-  class="many"
-  role="dialog"
-  aria-modal="true"
-  aria-label="Rename"
-  tabindex="-1"
-  onkeydown={onkey}
->
+<div class="many" role="dialog" aria-modal="true" aria-label="Rename" tabindex="-1" onkeydown={onkey}>
   <div class="fields">
     <label>
       <span>Find</span>
-      <input
-        bind:this={first}
-        bind:value={find}
-        class="orden-field"
-        type="text"
-        spellcheck="false"
-      />
+      <input bind:this={first} bind:value={find} class="orden-field" type="text" spellcheck="false" />
     </label>
     <label>
       <span>Replace with</span>
@@ -89,12 +66,7 @@
   </ol>
   <div class="buttons">
     <button type="button" class="orden-button is-quiet" onclick={onclose}>Cancel</button>
-    <button
-      type="button"
-      class="orden-button"
-      disabled={!changed || clashes.size > 0}
-      onclick={apply}>Rename</button
-    >
+    <button type="button" class="orden-button" disabled={!changed || clashes.size > 0} onclick={apply}>Rename</button>
   </div>
 </div>
 

@@ -33,14 +33,15 @@ export const BOOKMARKS = folder('', [
   ),
 ])
 
-const row = (
-  id: number,
-  parent: number,
-  type: number,
-  title: string,
-  url: string | null = null,
-  deleted = false,
-) => ({ id, parent, type, title, url, order: id, deleted })
+const row = (id: number, parent: number, type: number, title: string, url: string | null = null, deleted = false) => ({
+  id,
+  parent,
+  type,
+  title,
+  url,
+  order: id,
+  deleted,
+})
 
 export const TABS = [
   row(1, 0, 1, 'Root'),

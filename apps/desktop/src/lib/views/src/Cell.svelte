@@ -44,9 +44,7 @@
     return base ? cellValue(base, property, row, kit.live.context) : null
   })
   const shown = $derived(valueText(value, kit.live.today))
-  const styled = $derived(
-    kit.live.base ? formatted(value, formatOf(kit.live.base, property)) : null,
-  )
+  const styled = $derived(kit.live.base ? formatted(value, formatOf(kit.live.base, property)) : null)
   const chips = $derived.by(() => {
     const base = kit.live.base
     if (editor !== 'select' || !base) return null
@@ -64,8 +62,7 @@
   }
 
   const listed = $derived(
-    editor === 'list' ||
-      (editor === 'select' && (Array.isArray(value) || holdsLists(property, kit.live.rows))),
+    editor === 'list' || (editor === 'select' && (Array.isArray(value) || holdsLists(property, kit.live.rows))),
   )
 
   const here = $derived(isDateValue(value) ? onClock(value) : null)
@@ -105,8 +102,7 @@
 
   const choices = $derived(kit.live.base ? optionsOf(kit.live.base, property) : [])
 
-  const shownMember = (item: ListItem): Value =>
-    item !== null && typeof item === 'object' ? item.asWritten : item
+  const shownMember = (item: ListItem): Value => (item !== null && typeof item === 'object' ? item.asWritten : item)
 
   function fromWords(words: string | null): Value | null {
     if (words === null || words === '') return null
@@ -116,13 +112,10 @@
       const [day, time] = words.split(' ')
       const iso = day ?? words
       if (!time) return { kind: 'date', iso }
-      return isDateValue(value)
-        ? rewritten(value, { kind: 'date', iso, time })
-        : { kind: 'date', iso, time }
+      return isDateValue(value) ? rewritten(value, { kind: 'date', iso, time }) : { kind: 'date', iso, time }
     }
     const base = kit.live.base
-    if (editor === 'select' && base)
-      return optionWritten(base, property, value, kit.live.rows, words)
+    if (editor === 'select' && base) return optionWritten(base, property, value, kit.live.rows, words)
     return words
   }
 
@@ -148,10 +141,7 @@
     class="editing"
     onkeydown={stopOnKeys}
     onfocusout={(event) => {
-      if (!(
-        event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)
-      ))
-        onstop?.()
+      if (!(event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget))) onstop?.()
     }}
   >
     {#if editor === 'time'}
@@ -200,8 +190,7 @@
   >
 {:else if chips}
   <span class="shown chips">
-    {#each chips as chip, at (at)}<span class="chip" style:--tone={chip.colour}>{chip.words}</span
-      >{/each}
+    {#each chips as chip, at (at)}<span class="chip" style:--tone={chip.colour}>{chip.words}</span>{/each}
   </span>
 {:else if styled?.href}
   <a

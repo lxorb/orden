@@ -52,8 +52,7 @@ vi.mock('../../ai-providers/src/api', () => {
       held.keys.delete(id)
       return Promise.resolve()
     },
-    listModels: () =>
-      held.refusing ? Promise.reject(new Error('That key was refused.')) : Promise.resolve(['m1']),
+    listModels: () => (held.refusing ? Promise.reject(new Error('That key was refused.')) : Promise.resolve(['m1'])),
     firstModel: (_kind: string, models: string[]) => models[0] ?? '',
     localCli: () =>
       Promise.resolve({
@@ -80,12 +79,8 @@ beforeEach(() => {
 describe('connecting an AI during setup', () => {
   test('a refused key leaves no extra provider behind, however often it is tried', async () => {
     held.refusing = true
-    expect(await connectCompatible(openRouter, 'sk-or-wrong-key-123456')).toBe(
-      'That key was refused.',
-    )
-    expect(await connectCompatible(openRouter, 'sk-or-wrong-key-654321')).toBe(
-      'That key was refused.',
-    )
+    expect(await connectCompatible(openRouter, 'sk-or-wrong-key-123456')).toBe('That key was refused.')
+    expect(await connectCompatible(openRouter, 'sk-or-wrong-key-654321')).toBe('That key was refused.')
     expect(held.accounts).toEqual([])
     expect([...held.keys.keys()]).toEqual([])
 

@@ -10,16 +10,7 @@ const STEERED =
 
 const PRESSES = new Set([' ', 'Spacebar', 'Enter', 'Delete', 'Backspace', 'Tab'])
 
-const STEERS = new Set([
-  'ArrowUp',
-  'ArrowDown',
-  'ArrowLeft',
-  'ArrowRight',
-  'Home',
-  'End',
-  'PageUp',
-  'PageDown',
-])
+const STEERS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End', 'PageUp', 'PageDown'])
 
 function keyFromLayer(from: Element | null, host?: Element | null): boolean {
   const layer = from?.closest(LAYERS)

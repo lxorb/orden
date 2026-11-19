@@ -21,10 +21,7 @@ export function toBase64(bytes: Uint8Array): string {
 
 export async function sha256(data: string | Uint8Array | ArrayBuffer): Promise<string> {
   const bytes = typeof data === 'string' ? new TextEncoder().encode(data) : data
-  const digest = await crypto.subtle.digest(
-    'SHA-256',
-    bytes as Uint8Array<ArrayBuffer> | ArrayBuffer,
-  )
+  const digest = await crypto.subtle.digest('SHA-256', bytes as Uint8Array<ArrayBuffer> | ArrayBuffer)
 
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
 }
@@ -40,9 +37,7 @@ export function parseDataUri(uri: string): { mime: string; bytes: Uint8Array } |
 }
 
 export const pageBytes = async (page: string | Blob): Promise<Uint8Array> =>
-  typeof page === 'string'
-    ? new TextEncoder().encode(page)
-    : new Uint8Array(await page.arrayBuffer())
+  typeof page === 'string' ? new TextEncoder().encode(page) : new Uint8Array(await page.arrayBuffer())
 
 export async function fileBytes(path: string): Promise<Uint8Array> {
   if (isNative) return new Uint8Array(await invoke<ArrayBuffer>('read_file', { path }))

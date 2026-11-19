@@ -56,10 +56,7 @@
     mark('first screen drawn')
 
     const resized = new ResizeObserver(() => {
-      if (
-        Math.abs(area.clientWidth - what.area.width) >= 1 ||
-        Math.abs(area.clientHeight - what.area.height) >= 1
-      ) {
+      if (Math.abs(area.clientWidth - what.area.width) >= 1 || Math.abs(area.clientHeight - what.area.height) >= 1) {
         firstScreen.drop()
       }
     })

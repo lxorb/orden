@@ -37,9 +37,7 @@ export async function faceFrom(
   view: number,
 ): Promise<{ s: Encoded; l: Encoded }> {
   const square = sourceSquare(crop, picture.width, picture.height, view)
-  const [s, l] = await Promise.all(
-    [SMALL, LARGE].map((size) => encodedSmall(drawn(picture, square, size))),
-  )
+  const [s, l] = await Promise.all([SMALL, LARGE].map((size) => encodedSmall(drawn(picture, square, size))))
   if (!s || !l) throw new Error('no picture')
   return { s, l }
 }
@@ -97,8 +95,7 @@ function joined(head: Uint8Array, parts: readonly Uint8Array[]): Uint8Array {
 }
 
 export function withoutMetadata(bytes: Uint8Array): Uint8Array | null {
-  const ascii = (at: number, length: number) =>
-    String.fromCharCode(...bytes.subarray(at, at + length))
+  const ascii = (at: number, length: number) => String.fromCharCode(...bytes.subarray(at, at + length))
 
   if (ascii(0, 4) === 'RIFF' && ascii(8, 4) === 'WEBP') {
     const kept: Uint8Array[] = []

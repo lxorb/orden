@@ -71,9 +71,7 @@ const written = (target: string): string => decodeTarget(target)
 async function fill(card: HTMLElement, file: Drawn, showing: () => boolean): Promise<void> {
   const width = Math.round(card.clientWidth) || FALLBACK_WIDTH
 
-  const drawing = await (file.kind === 'pdf' ? paperPage(file, width) : plane(file)).catch(
-    () => null,
-  )
+  const drawing = await (file.kind === 'pdf' ? paperPage(file, width) : plane(file)).catch(() => null)
   if (drawing === null || !showing()) {
     card.classList.remove(DRAWN)
     return
@@ -123,8 +121,7 @@ async function paperPage(file: Drawn, width: number): Promise<HTMLCanvasElement 
       const context = sheet.getContext('2d', { alpha: false })
       if (!context) return null
 
-      await page.render({ canvas: sheet, canvasContext: context, viewport: at, ...fit.drawn })
-        .promise
+      await page.render({ canvas: sheet, canvasContext: context, viewport: at, ...fit.drawn }).promise
 
       return sheet
     } finally {

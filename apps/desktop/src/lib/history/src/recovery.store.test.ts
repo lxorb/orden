@@ -137,9 +137,7 @@ describe('the versions kept while a note is being written in', () => {
 
     open.notes = [{ key: 'a', path: '/notes/a.md', text: 'one, typed', revision: 2 }]
     await vi.advanceTimersByTimeAsync(DEFAULT_MINUTES * MINUTE)
-    expect(sent.calls).toEqual([
-      { command: 'snapshot_note', args: { path: '/notes/a.md', content: 'one, typed' } },
-    ])
+    expect(sent.calls).toEqual([{ command: 'snapshot_note', args: { path: '/notes/a.md', content: 'one, typed' } }])
     stop()
   })
 

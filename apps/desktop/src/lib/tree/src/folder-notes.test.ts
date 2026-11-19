@@ -245,8 +245,6 @@ describe('the links to a note that has just been nested', () => {
   test('while a link that spelled the path out is pointed at the new one', () => {
     const move = { from: 'A.md', to: 'A/A.md' }
 
-    expect(rewriteLinks('[the plan](A.md)\n', 'B.md', move, () => true)).toBe(
-      '[the plan](A/A.md)\n',
-    )
+    expect(rewriteLinks('[the plan](A.md)\n', 'B.md', move, () => true)).toBe('[the plan](A/A.md)\n')
   })
 })

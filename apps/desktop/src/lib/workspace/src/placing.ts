@@ -1,12 +1,5 @@
 import { type Entry, webPages } from '@orden/contracts'
-import {
-  nameFromTitle,
-  shownName,
-  nameOf,
-  invoke,
-  isDesktop,
-  joinPath,
-} from '../../platform/src/api'
+import { nameFromTitle, shownName, nameOf, invoke, isDesktop, joinPath } from '../../platform/src/api'
 import { sameSite, settleShortcuts } from '@orden/scan/settle'
 import { readWebFile, writeShortcut } from '@orden/scan/shortcut'
 import type { Space } from './workspace.svelte'
@@ -32,13 +25,7 @@ export interface Places {
 
 type Claim = (path: string, run: () => Promise<NoteDoc | null>) => Promise<NoteDoc | null>
 
-export async function keepWeb(
-  ws: Places,
-  claim: Claim,
-  tab: Tab,
-  dir: string,
-  file?: string,
-): Promise<string | null> {
+export async function keepWeb(ws: Places, claim: Claim, tab: Tab, dir: string, file?: string): Promise<string | null> {
   const { canWriteAt } = await import('../../sharing/src/api')
   if (!canWriteAt(dir)) return null
   const pages = webPages()
@@ -134,11 +121,7 @@ function originOf(url: string): string | null {
   }
 }
 
-async function sameNoteAt(
-  ws: Places,
-  path: string,
-  url: string,
-): Promise<{ path: string; text: string } | null> {
+async function sameNoteAt(ws: Places, path: string, url: string): Promise<{ path: string; text: string } | null> {
   if (ws.documentAt(path)) return null
 
   const text = await invoke<string>('read_note', { path }).catch(() => null)

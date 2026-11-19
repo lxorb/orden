@@ -1,16 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, test } from 'vitest'
-import {
-  ALL,
-  bringsLayer,
-  cutOf,
-  layersOver,
-  noticeRows,
-  settled,
-  watchArrivals,
-  type Cut,
-  type Layer,
-} from './covers'
+import { ALL, bringsLayer, cutOf, layersOver, noticeRows, settled, watchArrivals, type Cut, type Layer } from './covers'
 
 const PAGE = { x: 300, y: 100, width: 900, height: 600 }
 
@@ -41,11 +31,7 @@ describe('what of a page the app is over', () => {
   })
 
   test('each layer over the page is its own hollow', () => {
-    const cut = cutOf(PAGE, [
-      float(400, 120, 200, 300),
-      float(620, 140, 180, 200),
-      float(0, 0, 10, 10),
-    ])
+    const cut = cutOf(PAGE, [float(400, 120, 200, 300), float(620, 140, 180, 200), float(0, 0, 10, 10)])
     expect(cut?.all).toBe(false)
     expect(cut?.hollows).toHaveLength(2)
   })
@@ -161,8 +147,7 @@ describe('a layer arriving by itself', () => {
   })
 
   test('a layer marked rather than shaped is one, in its own shape or over all of the page', () => {
-    document.body.innerHTML =
-      '<div data-covers class="ghost"></div><div data-covers="all" class="catch"></div>'
+    document.body.innerHTML = '<div data-covers class="ghost"></div><div data-covers="all" class="catch"></div>'
     const found = layersOver(document.createElement('div'))
     expect(found.map((one) => one.scrim)).toEqual([false, true])
   })
@@ -196,9 +181,7 @@ describe('a layer arriving by itself', () => {
     const stopOne = watchArrivals(() => (one += 1))
     const stopOther = watchArrivals(() => (other += 1))
 
-    document
-      .querySelector('main')!
-      .append(Object.assign(document.createElement('div'), { className: 'orden-screen' }))
+    document.querySelector('main')!.append(Object.assign(document.createElement('div'), { className: 'orden-screen' }))
     await Promise.resolve()
     expect([one, other]).toEqual([1, 1])
 
@@ -212,9 +195,7 @@ describe('a layer arriving by itself', () => {
     expect([one, other]).toEqual([1, 2])
 
     stopOther()
-    document
-      .querySelector('main')!
-      .append(Object.assign(document.createElement('div'), { className: 'orden-layer' }))
+    document.querySelector('main')!.append(Object.assign(document.createElement('div'), { className: 'orden-layer' }))
     await Promise.resolve()
     expect([one, other]).toEqual([1, 2])
   })
