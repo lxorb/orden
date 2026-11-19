@@ -8,6 +8,7 @@ BOARD = "[data-todos-board]"
 PANEL = "[data-todos-panel]"
 RECORD = """([scope, count]) => {
   window.__frames = []
+  window.__stop = false
   const rec = () => {
     const lists = [...document.querySelectorAll(scope)].map((list) => {
       const box = list.getBoundingClientRect()
@@ -19,7 +20,7 @@ RECORD = """([scope, count]) => {
       return [list.dataset.key ?? '', cards]
     })
     window.__frames.push(lists)
-    if (window.__frames.length < count) requestAnimationFrame(rec)
+    if (window.__frames.length < count && !window.__stop) requestAnimationFrame(rec)
   }
   requestAnimationFrame(rec)
 }"""
@@ -105,13 +106,58 @@ def ticked(page: Page, scope: str, title: str, what: str) -> None:
     say(f"{what}: undone {after}")
     if after != before:
         wrong(f"{what}: Undo did not bring {title} back where it stood: {before} -> {after}")
+def slow(page: Page, key: str, what: str) -> None:
+    scope = f"{BOARD} [data-todos-column][data-key='{key}']"
+    order = titles(page, key)
+    start, end = box(page, order[0]), box(page, order[3])
+    page.evaluate(RECORD, [scope, 100000])
+    page.mouse.move(start["x"] + 30, start["y"] + start["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(start["x"] + 34, start["y"] + start["height"] / 2 + 6, steps=3)
+    page.wait_for_timeout(300)
+    y0, y1 = start["y"] + start["height"] / 2 + 6, end["y"] + end["height"] * 0.8
+    for step in range(1, 41):
+        page.mouse.move(start["x"] + 34, y0 + (y1 - y0) * step / 40)
+        page.wait_for_timeout(250 if step % 10 == 5 else 25)
+    page.wait_for_timeout(400)
+    dropped = page.evaluate("() => window.__frames.length")
+    page.mouse.up()
+    page.wait_for_timeout(800)
+    frames: Frames = page.evaluate("() => { window.__stop = true; return window.__frames }")
+    lifted = order[0]
+    held = tracks(frames[:dropped])
+    say(f"{what}: {len(frames)} frames, drop at {dropped}: " + ", ".join(f"{one} {[y for _, _, y in changes(t)]}" for one, t in held.items()))
+    for one, track in held.items():
+        ys = [y for _, _, y in changes(track)]
+        if one == lifted:
+            if any(b < a for a, b in zip(ys, ys[1:])):
+                wrong(f"{what}: the lifted {one} went back up while carried down {ys}")
+            if max(ys) >= max(y for t in held.values() for _, _, y in t):
+                wrong(f"{what}: the lifted {one} showed at the end of the column {ys}")
+        else:
+            if any(b > a for a, b in zip(ys, ys[1:])):
+                wrong(f"{what}: {one} went down and up while a card passed it {ys}")
+            if order.index(one) > 3 and len(ys) > 1:
+                wrong(f"{what}: {one} moved though nothing passed it {ys}")
+    after = {one: set(track) for one, track in tracks(frames[dropped:]).items()}
+    if any(len(one) > 1 for one in after.values()):
+        wrong(f"{what}: cards moved after the drop {({one: sorted(t) for one, t in after.items() if len(t) > 1})}")
+    if titles(page, key) != [*order[1:4], order[0], *order[4:]]:
+        wrong(f"{what}: {order} became {titles(page, key)}")
+def sort(page: Page, name: str) -> None:
+    page.locator(f"{BOARD} [data-todos-sort] [role=combobox]").click()
+    page.locator("[role=listbox] [role=option]", has_text=name).click()
+    wait_for(page, f"document.querySelector('{BOARD} [data-todos-sort] [role=combobox]').textContent.includes({json.dumps(name)})", f"sorted by {name}")
+    page.wait_for_timeout(400)
 def board(page: Page) -> None:
     page.evaluate("() => window.ordenApp.tasks().then(({ openTodos }) => openTodos())")
     page.wait_for_selector(f"{BOARD} [data-todos-column]", state="attached")
-    for title, label in [("Alpha one", "a"), ("Bravo one", "b"), ("Bravo two", "b"), ("Bravo three", "b"), ("Charlie one", "c"), ("Charlie two", "c"), ("Charlie three", "c"), ("Charlie four", "c")]:
+    for title, label in [("Delta one", "d"), ("Delta two", "d"), ("Delta three", "d"), ("Delta four", "d"), ("Delta five", "d"), ("Alpha one", "a"), ("Bravo one", "b"), ("Bravo two", "b"), ("Bravo three", "b"), ("Charlie one", "c"), ("Charlie two", "c"), ("Charlie three", "c"), ("Charlie four", "c")]:
         page.evaluate("([title, label]) => window.ordenApp.tasks().then(({ todos }) => todos.add({ title, labels: [label] }))", [title, label])
-    wait_for(page, f"document.querySelectorAll('{BOARD} [data-todo-card]').length >= 8", "the cards")
+    wait_for(page, f"document.querySelectorAll('{BOARD} [data-todo-card]').length >= 13", "the cards")
     page.wait_for_timeout(600)
+    slow(page, "d", "sorted: Delta one carried slowly down its column")
+    slow(page, "d", "manual: Delta two carried slowly down its column")
     scope = f"{BOARD} [data-todos-column]"
     first = page.locator(scope).first.bounding_box() or {}
     frames = carry(page, head(page, "c"), (first["x"] + 12, first["y"] + 20), scope)
@@ -123,6 +169,7 @@ def board(page: Page) -> None:
     frames = carry(page, head(page, "a"), (last["x"] + last["width"] - 10, last["y"] + 20), scope)
     still(frames, "column a to the end")
     order(frames, "column a to the end")
+    sort(page, "Deadline")
     under = box(page, "Bravo two")
     frames = carry(page, box(page, "Charlie one"), (under["x"] + 40, under["y"] + under["height"] * 0.8), scope)
     one_way(frames, "sorted: Charlie one into column b")

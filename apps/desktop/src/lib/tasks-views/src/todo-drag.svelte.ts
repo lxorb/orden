@@ -8,14 +8,13 @@ export interface Spot {
 }
 const EDGE = 40
 const MOST = 14
-export const placeOf = (y: number, box: { top: number; height: number }): 'before' | 'after' =>
-  y > box.top + box.height / 2 ? 'after' : 'before'
+export const slotOf = (middles: readonly number[], y: number): number => middles.filter((one) => one < y).length
 export function previewed(list: readonly Todo[], column: string, drag: TodoDrag): Todo[] {
   const carried = drag.todo
   if (!carried) return [...list]
   const without = list.filter((one) => one.id !== carried.id)
   const spot = drag.spot
-  if (spot?.column !== column) return drag.from === column && drag.leaves ? without : [...list]
+  if (spot?.column !== column) return drag.from === column ? without : [...list]
   const at = Math.max(0, Math.min(without.length, spot.at))
   return [...without.slice(0, at), carried, ...without.slice(at)]
 }
@@ -23,7 +22,6 @@ export class TodoDrag {
   todo = $state<Todo | null>(null)
   from = $state<string | null>(null)
   spot = $state<Spot | null>(null)
-  leaves = $state(true)
   column = $state<string | null>(null)
   columnAt = $state<number | null>(null)
   private landing: Promise<unknown> | null = null
@@ -41,12 +39,15 @@ export class TodoDrag {
     this.landing = null
     this.clear()
   }
-  start(todo: Todo, from: string, leaves = true): void {
+  start(todo: Todo, from: string, list: readonly Todo[] = []): void {
     this.landing = null
     this.todo = todo
     this.from = from
-    this.leaves = leaves
-    this.spot = null
+    const at = list.findIndex((one) => one.id === todo.id)
+    this.spot = at === -1 ? null : { column: from, at }
+  }
+  at(column: string, at: number): void {
+    if (this.spot?.column !== column || this.spot.at !== at) this.spot = { column, at }
   }
   over(column: string, list: readonly Todo[], beside: string | null, after: boolean): void {
     const carried = this.todo

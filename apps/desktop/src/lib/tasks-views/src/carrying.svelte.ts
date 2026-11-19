@@ -2,7 +2,8 @@ import { type Grouping, movedPatch, type Todo } from '../../tasks-model/src/api'
 import { carryTodo, carryTodoColumn, dragged, isTodoColumnDrag, isTodoDrag, isTreeDrag } from '../../ui-kit/src/api'
 import { linkNotes, patchTodo, placeTodo } from './acts'
 import type { Shown } from './shown.svelte'
-import { placeOf, type Spot, TodoDrag } from './todo-drag.svelte'
+import { shifted } from './glide'
+import { slotOf, type Spot, TodoDrag } from './todo-drag.svelte'
 import { touchLift } from './touch-lift'
 
 export interface CarryHost {
@@ -27,7 +28,17 @@ export class Carrying {
     return { to: (space: string) => void patchTodo(id, { space: spaceOf(space) }) }
   }
   started(todo: Todo, column: string): void {
-    this.drag.start(todo, column)
+    this.drag.start(todo, column, this.host.list(column))
+  }
+  private aimAt(node: HTMLElement, column: string, y: number): void {
+    const carried = this.drag.todo?.id
+    const middles = [...node.querySelectorAll<HTMLElement>('[data-todo-card]')]
+      .filter((one) => one.dataset.todoCard !== carried)
+      .map((one) => {
+        const box = one.getBoundingClientRect()
+        return box.top - shifted(one.closest('li') ?? one).y + box.height / 2
+      })
+    this.drag.at(column, slotOf(middles, y))
   }
   aim(column: string, beside: string | null, after: boolean): void {
     if (beside !== null && beside === this.drag.todo?.id) return
@@ -86,12 +97,7 @@ export class Carrying {
       this.taking = null
     }
     const over = (event: DragEvent) => {
-      if (isTodoDrag(event.dataTransfer) && this.drag.on) {
-        event.preventDefault()
-        event.stopPropagation()
-        if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
-        this.aim(column, todo.id, placeOf(event.clientY, node.getBoundingClientRect()) === 'after')
-      } else if (isTreeDrag(event.dataTransfer)) {
+      if (isTreeDrag(event.dataTransfer)) {
         event.preventDefault()
         event.stopPropagation()
         if (event.dataTransfer) event.dataTransfer.dropEffect = 'copy'
@@ -113,12 +119,7 @@ export class Carrying {
             .filter((one) => /\.md$/i.test(one))
             .map(nameOf),
         )
-        return
       }
-      if (!isTodoDrag(event.dataTransfer)) return
-      event.preventDefault()
-      event.stopPropagation()
-      void this.land()
     }
     node.addEventListener('dragstart', start)
     node.addEventListener('dragend', end)
@@ -134,12 +135,8 @@ export class Carrying {
       },
       over: (x, y, under) => {
         if (drop?.overSpaces(this.toSpace(todo.id), { x, y })) return
-        const card = under?.closest<HTMLElement>('[data-todo-card]')
         const area = under?.closest<HTMLElement>('[data-todo-column]')
-        if (card && area) {
-          const beside = card.dataset.todoCard ?? null
-          this.aim(area.dataset.todoColumn ?? '', beside, placeOf(y, card.getBoundingClientRect()) === 'after')
-        } else if (area) this.aim(area.dataset.todoColumn ?? '', null, true)
+        if (area) this.aimAt(area, area.dataset.todoColumn ?? '', y)
       },
       land: () => {
         if (drop?.droppedOnSpace(this.toSpace(todo.id))) {
@@ -176,7 +173,7 @@ export class Carrying {
       if (!isTodoDrag(event.dataTransfer) || !this.drag.on) return
       event.preventDefault()
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
-      this.aim(key, null, true)
+      this.aimAt(node, key, event.clientY)
     }
     const dropped = (event: DragEvent) => {
       if (!isTodoDrag(event.dataTransfer)) return

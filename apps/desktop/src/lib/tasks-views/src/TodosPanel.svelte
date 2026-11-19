@@ -1,11 +1,10 @@
 <script lang="ts">
   import { cubicOut } from 'svelte/easing'
-  import { flip } from 'svelte/animate'
   import { dur, slide } from '../../platform/src/api'
   import { startTodos, todos, type TodoPatch } from '../../tasks-model/src/api'
   import { addTodo, doWithAi, patchTodo, removeTodo, tickTodo } from './acts'
   import { Carrying } from './carrying.svelte'
-  import { away } from './glide'
+  import { away, glider } from './glide'
   import Filters from './Filters.svelte'
   import { openNote } from './notes'
   import { shellWorld, Shown } from './shown.svelte'
@@ -29,7 +28,15 @@
   $effect(() => rows.keep())
   const open = $derived(openId === null ? null : todos.todo(openId))
   const listed = $derived(previewed(shown.todos, LIST, carrying.drag))
-  const moving = { duration: dur(180), easing: cubicOut }
+  const laid = $derived(listed.map((one) => one.id).join('\n'))
+  let list = $state<HTMLElement | null>(null)
+  const glide = glider(() => list, [':scope > li'])
+  $effect.pre(() => {
+    if (laid) glide.before()
+  })
+  $effect(() => {
+    if (laid) glide.after()
+  })
   async function add() {
     const title = typed.trim()
     if (title === '') return
@@ -55,10 +62,10 @@
   {#if !shown.todos.length}
     <p class="empty">Nothing to do</p>
   {/if}
-  <ul class="list" use:rowKeys={rows} use:carrying.area={LIST}>
+  <ul class="list" bind:this={list} use:rowKeys={rows} use:carrying.area={LIST}>
     {#each listed as todo (todo.id)}
       {@const here = open?.id === todo.id ? open : null}
-      <li animate:flip={moving} out:away>
+      <li out:away>
         <div use:carrying.card={{ todo, column: LIST }}>
           <TodoRow
             {todo}
