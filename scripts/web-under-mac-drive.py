@@ -461,12 +461,14 @@ def peek(app: App, pid: int, ratio: float, out: pathlib.Path, as_before: Any, un
     wrong: list[str] = []
     measure("grabs after the app drew the left peek in which the page still shows inside it", f"{len(late)} of {len(after)}")
     measure("colour inside the left peek over the page", colour_at(image, inside, ratio))
-    measure("colour of the page beside the left peek", colour_at(image, beside, ratio))
+    ahead = [one for at, one in frames if isinstance(asked, (int, float)) and at < asked]
+    was = colour_at(ahead[-1], beside, ratio) if ahead else COLOUR
+    measure("colour of the page beside the left peek", f"{colour_at(image, beside, ratio)}, before the peek {was}")
     if late and under:
         wrong.append(f"[peek] the page shows through the left peek the app has drawn, in {len(late)} of {len(after)} grabs")
     if near(colour_at(image, inside, ratio), COLOUR):
         wrong.append("[peek] the page is drawn over the left peek")
-    if not near(colour_at(image, beside, ratio), COLOUR):
+    if not near(colour_at(image, beside, ratio), was):
         wrong.append("[peek] the page is not drawn beside the left peek")
     stays = app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible && !one.sent.away)") is True
     measure("the page stays live under the left peek", stays)
