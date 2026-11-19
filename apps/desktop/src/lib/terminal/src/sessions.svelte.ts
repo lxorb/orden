@@ -153,7 +153,16 @@ class Session {
   private underneath: string | null = null
   private unmatched: string | null = null
   private readonly unwatch: () => void
-  private readonly watching = new ResizeObserver(() => requestAnimationFrame(() => this.fit()))
+  private boxed = ''
+  private hidden = false
+  private readonly watching = new ResizeObserver((seen) => {
+    const box = seen.at(-1)?.contentRect
+    if (!box?.width || !box.height) return
+    const size = `${Math.round(box.width)}x${Math.round(box.height)}`
+    if (size === this.boxed) return
+    this.boxed = size
+    requestAnimationFrame(() => this.fit())
+  })
   offline = $state(false)
   writer = $state(true)
   get status(): Status | null {
@@ -396,8 +405,6 @@ class Session {
       this.term.open(this.host)
       this.drawn = true
       this.replay(history)
-    } else {
-      this.fit()
     }
     if (focus) this.focus()
   }
@@ -551,7 +558,12 @@ class Session {
     this.host.remove()
   }
   focus() {
-    if (this.drawn) this.term.focus()
+    if (this.drawn && !this.hidden) this.term.focus()
+  }
+  show(on: boolean, focus: boolean) {
+    this.hidden = !on
+    if (!on) this.term.blur()
+    else if (focus) this.focus()
   }
   fit() {
     if (!this.drawn || this.replaying || !this.host.isConnected) return
@@ -1018,7 +1030,7 @@ class Session {
     return true
   }
   private get inFront(): boolean {
-    return this.drawn && this.host.isConnected && document.hasFocus()
+    return this.drawn && !this.hidden && this.host.isConnected && document.hasFocus()
   }
   private clipboard(data: string): boolean {
     const text = clipboardWrite(data)
