@@ -39,5 +39,5 @@ export function answer(tab: string, page: Page, key: Passed): void {
   else if (key === 'escape') void fullscreen.leave()
   else if (key === 'find' || key === 'next' || key === 'previous') sought(tab, page, key)
   else if (key === 'install' && page.url)
-    void import('./extensions.svelte').then(({ extensions }) => extensions.install(page.url ?? ''))
+    void import('./extensions.svelte').then(({ extensions }) => extensions.installFrom(tab, page.url ?? ''))
 }

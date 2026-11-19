@@ -67,6 +67,8 @@ function readAsks(said: unknown): { name: string; gaps: Gaps } | null {
   const gaps = readGaps(said.asks)
   return gaps ? { name: typeof said.name === 'string' ? said.name : '', gaps } : null
 }
+export const PENDING_SAID = 'Starts when Orden next opens'
+export const UNKNOWN_ANSWER = 'Orden could not install that extension: it got an answer it does not know'
 export function pinnedOf(list: readonly Extension[]): Extension[] {
   return list.filter((one) => one.enabled && one.action && one.pinned && !one.pending)
 }
@@ -91,6 +93,8 @@ class Extensions {
   read = $state(false)
   installing = $state<string | null>(null)
   failed = $state<string | null>(null)
+  said = $state<string | null>(null)
+  shownIn = $state<string | null>(null)
   asking = $state<Asking | null>(null)
   popped = $state<Popped | null>(null)
   private listening = false
@@ -122,18 +126,30 @@ class Extensions {
     this.problems.clear()
     this.read = true
   }
+  installFrom(tab: string, link: string): Promise<boolean> {
+    this.shownIn = tab
+    return this.install(link)
+  }
   async install(link: string, anyway = false): Promise<boolean> {
     this.installing = link
     this.failed = null
+    this.said = null
     this.asking = null
     try {
-      const asks = readAsks(await invoke<unknown>('extensions_install', { link, anyway }))
+      const answer = await invoke<unknown>('extensions_install', { link, anyway })
+      const asks = readAsks(answer)
       if (asks) {
         this.asking = { link, ...asks }
         return false
       }
-      await this.load()
-      return true
+      const installed = readExtension(answer)
+      if (installed) {
+        await this.load()
+        if (installed.pending) this.said = PENDING_SAID
+        return true
+      }
+      this.failed = UNKNOWN_ANSWER
+      return false
     } catch (error) {
       this.failed = typeof error === 'string' ? error : error instanceof Error ? error.message : 'that did not work'
       return false

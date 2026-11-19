@@ -75,7 +75,7 @@
   .add {
     gap: var(--space-1);
   }
-  .add svg {
+  .add :global(svg) {
     width: var(--icon-sm);
     height: var(--icon-sm);
     fill: none;

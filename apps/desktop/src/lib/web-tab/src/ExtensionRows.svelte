@@ -6,7 +6,7 @@
   import { dur, slide } from '../../platform/src/api'
   import { workspace } from '../../workspace/src/api'
   import ExtensionGaps from './ExtensionGaps.svelte'
-  import { extensions } from './extensions.svelte'
+  import { extensions, PENDING_SAID } from './extensions.svelte'
 
   let opened = $state<string | null>(null)
   let link = $state('')
@@ -36,7 +36,7 @@
         {#if one.problem}
           <small class="warn">Did not load</small>
         {:else if one.pending}
-          <small>Starts when Orden next opens</small>
+          <small>{PENDING_SAID}</small>
         {:else}
           <small>{one.version}</small>
         {/if}
@@ -89,6 +89,8 @@
   <p class="warn">{extensions.failed}</p>
 {:else if extensions.asking}
   <ExtensionGaps gaps={extensions.asking.gaps} asking />
+{:else if extensions.said}
+  <p class="told">{extensions.said}</p>
 {/if}
 
 <style>
@@ -107,13 +109,13 @@
     cursor: pointer;
   }
   .extension img,
-  .extension svg {
+  .extension :global(svg) {
     flex: none;
     width: var(--icon-lg);
     height: var(--icon-lg);
     object-fit: contain;
   }
-  .extension svg {
+  .extension :global(svg) {
     fill: none;
     stroke: currentColor;
     stroke-width: 1.5;
@@ -176,8 +178,12 @@
     flex: 1;
     min-width: 0;
   }
-  p.warn {
+  p.warn,
+  p.told {
     margin: 0;
     font-size: var(--text-xs);
+  }
+  p.told {
+    color: var(--muted);
   }
 </style>

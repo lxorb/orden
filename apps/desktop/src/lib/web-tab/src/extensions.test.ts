@@ -1,4 +1,4 @@
-import { expect, test, vi } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 
 const asked: { command: string; args: Record<string, unknown> | undefined }[] = []
 let refuse = false
@@ -23,10 +23,12 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
       // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
       return said === null ? Promise.resolve(undefined) : Promise.reject(said)
     }
+    if (command === 'extensions_install' && !refuse) return Promise.resolve(row({ id: 'b' }))
     return refuse ? Promise.reject(new Error('no')) : Promise.resolve(undefined)
   },
 }))
-const { UPDATE_EVERY, extensions, pinnedOf, readExtension, updateDue } = await import('./extensions.svelte')
+const { PENDING_SAID, UNKNOWN_ANSWER, UPDATE_EVERY, extensions, pinnedOf, readExtension, updateDue } =
+  await import('./extensions.svelte')
 const { ASK_AGAIN, NOT_ANSWERING } = await import('./answering')
 function row(fields: Record<string, unknown>): Record<string, unknown> {
   return {
@@ -243,4 +245,50 @@ test('two installs at once each say they are installing until their own is done'
   two.resolve(undefined)
   await second
   expect(extensions.installing).toBeNull()
+})
+describe('every answer to an install shows', () => {
+  const link = 'https://chromewebstore.google.com/detail/ublock/ddkjiahejlhfcafbddmgiahcphecmpfh'
+  function answers(said: unknown) {
+    installs.push(
+      typeof said === 'function' ? Promise.reject(new Error('the engine fell over')) : Promise.resolve(said),
+    )
+  }
+  test('installed: the list is read again and the field clears', async () => {
+    answers(row({ id: 'b' }))
+    asked.length = 0
+    expect(await extensions.install(link)).toBe(true)
+    expect(asked.map((one) => one.command)).toContain('extensions_list')
+    expect([extensions.failed, extensions.said]).toEqual([null, null])
+  })
+  test('installed for the next start: it says when it starts', async () => {
+    answers(row({ id: 'b', pending: true }))
+    expect(await extensions.install(link)).toBe(true)
+    expect(extensions.said).toBe(PENDING_SAID)
+  })
+  test('installed from a tab: that tab shows the bubble, where the outcome is said', async () => {
+    answers(row({ id: 'b', pending: true }))
+    const done = extensions.installFrom('t7', link)
+    expect(extensions.shownIn).toBe('t7')
+    expect(await done).toBe(true)
+    expect(extensions.said).toBe(PENDING_SAID)
+    extensions.shownIn = null
+  })
+  test('nothing, or an answer it does not know: it says so, and the link stays', async () => {
+    for (const said of [
+      null,
+      undefined,
+      { what: 1 },
+      'done',
+      { store: 'https://chromewebstore.google.com/detail/x' },
+    ]) {
+      answers(said)
+      expect(await extensions.install(link)).toBe(false)
+      expect(extensions.failed).toBe(UNKNOWN_ANSWER)
+    }
+  })
+  test('the engine refusing: its words show', async () => {
+    answers(() => undefined)
+    expect(await extensions.install(link)).toBe(false)
+    expect(extensions.failed).toBe('the engine fell over')
+  })
 })
