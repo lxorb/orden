@@ -35,6 +35,31 @@ export function roomForMember(space: string, email: string, item: string, most: 
           or exists (select 1 from space_members
                       where space_id = ${space} and email = ${email} and item = ${item}))`
 }
+export const MOST_IN_A_SPACE = 10
+export const NO_SEAT_LEFT = `a shared space holds at most ${MOST_IN_A_SPACE} people, the owner included`
+function seatedMember(at: string): string {
+  return `item = '' and (joined_at is not null or expires_at is null or expires_at >= ${at})`
+}
+function seatsIn(space: string, at: string): string {
+  return `(1 + (select count(*) from space_members where space_id = ${space} and ${seatedMember(at)})
+            + (select count(*) from guest_members
+                where space_id = ${space} and item = '' and joined_at is not null and declined_at is null))`
+}
+export function roomForPerson(space: string, item: string, at: string, email?: string): string {
+  const seated = email
+    ? ` or exists (select 1 from space_members where space_id = ${space} and email = ${email} and ${seatedMember(at)})`
+    : ''
+  return `(${item} <> '' or ${seatsIn(space, at)} < ${MOST_IN_A_SPACE}${seated})`
+}
+export async function seatsUsed(env: Env, spaceId: string): Promise<number> {
+  const row = await env.DB.prepare(`select ${seatsIn('?1', '?2')} as used`)
+    .bind(spaceId, now())
+    .first<{ used: number }>()
+  return row?.used ?? 1
+}
+export async function roomForASeat(env: Env, spaceId: string, item: string): Promise<boolean> {
+  return item !== '' || (await seatsUsed(env, spaceId)) < MOST_IN_A_SPACE
+}
 export const MOST_GUESTS = 200
 export const EMAIL_LIMIT = 320
 const ID_LIMIT = 64
@@ -209,12 +234,13 @@ function presentLink(env: Env, link: LinkRow) {
   return { url: joinUrl(env, link.token), role: link.role, mode: link.mode }
 }
 async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
-  const [members, requests, guests, link, face] = await Promise.all([
+  const [members, requests, guests, link, face, used] = await Promise.all([
     membersOf(env, space.id, scope.id),
     requestsOf(env, space.id, scope.id),
     guestsOf(env, space.id, scope.id),
     linkOf(env, space.id, scope.id),
     env.DB.prepare(`select ${FACE} from users u where u.id = ?`).bind(owner.id).first<FaceColumns>(),
+    scope.id ? null : seatsUsed(env, space.id),
   ])
   return {
     owner: {
@@ -246,7 +272,17 @@ async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
         })),
     ],
     link: link ? presentLink(env, link) : null,
+    seats: used === null ? null : { used, most: MOST_IN_A_SPACE },
   }
+}
+async function seatedOrRoom(env: Env, spaceId: string, item: string, email: string): Promise<boolean> {
+  if (item) return true
+  const held = await env.DB.prepare(
+    `select 1 as one from space_members where space_id = ?1 and email = ?2 and ${seatedMember('?3')}`,
+  )
+    .bind(spaceId, email, now())
+    .first()
+  return !!held || (await roomForASeat(env, spaceId, item))
 }
 export const share = new Hono<{ Bindings: Env; Variables: Variables }>()
 function about(): MiddlewareHandler<{ Bindings: Env; Variables: Variables }> {
@@ -280,6 +316,9 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
   if (held.length >= MOST_MEMBERS && !held.some((one) => one.email === email)) {
     return context.json({ error: SPACE_IS_FULL }, 409)
   }
+  if (!(await seatedOrRoom(context.env, space.id, scope.id, email))) {
+    return context.json({ error: NO_SEAT_LEFT }, 409)
+  }
   if (!(await roomForAnItem(context.env, space.id, scope.id))) {
     return context.json({ error: TOO_MANY_ITEMS }, 409)
   }
@@ -291,6 +330,7 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
     `insert into space_members (space_id, email, item, role, invite_hash, expires_at, created_at)
      select ?1, ?2, ?3, ?4, ?5, ?6, ?7
       where ${roomForMember('?1', '?2', '?3', '?8')} and ${roomForItem('?1', '?3', '?9')}
+        and ${roomForPerson('?1', '?3', '?7', '?2')}
      on conflict(space_id, email, item) do update set
        role = excluded.role,
        invite_hash = excluded.invite_hash,
@@ -299,7 +339,11 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
     .bind(space.id, email, scope.id, role, await sha256(token), now() + INVITE_TTL, now(), MOST_MEMBERS, MOST_ITEMS)
     .run()
   if (!invited.meta.changes) {
-    const error = (await roomForAnItem(context.env, space.id, scope.id)) ? SPACE_IS_FULL : TOO_MANY_ITEMS
+    const error = !(await roomForAnItem(context.env, space.id, scope.id))
+      ? TOO_MANY_ITEMS
+      : (await seatedOrRoom(context.env, space.id, scope.id, email))
+        ? SPACE_IS_FULL
+        : NO_SEAT_LEFT
     return context.json({ error }, 409)
   }
   await onceShared(context.env, space.id, scope.id)
@@ -442,14 +486,17 @@ share.post('/:id/share/requests/:email', atLeast('owner'), about(), async (conte
   const admitted = await context.env.DB.prepare(
     `insert into space_members (space_id, email, item, role, joined_at, created_at)
      select ?1, ?2, ?3, ?4, ?5, ?5
-      where ${roomForMember('?1', '?2', '?3', '?6')}
+      where ${roomForMember('?1', '?2', '?3', '?6')} and ${roomForPerson('?1', '?3', '?5', '?2')}
      on conflict(space_id, email, item) do update set
        role = excluded.role,
        joined_at = coalesce(space_members.joined_at, excluded.joined_at)`,
   )
     .bind(space.id, email, scope.id, waiting.role, now(), MOST_MEMBERS)
     .run()
-  if (!admitted.meta.changes) return context.json({ error: SPACE_IS_FULL }, 409)
+  if (!admitted.meta.changes) {
+    const error = (await seatedOrRoom(context.env, space.id, scope.id, email)) ? SPACE_IS_FULL : NO_SEAT_LEFT
+    return context.json({ error }, 409)
+  }
   await onceShared(context.env, space.id, scope.id)
   await context.env.DB.prepare('delete from space_requests where space_id = ? and email = ? and item = ?')
     .bind(space.id, email, scope.id)
@@ -480,7 +527,8 @@ share.post('/:id/share/guests/:guest', atLeast('owner'), about(), async (context
       where space_id = ?2 and guest_id = ?3 and item = ?4
         and joined_at is null and declined_at is null
         and (select count(*) from guest_members
-              where space_id = ?2 and item = ?4 and joined_at is not null) < ?5`,
+              where space_id = ?2 and item = ?4 and joined_at is not null) < ?5
+        and ${roomForPerson('?2', '?4', '?1')}`,
   )
     .bind(now(), space.id, guest, scope.id, MOST_GUESTS)
     .run()
@@ -493,7 +541,8 @@ share.post('/:id/share/guests/:guest', atLeast('owner'), about(), async (context
       .bind(space.id, guest, scope.id)
       .first()
     if (!waiting) return context.json({ error: 'nobody is waiting by that name' }, 404)
-    return context.json({ error: SPACE_IS_FULL }, 409)
+    const error = (await roomForASeat(context.env, space.id, scope.id)) ? SPACE_IS_FULL : NO_SEAT_LEFT
+    return context.json({ error }, 409)
   }
   await onceShared(context.env, space.id, scope.id)
   return context.json(await sharing(context.env, space, context.get('user'), scope))

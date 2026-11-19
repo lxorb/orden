@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { feedPage } from '../src/sync2/feed'
 import { applyOps } from '../src/sync2/ops'
 import { prepareSpace } from '../src/sync2/prepare'
+import { MOST_IN_A_SPACE, NO_SEAT_LEFT, roomForASeat, seatsUsed } from '../src/spaces/share'
 import { isIcon, readIcons } from '../src/spaces/icons'
 import { type TestEnv, testEnv } from '../../sync-server/test/fakes'
 
@@ -130,5 +131,43 @@ describe('icons', () => {
   test('a stored map keeps its pictures', () => {
     const stored = JSON.stringify({ Work: picture(2048), Home: 'Folder', Bad: 'data:text/html;base64,PHA+' })
     expect(readIcons(stored)).toEqual({ Work: picture(2048), Home: 'Folder' })
+  })
+})
+describe('the people a shared space holds', () => {
+  const member = (email: string, item: string, joined: number | null, expires: number | null) =>
+    env.db
+      .prepare(
+        `insert into space_members (space_id, email, item, role, joined_at, expires_at, created_at)
+         values (?, ?, ?, 'read', ?, ?, 1)`,
+      )
+      .run(SPACE, email, item, joined, expires)
+  const guest = (id: string, joined: number | null, declined: number | null) => {
+    env.db.prepare("insert into guests (id, name, created_at) values (?, 'Guest', 1)").run(id)
+    env.db
+      .prepare(
+        `insert into guest_members (space_id, guest_id, item, role, joined_at, declined_at, created_at)
+         values (?, ?, '', 'read', ?, ?, 1)`,
+      )
+      .run(SPACE, id, joined, declined)
+  }
+  test('are ten at most, the owner among them, and a refusal says so', () => {
+    expect(MOST_IN_A_SPACE).toBe(10)
+    expect(NO_SEAT_LEFT).toBe('a shared space holds at most 10 people, the owner included')
+  })
+  test('are counted as the owner, members in, invitations still open, and guests let in', async () => {
+    expect(await seatsUsed(env, SPACE)).toBe(1)
+    member('in@example.com', '', 1, null)
+    member('open@example.com', '', null, Date.now() + 60_000)
+    member('ran-out@example.com', '', null, Date.now() - 1)
+    member('note@example.com', 'n-1', 1, null)
+    guest('g-in', 1, null)
+    guest('g-waiting', null, null)
+    guest('g-declined', null, 1)
+    expect(await seatsUsed(env, SPACE)).toBe(4)
+  })
+  test('leave room for a note shared on its own whatever the space holds', async () => {
+    for (let one = 0; one < 12; one++) member(`m${String(one)}@example.com`, '', 1, null)
+    expect(await roomForASeat(env, SPACE, '')).toBe(false)
+    expect(await roomForASeat(env, SPACE, 'n-1')).toBe(true)
   })
 })

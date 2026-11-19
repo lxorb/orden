@@ -24,8 +24,8 @@ beforeEach(async () => {
   ).json.note.id
 })
 afterEach(() => env.close())
-async function shareLink(role: 'write' | 'read', mode: 'open' | 'approval'): Promise<string> {
-  const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link`, {
+async function shareLink(role: 'write' | 'read', mode: 'open' | 'approval', item = ''): Promise<string> {
+  const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link${item ? `?item=${item}` : ''}`, {
     method: 'PUT',
     token: owner,
     body: { role, mode },
@@ -254,7 +254,7 @@ describe('a link anybody may follow', () => {
     expect((await call(env, `/v1/notes/${note}`, { token: json.token })).status).toBe(200)
   })
   test('stops taking guests when it has taken a crowd in a minute', async () => {
-    const link = await shareLink('read', 'open')
+    const link = await shareLink('read', 'open', note)
     let refused = 0
     for (let attempt = 0; attempt < 22; attempt++) {
       if ((await follow(link)).status === 429) refused++
