@@ -12,9 +12,6 @@ function identifier(text: string, at: number, length: number): boolean {
   const after = text.slice(at + length)
   return /[\\/]/.test(before) || /^(?:[\\/]|\.[A-Za-z]|-(?:Added|Home|Icon|Data|Chosen)\b)/.test(after)
 }
-const NAMED: Record<string, string[]> = {
-  'lib/web-backend/src/web/commands.ts': ['Nib'],
-}
 const renaming = (text: string) => text.includes('Orden')
 function literals(code: string): string[] {
   const found: string[] = []
@@ -98,9 +95,8 @@ describe('the name a reader sees', () => {
     const offenders: string[] = []
     for (const path of walk(SOURCE, code)) {
       const where = relative(SOURCE, path).replace(/\\/g, '/')
-      const named = NAMED[where] ?? []
       for (const text of readable(path, readFileSync(path, 'utf8'))) {
-        if (named.includes(text) || renaming(text)) continue
+        if (renaming(text)) continue
         for (const at of oldNames(text)) {
           offenders.push(`${where}: ${text.slice(Math.max(0, at - 50), at + 50).trim()}`)
         }
