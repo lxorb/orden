@@ -211,6 +211,7 @@ if (!__EVEN_PLUGIN__) {
     toTab: async () => void (await import('./time/src/api')).openTime(),
   })
   registerFeature(() => import('./agents/src/api'))
+  registerFeature(() => import('./mcp-servers/src/api'))
   registerFeature(() => import('./chats-client/src/api'))
   registerFeature(() => import('./crash-reports/src/api'))
   registerFeature(() => import('./terminal/src/api'))
