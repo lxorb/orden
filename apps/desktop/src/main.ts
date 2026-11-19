@@ -1,3 +1,4 @@
+import { demo, demoRun } from './lib/demo/src/api'
 import './lib/backend-ports'
 import { isDesktop, isMobile, platform, serveAssets, mark, markPainted, watchFirstInput } from './lib/platform/src/api'
 import './lib/launch/src/renamed.svelte'
@@ -43,10 +44,12 @@ if (isDesktop && (await (await import('./lib/workspace/src/former-home')).finish
   location.reload()
   await new Promise<never>(() => undefined)
 }
+if (demo) await (await demoRun()).seed()
 mark('mounting')
 watchFirstInput()
 watchPresses()
 holdComposingKeys()
 const app = mount(App, { target })
 markPainted('shell painted')
+if (demo) void demoRun().then((run) => run.play())
 export default app

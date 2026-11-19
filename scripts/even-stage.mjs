@@ -30,8 +30,10 @@ for (const stray of [
   'pass-256.png',
   'pass-512.png',
   '_headers',
+  'demo.js',
+  'demo',
 ]) {
-  rmSync(join(to, stray), { force: true })
+  rmSync(join(to, stray), { recursive: true, force: true })
 }
 const MANIFEST = JSON.parse(readFileSync(new URL('../apps/desktop/even.app.json', import.meta.url), 'utf8'))
 const ALLOWED = MANIFEST.permissions.find((one) => one.name === 'network')?.whitelist ?? []
