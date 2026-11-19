@@ -5,6 +5,7 @@
   import { startTodos, todos, type TodoPatch } from '../../tasks-model/src/api'
   import { addTodo, doWithAi, patchTodo, removeTodo, tickTodo } from './acts'
   import { Carrying } from './carrying.svelte'
+  import { away } from './glide'
   import Filters from './Filters.svelte'
   import { openNote } from './notes'
   import { shellWorld, Shown } from './shown.svelte'
@@ -57,7 +58,7 @@
   <ul class="list" use:rowKeys={rows} use:carrying.area={LIST}>
     {#each listed as todo (todo.id)}
       {@const here = open?.id === todo.id ? open : null}
-      <li animate:flip={moving} out:slide={{ duration: dur(200), easing: cubicOut }}>
+      <li animate:flip={moving} out:away>
         <div use:carrying.card={{ todo, column: LIST }}>
           <TodoRow
             {todo}

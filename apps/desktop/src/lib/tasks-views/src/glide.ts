@@ -1,4 +1,5 @@
-import { dur } from '../../platform/src/api'
+import { cubicOut } from 'svelte/easing'
+import { dur, slide } from '../../platform/src/api'
 
 const GLIDE = 180
 const EASE = 'cubic-bezier(0.215, 0.61, 0.355, 1)'
@@ -58,4 +59,9 @@ export function glider(root: () => HTMLElement | null, picks: readonly string[])
       })
     },
   }
+}
+export function away(node: Element) {
+  const going = slide(node, { duration: dur(200), easing: cubicOut })
+  const css = going.css
+  return css ? { ...going, css: (t: number, u: number) => `${css(t, u)}; opacity: ${String(t)}` } : going
 }

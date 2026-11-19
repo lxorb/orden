@@ -214,7 +214,7 @@ describe('tasks-model contract', () => {
     expect(shownTodos(all, { ...filter, done: true }).map((t) => t.id)).toEqual(['today', 'yesterday', 'open'])
     expect(shownTodos(all, { ...filter, anyStart: true }).map((t) => t.id)).toEqual(['open', 'later'])
   })
-  test('sorting is exactly deadline, priority and manual, done todos last', () => {
+  test('sorting is exactly deadline, priority and manual, done todos last unless kept where they stood', () => {
     expect([...SORTS]).toEqual(['deadline', 'priority', 'manual'])
     const all = [
       todo({ id: 'p1d2', priority: 1, deadline: '2026-12-02', order: 3 }),
@@ -226,6 +226,7 @@ describe('tasks-model contract', () => {
     expect(ids('deadline')).toEqual(['p0d1', 'p1d2', 'p3dn', 'done'])
     expect(ids('priority')).toEqual(['p3dn', 'p1d2', 'p0d1', 'done'])
     expect(ids('manual')).toEqual(['p3dn', 'p0d1', 'p1d2', 'done'])
+    expect(sortedTodos(all, 'deadline', ['done']).map((t) => t.id)).toEqual(['done', 'p0d1', 'p1d2', 'p3dn'])
   })
   test('grouping by label puts a todo in every label it carries and the unlabeled last', () => {
     const groups = groupedByLabel([

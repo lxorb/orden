@@ -163,7 +163,7 @@ export class Shown {
     return labelsOf(shown, { onlySpace: false, space: null, today, done: true })
   }
   get todos(): Todo[] {
-    return sortedTodos(shownTodos(this.world.todos(), this.filter), this.sort)
+    return sortedTodos(shownTodos(this.world.todos(), this.filter), this.sort, this.lingering)
   }
   spaceName(id: string | null): string | null {
     if (id === null) return null
