@@ -18,6 +18,7 @@ pub type Call =
 pub type Tell = fn(&Webview, Option<&str>, Vec<(&'static str, Value)>);
 pub type Zooms = Box<dyn Fn(crate::web_page::Step) + Send + Sync>;
 pub type Menus = Box<dyn Fn(serde_json::Value) -> bool + Send + Sync>;
+pub type Dialogs = Box<dyn Fn(serde_json::Value) -> bool + Send + Sync>;
 pub type Page = WebviewBuilder<orden_base::Engine>;
 pub struct Engine {
     pub page_id: fn(&PlatformWebview) -> Option<NativeWindow>,
@@ -31,6 +32,8 @@ pub struct Engine {
     pub zooms: fn(Page, Zooms) -> Page,
     pub menus: fn(Page, Menus) -> Page,
     pub menu_pick: fn(u64, Option<i32>) -> bool,
+    pub dialogs: fn(Page, Dialogs) -> Page,
+    pub dialog_answer: fn(u64, bool, Option<String>) -> bool,
 }
 static ENGINE: std::sync::OnceLock<Engine> = std::sync::OnceLock::new();
 pub fn hand(engine: Engine) {
@@ -39,6 +42,12 @@ pub fn hand(engine: Engine) {
 pub fn menus(page: Page, menus: Menus) -> Page {
     match engine() {
         Ok(engine) => (engine.menus)(page, menus),
+        Err(_) => page,
+    }
+}
+pub fn dialogs(page: Page, dialogs: Dialogs) -> Page {
+    match engine() {
+        Ok(engine) => (engine.dialogs)(page, dialogs),
         Err(_) => page,
     }
 }

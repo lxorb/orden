@@ -20,6 +20,7 @@ mod download;
 mod drag;
 mod focus;
 mod frame;
+mod js_dialog;
 mod keyboard;
 mod life_span;
 mod load;
@@ -37,6 +38,7 @@ pub(crate) use drag::{
   WebDragDropResourceRequestHandlerArgs, drag_drop_initialization_script, event_from_script_event,
 };
 use focus::TauriCefFocusHandler;
+use js_dialog::TauriCefJsDialogHandler;
 use keyboard::TauriCefKeyboardHandler;
 use life_span::{TauriCefChildLifeSpanHandler, TauriCefChildLifeSpanHandlerArgs};
 use load::TauriCefLoadHandler;
@@ -57,6 +59,7 @@ pub(crate) struct TauriCefBrowserClientHandlers<T: UserEvent> {
   pub(crate) console_message_handler: Option<Arc<crate::ConsoleMessageHandler>>,
   pub(crate) zoom_command_handler: Option<Arc<crate::ZoomCommandHandler>>,
   pub(crate) context_menu_handler: Option<Arc<crate::ContextMenuHandler>>,
+  pub(crate) js_dialog_handler: Option<Arc<crate::JsDialogHandler>>,
   pub(crate) permission_request_handler: Option<Arc<PermissionRequestHandler>>,
   pub(crate) web_content_process_terminate_handler:
     Option<Arc<tauri_runtime::webview::OnWebContentProcessTerminateHandler>>,
@@ -75,6 +78,7 @@ impl<T: UserEvent> Clone for TauriCefBrowserClientHandlers<T> {
       console_message_handler: self.console_message_handler.clone(),
       zoom_command_handler: self.zoom_command_handler.clone(),
       context_menu_handler: self.context_menu_handler.clone(),
+      js_dialog_handler: self.js_dialog_handler.clone(),
       permission_request_handler: self.permission_request_handler.clone(),
       web_content_process_terminate_handler: self.web_content_process_terminate_handler.clone(),
     }
@@ -210,6 +214,7 @@ wrap_with_args! {
             console_message_handler: None,
             zoom_command_handler: None,
             context_menu_handler: None,
+            js_dialog_handler: None,
             ipc_handler: None,
             on_page_load_handler: None,
             document_title_changed_handler: None,
@@ -236,6 +241,7 @@ wrap_with_args! {
       Some(TauriCefLoadHandler::new(
         self.handlers.on_page_load_handler.clone(),
         self.handlers.frame_event_handler.clone(),
+        (self.drag_drop_event_target == DragDropEventTarget::Window).then_some(self.window_id),
       ))
     }
 
@@ -262,6 +268,14 @@ wrap_with_args! {
         self.devtools_enabled,
         self.handlers.context_menu_handler.clone(),
       ))
+    }
+
+    fn jsdialog_handler(&self) -> Option<JsdialogHandler> {
+      self
+        .handlers
+        .js_dialog_handler
+        .clone()
+        .map(|handler| TauriCefJsDialogHandler::new(self.window_id, handler))
     }
 
     fn keyboard_handler(&self) -> Option<KeyboardHandler> {

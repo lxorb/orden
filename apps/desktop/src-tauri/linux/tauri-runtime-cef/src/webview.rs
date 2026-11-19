@@ -810,6 +810,10 @@ impl<T: UserEvent> WinitCefApp<T> {
         .runtime_specific_attributes
         .context_menu_handler
         .clone(),
+      js_dialog_handler: pending
+        .runtime_specific_attributes
+        .js_dialog_handler
+        .clone(),
       permission_request_handler: pending.permission_request_handler.take().map(Arc::from),
       web_content_process_terminate_handler,
     };
@@ -1540,6 +1544,7 @@ pub struct CefWebviewAttributes {
   pub console_message_handler: Option<Arc<ConsoleMessageHandler>>,
   pub zoom_command_handler: Option<Arc<ZoomCommandHandler>>,
   pub context_menu_handler: Option<Arc<crate::ContextMenuHandler>>,
+  pub js_dialog_handler: Option<Arc<crate::JsDialogHandler>>,
   /// Families of Chrome commands this webview keeps rather than swallows.
   ///
   /// Empty by default, which blocks every group in [`ChromeCommandGroup`].
@@ -1566,6 +1571,7 @@ impl std::fmt::Debug for CefWebviewAttributes {
       )
       .field("zoom_command_handler", &self.zoom_command_handler.is_some())
       .field("context_menu_handler", &self.context_menu_handler.is_some())
+      .field("js_dialog_handler", &self.js_dialog_handler.is_some())
       .field("allowed_chrome_commands", &self.allowed_chrome_commands)
       .field(
         "browser_settings_callback",
