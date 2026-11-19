@@ -4,6 +4,7 @@ import { type Command, EditorView } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
 import { door } from '@orden/markdown/door'
 import { escapeAll } from '@orden/markdown/html'
+import { coveredLines } from './live-preview/item-start'
 import { enclosingNamed } from './nodes'
 
 const OURS = 'data-orden="markdown"'
@@ -72,12 +73,13 @@ export function copiedFlavours(state: EditorState, cut = false): { text: string;
   const range = state.selection.main
   if (range.empty || state.selection.ranges.length > 1) return null
   if (cut && state.readOnly) return null
-  const text = state.doc.sliceString(range.from, range.to)
+  const covered = coveredLines(state, range.from, range.to)
+  const text = covered?.text ?? state.doc.sliceString(range.from, range.to)
   if (text.length > MOST_DRAWN) return { text, html: null }
-  const code = drawnAsCode(state, range.from, range.to)
+  const code = covered ? null : drawnAsCode(state, range.from, range.to)
   if (code) return { text, html: `<div ${OURS}>${code}</div>` }
   if (!render) void fetchRenderer()
-  const drawn = render?.(closedRuns(state, range.from, range.to))
+  const drawn = render?.(covered ? text : closedRuns(state, range.from, range.to))
   return { text, html: drawn === undefined ? null : `<div ${OURS}>${drawn}</div>` }
 }
 function carry(event: ClipboardEvent, view: EditorView, cut: boolean): boolean {
