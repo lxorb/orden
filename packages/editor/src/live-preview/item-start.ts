@@ -5,6 +5,7 @@ import {
   EditorSelection,
   findClusterBreak,
   EditorState,
+  Facet,
   type Line,
   Prec,
   type SelectionRange,
@@ -407,6 +408,58 @@ const leadKept = EditorState.transactionFilter.of((transaction) => {
     userEvent: 'delete.backward',
   }
 })
+const wholeItems = Facet.define<boolean, boolean>({ combine: (values) => values.some(Boolean) })
+const COVERED_LEAD = /^((?:[ \t]*>[ \t]?)*[ \t]*)(?:(?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?|#{1,6}[ \t]+)/
+function coveredLead(state: EditorState, line: Line): number | null {
+  const lead = COVERED_LEAD.exec(line.text)
+  if (!lead) return null
+  const mark = syntaxTree(state).resolveInner(line.from + (lead[1]?.length ?? 0), 1).name
+  return mark === 'ListMark' || mark === 'HeaderMark' ? lead[0].length : null
+}
+export function coveredLines(
+  state: EditorState,
+  from: number,
+  to: number,
+): { from: number; to: number; text: string } | null {
+  if (from >= to || !state.facet(wholeItems)) return null
+  const { doc } = state
+  const first = doc.lineAt(from)
+  let last = doc.lineAt(to)
+  if (last.number <= first.number) return null
+  const lead = coveredLead(state, first)
+  if (lead === null || from > first.from + lead) return null
+  if (to <= last.from + (coveredLead(state, last) ?? 0)) last = doc.line(last.number - 1)
+  else if (to < last.to) return null
+  const atEnd = last.number === doc.lines
+  return {
+    from: atEnd ? Math.max(0, first.from - 1) : first.from,
+    to: atEnd ? last.to : last.to + 1,
+    text: doc.sliceString(first.from, Math.min(to, last.to + 1)),
+  }
+}
+const TAKING = ['delete.cut', 'delete.selection', 'delete.backward', 'delete.forward']
+const itemsTaken = EditorState.transactionFilter.of((transaction) => {
+  if (!transaction.docChanged || !TAKING.some((event) => transaction.isUserEvent(event))) return transaction
+  const { startState } = transaction
+  const main = startState.selection.main
+  if (startState.selection.ranges.length > 1 || main.empty) return transaction
+  const taken: { from: number; to: number; inserted: number }[] = []
+  transaction.changes.iterChanges((from, to, _at, _end, inserted) =>
+    taken.push({ from, to, inserted: inserted.length }),
+  )
+  const [only] = taken
+  if (taken.length !== 1 || !only || only.inserted || only.from > main.from || only.to < main.to) return transaction
+  const covered = coveredLines(startState, only.from, only.to)
+  if (!covered) return transaction
+  const userEvent = transaction.annotation(Transaction.userEvent)
+  return {
+    changes: { from: covered.from, to: covered.to },
+    selection: EditorSelection.cursor(covered.from),
+    scrollIntoView: true,
+    ...(userEvent ? { userEvent } : {}),
+    annotations: landInWords.of(true),
+  }
+})
 export const itemStartBindings: BindingSpec[] = [
   { id: 'marks.heading-down', key: 'Enter', run: pushHeadingDown, contextual: true },
   { id: 'marks.backspace', key: 'Backspace', run: deleteBesideMarks(-1), contextual: true },
@@ -438,4 +491,4 @@ export const itemStartBindings: BindingSpec[] = [
     contextual: true,
   },
 ]
-export const itemStart = [snapped, leadKept, Prec.high(boundKeymap(itemStartBindings))]
+export const itemStart = [wholeItems.of(true), snapped, leadKept, itemsTaken, Prec.high(boundKeymap(itemStartBindings))]
