@@ -606,10 +606,10 @@ class Drive:
             raise SystemExit(f"the panes were not laid out: {made}")
         self.ids.update(made)
         print(f"laid out: {made}", flush=True)
-        if self.until("const p = orden.pages.of(@W@); return !!(p && p.live)", 40, W=self.ids["W"]) is None:
-            raise SystemExit("the web tab never went live")
+        self.show("web")
         if not self.site.fresh(20).get("rects"):
             raise SystemExit("the page never said where it is")
+        self.show("note")
     def sidebar(self, shown: bool) -> None:
         self.js("orden.workspace.panes.fills = null; if (!!orden.workspace.panel !== @V@) orden.workspace.toggleSidebar('left'); return true", V=shown)
         time.sleep(1.2)
@@ -617,11 +617,12 @@ class Drive:
         tab = self.ids["W"] if kind == "web" else self.ids["N"]
         self.js("orden.workspace.focusPane(@S@); orden.workspace.activate(@T@); return true", S=self.ids["S"], T=tab)
         if kind == "web":
-            ready = self.until("const p = orden.pages.of(@W@); return !!(p && p.sent && p.sent.visible && p.live)", 20, W=tab)
+            ready = self.until("const p = orden.pages.of(@W@); return !!(p && p.sent && p.sent.visible && p.live)", 40, W=tab)
         else:
             ready = self.until("return !!document.querySelector('[data-pane=\"' + @S@ + '\"] .cm-content')", 20, S=self.ids["S"])
         if not ready:
-            raise SystemExit(f"the {kind} tab never showed")
+            seen = self.js("return orden.pages.each().map(([id, one]) => [id, one.url, one.live, one.sent && one.sent.visible, one.layering])")
+            raise SystemExit(f"the {kind} tab never showed: {seen}")
         time.sleep(1.0)
         self.where = self.inner()
         return self.geometry()
