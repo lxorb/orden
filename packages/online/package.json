@@ -7,6 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./apps": "./src/apps.ts",
+    "./load": "./src/load.ts",
     "./term": "./src/term.ts",
     "./types": "./src/types.ts",
     "./urls": "./src/urls.ts",
