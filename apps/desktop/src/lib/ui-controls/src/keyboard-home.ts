@@ -1,7 +1,7 @@
 import { overlays } from '../../ui-kit/src/api'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { adrift, pressedThrough } from './adrift'
-import { IN_A_PAGE } from './trap'
+import { IN_A_PAGE, POINTING } from './trap'
 
 export const IN_PAGE = 'orden://keyboard-in-page'
 const LEAVING = 300
@@ -45,6 +45,7 @@ class KeyboardHome {
     }
   }
   private pressed() {
+    document.documentElement.setAttribute(POINTING, '')
     this.moves += 1
     this.pressing = true
     setTimeout(() => (this.pressing = false))
@@ -63,8 +64,9 @@ class KeyboardHome {
   private typed(event: KeyboardEvent) {
     if (!event.isTrusted) return
     this.moves += 1
-    if (overlays.depth > 0) return
     if (['Alt', 'Control', 'Shift', 'Meta', 'AltGraph'].includes(event.key)) return
+    document.documentElement.removeAttribute(POINTING)
+    if (overlays.depth > 0) return
     this.say()
   }
   private say() {
