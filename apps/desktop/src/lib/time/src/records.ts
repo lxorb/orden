@@ -1,4 +1,4 @@
-import { readTint } from '../../ui-kit/src/api'
+import { LONGEST_PICTURE, readIcon, readTint } from '../../ui-kit/src/api'
 
 const LONGEST_NAME = 80
 const LONGEST_NOTE = 1000
@@ -8,6 +8,7 @@ export interface Activity {
   id: string
   name: string
   tint: string | null
+  icon: string | null
   parent: string | null
   archived: boolean
   order: number
@@ -44,6 +45,10 @@ function tagsOf(value: unknown): string[] {
   return out
 }
 export const activityName = (name: string): string => name.trim().slice(0, LONGEST_NAME).trim()
+export function iconOf(value: unknown): string | null {
+  const said = typeof value === 'string' ? value.trim() : ''
+  return said && said.length <= LONGEST_PICTURE && readIcon(said) ? said : null
+}
 export function activityOf(id: string, value: Record<string, unknown>): Activity | null {
   const name = typeof value.name === 'string' ? activityName(value.name) : ''
   if (!name) return null
@@ -51,6 +56,7 @@ export function activityOf(id: string, value: Record<string, unknown>): Activity
     id,
     name,
     tint: readTint(typeof value.tint === 'string' ? value.tint : null),
+    icon: iconOf(value.icon),
     parent: idOr(value.parent),
     archived: value.archived === true,
     order: isTime(value.order) ? value.order : 0,
@@ -76,6 +82,7 @@ export function spanOf(id: string, value: Record<string, unknown>): Span | null 
 export const activityValue = (activity: Activity): Record<string, unknown> => ({
   name: activityName(activity.name),
   tint: activity.tint,
+  icon: iconOf(activity.icon),
   parent: activity.parent,
   archived: activity.archived,
   order: activity.order,

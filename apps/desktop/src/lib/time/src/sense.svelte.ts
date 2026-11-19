@@ -51,10 +51,6 @@ const near = (): Sensed => ({
   idleMs: Date.now() - lastInput,
   front: shown() && document.hasFocus(),
   app: null,
-  cpu: null,
-  memory: null,
-  battery: null,
-  charging: null,
   lid: null,
   locked: null,
 })

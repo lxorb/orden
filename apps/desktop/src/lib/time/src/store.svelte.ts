@@ -13,6 +13,7 @@ import {
   goalId,
   goalOf,
   goalValue,
+  iconOf,
   type Lane,
   type Per,
   recordingOf,
@@ -25,6 +26,7 @@ import {
 } from './records'
 import { MINUTE } from './days'
 import { KEEP_MINUTES, type Minute } from './minutes'
+import type { Write } from './schedule'
 import type { TimeRecord } from './written'
 
 const CURSOR = 'cursor'
@@ -210,22 +212,17 @@ export class TimeStore {
   activity(id: string | null): Activity | null {
     return this.activities.find((one) => one.id === id) ?? null
   }
-  named(name: string): Activity | null {
-    const wanted = activityName(name).toLocaleLowerCase()
-    return this.activities.find((one) => one.name.toLocaleLowerCase() === wanted) ?? null
-  }
-  startNamed(name: string, at = Date.now()): Span | null {
-    const said = activityName(name)
-    if (!said) return null
-    const found = this.named(said)
-    if (found?.archived) this.changeActivity(found.id, { archived: false })
-    return this.start((found ?? this.addActivity(said)).id, at)
-  }
-  addActivity(name: string, tint: string | null = null, parent: string | null = null): Activity {
+  addActivity(
+    name: string,
+    tint: string | null = null,
+    parent: string | null = null,
+    icon: string | null = null,
+  ): Activity {
     const activity: Activity = {
       id: crypto.randomUUID(),
       name: activityName(name),
       tint: tint ?? ACCENTS[this.activities.length % ACCENTS.length]?.id ?? null,
+      icon: iconOf(icon),
       parent,
       archived: false,
       order: (this.activities.at(-1)?.order ?? 0) + 1,
@@ -283,9 +280,21 @@ export class TimeStore {
   removeSpan(id: string): void {
     if (this.span(id)) this.written([this.write('span', id, null)])
   }
-  start(activity: string | null, at = Date.now()): Span {
+  start(activity: string, at = Date.now()): Span | null {
+    const found = this.activity(activity)
+    if (!found) return null
+    if (found.archived) this.changeActivity(found.id, { archived: false })
     this.stop(at)
     return this.addSpan({ start: at, end: null, activity, source: 'timer' })
+  }
+  schedule(writes: readonly Write[]): void {
+    this.written(
+      writes.map((one) => {
+        if (one.kind === 'remove') return this.write('span', one.id, null)
+        const span = one.kind === 'add' ? { ...one.span, device: one.span.device ?? (this.device || null) } : one.span
+        return this.write('span', span.id, spanValue(span))
+      }),
+    )
   }
   stop(at = Date.now()): void {
     const rows = this.running.map((span) =>

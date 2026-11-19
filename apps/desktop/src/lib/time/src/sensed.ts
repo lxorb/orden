@@ -4,10 +4,6 @@ export interface Sensed {
   idleMs: number | null
   front: boolean | null
   app: string | null
-  cpu: number | null
-  memory: number | null
-  battery: number | null
-  charging: boolean | null
   lid: boolean | null
   locked: boolean | null
 }
@@ -30,10 +26,6 @@ export function sensedOf(value: unknown): Sensed | null {
     idleMs: numberOr(value.idleMs),
     front: flagOr(value.front),
     app: appOf(value.app),
-    cpu: numberOr(value.cpu),
-    memory: numberOr(value.memory),
-    battery: numberOr(value.battery),
-    charging: flagOr(value.charging),
     lid: flagOr(value.lid),
     locked: flagOr(value.locked),
   }

@@ -55,19 +55,6 @@
     for (let one = Math.ceil(from / step) * step; one <= to; one += step) out.push(one)
     return out
   })
-  const line = (read: (one: (typeof buckets)[number]) => number | null): string => {
-    const points: string[] = []
-    for (const one of buckets) {
-      const value = read(one)
-      if (value === null) continue
-      const x = ((one.from + SNAP / 2 - from) / whole) * 1000
-      points.push(`${x.toFixed(1)},${(30 - value * 28).toFixed(1)}`)
-    }
-    return points.join(' ')
-  }
-  const cpu = $derived(line((one) => one.cpu))
-  const memory = $derived(line((one) => one.memory))
-  const battery = $derived(line((one) => one.battery))
   let track = $state<HTMLElement>()
   let pressed: { x: number; at: number; span: string | null } | null = null
   let dragging = $state(false)
@@ -125,7 +112,6 @@
       <span class="lane-label">{lane.label}</span>
     {/each}
     <span class="busy-label">Active</span>
-    <span class="system-label">System</span>
   </div>
 
   <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -201,12 +187,6 @@
       {/each}
     </div>
 
-    <svg class="system" viewBox="0 0 1000 32" preserveAspectRatio="none" aria-hidden="true">
-      <polyline class="memory" points={memory} />
-      <polyline class="battery" points={battery} />
-      <polyline class="cpu" points={cpu} />
-    </svg>
-
     {#each hours as hour (hour)}
       <span class="tick" style:left={at(hour)}></span>
     {/each}
@@ -223,12 +203,6 @@
       ></span>
     {/if}
   </div>
-
-  <div class="legend" aria-hidden="true">
-    <span><i class="cpu"></i>CPU</span>
-    <span><i class="memory"></i>Memory</span>
-    <span><i class="battery"></i>Battery</span>
-  </div>
 </div>
 
 <style>
@@ -236,7 +210,6 @@
     --said: 52px;
     --lane: 24px;
     --busy: 34px;
-    --system: 40px;
     --axis: 18px;
     display: grid;
     grid-template-columns: auto 1fr;
@@ -271,9 +244,6 @@
   }
   .busy-label {
     height: var(--busy);
-  }
-  .system-label {
-    height: var(--system);
   }
   .track {
     position: relative;
@@ -375,26 +345,6 @@
     background: repeating-linear-gradient(135deg, var(--muted) 0 2px, transparent 2px 4px);
     opacity: 0.8;
   }
-  .system {
-    width: 100%;
-    height: var(--system);
-    border-radius: var(--radius-sm);
-    background: var(--surface-2);
-  }
-  .system polyline {
-    fill: none;
-    stroke-width: 1.5;
-    vector-effect: non-scaling-stroke;
-  }
-  .cpu {
-    stroke: var(--accent);
-  }
-  .memory {
-    stroke: var(--muted);
-  }
-  .battery {
-    stroke: var(--success);
-  }
   .tick {
     position: absolute;
     top: var(--axis);
@@ -420,32 +370,5 @@
     border-inline: 1px solid var(--accent);
     background: color-mix(in srgb, var(--accent) 14%, transparent);
     pointer-events: none;
-  }
-  .legend {
-    grid-column: 2;
-    display: flex;
-    gap: var(--space-3);
-    margin-top: var(--space-1);
-    color: var(--muted);
-    font-size: var(--text-xs);
-  }
-  .legend span {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-  }
-  .legend i {
-    width: 10px;
-    height: 2px;
-    border-radius: 1px;
-  }
-  .legend i.cpu {
-    background: var(--accent);
-  }
-  .legend i.memory {
-    background: var(--muted);
-  }
-  .legend i.battery {
-    background: var(--success);
   }
 </style>

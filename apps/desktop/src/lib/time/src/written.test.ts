@@ -6,6 +6,7 @@ const UNI: Activity = {
   id: 'uni',
   name: 'Uni',
   tint: null,
+  icon: null,
   parent: null,
   archived: false,
   order: 1,

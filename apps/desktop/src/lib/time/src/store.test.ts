@@ -3,7 +3,8 @@ import { describe, expect, test, vi } from 'vitest'
 import { growth, GROWS_AT_MOST } from '../../../../../../scripts/growth'
 import { openTimeDisk } from './disk'
 import { FakeTimeServer, OLD_SERVER } from './fake-server'
-import type { Span } from './records'
+import { activityOf, type Span } from './records'
+import { placeBlock, removeBlock } from './schedule'
 import { TimeStore } from './store.svelte'
 
 const M = 60_000
@@ -165,32 +166,52 @@ describe('the time a person records', () => {
     store.removeActivity(uni.id)
     expect(store.goals).toEqual([])
   })
-  test('starts a timer by name, finding the activity whatever its case, or making it', async () => {
+  test('a timer starts only on an activity made beforehand, and switching stops the one before', async () => {
     const store = await opened(owner(), null)
     const uni = store.addActivity('Uni')
-    store.startNamed('  uni ', M)
-    store.startNamed('Reading', 2 * M)
-    store.startNamed('   ', 3 * M)
-    expect(store.activities.map((one) => one.name)).toEqual(['Uni', 'Reading'])
+    const sport = store.addActivity('Sport')
+    expect(store.start('no such activity', M)).toBeNull()
+    expect(store.spans).toEqual([])
+    store.start(uni.id, M)
+    store.start(sport.id, 3 * M)
+    expect(store.activities.map((one) => one.name)).toEqual(['Uni', 'Sport'])
     expect(store.spans.map((one) => [one.activity, one.start, one.end])).toEqual([
-      [uni.id, M, 2 * M],
-      [store.named('reading')?.id, 2 * M, null],
+      [uni.id, M, 3 * M],
+      [sport.id, 3 * M, null],
     ])
     expect(new Set(store.activities.map((one) => one.tint)).size).toBe(2)
   })
-  test('a name longer than an activity keeps finds the same activity on every start', async () => {
+  test('an activity keeps its icon, and one written before icons has none', async () => {
     const store = await opened(owner(), null)
-    const long = `  ${'Reading the whole long book '.repeat(5)}`
-    store.startNamed(long, M)
-    store.startNamed(long, 2 * M)
-    store.startNamed(long.toUpperCase(), 3 * M)
-    expect(store.activities).toHaveLength(1)
-    const [made] = store.activities
-    expect(made?.name).toBe(long.trim().slice(0, 80).trim())
-    expect(new Set(store.spans.map((one) => one.activity))).toEqual(new Set([made?.id]))
-    store.changeActivity(made?.id ?? '', { name: `${long}renamed` })
-    expect(store.activities.map((one) => one.name)).toEqual([made?.name])
-    expect(store.named(long)?.id).toBe(made?.id)
+    const uni = store.addActivity('Uni', null, null, 'graduation-cap')
+    const plain = store.addActivity('Plain')
+    expect(store.activity(uni.id)?.icon).toBe('graduation-cap')
+    expect(store.activity(plain.id)?.icon).toBeNull()
+    store.changeActivity(plain.id, { icon: '🍝' })
+    expect(store.activity(plain.id)?.icon).toBe('🍝')
+    expect(activityOf('old', { name: 'Old', tint: 'teal' })?.icon).toBeNull()
+    expect(activityOf('odd', { name: 'Odd', icon: 4 })?.icon).toBeNull()
+  })
+  test('a schedule edit is written at once, and a block added on this device names it', async () => {
+    const store = await opened(owner(), null)
+    const uni = store.addActivity('Uni')
+    store.schedule(placeBlock(store.spans, M, 10 * M, uni.id, 20 * M))
+    const [block] = store.spans
+    expect([block?.start, block?.end, block?.activity, block?.source, block?.device]).toEqual([
+      M,
+      10 * M,
+      uni.id,
+      'manual',
+      'here',
+    ])
+    store.schedule(placeBlock(store.spans, 4 * M, 6 * M, null, 20 * M))
+    expect(store.spans.map((one) => [one.start, one.end, one.activity])).toEqual([
+      [M, 4 * M, uni.id],
+      [4 * M, 6 * M, null],
+      [6 * M, 10 * M, uni.id],
+    ])
+    store.schedule(removeBlock(store.spans, store.spans[1]?.id ?? ''))
+    expect(store.spans).toHaveLength(2)
   })
   test('keeps the minutes on the device, and only the last ninety days of them', async () => {
     const store = await opened(owner(), null)
@@ -199,10 +220,6 @@ describe('the time a person records', () => {
       at,
       active: 30,
       samples: 12,
-      cpu: 0.2,
-      memory: 0.5,
-      battery: null,
-      charging: null,
       lid: true,
       locked: false,
     })
@@ -262,6 +279,7 @@ describe('the time a person records', () => {
     const two = await opened(who, null)
     const uni = one.addActivity('Uni')
     const timer = one.start(uni.id, 10 * M)
+    if (!timer) throw new Error('the timer did not start')
     await vi.waitFor(() => expect(two.running.map((span) => span.id)).toEqual([timer.id]))
     expect(two.activity(uni.id)?.name).toBe('Uni')
     two.stop(30 * M)

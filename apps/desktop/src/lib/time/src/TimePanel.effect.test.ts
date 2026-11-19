@@ -35,41 +35,41 @@ const button = (label: string): HTMLButtonElement => {
   if (!found) throw new Error(`no ${label} button`)
   return found
 }
-function typed(text: string) {
-  const field = target.querySelector<HTMLInputElement>('input[placeholder="What are you working on?"]')
-  if (!field) throw new Error('no field to say it in')
-  field.value = text
-  field.dispatchEvent(new Event('input', { bubbles: true }))
-  field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
-  flushSync()
-}
+const row = (name: string) =>
+  [...target.querySelectorAll('button.orden-row')].find((one) => one.textContent.includes(name)) ?? null
 describe('the time tracker beside the notes', () => {
-  test('opens on what to do: a field to say it in, and a few to begin with', () => {
+  test('with no activity yet, one is made by name, and that starts nothing and makes nothing else', () => {
     shown(TimePanel)
-    expect(target.textContent).toContain('Nothing recorded yet')
-    expect(target.querySelector('input[placeholder="What are you working on?"]')).not.toBeNull()
-    for (const name of ['Work', 'Study', 'Reading', 'Break']) expect(button(name)).toBeTruthy()
-    expect(target.querySelector('.strip')).not.toBeNull()
-    button('Study').click()
+    expect(target.textContent).not.toContain('Nothing recorded yet')
+    expect(target.querySelector('input[placeholder="What are you working on?"]')).toBeNull()
+    const field = target.querySelector<HTMLInputElement>('input[aria-label="New activity"]')
+    if (!field) throw new Error('no field to name an activity in')
+    field.value = 'Analysis'
+    field.dispatchEvent(new Event('input', { bubbles: true }))
     flushSync()
-    expect(time.running.map((one) => time.activity(one.activity)?.name)).toEqual(['Study'])
-    expect(target.querySelector('[role="timer"]')).not.toBeNull()
+    button('Add').click()
+    flushSync()
+    expect(time.activities.map((one) => one.name)).toEqual(['Analysis'])
+    expect(time.running).toEqual([])
+    expect(target.querySelector('input[aria-label="New activity"]')).toBeNull()
   })
-  test('starts what was typed, then lists it to start again, and stops', () => {
+  test('starts an activity from the list, switches to another, and stops', () => {
+    const analysis = time.addActivity('Analysis')
+    const reading = time.addActivity('Reading')
     shown(TimePanel)
-    typed('Analysis')
-    expect(time.running.map((one) => time.activity(one.activity)?.name)).toEqual(['Analysis'])
+    row('Analysis')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    flushSync()
+    expect(time.running.map((one) => one.activity)).toEqual([analysis.id])
     expect(target.textContent).toContain('Since')
+    row('Reading')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    flushSync()
+    expect(time.running.map((one) => one.activity)).toEqual([reading.id])
     button('Stop timer').click()
     flushSync()
     expect(time.running).toEqual([])
     expect(target.textContent).toContain('Recent')
     expect(target.textContent).toContain('Today')
-    expect(target.textContent).not.toContain('Nothing recorded yet')
-    const row = [...target.querySelectorAll('button.orden-row')].find((one) => one.textContent.includes('Analysis'))
-    row?.dispatchEvent(new MouseEvent('click', { bubbles: true }))
-    flushSync()
-    expect(time.running).toHaveLength(1)
+    expect(time.activities).toHaveLength(2)
   })
 })
 describe('the time tracker as a tab', () => {
@@ -120,25 +120,25 @@ describe('the time tracker as a tab', () => {
       at: day + 9 * 3_600_000 + index * 60_000,
       active: 60,
       samples: 12,
-      cpu: null,
-      memory: null,
-      battery: null,
-      charging: null,
       lid: null,
       locked: false,
     }))
     const yesterday = minutes.map((one) => ({ ...one, at: one.at - 86_400_000 }))
     time.keepMinutes([...yesterday, ...minutes])
-    await new Promise((go) => setTimeout(go, 30))
+    await vi.waitFor(async () =>
+      expect((await time.minutes(day - 86_400_000, day + 86_400_000)).length).toBeGreaterThanOrEqual(180),
+    )
     shown(TimeTab, { tab: tab('{"view":"week"}') })
-    await new Promise((go) => setTimeout(go, 30))
-    flushSync()
-    const actives = [...target.querySelectorAll('.week .head .active')].map((one) => one.textContent.trim())
-    expect(actives.filter((one) => one === length(90 * 60_000)).length).toBeGreaterThanOrEqual(1)
+    await vi.waitFor(() => {
+      flushSync()
+      const actives = [...target.querySelectorAll('.week .head .active')].map((one) => one.textContent.trim())
+      expect(actives.filter((one) => one === length(90 * 60_000)).length).toBeGreaterThanOrEqual(1)
+    })
     close?.()
     shown(TimePanel)
-    await new Promise((go) => setTimeout(go, 30))
-    flushSync()
-    expect(target.querySelector('.active')?.textContent).toContain(length(90 * 60_000))
+    await vi.waitFor(() => {
+      flushSync()
+      expect(target.querySelector('.active')?.textContent).toContain(length(90 * 60_000))
+    })
   })
 })
