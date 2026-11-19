@@ -40,6 +40,7 @@ class PassSync {
     await this.refresh()
   }
   signedOut(): void {
+    pass.lock()
     this.backfilled = false
     this.state = 'off'
     this.at = null
@@ -102,6 +103,7 @@ class PassSync {
   }
 }
 export const passSync = new PassSync()
+account.forgetWithSession(() => passSync.signedOut())
 let started = false
 export function startPassSync(): void {
   if (started) return
