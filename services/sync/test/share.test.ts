@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { type PullResponse, type PushResponse, seedUpdate } from '@orden/sync-core'
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
-import { MOST_MEMBERS } from '../src/sync-server-engine/src/spaces/share'
+import { MOST_IN_A_SPACE, MOST_MEMBERS } from '../src/sync-server-engine/src/spaces/share'
 import { call, invitation, joined, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 import { framed, live } from './sync2'
 
@@ -784,30 +784,89 @@ describe('one person’s role', () => {
   })
 })
 describe('as many people as one space holds', () => {
-  function fillMembers(spare = 0) {
+  const FULL = 'a shared space holds at most 10 people, the owner included'
+  function fillMembers(spare = 0, from = 0) {
     const at = Date.now()
-    for (let one = 0; one < MOST_MEMBERS - spare; one++) {
+    for (let one = from; one < MOST_IN_A_SPACE - 1 - spare; one++) {
       env.db
-        .prepare('insert into space_members (space_id, email, role, created_at) values (?, ?, ?, ?)')
-        .run(space, `filler${one}@example.com`, 'read', at + one)
+        .prepare('insert into space_members (space_id, email, role, joined_at, created_at) values (?, ?, ?, ?, ?)')
+        .run(space, `filler${one}@example.com`, 'read', at, at + one)
     }
   }
-  test('an invitation is refused past it', async () => {
-    fillMembers()
-    const response = await call(env, `/v1/spaces/${space}/share/invite`, {
-      token: owner,
-      body: { email: STRANGER, role: 'read' },
-    })
-    expect(response.status).toBe(409)
-    expect(response.json.error).toBe('that is as many people as one space holds')
+  function fillGuests(count: number) {
+    const long = Date.now() - 10 * 60_000
+    for (let one = 0; one < count; one++) {
+      env.db
+        .prepare('insert into guests (id, name, created_at) values (?, ?, ?)')
+        .run(`filler-guest-${String(one)}`, 'Filler', long)
+      env.db
+        .prepare(
+          `insert into guest_members (space_id, guest_id, role, joined_at, created_at)
+           values (?, ?, 'read', ?, ?)`,
+        )
+        .run(space, `filler-guest-${String(one)}`, long, long)
+    }
+  }
+  const asked = (email: string) =>
+    call<ShareView>(env, `/v1/spaces/${space}/share/invite`, { token: owner, body: { email, role: 'read' } })
+  function held(table: 'space_members' | 'space_requests'): number {
+    const row = env.db.prepare(`select count(*) as n from ${table} where space_id = ?`).get(space) as { n: number }
+    return row.n
+  }
+  test('is ten, the owner among them', () => {
+    expect(MOST_IN_A_SPACE).toBe(10)
   })
-  test('an open link is refused past it too', async () => {
+  test('an eleventh invitation is refused, the tenth not, and the refusal says why', async () => {
+    fillMembers(1)
+    expect((await asked('tenth@example.com')).status).toBe(200)
+    const eleventh = await asked(STRANGER)
+    expect(eleventh.status).toBe(409)
+    expect(eleventh.json.error).toBe(FULL)
+    expect((await shareView()).json.seats).toEqual({ used: 10, most: 10 })
+  })
+  test('somebody already holding a seat is invited again, to another role, when it is full', async () => {
+    fillMembers(1)
+    await asked(STRANGER)
+    const again = await call<ShareView>(env, `/v1/spaces/${space}/share/invite`, {
+      token: owner,
+      body: { email: STRANGER, role: 'write' },
+    })
+    expect(again.status).toBe(200)
+    expect(again.json.members.find((one) => one.email === STRANGER)?.role).toBe('write')
+  })
+  test('an invitation that ran out holds no seat', async () => {
+    fillMembers(1)
+    await asked(STRANGER)
+    env.db.prepare('update space_members set expires_at = ? where email = ?').run(Date.now() - 1, STRANGER)
+    expect((await shareView()).json.seats).toEqual({ used: 9, most: 10 })
+    expect((await asked('tenth@example.com')).status).toBe(200)
+  })
+  test('counts the owner, members, invitations still open and guests let in, and nobody waiting', async () => {
+    expect((await shareView()).json.seats).toEqual({ used: 1, most: 10 })
+    await invite(WRITER, 'write')
+    await inviteLink(READER, 'read')
+    await guestAt('read')
+    const token = await shareLink('read', 'approval')
+    await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+    await call(env, `/v1/join/${token}`, { method: 'POST', body: { name: 'Wren' } })
+    expect((await shareView()).json.seats).toEqual({ used: 4, most: 10 })
+  })
+  test('an open link lets no account in when it is full', async () => {
     const token = await shareLink('write', 'open')
     fillMembers()
     const joined = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
     expect(joined.status).toBe(409)
-    expect(joined.json.error).toBe('that is as many people as one space holds')
-    expect((await shareView()).json.members).toHaveLength(MOST_MEMBERS)
+    expect(joined.json.error).toBe(FULL)
+    expect((await shareView()).json.members).toHaveLength(MOST_IN_A_SPACE - 1)
+  })
+  test('an open link lets no guest in when it is full, and keeps no guest for it', async () => {
+    const token = await shareLink('read', 'open')
+    fillMembers()
+    const guestsBefore = (env.db.prepare('select count(*) as n from guests').get() as { n: number }).n
+    const joined = await call(env, `/v1/join/${token}`, { method: 'POST', body: { device: 'Windows' } })
+    expect(joined.status).toBe(409)
+    expect(joined.json.error).toBe(FULL)
+    expect((env.db.prepare('select count(*) as n from guests').get() as { n: number }).n).toBe(guestsBefore)
   })
   test('somebody already in is still let in when it is full', async () => {
     const token = await shareLink('read', 'open')
@@ -824,49 +883,39 @@ describe('as many people as one space holds', () => {
     expect(joined.status).toBe(200)
     expect(joined.json.space.role).toBe('write')
   })
-  function held(table: 'space_members' | 'space_requests'): number {
-    const row = env.db.prepare(`select count(*) as n from ${table} where space_id = ?`).get(space) as { n: number }
-    return row.n
-  }
   test('lets nobody in past it when somebody else got in just before', async () => {
     const token = await shareLink('read', 'open')
     fillMembers(1)
     env.justBefore(/insert into space_members/, () => {
       env.db
-        .prepare('insert into space_members (space_id, email, role, created_at) values (?, ?, ?, ?)')
-        .run(space, 'quicker@example.com', 'read', Date.now())
+        .prepare('insert into space_members (space_id, email, role, joined_at, created_at) values (?, ?, ?, ?, ?)')
+        .run(space, 'quicker@example.com', 'read', Date.now(), Date.now())
     })
     const joined = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
     expect(joined.status).toBe(409)
-    expect(held('space_members')).toBe(MOST_MEMBERS)
+    expect(held('space_members')).toBe(MOST_IN_A_SPACE - 1)
   })
   test('writes no more invitations than it holds when many are sent at once', async () => {
     fillMembers(1)
-    const answers = await Promise.all(
-      [0, 1, 2, 3].map((one) =>
-        call(env, `/v1/spaces/${space}/share/invite`, {
-          token: owner,
-          body: { email: `asked${one}@example.com`, role: 'read' },
-        }),
-      ),
-    )
-    expect(held('space_members')).toBe(MOST_MEMBERS)
+    const answers = await Promise.all([0, 1, 2, 3].map((one) => asked(`asked${one}@example.com`)))
+    expect(held('space_members')).toBe(MOST_IN_A_SPACE - 1)
     expect(answers.filter((one) => one.status === 409)).toHaveLength(3)
   })
-  test('lets nobody waiting in once it is full', async () => {
+  test('lets somebody wait when it is full, and refuses them only when they would be let in', async () => {
     const token = await shareLink('read', 'approval')
-    const asked = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
-    expect(asked.json.waiting).toBe(true)
     fillMembers()
+    const waiting = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+    expect(waiting.json.waiting).toBe(true)
     const admitted = await call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, {
       method: 'POST',
       token: owner,
     })
     expect(admitted.status).toBe(409)
-    expect(admitted.json.error).toBe('that is as many people as one space holds')
-    expect(held('space_members')).toBe(MOST_MEMBERS)
+    expect(admitted.json.error).toBe(FULL)
+    expect(held('space_members')).toBe(MOST_IN_A_SPACE - 1)
+    expect(held('space_requests')).toBe(1)
   })
-  test('keeps nobody waiting past it when somebody else asked just before', async () => {
+  test('keeps nobody waiting past what waits when somebody else asked just before', async () => {
     const token = await shareLink('read', 'approval')
     const at = Date.now()
     const ask = (email: string, when: number) =>
@@ -875,42 +924,31 @@ describe('as many people as one space holds', () => {
         .run(space, email, 'read', when)
     for (let one = 0; one < MOST_MEMBERS - 1; one++) ask(`waiting${one}@example.com`, at + one)
     env.justBefore(/insert into space_requests/, () => ask('quicker@example.com', at))
-    const asked = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
-    expect(asked.status).toBe(429)
+    const waited = await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })
+    expect(waited.status).toBe(429)
     expect(held('space_requests')).toBe(MOST_MEMBERS)
   })
-  test('lets no waiting guest in once guests fill it', async () => {
+  test('lets a guest wait when it is full, and no waiting guest in', async () => {
     const token = await shareLink('read', 'approval')
-    const asked = await call(env, `/v1/join/${token}`, { method: 'POST', body: { name: 'Wren' } })
-    expect(asked.json.waiting).toBe(true)
-    const guest = await guestOf(asked.json.token)
-    const long = Date.now() - 10 * 60_000
-    for (let one = 0; one < 200; one++) {
-      env.db
-        .prepare('insert into guests (id, name, created_at) values (?, ?, ?)')
-        .run(`filler-guest-${String(one)}`, 'Filler', long)
-      env.db
-        .prepare(
-          `insert into guest_members (space_id, guest_id, role, joined_at, created_at)
-           values (?, ?, 'read', ?, ?)`,
-        )
-        .run(space, `filler-guest-${String(one)}`, long, long)
-    }
+    fillGuests(MOST_IN_A_SPACE - 1)
+    const waiting = await call(env, `/v1/join/${token}`, { method: 'POST', body: { name: 'Wren' } })
+    expect(waiting.json.waiting).toBe(true)
+    const guest = await guestOf(waiting.json.token)
     const admitted = await call(env, `/v1/spaces/${space}/share/guests/${guest}`, {
       method: 'POST',
       token: owner,
     })
     expect(admitted.status).toBe(409)
-    expect(admitted.json.error).toBe('that is as many people as one space holds')
+    expect(admitted.json.error).toBe(FULL)
     const joined = env.db
       .prepare('select count(*) as n from guest_members where space_id = ? and joined_at is not null')
       .get(space) as { n: number }
-    expect(joined.n).toBe(200)
+    expect(joined.n).toBe(MOST_IN_A_SPACE - 1)
   })
   test('leaves a guest out who is declined just as they are let in elsewhere', async () => {
     const token = await shareLink('read', 'approval')
-    const asked = await call(env, `/v1/join/${token}`, { method: 'POST', body: { name: 'Wren' } })
-    const guest = await guestOf(asked.json.token)
+    const waiting = await call(env, `/v1/join/${token}`, { method: 'POST', body: { name: 'Wren' } })
+    const guest = await guestOf(waiting.json.token)
     env.justBefore(/update guest_members set declined_at/, () =>
       env.db.prepare('update guest_members set joined_at = ? where guest_id = ?').run(Date.now(), guest),
     )
@@ -921,18 +959,7 @@ describe('as many people as one space holds', () => {
   })
   test('lets in no more guests than it holds when many come at once', async () => {
     const token = await shareLink('read', 'open')
-    const long = Date.now() - 10 * 60_000
-    for (let one = 0; one < 199; one++) {
-      env.db
-        .prepare('insert into guests (id, name, created_at) values (?, ?, ?)')
-        .run(`filler-guest-${String(one)}`, 'Filler', long)
-      env.db
-        .prepare(
-          `insert into guest_members (space_id, guest_id, role, joined_at, created_at)
-           values (?, ?, 'read', ?, ?)`,
-        )
-        .run(space, `filler-guest-${String(one)}`, long, long)
-    }
+    fillGuests(MOST_IN_A_SPACE - 2)
     const guestsBefore = (env.db.prepare('select count(*) as n from guests').get() as { n: number }).n
     const answers = await Promise.all(
       [0, 1, 2].map(() => call(env, `/v1/join/${token}`, { method: 'POST', body: { device: 'Windows' } })),
@@ -940,10 +967,54 @@ describe('as many people as one space holds', () => {
     const joined = env.db
       .prepare('select count(*) as n from guest_members where space_id = ? and joined_at is not null')
       .get(space) as { n: number }
-    expect(joined.n).toBe(200)
-    expect(answers.filter((one) => one.status === 429)).toHaveLength(2)
+    expect(joined.n).toBe(MOST_IN_A_SPACE - 1)
+    expect(answers.filter((one) => one.status === 409)).toHaveLength(2)
     const guestsAfter = (env.db.prepare('select count(*) as n from guests').get() as { n: number }).n
     expect(guestsAfter - guestsBefore).toBe(1)
+  })
+  test('does not count a note shared on its own, and lets a full space share its notes', async () => {
+    fillMembers()
+    for (let one = 0; one < 12; one++) {
+      const link = await invitation(env, owner, space, `reader${one}@example.com`, 'read', note)
+      expect(link).toMatch(/^[a-f0-9]+$/)
+    }
+    const view = await call<ShareView>(env, `/v1/spaces/${space}/share?item=${note}`, { token: owner })
+    expect(view.json.members).toHaveLength(12)
+    expect(view.json.seats).toBeNull()
+    expect((await shareView()).json.seats).toEqual({ used: 10, most: 10 })
+  })
+  test('a space that held more before keeps them all, and takes nobody new until there is a seat', async () => {
+    fillMembers(0)
+    fillMembers(-3, MOST_IN_A_SPACE - 1)
+    const view = await shareView()
+    expect(view.json.members).toHaveLength(12)
+    expect(view.json.seats).toEqual({ used: 13, most: 10 })
+    expect((await asked(STRANGER)).status).toBe(409)
+    for (const one of [0, 1, 2, 3]) {
+      await call(env, `/v1/spaces/${space}/share/members/filler${one}@example.com`, {
+        method: 'DELETE',
+        token: owner,
+      })
+    }
+    expect((await shareView()).json.seats).toEqual({ used: 9, most: 10 })
+    expect((await asked(STRANGER)).status).toBe(200)
+  })
+})
+describe('as many people as one note holds', () => {
+  test('is far more than a space, and counted apart from it', async () => {
+    const at = Date.now()
+    for (let one = 0; one < MOST_MEMBERS; one++) {
+      env.db
+        .prepare('insert into space_members (space_id, email, item, role, created_at) values (?, ?, ?, ?, ?)')
+        .run(space, `filler${one}@example.com`, note, 'read', at + one)
+    }
+    const response = await call(env, `/v1/spaces/${space}/share/invite?item=${note}`, {
+      token: owner,
+      body: { email: STRANGER, role: 'read' },
+    })
+    expect(response.status).toBe(409)
+    expect(response.json.error).toBe('that is as many people as one space holds')
+    expect((await shareView()).json.seats).toEqual({ used: 1, most: 10 })
   })
 })
 describe('a share link', () => {

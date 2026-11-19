@@ -180,6 +180,7 @@ export interface ShareView {
     at: number
   }[]
   link: { url: string; role: string; mode: string } | null
+  seats: { used: number; most: number } | null
   mailed: boolean
   error: string
 }
