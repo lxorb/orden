@@ -24,6 +24,7 @@ pub struct Frame {
     pub pane: Bounds,
 }
 const SAME: f64 = 0.5;
+pub const FOLLOWS_THE_WINDOW: bool = cfg!(target_os = "macos");
 fn along(
     hole: (f64, f64),
     pane: (f64, f64),
@@ -90,7 +91,7 @@ pub fn placed(
     frame: Option<Frame>,
     shown: bool,
 ) -> Bounds {
-    let Some(frame) = frame.filter(|_| shown) else {
+    let Some(frame) = frame.filter(|_| shown && FOLLOWS_THE_WINDOW) else {
         unfollow(label);
         return hole;
     };
@@ -126,6 +127,9 @@ fn rect_of((left, top, width, height): (i32, i32, u32, u32)) -> Rect {
     }
 }
 pub fn heard(window: &Window, event: &WindowEvent) {
+    if !FOLLOWS_THE_WINDOW {
+        return;
+    }
     let (now, scale) = match event {
         WindowEvent::Resized(_) => {
             let Ok(scale) = crate::page_scale::of(window) else {
@@ -159,7 +163,7 @@ pub fn heard(window: &Window, event: &WindowEvent) {
 }
 #[cfg(test)]
 mod tests {
-    use super::{edges, extent, fitted, Bounds, Extent, Frame};
+    use super::{edges, extent, fitted, Bounds, Extent, Frame, FOLLOWS_THE_WINDOW};
 
     fn near(found: Bounds, wanted: Bounds) {
         let off = [
@@ -180,6 +184,10 @@ mod tests {
         let area = at(240.0, 36.0, 960.0, 724.0);
         let frame = Frame { window: size(1200.0, 800.0), area, pane: area };
         (at(240.0, 76.0, 960.0, 684.0), frame)
+    }
+    #[test]
+    fn only_a_mac_moves_a_page_ahead_of_the_app_s_own_layout() {
+        assert_eq!(FOLLOWS_THE_WINDOW, cfg!(target_os = "macos"));
     }
     #[test]
     fn the_same_size_is_the_same_place() {
