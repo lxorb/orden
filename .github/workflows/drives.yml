@@ -77,7 +77,7 @@ jobs:
         run: |
           python3 -m pip install --quiet --break-system-packages playwright pillow
           python3 -m playwright install --with-deps chromium webkit
-          sudo apt-get install -y --no-install-recommends fonts-noto-core
+          bash scripts/ci-apt.sh --no-install-recommends fonts-noto-core
 
       - name: Drives
         env:

@@ -44,8 +44,7 @@ runs:
       if: runner.os == 'Linux'
       shell: bash
       run: |
-        sudo apt-get update
-        sudo apt-get install -y libgtk-4-dev libdbus-1-dev libnss3 cmake ninja-build patchelf xdg-utils squashfs-tools
+        bash scripts/ci-apt.sh libgtk-4-dev libdbus-1-dev libnss3 cmake ninja-build patchelf xdg-utils squashfs-tools
 
     - name: The CEF distribution
       if: runner.os != 'macOS'

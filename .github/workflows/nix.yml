@@ -244,8 +244,7 @@ jobs:
 
       - name: sway, Xwayland and the tools that look at them
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends sway xwayland grim jq
+          bash scripts/ci-apt.sh --no-install-recommends sway xwayland grim jq
 
       - name: A plugin path full of strangers, and GStreamer's own inspector
         if: steps.build.outputs.engine == 'webkit'
