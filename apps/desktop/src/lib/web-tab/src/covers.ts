@@ -13,7 +13,6 @@ export interface Layer {
   box: Rect
   radius: number
   scrim: boolean
-  notice?: boolean
   node?: Element
 }
 
@@ -68,23 +67,6 @@ export function settled(cut: Cut | null, pictured: boolean, cuts: boolean): Cut 
   return cut?.all && (pictured || !cuts) ? ALL : cut
 }
 
-const LEFT = 0.5
-
-export function clearOf(hole: Rect, layers: readonly Layer[]): { box: Rect; layers: Layer[] } {
-  const notices = layers.filter(
-    (one) => one.notice && one.box.width > 0 && one.box.height > 0 && meets(one.box, hole),
-  )
-  if (notices.length === 0) return { box: hole, layers: [...layers] }
-
-  const top = notices.map((one) => one.box.y).reduce((low, one) => Math.min(low, one), Infinity)
-  const height = Math.floor(top - hole.y)
-  if (height < hole.height * LEFT) return { box: hole, layers: [...layers] }
-  return {
-    box: { ...hole, height },
-    layers: layers.filter((one) => !notices.includes(one)),
-  }
-}
-
 export function boxOf(node: Element): Rect {
   const box = node.getBoundingClientRect()
   return { x: box.x, y: box.y, width: box.width, height: box.height }
@@ -104,7 +86,6 @@ export function layersOver(hole: HTMLElement): Layer[] {
       box: boxOf(node),
       radius: scrim ? 0 : parseFloat(getComputedStyle(node).borderTopLeftRadius) || 0,
       scrim,
-      notice: node.matches(CARDS),
       node,
     })
   }

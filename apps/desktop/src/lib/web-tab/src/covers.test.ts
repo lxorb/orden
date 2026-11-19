@@ -3,7 +3,6 @@ import { describe, expect, test } from 'vitest'
 import {
   ALL,
   bringsLayer,
-  clearOf,
   cutOf,
   layersOver,
   noticeRows,
@@ -82,7 +81,6 @@ describe("the notices row's cards", () => {
     const found = layersOver(hole)
     expect(found.map((one) => one.node)).toEqual([toast])
     expect(found[0]?.scrim).toBe(false)
-    expect(found[0]?.notice).toBe(true)
     expect(found.some((one) => one.node === notices)).toBe(false)
   })
 
@@ -125,38 +123,14 @@ describe("a swipe's arrow over a page", () => {
   })
 })
 
-describe('a page on an engine that cannot cut, over the notices', () => {
-  function notice(x: number, y: number, width: number, height: number): Layer {
-    return { ...float(x, y, width, height), notice: true }
-  }
-
-  test('ends above the notices, and is cut by nothing', () => {
-    const clear = clearOf(PAGE, [notice(850, 640, 330, 52)])
-    expect(clear.box).toEqual({ x: 300, y: 100, width: 900, height: 540 })
-    expect(cutOf(clear.box, clear.layers)).toBeNull()
-  })
-
-  test('above the highest of them', () => {
-    const clear = clearOf(PAGE, [notice(850, 640, 330, 52), notice(600, 620.6, 200, 72)])
-    expect(clear.box.height).toBe(520)
-  })
-
-  test('and a menu over it at the same time is still a layer over the page', () => {
-    const menu = float(400, 150, 220, 300)
-    const clear = clearOf(PAGE, [notice(850, 640, 330, 52), menu])
-    expect(clear.layers).toEqual([menu])
-    expect(cutOf(clear.box, clear.layers)?.hollows).toHaveLength(1)
-  })
-
-  test('a notice beside the page leaves the page its whole height', () => {
-    expect(clearOf(PAGE, [notice(20, 640, 240, 52)]).box).toEqual(PAGE)
-  })
-
-  test('notices that would leave less than half of it are layers like any other', () => {
-    const tall = notice(850, 300, 330, 380)
-    const clear = clearOf(PAGE, [tall])
-    expect(clear.box).toEqual(PAGE)
-    expect(clear.layers).toEqual([tall])
+describe('a page over the notices', () => {
+  test('keeps its whole box and is cut round each card alone', () => {
+    const cut = cutOf(PAGE, [float(850, 640, 330, 52), float(600, 620.6, 200, 72)])
+    expect(cut?.all).toBe(false)
+    expect(cut?.hollows).toEqual([
+      { x: 550, y: 540, width: 330, height: 52, radius: 8 },
+      { x: 300, y: 520.6, width: 200, height: 72, radius: 8 },
+    ])
   })
 })
 

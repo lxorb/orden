@@ -34,7 +34,6 @@
     ALL,
     boxOf,
     settled,
-    clearOf,
     cutOf,
     layersOver,
     moving,
@@ -107,8 +106,7 @@
     if (strangerOver(hole)) return { box, cut: ALL }
     const layers = layersOver(hole)
     watchLayers(layers)
-    const clear = pages.cuts ? { box, layers } : clearOf(box, layers)
-    return { box: clear.box, cut: cutOf(clear.box, clear.layers) }
+    return { box, cut: cutOf(box, layers) }
   }
 
   let watched: Element[] = []
