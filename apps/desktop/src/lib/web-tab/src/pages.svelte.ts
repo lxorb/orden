@@ -35,6 +35,7 @@ const LOOK_WAITS = 500
 const SHOT_WAITS = 300
 const COVER_HIDES = 5000
 const DRAWN_AWAY = 120
+const FRESH_EVERY = 200
 const ARRIVES = 3000
 export interface Rect {
   x: number
@@ -430,13 +431,17 @@ class Pages {
     }
     if (covering && page.live && cutsOut(page.layering, over.cut)) {
       await this.cover(tabId, page, pane, over)
+      if (over.cut?.all) void this.keepFresh(tabId, page, () => page.placings === turn)
       return
     }
     if (covering) await this.shoot(tabId)
     if (page.placings !== turn) return
     if (covering && goesAway(page.layering) && (page.shown || page.stowed)) {
       if (!page.stowed) await this.put(tabId, page, awayFrom(pane))
-      if (over.cut?.all) page.stowing = setTimeout(() => void this.stow(tabId, page, pane, turn), COVER_HIDES)
+      if (over.cut?.all) {
+        page.stowing = setTimeout(() => void this.stow(tabId, page, pane, turn), COVER_HIDES)
+        void this.keepFresh(tabId, page, () => page.placings === turn && !page.stowed)
+      }
       return
     }
     if (visible && page.stowed) {
@@ -452,6 +457,14 @@ class Pages {
       cut: null,
       corner: over.corner,
     })
+  }
+  private async keepFresh(tabId: string, page: Page, going: () => boolean): Promise<void> {
+    const until = Date.now() + COVER_HIDES
+    while (Date.now() < until) {
+      await new Promise<void>((go) => setTimeout(go, FRESH_EVERY))
+      if (!going() || !page.live || this.held.get(tabId) !== page) return
+      await this.retake(tabId, page)
+    }
   }
   private async stow(tabId: string, page: Page, pane: Rect, turn: number): Promise<void> {
     if (page.placings !== turn) return
@@ -540,6 +553,7 @@ class Pages {
           ? awayFrom(at.pane)
           : { ...at, visible: false },
     )
+    if (goesAway(page.layering)) void this.keepFresh(tabId, page, () => this.still && page.heldAt === at)
   }
   async letGo(): Promise<void> {
     this.still = false
@@ -653,6 +667,9 @@ class Pages {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live || !page.shown) return
     if (page.shot && Date.now() - page.shotAt < SHOT_KEEPS) return
+    await this.retake(tabId, page)
+  }
+  private async retake(tabId: string, page: Page): Promise<void> {
     if (page.shooting) return page.shooting
     const taking = this.photograph(page, tabId)
     page.shooting = taking
@@ -672,8 +689,10 @@ class Pages {
     const { url, pane, shotAt } = page
     const same = (now: Rect | null) => now?.width === pane?.width && now?.height === pane?.height
     const asked = invoke<string | null>('web_shot', { tab: tabId })
+    const standing = page.shot !== null
     void asked.then(
-      (said) => {
+      async (said) => {
+        if (said && standing) await decoded(said)
         if (said && page.shotAt === shotAt && page.url === url && same(page.pane)) {
           page.shot = said
           page.shotAt = Date.now()
@@ -1018,6 +1037,12 @@ providePort('web.pages', {
 })
 export const MARKS = 'orden:favicons'
 export const MARK = 'orden:favicon:'
+async function decoded(picture: string): Promise<void> {
+  if (typeof Image !== 'function') return
+  const one = new Image()
+  one.src = picture
+  await one.decode().catch(() => undefined)
+}
 export function drawable(picture: string): boolean {
   return picture.length <= 22 * 1024 && /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+=*$/i.test(picture)
 }
