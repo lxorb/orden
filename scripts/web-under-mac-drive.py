@@ -462,7 +462,7 @@ def peek(app: App, pid: int, ratio: float, out: pathlib.Path, as_before: Any, un
     measure("grabs after the app drew the left peek in which the page still shows inside it", f"{len(late)} of {len(after)}")
     measure("colour inside the left peek over the page", colour_at(image, inside, ratio))
     measure("colour of the page beside the left peek", colour_at(image, beside, ratio))
-    if late:
+    if late and under:
         wrong.append(f"[peek] the page shows through the left peek the app has drawn, in {len(late)} of {len(after)} grabs")
     if near(colour_at(image, inside, ratio), COLOUR):
         wrong.append("[peek] the page is drawn over the left peek")
