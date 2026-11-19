@@ -40,7 +40,8 @@ export {
   TITLE_CHARS,
 } from '@orden/markdown/note-name'
 export { isVault, onDisk } from './on-disk'
-export { filledIn, meet, readSpaces, withOrWithout, without } from './records'
+export { filledIn, meet, readSpaces, spacesOf, withOrWithout, without } from './records'
+export { Kept, merged } from './kept.svelte'
 export type { Folded, Folding } from './records'
 export {
   askCase,
