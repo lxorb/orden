@@ -1,6 +1,7 @@
 mod bin;
 pub mod changes;
 pub mod jobs;
+pub mod kinds;
 pub mod listing;
 pub mod reach;
 pub mod watch;

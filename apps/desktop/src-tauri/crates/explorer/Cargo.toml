@@ -10,22 +10,37 @@ publish = false
 workspace = true
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-orden-apps = { path = "../apps" }
 orden-base = { path = "../base" }
 tauri.workspace = true
 tauri-plugin-opener.workspace = true
 serde.workspace = true
 notify.workspace = true
+base64.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+dirs.workspace = true
 
 [target.'cfg(any(target_os = "linux", target_os = "windows"))'.dependencies]
+png.workspace = true
 trash.workspace = true
 
 [target.'cfg(target_os = "macos")'.dependencies]
+objc2.workspace = true
+objc2-app-kit.workspace = true
 objc2-foundation.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
-windows = { workspace = true, features = ["Win32_Storage_FileSystem"] }
+windows = { workspace = true, features = [
+  "Win32_Foundation",
+  "Win32_Graphics_Gdi",
+  "Win32_Storage_FileSystem",
+  "Win32_System_Com",
+  "Win32_UI_Controls",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
+] }
 
 [dev-dependencies]
 orden-base = { path = "../base", features = ["testing"] }
+png.workspace = true
 tempfile.workspace = true
