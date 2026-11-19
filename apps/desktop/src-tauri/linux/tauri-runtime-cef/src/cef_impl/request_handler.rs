@@ -222,9 +222,6 @@ wrap_with_args! {
       error_code: ::std::os::raw::c_int,
       error_string: Option<&CefString>,
     ) {
-      if let Some(browser) = browser.as_deref() {
-        crate::webview::clear_ground_again(browser, true);
-      }
       let mut frame = browser.as_ref().and_then(|browser| browser.main_frame());
       crate::frame::emit_frame_event(&self.frame_event_handler, browser, frame.as_mut(), crate::FrameEventKind::RendererTerminated);
       if let Some(handler) = &self.web_content_process_terminate_handler {
