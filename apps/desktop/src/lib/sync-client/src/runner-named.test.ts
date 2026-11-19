@@ -33,6 +33,7 @@ const open = runner as unknown as Open
 function engineWith(root: string) {
   const space = { id: 's1', row: { root, role: 'owner' } }
   return {
+    waiting: () => false,
     core: {
       spaces: new Map([['s1', space]]),
       rootMoved: (_id: string, to: string) => {

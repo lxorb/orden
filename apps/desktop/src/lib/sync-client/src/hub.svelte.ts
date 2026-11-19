@@ -1,6 +1,6 @@
 import { DEVICE_PROTOCOL, shutOut, TOKEN_PROTOCOL } from '@orden/sync-core'
 import { untrack } from 'svelte'
-import { BEAT_EVERY, roomDelay, heldForLife } from '../../platform/src/api'
+import { BEAT_EVERY, linkDelay, heldForLife, roomDelay } from '../../platform/src/api'
 import { madeDeviceId } from './made-device'
 import { account, invoke, isDesktop, platform, remote } from './ports'
 import { BEAT, DEVICE, readHubFrame, type FromDevice, type FromHub, type HubFrame, type HubType } from './hub-frames'
@@ -255,16 +255,20 @@ export class Hub {
     void account()
       .recheck()
       .then(() => {
-        if (token && this.token === token && account().token === token) this.again()
+        if (token && this.token === token && account().token === token) this.again(true)
       })
   }
-  private again(): void {
+  private again(shut = false): void {
     if (!this.token || this.retry) return
     this.tries++
-    this.retry = setTimeout(() => {
-      this.retry = undefined
-      this.connect()
-    }, roomDelay(this.tries))
+    const hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden'
+    this.retry = setTimeout(
+      () => {
+        this.retry = undefined
+        this.connect()
+      },
+      shut ? roomDelay(this.tries) : linkDelay(this.tries, hidden),
+    )
   }
   private drop(): void {
     clearTimeout(this.retry)

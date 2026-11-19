@@ -74,6 +74,7 @@ import {
 } from './local'
 import { deviceOfSyncStore, forgetSyncStore, get, openSyncStore, put, remove } from './store'
 import { eachDue, reachable, sentAll } from './rounds'
+import { Cadence, FALLBACK, NUDGE, nextPassIn } from './cadence'
 import { pairsFromV1 } from './v1-pairs'
 import { usage } from '../../accounts/src/api'
 import { forgetAccount, leaveSpaces } from '../../left-spaces/src/api'
@@ -84,9 +85,6 @@ const ASKS_AT_MOST = 30_000
 const ASK_ALIVE_EVERY = 10_000
 const ASK_LONGEST = 10 * 60_000
 const SIGN_OUT_WAITS = 10_000
-const NUDGE = 2_000
-const FALLBACK = 30_000
-const HIDDEN_FALLBACK = 5 * 60_000
 const FIRST = 'first:'
 function v1Spaces(accountId: string): Map<string, V1Space> {
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read once by the first pass; nothing renders from it
@@ -127,8 +125,12 @@ class Runner {
   private stops: (() => void)[] = []
   private due = new Set<string>()
   private readonly full = new Set<string>()
-  private passing_: Promise<void> | null = null
-  private timer: ReturnType<typeof setTimeout> | undefined
+  private readonly cadence = new Cadence({
+    run: () => this.run(),
+    owed: () => this.current !== null && this.due.size > 0,
+    fire: () => this.kick(),
+    next: () => this.nextPassIn(),
+  })
   private quiet = 0
   private reconciledAt = 0
   private readonly own = new Set<string>()
@@ -336,7 +338,7 @@ class Runner {
             if (!tree || !samePath(tree.path, root)) return null
             return folder ? (workspace().entryAt(joinPath(root, folder))?.children ?? null) : tree.children
           },
-          () => this.nudge(),
+          () => this.push(),
         ),
       ),
     )
@@ -354,7 +356,7 @@ class Runner {
       const watched = await watchFolders({
         engine,
         ready: (id) => this.firsts.has(id),
-        changed: () => this.nudge(),
+        changed: (tree) => (tree ? this.push() : this.nudge()),
         moved: (from, to, kind) => this.telling.moved(from, to, kind),
       })
       this.watched = watched
@@ -398,7 +400,7 @@ class Runner {
       const watched = await watchFolders({
         engine,
         ready: (id) => this.firsts.has(id),
-        changed: () => this.nudge(),
+        changed: (tree) => (tree ? this.push() : this.nudge()),
         moved: (from, to, kind) => this.telling.moved(from, to, kind),
       })
       this.watched = watched
@@ -450,7 +452,7 @@ class Runner {
     usage.syncFull(false)
     for (const one of this.bound.values()) one.part()
     this.bound.clear()
-    clearTimeout(this.timer)
+    this.cadence.stop()
     clearTimeout(this.trimTimer)
     this.awayPaths.clear()
     keptAway.clear()
@@ -651,7 +653,7 @@ class Runner {
     if (!isNative()) await forgetIndex(accountId)
   }
   get passing(): boolean {
-    return this.passing_ !== null
+    return this.cadence.running !== null
   }
   async passNow(): Promise<boolean> {
     if (!this.current) {
@@ -659,7 +661,7 @@ class Runner {
     }
     const before = this.lastSyncedAt
     this.kick()
-    await this.passing_
+    await this.cadence.running
     return this.lastSyncedAt !== before
   }
   kick(space?: string) {
@@ -668,16 +670,21 @@ class Runner {
       if (this.accountId) this.say('sync-kick', { space })
       return
     }
-    if (space) {
-      if (engine.core.spaces.has(space)) this.due.add(space)
+    if (space && engine.core.spaces.has(space)) {
+      this.due.add(space)
     } else {
       for (const id of engine.core.spaces.keys()) this.due.add(id)
       this.due.add('')
     }
-    this.passing_ ??= this.run().finally(() => {
-      this.passing_ = null
-      this.schedule()
-    })
+    this.cadence.go()
+  }
+  push() {
+    if (!this.current) {
+      if (this.accountId) this.say('sync-kick', {})
+      return
+    }
+    this.quiet = 0
+    this.kick()
   }
   nudge() {
     if (!this.current) {
@@ -685,24 +692,19 @@ class Runner {
       return
     }
     this.quiet = 0
-    clearTimeout(this.timer)
-    this.timer = setTimeout(() => this.kick(), NUDGE)
+    this.cadence.in(NUDGE)
   }
-  private schedule() {
+  private nextPassIn(): number | null {
     const engine = this.current
-    if (!engine) return
-    clearTimeout(this.timer)
-    const waiting = [...engine.core.spaces.keys()].some((id) => engine.waiting(id))
-    const delay = waiting
-      ? NUDGE
-      : this.local
-        ? HIDDEN_FALLBACK
-        : hub.state === 'open'
-          ? document.hidden
-            ? HIDDEN_FALLBACK
-            : FALLBACK
-          : pollDelay(this.quiet, document.hidden)
-    this.timer = setTimeout(() => this.kick(), delay)
+    if (!engine) return null
+    return nextPassIn({
+      waiting: [...engine.core.spaces.keys()].some((id) => engine.waiting(id)),
+      local: this.local,
+      hubOpen: hub.state === 'open',
+      hidden: typeof document !== 'undefined' && document.hidden,
+      online: this.status === 'idle',
+      quiet: this.quiet,
+    })
   }
   private async run(): Promise<void> {
     const engine = this.current
@@ -963,7 +965,7 @@ class Runner {
     } finally {
       await this.awayHeard(engine, false)
     }
-    this.nudge()
+    this.push()
   }
   private awayPaths = new Map<string, string>()
   private awayOwed = false
@@ -1077,7 +1079,7 @@ class Runner {
       } else if (op.kind !== 'space') {
         await engine.removed(op.path, op.back)
       }
-      this.nudge()
+      this.push()
     })()
     return done.catch((error: unknown) => {
       log('error', `sync: ${op.op} - ${String(error)}`)
@@ -1433,7 +1435,8 @@ class Runner {
     } else {
       await takeOwed(engine, item, (op) => this.follow(op))
     }
-    this.nudge()
+    if (what.kind === 'wrote') this.nudge()
+    else this.push()
   }
   private async answering(said: Said): Promise<unknown> {
     const args = (said.args ?? {}) as { path?: string; root?: string }

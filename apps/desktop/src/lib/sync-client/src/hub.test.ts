@@ -172,6 +172,17 @@ describe('a device’s hub socket', () => {
     account.token = null
     asked.mockRestore()
   })
+  test('dropped again and again while the window is in sight, tries again within a few seconds (#2280)', async () => {
+    const hub = new Hub(world())
+    hub.follow('token-1')
+    for (let turn = 0; turn < 10; turn++) {
+      const socket = await open()
+      socket.events.closed(1006)
+      await vi.advanceTimersByTimeAsync(6_500)
+      expect(sockets).toHaveLength(turn + 2)
+    }
+    hub.follow(null)
+  })
   test('waits longer each time it is shut out again while the session still holds', async () => {
     const asked = vi.spyOn(account, 'recheck').mockResolvedValue(undefined)
     account.token = 'token-1'
