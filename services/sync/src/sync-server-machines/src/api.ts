@@ -1,7 +1,4 @@
 export { aiVault } from './ai/vault'
-export { appCatalogues } from './apps/catalogue'
-export { appsDoor } from './apps/door'
-export { appIce } from './apps/ice'
 export { AppRelay } from './apps/relay'
 export { ask } from './ask'
 export { onlineAdmin } from './machines/admin'

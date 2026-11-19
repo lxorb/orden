@@ -90,9 +90,6 @@ import {
   sweepAudit,
   machineBundle,
   onlineDoor,
-  appCatalogues,
-  appsDoor,
-  appIce,
   isMachineHost,
   machineDomain,
   online,
@@ -143,7 +140,6 @@ app.route('/rooms', rooms)
 app.route('/v2/hub', hubDoor)
 app.route('/v2/chats', chatDoor)
 app.route('/v2/online', onlineDoor)
-app.route('/v2/apps', appsDoor)
 app.route('/v2/online/machine', machineBundle)
 app.route('/v1/join', join)
 app.route('/v1/account/left', left)
@@ -246,8 +242,6 @@ app.route('/v1/second', second)
 app.route('/v1/account', account)
 app.route('/v1', notes)
 app.route('/v2/devices', devices)
-app.route('/v2/apps/catalogue', appCatalogues)
-app.route('/v2/apps/ice', appIce)
 app.route('/v2/ai', aiVault)
 app.route('/v2/pass', pass)
 app.route('/v2/spaces', v2Spaces)

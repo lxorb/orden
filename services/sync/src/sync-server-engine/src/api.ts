@@ -1,5 +1,5 @@
 export { eraseAccount, finishErasing } from './erase'
-export { deviceOfSession, devices, devicesEnded } from './hub/devices'
+export { devices, devicesEnded } from './hub/devices'
 export { hubDoor } from './hub/door'
 export { DEVICE } from './hub/frames'
 export { AccountHub } from './hub/hub'

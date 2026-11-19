@@ -72,7 +72,7 @@ export {
   within,
 } from './limits'
 export { deviceName } from './locks/device-name'
-export { type Holder, SocketLock } from './locks/sockets'
+export { SocketLock } from './locks/sockets'
 export { OPEN_HEADER, openAnswer, openIn, sweepOpened, WRITTEN_HEADER } from './opened'
 export { bytesOf, digest, hexOf, opens } from './pairing'
 export { LONGEST_PATH, staysInside } from './paths'
