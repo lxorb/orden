@@ -208,7 +208,7 @@ fn a_store_name_is_one_plain_folder_with_a_known_prefix() {
 #[test]
 fn the_app_s_own_hosts_are_no_web_page() {
     for host in
-        ["tauri.localhost", "ipc.localhost", "asset.localhost", "nib.localhost", "TAURI.localhost."]
+        ["tauri.localhost", "ipc.localhost", "asset.localhost", "IPC.localhost", "TAURI.localhost."]
     {
         assert!(app_host(host), "{host}");
     }
@@ -334,7 +334,7 @@ fn the_settings_switch_the_engine_s_swipe_off_on_every_desktop() {
     assert!(settings.switches.contains(&(switch.to_owned(), Some(value.to_owned()))));
     assert_eq!(settings.sandbox, SandboxPolicy::Auto);
     assert_eq!(settings.remote_debugging, None);
-    assert_eq!(settings.deep_link_schemes, ["orden", "nib"]);
+    assert_eq!(settings.deep_link_schemes, ["orden"]);
     let bars = overlay_scrollbars();
     assert_eq!(bars.is_some(), cfg!(any(target_os = "linux", windows)));
     assert_eq!(settings.enabled_features, bars.map(str::to_owned).into_iter().collect::<Vec<_>>());

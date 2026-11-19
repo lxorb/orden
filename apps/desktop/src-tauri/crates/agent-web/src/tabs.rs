@@ -367,7 +367,7 @@ mod tests {
         assert!(web_address("data:text/html,x").is_err());
         assert!(web_address("about:version").is_err());
         assert!(web_address("http://tauri.localhost/").is_err());
-        assert!(web_address("https://nib.localhost/").is_err());
+        assert!(web_address("https://ipc.localhost/").is_err());
         assert!(web_address("http://tauri.localhost./").is_err());
         assert!(web_address("about:blank").is_ok());
         assert_eq!(
