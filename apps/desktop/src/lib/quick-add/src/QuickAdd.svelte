@@ -18,7 +18,7 @@
   import type { Entry, Prefill } from './entry'
   import { carried, chosen, pastedLines, piecesOf, type Span, suggestions, tokenAt, without } from './field'
   import Glyph from './Glyph.svelte'
-  import { priorityTone } from '../../tasks-model/src/api'
+  import { priorityOf, priorityTone } from '../../tasks-model/src/api'
   import { dayWords, durationLabel } from './labels'
   import Picker from './Picker.svelte'
   import { type Ask, dayRows, durationRows, priorityRows, remindRows, tagRows } from './pickers'
@@ -535,7 +535,7 @@
         type="button"
         class="control"
         class:set={(fields.priority ?? 4) < 4}
-        style:color={priorityTone(fields.priority ?? 4)}
+        style:color={priorityTone(priorityOf(fields.priority))}
         onclick={askPriority}
         aria-label="Priority"
       >
