@@ -44,6 +44,13 @@ class Hush {
     this.sound = on
     this.changed({ chatSound: on })
   }
+  forget() {
+    this.keywords = []
+    this.hours = null
+    this.previews = true
+    this.sound = false
+    this.persist()
+  }
   receive(remote: AccountSettings) {
     this.took({
       keywords: remote.chatKeywords,
@@ -75,6 +82,7 @@ class Hush {
 }
 export const hush = /* @__PURE__ */ new Hush()
 heardElsewhere([KEY], () => hush.heard())
+account.forgetWithSession(() => hush.forget())
 export function dndUntil(): number | null {
   const status = account.user?.status
   if (!status?.quiet || !stands(status, Date.now())) return null

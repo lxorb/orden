@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 
 const saved = vi.hoisted(() => [] as Record<string, unknown>[])
-vi.mock('../../accounts/src/account.svelte', () => ({ account: { accountToken: 'token' } }))
+vi.mock('../../accounts/src/account.svelte', () => ({
+  account: { accountToken: 'token', forgetWithSession: () => undefined },
+}))
 vi.mock('../../accounts/src/client', () => ({
   api: {
     saveSettings: (_token: string, patch: Record<string, unknown>) => {

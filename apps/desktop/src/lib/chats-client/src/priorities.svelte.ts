@@ -10,6 +10,7 @@ import {
   suggestionAsk,
   suggestionIn,
 } from '@orden/chats/priority'
+import { account } from '../../accounts/src/api'
 import { heardElsewhere, isNumber, isRecord, isString, keepJson, stored } from '../../platform/src/api'
 
 const KEY = 'orden:chat-priorities'
@@ -72,6 +73,12 @@ export class Priorities {
     this.assigned = kept.assigned
     this.lessons = kept.lessons
     if (!this.drafting) this.suggestions = {}
+  }
+  forget(): void {
+    this.assigned = {}
+    this.lessons = []
+    this.suggestions = {}
+    this.keep()
   }
   useAsker(ask: () => Asker | null): void {
     this.ask = ask
@@ -146,3 +153,4 @@ export class Priorities {
 }
 export const priorities = new Priorities()
 heardElsewhere([KEY], () => priorities.restore())
+account.forgetWithSession(() => priorities.forget())
