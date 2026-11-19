@@ -8,8 +8,8 @@ const NOTES: Record<string, string> = {
   'Journal/Day.md': '# Day\n\n![[trips/cat.png]]\n',
 }
 const FILES = ['trips/cat.png', 'home/cat.png']
-vi.mock('./platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string) =>
     Promise.resolve(
       command === 'scan_links'
@@ -20,10 +20,10 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
         : undefined,
     ),
 }))
-const { links, notePicture } = await import('./link-index/src/api')
-const { startup } = await import('./launch/src/api')
-const { renderOptions } = await import('./export/src/context')
-const { withPictures } = await import('./reading/src/render')
+const { links, notePicture } = await import('./api')
+const { startup } = await import('../../launch/src/api')
+const { renderOptions } = await import('../../export/src/context')
+const { withPictures } = await import('../../reading/src/render')
 void startup.shown()
 await links.build(ROOT)
 const DAY = `${ROOT}/Journal/Day.md`

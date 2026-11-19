@@ -7,8 +7,8 @@ const NOTES: Record<string, string> = {
   'Projects/Beta/Beta.md': '# Beta\n\n![](cover.jpg)\n',
 }
 const FILES = ['Projects/Alpha/cover.jpg', 'Projects/Beta/cover.jpg']
-vi.mock('./platform/src/tauri', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./platform/src/tauri')>()),
+vi.mock('../../platform/src/tauri', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: (command: string) =>
     Promise.resolve(
       command === 'scan_links'
@@ -19,9 +19,9 @@ vi.mock('./platform/src/tauri', async (importOriginal) => ({
         : undefined,
     ),
 }))
-const { links, notePicture } = await import('./link-index/src/api')
-const { startup } = await import('./launch/src/api')
-const { renderOptions } = await import('./export/src/context')
+const { links, notePicture } = await import('./api')
+const { startup } = await import('../../launch/src/api')
+const { renderOptions } = await import('../../export/src/context')
 void startup.shown()
 await links.build(ROOT)
 describe('two folders that each keep a cover.jpg beside their note', () => {
