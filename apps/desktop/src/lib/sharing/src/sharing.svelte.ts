@@ -2,7 +2,9 @@ import {
   api,
   ApiError,
   type GivenRole,
+  readSeats,
   type RemoteSpace,
+  type Seats,
   type SharedItem,
   type Sharing,
   type SpaceRole,
@@ -253,6 +255,9 @@ export function addressesIn(typed: string): string[] {
   const keys = all.map((one) => one.toLowerCase())
   return all.filter((one, at) => keys.indexOf(one.toLowerCase()) === at)
 }
+export function isFull(seats: Seats | null): boolean {
+  return seats !== null && seats.used >= seats.most
+}
 export function looksLikeAddress(one: string): boolean {
   return /^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(one)
 }
@@ -270,6 +275,12 @@ class Share {
   wrongAddress = $state(false)
   get busy(): boolean {
     return this.working !== null
+  }
+  get seats(): Seats | null {
+    return this.item ? null : readSeats(this.who?.seats)
+  }
+  get full(): boolean {
+    return isFull(this.seats)
   }
   waiting(about: string): boolean {
     return this.working === about
@@ -302,12 +313,13 @@ class Share {
     this.open = false
   }
   async invite() {
+    if (this.full) return
     const addresses = addressesIn(this.email)
     if (!addresses.length) return
     this.wrongAddress = addresses.some((one) => !looksLikeAddress(one))
     if (this.wrongAddress) return
     const left = [...addresses]
-    while (left.length) {
+    while (left.length && !this.full) {
       const address = left[0] ?? ''
       const role = this.role
       if (

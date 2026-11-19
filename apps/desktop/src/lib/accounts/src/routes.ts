@@ -56,6 +56,11 @@ export interface Sharing {
   members: Member[]
   requests: JoinRequest[]
   link: ShareLink | null
+  seats?: Seats | null
+}
+export interface Seats {
+  used: number
+  most: number
 }
 export interface SharedItem {
   id: string

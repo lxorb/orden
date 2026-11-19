@@ -24,6 +24,7 @@
   const item = $derived(share.item)
   const subject = $derived(item ? shownName(nameOf(item.path)) : (share.space?.name ?? ''))
   const alreadyInTheSpace = $derived(!!share.space && isShared(share.space.root))
+  const seats = $derived(share.seats)
   type Waiting = Sharing['requests'][number]
   function name(person: Member | Waiting): string {
     return person.email ? called({ name: person.name, email: person.email }) : (person.name ?? '')
@@ -115,6 +116,7 @@
       <input
         data-lands
         bind:value={share.email}
+        disabled={share.full}
         oninput={() => (share.wrongAddress = false)}
         type="text"
         inputmode="email"
@@ -139,7 +141,7 @@
           class="send"
           aria-label="Invite"
           title="Invite"
-          disabled={share.busy}
+          disabled={share.busy || share.full}
           transition:scale={{ duration: dur(130), start: 0.6 }}
         >
           <svg viewBox="0 0 14 14"><path d="M2.5 7h9M7.6 3l4 4-4 4" /></svg>
@@ -149,6 +151,10 @@
 
     {#if share.wrongAddress}
       <p class="hint bad" transition:fade={{ duration: dur(130) }}>enter a valid email address</p>
+    {/if}
+
+    {#if share.full}
+      <p class="hint full">This space is full. Remove someone to invite more.</p>
     {/if}
 
     {#if !who}
@@ -186,7 +192,12 @@
         {/each}
       {/if}
 
-      <h3>Who has access</h3>
+      <div class="access">
+        <h3>Who has access</h3>
+        {#if seats}
+          <small class="seats">{seats.used} of {seats.most} places used</small>
+        {/if}
+      </div>
 
       <div class="row person">
         {@render face(faceOf(who.owner, called(who.owner)), pressFor(who.owner))}
@@ -348,6 +359,20 @@
   }
   .person {
     padding: var(--space-1) 0;
+  }
+  .access {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+  .seats {
+    flex: none;
+    font-size: var(--text-xs);
+    color: var(--muted);
+  }
+  .full {
+    padding-top: var(--space-1);
   }
   .worn {
     display: contents;

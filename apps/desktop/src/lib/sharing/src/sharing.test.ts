@@ -22,6 +22,7 @@ interface Who {
   members: (Held & { pending: boolean })[]
   requests: (Held & { at: number })[]
   link: { url: string; role: string; mode: string } | null
+  seats?: unknown
 }
 interface World {
   mirrors: Record<string, string>
@@ -927,6 +928,67 @@ describe('the Share sheet', () => {
     world.refuse = 'only the owner can do that'
     expect(await share.remove(member('ada@example.com'))).toBe(false)
     expect(share.error).toBe('only the owner can do that')
+  })
+})
+describe('the places in a shared space', () => {
+  beforeEach(() => {
+    world.mirrors = { Notes: 'space-1' }
+    world.notes = { 'Notes/plan.md': 'note-1' }
+    account.spaces = [remote('space-1', 'owner')]
+  })
+  test('are read as the server counted them', async () => {
+    world.sharing.seats = { used: 3, most: 10 }
+    await share.show(local('Notes'))
+    expect(share.seats).toEqual({ used: 3, most: 10 })
+    expect(share.full).toBe(false)
+  })
+  test('once all taken, leave the space full and nobody is invited', async () => {
+    world.sharing.seats = { used: 10, most: 10 }
+    await share.show(local('Notes'))
+    world.asked = []
+    share.email = 'ada@example.com'
+    await share.invite()
+    expect(share.full).toBe(true)
+    expect(world.asked).toEqual([])
+    expect(share.email).toBe('ada@example.com')
+  })
+  test('leave it full too when more are in than it holds', async () => {
+    world.sharing.seats = { used: 12, most: 10 }
+    await share.show(local('Notes'))
+    expect(share.full).toBe(true)
+  })
+  test('stop the invitations the moment the last one is taken', async () => {
+    world.sharing.seats = { used: 9, most: 10 }
+    await share.show(local('Notes'))
+    world.asked = []
+    world.sharing = { ...world.sharing, seats: { used: 10, most: 10 } }
+    share.email = 'ada@example.com, bob@example.com'
+    await share.invite()
+    expect(world.asked).toEqual(['invite ada@example.com as write to space-1'])
+    expect(share.email).toBe('bob@example.com')
+  })
+  test('are not counted by a server that says nothing of them', async () => {
+    await share.show(local('Notes'))
+    world.asked = []
+    expect(share.seats).toBeNull()
+    expect(share.full).toBe(false)
+    share.email = 'ada@example.com'
+    await share.invite()
+    expect(world.asked).toEqual(['invite ada@example.com as write to space-1'])
+  })
+  test('are nothing to a count that is not one', async () => {
+    world.sharing.seats = { used: '3', most: 10 }
+    await share.show(local('Notes'))
+    expect(share.seats).toBeNull()
+  })
+  test('are not counted on the sheet about one file', async () => {
+    world.sharingOf['note-1'] = { ...world.sharing, seats: { used: 10, most: 10 } }
+    await share.showItem(local('Notes'), 'Notes/plan.md')
+    world.asked = []
+    expect(share.seats).toBeNull()
+    share.email = 'ada@example.com'
+    await share.invite()
+    expect(world.asked).toEqual(['invite ada@example.com as write to space-1 about note-1'])
   })
 })
 describe('the sheet about one file', () => {
