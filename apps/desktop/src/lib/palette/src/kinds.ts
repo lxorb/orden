@@ -1,4 +1,4 @@
-import { foldName } from '@orden/markdown/links'
+import { foldName, isChatTarget } from '@orden/markdown/links'
 import type { Command } from '../../commands/src/api'
 import { fileMark } from '../../marks/src/api'
 import { shownName, rowName, folderOf, insideSpace, relativeTo, withinSpace } from '../../platform/src/api'
@@ -62,7 +62,6 @@ export function rowKey(row: Row): string | null {
     case 'agents':
     case 'address':
     case 'connect':
-    case 'message':
       return null
   }
 }
@@ -135,7 +134,8 @@ function recentFirst(files: readonly Entry[], place: ReadonlyMap<string, number>
 }
 export function candidates(world: World): Candidate<Row>[] {
   const out: Candidate<Row>[] = []
-  const shared = sharing(world.files, world.root)
+  const files = world.files.filter((one) => !isChatTarget(one.path))
+  const shared = sharing(files, world.root)
   const place = new Map(world.recent.map((path, index) => [path, index]))
   const recency = (path: string) => {
     const at = place.get(path)
@@ -148,6 +148,7 @@ export function candidates(world: World): Candidate<Row>[] {
   const open = new Set<string>()
   const openPages = new Set<string>()
   for (const tab of world.tabs) {
+    if (tab.path && isChatTarget(tab.path)) continue
     const key = tabKey(tab)
     if (open.has(key)) continue
     open.add(key)
@@ -168,7 +169,7 @@ export function candidates(world: World): Candidate<Row>[] {
       ),
     )
   }
-  for (const entry of recentFirst(world.files, place)) {
+  for (const entry of recentFirst(files, place)) {
     const reading = readingOf(entry, world.root)
     if (open.has(reading.key)) continue
     const url = world.addressOf?.(entry.path) ?? null
@@ -184,7 +185,7 @@ export function candidates(world: World): Candidate<Row>[] {
       item: { kind: 'note', entry, folder: reading.folder, shared: shared(reading.alike) },
     })
   }
-  out.push(...bookmarkCandidates(world))
+  out.push(...bookmarkCandidates(world, files))
   for (const command of world.commands) {
     const lift =
       (command.disabled ? LIFT.unavailable : 0) +
@@ -238,9 +239,9 @@ export function candidates(world: World): Candidate<Row>[] {
   }
   return out
 }
-function bookmarkCandidates(world: World): Candidate<Row>[] {
+function bookmarkCandidates(world: World, listed: readonly Entry[]): Candidate<Row>[] {
   const out: Candidate<Row>[] = []
-  const files = new Map(world.files.map((one) => [one.path, one]))
+  const files = new Map(listed.map((one) => [one.path, one]))
   for (const mark of world.bookmarks) {
     if (mark.kind === 'note' || mark.kind === 'group') continue
     if (mark.kind === 'search' || mark.kind === 'graph') {

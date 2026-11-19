@@ -28,7 +28,6 @@ function hands(): { asked: string[]; hands: Hands } {
       openHost: say('host'),
       openHosts: say('hosts'),
       connect: say('connect'),
-      openMessage: say('message'),
     },
   }
 }
@@ -177,25 +176,6 @@ describe('another machine', () => {
     expect(choose({ kind: 'connect', wanted, said: 'emil@box:2222' }, undefined, hand)).toBe('close')
     expect(choose({ kind: 'group', group: 'Home', hosts: [host] }, undefined, hand)).toBe('close')
     expect(asked).toEqual(['host ["pi"]', `connect [${JSON.stringify(wanted)}]`, 'hosts [["pi"]]'])
-  })
-})
-describe('a message in a chat', () => {
-  test('opens its chat at it, in a tab of its own behind with Ctrl', () => {
-    const { asked, hands: hand } = hands()
-    const row: Row = {
-      kind: 'message',
-      chat: 'c_1',
-      id: '01K6Z8',
-      path: '/s/Team/thesis.chat',
-      line: 'the figures',
-      where: ['#thesis', 'Lucile'],
-    }
-    expect(choose(row, undefined, hand)).toBe('close')
-    expect(choose(row, key({ ctrl: true }), hand)).toBe('close')
-    expect(asked).toEqual([
-      'message ["/s/Team/thesis.chat","01K6Z8",{}]',
-      'message ["/s/Team/thesis.chat","01K6Z8",{"activate":false,"beside":true}]',
-    ])
   })
 })
 describe('the row for a name a note cannot have', () => {

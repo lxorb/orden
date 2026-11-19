@@ -21,7 +21,6 @@ export interface Hands {
   openHost(id: string): void
   openHosts(ids: readonly string[]): void
   connect(wanted: PaletteDestination): void
-  openMessage(path: string, message: string, how: OpenHow): void
 }
 export type Chosen = 'close' | 'stay' | 'nothing'
 function openFile(path: string, press: Press | undefined, hands: Hands) {
@@ -76,9 +75,6 @@ export function choose(row: Row, press: Press | undefined, hands: Hands): Chosen
       return 'close'
     case 'connect':
       hands.connect(row.wanted)
-      return 'close'
-    case 'message':
-      hands.openMessage(row.path, row.id, howFor(ask))
       return 'close'
   }
 }

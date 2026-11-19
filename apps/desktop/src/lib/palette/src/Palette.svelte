@@ -4,7 +4,6 @@
     OUTLINE_MARK,
     GRAPH_MARK,
     SEARCH_MARK,
-    Facts,
     recentFirst,
     overlays,
     UnsavedDot,
@@ -34,7 +33,7 @@
   import type { OpenTab, Row } from './rows'
   import { isDraft, scanHeadings } from '../../documents/src/api'
   import { lookOf } from './trying'
-  import { chatsOn, hiddenKinds } from '../../gates/src/api'
+  import { hiddenKinds } from '../../gates/src/api'
   import { relativeTo, samePath } from '../../platform/src/api'
   import { TabMark } from '../../marks/src/api'
   import { theme } from '../../theme/src/api'
@@ -146,34 +145,6 @@
     const offer = __EVEN_PLUGIN__ ? null : paletteKind('hosts').wanted(term)
     return offer ? [...found, { kind: 'connect', ...offer }] : found
   }
-  let messages = $state.raw<{ rows: Row[]; only: boolean; term: string }>({
-    rows: [],
-    only: false,
-    term: '',
-  })
-  $effect(() => {
-    const words = term.trim()
-    if (!open || mode !== 'everything' || words.length < 3 || !chatsOn()) {
-      messages = { rows: [], only: false, term: '' }
-      return
-    }
-    let current = true
-    const timer = setTimeout(() => {
-      void paletteKind('messages')
-        .hits(words)
-        .then((found) => {
-          if (current) {
-            const rows = found.rows.map((one): Row => ({ kind: 'message', ...one }))
-            messages = { rows, only: found.only, term: words }
-          }
-        })
-    }, 150)
-    return () => {
-      current = false
-      clearTimeout(timer)
-    }
-  })
-  const found = $derived(messages.term === term.trim() ? messages : { rows: [], only: false })
   const browsed = $derived(
     mode === 'everything' && !term && world
       ? browse(
@@ -193,8 +164,7 @@
       return [{ kind: 'place', line, text, depth: 0, hint: String(line + 1) }]
     }
     if (!term) return browsed?.rows ?? []
-    if (found.only) return found.rows
-    return [...withOffers(ranked(term, [...offered, ...headingRows]), term, address, makes), ...found.rows]
+    return withOffers(ranked(term, [...offered, ...headingRows]), term, address, makes)
   })
   function label(row: Row): string {
     switch (row.kind) {
@@ -224,11 +194,9 @@
         return row.group
       case 'connect':
         return row.said
-      case 'message':
-        return row.line
     }
   }
-  function whereOf(row: Row): string | readonly string[] | null {
+  function whereOf(row: Row): string | null {
     switch (row.kind) {
       case 'note':
       case 'tab': {
@@ -249,8 +217,6 @@
         return row.host.detail
       case 'group':
         return 'Open all'
-      case 'message':
-        return row.where
       case 'command':
       case 'place':
       case 'address':
@@ -314,7 +280,6 @@
     row.kind === 'tab' ||
     row.kind === 'page' ||
     row.kind === 'address' ||
-    row.kind === 'message' ||
     (row.kind === 'bookmark' && (row.mark.kind === 'heading' || row.mark.kind === 'block'))
   const hands: Hands = {
     openEntry: (path, how) => void workspace.openEntry(path, how),
@@ -343,7 +308,6 @@
     openHost: (id) => paletteKind('hosts').open(id),
     openHosts: (ids) => paletteKind('hosts').openAll(ids),
     connect: (wanted) => paletteKind('hosts').connect(wanted),
-    openMessage: (path, message, how) => paletteKind('messages').open(path, message, how),
   }
   function pick(row: Row, press?: KeyboardEvent | MouseEvent) {
     if (lookOf(row, theme)) trying = false
@@ -508,8 +472,6 @@
                 <svg class="mark drawn" viewBox="0 0 13 13"><path d={OUTLINE_MARK} /></svg>
               {:else if row.kind === 'make'}
                 <span class="mark quiet"><Icon icon={null} fallback={FilePlus} /></span>
-              {:else if row.kind === 'message'}
-                <FileMark mark="chat" path={row.path} />
               {:else if row.kind === 'host' || row.kind === 'connect' || row.kind === 'group'}
                 {@const colour = row.kind === 'host' ? row.host.colour : null}
                 <span class="mark" style:color={colour ? `var(--canvas-${colour})` : undefined}
@@ -522,9 +484,7 @@
                     >{:else}{piece.text}{/if}{/each}</span
               >
               {#if row.kind === 'tab' && unsavedTab(row)}<UnsavedDot />{/if}
-              {#if where}<span class="where"
-                  >{#if typeof where === 'string'}{where}{:else}<Facts line parts={where} />{/if}</span
-                >{/if}
+              {#if where}<span class="where">{where}</span>{/if}
               {#if row.kind === 'setting' && row.setting.switched() !== null}
                 <span class="flip" aria-hidden="true"
                   ><span class="orden-switch" class:on={row.setting.switched()}></span></span

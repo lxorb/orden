@@ -33,11 +33,3 @@ export type Row =
   | { kind: 'host'; host: PaletteHost }
   | { kind: 'group'; group: string; hosts: readonly PaletteHost[] }
   | { kind: 'connect'; wanted: PaletteDestination; said: string }
-  | {
-      kind: 'message'
-      chat: string
-      id: string
-      path: string
-      line: string
-      where: readonly string[]
-    }
