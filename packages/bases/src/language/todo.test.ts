@@ -58,7 +58,6 @@ describe('a todo typed in one line', () => {
     })
   })
   test.each([
-    'Water plants every monday',
     'Water plants !tomorrow',
     'Water plants for 30 min',
     'Water plants +bob',
@@ -66,6 +65,21 @@ describe('a todo typed in one line', () => {
     'Water plants tonight',
   ])('%s is all title, since a todo keeps no such field', (text) => {
     expect(todo(text)).toEqual({ title: text, labels: [], chips: [] })
+  })
+  test.each([
+    ['Water plants every day', 'every day', '2026-10-07'],
+    ['Water plants every 3 days', 'every 3 days', '2026-10-07'],
+    ['Water plants every month on the 1st', 'every month on the 1st', '2026-11-01'],
+    ['Water plants every! 10 days', 'every 10 days when done', '2026-10-07'],
+    ['Water plants every monday', 'every week on Monday', '2026-10-12'],
+  ])('%s repeats, starting on its first day', (text, repeat, start) => {
+    expect(todo(text)).toEqual({
+      title: 'Water plants',
+      labels: [],
+      start,
+      repeat,
+      chips: [{ kind: 'repeat', from: 13, to: text.length }],
+    })
   })
   test('kept and escaped spans stay words', () => {
     expect(todo('Read tomorrow', { keep: [{ from: 5, to: 13 }] })).toEqual({
