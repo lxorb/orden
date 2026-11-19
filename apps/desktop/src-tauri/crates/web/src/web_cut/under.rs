@@ -184,9 +184,12 @@ fn page_at(host: &NSView, point: NSPoint) -> Option<Retained<NSView>> {
     None
 }
 fn original_of(view: &NSView) -> Option<&'static AnyClass> {
+    original_as(view, PREFIX)
+}
+fn original_as(view: &NSView, prefix: &str) -> Option<&'static AnyClass> {
     let mut class = view.class();
     loop {
-        if class.name().to_bytes().starts_with(PREFIX.as_bytes()) {
+        if class.name().to_bytes().starts_with(prefix.as_bytes()) {
             return class.superclass();
         }
         class = class.superclass()?;
@@ -219,11 +222,45 @@ extern "C-unwind" fn reach(this: &NSView, _: Sel, point: NSPoint) -> *mut AnyObj
 }
 #[allow(unsafe_code)]
 fn adopt(host: &NSView) -> bool {
-    if original_of(host).is_some() {
+    let ok = adopt_as(host, PREFIX, |builder| unsafe {
+        builder.add_method(sel!(hitTest:), hit as extern "C-unwind" fn(_, _, _) -> _);
+        builder
+            .add_method(sel!(accessibilityHitTest:), reach as extern "C-unwind" fn(_, _, _) -> _);
+    });
+    if let Some(drop) = ok.then(|| dropper(host)).flatten() {
+        adopt_as(&drop, DROPS, |builder| unsafe {
+            builder.add_method(
+                sel!(draggingEntered:),
+                drag_entered as extern "C-unwind" fn(_, _, _) -> _,
+            );
+            builder.add_method(
+                sel!(draggingUpdated:),
+                drag_updated as extern "C-unwind" fn(_, _, _) -> _,
+            );
+            builder.add_method(sel!(draggingExited:), drag_exited as extern "C-unwind" fn(_, _, _));
+            builder.add_method(
+                sel!(prepareForDragOperation:),
+                drag_prepare as extern "C-unwind" fn(_, _, _) -> _,
+            );
+            builder.add_method(
+                sel!(performDragOperation:),
+                drag_perform as extern "C-unwind" fn(_, _, _) -> _,
+            );
+            builder.add_method(
+                sel!(concludeDragOperation:),
+                drag_conclude as extern "C-unwind" fn(_, _, _),
+            );
+        });
+    }
+    ok
+}
+#[allow(unsafe_code)]
+fn adopt_as(view: &NSView, prefix: &str, methods: impl FnOnce(&mut ClassBuilder)) -> bool {
+    if original_as(view, prefix).is_some() {
         return true;
     }
-    let base = host.class();
-    let Ok(name) = CString::new(format!("{PREFIX}{}", base.name().to_string_lossy())) else {
+    let base = view.class();
+    let Ok(name) = CString::new(format!("{prefix}{}", base.name().to_string_lossy())) else {
         return false;
     };
     let class = if let Some(made) = AnyClass::get(&name) {
@@ -232,20 +269,147 @@ fn adopt(host: &NSView) -> bool {
         let Some(mut builder) = ClassBuilder::new(&name, base) else {
             return false;
         };
-        unsafe {
-            builder.add_method(sel!(hitTest:), hit as extern "C-unwind" fn(_, _, _) -> _);
-            builder.add_method(
-                sel!(accessibilityHitTest:),
-                reach as extern "C-unwind" fn(_, _, _) -> _,
-            );
-        }
+        methods(&mut builder);
         builder.register()
     };
     unsafe {
         objc2::ffi::object_setClass(
-            std::ptr::from_ref::<NSView>(host).cast::<AnyObject>().cast_mut(),
+            std::ptr::from_ref::<NSView>(view).cast::<AnyObject>().cast_mut(),
             std::ptr::from_ref::<AnyClass>(class),
         );
     }
     true
+}
+const DROPS: &str = "OrdenUnderDrops_";
+#[allow(unsafe_code)]
+fn dropper(view: &NSView) -> Option<Retained<NSView>> {
+    let types: *mut AnyObject = unsafe { msg_send![view, registeredDraggedTypes] };
+    let count: usize = unsafe { types.as_ref().map_or(0, |one| msg_send![one, count]) };
+    if count > 0 {
+        return view_at(address(view));
+    }
+    let subviews = view.subviews();
+    (0..subviews.count()).find_map(|at| dropper(&subviews.objectAtIndex(at)))
+}
+fn host_above(view: &NSView) -> Option<Retained<NSView>> {
+    let hosts: Vec<usize> = PAGES.held().values().map(|one| one.host).collect();
+    let mut at = holder_of(view);
+    while let Some(one) = at {
+        if hosts.contains(&address(&one)) {
+            return Some(one);
+        }
+        at = holder_of(&one);
+    }
+    None
+}
+#[allow(unsafe_code)]
+fn dropped_on(this: &NSView, info: *mut AnyObject) -> Option<Retained<NSView>> {
+    let info = unsafe { info.as_ref() }?;
+    let host = host_above(this)?;
+    let at: NSPoint = unsafe { msg_send![info, draggingLocation] };
+    let holder = holder_of(&host)?;
+    let page = page_at(&host, holder.convertPoint_fromView(at, None))?;
+    dropper(&page)
+}
+std::thread_local! {
+    static DRAGGED: std::cell::RefCell<HashMap<usize, Option<Retained<NSView>>>> =
+        std::cell::RefCell::new(HashMap::new());
+}
+fn dragging(this: &NSView) -> Option<Retained<NSView>> {
+    DRAGGED.with_borrow(|all| all.get(&address(this)).cloned().flatten())
+}
+#[allow(unsafe_code)]
+extern "C-unwind" fn drag_entered(this: &NSView, _: Sel, info: *mut AnyObject) -> usize {
+    let Some(original) = original_as(this, DROPS) else {
+        return 0;
+    };
+    let to = dropped_on(this, info);
+    DRAGGED.with_borrow_mut(|all| all.insert(address(this), to.clone()));
+    unsafe {
+        match to {
+            Some(page) => msg_send![&*page, draggingEntered: info],
+            None => msg_send![super(this, original), draggingEntered: info],
+        }
+    }
+}
+#[allow(unsafe_code)]
+extern "C-unwind" fn drag_updated(this: &NSView, _: Sel, info: *mut AnyObject) -> usize {
+    let Some(original) = original_as(this, DROPS) else {
+        return 0;
+    };
+    let to = dropped_on(this, info);
+    let from = dragging(this);
+    if from.as_deref().map(address) != to.as_deref().map(address) {
+        unsafe {
+            match &from {
+                Some(page) => {
+                    let () = msg_send![&**page, draggingExited: info];
+                }
+                None => {
+                    let () = msg_send![super(this, original), draggingExited: info];
+                }
+            }
+            let _: usize = match &to {
+                Some(page) => msg_send![&**page, draggingEntered: info],
+                None => msg_send![super(this, original), draggingEntered: info],
+            };
+        }
+        DRAGGED.with_borrow_mut(|all| all.insert(address(this), to.clone()));
+    }
+    unsafe {
+        match to {
+            Some(page) => msg_send![&*page, draggingUpdated: info],
+            None => msg_send![super(this, original), draggingUpdated: info],
+        }
+    }
+}
+#[allow(unsafe_code)]
+extern "C-unwind" fn drag_exited(this: &NSView, _: Sel, info: *mut AnyObject) {
+    let Some(original) = original_as(this, DROPS) else {
+        return;
+    };
+    let to = DRAGGED.with_borrow_mut(|all| all.remove(&address(this)).flatten());
+    unsafe {
+        match to {
+            Some(page) => msg_send![&*page, draggingExited: info],
+            None => msg_send![super(this, original), draggingExited: info],
+        }
+    }
+}
+#[allow(unsafe_code)]
+extern "C-unwind" fn drag_prepare(this: &NSView, _: Sel, info: *mut AnyObject) -> Bool {
+    let Some(original) = original_as(this, DROPS) else {
+        return Bool::NO;
+    };
+    unsafe {
+        match dragging(this) {
+            Some(page) => msg_send![&*page, prepareForDragOperation: info],
+            None => msg_send![super(this, original), prepareForDragOperation: info],
+        }
+    }
+}
+#[allow(unsafe_code)]
+extern "C-unwind" fn drag_perform(this: &NSView, _: Sel, info: *mut AnyObject) -> Bool {
+    let Some(original) = original_as(this, DROPS) else {
+        return Bool::NO;
+    };
+    unsafe {
+        match dragging(this) {
+            Some(page) => msg_send![&*page, performDragOperation: info],
+            None => msg_send![super(this, original), performDragOperation: info],
+        }
+    }
+}
+#[allow(unsafe_code)]
+extern "C-unwind" fn drag_conclude(this: &NSView, _: Sel, info: *mut AnyObject) {
+    let Some(original) = original_as(this, DROPS) else {
+        return;
+    };
+    let to = DRAGGED.with_borrow_mut(|all| all.remove(&address(this)).flatten());
+    unsafe {
+        match to {
+            Some(page) => msg_send![&*page, concludeDragOperation: info],
+            None => msg_send![super(this, original), concludeDragOperation: info],
+        }
+    }
 }

@@ -421,7 +421,7 @@ def peek(app: App, pid: int, ratio: float, out: pathlib.Path, as_before: Any, un
         wrong.append("[peek] the page steps away for the left peek")
     return wrong, []
 def cleared_after_reload(app: App, hole: tuple[float, float, float, float], ratio: float, out: pathlib.Path) -> list[str]:
-    middle = ((hole[0] + hole[2]) / 2, (hole[1] + hole[3]) / 2)
+    middle = (hole[0] + (hole[2] - hole[0]) * 0.75, hole[1] + (hole[3] - hole[1]) * 0.8)
     app.eval("setTimeout(() => location.reload(), 50); return true")
     time.sleep(3)
     until = time.monotonic() + 60
