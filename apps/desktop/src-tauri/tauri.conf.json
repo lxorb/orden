@@ -64,7 +64,7 @@
       "wix": {
         "upgradeCode": "d5bab44c-df33-5303-bd5d-b6449f670c8e",
         "fragmentPaths": ["wix/browser.wxs", "wix/pdf.wxs"],
-        "componentRefs": ["NibBrowser", "NibOldShortcuts", "NibPdf"]
+        "componentRefs": ["OrdenBrowser", "OldNameShortcuts", "OrdenPdf"]
       }
     },
     "linux": {
