@@ -270,9 +270,11 @@ pub fn answered(label: &str, said: Layering) {
 fn told_long_enough(label: &str) -> bool {
     TOLD.held().get(label).is_some_and(|at| at.elapsed() >= std::time::Duration::from_millis(600))
 }
-static SIZES: LazyLock<Mutex<HashMap<String, (u32, u32, f64)>>> = LazyLock::new(Mutex::default);
+type Sizes = HashMap<String, (u32, u32, f64)>;
+static SIZES: LazyLock<Mutex<Sizes>> = LazyLock::new(Mutex::default);
 #[cfg(target_os = "macos")]
 fn watch(window: &tauri::Window, key: &str) {
+    use tauri::Manager as _;
     for _ in 0..LOOKS {
         std::thread::sleep(std::time::Duration::from_millis(800));
         match looked(window) {
@@ -284,7 +286,6 @@ fn watch(window: &tauri::Window, key: &str) {
                 told_why(&format!("{why}; pages go back to being cut out"));
                 let raising = window.clone();
                 let _ = window.run_on_main_thread(move || {
-                    use tauri::Manager as _;
                     for (name, page) in raising.app_handle().webviews() {
                         if name.starts_with(crate::web_tabs::LABEL)
                             && page.window().label() == raising.label()
