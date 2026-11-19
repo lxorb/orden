@@ -27,6 +27,7 @@ export const ICONS: Record<string, string> = {
     'M4.5 6h7a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5h-7A1.5 1.5 0 0 1 3 11.5v-4A1.5 1.5 0 0 1 4.5 6zM8 6V3.6M8 3.4h.01M6.2 9.3v.4M9.8 9.3v.4',
   sync: 'M13.2 7a5.3 5.3 0 0 0-9.1-2.6L2.8 5.7M2.8 9a5.3 5.3 0 0 0 9.1 2.6l1.3-1.3M2.8 3v2.7h2.7M13.2 13v-2.7h-2.7',
   trash: 'M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8a1 1 0 0 0 1 .9h3.8a1 1 0 0 0 1-.9l.6-8M6.5 7v4M9.5 7v4',
+  archived: 'M2 3h12v3H2zM3 6v7a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V6M6.5 8.5h3',
   export: 'M8 10.5V2.5M5 5.5L8 2.5l3 3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10',
   import: 'M8 2.5v8M5 7.5l3 3 3-3M2.5 10v2.5a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V10',
   remote: 'M3 2.5h10v4.5H3zM3 9h10v4.5H3zM5.5 4.75h.01M5.5 11.25h.01',
@@ -58,6 +59,7 @@ export function sectionGroups(): Item[][] {
     ],
     [
       { id: 'trash', label: 'Recently deleted' },
+      { id: 'archived', label: 'Archived spaces' },
       ...(__EVEN_PLUGIN__ ? [] : [{ id: 'import' as SettingsSectionId, label: 'Import' }]),
       { id: 'export', label: 'Export' },
     ],

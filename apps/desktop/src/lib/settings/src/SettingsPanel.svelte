@@ -761,7 +761,7 @@
     <SyncPane />
   {:else if settings.section === 'ai' || settings.section === 'agents' || settings.section === 'llm'}
     {@render parts('ai')}
-  {:else if settings.section === 'online' || settings.section === 'remote'}
+  {:else if settings.section === 'online' || settings.section === 'remote' || settings.section === 'archived'}
     {@render parts(settings.section)}
   {:else if !__EVEN_PLUGIN__ && settings.section === 'space'}
     {#await import('./SpacePane.svelte') then pane}

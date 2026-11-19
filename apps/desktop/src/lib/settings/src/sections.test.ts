@@ -35,3 +35,8 @@ describe('the Mobile section', () => {
     expect(listed().indexOf('mobile')).toBe(listed().indexOf('shortcuts') + 1)
   })
 })
+describe('the Archived spaces section', () => {
+  test('is offered beside Recently deleted', () => {
+    expect(listed().indexOf('archived')).toBe(listed().indexOf('trash') + 1)
+  })
+})

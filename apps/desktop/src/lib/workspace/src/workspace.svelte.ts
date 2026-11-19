@@ -624,7 +624,7 @@ class Workspace {
       this.rightPanel = state.rightPanel ?? null
     }
     this.lastRight ??= state.lastRight ?? null
-    this.activeSpaceId = state.activeSpace ?? this.spaces[0]?.id ?? null
+    this.activeSpaceId = state.activeSpace ?? this.shownSpaces[0]?.id ?? this.spaces[0]?.id ?? null
     await this.loadSpaces()
     this.spacesHeard()
     if (this.activeSpaceId) await this.loadTree()

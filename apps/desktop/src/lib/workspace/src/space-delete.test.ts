@@ -37,6 +37,7 @@ function store() {
     activeSpaceId: 'h',
     tabs: [],
     tree: null,
+    archivedSpaces: { has: () => false, set: () => false },
     fileGone: () => Promise.resolve(),
     persist: () => undefined,
   } as unknown as HoldsSpaces

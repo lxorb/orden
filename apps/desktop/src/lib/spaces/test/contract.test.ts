@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { providePort } from '@orden/contracts'
+import { providePort, settingsPartsIn } from '@orden/contracts'
 import { publishSpace, spaceMenu } from '../src/api'
 
 const SPACE = { id: 's', name: 'Notes', root: '/s' }
@@ -22,5 +22,11 @@ describe('the spaces', () => {
     await publishSpace(SPACE)
     stop()
     expect(shown).toEqual(['/s'])
+  })
+  test('hold the archived spaces in a Settings section of their own', () => {
+    const [part, ...more] = settingsPartsIn('archived')
+    expect(more).toEqual([])
+    expect(part?.shown()).toBe(true)
+    expect(part?.places?.().map((one) => one.label)).toEqual(['Unarchive'])
   })
 })

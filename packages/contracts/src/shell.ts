@@ -87,6 +87,7 @@ export type SettingsSectionId =
   | 'sync'
   | 'llm'
   | 'trash'
+  | 'archived'
   | 'import'
   | 'export'
 export type SidebarPanelId = 'tree' | 'outline' | 'search' | 'tasks' | 'chats' | 'time' | 'links' | 'ask'

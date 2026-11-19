@@ -1,6 +1,6 @@
 import { account } from '../../accounts/src/api'
 import { iconChoice } from '../../icon-picker/src/api'
-import { DIVIDER, held, latched, type MenuEntry, trim, prompt } from '../../ui-kit/src/api'
+import { DIVIDER, held, latched, type MenuEntry, partView, trim, prompt } from '../../ui-kit/src/api'
 import {
   canPublish,
   canShare,
@@ -12,12 +12,19 @@ import {
   trustAgain,
   protectEntries,
 } from '../../sharing/src/api'
-import { portOf, settingsWindow } from '@orden/contracts'
+import { portOf, registerSettingsPart, settingsWindow } from '@orden/contracts'
 import { type Space, spaceChanges, workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import { AGENTS_NAME, joinPath } from '../../platform/src/api'
 
 export const spaceArchiving = () => import('./space-archive')
+registerSettingsPart({
+  section: 'archived',
+  card: false,
+  shown: () => true,
+  places: () => [{ label: 'Unarchive', text: ['Archive', 'Delete space'] }],
+  load: async () => partView((await import('./ArchivedSpaces.svelte')).default, () => ({})),
+})
 export async function newSpace(): Promise<Space | undefined> {
   const name = await prompt.ask({
     title: 'Name the space',
@@ -140,6 +147,8 @@ export async function deleteSpace(space: Space) {
   if (!(await mayEndSpace(workspace, space.id))) return
   const root = space.root
   await workspace.deleteSpace(space.id)
+  const open = workspace.activeSpace
+  if (open && workspace.archivedSpaces.has(open.root)) await (await spaceArchiving()).unarchiveSpace(open)
   const { sync } = await import('../../sync-store/src/api')
   await sync.forget(root, role)
 }

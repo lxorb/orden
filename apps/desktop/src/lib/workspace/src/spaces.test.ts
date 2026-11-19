@@ -54,6 +54,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { applySpaceOrder, loadSpaces, moveSpace } = await import('./spaces')
 const { keepHomes } = await import('../../left-spaces/src/api')
 const { adoptSpace, deleteSpace, renameSpace } = await import('./space-changes')
+const { ArchivedSpaces } = await import('../../space-kept/src/api')
 type HoldsSpaces = import('./spaces').HoldsSpaces
 type Space = import('./workspace.svelte').Space
 function store(spaces: Space[]) {
@@ -66,6 +67,7 @@ function store(spaces: Space[]) {
     panel: null,
     notes: [],
     tabs: [],
+    archivedSpaces: new ArchivedSpaces(),
     fileMoved: async (from: string, to: string, kind: string) => void told.push(`moved ${kind} ${from} -> ${to}`),
     fileGone: async (path: string, kind: string) => void told.push(`gone ${kind} ${path}`),
     holdingUnder: (_path: string, run: () => Promise<void>) => run(),
@@ -78,6 +80,7 @@ function store(spaces: Space[]) {
 }
 const WORK = { id: 'w', name: 'Work', root: '/spaces/Work' }
 const HOME = { id: 'h', name: 'Home', root: '/spaces/Home' }
+const OLD = { id: 'o', name: 'Old', root: '/spaces/Old' }
 beforeEach(() => {
   sent.length = 0
   listed = []
@@ -115,6 +118,17 @@ describe('reading the spaces folder', () => {
     listed = [{ name: 'Work', path: '/spaces/Work' }]
     await loadSpaces(ws)
     expect(ws.spaces.map((one) => one.id)).toEqual(['w'])
+    expect(ws.activeSpaceId).toBe('w')
+  })
+  test('and a space that has gone leaves the open one on a space that is not archived', async () => {
+    const { ws } = store([OLD, WORK, HOME])
+    ws.archivedSpaces.set(OLD.root, true)
+    ws.activeSpaceId = 'h'
+    listed = [
+      { name: 'Old', path: '/spaces/Old' },
+      { name: 'Work', path: '/spaces/Work' },
+    ]
+    await loadSpaces(ws)
     expect(ws.activeSpaceId).toBe('w')
   })
   test('and none at all leaves nothing open', async () => {
@@ -233,6 +247,18 @@ describe('a space deleted', () => {
     expect(ws.spaces.map((one) => one.id)).toEqual(['h'])
     expect(told).toEqual(['gone space /spaces/Work'])
     expect(ws.activeSpaceId).toBe('h')
+  })
+  test('opens the next space that is not archived', async () => {
+    const { ws } = store([WORK, OLD, HOME])
+    ws.archivedSpaces.set(OLD.root, true)
+    await deleteSpace(ws, 'w')
+    expect(ws.activeSpaceId).toBe('h')
+  })
+  test('takes its archive mark along, so a new space in its folder is not archived', async () => {
+    const { ws } = store([WORK, OLD])
+    ws.archivedSpaces.set(OLD.root, true)
+    await deleteSpace(ws, 'o')
+    expect(ws.archivedSpaces.has(OLD.root)).toBe(false)
   })
   test('goes to this device’s trash while there is no account to keep it', async () => {
     const { ws } = store([WORK])

@@ -9,7 +9,6 @@
   import { spacePicker } from './space-picker.svelte'
   import { SpaceTyping } from '../../space-pick/src/api'
   import { sharedWithYou } from '../../sharing/src/api'
-  import SpaceBadge from './SpaceBadge.svelte'
   import { spendClick } from '../../ui-controls/src/api'
   import { trap } from '../../ui-controls/src/api'
   import { type Space, workspace } from '../../workspace/src/api'
@@ -34,18 +33,6 @@
       ],
       { title: item.name },
     )
-  }
-  const archived = $derived(workspace.spaces.filter((one) => workspace.archivedSpaces.has(one.root)))
-  async function bringBack(space: Space) {
-    close()
-    const { unarchiveSpace } = await import('./space-archive')
-    await unarchiveSpace(space)
-    await workspace.showSpace(space.id)
-  }
-  function aboutArchived(event: MouseEvent, space: Space) {
-    menu.show(event, [{ label: 'Unarchive', run: () => void bringBack(space) }], {
-      title: space.name,
-    })
   }
   const typing = new SpaceTyping(choose)
   $effect(() => () => typing.stop())
@@ -96,31 +83,6 @@
     </span>
     <span class="orden-row-label">New space</span>
   </button>
-
-  {#if archived.length}
-    <hr />
-
-    <div class="held" role="group" aria-label="Archived" data-archived-spaces>
-      <p class="from" aria-hidden="true">Archived</p>
-
-      {#each archived as space (space.id)}
-        <div class="line" role="none">
-          <button
-            class="orden-row"
-            role="menuitem"
-            title="Unarchive"
-            onclick={() => void bringBack(space)}
-            oncontextmenu={(event) => aboutArchived(event, space)}
-            use:longPress={(event) => aboutArchived(event, space)}
-          >
-            <SpaceBadge {space} />
-            <span class="orden-row-label">{space.name}</span>
-          </button>
-          <RowMore onclick={(event: MouseEvent) => aboutArchived(event, space)} />
-        </div>
-      {/each}
-    </div>
-  {/if}
 
   {#if sharedWithYou.items.length}
     <hr />
