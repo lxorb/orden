@@ -351,6 +351,7 @@ macro_rules! desktop_commands {
             orden_web::web_dialog::web_dialog_answer,
             orden_web::web_permission::web_permission_answer,
             orden_web::web_select::web_select_pick,
+            orden_web::web_page_ui::web_page_ui,
             orden_web::web_clear::web_clear,
             orden_dictation::dictation::dictation_local,
             orden_dictation::dictation::dictation_local_fetch,
