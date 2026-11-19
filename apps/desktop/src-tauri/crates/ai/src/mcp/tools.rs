@@ -111,6 +111,14 @@ mod tests {
         }
     }
     #[test]
+    fn a_todo_belongs_to_no_space() {
+        for name in ["list_tasks", "add_task", "update_task"] {
+            let tool = find(name).expect(name);
+            assert!(tool.input["properties"].get("space").is_none(), "{name}");
+            assert!(!tool.description.contains("space"), "{name}");
+        }
+    }
+    #[test]
     fn the_table_reads_whole_with_one_row_a_name() {
         let raw: Vec<Value> =
             serde_json::from_str(include_str!("tools.json")).expect("tools.json is JSON");
