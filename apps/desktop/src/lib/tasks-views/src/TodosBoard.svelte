@@ -10,13 +10,13 @@
     type TodoPatch,
   } from '../../tasks-model/src/api'
   import { cubicOut } from 'svelte/easing'
-  import { flip } from 'svelte/animate'
   import { tick } from 'svelte'
   import { dur, fly, slide } from '../../platform/src/api'
   import { Select } from '../../ui-controls/src/api'
   import { addTodo, doWithAi, patchTodo, removeTodo, tickTodo } from './acts'
   import { Carrying, columnPreview } from './carrying.svelte'
   import Filters from './Filters.svelte'
+  import { glider } from './glide'
   import { openNote } from './notes'
   import { shellWorld, Shown, SORT_NAMES } from './shown.svelte'
   import TodoEditor from './TodoEditor.svelte'
@@ -52,7 +52,18 @@
   $effect(() => rows.keep())
   const open = $derived(openId === null ? null : todos.todo(openId))
   const shownColumns = $derived(columnPreview(columns, carrying.drag))
-  const moving = { duration: dur(180), easing: cubicOut }
+  const lists = $derived(shownColumns.map((column) => previewed(column.todos, column.key, carrying.drag)))
+  const laid = $derived(
+    lists.map((list, at) => [shownColumns[at]?.key, ...list.map((one) => one.id)].join('\n')).join('\n\n'),
+  )
+  let row = $state<HTMLElement | null>(null)
+  const glide = glider(() => row, ['[data-todos-column]', '[data-todos-column] li'])
+  $effect.pre(() => {
+    if (laid) glide.before()
+  })
+  $effect(() => {
+    if (laid) glide.after()
+  })
   async function add() {
     const title = typed.trim()
     if (title === '') return
@@ -116,12 +127,13 @@
   <div class="body">
     <div
       class="columns"
+      bind:this={row}
       use:rowKeys={rows}
       use:edgeScroll={'x'}
       use:carrying.row={(key: string, at: number) => shown.moveColumn(key, at)}
     >
-      {#each shownColumns as column (column.key)}
-        {@const list = previewed(column.todos, column.key, carrying.drag)}
+      {#each shownColumns as column, at (column.key)}
+        {@const list = lists[at] ?? []}
         <section
           class="column"
           class:is-taking={carrying.drag.spot?.column === column.key && carrying.drag.from !== column.key}
@@ -129,7 +141,6 @@
           aria-label={column.name}
           data-todos-column
           data-key={column.key}
-          animate:flip={moving}
           use:carrying.area={column.key}
         >
           <h2 use:carrying.head={column.key} title="Drag to move this column">
@@ -179,7 +190,7 @@
           {/if}
           <ul use:edgeScroll>
             {#each list as todo (todo.id)}
-              <li animate:flip={moving} out:slide={{ duration: dur(200), easing: cubicOut }}>
+              <li out:slide={{ duration: dur(200), easing: cubicOut }}>
                 <div class="card" use:carrying.card={{ todo, column: column.key }}>
                   <TodoRow
                     {todo}

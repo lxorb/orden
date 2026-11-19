@@ -26,10 +26,23 @@ export class TodoDrag {
   leaves = $state(true)
   column = $state<string | null>(null)
   columnAt = $state<number | null>(null)
+  private landing: Promise<unknown> | null = null
   get on(): boolean {
     return this.todo !== null
   }
+  get settling(): boolean {
+    return this.landing !== null
+  }
+  async settle(work: Promise<unknown>): Promise<void> {
+    const mine = work.catch(() => undefined)
+    this.landing = mine
+    await mine
+    if (this.landing !== mine) return
+    this.landing = null
+    this.clear()
+  }
   start(todo: Todo, from: string, leaves = true): void {
+    this.landing = null
     this.todo = todo
     this.from = from
     this.leaves = leaves
@@ -45,6 +58,7 @@ export class TodoDrag {
     this.spot = { column, at }
   }
   startColumn(key: string): void {
+    this.landing = null
     this.column = key
     this.columnAt = null
   }
