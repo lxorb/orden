@@ -32,6 +32,20 @@ describe('the crate news, read', () => {
     expect(readEvent({ kind: 'asked', approval: { id: 'q1' } })).toBeNull()
     expect(readEvent({ kind: 'something new' })).toBeNull()
   })
+  test('keeps the thread a question was raised in', () => {
+    const approval = {
+      id: 'q1',
+      agent: 'orden-cc',
+      name: 'Claude Code',
+      category: 'writing',
+      summary: 'Edit a.md',
+      verb: 'edit_note',
+      thread: 'thread-a',
+      asked: 1,
+      answer: 'pending',
+    }
+    expect(readEvent({ kind: 'asked', approval })).toEqual({ kind: 'asked', approval })
+  })
 })
 describe('the session', () => {
   const lines = [

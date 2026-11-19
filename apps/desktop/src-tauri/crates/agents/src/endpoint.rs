@@ -279,6 +279,14 @@ pub fn dispatch(
     let Some(verb) = verb else {
         return (400, refused("say which verb"));
     };
+    let threaded;
+    let caller = match crate::thread_of(&asked) {
+        Some(thread) => {
+            threaded = caller.clone().in_thread(Some(thread));
+            &threaded
+        }
+        None => caller,
+    };
     let args = asked.get("args").cloned().unwrap_or_default();
     let session = crate::session_of(&asked);
     if let Some(read) = crate::verbs::Verb::read(&verb, args.clone()) {

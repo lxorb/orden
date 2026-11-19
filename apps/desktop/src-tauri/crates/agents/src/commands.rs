@@ -79,6 +79,7 @@ pub fn agents_answer(
     Ok(approval)
 }
 #[tauri::command(async)]
+#[allow(clippy::too_many_arguments)]
 pub fn agents_ask(
     webview: tauri::Webview,
     app: AppHandle,
@@ -87,16 +88,19 @@ pub fn agents_ask(
     summary: String,
     key: String,
     site: Option<String>,
+    thread: Option<String>,
 ) -> Answer {
     if let Err(why) = orden_base::labels::from_the_app(&webview) {
         return Answer::error(Code::NotGranted, why);
     }
-    if approvals::allowed(&agent, &key) {
+    let thread = crate::thread_of(&serde_json::json!({ "thread": thread }));
+    if approvals::allowed(&agent, thread.as_deref(), &key) {
         return Answer::ok(verbs::Nothing {});
     }
-    let Some(grant) = state(&app).grants.by_id(&app, &agent) else {
+    let Some(mut grant) = state(&app).grants.by_id(&app, &agent) else {
         return Answer::error(Code::NotGranted, "there is no such agent");
     };
+    grant.thread = thread;
     if !grant.asks(category) || site.as_deref().is_some_and(|site| grant.always(site, category)) {
         return Answer::ok(verbs::Nothing {});
     }

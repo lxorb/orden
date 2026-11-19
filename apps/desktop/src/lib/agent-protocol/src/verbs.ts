@@ -179,6 +179,7 @@ export interface Approval {
   site?: string
   tab?: string
   verb?: string
+  thread?: string
   asked: number
   answer: 'pending' | 'allowed' | 'denied' | 'expired' | 'done'
 }

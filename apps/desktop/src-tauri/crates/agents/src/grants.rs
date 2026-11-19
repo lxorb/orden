@@ -158,6 +158,8 @@ pub struct Grant {
     pub created: u64,
     #[serde(default)]
     pub built_in: bool,
+    #[serde(skip)]
+    pub thread: Option<String>,
 }
 impl Grant {
     pub fn own(id: String, client: &str) -> Self {
@@ -181,6 +183,7 @@ impl Grant {
             limits: Limits::default(),
             created: orden_base::clock::now(),
             built_in: false,
+            thread: None,
         }
     }
     pub fn third_party(id: String, client: &str) -> Self {
