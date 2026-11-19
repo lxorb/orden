@@ -48,7 +48,7 @@ PRESS = """
     )
 
   send('touchstart')
-  window.__nibRelease = () => send('touchend')
+  window.__ordenRelease = () => send('touchend')
   return true
 }
 """
@@ -98,7 +98,7 @@ PRESS_NTH = """
     )
 
   send('touchstart')
-  window.__nibRelease = () => send('touchend')
+  window.__ordenRelease = () => send('touchend')
   return true
 }
 """
@@ -115,11 +115,11 @@ def hold_for(page: Page, selector: str, index: int, wanted: str, label: str) -> 
         try:
             row.first.wait_for(state="visible", timeout=2000)
         except Exception:
-            page.evaluate("() => window.__nibRelease?.()")
+            page.evaluate("() => window.__ordenRelease?.()")
             if last:
                 raise SystemExit(f"[{label}] no menu offering {wanted!r} on {selector}")
             continue
-        page.evaluate("() => window.__nibRelease?.()")
+        page.evaluate("() => window.__ordenRelease?.()")
         return
 def hold(page: Page, selector: str, label: str) -> None:
     page.wait_for_selector(selector, state="attached", timeout=10000)
@@ -133,14 +133,14 @@ def hold(page: Page, selector: str, label: str) -> None:
         try:
             page.wait_for_selector('[role="menu"]:visible', timeout=2000)
         except Exception:
-            page.evaluate("() => window.__nibRelease?.()")
+            page.evaluate("() => window.__ordenRelease?.()")
             if last:
                 raise SystemExit(
                     f"[{label}] the menu never opened on {selector}"
                     f" after {TRIES} presses"
                 )
             continue
-        page.evaluate("() => window.__nibRelease?.()")
+        page.evaluate("() => window.__ordenRelease?.()")
         return
 def seed(page: Page) -> None:
     page.evaluate(

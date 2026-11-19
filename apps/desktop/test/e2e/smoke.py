@@ -72,7 +72,7 @@ def drive(browser: Browser) -> None:
     wait_for(page, "window.ordenApp.workspace.active", "the app to open its own note")
     say(f"the space holds {page.evaluate(SEED, [FIRST, SECOND])} notes")
     wait_for(page, "document.querySelector('.cm-content')", "the writing surface")
-    stamp = page.evaluate("() => window.nibBuild || 'unstamped'")
+    stamp = page.evaluate("() => window.ordenBuild || 'unstamped'")
     say(f"driving build {stamp}")
     show(page, "Smoke")
     shot(page, "01-smoke")

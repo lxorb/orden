@@ -189,8 +189,8 @@ function claudeServers() {
   const config = JSON.parse(readFileSync(file, 'utf8'))
   const names = Object.keys(config.mcpServers ?? {})
   if (names.length !== 1 || names[0] !== 'orden') throw new Error(`servers ${names.join(', ')}`)
-  const nib = config.mcpServers.orden
-  if (nib.args?.join(' ') !== 'mcp' || nib.env) throw new Error('nib is not run as orden mcp')
+  const own = config.mcpServers.orden
+  if (own.args?.join(' ') !== 'mcp' || own.env) throw new Error('the orden server is not run as orden mcp')
   return has('--safe-mode') ? [] : [{ name: 'orden', status: 'connected' }]
 }
 function claudeSession() {

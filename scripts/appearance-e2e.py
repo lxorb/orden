@@ -149,10 +149,10 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         else:
             say(f"Orden's own frame: {bare}px between the window and its client area")
         if not ran(held, "!!document.querySelector('header .controls')"):
-            wrong("nib draws its own frame and none of its own window buttons")
+            wrong("Orden draws its own frame and none of its own window buttons")
         if backdrop_of(hwnd) == DWMSBT_TABBEDWINDOW:
             wrong("the window came up with a material behind it, which is not the default")
-        shot(process.pid, "01-nib-frame")
+        shot(process.pid, "01-orden-frame")
         pressed(held, "window-frame")
         framed = frame_of(hwnd)
         if framed - bare < 20:
@@ -162,7 +162,7 @@ def drive(app: pathlib.Path, given: str | None) -> None:
         if frame_said(held) != "system":
             wrong("the root does not say which frame is on, so the shell cannot read it")
         if ran(held, "!!document.querySelector('header .controls')"):
-            wrong("nib is still drawing its own window buttons under the system's titlebar")
+            wrong("Orden is still drawing its own window buttons under the system's titlebar")
         else:
             say("and Orden's own window buttons are gone from the bar")
         shot(process.pid, "02-system-frame")

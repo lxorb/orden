@@ -87,7 +87,7 @@ jobs:
           pnpm --filter ./apps/desktop build
           bash scripts/web-channels.sh apps/desktop/dist "$GITHUB_WORKSPACE/apps/desktop/dist"
 
-      - name: Build nibd for the Worker's bundle
+      - name: Build ordend for the Worker's bundle
         working-directory: ${{ runner.temp }}/main
         run: pnpm --filter ./services/machine build
 

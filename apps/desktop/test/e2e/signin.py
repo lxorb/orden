@@ -105,10 +105,10 @@ def state(page: Page) -> str:
     )
 WATCH = """
 () => {
-  window.__nib = []
+  window.__orden = []
   const tick = () => {
     const store = window.ordenApp.arriving
-    window.__nib.push([
+    window.__orden.push([
       Math.round(performance.now()),
       store.showing ? 1 : 0,
       document.querySelector('.arriving') ? 1 : 0,
@@ -117,7 +117,7 @@ WATCH = """
       window.ordenApp.sync.status,
       (document.querySelector('aside .foot .coming')?.innerText ?? '').trim(),
     ])
-    if (window.__nib.length < 600) setTimeout(tick, 200)
+    if (window.__orden.length < 600) setTimeout(tick, 200)
   }
   tick()
 }
@@ -131,14 +131,14 @@ def counted_in(page: Page, patience: float = 30) -> str:
         )
         if COUNT.search(live):
             return live
-        seen = [row[6] for row in page.evaluate("() => window.__nib ?? []") if COUNT.search(row[6])]
+        seen = [row[6] for row in page.evaluate("() => window.__orden ?? []") if COUNT.search(row[6])]
         if seen:
             return f"{seen[0]} up to {seen[-1]}"
         if time.monotonic() >= until:
             return ""
         page.wait_for_timeout(200)
 def watched(page: Page) -> str:
-    rows = page.evaluate("() => window.__nib ?? []")
+    rows = page.evaluate("() => window.__orden ?? []")
     out: list[str] = []
     last = None
     for row in rows:
@@ -155,7 +155,7 @@ def sign_in(page: Page, worker: Worker, label: str, address: str) -> None:
     already = len(worker.written())
     page.get_by_role("button", name="Continue").click()
     code = worker.waits_for_mail(
-        address, r"(\d{6}) is your (?:nibeditor|Orden) code", f"[{label}] the sign-in code", already
+        address, r"(\d{6}) is your Orden code", f"[{label}] the sign-in code", already
     ).group(1)
     say(f"[{label}] the code in the mail is {code}")
     page.locator(".digits input").first.fill(code)

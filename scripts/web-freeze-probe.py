@@ -41,7 +41,7 @@ app and not about somebody's network. The space is made in the spaces folder,
 because a path outside one is not a path the app will open, and taken away again at
 the end.
 
-    python scripts/web-freeze-probe.py --exe path/to/Nib.exe
+    python scripts/web-freeze-probe.py --exe path/to/orden.exe
 
 The exe comes from wherever the crate is built; the machine this was written on does
 not compile it at all, so it came out of a throwaway CI job on a `windows-11-arm`

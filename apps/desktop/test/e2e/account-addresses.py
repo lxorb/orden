@@ -14,7 +14,7 @@ def sign_in(page: Page, worker: harness.Worker) -> None:
     already = len(worker.written())
     page.get_by_role("button", name="Continue").click()
     mailed = worker.waits_for_mail(
-        PERSON, r"(\d{6}) is your (?:nibeditor|Orden) code", "the sign-in code", already
+        PERSON, r"(\d{6}) is your Orden code", "the sign-in code", already
     ).group(1)
     page.locator(".digits input").first.fill(mailed)
     DRIVE.wait_for(page, "() => !!window.ordenApp.account.accountToken", "the session")

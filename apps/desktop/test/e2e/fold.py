@@ -65,7 +65,7 @@ PLACEMENT = """
   const row = Number.parseFloat(getComputedStyle(line).lineHeight) || box.height
 
   return {
-    kind: [...line.classList].filter((one) => one.startsWith('nib-')).join(' ') || 'plain',
+    kind: [...line.classList].filter((one) => one.startsWith('orden-')).join(' ') || 'plain',
     text: line.textContent.trim().slice(0, 22),
     gap: Math.round(box.left - mark.right),
     left: Math.round(box.left),

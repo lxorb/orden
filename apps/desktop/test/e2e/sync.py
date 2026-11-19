@@ -227,7 +227,7 @@ def headless(worker: Worker, token: str, space: str) -> None:
             env={**os.environ, "ORDEN_TOKEN": program, "ORDEN_API": ORIGIN},
             check=False,
         )
-        say(f"nib-sync pull said: {done.stdout.strip() or done.stderr.strip()}")
+        say(f"orden-sync pull said: {done.stdout.strip() or done.stderr.strip()}")
         landed = sorted(one.name for one in folder.rglob("*.md"))
         say(f"and left: {landed}")
         if landed:
@@ -241,7 +241,7 @@ def headless(worker: Worker, token: str, space: str) -> None:
                 env={**os.environ, "ORDEN_TOKEN": program, "ORDEN_API": ORIGIN},
                 check=False,
             )
-            say(f"nib-sync push said: {pushed.stdout.strip() or pushed.stderr.strip()}")
+            say(f"orden-sync push said: {pushed.stdout.strip() or pushed.stderr.strip()}")
 def page_note(browser, token: str, space: str) -> None:
     paper = (
         '{"nodes":[{"id":"p1","type":"page","x":0,"y":0,"width":794,"height":1123}],'

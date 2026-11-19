@@ -959,7 +959,7 @@ def refused(exe: Path, identifier: str | None) -> str:
     local = os.environ.get("LOCALAPPDATA")
     for installed in ("Nib", "nibeditor", "Orden"):
         if local and exe.resolve().is_relative_to((Path(local) / installed).resolve()):
-            return f"{exe} is the installed nib"
+            return f"{exe} is the installed Orden"
     if not identifier:
         return f"{exe} names no identifier (ORDEN_PROBE_IDENTIFIER, or --identifier to the drive)"
     if identifier == RELEASE_IDENTIFIER or not identifier.startswith(RELEASE_IDENTIFIER + "."):

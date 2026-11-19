@@ -34,7 +34,7 @@ def sign_in(page: Page, worker: harness.Worker, phone: Authenticator) -> None:
     already = len(worker.written())
     page.get_by_role("button", name="Continue").click()
     mailed = worker.waits_for_mail(
-        PERSON, r"(\d{6}) is your (?:nibeditor|Orden) code", "the sign-in code", already
+        PERSON, r"(\d{6}) is your Orden code", "the sign-in code", already
     ).group(1)
     page.locator(".digits input").first.fill(mailed)
     page.get_by_text("Now the code from your authenticator app").wait_for(timeout=20_000)
@@ -64,7 +64,7 @@ def drive(browser: Browser) -> None:
         page.get_by_role("button", name="Delete account").click()
         already = len(worker.written())
         mailed = worker.waits_for_mail(
-            PERSON, r"(\d{6}) deletes your (?:nibeditor|Orden) account", "the code that deletes", already
+            PERSON, r"(\d{6}) deletes your Orden account", "the code that deletes", already
         ).group(1)
         say(f"[{scheme}] the mail that deletes says {mailed}")
         change = page.locator('input[aria-label="Code to change sign-in"]')
@@ -88,7 +88,7 @@ def drive(browser: Browser) -> None:
         say("deleted, and signed out")
         shot(page, "gone")
         worker.waits_for_mail(
-            PERSON, r"Your (?:nibeditor|Orden) account has been deleted", "the receipt", already
+            PERSON, r"Your Orden account has been deleted", "the receipt", already
         )
         left = worker.query(f"select count(*) as n from users where email = '{PERSON}'")
         if left and left[0].get("n"):

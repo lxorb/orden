@@ -57,7 +57,7 @@ for _ in $(seq 120); do
     status=1
     break
   fi
-  if xwininfo -root -tree 2>/dev/null | awk 'tolower($0) ~ /"(orden|read me|nib)/ && !/ 1x1\+/ { found = 1 } END { exit !found }'; then
+  if xwininfo -root -tree 2>/dev/null | awk 'tolower($0) ~ /"(orden|read me)/ && !/ 1x1\+/ { found = 1 } END { exit !found }'; then
     mapped=yes
     break
   fi
@@ -66,7 +66,7 @@ done
 [ "$status" = 0 ] && [ -z "$mapped" ] && { echo "::error::no window mapped under X11 in 60 s"; status=1; }
 if [ "$status" = 0 ]; then
   echo "the window mapped under X11:"
-  xwininfo -root -tree 2>/dev/null | grep -iE 'orden|nib|read me' | head || true
+  xwininfo -root -tree 2>/dev/null | grep -iE 'orden|read me' | head || true
   if [ "${IDLE:-0}" = 1 ]; then
     sleep 15
     echo "on the first screen, before setup is finished:"

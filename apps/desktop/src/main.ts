@@ -18,7 +18,7 @@ import { holdComposingKeys } from './lib/ui-kit/src/api'
 
 mark('modules evaluated')
 serveAssets()
-Object.assign(window, { nibBuild: __EVEN_BUILD__ })
+Object.assign(window, { ordenBuild: __EVEN_BUILD__ })
 if (isMobile) {
   const meta = document.querySelector('meta[name="viewport"]')
   meta?.setAttribute('content', `${meta.getAttribute('content')}, maximum-scale=1, user-scalable=no`)

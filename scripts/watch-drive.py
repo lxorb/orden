@@ -10,12 +10,12 @@ failures = []
 def fail(what):
     print(f"::error::{PHASE}: {what}")
     failures.append(what)
-ARM = """(() => { window.nibHeard = []; const internals = window.__TAURI_INTERNALS__;
-  const id = internals.transformCallback((raw) => { if (raw && 'message' in raw) window.nibHeard.push(raw.message) });
+ARM = """(() => { window.ordenHeard = []; const internals = window.__TAURI_INTERNALS__;
+  const id = internals.transformCallback((raw) => { if (raw && 'message' in raw) window.ordenHeard.push(raw.message) });
   return internals.invoke('working_watch', { root: ROOT, news: '__CHANNEL__:' + id })
     .then(() => 'armed', (error) => 'refused: ' + error) })()"""
 def heard():
-    return run("JSON.stringify(window.nibHeard ?? [])") or "[]"
+    return run("JSON.stringify(window.ordenHeard ?? [])") or "[]"
 for _ in range(120):
     if run("performance.getEntriesByName('orden: launch order finished').length > 0"):
         break

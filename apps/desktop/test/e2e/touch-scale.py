@@ -158,7 +158,7 @@ PRESS = """
       changedTouches: [touch], bubbles: true, cancelable: true,
     }))
   send('touchstart')
-  window.__nibRelease = () => send('touchend')
+  window.__ordenRelease = () => send('touchend')
   return true
 }
 """
@@ -275,7 +275,7 @@ def one(
     if touch:
         if page.evaluate(PRESS, "aside .row"):
             page.wait_for_selector('[role="menu"]:visible', timeout=5000)
-            page.evaluate("() => window.__nibRelease?.()")
+            page.evaluate("() => window.__ordenRelease?.()")
             page.wait_for_timeout(300)
     else:
         page.locator("aside .row").first.click(button="right")
