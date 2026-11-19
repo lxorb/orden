@@ -827,6 +827,7 @@ pub async fn web_close(
             crate::keyboard::closed(view.label());
             crate::web_follow::unfollow(view.label());
             crate::web_cut::uncut(view.label());
+            crate::web_drawing::forget(view.label());
             let_go(view.label());
             if !crate::web_answers::answers(&view) {
                 crate::web_answers::said(&closing);
@@ -921,6 +922,7 @@ pub fn close_page(app: &AppHandle, tab: &str) {
         crate::keyboard::closed(view.label());
         crate::web_follow::unfollow(view.label());
         crate::web_cut::uncut(view.label());
+        crate::web_drawing::forget(view.label());
         let _ = view.close();
     }
 }
