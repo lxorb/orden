@@ -1,6 +1,6 @@
 import { type Grouping, movedPatch, type Todo } from '../../tasks-model/src/api'
 import { carryTodo, carryTodoColumn, dragged, isTodoColumnDrag, isTodoDrag, isTreeDrag } from '../../ui-kit/src/api'
-import { linkNotes, patchTodo, placeTodo } from './acts'
+import { linkNotes, patchTodo, placeTodo, placeTodos } from './acts'
 import type { Shown } from './shown.svelte'
 import { shifted } from './glide'
 import { slotOf, type Spot, TodoDrag } from './todo-drag.svelte'
@@ -11,6 +11,8 @@ export interface CarryHost {
   list(column: string): readonly Todo[]
   grouping(): Grouping | null
   columns?(): readonly string[]
+  group?(id: string): readonly Todo[]
+  columnOf?(id: string): string | null
 }
 const nameOf = (path: string): string => (path.split('/').pop() ?? path).replace(/\.md$/i, '')
 const shared = new TodoDrag()
@@ -19,7 +21,8 @@ export class Carrying {
   taking = $state<string | null>(null)
   constructor(private readonly host: CarryHost) {}
   started(todo: Todo, column: string): void {
-    this.drag.start(todo, column, this.host.list(column))
+    const others = (this.host.group?.(todo.id) ?? []).filter((one) => one.id !== todo.id)
+    this.drag.start(todo, column, this.host.list(column), others)
   }
   private aimAt(node: HTMLElement, column: string, y: number): void {
     const carried = this.drag.todo?.id
@@ -36,9 +39,38 @@ export class Carrying {
     this.drag.over(column, this.host.list(column), beside, after)
   }
   async land(): Promise<void> {
-    const { todo, spot, from } = this.drag
+    const { todo, spot, from, others } = this.drag
     if (!todo || !spot || from === null) this.drag.clear()
+    else if (others.length) await this.drag.settle(this.putAll(todo, others, spot, from))
     else await this.drag.settle(this.put(todo, spot, from))
+  }
+  private async putAll(todo: Todo, others: readonly Todo[], spot: Spot, from: string): Promise<void> {
+    const shown = this.host.shown
+    const group = (this.host.group?.(todo.id) ?? [todo, ...others]).filter(
+      (one) => one.id === todo.id || others.some((other) => other.id === one.id),
+    )
+    const going = group.map((one) => one.id)
+    const list = this.host.list(spot.column)
+    const anchor = list
+      .filter((one) => one.id !== todo.id)
+      .slice(spot.at)
+      .find((one) => !going.includes(one.id))
+    const without = list.filter((one) => !going.includes(one.id))
+    const at = anchor ? without.indexOf(anchor) : without.length
+    const grouping = this.host.grouping()
+    const was = (one: Todo) => (one.id === todo.id ? from : (this.host.columnOf?.(one.id) ?? from))
+    const moving = group.filter((one) => was(one) !== spot.column)
+    if (grouping !== null && moving.length) {
+      await Promise.all(
+        moving.flatMap((one) => {
+          const patch = movedPatch(one, grouping, was(one), spot.column, shown.filter.today)
+          return patch ? [patchTodo(one.id, patch)] : []
+        }),
+      )
+      if (shown.sort !== 'manual') return
+    }
+    if (shown.sort !== 'manual') shown.setSort('manual')
+    await placeTodos([...without.slice(0, at), ...group, ...without.slice(at)], going)
   }
   private async put(todo: Todo, spot: Spot, from: string): Promise<void> {
     const shown = this.host.shown

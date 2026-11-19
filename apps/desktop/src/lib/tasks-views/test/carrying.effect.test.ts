@@ -1,7 +1,7 @@
 import 'fake-indexeddb/auto'
 import { providePort } from '@orden/contracts'
 import { describe, expect, test, vi } from 'vitest'
-import { addTask, type Board, todos } from '../../tasks-model/src/api'
+import { addTask, type Board, type Todo, todos } from '../../tasks-model/src/api'
 import { patchTodo } from '../src/acts'
 import { Carrying, columnPreview } from '../src/carrying.svelte'
 import { Shown, type ShownWorld } from '../src/shown.svelte'
@@ -19,7 +19,7 @@ providePort('sync.account', {
   askBeforeLeaving: () => undefined,
 })
 const prefix = () => `t${String(Math.random()).slice(2, 8)}`
-function shownOf(mine: string, where: 'panel' | 'board' = 'board') {
+function shownOf(mine: string, where: 'panel' | 'board' = 'board', group?: (id: string) => readonly Todo[]) {
   let board: Board = {
     grouping: 'label',
     done: false,
@@ -40,6 +40,9 @@ function shownOf(mine: string, where: 'panel' | 'board' = 'board') {
     shown,
     list: (key) => (where === 'panel' ? shown.todos : (shown.columns.find((one) => one.key === key)?.todos ?? [])),
     grouping: () => (where === 'panel' ? null : shown.grouping),
+    ...(group ? { group } : {}),
+    columnOf: (id) =>
+      where === 'panel' ? '' : (shown.columns.find((one) => one.todos.some((todo) => todo.id === id))?.key ?? null),
   })
   return { shown, carrying }
 }
@@ -144,6 +147,22 @@ describe('a carried todo', () => {
     await carrying.land()
     expect(todos.todo(a.id)?.labels).toEqual(['work'])
     expect(titles(shown.columns.find((one) => one.key === 'work')?.todos ?? [], mine)).toEqual(['b', 'a', 'c'])
+  })
+  test('carried with others picked, they all go into the column together in their order', async () => {
+    const mine = prefix()
+    const a = await made(mine, 'a', ['home'])
+    const b = await made(mine, 'b', ['home'])
+    await made(mine, 'c', ['home'])
+    await made(mine, 'd', ['work'])
+    const { shown, carrying } = shownOf(mine, 'board', (id) => (id === a.id || id === b.id ? [a, b] : []))
+    shown.setSort('manual')
+    carrying.started(b, 'home')
+    expect(carrying.drag.carries(a.id)).toBe(true)
+    carrying.aim('work', null, true)
+    await carrying.land()
+    expect([a, b].map((one) => todos.todo(one.id)?.labels)).toEqual([['work'], ['work']])
+    expect(titles(shown.columns.find((one) => one.key === 'work')?.todos ?? [], mine)).toEqual(['d', 'a', 'b'])
+    expect(titles(shown.columns.find((one) => one.key === 'home')?.todos ?? [], mine)).toEqual(['c'])
   })
   test('let go in a priority column takes that priority', async () => {
     const mine = prefix()

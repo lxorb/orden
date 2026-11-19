@@ -16,10 +16,14 @@ export async function patchTodo(id: string, patch: TodoPatch): Promise<string | 
   const kept = await todos.update(id, patch)
   return kept.ok ? null : kept.error.message
 }
-export async function tickTodo(shown: Shown, id: string, done: boolean): Promise<void> {
-  if (done && !shown.showDone) shown.linger(id)
-  if ((await patchTodo(id, { done })) !== null || !done) return
-  undoToast.offer('done', () => patchTodo(id, { done: false }))
+export async function tickTodos(shown: Shown, ids: readonly string[], done: boolean): Promise<void> {
+  if (done && !shown.showDone) for (const id of ids) shown.linger(id)
+  const failed = await Promise.all(ids.map((id) => patchTodo(id, { done })))
+  if (!done || failed.every((one) => one !== null)) return
+  undoToast.offer('done', () => Promise.all(ids.map((id) => patchTodo(id, { done: false }))))
+}
+export async function patchTodos(ids: readonly string[], patch: TodoPatch): Promise<void> {
+  await Promise.all(ids.map((id) => patchTodo(id, patch)))
 }
 export async function removeTodo(id: string): Promise<void> {
   await removeTodos([id])
@@ -40,6 +44,16 @@ export async function removeTodos(ids: readonly string[]): Promise<boolean> {
 }
 function ascending(list: readonly Todo[]): boolean {
   return list.every((one, at) => at === 0 || (list[at - 1]?.order ?? -Infinity) < one.order)
+}
+export async function placeTodos(list: readonly Todo[], ids: readonly string[]): Promise<void> {
+  const [one] = ids
+  if (ids.length === 1 && one !== undefined) {
+    await placeTodo(list, one)
+    return
+  }
+  await Promise.all(
+    list.flatMap((todo, index) => (todo.order === index + 1 ? [] : [patchTodo(todo.id, { order: index + 1 })])),
+  )
 }
 export async function placeTodo(list: readonly Todo[], id: string): Promise<void> {
   const at = list.findIndex((one) => one.id === id)

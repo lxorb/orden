@@ -14,7 +14,7 @@
   import { tick } from 'svelte'
   import { dur, fly, slide } from '../../platform/src/api'
   import { Select } from '../../ui-controls/src/api'
-  import { addTodo, doWithAi, patchTodo, removeTodo, tickTodo } from './acts'
+  import { addTodo, doWithAi, patchTodo, removeTodo } from './acts'
   import { Carrying, columnPreview } from './carrying.svelte'
   import Filters from './Filters.svelte'
   import { away, glider } from './glide'
@@ -36,12 +36,15 @@
   let columnTyped = $state('')
   let columnField = $state<HTMLInputElement | null>(null)
   const columns = $derived(shown.columns)
-  const carrying = new Carrying({
+  const carrying: Carrying = new Carrying({
     shown,
     list: (key) => columns.find((one) => one.key === key)?.todos ?? [],
     grouping: () => shown.grouping,
+    group: (id) => rows.group(id),
+    columnOf: (id) => columns.find((one) => one.todos.some((todo) => todo.id === id))?.key ?? null,
   })
-  const rows = new TodoRows({
+  const rows: TodoRows = new TodoRows({
+    shown,
     order: () => columns.flatMap((column) => column.todos),
     opened: () => openId,
     open: (id) => (openId = id),
@@ -202,9 +205,9 @@
                     today={shown.filter.today}
                     open={openId === todo.id}
                     showLabels={shown.grouping !== 'label' || todo.labels.length > 1}
-                    lifted={carrying.drag.todo?.id === todo.id}
+                    lifted={carrying.drag.carries(todo.id)}
                     taking={carrying.taking === todo.id}
-                    ontoggle={(done: boolean) => void tickTodo(shown, todo.id, done)}
+                    ontoggle={(done: boolean) => void rows.tick(todo.id, done)}
                     picked={rows.picking.has(todo.id)}
                     onopen={() => (openId = openId === todo.id ? null : todo.id)}
                     onpick={(event: MouseEvent) => rows.click(event, todo.id)}

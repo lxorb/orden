@@ -20,6 +20,7 @@ export function previewed(list: readonly Todo[], column: string, drag: TodoDrag)
 }
 export class TodoDrag {
   todo = $state<Todo | null>(null)
+  others = $state<readonly Todo[]>([])
   from = $state<string | null>(null)
   spot = $state<Spot | null>(null)
   column = $state<string | null>(null)
@@ -39,9 +40,13 @@ export class TodoDrag {
     this.landing = null
     this.clear()
   }
-  start(todo: Todo, from: string, list: readonly Todo[] = []): void {
+  carries(id: string): boolean {
+    return this.todo?.id === id || this.others.some((one) => one.id === id)
+  }
+  start(todo: Todo, from: string, list: readonly Todo[] = [], others: readonly Todo[] = []): void {
     this.landing = null
     this.todo = todo
+    this.others = others
     this.from = from
     const at = list.findIndex((one) => one.id === todo.id)
     this.spot = at === -1 ? null : { column: from, at }
@@ -68,6 +73,7 @@ export class TodoDrag {
   }
   clear(): void {
     this.todo = null
+    this.others = []
     this.from = null
     this.spot = null
     this.column = null
