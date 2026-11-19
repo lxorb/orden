@@ -5,6 +5,7 @@ import {
   type Column,
   columnsOf,
   type Grouping,
+  isGrouping,
   movedColumns,
   orderedColumns,
   todos as held,
@@ -40,6 +41,8 @@ export type Where = 'panel' | 'board'
 interface Kept {
   sort: Sort
   done: boolean
+  group: Grouping | null
+  folded: readonly string[]
 }
 const LINGER = 900
 function keptOf(value: unknown): Kept {
@@ -47,6 +50,8 @@ function keptOf(value: unknown): Kept {
   return {
     sort: isSort(read.sort) ? read.sort : 'deadline',
     done: read.done === true,
+    group: isGrouping(read.group) ? read.group : null,
+    folded: Array.isArray(read.folded) ? read.folded.filter((one): one is string => typeof one === 'string') : [],
   }
 }
 export class Shown {
@@ -54,6 +59,8 @@ export class Shown {
   sort = $state<Sort>('deadline')
   lingering = $state<readonly string[]>([])
   private panelDone = $state(false)
+  group = $state<Grouping | null>(null)
+  folded = $state<readonly string[]>([])
   constructor(
     private readonly world: ShownWorld,
     readonly where: Where = 'panel',
@@ -61,9 +68,11 @@ export class Shown {
     const kept = keptOf(world.kept())
     this.sort = kept.sort
     this.panelDone = kept.done
+    this.group = kept.group
+    this.folded = kept.folded
   }
-  private remember(): void {
-    this.world.keep({ sort: this.sort, done: this.panelDone })
+  private remember(change: Partial<Kept>): void {
+    this.world.keep({ ...keptOf(this.world.kept()), ...change })
   }
   get showDone(): boolean {
     return this.where === 'board' ? this.world.board().done : this.panelDone
@@ -72,7 +81,7 @@ export class Shown {
     if (this.where === 'board') this.world.arrange({ ...this.world.board(), done: value })
     else {
       this.panelDone = value
-      this.remember()
+      this.remember({ done: value })
     }
   }
   get anyStart(): boolean {
@@ -106,7 +115,18 @@ export class Shown {
   }
   setSort(value: Sort): void {
     this.sort = value
-    this.remember()
+    this.remember({ sort: value })
+  }
+  setGroup(value: Grouping | null): void {
+    this.group = value
+    this.remember({ group: value })
+  }
+  fold(key: string): void {
+    this.folded = this.folded.includes(key) ? this.folded.filter((one) => one !== key) : [...this.folded, key]
+    this.remember({ folded: this.folded })
+  }
+  get groups(): Column[] {
+    return this.group === null ? [] : columnsOf(this.todos, this.group, this.world.today())
   }
   setLabel(value: string | null): void {
     this.label = value

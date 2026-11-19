@@ -142,7 +142,7 @@ describe('tasks-views contract', () => {
     expect(first.todos.map((t) => t.id)).toEqual(['a', 'b'])
     first.setSort('manual')
     first.setLabel('x')
-    expect(read()).toEqual({ sort: 'manual', done: false })
+    expect(read()).toEqual({ sort: 'manual', done: false, group: null, folded: [] })
     const second = new Shown(w)
     expect(second.sort).toBe('manual')
     expect(second.label).toBeNull()
@@ -187,6 +187,24 @@ describe('tasks-views contract', () => {
     expect(shown.space).toBeNull()
     expect(shown.todos.map((t) => t.id)).toEqual(['a'])
   })
+  test('the panel groups by none, label, deadline or priority, and keeps its grouping and folded groups on this device', () => {
+    const { world: w, read } = world([todo({ id: 'a', labels: ['x'] }), todo({ id: 'b' })])
+    const first = new Shown(w)
+    expect(first.group).toBeNull()
+    expect(first.groups).toEqual([])
+    first.setGroup('label')
+    first.fold('x')
+    expect(first.groups.map((one) => [one.key, one.todos.map((t) => t.id)])).toEqual([
+      ['x', ['a']],
+      ['', ['b']],
+    ])
+    expect(read()).toMatchObject({ group: 'label', folded: ['x'] })
+    const second = new Shown(w)
+    expect(second.group).toBe('label')
+    expect(second.folded).toEqual(['x'])
+    second.fold('x')
+    expect(new Shown(w).folded).toEqual([])
+  })
   test('done todos stay hidden until Show done is on, and one just ticked lingers a moment where it stood', () => {
     vi.useFakeTimers()
     const list = [todo({ id: 'a', done: true, doneAt: 1 }), todo({ id: 'b' })]
@@ -199,7 +217,7 @@ describe('tasks-views contract', () => {
     expect(shown.todos.map((t) => t.id)).toEqual(['b'])
     shown.setShowDone(true)
     expect(shown.todos.map((t) => t.id)).toEqual(['b', 'a'])
-    expect(read()).toEqual({ sort: 'deadline', done: true })
+    expect(read()).toEqual({ sort: 'deadline', done: true, group: null, folded: [] })
     vi.useRealTimers()
   })
   test('the board keeps its grouping, Show done, Ignore start date and column order in the synced board', () => {
