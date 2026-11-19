@@ -129,3 +129,21 @@ describe('an archived space', () => {
     expect([workspace.activeSpaceId, workspace.activeTabId]).toEqual([OLD.id, trip])
   })
 })
+describe('the tab here', () => {
+  const HOME = { id: 'home', name: 'Home', root: '/notes/Home' }
+  const AWAY = { id: 'away', name: 'Away', root: '/notes/Away' }
+  test('is one of the space in sight, never one another space holds', async () => {
+    workspace.spaces = [{ ...HOME }, { ...AWAY }]
+    await workspace.showSpace(AWAY.id)
+    workspace.openBlank('Away note', '# Away')
+    const away = workspace.activeTabId
+    await workspace.showSpace(HOME.id)
+    workspace.openBlank('Home note', '# Home')
+    const home = workspace.activeTabId
+    const either = (one: { id: string }) => one.id === away || one.id === home
+    expect(workspace.tabHere(either)?.id).toBe(home)
+    expect(workspace.tabHere((one) => one.id === away)).toBeNull()
+    await workspace.showSpace(AWAY.id)
+    expect(workspace.tabHere(either)?.id).toBe(away)
+  })
+})

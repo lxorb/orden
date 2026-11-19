@@ -1164,8 +1164,11 @@ class Workspace {
   private isHere(tab: Tab, kind: TabKind): boolean {
     return tab.kind === kind && this.panes.at(tab.paneId) !== null
   }
+  tabHere(match: (tab: Tab) => boolean): Tab | null {
+    return this.tabs.find((tab) => this.panes.at(tab.paneId) !== null && match(tab)) ?? null
+  }
   singleHere(kind: TabKind): Tab | null {
-    return this.tabs.find((tab) => this.isHere(tab, kind)) ?? null
+    return this.tabHere((tab) => tab.kind === kind)
   }
   private add(tab: Tab, activate = true, opener: string | null = null): Tab {
     const chosen = this.chosenFor(tab)
