@@ -12,6 +12,7 @@
     "tab-strip",
     "windows",
     "undo-toast",
-    "workspace"
+    "workspace",
+    "link-index"
   ]
 }

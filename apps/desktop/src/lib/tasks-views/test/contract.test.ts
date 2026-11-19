@@ -1,7 +1,29 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test, vi } from 'vitest'
+import { openNote } from '../src/notes'
 import { Shown, type ShownWorld, SORT_NAMES } from '../src/shown.svelte'
+
+const desk = vi.hoisted(() => ({
+  notes: new Map<string, Record<string, string>>(),
+  followed: [] as unknown[][],
+}))
+vi.mock('../../workspace/src/api', () => ({
+  workspace: {
+    spaces: [
+      { id: 'home', root: '/s/home' },
+      { id: 'work', root: '/s/work' },
+    ],
+    activeSpace: { id: 'work', root: '/s/work' },
+  },
+  followNote: (...said: unknown[]) => void desk.followed.push(said),
+}))
+vi.mock('../../link-index/src/api', () => ({
+  links: {
+    spaceRead: async () => undefined,
+    reachedOf: (from: string, link: { target: string }) => desk.notes.get(from)?.[link.target] ?? null,
+  },
+}))
 
 const TODAY = '2026-11-14'
 interface Fake {
@@ -60,6 +82,25 @@ function world(list: Fake[], active: string | null = 'home') {
   return { world: made, read: () => kept, board: () => board }
 }
 describe('tasks-views contract', () => {
+  test("a note chip opens only a note that is there, found in the todo's own space, and after a rename the renamed one", async () => {
+    desk.notes.set('/s/home', { Plan: 'Work/Plan.md' })
+    desk.notes.set('/s/work', { Plan: 'Plan.md' })
+    desk.followed.length = 0
+    await openNote('Gone', 'home')
+    await openNote('Gone', null)
+    expect(desk.followed).toEqual([])
+    await openNote('Plan', 'home')
+    expect(desk.followed).toEqual([
+      [{ path: 'Work/Plan.md', target: 'Plan', heading: null, block: null, page: null }, undefined, '/s/home'],
+    ])
+    desk.notes.set('/s/home', { Roadmap: 'Work/Roadmap.md' })
+    desk.followed.length = 0
+    await openNote('Plan', 'home')
+    await openNote('Roadmap', 'home')
+    expect(desk.followed).toEqual([
+      [{ path: 'Work/Roadmap.md', target: 'Roadmap', heading: null, block: null, page: null }, undefined, '/s/home'],
+    ])
+  })
   test('the module reads the model, the motion, the shortcuts, the shared controls and the shell parts it borrows only through their apis', () => {
     const src = join(import.meta.dirname, '..', 'src')
     for (const name of readdirSync(src)) {

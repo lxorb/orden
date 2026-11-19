@@ -1,5 +1,6 @@
 import { portOf, whenPortProvided } from '@orden/contracts'
 import { openTodoDisk } from './disk'
+import { followingMoves } from './relink'
 import { todoServer } from './server'
 import { TodoStore, type StoreWorld } from './store.svelte'
 
@@ -63,6 +64,7 @@ export function startTodos(): void {
       })
     })
   })
+  whenPortProvided('workspace.view', (view) => view.follow(followingMoves(todos, () => view.spaces)))
   if (typeof window === 'undefined') return
   const again = () => {
     if (document.visibilityState === 'visible') void todos.exchange()

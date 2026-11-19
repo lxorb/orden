@@ -26,6 +26,7 @@ export {
   sortedTodos,
 } from './query'
 export { isTodoSpace, todoSpaceOf, type TodoSpace } from './space'
+export { followingMoves, relinked } from './relink'
 export { TodoStore, type StoreWorld, type Opening } from './store.svelte'
 export { MemoryTodoDisk, MemoryTodoServer, type TodoDisk, type TodoServer } from './records'
 export { startTodos, todos } from './start.svelte'
