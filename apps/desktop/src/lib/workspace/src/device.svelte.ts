@@ -4,9 +4,8 @@ import {
   isNumber,
   isString,
   keep,
-  keepJson,
+  Kept,
   recordOf,
-  stored,
   storedText,
   stringList,
   without,
@@ -29,45 +28,79 @@ const ESSENTIALS_KEY = 'orden:essentials-look'
 const FOLLOWS_KEY = 'orden:pane-follows-pointer'
 const RECENT_LIMIT = 15
 const SETTLING = 400
+const booleans = (saved: unknown) => recordOf(saved, isBoolean)
+const strings = (saved: unknown) => recordOf(saved, isString)
 export class DeviceView {
-  recent = $state<string[]>([])
-  expanded = $state<Record<string, boolean>>({})
-  listScroll = $state<Record<string, number>>({})
-  expandedTags = $state<Record<string, boolean>>({})
-  expandedGroups = $state<Record<string, boolean>>({})
+  private readonly kept = {
+    recent: new Kept<string[]>(RECENT_KEY, (saved) => stringList(saved) ?? []),
+    expanded: new Kept(EXPANDED_KEY, booleans),
+    listScroll: new Kept(LIST_AT_KEY, (saved) => recordOf(saved, isNumber)),
+    expandedTags: new Kept(TAGS_KEY, booleans),
+    expandedGroups: new Kept(GROUPS_KEY, booleans),
+    icons: new Kept(ICONS_KEY, strings),
+    iconTints: new Kept(ICON_TINTS_KEY, strings),
+  }
   paneFollowsPointer = $state(true)
-  icons = $state<Record<string, string>>({})
-  iconTints = $state<Record<string, string>>({})
   private writing: ReturnType<typeof setTimeout> | null = null
   constructor() {
     this.reread()
   }
+  get recent(): string[] {
+    return this.kept.recent.value
+  }
+  set recent(next: string[]) {
+    this.kept.recent.value = next
+  }
+  get expanded(): Record<string, boolean> {
+    return this.kept.expanded.value
+  }
+  set expanded(next: Record<string, boolean>) {
+    this.kept.expanded.value = next
+  }
+  get listScroll(): Record<string, number> {
+    return this.kept.listScroll.value
+  }
+  set listScroll(next: Record<string, number>) {
+    this.kept.listScroll.value = next
+  }
+  get expandedTags(): Record<string, boolean> {
+    return this.kept.expandedTags.value
+  }
+  set expandedTags(next: Record<string, boolean>) {
+    this.kept.expandedTags.value = next
+  }
+  get expandedGroups(): Record<string, boolean> {
+    return this.kept.expandedGroups.value
+  }
+  set expandedGroups(next: Record<string, boolean>) {
+    this.kept.expandedGroups.value = next
+  }
+  get icons(): Record<string, string> {
+    return this.kept.icons.value
+  }
+  get iconTints(): Record<string, string> {
+    return this.kept.iconTints.value
+  }
   reread(): void {
-    this.recent = stringList(stored(RECENT_KEY)) ?? []
-    this.expanded = recordOf(stored(EXPANDED_KEY), isBoolean)
-    this.listScroll = recordOf(stored(LIST_AT_KEY), isNumber)
-    this.expandedTags = recordOf(stored(TAGS_KEY), isBoolean)
-    this.expandedGroups = recordOf(stored(GROUPS_KEY), isBoolean)
+    for (const one of Object.values(this.kept)) one.reread()
     forget(ESSENTIALS_KEY)
     this.paneFollowsPointer = storedText(FOLLOWS_KEY) !== 'off'
-    this.icons = recordOf(stored(ICONS_KEY), isString)
-    this.iconTints = recordOf(stored(ICON_TINTS_KEY), isString)
   }
   remember(path: string) {
     this.recent = [path, ...this.recent.filter((entry) => !samePath(entry, path))].slice(0, RECENT_LIMIT)
-    keepJson(RECENT_KEY, this.recent)
+    this.kept.recent.write()
     void import('../../matching/src/api').then((one) => one.frecency.use(`note:${path}`))
   }
   unremember(path: string) {
     this.recent = this.recent.filter((entry) => !samePath(entry, path))
-    keepJson(RECENT_KEY, this.recent)
+    this.kept.recent.write()
   }
   isExpanded(path: string): boolean {
     return this.expanded[path] === true
   }
   toggleFolder(path: string) {
     this.expanded = this.isExpanded(path) ? without(this.expanded, path) : { ...this.expanded, [path]: true }
-    keepJson(EXPANDED_KEY, this.expanded)
+    this.kept.expanded.write()
   }
   isGroupOpen(id: string): boolean {
     return this.expandedGroups[id] === true
@@ -76,7 +109,7 @@ export class DeviceView {
     this.expandedGroups = this.isGroupOpen(id)
       ? without(this.expandedGroups, id)
       : { ...this.expandedGroups, [id]: true }
-    keepJson(GROUPS_KEY, this.expandedGroups)
+    this.kept.expandedGroups.write()
   }
   followPointer(on: boolean) {
     this.paneFollowsPointer = on
@@ -92,7 +125,7 @@ export class DeviceView {
     if (this.writing !== null) return
     this.writing = setTimeout(() => {
       this.writing = null
-      keepJson(LIST_AT_KEY, this.listScroll)
+      this.kept.listScroll.write()
     }, SETTLING)
   }
   follow(op: FileOp) {
@@ -103,19 +136,19 @@ export class DeviceView {
       const at = this.listScroll[op.from]
       if (at !== undefined) {
         this.listScroll = { ...without(this.listScroll, op.from), [op.to]: at }
-        keepJson(LIST_AT_KEY, this.listScroll)
+        this.kept.listScroll.write()
       }
     }
     const moved = (path: string) => movedTo(path, op.from, op.to) ?? path
     const recent = this.recent.map(moved)
     if (recent.some((one, at) => one !== this.recent[at])) {
       this.recent = recent
-      keepJson(RECENT_KEY, recent)
+      this.kept.recent.write()
     }
     const open = Object.keys(this.expanded)
     if (open.some((path) => moved(path) !== path)) {
       this.expanded = Object.fromEntries(open.map((path) => [moved(path), true]))
-      keepJson(EXPANDED_KEY, this.expanded)
+      this.kept.expanded.write()
     }
   }
   private forget(op: FileOp) {
@@ -123,7 +156,7 @@ export class DeviceView {
     const kept = Object.keys(this.expanded).filter((path) => within(op.path, path) === null)
     if (kept.length === Object.keys(this.expanded).length) return
     this.expanded = Object.fromEntries(kept.map((path) => [path, true]))
-    keepJson(EXPANDED_KEY, this.expanded)
+    this.kept.expanded.write()
   }
   keepOpen(root: string, spelled: (path: string) => string | null) {
     const open = Object.keys(this.expanded)
@@ -134,14 +167,14 @@ export class DeviceView {
     })
     if (now.length === open.length && now.every((path, at) => path === open[at])) return
     this.expanded = Object.fromEntries(now.map((path) => [path, true]))
-    keepJson(EXPANDED_KEY, this.expanded)
+    this.kept.expanded.write()
   }
   isTagOpen(path: string): boolean {
     return this.expandedTags[path] === true
   }
   toggleTag(path: string) {
     this.expandedTags = this.isTagOpen(path) ? without(this.expandedTags, path) : { ...this.expandedTags, [path]: true }
-    keepJson(TAGS_KEY, this.expandedTags)
+    this.kept.expandedTags.write()
   }
   expand(path: string) {
     if (this.isExpanded(path)) return
@@ -151,7 +184,7 @@ export class DeviceView {
     const kept = Object.fromEntries(Object.entries(this.expanded).filter(([path]) => withinSpace(root, path) === null))
     if (Object.keys(kept).length === Object.keys(this.expanded).length) return
     this.expanded = kept
-    keepJson(EXPANDED_KEY, this.expanded)
+    this.kept.expanded.write()
   }
   iconOf(root: string): string | null {
     return this.icons[root] ?? null
@@ -179,11 +212,11 @@ export class DeviceView {
     if (tint) this.writeTints({ ...without(this.iconTints, from), [to]: tint })
   }
   private writeIcons(next: Record<string, string>) {
-    this.icons = next
-    keepJson(ICONS_KEY, next)
+    this.kept.icons.value = next
+    this.kept.icons.write()
   }
   private writeTints(next: Record<string, string>) {
-    this.iconTints = next
-    keepJson(ICON_TINTS_KEY, next)
+    this.kept.iconTints.value = next
+    this.kept.iconTints.write()
   }
 }
