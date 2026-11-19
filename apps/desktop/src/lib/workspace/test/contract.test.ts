@@ -12,6 +12,20 @@ vi.stubGlobal('localStorage', {
   length: 0,
   clear: () => held.clear(),
 })
+const ending = vi.hoisted(() => ({ refuse: false, asked: [] as string[][] }))
+vi.mock('../src/services', async (original) => {
+  const real = await original<typeof import('../src/services')>()
+  return {
+    ...real,
+    services: () => ({
+      ...real.services(),
+      mayEnd: (closing: readonly { id: string }[]) => {
+        ending.asked.push(closing.map((one) => one.id))
+        return Promise.resolve(!ending.refuse)
+      },
+    }),
+  }
+})
 const { firstVisiting, isHiddenTabs, movingOf, notices, ownerOf, spaceSets, spacesFor, workspace } =
   await import('../src/api')
 const HERE = join(import.meta.dirname, '..')
@@ -316,5 +330,51 @@ describe('a tab of another space, opened here', () => {
     expect(workspace.tabs).toHaveLength(views)
     workspace.openHere(home.id)
     expect([workspace.activeSpaceId, workspace.activeTabId]).toEqual([TWO.id, home.id])
+  })
+})
+describe('a tab and its twin', () => {
+  const SHELL = { kind: 'terminal' as const, words: '', title: 'Shell' }
+  function three() {
+    workspace.openBlank('One', '')
+    workspace.openBlank('Two', '')
+    const two = workspace.active
+    workspace.openBlank('Three', '')
+    if (!two) throw new Error('nothing opened')
+    workspace.activate(two.id)
+    return two
+  }
+  test('turn in the same place, active as it was, and turn back to the very same tab', () => {
+    const two = three()
+    const strip = () => workspace.tabsIn(two.paneId).map((one) => one.id)
+    const before = strip()
+    const shell = workspace.turn(two.id, SHELL)
+    if (!shell) throw new Error('no twin')
+    expect(strip()).toEqual(before.map((id) => (id === two.id ? shell.id : id)))
+    expect([workspace.activeTabId, shell.kind, shell.name]).toEqual([shell.id, 'terminal', 'Shell'])
+    expect(workspace.twinOf(shell.id)).toBe(two)
+    expect(workspace.tucked).toContain(two)
+    expect(workspace.tabs).not.toContain(two)
+    expect(workspace.turn(two.id)).toBeNull()
+    expect(workspace.turn(shell.id)).toBe(two)
+    expect(strip()).toEqual(before)
+    expect(workspace.activeTabId).toBe(two.id)
+    expect(workspace.twinOf(two.id)).toBe(shell)
+    expect(workspace.tucked).toContain(shell)
+    expect(workspace.turn(before[0] ?? '')).toBeNull()
+  })
+  test('closes with its tab, asked as itself would be, and a no keeps both', async () => {
+    const two = three()
+    const shell = workspace.turn(two.id, SHELL)
+    if (!shell) throw new Error('no twin')
+    workspace.turn(shell.id)
+    ending.refuse = true
+    await workspace.closeMany([two.id])
+    expect(ending.asked.at(-1)).toContain(shell.id)
+    expect(workspace.tabs).toContain(two)
+    expect(workspace.tucked).toContain(shell)
+    ending.refuse = false
+    await workspace.closeMany([two.id])
+    expect(workspace.tabs).not.toContain(two)
+    expect(workspace.tucked).not.toContain(shell)
   })
 })

@@ -314,6 +314,45 @@ class Workspace {
     this.arrive(copy, how)
     this.persist()
   }
+  private tuckedBy = $state.raw<Record<string, Tab>>({})
+  get tucked(): readonly Tab[] {
+    return Object.entries(this.tuckedBy).flatMap(([id, twin]) => (this.tabs.some((one) => one.id === id) ? [twin] : []))
+  }
+  twinOf(id: string): Tab | null {
+    return this.tuckedBy[id] ?? null
+  }
+  turn(id: string, other?: { kind: TabKind; words: string; title: string }): Tab | null {
+    const tab = this.tabs.find((one) => one.id === id)
+    if (!tab) return null
+    const twin = this.tuckedBy[id] ?? (other ? this.twinMade(tab, other) : null)
+    if (!twin) return null
+    const front = this.panes.at(tab.paneId)?.activeTabId === id
+    twin.paneId = tab.paneId
+    twin.essential = tab.essential
+    this.tabs = this.tabs.map((one) => (one === tab ? twin : one))
+    const rest = Object.fromEntries(Object.entries(this.tuckedBy).filter(([key]) => key !== id))
+    this.tuckedBy = { ...rest, [twin.id]: tab }
+    if (this.previewTabId === id) this.previewTabId = null
+    if (this.heldTabId === id) this.heldTabId = twin.id
+    if (front) this.activeTabId = twin.id
+    this.persist()
+    return twin
+  }
+  private twinMade(tab: Tab, other: { kind: TabKind; words: string; title: string }): Tab {
+    const here = this.panes.at(tab.paneId) ? this.activeSpaceId : null
+    const note = this.document({
+      kind: other.kind,
+      path: null,
+      name: other.title,
+      text: other.words,
+      dirty: false,
+      home: tab.note.home ?? here,
+    })
+    return new Tab(note, tab.paneId)
+  }
+  private withTwins(tabs: readonly Tab[]): Tab[] {
+    return [...tabs, ...tabs.flatMap((one) => this.tuckedBy[one.id] ?? [])]
+  }
   get shownTabs(): Tab[] {
     return this.tabs.filter((tab) => !this.archivedTab(tab))
   }
@@ -2130,8 +2169,9 @@ class Workspace {
     const tab = this.tabs.find((one) => one.id === id)
     return tab ? closedAround(this.tabsIn(tab.paneId), id, which).length : 0
   }
-  private async mayClose(closing: readonly Tab[], again: () => void): Promise<boolean> {
+  private async mayClose(shown: readonly Tab[], again: () => void): Promise<boolean> {
     if (__EVEN_PLUGIN__) return true
+    const closing = this.withTwins(shown)
     if (closing.some(unsaved)) {
       const { mayLose } = await import('./closing-unsaved')
       if (!(await mayLose(this, closing, again))) return false
@@ -2174,6 +2214,12 @@ class Workspace {
     }
     webPages().forget(tab.id)
     this.tabs = this.tabs.filter((one) => one.id !== id)
+    const twin = this.tuckedBy[id]
+    if (twin) {
+      this.tuckedBy = Object.fromEntries(Object.entries(this.tuckedBy).filter(([key]) => key !== id))
+      webPages().forget(twin.id)
+      this.saving.closed(twin.note)
+    }
     if (this.previewTabId === id) this.previewTabId = null
     this.saving.closed(tab.note)
     if (!this.panes.at(paneId)) return true
@@ -2963,10 +3009,10 @@ class Workspace {
     failed.tell(again, true)
     return false
   }
-  private turn: Promise<void> = Promise.resolve()
+  private queue: Promise<void> = Promise.resolve()
   private inTurn(work: () => Promise<void>): Promise<void> {
-    this.turn = this.turn.then(work, work)
-    return this.turn
+    this.queue = this.queue.then(work, work)
+    return this.queue
   }
   async arrived(path: string) {
     const waiting = this.tabs.filter((tab) => tab.coming && samePath(tab.path, path))
