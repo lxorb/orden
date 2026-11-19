@@ -535,7 +535,9 @@ pub fn heard_on_chromium(app: &tauri::AppHandle, window: &str, tab: &str, payloa
         return;
     }
     if name == PRESSED_IN {
-        crate::web_tabs::page_chosen(app, window, &crate::web_tabs::label_of(tab));
+        let page = crate::web_tabs::label_of(tab);
+        crate::keyboard::page_pressed(window, &page);
+        crate::web_tabs::page_chosen(app, window, &page);
         return;
     }
     if let Some(asked) = placed(&name, true, Held::default(), false) {

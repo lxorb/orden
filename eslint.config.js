@@ -430,6 +430,7 @@ export default tseslint.config(
       'apps/desktop/src-tauri/crates/system/src/gpu.js',
       'apps/desktop/src-tauri/crates/web/src/page_scale.js',
       'apps/desktop/src-tauri/crates/web/src/keyboard_press.js',
+      'apps/desktop/src-tauri/crates/web/src/keyboard_into.js',
       'apps/desktop/src-tauri/crates/web/src/page_scheme.js',
       'apps/desktop/src-tauri/crates/carry/src/kept.js',
       'apps/desktop/src-tauri/crates/carry/src/former.js',

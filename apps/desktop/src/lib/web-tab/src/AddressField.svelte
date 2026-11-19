@@ -36,6 +36,7 @@
   import { dotCom, type HalfTyped } from '@orden/scan/typed'
   import { shownAddress, type Visit } from '@orden/scan/visits'
   import { visited } from './visited'
+  import { offeredInline } from './bar-keys'
   import { leads, noteKey, webNotesFor, webNotesOf, type WebNote } from './web-notes'
 
   type Offer = { kind: 'page'; visit: Visit } | { kind: 'note'; note: WebNote }
@@ -212,7 +213,7 @@
     const box = field
     if (!box) return false
     const row = rows[active]
-    const offered = box.selectionStart !== box.selectionEnd && box.selectionEnd === box.value.length
+    const offered = offeredInline(box.selectionStart, box.selectionEnd, box.value.length, typed.length)
     if (!row && !offered) return false
     const text = row ? shownAddress(urlOf(row)) : box.value
     box.value = text

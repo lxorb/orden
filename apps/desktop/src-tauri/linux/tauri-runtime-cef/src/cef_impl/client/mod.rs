@@ -18,6 +18,7 @@ mod context_menu;
 mod display;
 mod download;
 mod drag;
+mod focus;
 mod frame;
 mod keyboard;
 mod life_span;
@@ -35,6 +36,7 @@ pub(crate) use drag::{
   DragDropEventTarget, DragDropScriptEvent, DragDropState, WebDragDropResourceRequestHandler,
   WebDragDropResourceRequestHandlerArgs, drag_drop_initialization_script, event_from_script_event,
 };
+use focus::TauriCefFocusHandler;
 use keyboard::TauriCefKeyboardHandler;
 use life_span::{TauriCefChildLifeSpanHandler, TauriCefChildLifeSpanHandlerArgs};
 use load::TauriCefLoadHandler;
@@ -257,7 +259,14 @@ wrap_with_args! {
     }
 
     fn keyboard_handler(&self) -> Option<KeyboardHandler> {
-      Some(TauriCefKeyboardHandler::new(self.devtools_enabled))
+      Some(TauriCefKeyboardHandler::new(
+        self.devtools_enabled,
+        self.opener.is_none().then(|| self.label.clone()),
+      ))
+    }
+
+    fn focus_handler(&self) -> Option<FocusHandler> {
+      Some(TauriCefFocusHandler::new(self.opener.is_none().then(|| self.label.clone())))
     }
 
     fn command_handler(&self) -> Option<CommandHandler> {

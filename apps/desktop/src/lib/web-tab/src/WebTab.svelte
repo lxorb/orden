@@ -60,6 +60,8 @@
   import { extensions, type Extension } from './extensions.svelte'
   import WebSite from './WebSite.svelte'
   import { NewHere } from '../../new-here/src/api'
+  import { handAppKeys } from './app-keys.svelte'
+  import { cameFromAfter, focusBeside, readLeft } from './keys'
 
   const { tab: shown, focused }: { tab: Tab; focused: boolean } = $props()
   const tab = untrack(() => shown)
@@ -69,6 +71,18 @@
   const pictured = $derived(page.shot !== null && (page.layering !== 'under' || page.heldAt !== null))
   let hole = $state<HTMLElement>()
   let marked = $state(true)
+  $effect(() => {
+    const slot = hole
+    if (!slot) return
+    slot.tabIndex = page.live && !pictured ? 0 : -1
+    const into = (event: FocusEvent) => {
+      if (!slot.matches(':focus-visible')) return
+      const last = cameFromAfter(slot, event.relatedTarget)
+      void invoke('keyboard_into', { tab: tab.id, last }).catch(() => undefined)
+    }
+    slot.addEventListener('focus', into)
+    return () => slot.removeEventListener('focus', into)
+  })
   const worn = $derived(agentMarks.on[tab.id] ?? null)
   const FRAME = 2
   function rect(): Rect | null {
@@ -226,6 +240,19 @@
     })
   })
   onMount(() => {
+    handAppKeys()
+    let unheard: (() => void) | null = null
+    let gone = false
+    if (isDesktop) {
+      void import('../../windows/src/api').then(async ({ hearHere }) => {
+        const stop = await hearHere('orden://keyboard-left-page', (event) => {
+          const said = readLeft(event.payload)
+          if (said?.tab === tab.id && hole) focusBeside(hole, said.next)
+        })
+        if (gone) stop()
+        else unheard = stop
+      })
+    }
     const asking = () => {
       ready = true
       look()
@@ -245,6 +272,8 @@
     const unwatch = overlays.watch(follow)
     const unarrive = watchArrivals(now)
     return () => {
+      gone = true
+      unheard?.()
       cancelAnimationFrame(scheduled)
       watching?.disconnect()
       unwatch()

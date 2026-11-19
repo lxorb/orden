@@ -328,6 +328,8 @@ macro_rules! desktop_commands {
             orden_web::keyboard::keyboard_went,
             orden_web::keyboard::keyboard_back,
             orden_web::web_keys::web_keys_take,
+            orden_web::web_keys::web_keys_app,
+            orden_web::keyboard::keyboard_into,
             orden_web::web_tabs::web_navigate,
             orden_web::web_tabs::web_step,
             orden_web::web_tabs::web_trail,
@@ -621,6 +623,7 @@ fn first_of_all(handle: &tauri::AppHandle) {
         served: engine::certificate::served,
         zooms: engine::zooms,
     });
+    engine::hear_keys();
     orden_agent_web::engines::hand(orden_agent_web::engines::Pages {
         page: engine::windowless::shared,
         build: engine::windowless::build,

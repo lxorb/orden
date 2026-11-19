@@ -133,6 +133,32 @@ pub(crate) fn zooms(
         });
     })
 }
+pub(crate) fn hear_keys() {
+    tauri_runtime_cef::hear_keys(pressed, orden_web::keyboard::left);
+}
+fn pressed(label: &str, event: &cef::KeyEvent) -> bool {
+    use cef::sys::{cef_event_flags_t as Flag, cef_key_event_type_t as Kind};
+    let kind = |one: Kind| event.type_ == cef::KeyEventType::from(one);
+    let held = |flag: Flag| i64::from(event.modifiers) & i64::from(flag.0) != 0;
+    let Ok(vk) = u32::try_from(event.windows_key_code) else {
+        return false;
+    };
+    let down = kind(Kind::KEYEVENT_RAWKEYDOWN) || kind(Kind::KEYEVENT_KEYDOWN);
+    down && orden_web::keyboard::pressed(
+        label,
+        orden_web::web_keys::Press {
+            vk,
+            held: orden_web::web_keys::Held {
+                ctrl: held(Flag::EVENTFLAG_CONTROL_DOWN),
+                shift: held(Flag::EVENTFLAG_SHIFT_DOWN),
+                alt: held(Flag::EVENTFLAG_ALT_DOWN),
+            },
+            meta: held(Flag::EVENTFLAG_COMMAND_DOWN),
+            altgr: held(Flag::EVENTFLAG_ALTGR_DOWN),
+            repeat: held(Flag::EVENTFLAG_IS_REPEAT),
+        },
+    )
+}
 #[allow(
     clippy::cast_possible_truncation,
     clippy::useless_conversion,
