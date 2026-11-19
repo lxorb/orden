@@ -71,7 +71,7 @@ pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64, corner: f64
 
 const CUTS: bool = cfg!(target_os = "linux");
 
-const HOLLOWS: bool = cfg!(windows);
+const HOLLOWS: bool = cfg!(any(windows, target_os = "macos"));
 
 #[derive(Clone, Copy, Debug, serde::Serialize, PartialEq)]
 #[serde(untagged)]
@@ -348,7 +348,227 @@ mod engine {
     }
 }
 
-#[cfg(not(any(target_os = "linux", windows)))]
+#[cfg(target_os = "macos")]
+mod engine {
+    use std::collections::HashMap;
+    use std::ffi::{c_void, CString};
+    use std::sync::{LazyLock, Mutex};
+
+    use objc2::encode::{Encoding, RefEncode};
+    use objc2::rc::Retained;
+    use objc2::runtime::{AnyClass, AnyObject, ClassBuilder, Sel};
+    use objc2::{msg_send, sel};
+    use objc2_app_kit::NSView;
+    use objc2_foundation::{NSPoint, NSRect, NSSize, NSString};
+    use orden_base::Held as _;
+    use tauri::Webview;
+
+    use super::{Piece, Shape};
+
+    const PREFIX: &str = "OrdenCut_";
+
+    #[repr(C)]
+    struct CGPath([u8; 0]);
+
+    #[allow(unsafe_code)]
+    unsafe impl RefEncode for CGPath {
+        const ENCODING_REF: Encoding = Encoding::Pointer(&Encoding::Struct("CGPath", &[]));
+    }
+
+    #[allow(unsafe_code)]
+    #[link(name = "CoreGraphics", kind = "framework")]
+    unsafe extern "C" {
+        fn CGPathCreateMutable() -> *mut CGPath;
+        fn CGPathAddRect(path: *mut CGPath, transform: *const c_void, rect: NSRect);
+        fn CGPathAddRoundedRect(
+            path: *mut CGPath,
+            transform: *const c_void,
+            rect: NSRect,
+            width: f64,
+            height: f64,
+        );
+        fn CGPathRelease(path: *mut CGPath);
+    }
+
+    type Hollows = Vec<(NSRect, f64)>;
+
+    static HELD: LazyLock<Mutex<HashMap<usize, Hollows>>> = LazyLock::new(Mutex::default);
+
+    pub fn round(_view: &Webview, _corner: f64) {}
+
+    #[allow(unsafe_code)]
+    pub fn shape(view: &Webview, shape: Shape) {
+        let _ = view.with_webview(move |platform| {
+            let Some(page) =
+                crate::host::page_id(&platform).and_then(|one| usize::try_from(one.0).ok())
+            else {
+                return;
+            };
+            let Some(page) = (unsafe { Retained::retain(page as *mut NSView) }) else {
+                return;
+            };
+            give(&page, shape.as_deref());
+        });
+    }
+
+    fn give(page: &NSView, shape: Option<&[Piece]>) {
+        let key = std::ptr::from_ref(page).addr();
+        let hollows = match shape {
+            None | Some([_]) => None,
+            Some([]) => Some(vec![(page.bounds(), 0.0)]),
+            Some([(_, _, right, _, _), hollows @ ..]) => {
+                let bounds = page.bounds();
+                let by = if *right > 0 {
+                    bounds.size.width / f64::from(*right)
+                } else {
+                    1.0
+                };
+                Some(
+                    hollows
+                        .iter()
+                        .map(|&(left, top, right, bottom, round)| {
+                            let at = |one: i32| f64::from(one) * by;
+                            let (width, height) = (at(right - left), at(bottom - top));
+                            let y = if page.isFlipped() {
+                                at(top)
+                            } else {
+                                bounds.size.height - at(bottom)
+                            };
+                            let corner = (at(round) / 2.0)
+                                .min(width / 2.0)
+                                .min(height / 2.0)
+                                .max(0.0);
+                            (
+                                NSRect::new(NSPoint::new(at(left), y), NSSize::new(width, height)),
+                                corner,
+                            )
+                        })
+                        .collect(),
+                )
+            }
+        };
+        mask(page, hollows.as_deref());
+        let mut all = HELD.held();
+        match hollows {
+            Some(hollows) => {
+                adopt(page);
+                all.insert(key, hollows);
+            }
+            None => {
+                all.remove(&key);
+            }
+        }
+    }
+
+    #[allow(unsafe_code)]
+    fn mask(page: &NSView, hollows: Option<&[(NSRect, f64)]>) {
+        unsafe {
+            let Some(hollows) = hollows else {
+                let layer: *mut AnyObject = msg_send![page, layer];
+                if let Some(layer) = layer.as_ref() {
+                    let () = msg_send![layer, setMask: std::ptr::null::<AnyObject>()];
+                }
+                return;
+            };
+            page.setWantsLayer(true);
+            let layer: *mut AnyObject = msg_send![page, layer];
+            let Some(layer) = layer.as_ref() else {
+                return;
+            };
+            let Some(shapes) = AnyClass::get(c"CAShapeLayer") else {
+                return;
+            };
+            let cut: *mut AnyObject = msg_send![shapes, layer];
+            let Some(cut) = cut.as_ref() else {
+                return;
+            };
+            let bounds: NSRect = msg_send![layer, bounds];
+            let () = msg_send![cut, setFrame: bounds];
+            let path = CGPathCreateMutable();
+            CGPathAddRect(path, std::ptr::null(), bounds);
+            for &(hollow, corner) in hollows {
+                if corner > 0.0 {
+                    CGPathAddRoundedRect(path, std::ptr::null(), hollow, corner, corner);
+                } else {
+                    CGPathAddRect(path, std::ptr::null(), hollow);
+                }
+            }
+            let () = msg_send![cut, setPath: path.cast_const()];
+            CGPathRelease(path);
+            let () = msg_send![cut, setFillRule: &*NSString::from_str("even-odd")];
+            let () = msg_send![layer, setMask: cut];
+        }
+    }
+
+    fn within(page: &NSView, point: NSPoint) -> bool {
+        let key = std::ptr::from_ref(page).addr();
+        HELD.held().get(&key).is_some_and(|hollows| {
+            hollows.iter().any(|(one, _)| {
+                point.x >= one.origin.x
+                    && point.x < one.origin.x + one.size.width
+                    && point.y >= one.origin.y
+                    && point.y < one.origin.y + one.size.height
+            })
+        })
+    }
+
+    fn original_of(view: &NSView) -> Option<&'static AnyClass> {
+        let mut class = view.class();
+        loop {
+            if class.name().to_bytes().starts_with(PREFIX.as_bytes()) {
+                return class.superclass();
+            }
+            class = class.superclass()?;
+        }
+    }
+
+    #[allow(unsafe_code)]
+    extern "C-unwind" fn hit(this: &NSView, _: Sel, point: NSPoint) -> *mut NSView {
+        let Some(original) = original_of(this) else {
+            return std::ptr::null_mut();
+        };
+        let inside = unsafe {
+            let above = this.superview();
+            this.convertPoint_fromView(point, above.as_deref())
+        };
+        if within(this, inside) {
+            return std::ptr::null_mut();
+        }
+        unsafe { msg_send![super(this, original), hitTest: point] }
+    }
+
+    #[allow(unsafe_code)]
+    fn adopt(page: &NSView) {
+        if original_of(page).is_some() {
+            return;
+        }
+        let base = page.class();
+        let Ok(name) = CString::new(format!("{PREFIX}{}", base.name().to_string_lossy())) else {
+            return;
+        };
+        let class = if let Some(made) = AnyClass::get(&name) {
+            made
+        } else {
+            let Some(mut builder) = ClassBuilder::new(&name, base) else {
+                return;
+            };
+            unsafe {
+                builder.add_method(sel!(hitTest:), hit as extern "C-unwind" fn(_, _, _) -> _);
+            }
+            builder.register()
+        };
+        unsafe {
+            objc2::ffi::object_setClass(
+                std::ptr::from_ref::<NSView>(page)
+                    .cast::<AnyObject>()
+                    .cast_mut(),
+                std::ptr::from_ref::<AnyClass>(class),
+            );
+        }
+    }
+}
+
+#[cfg(not(any(target_os = "linux", windows, target_os = "macos")))]
 mod engine {
     use tauri::Webview;
 
@@ -456,7 +676,7 @@ mod tests {
         let said = serde_json::to_value(super::layering("page")).expect("said");
         let wanted = if cfg!(target_os = "linux") {
             serde_json::json!(true)
-        } else if cfg!(windows) {
+        } else if cfg!(any(windows, target_os = "macos")) {
             serde_json::json!("hollows")
         } else {
             serde_json::json!(false)

@@ -480,8 +480,8 @@ def main() -> int:
         cuts = app.eval("orden.pages.cuts") is True
         still = app.eval("!!document.querySelector('.hole.still')") is True
         print(f"the engine cuts layers out of pages: {cuts}; the page is held as a still under the layer: {still}", flush=True)
-        if cuts and still:
-            wrong.append("the page's hole shows a still under the app's layer, though the engine cuts the layer out of the page")
+        if cuts and app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible)") is not True:
+            wrong.append("the page steps behind its picture for a layer over part of it, though the engine cuts the layer out of the page")
         if not cuts and not still:
             wrong.append("the page is hidden under the app's layer with no still of it in its place")
 
@@ -501,6 +501,38 @@ def main() -> int:
         if not cuts and reached:
             wrong.append("a click beside the app's layer reached the page held still under it")
         app.eval("document.getElementById('drive-layer')?.remove(); return true")
+        time.sleep(1)
+
+        low = pane["height"] - 90
+        app.eval(
+            "window.__noticeHit = 0; const row = document.createElement('div'); row.dataset.notices = ''; row.id = 'drive-notices';"
+            f"Object.assign(row.style, {{ position: 'fixed', left: '{pane['x'] + pane['width'] - 420}px',"
+            f" top: '{pane['y'] + low}px', width: '400px', height: '70px', zIndex: 9999 }});"
+            "const card = document.createElement('div');"
+            "Object.assign(card.style, { width: '400px', height: '70px', background: 'rgb(0,160,0)', borderRadius: '8px' });"
+            "card.addEventListener('click', () => window.__noticeHit++); row.append(card); document.body.append(row); return true"
+        )
+        time.sleep(1.5)
+        image = shot()
+        image.save(args.out / "notice.png")
+        card = (hole[0] + pane["width"] - 220, hole[1] + low + 35)
+        for name, there in (("beside", at(200, low + 35)), ("below", at(200, pane["height"] - 10))):
+            if not near(colour_at(image, there, ratio), COLOUR):
+                wrong.append(f"the page is not drawn {name} the notice: {colour_at(image, there, ratio)}")
+        if not near(colour_at(image, card, ratio), LAYER):
+            wrong.append(f"the notice is not drawn over the page: {colour_at(image, card, ratio)}")
+        if app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible)") is not True:
+            wrong.append("the page steps behind its picture for a notice over part of it")
+        before = len(heard(0.6).get("log", []))
+        press(card)
+        if app.eval("window.__noticeHit") != 1:
+            wrong.append("a click on the notice over the page was not the app's")
+        if any(one[0] == "click" for one in heard().get("log", [])[before:]):
+            wrong.append("a click on the notice reached the page under it")
+        press(at(200, low + 35))
+        if not any(one[0] == "click" for one in heard().get("log", [])[before:]):
+            wrong.append("a click on the page beside the notice was not heard by the page")
+        app.eval("document.getElementById('drive-notices')?.remove(); return true")
         time.sleep(1)
 
         press(at(120, 60))
