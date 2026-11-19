@@ -1,6 +1,6 @@
 import type { TextEdit } from '@orden/markdown/edits'
 import { changedTask, type TaskChange, writeTask } from '@orden/markdown/task-edits'
-import { parseTask, readTask, type TaskFields } from '@orden/markdown/task-line'
+import { NO_PRIORITY, parseTask, readTask, type TaskFields } from '@orden/markdown/task-line'
 import { addDays, dayNumber, todayOf } from './dates'
 import { fewerTimes, nextDate, parseRule } from './recurrence'
 
@@ -31,6 +31,31 @@ export function nextOccurrence(task: TaskFields, today: string, options: Occurre
   const date = nextDate(rule, reference, after)
   if (!date) return null
   return shiftedBy(next, dayNumber(date) - dayNumber(reference))
+}
+export interface Repeating {
+  readonly repeat: string
+  readonly start: string | null
+  readonly deadline: string | null
+}
+export function nextRepeat(todo: Repeating, today: string): Repeating | null {
+  const task: TaskFields = {
+    text: '',
+    status: ' ',
+    done: false,
+    cancelled: false,
+    remind: [],
+    priority: NO_PRIORITY,
+    tags: [],
+    dependsOn: [],
+    fields: {},
+    recurrence: todo.repeat,
+  }
+  if (todo.start) task.start = todo.start
+  if (todo.deadline) task.deadline = todo.deadline
+  if (!todo.start && !todo.deadline) task.start = today
+  const next = nextOccurrence(task, today)
+  if (!next) return null
+  return { repeat: next.recurrence ?? todo.repeat, start: next.start ?? null, deadline: next.deadline ?? null }
 }
 function shiftedBy(task: TaskFields, days: number): TaskFields {
   const moved = { ...task }
