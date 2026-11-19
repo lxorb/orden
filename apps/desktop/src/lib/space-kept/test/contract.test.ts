@@ -62,6 +62,19 @@ describe('what a space keeps beside its files', () => {
     expect(isTile({ ...plan, parent: 'g1' })).toBe(false)
   })
 })
+describe('a folder icon', () => {
+  test('may be a small picture kept whole, and a longer one is not kept', () => {
+    const picture = (length: number) => `data:image/png;base64,${'A'.repeat(length - 22)}`
+    const icons = new FolderIcons(() => '/s')
+    icons.set('/s/Work', picture(2048))
+    icons.set('/s/Notes', picture(2049))
+    expect(icons.iconOf('/s/Work')).toBe(picture(2048))
+    expect(icons.iconOf('/s/Notes')).toBeNull()
+    const again = new FolderIcons(() => '/s')
+    expect(again.iconOf('/s/Work')).toBe(picture(2048))
+    expect(again.iconOf('/s/Notes')).toBeNull()
+  })
+})
 describe("a space's graph settings", () => {
   test('with no space open there is nothing to change', () => {
     const settings = new SpaceGraphSettings(() => null)
