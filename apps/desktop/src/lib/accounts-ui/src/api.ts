@@ -1,3 +1,4 @@
+import './shell-parts'
 export { default as Addresses } from './Addresses.svelte'
 export { default as Avatar } from './Avatar.svelte'
 export { card, showProfile } from './card.svelte'
