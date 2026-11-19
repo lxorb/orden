@@ -2,7 +2,7 @@ import { type ClientFrame, outOf, type Refusal, type ServerFrame, serverFrameOf,
 import { BEAT, DEVICE_PROTOCOL, TOKEN_PROTOCOL } from '@orden/sync-core'
 import { BEAT_EVERY, linkDelay } from '../../platform/src/api'
 
-export interface LinkSocket {
+interface LinkSocket {
   readonly open: boolean
   readonly buffered: number
   send(data: string | Uint8Array): void
@@ -33,7 +33,7 @@ export const PROBE_WITHIN = 3_000
 export const OPEN_WITHIN = 10_000
 const SLEPT = BEAT_EVERY
 const FINAL: readonly Refusal[] = ['gone', 'list', 'allowance', 'budget', 'off', 'flag']
-export abstract class Channel<In extends { t: string }, Out extends { t: string }> {
+abstract class Channel<In extends { t: string }, Out extends { t: string }> {
   private socket: LinkSocket | null = null
   private retry: (() => void) | null = null
   private tries = 0
