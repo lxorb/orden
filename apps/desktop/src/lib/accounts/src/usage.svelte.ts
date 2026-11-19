@@ -32,6 +32,7 @@ class Usage {
     }
     try {
       const { used, limit } = await api.usage(token)
+      if (account.accountToken !== token) return
       if (limit && used / limit > this.fraction) this.dismissed = false
       this.used = used
       this.limit = limit

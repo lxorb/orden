@@ -1,5 +1,17 @@
-import { describe, expect, test } from 'vitest'
-import { NEARLY_FULL, readableSize } from './usage.svelte'
+import { describe, expect, test, vi } from 'vitest'
+
+const server = vi.hoisted(() => ({
+  held: [] as (() => void)[],
+  account: { accountToken: 'first' },
+}))
+vi.mock('./account.svelte', () => ({ account: server.account }))
+vi.mock('./client', () => ({
+  api: {
+    usage: () =>
+      new Promise<{ used: number; limit: number }>((done) => server.held.push(() => done({ used: 95, limit: 100 }))),
+  },
+}))
+const { NEARLY_FULL, readableSize, usage } = await import('./usage.svelte')
 
 describe('showing a size', () => {
   test('leaves small things in bytes', () => {
@@ -27,5 +39,25 @@ describe('the warning threshold', () => {
     const limit = 1024 ** 3
     expect((limit * 0.89) / limit >= NEARLY_FULL).toBe(false)
     expect((limit * 0.91) / limit >= NEARLY_FULL).toBe(true)
+  })
+})
+describe('the numbers of one account', () => {
+  test('are dropped when they arrive after another account signed in', async () => {
+    const asking = usage.refresh()
+    server.account.accountToken = 'second'
+    usage.reset()
+    for (const one of server.held) one()
+    await asking
+    expect(usage.used).toBe(0)
+    expect(usage.limit).toBe(0)
+    expect(usage.warning).toBe(false)
+  })
+  test('are kept when the same account is still there', async () => {
+    server.held = []
+    const asking = usage.refresh()
+    for (const one of server.held) one()
+    await asking
+    expect(usage.used).toBe(95)
+    expect(usage.limit).toBe(100)
   })
 })

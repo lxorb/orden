@@ -316,6 +316,17 @@ class Share {
   close() {
     this.open = false
   }
+  forget() {
+    this.sheet += 1
+    this.open = false
+    this.space = null
+    this.spaceId = null
+    this.item = null
+    this.who = null
+    this.working = null
+    this.error = null
+    this.email = ''
+  }
   async invite() {
     if (isFull(this.seats)) return
     const addresses = addressesIn(this.email)
@@ -440,6 +451,10 @@ function gone(error: unknown): boolean {
 }
 export const share = new Share()
 export const members = new Share()
+account.forgetWithSession(() => {
+  share.forget()
+  members.forget()
+})
 function ownsRemotely(space: WorkspaceSpace): boolean {
   return !!account.user && !!remoteIdFor(space.root) && roleOf(space.root) === 'owner'
 }

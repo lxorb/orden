@@ -5,24 +5,34 @@ const server = vi.hoisted(() => ({
   refuseDelete: false,
   clients: [] as { id: string; name: string }[],
   asked: [] as string[],
+  held: null as (() => void)[] | null,
+  forgets: [] as (() => void)[],
+  account: { accountToken: 'session' },
 }))
+const answer = <T>(value: () => Promise<T>): Promise<T> => {
+  const held = server.held
+  if (!held) return value()
+  return new Promise<T>((done, fail) => held.push(() => void value().then(done, fail)))
+}
 const no = () => Promise.reject(new Error('the service said no'))
 vi.mock('./client', () => ({
   api: {
     connector: () => {
       server.asked.push('connector')
       if (server.refuse) return no()
-      return Promise.resolve({
-        exists: true,
-        readOnly: true,
-        lastUsedAt: null,
-        clients: server.clients.map((one) => ({
-          ...one,
+      return answer(() =>
+        Promise.resolve({
+          exists: true,
           readOnly: true,
-          createdAt: 0,
           lastUsedAt: null,
-        })),
-      })
+          clients: server.clients.map((one) => ({
+            ...one,
+            readOnly: true,
+            createdAt: 0,
+            lastUsedAt: null,
+          })),
+        }),
+      )
     },
     disconnectClient: (_token: string, id: string) => {
       server.asked.push(`disconnect ${id}`)
@@ -32,7 +42,7 @@ vi.mock('./client', () => ({
     },
     issueConnector: () => {
       server.asked.push('issue')
-      return server.refuse ? no() : Promise.resolve({ token: 'mcp-secret' })
+      return answer(() => (server.refuse ? no() : Promise.resolve({ token: 'mcp-secret' })))
     },
     revokeConnector: () => {
       server.asked.push('revoke')
@@ -41,12 +51,21 @@ vi.mock('./client', () => ({
   },
 }))
 vi.mock('./account.svelte', () => ({
-  account: {
-    accountToken: 'session',
-    forgetWithSession: () => undefined,
+  account: Object.assign(server.account, {
+    forgetWithSession: (clear: () => void) => server.forgets.push(clear),
     holdsNoAccount: () => undefined,
-  },
+  }),
 }))
+function switchTo(token: string) {
+  server.account.accountToken = token
+  for (const clear of server.forgets) clear()
+}
+async function release() {
+  const held = server.held ?? []
+  server.held = null
+  for (const one of held) one()
+  for (let turn = 0; turn < 6; turn++) await Promise.resolve()
+}
 vi.mock('../../ui-kit/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../ui-kit/src/api')>()),
   message: (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback),
@@ -73,8 +92,12 @@ beforeEach(async () => {
   server.refuseDelete = false
   server.clients = [{ id: 'c1', name: 'Claude' }]
   server.asked = []
+  server.held = null
+  server.forgets = []
+  server.account.accountToken = 'session'
   vi.resetModules()
   ;({ connectors } = await import('./connectors.svelte'))
+  connectors.restore()
 })
 describe('taking a client off the account', () => {
   test('goes at once and stays gone', async () => {
@@ -109,5 +132,31 @@ describe('the pasted token', () => {
     expect(connectors.error).toBe('the service said no')
     expect(connectors.freshToken).toBe('mcp-secret')
     expect(connectors.busy).toBe(false)
+  })
+})
+describe('another account signing in on this device', () => {
+  test('never sees the clients of the last one, even from a list still on its way', async () => {
+    server.held = []
+    const loading = connectors.load()
+    switchTo('other')
+    await release()
+    await loading
+    expect(connectors.clients).toEqual([])
+    expect(connectors.token).toBeNull()
+  })
+  test('never sees a token minted for the last one', async () => {
+    server.held = []
+    const minting = connectors.createToken()
+    switchTo('other')
+    await release()
+    await minting
+    expect(connectors.freshToken).toBeNull()
+    expect(connectors.busy).toBe(false)
+  })
+  test('starts without the last one’s error', async () => {
+    server.refuse = true
+    await connectors.createToken()
+    switchTo('other')
+    expect(connectors.error).toBeNull()
   })
 })
