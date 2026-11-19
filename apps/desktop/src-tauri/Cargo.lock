@@ -3749,6 +3749,7 @@ dependencies = [
  "orden-explorer",
  "orden-extensions",
  "orden-import",
+ "orden-mcp-client",
  "orden-notes",
  "orden-placement",
  "orden-pty",
@@ -4028,6 +4029,26 @@ dependencies = [
  "serde_json",
  "tauri",
  "tempfile",
+]
+
+[[package]]
+name = "orden-mcp-client"
+version = "0.1.0"
+dependencies = [
+ "dirs",
+ "libc",
+ "orden-base",
+ "orden-secrets",
+ "reqwest",
+ "rustls",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "tauri",
+ "tempfile",
+ "tokio",
+ "toml 1.1.5+spec-1.1.0",
+ "windows 0.58.0",
 ]
 
 [[package]]

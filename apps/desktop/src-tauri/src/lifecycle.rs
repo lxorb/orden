@@ -106,6 +106,7 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             orden_pty::terminal::end_all(app);
             orden_apps::apps_host::end_all(app);
             orden_ai::ai_cli::end_all(app);
+            orden_mcp_client::stop_all();
             orden_agents::stop::quitting();
             orden_reminders::notices::clear_all(app);
         }
