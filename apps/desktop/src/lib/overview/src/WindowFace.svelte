@@ -24,14 +24,12 @@
     face,
     width,
     height,
-    drawing,
     flying = false,
   }: {
     tab: Tab
     face: Face | null
     width: number
     height: number
-    drawing?: (done: Promise<unknown>) => void
     flying?: boolean
   } = $props()
   const how = $derived(TAB_KINDS[tab.kind].preview)
@@ -61,13 +59,12 @@
       return
     }
     let stale = false
-    const done = readingHtml({ text: asked.text, path: tab.path }, asked.scheme, asked.trusted)
+    void readingHtml({ text: asked.text, path: tab.path }, asked.scheme, asked.trusted)
       .catch(() => unreadableHtml(asked.text))
       .then((html) => {
         drawnBefore.set(tab.id, { key: asked.key, html })
         if (!stale) made = html
       })
-    untrack(() => drawing?.(done))
     return () => {
       stale = true
     }
@@ -93,10 +90,9 @@
   $effect(() => {
     if (how !== 'scrollback' || locked) return
     let stale = false
-    const done = scrollbackOf(tab).then((one) => {
+    void scrollbackOf(tab).then((one) => {
       if (!stale) readScreen = one
     })
-    untrack(() => drawing?.(done))
     return () => {
       stale = true
     }
@@ -117,7 +113,6 @@
   function decoded(node: HTMLImageElement, shot: string) {
     const decode = (one: string) => {
       const done = typeof node.decode === 'function' ? node.decode().then(() => one) : Promise.resolve(one)
-      drawing?.(done)
       void done.then(
         (seen) => {
           if (seen === shot) decodedShot = seen

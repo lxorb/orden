@@ -74,21 +74,14 @@ async function drawnNow() {
   await Promise.resolve()
   flushSync()
 }
-test('the windows set off only once what each of them shows is drawn', async () => {
+test('the windows set off on the first frame, their marks standing in for what is not drawn yet', () => {
   tabOverview.open = true
   flushSync()
   expect(drawn.length).toBeGreaterThan(0)
-  for (let i = 0; i < 5; i++) frame()
-  expect(tabOverview.out).toEqual([])
-  await drawnNow()
+  frame()
   frame()
   expect(tabOverview.out.length).toBeGreaterThan(0)
-})
-test('a picture that takes too long to draw does not keep the windows waiting', () => {
-  tabOverview.open = true
-  flushSync()
-  for (let i = 0; i < 20; i++) frame()
-  expect(tabOverview.out.length).toBeGreaterThan(0)
+  expect(document.querySelector('.window .face .mark')).not.toBe(null)
 })
 test('the first frame that moves moves by one frame, however long the frame before it took', async () => {
   tabOverview.open = true

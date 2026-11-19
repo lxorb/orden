@@ -468,21 +468,10 @@
   let at = $state<string | null>(null)
   let frameAsked = 0
   let last = 0
-  const READY = 250
   const LONGEST_FRAME = 1 / 30
-  let unready = 0
   let entered = 0
   let stood = true
   const STANDS = 1500
-  function readying(done: Promise<unknown>) {
-    if (started) return
-    unready++
-    const settled = () => {
-      unready--
-    }
-    void done.then(settled, settled)
-  }
-  const unwaited = () => undefined
   function fly() {
     if (frameAsked) return
     last = performance.now()
@@ -492,7 +481,7 @@
   function tick(now: number) {
     frameAsked = 0
     bubbles?.wake()
-    if (!started && ((unready > 0 && now - entered < READY) || (!stood && now - entered < STANDS))) {
+    if (!started && !stood && now - entered < STANDS) {
       last = now
       frameAsked = requestAnimationFrame(tick)
       return
@@ -755,7 +744,7 @@
       places.recall(workspace.tabs)
       entered = performance.now()
       started = false
-      readying(faces.read())
+      void faces.read()
       const holding = webPages().holdStill()
       stood = holding === null
       void holding?.finally(() => (stood = true))
@@ -1463,14 +1452,7 @@
         use:placed={tab.id}
       >
         <span class="face-box" class:is-live={live} style:scale={slot.w / face.w}>
-          <WindowFace
-            {tab}
-            face={faces.of(tab.id)}
-            width={face.w}
-            height={face.h}
-            drawing={live ? unwaited : readying}
-            flying={onTheWay}
-          />
+          <WindowFace {tab} face={faces.of(tab.id)} width={face.w} height={face.h} flying={onTheWay} />
         </span>
         <span class="chip" class:is-copy={!!tabsAsDrawn[tab.id]} aria-hidden="true">
           {#if tabsAsDrawn[tab.id]}
