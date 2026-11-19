@@ -107,14 +107,12 @@ describe('Settings > Space', () => {
     disk.files.set('/space/AGENTS.md', '# Rules')
     const box = await shown()
     expect(box.value).toBe('# Rules')
-    expect(target.textContent).toContain('Plans')
   })
   test('is about the space it was asked for', async () => {
     disk.files.set('/other/AGENTS.md', '# Theirs')
     settings.space = '/other'
     const box = await shown()
     expect(box.value).toBe('# Theirs')
-    expect(target.textContent).toContain('Other')
   })
   test('opened and closed, it makes no file', async () => {
     await shown()

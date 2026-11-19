@@ -14,7 +14,7 @@ describe('a segmented setting', () => {
 })
 describe('the open pane', () => {
   test('is named by a second-level heading over its third-level groups, on a phone as beside the list', () => {
-    const named = [...SOURCE.matchAll(/<(h\d)>\{titleOf\(settings\.section\)\}<\/\1>/g)].map((one) => one[1])
+    const named = [...SOURCE.matchAll(/<(h\d)>\{headOf\(settings\.section\)\}<\/\1>/g)].map((one) => one[1])
     expect(named.length).toBeGreaterThan(1)
     expect(new Set(named)).toEqual(new Set(['h2']))
   })
