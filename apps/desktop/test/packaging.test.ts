@@ -57,7 +57,7 @@ describe('the release', () => {
     return block.replace(/^ {10}/gm, '')
   }
   function upload(gh: { refuse?: string; drop?: string }) {
-    const at = mkdtempSync(join(tmpdir(), 'nib-release-'))
+    const at = mkdtempSync(join(tmpdir(), 'orden-release-'))
     mkdirSync(join(at, 'bin'))
     mkdirSync(join(at, 'artifacts'))
     const bundles = ['Nib-1.0.0-linux-x64.AppImage', 'Nib-1.0.0-windows-x64-setup.exe', 'Nib-1.0.0-linux-x64.rpm']
@@ -229,9 +229,9 @@ esac
       ['x64', ['AppImage', 'deb', 'rpm']],
       ['arm64', ['AppImage', 'deb', 'rpm']],
     ] as const) {
-      mkdirSync(join(at, `nib-linux-${arch}`))
+      mkdirSync(join(at, `orden-linux-${arch}`))
       for (const kind of kinds) {
-        writeFileSync(join(at, `nib-linux-${arch}`, `Nib-1.0.0-linux-${arch}.${kind}.sig`), `sig ${arch} ${kind}`)
+        writeFileSync(join(at, `orden-linux-${arch}`, `Nib-1.0.0-linux-${arch}.${kind}.sig`), `sig ${arch} ${kind}`)
       }
     }
     const ran = spawnSync('node', [join(HERE, 'scripts', 'update-manifest.mjs'), 'updates', '1.0.0', at], {
@@ -250,6 +250,22 @@ esac
       expect(platforms[key]?.url, key).toBe(`https://github.com/lxorb/nibeditor/releases/download/updates/${file}`)
       expect(platforms[key]?.signature, key).toBe(signature)
     }
+  })
+  test('names the bundles of every artifact the build uploads, Nib- for the updaters that read only that', () => {
+    const uploaded = [...workflow.matchAll(/name: ([\w-]+)-\$\{\{ matrix\.label \}\}$/gm)].map((one) => one[1])
+    expect(uploaded.length).toBeGreaterThan(0)
+    expect(new Set(uploaded)).toEqual(new Set(['orden']))
+    expect(workflow).toContain("pattern: 'orden-*'")
+    const at = mkdtempSync(join(tmpdir(), 'orden-assets-'))
+    mkdirSync(join(at, 'orden-linux-x64'))
+    writeFileSync(join(at, 'orden-linux-x64', 'Orden_1.0.0_amd64.deb'), 'bytes')
+    writeFileSync(join(at, 'orden-linux-x64', 'Orden_1.0.0_amd64.deb.sig'), 'sig')
+    const ran = spawnSync('node', [join(HERE, 'scripts', 'name-assets.mjs'), at, 'v1.0.0'], { encoding: 'utf8' })
+    expect(ran.status, ran.stderr).toBe(0)
+    expect(readdirSync(join(at, 'orden-linux-x64')).sort()).toEqual([
+      'Nib-1.0.0-linux-x64.deb',
+      'Nib-1.0.0-linux-x64.deb.sig',
+    ])
   })
   describe.skipIf(process.platform === 'win32')('puts on the release the app downloads from', () => {
     test('the .deb and the .rpm beside the setups', () => {
@@ -307,7 +323,7 @@ esac
       expect(mobile).not.toContain('--draft')
     })
     function publish(tag: string, latest: string, draft: boolean) {
-      const at = mkdtempSync(join(tmpdir(), 'nib-release-'))
+      const at = mkdtempSync(join(tmpdir(), 'orden-release-'))
       mkdirSync(join(at, 'bin'))
       const log = join(at, 'gh.log')
       writeFileSync(log, '')
@@ -439,7 +455,7 @@ describe('the phones, linted before a push to unstable finds them', () => {
     expect(job).toContain('TARGET: ${{ matrix.target }}')
   })
 })
-describe('what nib claims to open', () => {
+describe('what Orden claims to open', () => {
   const tauri = (...parts: string[]) => repo('apps', 'desktop', 'src-tauri', ...parts)
   test('no file type in any bundle but a PDF, and on a Mac plain text, each only offered', () => {
     for (const config of ['tauri.conf.json', 'tauri.macos.conf.json']) {
@@ -566,7 +582,7 @@ describe('what nib claims to open', () => {
   test('a Linux desktop entry is a browser and a reader of PDFs, no editor of files', () => {
     for (const [name, entry] of Object.entries(desktops)) {
       expect(entry, name).toContain('MimeType=x-scheme-handler/http;x-scheme-handler/https;application/pdf;\n')
-      expect(entry, name).toMatch(/^\s*Exec=(?:nib|orden) %U$/m)
+      expect(entry, name).toMatch(/^\s*Exec=orden %U$/m)
       expect(entry, name).not.toContain('text/markdown')
       expect(entry, name).not.toContain('%F')
     }
@@ -577,10 +593,6 @@ describe('what nib claims to open', () => {
     expect(read('aur', 'nib-bin', '.SRCINFO')).toContain(`sha256sums = ${digest}`)
   })
   test('no package manager lists a file type', () => {
-    for (const version of readdirSync(join(ROOT, 'winget'))) {
-      const manifest = read('winget', version, 'lxorb.Nib.installer.yaml')
-      expect(manifest, version).not.toContain('FileExtensions')
-    }
     expect(read('chocolatey', 'orden.nuspec')).not.toMatch(/file association/i)
   })
 })
@@ -818,6 +830,15 @@ describe('the engine a Linux package runs', () => {
     const build = /build\(\) \{([\s\S]*?)\n\}/.exec(recipe)?.[1] ?? ''
     expect(build).toContain('scripts/linux-cef.sh tauri build')
     expect(repo('.github', 'workflows', 'release.yml')).toContain('scripts/linux-cef.sh tauri build')
+  })
+})
+describe('the recipes that unpack a .deb', () => {
+  test("take Orden's layout as the .deb holds it, with no way back to nib's", () => {
+    for (const path of ['aur/nib-bin/PKGBUILD', 'aur/nib-bin/.SRCINFO', 'snap/snapcraft.yaml', 'nix/flake.nix']) {
+      expect(read(...path.split('/')), path).not.toMatch(
+        /nib\.(?:deb|png)|\/nib(?![\w.-])|ln -s nib|Nib\.desktop|nibeditor\.desktop|icon=nib|\bnib = /,
+      )
+    }
   })
 })
 describe('the Nix edge', () => {

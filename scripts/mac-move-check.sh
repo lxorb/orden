@@ -59,7 +59,7 @@ say_eval "void window.__TAURI_INTERNALS__.invoke('move_to_applications'), 'asked
 for _ in $(seq 60); do running "$app" || break; sleep 1; done
 running "$app" && { echo "FAILED: the copy on the disk image is still running"; verdict=1; }
 up "$moved" || verdict=1
-ls /Applications | grep -i nib || true
+ls /Applications | grep -i orden || true
 xattr -l "$moved" | grep -q quarantine && { echo "FAILED: the moved copy is quarantined"; verdict=1; }
 
 in_place="$(say_eval "await window.__TAURI_INTERNALS__.invoke('app_stuck')")"

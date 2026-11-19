@@ -17,7 +17,7 @@ const USAGE = `usage: node scripts/crash-reports.mjs <command>
   groups [--since <days>] [--limit <n>]   the groups, latest first
   list <signature> [--limit <n>]          the reports of a group
   read <id>                               one whole report
-  file <signature> [--repo lxorb/orden] [--symbols <nib.pdb or debug file>]
+  file <signature> [--repo lxorb/orden] [--symbols <orden.pdb or debug file>]
                                           open a GitHub issue for a group
 env: ORDEN_CRASH_TOKEN (required), ORDEN_API (default https://orden.so)`
 export function issueTitle(group) {

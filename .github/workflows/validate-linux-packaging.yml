@@ -199,7 +199,7 @@ jobs:
           unsquashfs -l "${{ steps.build.outputs.snap }}" | head -40
           unsquashfs -d /tmp/snapx "${{ steps.build.outputs.snap }}" >/dev/null
           cat /tmp/snapx/meta/snap.yaml
-          test -f /tmp/snapx/usr/share/applications/nib.desktop
+          test -f /tmp/snapx/usr/share/applications/orden.desktop
           for tauri in Nib nibeditor Orden; do
             test ! -e "/tmp/snapx/usr/share/applications/$tauri.desktop"
           done
