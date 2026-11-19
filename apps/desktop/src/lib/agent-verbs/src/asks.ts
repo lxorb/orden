@@ -28,8 +28,9 @@ export async function asked(
   site?: string,
   quietly: Category = 'writing',
 ): Promise<AgentAnswer | null> {
-  const agent = call.caller.agent
-  if (agent === null || fullPermissions(agent)) return null
+  const caller = call.caller
+  if (caller.agent === null || fullPermissions(caller.agent)) return null
+  const agent = caller.agent
   const about = category ?? (agent.mode === 'confirm' ? quietly : null)
   if (about === null) return null
   const said = await invoke<unknown>('agents_ask', {
@@ -38,6 +39,7 @@ export async function asked(
     summary,
     key: keyOf(call),
     ...(site ? { site } : {}),
+    ...(caller.thread ? { thread: caller.thread } : {}),
   }).catch((error: unknown) => ({ status: 'error', code: 'failed', message: String(error) }))
   return answered(said)
 }
