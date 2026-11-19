@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
+import { Cadence, nextPassIn } from '../src/cadence'
 import { portProvided, providePort } from '@orden/contracts'
 import {
   act,
@@ -320,6 +321,31 @@ describe('words the account refuses once the space is only read here (#2249)', (
     expect(member.disk.files.get(file)).toBe(theirs)
     expect(logged).toEqual([`you can only read this space, so your change to ${name} went to Recently deleted`])
     expect(member.engine.core.hasPending(member.engine.entryAt(file)?.id ?? '')).toBe(false)
+  })
+})
+describe('how soon what changed here goes up (#2280)', () => {
+  test('a change to the tree starts a pass at once, and one made during a pass starts the next as it ends', async () => {
+    const runs: (() => void)[] = []
+    const cadence = new Cadence({
+      run: () => new Promise<void>((done) => runs.push(done)),
+      owed: () => true,
+      fire: () => undefined,
+      next: () => null,
+    })
+    cadence.go()
+    expect(runs).toHaveLength(1)
+    cadence.go()
+    expect(runs).toHaveLength(1)
+    runs[0]?.()
+    await new Promise((settled) => setTimeout(settled, 0))
+    expect(runs).toHaveLength(2)
+    cadence.stop()
+  })
+  test('while the account answers and the hub is not open, the next pass is never more than 5 s away', () => {
+    for (let quiet = 0; quiet <= 8; quiet += 1) {
+      const at = nextPassIn({ waiting: false, local: false, hubOpen: false, hidden: false, online: true, quiet })
+      expect(at).toBeLessThanOrEqual(5_000)
+    }
   })
 })
 describe('ports', () => {

@@ -197,4 +197,13 @@ describe('the engine kept signed out', () => {
     expect(JSON.parse(String(from?.value))).toEqual({ account: 'u3', ids: [id] })
     await runner.stop()
   })
+  test('passes at once after a change to the tree, and only after the nudge after words (#2280)', async () => {
+    await runner.startLocal()
+    await vi.waitFor(() => expect(runner.passing).toBe(false))
+    await runner.wrote('/Notes/Plan.md', 'words')
+    expect(runner.passing).toBe(false)
+    await runner.follow({ op: 'removed', kind: 'file', path: '/Notes/Gone.md', root: '/Notes' })
+    expect(runner.passing).toBe(true)
+    await runner.stop()
+  })
 })

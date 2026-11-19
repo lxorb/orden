@@ -50,7 +50,7 @@ async function limitReached(): Promise<void> {
 export interface Watching {
   engine: Engine
   ready(spaceId: string): boolean
-  changed(): void
+  changed(tree: boolean): void
   moved?(from: string, to: string, kind: 'file' | 'folder'): Promise<void>
 }
 export interface Watched {
@@ -63,7 +63,7 @@ function spaceAt(engine: Engine, root: string) {
 }
 export async function watchFolders(how: Watching): Promise<Watched> {
   const mounts = await keptMounts()
-  const queue: (() => Promise<void>)[] = []
+  const queue: { run: () => Promise<void>; tree: boolean }[] = []
   let draining = false
   let stopped = false
   const drain = async () => {
@@ -72,8 +72,8 @@ export async function watchFolders(how: Watching): Promise<Watched> {
     try {
       while (queue.length && !stopped) {
         const batch = queue.splice(0, BATCH)
-        for (const one of batch) await one().catch(() => undefined)
-        how.changed()
+        for (const one of batch) await one.run().catch(() => undefined)
+        how.changed(batch.some((one) => one.tree))
         await new Promise((resolve) => setTimeout(resolve, 0))
       }
     } finally {
@@ -91,18 +91,24 @@ export async function watchFolders(how: Watching): Promise<Watched> {
     if (news.scan) {
       const again = started.has(news.root)
       started.add(news.root)
-      queue.push(() => {
-        if (again) behind(spaceAt(how.engine, news.root)?.id)
-        return scanned(how, news.root)
+      queue.push({
+        run: () => {
+          if (again) behind(spaceAt(how.engine, news.root)?.id)
+          return scanned(how, news.root)
+        },
+        tree: true,
       })
     }
     const landed = landedElsewhere(news.changes)
     for (const change of news.changes) {
       const to = change.kind === 'removed' ? landed.get(change.path) : undefined
-      queue.push(() => {
-        if (to !== undefined) lockedAlike(change.path, to)
-        behind(how.engine.placed(change.path)?.space.id)
-        return changed(how, change)
+      queue.push({
+        run: () => {
+          if (to !== undefined) lockedAlike(change.path, to)
+          behind(how.engine.placed(change.path)?.space.id)
+          return changed(how, change)
+        },
+        tree: change.kind !== 'modified' || !how.engine.entryAt(change.path),
       })
     }
     void drain()
@@ -146,7 +152,7 @@ export async function watchFolders(how: Watching): Promise<Watched> {
     caughtUp: (spaceId) => {
       const root = how.engine.core.spaces.get(spaceId)?.row.root
       if (!missed.delete(spaceId) || root === undefined) return
-      queue.push(() => scanned(how, root))
+      queue.push({ run: () => scanned(how, root), tree: true })
       void drain()
     },
     stop: () => {
