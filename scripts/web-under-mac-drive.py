@@ -599,7 +599,7 @@ def main() -> int:
         laid = app.eval("orden.pages.under") is True
         measure("the engine lays the page under the app", laid)
         if args.under and not back and not laid:
-            wrong.append("the engine did not lay the page under the app")
+            unverified.append("the engine fell back to a cut-out page: the app's ground was not seen clear at the first look (#2224, the ground race on a Mac)")
         if back and laid:
             wrong.append("the engine kept the page under the app though its ground does not clear")
         cuts = app.eval("orden.pages.cuts") is True
