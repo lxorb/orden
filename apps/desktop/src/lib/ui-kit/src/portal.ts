@@ -13,6 +13,7 @@ export interface Box {
 }
 export interface Hanging {
   side?: 'below' | 'above'
+  align?: 'start' | 'end'
   gap?: number
   inset?: number | `--${string}`
   stretch?: boolean
@@ -23,12 +24,13 @@ export function placeOf(
   at: Box,
   size: { width: number; height: number },
   room: { width: number; height: number },
-  hanging: { side: 'below' | 'above'; gap: number; inset: number },
+  hanging: { side: 'below' | 'above'; gap: number; inset: number; align?: 'start' | 'end' },
   rtl: boolean,
 ): { left: number; top: number; side: 'below' | 'above' } {
   const { gap, inset } = hanging
   const width = size.width
-  const start = rtl ? at.right - inset - width : at.left + inset
+  const fromRight = rtl !== (hanging.align === 'end')
+  const start = fromRight ? at.right - inset - width : at.left + inset
   const left = Math.max(MARGIN, Math.min(start, room.width - MARGIN - width))
   const below = at.bottom + gap
   const above = at.top - gap - size.height
@@ -108,7 +110,7 @@ export function hang(node: HTMLElement, hanging: Hanging = {}) {
       at,
       { width: node.offsetWidth, height: node.offsetHeight },
       { width: window.innerWidth, height: window.innerHeight },
-      { side: options.side ?? 'below', gap: options.gap ?? 4, inset },
+      { side: options.side ?? 'below', gap: options.gap ?? 4, inset, align: options.align ?? 'start' },
       style.direction === 'rtl',
     )
     const left = `${spot.left}px`
