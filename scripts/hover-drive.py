@@ -120,6 +120,20 @@ document.body.appendChild(grid);
 return true
 """ % (COLS, ROWS, COLS * ROWS)
 START = "const m = window.__hover; m.r = []; m.f = []; m.on = true; requestAnimationFrame(m.loop); return true"
+SOFTWARE = ("--disable-gpu", "--use-angle=swiftshader", "--use-angle=d3d11-warp", "--use-gl=swiftshader")
+
+GPU_LINES = (
+    "$all = Get-CimInstance Win32_Process; $mine = @(%d);"
+    " do { $n = $mine.Count; $mine = @($mine + ($all | ? { $mine -contains $_.ParentProcessId } | %% ProcessId) | Sort-Object -Unique) }"
+    " while ($mine.Count -ne $n);"
+    " $all | ? { $mine -contains $_.ProcessId -and $_.CommandLine -match 'type=gpu-process' } | %% CommandLine"
+)
+
+RENDERER = (
+    "const g = document.createElement('canvas').getContext('webgl2'); if (!g) return 'no WebGL';"
+    "const i = g.getExtension('WEBGL_debug_renderer_info');"
+    "return String(g.getParameter(i ? i.UNMASKED_RENDERER_WEBGL : g.RENDERER))"
+)
 STOP = "const m = window.__hover; m.on = false; return { r: m.r, f: m.f }"
 
 
@@ -312,7 +326,9 @@ def measure(app: App, root: int) -> dict[str, Any]:
     area = (rect.left + 8, rect.top + 8, rect.right - 8, rect.bottom - 8)
     move(area[2] - 3, area[3] - 3)
     time.sleep(2)
-    said: dict[str, Any] = {"idle_cpu": cpu_over(root, IDLE)}
+    said: dict[str, Any] = {"idle_cpu": cpu_over(root, IDLE), "renderer": str(app.eval(RENDERER))}
+    asked = subprocess.run(["powershell", "-NoProfile", "-Command", GPU_LINES % root], capture_output=True, text=True, timeout=120, check=False)
+    said["gpu"] = [line for line in asked.stdout.splitlines() if line.strip()]
     grid(app)
     front(hwnd)
     took = hovers(hwnd, area)
@@ -343,6 +359,11 @@ def measure(app: App, root: int) -> dict[str, Any]:
 def judged(said: dict[str, Any]) -> list[str]:
     frame = said["frame_ms"]
     wrong = []
+    if not said["gpu"]:
+        wrong.append("no GPU process runs")
+    for flag in SOFTWARE:
+        if any(flag in line for line in said["gpu"]):
+            wrong.append(f"the GPU process draws in software ({flag})")
     if said["idle_cpu"] > IDLE_CPU:
         wrong.append(f"idle CPU {said['idle_cpu']:.1f}% of a core, over {IDLE_CPU}%")
     if said["hovered"] < COLS * ROWS // 2:
@@ -374,7 +395,7 @@ def main() -> int:
         said = measure(endpoint(config, process.pid, secret, 20), process.pid)
     finally:
         ended(process)
-    print(json.dumps({key: round(value, 2) for key, value in said.items()}))
+    print(json.dumps({key: round(value, 2) if isinstance(value, float) else value for key, value in said.items() if key != "gpu"}))
     wrong = judged(said)
     for one in wrong:
         print(f"::error::{one}")
