@@ -27,6 +27,7 @@ export const fileUndoing = () => import('./undoing')
 export const notices = () => import('./notices.svelte')
 export const firstVisiting = () => import('./first-visit.svelte')
 export const loadUndoToast = () => import('./UndoToast.svelte')
+export { default as TurnButton } from './TurnButton.svelte'
 export { focusEditor, focusList, intoSide, openAgentSession, openSpaces, revealPanel, stepRegionFocus } from './focus'
 export { hasStatusBar } from './regions'
 export { followHref, followNote, followNoteFrom, MIDDLE, openHref, opensLink, webHref } from './open-link'
