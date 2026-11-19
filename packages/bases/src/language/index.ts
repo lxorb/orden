@@ -1,1 +1,10 @@
-export { type Chip, type ChipKind, parseQuickAdd, type QuickAdd, type QuickAddOptions, type QuickFields } from './parse'
+export {
+  type Chip,
+  type ChipKind,
+  parseQuickAdd,
+  parseTodo,
+  type QuickAdd,
+  type QuickAddOptions,
+  type QuickFields,
+  type TypedTodo,
+} from './parse'

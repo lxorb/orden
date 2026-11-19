@@ -245,7 +245,7 @@ export function askedTime(words: readonly Word[], at: number, g: Grammar): When 
   if (part) return { end: at + 2, time: part }
   return timeAt(words, at, g, false)
 }
-function askedDay(words: readonly Word[], at: number, g: Grammar, clock: Clock, free: boolean): When | null {
+export function askedDay(words: readonly Word[], at: number, g: Grammar, clock: Clock, free: boolean): When | null {
   if (g.dayWords.has(bare(words[at]))) {
     if (g.partsOfDay[bare(words[at + 1])]) return null
     const day = dayAt(words, at + 1, g, clock, true) ?? monthDayAt(words, at + 1, g, clock.today)
