@@ -191,6 +191,8 @@ import {
   isShared,
   isSharedItem,
   looksLikeAddress,
+  managesSpace,
+  members,
   originOfDocument,
   othersIn,
   reachedByOthers,
@@ -928,6 +930,74 @@ describe('the Share sheet', () => {
     world.refuse = 'only the owner can do that'
     expect(await share.remove(member('ada@example.com'))).toBe(false)
     expect(share.error).toBe('only the owner can do that')
+  })
+})
+describe('who manages a space', () => {
+  beforeEach(() => {
+    world.mirrors = { Notes: 'space-1' }
+    world.notes = { 'Notes/plan.md': 'note-1' }
+  })
+  test('the owner, who may share it', () => {
+    account.spaces = [remote('space-1', 'owner')]
+    expect(managesSpace('Notes')).toBe(true)
+    expect(canShare(local('Notes'))).toBe(true)
+  })
+  test('an admin, who may share it too', () => {
+    account.spaces = [{ ...remote('space-1', 'write', true), admin: true }]
+    expect(managesSpace('Notes')).toBe(true)
+    expect(canShare(local('Notes'))).toBe(true)
+  })
+  test('nobody who only writes or reads in it, nor anybody on a server that says nothing of admins', () => {
+    account.spaces = [{ ...remote('space-1', 'write', true), admin: false }, remote('space-2', 'read', true)]
+    world.mirrors = { Notes: 'space-1', Read: 'space-2' }
+    expect(managesSpace('Notes')).toBe(false)
+    expect(canShare(local('Notes'))).toBe(false)
+    expect(managesSpace('Read')).toBe(false)
+    account.spaces = [remote('space-1', 'write', true)]
+    expect(managesSpace('Notes')).toBe(false)
+  })
+  test('the reader, for a folder that never reached the account, though nothing in it can be shared yet', () => {
+    expect(managesSpace('Elsewhere')).toBe(true)
+    expect(canShare(local('Elsewhere'))).toBe(false)
+  })
+  test('makes somebody an admin, and asks again an admin who has not answered', async () => {
+    account.spaces = [remote('space-1', 'owner')]
+    await share.show(local('Notes'))
+    world.asked = []
+    await share.setRole(member('ada@example.com'), 'admin')
+    await share.resend({ email: 'bob@example.com', guest: null, role: 'write', admin: true })
+    share.email = 'grace@example.com'
+    share.role = 'admin'
+    await share.invite()
+    expect(world.asked).toEqual([
+      'ada@example.com is now admin in space-1',
+      'invite bob@example.com as admin to space-1',
+      'invite grace@example.com as admin to space-1',
+    ])
+  })
+  test('makes no guest an admin, nor anybody on the sheet about one file', async () => {
+    account.spaces = [remote('space-1', 'owner')]
+    await share.show(local('Notes'))
+    world.asked = []
+    expect(await share.setRole(guest('g1', 'Windows wren'), 'admin')).toBe(false)
+    await share.showItem(local('Notes'), 'Notes/plan.md')
+    world.asked = []
+    expect(await share.setRole(member('ada@example.com'), 'admin')).toBe(false)
+    share.email = 'grace@example.com'
+    share.role = 'admin'
+    await share.invite()
+    expect(world.asked).toEqual(['invite grace@example.com as write to space-1 about note-1'])
+  })
+  test('reads who is in the space for Settings without opening the sheet', async () => {
+    account.spaces = [remote('space-1', 'owner')]
+    world.sharing.members = [member('ada@example.com')]
+    await members.look(local('Notes'))
+    expect(members.open).toBe(false)
+    expect(share.open).toBe(false)
+    expect(share.who).toBeNull()
+    expect(members.who?.members).toEqual([member('ada@example.com')])
+    await members.setRole(member('ada@example.com'), 'read')
+    expect(world.asked).toContain('ada@example.com is now read in space-1')
   })
 })
 describe('the places in a shared space', () => {

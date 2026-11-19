@@ -18,6 +18,7 @@ export interface Account {
 }
 export type SpaceRole = 'owner' | 'write' | 'read'
 export type GivenRole = 'write' | 'read'
+export type MemberRole = GivenRole | 'admin'
 export interface Guest {
   id: string
   name: string
@@ -29,6 +30,7 @@ export interface Member {
   guest: string | null
   name: string | null
   role: GivenRole
+  admin?: boolean
   pending: boolean
 }
 export interface ShareLink {
@@ -101,6 +103,7 @@ export interface RemoteSpace {
   icon: string | null
   tint?: string | null
   role: SpaceRole
+  admin?: boolean
   shared: boolean
   people?: string[]
   sharedItems?: string[]
@@ -425,12 +428,12 @@ export const routes = {
   deleteSpace: (token: string, id: string) => request<{ ok: true }>(`/v1/spaces/${id}`, { method: 'DELETE', token }),
   sharing: (token: string, id: string, item = '') =>
     request<Sharing>(`/v1/spaces/${id}/share${about(item)}`, { token }),
-  invite: (token: string, id: string, email: string, role: GivenRole, item = '') =>
+  invite: (token: string, id: string, email: string, role: MemberRole, item = '') =>
     request<Sharing>(`/v1/spaces/${id}/share/invite${about(item)}`, {
       token,
       body: { email, role },
     }),
-  setMemberRole: (token: string, id: string, email: string, role: GivenRole, item = '') =>
+  setMemberRole: (token: string, id: string, email: string, role: MemberRole, item = '') =>
     request<Sharing>(`/v1/spaces/${id}/share/members/${encodeURIComponent(email)}${about(item)}`, {
       method: 'PATCH',
       token,

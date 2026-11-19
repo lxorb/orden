@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { joining, protectionOn } from '../src/api'
+import { joining, managesSpace, members, protectionOn, share } from '../src/api'
 import { addressesIn, isFull, looksLikeAddress } from '../src/sharing.svelte'
 
 describe('the module stands on its own', () => {
@@ -27,5 +27,15 @@ describe('the places in a space', () => {
     expect(isFull({ used: 10, most: 10 })).toBe(true)
     expect(isFull({ used: 11, most: 10 })).toBe(true)
     expect(isFull(null)).toBe(false)
+  })
+})
+describe('the people in a space', () => {
+  test('a folder that never reached the account is managed by whoever holds it', () => {
+    expect(managesSpace('Nowhere')).toBe(true)
+  })
+  test('Settings reads them through a store of its own, apart from the Share sheet', () => {
+    expect(members).not.toBe(share)
+    expect(members.open).toBe(false)
+    expect(members.who).toBeNull()
   })
 })
