@@ -1204,22 +1204,6 @@
     }
   },
   {
-    "name": "application_tabs",
-    "description": "The reader's application tabs (op list), run on a computer of theirs. Only while this device holds one (never take it over): start, stop, restart; picture, a PNG; input, events in its pixels: {type: move|click|down|up|scroll|key|text, x, y, button, count, dx, dy, key like Enter or Ctrl+S, text}.",
-    "inputSchema": {
-      "type": "object",
-      "properties": {
-        "op": {
-          "type": "string",
-          "enum": ["list", "start", "stop", "restart", "picture", "input"]
-        },
-        "tab": { "type": "string" },
-        "events": { "type": "array", "items": { "type": "object" } }
-      },
-      "required": ["op"]
-    }
-  },
-  {
     "name": "explorer_tabs",
     "description": "The reader's file explorer tabs, folders on this computer. op list; open a folder (path, absolute or ~/) in a tab behind; in a tab: go to a folder, select paths, and through it trash (to the system trash), move or copy paths into to, rename a path to name, mkdir name. Each change the reader can undo. In a space use the note tools.",
     "inputSchema": {

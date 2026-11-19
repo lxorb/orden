@@ -54,13 +54,11 @@ pub enum Scope {
     Ask,
     #[serde(rename = "editor")]
     Editor,
-    #[serde(rename = "applications")]
-    Applications,
     #[serde(rename = "agents")]
     Agents,
 }
 impl Scope {
-    pub const ALL: [Scope; 23] = [
+    pub const ALL: [Scope; 22] = [
         Scope::Context,
         Scope::NotesRead,
         Scope::NotesWrite,
@@ -82,7 +80,6 @@ impl Scope {
         Scope::Clipboard,
         Scope::Ask,
         Scope::Editor,
-        Scope::Applications,
         Scope::Agents,
     ];
 }
@@ -138,6 +135,7 @@ pub struct Grant {
     pub id: String,
     pub name: String,
     pub client: String,
+    #[serde(deserialize_with = "known_scopes")]
     pub scopes: Vec<Scope>,
     pub spaces: Spaces,
     #[serde(default)]
@@ -203,7 +201,6 @@ impl Grant {
                     | Scope::Clipboard
                     | Scope::Ask
                     | Scope::Editor
-                    | Scope::Applications
             )
         });
         grant.mode = Mode::Confirm;
@@ -416,6 +413,10 @@ pub fn cached(id: &str) -> Option<Grant> {
 fn file(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(config_dir(app)?.join("agents.json"))
 }
+fn known_scopes<'de, D: serde::Deserializer<'de>>(said: D) -> Result<Vec<Scope>, D::Error> {
+    let all = Vec::<serde_json::Value>::deserialize(said)?;
+    Ok(all.into_iter().filter_map(|one| serde_json::from_value(one).ok()).collect())
+}
 fn read(path: &std::path::Path) -> Vec<Kept> {
     std::fs::read_to_string(path)
         .ok()
@@ -595,6 +596,25 @@ mod tests {
         assert!(one["scopes"].as_array().expect("scopes").contains(&"browser.reader".into()));
     }
     #[test]
+    fn a_scope_no_longer_known_is_dropped_and_the_grant_still_reads() {
+        let mut value = serde_json::to_value(File {
+            agents: vec![Kept { grant: Grant::own("a".into(), "A"), token: hashed("t") }],
+            chats: true,
+            helpers: true,
+            orden: true,
+        })
+        .expect("json");
+        let scopes = value["agents"][0]["scopes"].as_array_mut().expect("scopes");
+        scopes.insert(0, "applications".into());
+        scopes.push("someday".into());
+        let dir = tempfile::tempdir().expect("a folder");
+        let path = dir.path().join("agents.json");
+        std::fs::write(&path, value.to_string()).expect("written");
+        let read = read(&path);
+        assert_eq!(read.len(), 1);
+        assert_eq!(read[0].grant.scopes, Grant::own("a".into(), "A").scopes);
+    }
+    #[test]
     fn a_sidebar_grant_from_before_the_rename_is_called_orden_once() {
         let kept = |id: &str, client: &str, name: &str| {
             let mut grant = Grant::own(id.into(), client);
@@ -717,7 +737,6 @@ mod tests {
         assert!(own.holds(Scope::Network));
         assert!(own.holds(Scope::Clipboard) && own.holds(Scope::Ask));
         assert!(own.holds(Scope::Editor));
-        assert!(own.holds(Scope::Applications));
         assert!(own.asks(Category::Terminal));
         assert_eq!(own.mode, Mode::Unsupervised);
         assert!(own.asks(Category::Paying));
@@ -732,7 +751,6 @@ mod tests {
         assert!(!other.holds(Scope::Network));
         assert!(!other.holds(Scope::Clipboard) && !other.holds(Scope::Ask));
         assert!(!other.holds(Scope::Editor));
-        assert!(!other.holds(Scope::Applications));
         assert_eq!(other.mode, Mode::Confirm);
     }
     #[test]

@@ -7,7 +7,7 @@ describe('the host', () => {
     for (const verb of ['get_context', 'read_note', 'workspace_tabs', 'ask_reader', 'bookmarks']) {
       expect(typeof hostVerbs[verb]).toBe('function')
     }
-    for (const verb of ['explorer_tabs', 'application_tabs', 'list_chats', 'run_terminal']) {
+    for (const verb of ['explorer_tabs', 'list_chats', 'run_terminal']) {
       expect(hostVerbs[verb]).toBeUndefined()
     }
     expect(typeof keepMarksOf).toBe('function')
