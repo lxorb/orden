@@ -137,7 +137,7 @@ document.elementFromPoint = () => over ?? document.querySelector('.hole')
 
 const { overlays } = await import('../../src/lib/ui-kit/src/overlays')
 const { workspace } = await import('../../src/lib/workspace/src/api')
-const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
+const { OUT_OF_THE_WAY, pages } = await import('../../src/lib/web-tab/src/pages.svelte')
 const { startup } = await import('../../src/lib/launch/src/api')
 const { hovering } = await import('../../src/lib/tab-strip/src/hover-card.svelte')
 const WebTab = (await import('../../src/lib/web-tab/src/WebTab.svelte')).default
@@ -237,7 +237,12 @@ function layer(kind: string, box = { x: 100, y: 100, width: 240, height: 200 }):
   return made
 }
 
-test('the page is hidden while a layer of the app is over it, and comes back when it goes', async () => {
+function away(one: { args: Record<string, unknown> } | undefined): boolean {
+  const pane = one?.args.pane as { x: number } | undefined
+  return one?.args.visible === true && pane?.x === -OUT_OF_THE_WAY
+}
+
+test('the page goes out of the way, still drawn, while a layer of the app is over it, and comes back when it goes', async () => {
   await launched()
 
   workspace.openWebsite()
@@ -256,13 +261,12 @@ test('the page is hidden while a layer of the app is over it, and comes back whe
   const off = overlays.show(() => undefined)
   await frames()
 
-  const hidden = asked.filter((one) => one.command === 'web_place').at(-1)
-  expect(hidden?.args.visible).toBe(false)
+  const placed = asked.filter((one) => one.command === 'web_place')
+  expect(away(placed.at(-1))).toBe(true)
+  expect(placed.some((one) => one.args.visible === false)).toBe(false)
   const said = asked.map((one) => one.command)
   expect(said).toContain('web_shot')
-  expect(said.indexOf('web_shot')).toBeLessThan(
-    asked.findIndex((one) => one.command === 'web_place' && one.args.visible === false),
-  )
+  expect(said.indexOf('web_shot')).toBeLessThan(asked.findIndex((one) => away(one)))
 
   asked.length = 0
   off()
@@ -271,6 +275,31 @@ test('the page is hidden while a layer of the app is over it, and comes back whe
 
   const shown = asked.filter((one) => one.command === 'web_place').at(-1)
   expect(shown?.args.visible).toBe(true)
+  expect(away(shown)).toBe(false)
+
+  void unmount(app)
+})
+
+test('a page a sheet covers for long is hidden, and comes back drawn out of the way first', async () => {
+  const { app } = await opened('https://example.com/stowed')
+
+  asked.length = 0
+  const scrim = layer('orden-scrim', { x: 0, y: 0, width: 800, height: 600 })
+  onTestFinished(() => scrim.remove())
+  await frames()
+  expect(away(asked.filter((one) => one.command === 'web_place').at(-1))).toBe(true)
+
+  await elapse(5_000)
+  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args.visible).toBe(false)
+
+  asked.length = 0
+  scrim.remove()
+  await frames()
+
+  const placed = asked.filter((one) => one.command === 'web_place')
+  expect(away(placed[0])).toBe(true)
+  expect(placed.at(-1)?.args.visible).toBe(true)
+  expect(away(placed.at(-1))).toBe(false)
 
   void unmount(app)
 })
@@ -561,7 +590,7 @@ describe('a layer is answered in the frame it is first drawn in, however it came
   }
 })
 
-test('the page is hidden while a drag is over the panes, and comes back when it ends', async () => {
+test('the page goes out of the way, still drawn, while a drag is over the panes, and comes back when it ends', async () => {
   await launched()
 
   workspace.openWebsite()
@@ -577,10 +606,11 @@ test('the page is hidden while a drag is over the panes, and comes back when it 
 
   asked.length = 0
   workspace.panes.dragging = { tabId: tab.id }
+  onTestFinished(() => workspace.panes.dropped())
   flushSync()
   await frames()
 
-  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args.visible).toBe(false)
+  expect(away(asked.filter((one) => one.command === 'web_place').at(-1))).toBe(true)
   expect(asked.map((one) => one.command)).toContain('web_shot')
 
   asked.length = 0
@@ -588,7 +618,9 @@ test('the page is hidden while a drag is over the panes, and comes back when it 
   flushSync()
   await frames()
 
-  expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args.visible).toBe(true)
+  const back = asked.filter((one) => one.command === 'web_place').at(-1)
+  expect(back?.args.visible).toBe(true)
+  expect(away(back)).toBe(false)
 
   void unmount(app)
 })
@@ -811,60 +843,68 @@ test('a picture of the page goes when the page is shown at another size', async 
 
 describe('a page held still while its hole moves, and let go', () => {
   for (const cutting of [true, false, 'under'] as const) {
-    test(cutting === 'under' ? 'drawn under the app' : cutting ? 'cut' : 'hidden', async () => {
-      cuts = cutting
-      const { tab, app } = await opened(`https://example.com/still-${String(cutting)}`)
-      const page = pages.of(tab.id)
-      page.shot = 'data:image/png;base64,iVBORw0KGgo='
-      page.shotAt = Date.now()
-      await settle()
-      await frames()
-      const hole = document.querySelector('.hole')
-      if (!hole) throw new Error('no hole')
-      onTestFinished(() => {
-        hole.removeAttribute('data-box')
-        void unmount(app)
-      })
-      const shown = asked.filter((one) => one.command === 'web_place').at(-1)?.args.pane
-
-      asked.length = 0
-      await pages.holdStill()
-      await settle()
-      const held = asked.filter((one) => one.command === 'web_place')
-      expect(held.at(-1)?.args).toMatchObject(
-        cutting === 'under' ? { visible: true, cut: { all: true } } : { visible: false },
-      )
-      expect(hole.classList.contains('still')).toBe(true)
-      expect(hole.classList.contains('under')).toBe(false)
-
-      asked.length = 0
-      for (const [step, scale] of [0.9, 0.7, 0.5].entries()) {
-        hole.setAttribute(
-          'data-box',
-          JSON.stringify({
-            x: 30 * (step + 1),
-            y: 40 + 20 * (step + 1),
-            width: 800 * scale,
-            height: 560 * scale,
-          }),
-        )
+    test(
+      cutting === 'under' ? 'drawn under the app' : cutting ? 'cut' : 'out of the way',
+      async () => {
+        cuts = cutting
+        const { tab, app } = await opened(`https://example.com/still-${String(cutting)}`)
+        const page = pages.of(tab.id)
+        page.shot = 'data:image/png;base64,iVBORw0KGgo='
+        page.shotAt = Date.now()
         await settle()
         await frames()
-      }
-      expect(asked.filter((one) => one.command === 'web_place')).toEqual([])
+        const hole = document.querySelector('.hole')
+        if (!hole) throw new Error('no hole')
+        onTestFinished(async () => {
+          hole.removeAttribute('data-box')
+          await pages.letGo()
+          void unmount(app)
+        })
+        const shown = asked.filter((one) => one.command === 'web_place').at(-1)?.args.pane
 
-      hole.removeAttribute('data-box')
-      await pages.letGo()
-      await settle()
-      await frames()
-      expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args).toMatchObject({
-        visible: true,
-        cut: null,
-        pane: shown,
-      })
-      expect(page.heldAt).toBe(null)
-      expect(hole.classList.contains('under')).toBe(cutting === 'under')
-    })
+        asked.length = 0
+        await pages.holdStill()
+        await settle()
+        const held = asked.filter((one) => one.command === 'web_place')
+        expect(held.at(-1)?.args).toMatchObject(
+          cutting === 'under'
+            ? { visible: true, cut: { all: true } }
+            : cutting
+              ? { visible: false }
+              : { visible: true, cut: { all: true }, pane: { x: -OUT_OF_THE_WAY } },
+        )
+        expect(hole.classList.contains('still')).toBe(true)
+        expect(hole.classList.contains('under')).toBe(false)
+
+        asked.length = 0
+        for (const [step, scale] of [0.9, 0.7, 0.5].entries()) {
+          hole.setAttribute(
+            'data-box',
+            JSON.stringify({
+              x: 30 * (step + 1),
+              y: 40 + 20 * (step + 1),
+              width: 800 * scale,
+              height: 560 * scale,
+            }),
+          )
+          await settle()
+          await frames()
+        }
+        expect(asked.filter((one) => one.command === 'web_place')).toEqual([])
+
+        hole.removeAttribute('data-box')
+        await pages.letGo()
+        await settle()
+        await frames()
+        expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args).toMatchObject({
+          visible: true,
+          cut: null,
+          pane: shown,
+        })
+        expect(page.heldAt).toBe(null)
+        expect(hole.classList.contains('under')).toBe(cutting === 'under')
+      },
+    )
   }
 })
 

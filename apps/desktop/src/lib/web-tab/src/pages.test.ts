@@ -61,7 +61,8 @@ vi.mock('../../windows/src/api', async (importOriginal) => ({
   },
 }))
 
-const { cardCorner, pages, readChosen, readOpening } = await import('./pages.svelte')
+const { cardCorner, OUT_OF_THE_WAY, pages, readChosen, readOpening } =
+  await import('./pages.svelte')
 
 await Promise.all([
   import('./web-data.svelte').then((one) => one.webData.merged()),
@@ -324,7 +325,7 @@ describe('a page whose engine cuts only what floats over it', () => {
     expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, cut: over.cut })
   })
 
-  test('steps behind its picture under a scrim', async () => {
+  test('steps out of the way behind its picture under a scrim', async () => {
     cuts = 'hollows'
     await built()
     await settle()
@@ -333,7 +334,12 @@ describe('a page whose engine cuts only what floats over it', () => {
     await pages.show('a', SITE, PANE, false, { cut: { all: true, hollows: [] }, frame: null })
     await settle()
 
-    expect(last('web_place')).toMatchObject({ tab: 'a', visible: false, cut: null })
+    expect(last('web_place')).toMatchObject({
+      tab: 'a',
+      visible: true,
+      cut: { all: true, hollows: [] },
+      pane: { x: -OUT_OF_THE_WAY, y: -OUT_OF_THE_WAY },
+    })
     expect(commands()).toContain('web_shot')
   })
 })
@@ -1069,7 +1075,7 @@ describe('a page out of sight', () => {
       pages.retime()
       await settle()
 
-      expect(pages.of('t0').shown).toBe(false)
+      expect(pages.of('t0').sent?.away).toBe(true)
       expect(commands()).not.toContain('web_close')
     })
 
@@ -1476,4 +1482,92 @@ describe('a page parked out of sight', () => {
     expect(await pages.losing('nobody')).toBe(false)
     pages.forget('typed')
   })
+})
+
+describe('a page something comes over', () => {
+  afterEach(async () => {
+    photographing = null
+    photo = null
+    await pages.letGo()
+  })
+
+  function moved(): boolean {
+    return calls.some(
+      (one) =>
+        one.command === 'web_place' &&
+        one.args.tab === 'a' &&
+        one.args.visible === true &&
+        (one.args.pane as { x: number }).x === -OUT_OF_THE_WAY,
+    )
+  }
+
+  async function covered(): Promise<() => void> {
+    await built()
+    await pages.show('a', SITE, PANE, true)
+    await settle()
+    pages.of('a').shot = null
+    let landed = (): void => undefined
+    photographing = new Promise<void>((go) => (landed = go))
+    photo = 'data:image/png;base64,now'
+    calls.length = 0
+    void pages.show('a', SITE, PANE, false)
+    await settle()
+    return landed
+  }
+
+  test('stays in front until a picture of it as it is now stands in its place', async () => {
+    const landed = await covered()
+    expect(moved()).toBe(false)
+
+    landed()
+    await vi.waitFor(() => expect(moved()).toBe(true))
+    expect(pages.of('a').shot).toBe('data:image/png;base64,now')
+  })
+
+  test.each([false, 'hollows'] as const)(
+    'is moved out of the way, still drawn, rather than hidden, so it comes back with nothing to draw (cuts %s)',
+    async (cutting) => {
+      cuts = cutting
+      const landed = await covered()
+      landed()
+      await vi.waitFor(() => expect(moved()).toBe(true))
+      expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(
+        false,
+      )
+      expect(last('web_place')).toMatchObject({ cut: { all: true, hollows: [] } })
+
+      await pages.show('a', SITE, PANE, true)
+      expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true })
+    },
+  )
+
+  test('is not moved once it was shown again while its picture was being taken', async () => {
+    const landed = await covered()
+    await pages.show('a', SITE, PANE, true)
+    landed()
+    await settle()
+
+    expect(moved()).toBe(false)
+    expect(last('web_place')).toMatchObject({ tab: 'a', visible: true })
+  })
+
+  test.each([false, 'hollows'] as const)(
+    'is moved out of the way under the overview too, and put back as it closes (cuts %s)',
+    async (cutting) => {
+      cuts = cutting
+      await built()
+      await pages.show('a', SITE, PANE, true)
+      await settle()
+      calls.length = 0
+
+      await pages.holdStill()
+      expect(moved()).toBe(true)
+      expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(
+        false,
+      )
+
+      await pages.letGo()
+      expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, visible: true })
+    },
+  )
 })

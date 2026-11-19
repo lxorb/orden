@@ -48,6 +48,8 @@ export const OUT_OF_THE_WAY = 20_000
 const SHOT_KEEPS = 400
 const LOOK_WAITS = 500
 const SHOT_WAITS = 300
+const COVER_HIDES = 5000
+const DRAWN_AWAY = 120
 const ARRIVES = 3000
 
 export interface Rect {
@@ -73,6 +75,11 @@ export interface Over {
 const WHOLE: Cut = { all: true, hollows: [] }
 const NOTHING: Over = { cut: null, frame: null }
 
+function awayFrom(pane: Rect): Placement {
+  const away = { ...pane, x: -OUT_OF_THE_WAY, y: -OUT_OF_THE_WAY }
+  return { pane: away, visible: true, frame: null, cut: WHOLE, away: true }
+}
+
 interface Placement {
   pane: Rect
   visible: boolean
@@ -94,6 +101,8 @@ function heard(page: Page, said: unknown): void {
 
 const cutsOut = (layering: Layering, cut: Cut | null): boolean =>
   cut !== null && (layering === 'cut' || (layering === 'hollows' && !cut.all))
+
+const goesAway = (layering: Layering): boolean => layering === 'hide' || layering === 'hollows'
 
 interface Looked {
   url: string
@@ -219,6 +228,9 @@ export class Page {
   heldAt = $state.raw<Placement | null>(null)
   shotAt = 0
   shooting: Promise<void> | null = null
+  placings = 0
+  stowed = false
+  stowing: ReturnType<typeof setTimeout> | undefined
   shown = false
   path: string | null = null
   at: string | null = null
@@ -504,6 +516,8 @@ class Pages {
     }
 
     if (!page.live && visible) return
+    const turn = ++page.placings
+    clearTimeout(page.stowing)
 
     if (page.layering === 'under' && page.live) {
       const shown = visible || covering
@@ -524,7 +538,20 @@ class Pages {
       return
     }
 
-    if (covering) void this.shoot(tabId)
+    if (covering) await this.shoot(tabId)
+    if (page.placings !== turn) return
+    if (covering && goesAway(page.layering) && (page.shown || page.stowed)) {
+      if (!page.stowed) await this.put(tabId, page, awayFrom(pane))
+      if (over.cut?.all)
+        page.stowing = setTimeout(() => void this.stow(tabId, page, pane, turn), COVER_HIDES)
+      return
+    }
+    if (visible && page.stowed) {
+      page.stowed = false
+      await this.put(tabId, page, awayFrom(pane))
+      await new Promise<void>((go) => setTimeout(go, DRAWN_AWAY))
+      if (page.placings !== turn) return
+    }
 
     await this.put(tabId, page, {
       pane,
@@ -533,6 +560,12 @@ class Pages {
       cut: null,
       corner: over.corner,
     })
+  }
+
+  private async stow(tabId: string, page: Page, pane: Rect, turn: number): Promise<void> {
+    if (page.placings !== turn) return
+    page.stowed = true
+    await this.put(tabId, page, { pane, visible: false, frame: null, cut: null })
   }
 
   private async cover(tabId: string, page: Page, pane: Rect, over: Over): Promise<void> {
@@ -610,7 +643,7 @@ class Pages {
 
   private heldWhere(page: Page): Placement | null {
     if (__EVEN_PLUGIN__ || !isDesktop || !page.live) return null
-    return page.heldAt ?? (page.shown && page.sent?.visible ? page.sent : null)
+    return page.heldAt ?? (page.shown && page.sent?.visible && !page.sent.away ? page.sent : null)
   }
 
   private async holdOne(tabId: string, page: Page): Promise<void> {
@@ -624,7 +657,11 @@ class Pages {
     await this.put(
       tabId,
       page,
-      page.layering === 'under' ? { ...at, cut: WHOLE } : { ...at, visible: false },
+      page.layering === 'under'
+        ? { ...at, cut: WHOLE }
+        : goesAway(page.layering)
+          ? awayFrom(at.pane)
+          : { ...at, visible: false },
     )
   }
 
@@ -654,8 +691,7 @@ class Pages {
   }
 
   async aside(tabId: string, page: Page, pane: Rect): Promise<void> {
-    const away = { ...pane, x: -OUT_OF_THE_WAY, y: -OUT_OF_THE_WAY }
-    await this.put(tabId, page, { pane: away, visible: true, frame: null, cut: null, away: true })
+    await this.put(tabId, page, awayFrom(pane))
     await page.shooting
     if (!page.onScreen && !page.lent) await this.place(tabId, pane, false)
   }
