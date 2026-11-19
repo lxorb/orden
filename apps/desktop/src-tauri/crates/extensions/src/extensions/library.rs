@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 use super::firefox::{self, Gaps};
 use super::link::Store;
-use super::unzip;
+use super::{crx, manifest, unzip};
 
 const LIST: &str = "library.json";
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -50,6 +50,12 @@ pub fn plain_version(version: &str) -> bool {
             .split('.')
             .all(|part| !part.is_empty() && part.bytes().all(|byte| byte.is_ascii_digit()))
 }
+pub fn unpack(root: &Path, store: Store, id: &str, bytes: &[u8]) -> Result<String, String> {
+    unpack_checked(root, &crx::checked(bytes, id, Some(store))?)
+}
+fn unpack_checked(root: &Path, checked: &crx::Checked<'_>) -> Result<String, String> {
+    unpack_with(root, &checked.id, checked.zip, |folder| manifest::keyed(folder, &checked.key))
+}
 pub fn unpack_firefox(
     root: &Path,
     id: &str,
@@ -81,7 +87,7 @@ fn unpack_with(
     let made = (|| {
         unzip::unzip(zip, &making)?;
         finish(&making)?;
-        let about = super::manifest::read(&making)?;
+        let about = manifest::read(&making)?;
         if !plain_version(&about.version) {
             return Err("that extension's version is not one".to_string());
         }
@@ -134,10 +140,20 @@ pub fn tidy(root: &Path) {
         }
     }
 }
+pub fn ours(root: &Path, one: &Kept) -> bool {
+    one.store == Store::Firefox
+        || folder_of(root, &one.id, &one.version).join("manifest.json").is_file()
+}
+pub fn loaded_folders(root: &Path) -> Vec<PathBuf> {
+    folders(root, |_| true)
+}
 pub fn firefox_folders(root: &Path) -> Vec<PathBuf> {
+    folders(root, |one| one.store == Store::Firefox)
+}
+fn folders(root: &Path, which: impl Fn(&Kept) -> bool) -> Vec<PathBuf> {
     read(root)
         .into_iter()
-        .filter(|one| one.store == Store::Firefox && one.enabled)
+        .filter(|one| one.enabled && which(one))
         .map(|one| folder_of(root, &one.id, &one.version))
         .filter(|folder| {
             folder.join("manifest.json").is_file() && !folder.to_string_lossy().contains(',')
@@ -149,9 +165,13 @@ mod amo_tests {
     use sha2::{Digest as _, Sha256};
 
     use super::super::amo::{checked, Listing};
+    use super::super::crx;
     use super::super::firefox::{chromium_version, id_and_key};
     use super::super::unzip::tests::zip;
-    use super::{folder_of, read, tidy, unpack_firefox, write, Kept, Store};
+    use super::{
+        firefox_folders, folder_of, loaded_folders, read, tidy, unpack, unpack_checked,
+        unpack_firefox, write, Kept, Store,
+    };
 
     fn xpi(version: &str) -> (Vec<u8>, Listing) {
         let manifest = format!(
@@ -224,5 +244,43 @@ mod amo_tests {
         tidy(root);
         assert!(folder_of(root, &id, &newer).is_dir());
         assert!(!folder.exists());
+    }
+    #[test]
+    fn a_store_file_unpacks_under_its_own_id_with_its_key_and_loads_at_the_next_start() {
+        use base64::Engine as _;
+
+        let root = tempfile::tempdir().expect("a folder");
+        let root = root.path();
+        let archive = zip(&[
+            ("manifest.json", br#"{"manifest_version": 3, "name": "Pass", "version": "1.2.3"}"#),
+            ("popup.html", b"<html></html>"),
+            ("_metadata/verified_contents.json", b"[]"),
+        ]);
+        let (bytes, id) = crx::tests::crx(&archive);
+        assert!(unpack(root, Store::Chrome, &id, &bytes)
+            .unwrap_err()
+            .contains("the store did not sign it"));
+        assert!(unpack(root, Store::Edge, &id, &bytes).is_err());
+        assert!(unpack(root, Store::Chrome, &id, b"PK\x03\x04")
+            .unwrap_err()
+            .contains("no CRX header"));
+        let checked = crx::checked(&bytes, &id, None).expect("checked");
+        let version = unpack_checked(root, &checked).expect("unpacked");
+        assert_eq!(version, "1.2.3");
+        let folder = folder_of(root, &id, &version);
+        let manifest: serde_json::Value = serde_json::from_str(
+            &std::fs::read_to_string(folder.join("manifest.json")).expect("there"),
+        )
+        .expect("a manifest");
+        assert_eq!(manifest["key"], base64::engine::general_purpose::STANDARD.encode(&checked.key));
+        assert_eq!(crx::id_of_key(&checked.key), id);
+        assert!(folder.join("popup.html").is_file());
+        assert!(!folder.join("_metadata").exists());
+        let kept =
+            Kept { id, store: Store::Chrome, version, enabled: true, pinned: true, addon: None };
+        let pin = Kept { id: "a".repeat(32), ..kept.clone() };
+        write(root, &[kept, pin]).expect("written");
+        assert_eq!(loaded_folders(root), vec![folder]);
+        assert!(firefox_folders(root).is_empty());
     }
 }

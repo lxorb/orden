@@ -7,6 +7,7 @@ use serde::Serialize;
 use tauri::{AppHandle, Emitter as _};
 
 mod amo;
+mod crx;
 mod fetch;
 mod firefox;
 pub mod library;
@@ -18,7 +19,7 @@ mod unzip;
 mod chromium;
 pub mod tabs;
 
-use firefox::Gaps;
+pub use firefox::Gaps;
 use library::Kept;
 use link::Store;
 use manifest::About;
@@ -43,34 +44,45 @@ fn listed(app: &AppHandle) -> Vec<(Kept, PathBuf)> {
         if let Ok(root) = root(app) {
             TIDIED.call_once(|| library::tidy(&root));
         }
-        let pins = kept(app);
-        let mut list: Vec<(Kept, PathBuf)> = chromium::installed(app)
-            .into_iter()
-            .map(|(mut one, folder)| {
-                one.pinned = pins.iter().find(|pin| pin.id == one.id).is_none_or(|pin| pin.pinned);
-                (one, folder)
-            })
-            .collect();
-        if let Ok(root) = root(app) {
-            let mut pending = PENDING.write().unwrap_or_else(PoisonError::into_inner);
-            pending.clear();
-            for one in pins.iter().filter(|one| one.store == Store::Firefox) {
-                let folder = library::folder_of(&root, &one.id, &one.version);
-                let loaded = list.iter().position(|(there, _)| there.id == one.id);
-                let current = loaded.is_some_and(|at| list[at].0.version == one.version);
-                if one.enabled && !current {
-                    pending.insert(one.id.clone());
-                }
-                match loaded {
-                    Some(at) => list[at] = (one.clone(), folder),
-                    None => list.push((one.clone(), folder)),
-                }
+        let installed = chromium::installed(app);
+        match root(app) {
+            Ok(root) => {
+                let (list, pending) = merged(installed, &library::read(&root), &root);
+                *PENDING.write().unwrap_or_else(PoisonError::into_inner) = pending;
+                list
             }
+            Err(_) => installed,
         }
-        list
     };
     orden_web::extension_ids::replace(list.iter().map(|(one, _)| one.id.clone()));
     list
+}
+fn merged(
+    installed: Vec<(Kept, PathBuf)>,
+    pins: &[Kept],
+    root: &Path,
+) -> (Vec<(Kept, PathBuf)>, HashSet<String>) {
+    let mut list: Vec<(Kept, PathBuf)> = installed
+        .into_iter()
+        .map(|(mut one, folder)| {
+            one.pinned = pins.iter().find(|pin| pin.id == one.id).is_none_or(|pin| pin.pinned);
+            (one, folder)
+        })
+        .collect();
+    let mut pending = HashSet::new();
+    for one in pins.iter().filter(|one| library::ours(root, one)) {
+        let folder = library::folder_of(root, &one.id, &one.version);
+        let loaded = list.iter().position(|(there, _)| there.id == one.id);
+        let current = loaded.is_some_and(|at| list[at].0.version == one.version);
+        if one.enabled && !current {
+            pending.insert(one.id.clone());
+        }
+        match loaded {
+            Some(at) => list[at] = (one.clone(), folder),
+            None => list.push((one.clone(), folder)),
+        }
+    }
+    (list, pending)
 }
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -84,7 +96,7 @@ pub struct Shown {
     gaps: Option<Gaps>,
     pending: bool,
 }
-fn shown(kept: Kept, folder: &Path) -> Shown {
+pub fn shown(kept: Kept, folder: &Path) -> Shown {
     let about = manifest::read(folder).unwrap_or_default();
     let picture = about.icon.as_deref().and_then(|icon| picture(folder, icon));
     let problem = PROBLEMS.held().iter().find(|(id, _)| *id == kept.id).map(|(_, why)| why.clone());
@@ -147,7 +159,6 @@ pub async fn extensions_list(app: AppHandle) -> Result<Vec<Shown>, String> {
 #[serde(untagged)]
 pub enum Done {
     Installed(Box<Shown>),
-    Store { store: String },
     Asks { name: String, asks: Gaps },
 }
 #[tauri::command]
@@ -160,10 +171,25 @@ pub async fn extensions_install(
     if store == Store::Firefox {
         return from_amo(app, &id, anyway == Some(true)).await;
     }
-    {
-        let _ = app;
-        Ok(Done::Store { store: link::page_of(store, &id) })
-    }
+    from_store(app, store, id).await
+}
+async fn from_store(app: AppHandle, store: Store, id: String) -> Result<Done, String> {
+    let bytes = fetch::crx(store, &id).await?;
+    unpacked(app, store, id, bytes).await.map(|one| Done::Installed(Box::new(one)))
+}
+async fn unpacked(
+    app: AppHandle,
+    store: Store,
+    id: String,
+    bytes: Vec<u8>,
+) -> Result<Shown, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        let root = root(&app)?;
+        let version = library::unpack(&root, store, &id, &bytes)?;
+        listed_as(&app, &root, store, &id, version, None)
+    })
+    .await
+    .map_err(|error| error.to_string())?
 }
 async fn from_amo(app: AppHandle, slug: &str, anyway: bool) -> Result<Done, String> {
     let listing = amo::listing(slug).await?;
@@ -226,9 +252,9 @@ pub async fn extensions_set(
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
         if let Some(on) = enabled {
-            let firefox = kept(&app).iter().any(|one| one.id == id && one.store == Store::Firefox);
+            let ours = kept(&app).iter().any(|one| one.id == id && library::ours(&root, one));
             let done = chromium::enable(&app, &id, on);
-            if !firefox {
+            if !ours {
                 done?;
             }
         }
@@ -263,9 +289,9 @@ pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String>
     tauri::async_runtime::spawn_blocking(move || {
         let root = root(&app)?;
         {
-            let firefox = kept(&app).iter().any(|one| one.id == id && one.store == Store::Firefox);
+            let ours = kept(&app).iter().any(|one| one.id == id && library::ours(&root, one));
             let done = chromium::remove(&app, &id);
-            if !firefox {
+            if !ours {
                 done?;
             }
         }
@@ -284,15 +310,32 @@ pub async fn extensions_remove(app: AppHandle, id: String) -> Result<(), String>
 }
 #[tauri::command]
 pub async fn extensions_update(app: AppHandle) -> Result<usize, String> {
+    let root = root(&app)?;
     let mut moved = 0;
-    for one in kept(&app).into_iter().filter(|one| one.store == Store::Firefox) {
-        if amo_update(&app, &one).await.unwrap_or(false) {
-            moved += 1;
+    let mut failed = Vec::new();
+    for one in kept(&app).into_iter().filter(|one| library::ours(&root, one)) {
+        let done = match one.store {
+            Store::Firefox => amo_update(&app, &one).await,
+            Store::Chrome | Store::Edge => store_update(&app, &one).await,
+        };
+        match done {
+            Ok(true) => moved += 1,
+            Ok(false) => {}
+            Err(why) => failed.push(format!("{}: {why}", one.id)),
         }
     }
-    {
+    if failed.is_empty() {
         Ok(moved)
+    } else {
+        Err(failed.join("; "))
     }
+}
+async fn store_update(app: &AppHandle, one: &Kept) -> Result<bool, String> {
+    let Some(file) = fetch::newer(one.store, &one.id, &one.version).await? else {
+        return Ok(false);
+    };
+    let bytes = fetch::file(&file).await?;
+    unpacked(app.clone(), one.store, one.id.clone(), bytes).await.map(|_| true)
 }
 async fn amo_update(app: &AppHandle, one: &Kept) -> Result<bool, String> {
     let slug = one.addon.clone().ok_or("that add-on has no address on AMO")?;
@@ -330,18 +373,16 @@ fn page_of(app: &AppHandle, id: &str, options: bool) -> Result<String, String> {
 }
 #[tauri::command]
 pub fn extensions_named(link: String) -> Option<(Store, String)> {
-    link::named(&link)
-        .filter(|_| link.contains("://"))
-        .filter(|(store, _)| *store == Store::Firefox)
+    link::named(&link).filter(|_| link.contains("://"))
 }
 #[cfg(test)]
 mod tests {
     use std::fs;
-    use std::path::Path;
+    use std::path::{Path, PathBuf};
 
     use serde_json::{json, Value};
 
-    use super::{shown, Kept, Store, LARGEST};
+    use super::{merged, shown, Kept, Store, LARGEST};
 
     fn kept() -> Kept {
         Kept {
@@ -430,5 +471,33 @@ mod tests {
         for path in ["folder.png", "large.png", "nowhere.png", "small.txt"] {
             assert_eq!(picture(path), Value::Null, "{path}");
         }
+    }
+    #[test]
+    fn one_kept_by_orden_and_by_the_profile_is_listed_once_and_pending_until_loaded() {
+        let root = tempfile::tempdir().expect("a folder");
+        let root = root.path();
+        let pass = Kept { version: "1.2.3".to_owned(), ..kept() };
+        let folder = root.join(&pass.id).join(&pass.version);
+        fs::create_dir_all(&folder).expect("a folder");
+        fs::write(folder.join("manifest.json"), "{}").expect("a manifest");
+        let other = Kept { id: "b".repeat(32), ..kept() };
+        let unpinned = Kept { pinned: false, ..other.clone() };
+        let profile = PathBuf::from("profile");
+        let installed = vec![(kept(), profile.clone()), (other.clone(), profile)];
+        let (list, pending) = merged(installed, &[pass.clone(), unpinned], root);
+        assert_eq!(list.len(), 2);
+        assert_eq!(list[0], (pass.clone(), folder.clone()));
+        assert_eq!(list[1].0, Kept { pinned: false, ..other });
+        assert!(pending.contains(&pass.id) && pending.len() == 1);
+        let (list, pending) =
+            merged(vec![(pass.clone(), folder.clone())], std::slice::from_ref(&pass), root);
+        assert_eq!(list.len(), 1);
+        assert!(pending.is_empty());
+        let (list, pending) = merged(Vec::new(), std::slice::from_ref(&pass), root);
+        assert_eq!(list, vec![(pass.clone(), folder)]);
+        assert!(pending.contains(&pass.id));
+        let pin = Kept { id: "c".repeat(32), ..kept() };
+        let (list, pending) = merged(Vec::new(), &[pin], root);
+        assert!(list.is_empty() && pending.is_empty());
     }
 }
