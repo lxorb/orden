@@ -363,7 +363,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     const agents = agentsOf(provider.id)
     const unhear = await answers
       .asked((asked) => {
-        if (!agents.includes(asked.agent)) return
+        if (!agents.includes(asked.agent) || (asked.thread && asked.thread !== thread.id)) return
         const at = turn.parts.findIndex(
           (one) => one.kind === 'tool' && one.state === 'running' && one.verb === asked.verb,
         )

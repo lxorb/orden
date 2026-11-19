@@ -749,3 +749,64 @@ describe('the Gemini CLI', () => {
     expect(events.at(-1)).toEqual({ type: 'done', stop: 'error', error: 'Error: boom' })
   })
 })
+describe('a question raised in one of two threads on one program', () => {
+  interface Asked {
+    id: string
+    agent: string
+    verb: string
+    category: string
+    thread?: string
+  }
+  async function twoAsked(asked: Omit<Asked, 'id' | 'agent' | 'verb' | 'category'>) {
+    const rests: (() => void)[] = []
+    const lines = claudeTurn('Herons wait.')
+    answer = (open, said) => {
+      if (said.kind !== 'turn') return []
+      rests.push(() => {
+        for (const one of lines.slice(4)) line(open.channel, one)
+      })
+      return lines.slice(0, 4)
+    }
+    const hearers: ((asked: Asked) => void)[] = []
+    const given: { id: string; allow: boolean }[] = []
+    const built = createLocalEngine('claude-code', {
+      provider: (id) => (id === CLAUDE.id ? CLAUDE : null),
+      answers: {
+        answer: (id: string, allow: boolean) => {
+          given.push({ id, allow })
+          return Promise.resolve()
+        },
+        answered: () => Promise.resolve(false),
+        asked: (on: (asked: Asked) => void) => {
+          hearers.push(on)
+          return Promise.resolve(() => hearers.splice(hearers.indexOf(on), 1))
+        },
+      },
+    })
+    const a = thread(CLAUDE, { id: 'thread-a', always: ['read_note'] })
+    const b = thread(CLAUDE, { id: 'thread-b' })
+    const sentA = built.send(a, draft('what waits?'), () => undefined, new AbortController().signal)
+    const sentB = built.send(b, draft('what waits?'), () => undefined, new AbortController().signal)
+    await vi.waitFor(() => {
+      expect(a.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' })
+      expect(b.turns.at(-1)?.parts[1]).toMatchObject({ state: 'running' })
+    })
+    for (const hear of [...hearers]) {
+      hear({ id: 'q1', agent: 'orden-cc', verb: 'read_note', category: 'writing', ...asked })
+    }
+    const states = [a, b].map((one) => (one.turns.at(-1)?.parts[1] as { state: string }).state)
+    for (const rest of rests) rest()
+    await Promise.all([sentA, sentB])
+    return { given, states }
+  }
+  test('waits in the row of the thread that raised it, and another thread’s Always never answers it', async () => {
+    const { given, states } = await twoAsked({ thread: 'thread-b' })
+    expect(given).toEqual([])
+    expect(states).toEqual(['running', 'asking'])
+  })
+  test('is answered by the Always of the thread that raised it, and the other thread is left alone', async () => {
+    const { given, states } = await twoAsked({ thread: 'thread-a' })
+    expect(given).toEqual([{ id: 'q1', allow: true }])
+    expect(states).toEqual(['running', 'running'])
+  })
+})
