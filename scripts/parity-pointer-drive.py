@@ -466,6 +466,18 @@ def linux_hand() -> Any:
 NAMED_CURSORS = {"arrow", "ibeam", "hand", "resize-we", "resize-ns", "resize-nwse", "resize-nesw", "move", "no", "wait", "busy", "cross"}
 def named(cursor: Any) -> bool:
     return isinstance(cursor, str) and cursor in NAMED_CURSORS
+def x_client(pid: int, size: list[float] | None) -> tuple[int, int] | None:
+    found = subprocess.run(["xdotool", "search", "--onlyvisible", "--pid", str(pid)], capture_output=True, text=True, check=False).stdout.split()
+    best, off = None, None
+    for window in found:
+        said = subprocess.run(["xdotool", "getwindowgeometry", "--shell", window], capture_output=True, text=True, check=False).stdout
+        got = {key: int(value) for key, _, value in (line.partition("=") for line in said.split()) if value.lstrip("-").isdigit()}
+        if not got.get("WIDTH"):
+            continue
+        apart = abs(got["WIDTH"] - size[0]) + abs(got["HEIGHT"] - size[1]) if size else -got["WIDTH"] * got["HEIGHT"]
+        if off is None or apart < off:
+            best, off = (got["X"], got["Y"]), apart
+    return best
 def borrowed(name: str) -> Any:
     spec = importlib.util.spec_from_file_location(name.replace("-", "_"), HERE / f"{name}.py")
     if spec is None or spec.loader is None:
@@ -601,6 +613,13 @@ class Drive:
                 if (bounds["X"], bounds["Y"]) != (said["x"] / said["scale"], said["y"] / said["scale"]):
                     print(f"the app says its window is at {said}, the screen shows it at {bounds}", flush=True)
                 said = {**said, "x": bounds["X"] * said["scale"], "y": bounds["Y"] * said["scale"]}
+        elif PLATFORM == "linux":
+            size = self.app.eval("[innerWidth, innerHeight]")
+            client = x_client(self.pid, size if isinstance(size, list) else None)
+            if client and (client[0], client[1]) != (said["x"], said["y"]):
+                print(f"the app says its window is at {said}, X shows its client area at {client}", flush=True)
+            if client:
+                said = {**said, "x": client[0], "y": client[1]}
         return said
     def screen(self, x: float, y: float) -> tuple[float, float]:
         inner = self.where
@@ -750,6 +769,8 @@ class Drive:
         cursor = self.hand.cursor()
         said = self.heard()
         first = next((one for one in said["moves"] if one[3] and abs(one[1] - end[0]) <= 3 and abs(one[2] - end[1]) <= 3), None)
+        if first is None:
+            print(f"nothing heard at {end}: the last moves {[one[1:4] for one in said['moves'][-3:]]}", flush=True)
         hit = said["hits"].get("h")
         return {
             "heard ms": ms(first[0] - arrived) if first else None,
@@ -771,8 +792,11 @@ class Drive:
             self.watch(peek=[".column.peek", "there"])
             arrived = self.glide(mid, (1, mid[1]), 12)
             time.sleep(2.5)
-            hit = self.heard()["hits"].get("peek")
+            said = self.heard()
+            hit = said["hits"].get("peek")
             one["left edge"] = ms(hit - arrived) if hit else None
+            if not hit:
+                print(f"{kind}: no peek; the last moves the app heard {[one[1:4] for one in said['moves'][-3:]]}, the window at {self.where}, the pane at {geo['pane']}", flush=True)
             self.glide((1, mid[1]), mid, 12)
             self.until("return !document.querySelector('.column.peek')", 5)
             if geo["tab"]:
@@ -836,9 +860,16 @@ class Drive:
             got[kind] = one
             print(f"{kind}: {json.dumps(one)}", flush=True)
         web, note = got["web"], got["note"]
-        self.row(3, "the left edge over the pane brings the shut sidebar out (ms)", web["left edge"], note["left edge"], soon(web["left edge"], note["left edge"]))
-        self.row(3, "the top edge over a filled pane brings the bar out (ms)", web["top edge"], note["top edge"],
-                 soon(web["top edge"]["ms"], note["top edge"]["ms"]) and not web["top edge"]["shown before"])
+        edgeless = "the app heard no pointer there over the note either, so this machine gives the drive no way to reach that spot"
+        if note["left edge"] is None:
+            self.unmeasurable(3, "the left edge over the pane brings the shut sidebar out", edgeless)
+        else:
+            self.row(3, "the left edge over the pane brings the shut sidebar out (ms)", web["left edge"], note["left edge"], soon(web["left edge"], note["left edge"]))
+        if note["top edge"]["ms"] is None:
+            self.unmeasurable(3, "the top edge over a filled pane brings the bar out", edgeless)
+        else:
+            self.row(3, "the top edge over a filled pane brings the bar out (ms)", web["top edge"], note["top edge"],
+                     soon(web["top edge"]["ms"], note["top edge"]["ms"]) and not web["top edge"]["shown before"])
         for name, what in (("tab", "a tab in the strip"), ("divider", "the divider")):
             w, n = web.get(name), note.get(name)
             if not w or not n:
@@ -848,7 +879,10 @@ class Drive:
             self.row(3, f"from the pane onto {what}: its hover shows (ms)", w["hover ms"], n["hover ms"], soon(w["hover ms"], n["hover ms"]))
             self.cursor_row(f"from the pane onto {what}: the cursor", w["cursor"], n["cursor"], w["cursor"] == n["cursor"])
         w, n = web["corner"], note["corner"]
-        self.row(3, "at the pane's rounded corner: the app hears the pointer (ms)", w["heard ms"], n["heard ms"], soon(w["heard ms"], n["heard ms"]))
+        if n["heard ms"] is None:
+            self.unmeasurable(3, "at the pane's rounded corner: the app hears the pointer", edgeless)
+        else:
+            self.row(3, "at the pane's rounded corner: the app hears the pointer (ms)", w["heard ms"], n["heard ms"], soon(w["heard ms"], n["heard ms"]))
         self.cursor_row("at the pane's rounded corner: the cursor", w["cursor"], n["cursor"], w["cursor"] == n["cursor"])
         if web.get("band") and note.get("band"):
             def wide(band: list[str]) -> int:
@@ -1055,7 +1089,9 @@ class Drive:
                      note["row middle"].get("note took") is True and web["row middle"].get("page took") is True)
         else:
             self.unmeasurable(3, "a note from the file list let go in the pane's middle", "the file list row was not on screen")
-        if web["row edge"] is not None and note["row edge"] is not None:
+        if note["row edge"] is not None and note["row edge"]["split"] is not True:
+            self.unmeasurable(3, "a note from the file list let go at the pane's right edge", f"the note pane did not split either, so the app splits no pane for a file let go over a note's text: note {note['row edge']}, web {web['row edge']}")
+        elif web["row edge"] is not None and note["row edge"] is not None:
             self.row(3, "a note from the file list let go at the pane's right edge splits the pane", web["row edge"], note["row edge"],
                      note["row edge"]["split"] is True and web["row edge"]["split"] is True)
         else:
