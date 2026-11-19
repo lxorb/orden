@@ -184,6 +184,30 @@ def board(page: Page) -> None:
     say(f"column b: {titles(page, 'b')}, column c: {titles(page, 'c')}")
     if titles(page, "b").index("Charlie two") != titles(page, "b").index("Bravo one") - 1:
         wrong(f"Charlie two did not land above Bravo one: {titles(page, 'b')}")
+def panel_groups(page: Page) -> None:
+    page.locator(f"{PANEL} [data-todos-group] [role=combobox]").click()
+    page.locator("[role=listbox] [role=option]", has_text="Label").click()
+    page.wait_for_selector(f"{PANEL} [data-todos-group-box][data-key='a'] [data-todos-group-head]")
+    page.wait_for_timeout(500)
+    DRIVE.shot(page, "panel-groups")
+    scope = f"{PANEL} .lists"
+    for what in ["folded", "unfolded"]:
+        page.evaluate(RECORD, [scope, 60])
+        page.locator(f"{PANEL} [data-todos-group-box][data-key='a'] [data-todos-group-head]").click()
+        frames = recorded(page, 60)
+        for title, track in tracks(frames).items():
+            ys = [y for _, _, y in changes(track)]
+            steps = [b - a for a, b in zip(ys, ys[1:]) if b != a]
+            if title != "Alpha one" and any(x * y < 0 for x, y in zip(steps, steps[1:])):
+                wrong(f"group a {what}: {title} went back and forth {ys}")
+        say(f"group a {what}: {len(frames)} frames, cards below moved one way")
+    under = page.locator(f"{PANEL} [data-todos-group-box][data-key='b'] [data-todo-card]").first.bounding_box() or {}
+    start = page.locator(f"{PANEL} [data-todos-group-box][data-key='a'] [data-todo-card]").first.bounding_box() or {}
+    carry(page, start, (under["x"] + 40, under["y"] + under["height"] * 0.8), scope)
+    labels = page.evaluate("() => window.ordenApp.tasks().then(({ todos }) => todos.todos.find((one) => one.title === 'Alpha one').labels)")
+    say(f"Alpha one carried into group b has labels {labels}")
+    if labels != ["b"]:
+        wrong(f"a todo carried into another group of the panel kept {labels}")
 def tones(browser: Browser, scheme: str) -> None:
     context = DRIVE.context(browser, viewport={"width": 1100, "height": 600}, color_scheme=scheme)
     page = context.new_page()
@@ -206,6 +230,12 @@ def tones(browser: Browser, scheme: str) -> None:
     if not low or low == seen["Sort the photos"][1] or low in (medium, high) or medium == high:
         wrong(f"({scheme}) Low, Medium and High are not each in their own tone: {seen}")
     DRIVE.shot(page, f"tones-{scheme}")
+    page.evaluate("() => { const ws = window.ordenApp.workspace; ws.movePanel('tasks', 'right'); ws.showPanel('tasks') }")
+    page.locator(f"{PANEL} [data-todos-group] [role=combobox]").click()
+    page.locator("[role=listbox] [role=option]", has_text="Priority").click()
+    page.wait_for_selector(f"{PANEL} [data-todos-group-head]")
+    page.wait_for_timeout(400)
+    DRIVE.shot(page, f"panel-groups-{scheme}")
     context.close()
 def drive(browser: Browser) -> None:
     tones(browser, "light")
@@ -222,5 +252,6 @@ def drive(browser: Browser) -> None:
     page.wait_for_timeout(500)
     second = listed(page, f"{PANEL} ul.list")[0][1]
     ticked(page, f"{PANEL} ul.list", second, "ticked in the panel")
+    panel_groups(page)
     context.close()
 raise SystemExit(DRIVE.run(drive, "todos move without a jump: a column carries its cards still, a card lands without going back"))

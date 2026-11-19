@@ -13,10 +13,10 @@
   import { cubicOut } from 'svelte/easing'
   import { tick } from 'svelte'
   import { dur, fly, slide } from '../../platform/src/api'
-  import { Select } from '../../ui-controls/src/api'
   import { addTodo, doWithAi, patchTodo, removeTodo } from './acts'
   import { Carrying, columnPreview } from './carrying.svelte'
   import Filters from './Filters.svelte'
+  import Pick from './Pick.svelte'
   import { away, glider } from './glide'
   import { openNote } from './notes'
   import { shellWorld, Shown, SORT_NAMES } from './shown.svelte'
@@ -94,26 +94,20 @@
 <div class="board" data-todos-board>
   <header class="bar">
     <Filters {shown} />
-    <div class="pick" data-todos-group>
-      <span>Group</span>
-      <Select
-        plain
-        label="Group"
-        value={shown.grouping}
-        options={GROUPINGS.map((one) => ({ value: one, label: GROUPING_NAMES[one] }))}
-        onchange={(next: string) => shown.setGrouping(next as Grouping)}
-      />
-    </div>
-    <div class="pick" data-todos-sort>
-      <span>Sort</span>
-      <Select
-        plain
-        label="Sort"
-        value={shown.sort}
-        options={SORTS.map((sort) => ({ value: sort, label: SORT_NAMES[sort] }))}
-        onchange={(next: string) => shown.setSort(next as (typeof SORTS)[number])}
-      />
-    </div>
+    <Pick
+      name="Group"
+      data-todos-group
+      value={shown.grouping}
+      options={GROUPINGS.map((one) => ({ value: one, label: GROUPING_NAMES[one] }))}
+      onchange={(next: string) => shown.setGrouping(next as Grouping)}
+    />
+    <Pick
+      name="Sort"
+      data-todos-sort
+      value={shown.sort}
+      options={SORTS.map((sort) => ({ value: sort, label: SORT_NAMES[sort] }))}
+      onchange={(next: string) => shown.setSort(next as (typeof SORTS)[number])}
+    />
     <form
       class="adder"
       onsubmit={(event) => {
@@ -258,13 +252,6 @@
     align-items: center;
     padding: var(--space-2) var(--space-3);
     border-bottom: 1px solid var(--line);
-  }
-  .pick {
-    display: inline-flex;
-    gap: var(--space-1);
-    align-items: center;
-    color: var(--muted);
-    font-size: var(--text-sm);
   }
   .adder {
     flex: 1;

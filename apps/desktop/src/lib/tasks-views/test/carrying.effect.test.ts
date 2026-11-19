@@ -164,6 +164,23 @@ describe('a carried todo', () => {
     expect(titles(shown.columns.find((one) => one.key === 'work')?.todos ?? [], mine)).toEqual(['d', 'a', 'b'])
     expect(titles(shown.columns.find((one) => one.key === 'home')?.todos ?? [], mine)).toEqual(['c'])
   })
+  test('in the panel grouped by label, a todo let go in another group takes its label', async () => {
+    const mine = prefix()
+    const a = await made(mine, 'a', ['home'])
+    await made(mine, 'b', ['work'])
+    const { shown } = shownOf(mine, 'panel')
+    shown.setGroup('label')
+    const carrying = new Carrying({
+      shown,
+      list: (key) => shown.groups.find((one) => one.key === key)?.todos ?? [],
+      grouping: () => shown.group,
+    })
+    expect(shown.groups.map((one) => one.key)).toEqual(['home', 'work', ''])
+    carrying.started(a, 'home')
+    carrying.aim('work', null, true)
+    await carrying.land()
+    expect(todos.todo(a.id)?.labels).toEqual(['work'])
+  })
   test('let go in a priority column takes that priority', async () => {
     const mine = prefix()
     const a = await made(mine, 'a')
