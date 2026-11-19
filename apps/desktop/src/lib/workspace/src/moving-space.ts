@@ -1,7 +1,7 @@
 import { log, isAgentsName, nameOf, samePath } from '../../platform/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import type { Tab } from '../../documents/src/api'
-import { workspace } from './workspace.svelte'
+import { archivedRefused, workspace } from './workspace.svelte'
 import { mayCarry } from './chat-carry'
 import type { Draft } from '../../session/src/api'
 import { ownerOf } from './sets'
@@ -48,8 +48,7 @@ export async function reopening(draft: Draft): Promise<Draft | null> {
   if (owner === null || owner === ws.activeSpaceId) return draft
   if (!ws.shownSpaces.some((one) => one.id === owner)) {
     if (draft.path === null) return { ...draft, space: ws.activeSpaceId ?? undefined }
-    const { busy } = await import('../../ui-kit/src/api')
-    busy.failed('Its space is archived')
+    archivedRefused()
     return null
   }
   if (draft.path !== null && !draft.dirty) {

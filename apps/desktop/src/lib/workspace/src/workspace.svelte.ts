@@ -271,6 +271,9 @@ export function toggleTabOverview(): void {
   tabOverview.open = !tabOverview.open
 }
 const unsaved = (tab: Tab) => isDraft(tab.note) && hasWords(tab.note)
+export function archivedRefused(): void {
+  busy.failed('Its space is archived')
+}
 class Workspace {
   private readonly pdfPageNotes = new Map<string, Promise<string | null>>()
   spaces = $state<Space[]>([])
@@ -278,6 +281,15 @@ class Workspace {
   readonly archivedSpaces = new ArchivedSpaces()
   get shownSpaces(): Space[] {
     return this.spaces.filter((one) => !this.archivedSpaces.has(one.root))
+  }
+  setOf = $state.raw<(tab: Tab) => string | null>(() => null)
+  archivedTab(tab: Tab): boolean {
+    if (this.panes.at(tab.paneId)) return false
+    const key = this.setOf(tab)
+    return key !== null && this.spaces.some((one) => one.id === key && this.archivedSpaces.has(one.root))
+  }
+  get shownTabs(): Tab[] {
+    return this.tabs.filter((tab) => !this.archivedTab(tab))
   }
   tree = $state.raw<Entry | null>(null)
   private strip = $state<Tab[]>([])

@@ -11,7 +11,8 @@ vi.stubGlobal('localStorage', {
   length: 0,
   clear: () => held.clear(),
 })
-const { firstVisiting, isHiddenTabs, movingOf, notices, ownerOf, spacesFor, workspace } = await import('../src/api')
+const { firstVisiting, isHiddenTabs, movingOf, notices, ownerOf, spaceSets, spacesFor, workspace } =
+  await import('../src/api')
 const HERE = join(import.meta.dirname, '..')
 const LIB = join(HERE, '..')
 const own = JSON.parse(readFileSync(join(HERE, 'module.json'), 'utf8')) as {
@@ -97,5 +98,34 @@ describe('where tabs may move', () => {
 describe('the hidden tabs choice', () => {
   test('hidden tabs run, pause or ask, and nothing else', () => {
     expect(['run', 'pause', 'ask', 'sleep', 1].map(isHiddenTabs)).toEqual([true, true, true, false, false])
+  })
+})
+describe('an archived space', () => {
+  const OLD = { id: 'old', name: 'Old', root: '/notes/Old' }
+  const WORK = { id: 'work', name: 'Work', root: '/notes/Work' }
+  const ids = () => workspace.shownTabs.map((one) => one.id)
+  test('keeps its tabs out of sight: choosing one leaves the window where it is, until it is unarchived', async () => {
+    const { sets } = await spaceSets()
+    workspace.spaces = [{ ...WORK }, { ...OLD }]
+    await workspace.showSpace(OLD.id)
+    workspace.openBlank('Trip', '# Trip')
+    const trip = workspace.activeTabId ?? ''
+    await workspace.showSpace(WORK.id)
+    workspace.openBlank('Plan', '# Plan')
+    const plan = workspace.activeTabId
+    expect(ids()).toEqual(expect.arrayContaining([trip, plan]))
+    workspace.archivedSpaces.set(OLD.root, true)
+    expect(ids()).toContain(plan)
+    expect(ids()).not.toContain(trip)
+    workspace.activate(trip)
+    await sets.reveal(trip)
+    await vi.dynamicImportSettled()
+    await new Promise((done) => setTimeout(done))
+    expect([workspace.activeSpaceId, workspace.activeTabId]).toEqual([WORK.id, plan])
+    workspace.archivedSpaces.set(OLD.root, false)
+    expect(ids()).toContain(trip)
+    workspace.activate(trip)
+    await sets.reveal(trip)
+    expect([workspace.activeSpaceId, workspace.activeTabId]).toEqual([OLD.id, trip])
   })
 })
