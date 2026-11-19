@@ -247,6 +247,7 @@ describe('what hides a web page', () => {
     'lib/chats-client/src/view/MembersPanel.svelte',
     'lib/accounts-ui/src/ProfileCard.svelte',
     'lib/quick-add/src/QuickAddSheet.svelte',
+    'lib/tasks-views/src/LabelSelect.svelte',
     'lib/quitting/src/QuitSheet.svelte',
     'lib/terminal/src/remote/HostPicker.svelte',
     'lib/tab-strip/src/hover-card.svelte.ts',
