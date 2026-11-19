@@ -90,7 +90,7 @@ impl AppWebview {
   pub(crate) fn apply_visible(&self, visible: bool) {
     let nsview = self.nsview();
 
-    nsview.setHidden(!visible);
+    at_once(|| nsview.setHidden(!visible));
   }
 
   /// Destroys CEF's own view for this browser, completing a close that
@@ -123,6 +123,23 @@ impl AppWebview {
     };
 
     let frame = NSRect::new(NSPoint::new(x, y), NSSize::new(width, height));
-    nsview.setFrame(frame);
+    at_once(|| nsview.setFrame(frame));
+  }
+}
+
+fn at_once(change: impl FnOnce()) {
+  let transaction = objc2::runtime::AnyClass::get(c"CATransaction");
+  if let Some(one) = transaction {
+    unsafe {
+      let () = objc2::msg_send![one, begin];
+      let () = objc2::msg_send![one, setDisableActions: objc2::runtime::Bool::YES];
+    }
+  }
+  change();
+  if let Some(one) = transaction {
+    unsafe {
+      let () = objc2::msg_send![one, commit];
+      let () = objc2::msg_send![one, flush];
+    }
   }
 }

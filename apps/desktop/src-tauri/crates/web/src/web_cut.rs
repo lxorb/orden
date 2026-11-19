@@ -231,6 +231,27 @@ pub async fn settle(own: &Webview, page: &str) {
     }
     let _ = (own, page);
 }
+#[cfg(target_os = "macos")]
+#[allow(unsafe_code)]
+pub(crate) fn at_once<T>(change: impl FnOnce() -> T) -> T {
+    use objc2::msg_send;
+    use objc2::runtime::{AnyClass, Bool};
+    let transaction = AnyClass::get(c"CATransaction");
+    if let Some(one) = transaction {
+        unsafe {
+            let () = msg_send![one, begin];
+            let () = msg_send![one, setDisableActions: Bool::YES];
+        }
+    }
+    let done = change();
+    if let Some(one) = transaction {
+        unsafe {
+            let () = msg_send![one, commit];
+            let () = msg_send![one, flush];
+        }
+    }
+    done
+}
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 fn told_why(why: &str) {
     orden_base::trace::mark(&format!("pages under the app: {why}"));
@@ -620,7 +641,7 @@ mod engine {
 
     use objc2::encode::{Encoding, RefEncode};
     use objc2::rc::Retained;
-    use objc2::runtime::{AnyClass, AnyObject, ClassBuilder, Sel};
+    use objc2::runtime::{AnyClass, AnyObject, Bool, ClassBuilder, Sel};
     use objc2::{msg_send, sel};
     use objc2_app_kit::NSView;
     use objc2_foundation::{NSPoint, NSRect, NSSize, NSString};
@@ -716,6 +737,10 @@ mod engine {
     }
     #[allow(unsafe_code)]
     fn mask(page: &NSView, whole: Option<&[NSRect]>, hollows: Option<&[(NSRect, f64)]>) {
+        crate::web_cut::at_once(|| mask_now(page, whole, hollows));
+    }
+    #[allow(unsafe_code)]
+    fn mask_now(page: &NSView, whole: Option<&[NSRect]>, hollows: Option<&[(NSRect, f64)]>) {
         unsafe {
             if whole.is_none() && hollows.is_none() {
                 let layer: *mut AnyObject = msg_send![page, layer];
@@ -732,7 +757,15 @@ mod engine {
             let Some(shapes) = AnyClass::get(c"CAShapeLayer") else {
                 return;
             };
-            let cut: *mut AnyObject = msg_send![shapes, layer];
+            let worn: *mut AnyObject = msg_send![layer, mask];
+            let reused = worn.as_ref().filter(|one| {
+                let kind: Bool = msg_send![*one, isKindOfClass: shapes];
+                kind.as_bool()
+            });
+            let cut: *mut AnyObject = match reused {
+                Some(one) => std::ptr::from_ref(one).cast_mut(),
+                None => msg_send![shapes, layer],
+            };
             let Some(cut) = cut.as_ref() else {
                 return;
             };
@@ -752,7 +785,9 @@ mod engine {
             let () = msg_send![cut, setPath: path.cast_const()];
             CGPathRelease(path);
             let () = msg_send![cut, setFillRule: &*NSString::from_str("even-odd")];
-            let () = msg_send![layer, setMask: cut];
+            if reused.is_none() {
+                let () = msg_send![layer, setMask: cut];
+            }
         }
     }
     fn within(page: &NSView, point: NSPoint) -> bool {

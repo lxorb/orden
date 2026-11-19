@@ -53,7 +53,7 @@ pub fn lower(window: &tauri::Window, view: &Webview) {
             else {
                 return;
             };
-            if beneath(&page, &host) {
+            if super::at_once(|| beneath(&page, &host)) {
                 let mut all = PAGES.held();
                 let kept = all.remove(&address(&page));
                 let (cut, wide) = kept.map_or((None, 0.0), |one| (one.cut, one.wide));
@@ -115,7 +115,7 @@ pub fn cut(view: &Webview, cut: Option<Cut>, wide: f64) {
     };
     let _ = crate::engine::with_platform!(view, move |platform| {
         if let (Some(page), Some(host)) = (native(&platform).and_then(view_at), view_at(host)) {
-            beneath(&page, &host);
+            super::at_once(|| beneath(&page, &host));
         }
     });
 }
@@ -132,17 +132,7 @@ pub fn opacity(view: &Webview, opacity: f64) {
         if (page.alphaValue() - to).abs() < 0.001 {
             return;
         }
-        let transaction = AnyClass::get(c"CATransaction");
-        unsafe {
-            if let Some(one) = transaction {
-                let () = msg_send![one, begin];
-                let () = msg_send![one, setDisableActions: Bool::YES];
-            }
-            page.setAlphaValue(to);
-            if let Some(one) = transaction {
-                let () = msg_send![one, commit];
-            }
-        }
+        super::at_once(|| page.setAlphaValue(to));
     });
 }
 fn page_at(host: &NSView, point: NSPoint) -> Option<Retained<NSView>> {
@@ -444,11 +434,16 @@ pub fn raise(view: &Webview) {
         let Some(page) = native(&platform).and_then(view_at) else {
             return;
         };
-        page.setAlphaValue(1.0);
-        let (Some(holder), Some(host)) = (holder_of(&page), host.and_then(view_at)) else {
-            return;
-        };
-        holder.addSubview_positioned_relativeTo(&page, NSWindowOrderingMode::Above, Some(&host));
+        super::at_once(|| {
+            page.setAlphaValue(1.0);
+            if let (Some(holder), Some(host)) = (holder_of(&page), host.and_then(view_at)) {
+                holder.addSubview_positioned_relativeTo(
+                    &page,
+                    NSWindowOrderingMode::Above,
+                    Some(&host),
+                );
+            }
+        });
     });
 }
 #[allow(unsafe_code)]
