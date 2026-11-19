@@ -4,7 +4,7 @@ import { HISTORY, isOwnPage } from '@orden/scan/own-pages'
 import { pages } from './pages.svelte'
 
 export function openHistory(from: Tab | null = workspace.active): void {
-  const open = workspace.tabs.find((one) => one.kind === 'web' && isOwnPage(pages.addressOf(one.id) ?? one.address))
+  const open = workspace.tabHere((one) => one.kind === 'web' && isOwnPage(pages.addressOf(one.id) ?? one.address))
   if (open) {
     workspace.activate(open.id)
     return
