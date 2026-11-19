@@ -65,7 +65,7 @@
   function toggleLink() {
     if (share.busy) return
     if (link) void share.revoke()
-    else void share.setLink('read', 'approval')
+    else void share.setLink('read', 'open')
   }
   const sharable = 'share' in navigator
   function shareLink(url: string) {
@@ -250,7 +250,6 @@
         }}
       >
         <span class="name">Link</span>
-        <span class="dot" class:on={!!link} aria-hidden="true"></span>
         <span class="orden-switch" class:on={!!link} aria-hidden="true"></span>
       </div>
 
@@ -269,7 +268,7 @@
             <Select
               value={link?.role ?? 'read'}
               options={ROLES}
-              onchange={(role: string) => void share.setLink(role as GivenRole, link?.mode ?? 'approval')}
+              onchange={(role: string) => void share.setLink(role as GivenRole, link?.mode ?? 'open')}
               label="Role"
               plain
               disabled={!link || share.busy}
@@ -400,18 +399,7 @@
   }
   .card-head .name {
     flex: none;
-  }
-  .dot {
-    flex: none;
-    width: 6px;
-    height: 6px;
     margin-inline-end: auto;
-    border-radius: 50%;
-    background: var(--line-strong);
-    transition: background var(--dur-base) var(--ease-out);
-  }
-  .dot.on {
-    background: var(--success);
   }
   .linkbody {
     display: flex;
