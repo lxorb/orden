@@ -166,26 +166,26 @@ def menu_row(page: Page, label: str) -> None:
     page.locator(f".menu [role=menuitem]:has-text({json.dumps(label)})").first.click()
 def more_row(page: Page, label: str) -> None:
     page.locator(".view-tab .head [aria-label=Settings]").first.click()
-    page.locator(f".view-tab .settings .orden-row:has-text({json.dumps(label)})").first.click()
+    page.locator(f".pop[role=dialog] .settings .orden-row:has-text({json.dumps(label)})").first.click()
 def the_builders(page: Page) -> None:
     open_view(page, "All")
     page.locator(".view-tab .heads .head:has-text('status')").first.click(button="right")
     menu_row(page, "Options")
-    wait_for(page, "document.querySelectorAll('.view-tab .pop .tone').length === 3", "the status options")
+    wait_for(page, "document.querySelectorAll('.pop[role=dialog] .tone').length === 3", "the status options")
     shot(page, "05-options")
     page.keyboard.press("Escape")
     for label, name in [("Automations", "06-automations"), ("Colour", "07-colour")]:
         more_row(page, label)
-        wait_for(page, "document.querySelector('.view-tab .pop')", f"the {label} layer")
+        wait_for(page, "document.querySelector('.pop[role=dialog]')", f"the {label} layer")
         shot(page, name)
         page.keyboard.press("Escape")
-        wait_for(page, "!document.querySelector('.view-tab .pop')", f"the {label} layer shut")
+        wait_for(page, "!document.querySelector('.pop[role=dialog]')", f"the {label} layer shut")
     page.locator(".view-tab .heads .head:has-text('Tasks_count')").first.click(button="right")
     menu_row(page, "Add a column")
     wait_for(page, "document.querySelector('[role=menu].menu')?.getAttribute('aria-label') === 'Add a column'", "the columns to add")
     quiet(page)
     menu_row(page, "Rollup")
-    wait_for(page, "document.querySelector('.view-tab .pop .rows')", "the rollup picker")
+    wait_for(page, "document.querySelector('.pop[role=dialog] .rows')", "the rollup picker")
     shot(page, "08-rollup-picker")
     page.keyboard.press("Escape")
     more_row(page, "Lock view")
@@ -197,6 +197,36 @@ def the_builders(page: Page) -> None:
     shot(page, "09-locked")
     page.locator(".view-tab .lock").click()
     wait_for(page, "!document.querySelector('.view-tab .lock')", "the view unlocked")
+IN_SIGHT = """() => {
+  const pop = document.querySelector('.pop[role=dialog]')
+  if (!pop) return null
+  const box = pop.getBoundingClientRect()
+  const corners = [[box.left + 3, box.top + 3], [box.right - 3, box.top + 3], [box.left + 3, box.bottom - 3], [box.right - 3, box.bottom - 3]]
+  return {
+    box: [box.left, box.top, box.right, box.bottom].map(Math.round),
+    inside: box.left >= 0 && box.top >= 0 && box.right <= innerWidth && box.bottom <= innerHeight,
+    hidden: corners.filter(([x, y]) => !pop.contains(document.elementFromPoint(x, y))).length,
+  }
+}"""
+def the_popovers_in_sight(page: Page) -> None:
+    page.set_viewport_size({"width": 700, "height": 560})
+    open_view(page, "All")
+    labels = page.evaluate("() => [...document.querySelectorAll('.view-tab .head [data-opens-popover]')].map((one) => one.getAttribute('aria-label') ?? one.textContent.trim())")
+    if len(labels) < 3:
+        wrong(f"[sight] the toolbar has {labels}, not filter, sort and settings")
+    for at, label in enumerate(labels):
+        page.locator(".view-tab .head [data-opens-popover]").nth(at).click()
+        if not DRIVE.waited(page, "document.querySelector('.pop[role=dialog]')", f"the {label} popover"):
+            continue
+        quiet(page)
+        seen = page.evaluate(IN_SIGHT)
+        say(f"[sight] {label} at {seen['box']} in {page.viewport_size}, {seen['hidden']} corners covered")
+        if not seen["inside"] or seen["hidden"]:
+            shot(page, f"12-out-of-sight-{at}")
+            wrong(f"[sight] the {label} popover at {seen['box']} is not wholly in the window and on top")
+        page.keyboard.press("Escape")
+        wait_for(page, "!document.querySelector('.pop[role=dialog]')", f"the {label} popover shut")
+    page.set_viewport_size({"width": 1280, "height": 820})
 def the_form(page: Page) -> None:
     open_view(page, "New")
     wait_for(page, "document.querySelector('.view-tab form.form')", "the form")
@@ -223,6 +253,7 @@ def drive(browser) -> None:  # type: ignore[no-untyped-def]
     the_cancelled_resize(page)
     the_button(page)
     the_builders(page)
+    the_popovers_in_sight(page)
     the_form(page)
     page.close()
 raise SystemExit(DRIVE.run(drive, "a rollup counted, a button set a property, a form made a note"))
