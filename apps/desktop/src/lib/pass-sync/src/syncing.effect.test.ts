@@ -3,12 +3,13 @@ import { elapse } from '../../../../test/effects/settle'
 
 const fake = vi.hoisted(() => ({
   syncOnce: vi.fn(),
-  account: { user: { id: 'u1', email: 'ada@example.com' }, token: 'token' },
+  account: { user: { id: 'u1', email: 'ada@example.com' }, token: 'token', forgetWithSession: vi.fn() },
   pass: {
     state: 'open',
     conflict: false,
     start: vi.fn(),
     accountHeard: vi.fn(),
+    lock: vi.fn(),
     onLocalChange: vi.fn(),
     backfillTrust: vi.fn(() => Promise.resolve(0)),
   },

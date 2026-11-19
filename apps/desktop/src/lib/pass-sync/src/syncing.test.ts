@@ -5,7 +5,7 @@ import type { SyncWorld } from './sync-world'
 vi.mock('../../accounts/src/account.svelte', async () => ({
   account: (await import('../../accounts/test/fakes')).accountDouble(),
 }))
-const server = vi.hoisted(() => ({ held: null as Promise<void> | null, invites: [] as unknown[] }))
+const server = vi.hoisted(() => ({ held: null as Promise<void> | null, invites: [] as unknown[], lock: vi.fn() }))
 vi.mock('../../accounts/src/client', () => ({ BASE: '', request: () => Promise.resolve({}) }))
 vi.mock('../../platform/src/log', () => ({ log: () => undefined }))
 vi.mock('../../gates/src/api', () => ({ passOn: () => true }))
@@ -19,6 +19,7 @@ vi.mock('./store.svelte', () => ({
     conflict: false,
     start: () => Promise.resolve(),
     accountHeard: () => undefined,
+    lock: server.lock,
     backfillTrust: () => Promise.resolve(0),
   },
 }))
@@ -69,5 +70,12 @@ describe('the passwords synced for an account', () => {
     expect(passSync.at).toBeNull()
     expect(passSync.state).toBe('off')
     expect(pass.conflict).toBe(false)
+  })
+  test('lock the passwords when the account signs out or another one signs in', () => {
+    server.lock.mockClear()
+    account.signInAs('b')
+    expect(server.lock).toHaveBeenCalledTimes(1)
+    account.signOut()
+    expect(server.lock).toHaveBeenCalledTimes(2)
   })
 })
