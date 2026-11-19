@@ -72,3 +72,18 @@ test('a session of an account the vault moved to a fresh id goes by the agent ri
     account: 'cx-2',
   })
 })
+test('a session opened with only some tools names just those, and an empty list allows none, while one without a list names no list', async () => {
+  const opening = {
+    tool: 'codex',
+    agent: { id: 'cx', name: 'Codex' },
+    mode: 'auto',
+    model: null,
+    effort: null,
+  } as const
+  await openSession({ ...opening, only: ['task_set', 'task_note'] }, () => undefined)
+  expect(opened.at(-1)?.only).toEqual(['task_set', 'task_note'])
+  await openSession({ ...opening, only: [] }, () => undefined)
+  expect(opened.at(-1)?.only).toEqual([])
+  await openSession(opening, () => undefined)
+  expect(opened.at(-1)).not.toHaveProperty('only')
+})

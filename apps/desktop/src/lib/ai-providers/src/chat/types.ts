@@ -124,6 +124,7 @@ export interface Thread {
   mode: Mode
   always?: string[]
   without?: string[]
+  only?: string[]
   turns: Turn[]
   goal?: Goal
   usage: Usage
