@@ -10,7 +10,6 @@ import {
   within,
   forget,
   isRecord,
-  keep,
   heardElsewhere,
   keepJson,
   stored,
@@ -21,13 +20,16 @@ import {
   readSpaces,
   without,
 } from '../../platform/src/api'
+import { account } from '../../accounts/src/api'
 import { carried, moving, type Moving } from '../../file-ops/src/api'
 import type { Cost } from './scrypt'
 import { unlocks } from './unlocked.svelte'
 
 export const STORAGE_KEY = 'orden:protected'
+const PASSWORDS_KEY = 'orden:protect-passwords'
 const PASSWORD_KEY = 'orden:protect-password'
 const OWNER_KEY = 'orden:protect-password-account'
+const DEVICE = ''
 export type Way = 'password' | 'device'
 export const SPACE = ''
 const MOST_PROTECTED = 400
@@ -125,21 +127,39 @@ function originalsOf(path: string): string[] {
 function paperMoving(from: string, to: string): [string, string] | null {
   return /\.pages$/i.test(from) && /\.pages$/i.test(to) ? [`${from}.pdf`, `${to}.pdf`] : null
 }
+function readPasswords(): Record<string, Hashed> {
+  const saved = stored(PASSWORDS_KEY)
+  if (!isRecord(saved)) {
+    const old = hashedOf(stored(PASSWORD_KEY))
+    return old ? { [storedText(OWNER_KEY) ?? DEVICE]: old } : {}
+  }
+  const out: Record<string, Hashed> = {}
+  for (const [who, one] of Object.entries(saved)) {
+    const hashed = hashedOf(one)
+    if (hashed) out[who] = hashed
+  }
+  return out
+}
+const signedInAs = () => account.user?.id ?? null
 function covers(key: string, at: string, root: string): boolean {
   return key === SPACE || within(key, at, root) !== null
 }
 export class Protection {
   private spaces = $state<Record<string, Kept>>(read())
   private revision = $state(0)
-  private hashed = $state<Hashed | null>(hashedOf(stored(PASSWORD_KEY)))
-  private owner: string | null = storedText(OWNER_KEY)
+  private passwords = $state<Record<string, Hashed>>(readPasswords())
   private heard = JSON.stringify(this.spaces)
-  constructor() {
-    heardElsewhere([STORAGE_KEY, PASSWORD_KEY, OWNER_KEY], (key) => {
+  constructor(private readonly who: () => string | null = signedInAs) {
+    heardElsewhere([STORAGE_KEY, PASSWORDS_KEY], (key) => {
       if (key === STORAGE_KEY || key === null) this.reread()
-      if (key === PASSWORD_KEY || key === null) this.hashed = hashedOf(stored(PASSWORD_KEY))
-      if (key === OWNER_KEY || key === null) this.owner = storedText(OWNER_KEY)
+      if (key === PASSWORDS_KEY || key === null) this.passwords = readPasswords()
     })
+  }
+  private get me(): string {
+    return this.who() ?? DEVICE
+  }
+  private ownerOf(root: string): string {
+    return this.spaces[root]?.account ?? this.me
   }
   private reread(): void {
     const spaces = read()
@@ -210,35 +230,52 @@ export class Protection {
     return !locks.length || unlocks.agentsMay(locks)
   }
   get password(): Hashed | null {
-    return this.hashed
+    return this.passwords[this.me] ?? null
+  }
+  passwordFor(path: string): Hashed | null {
+    const owners = this.covering(path)
+      .filter((one) => one.way === 'password')
+      .map((one) => this.ownerOf(one.root))
+    const owner = owners[0] ?? this.me
+    return owners.every((one) => one === owner) ? (this.passwords[owner] ?? null) : null
+  }
+  passwordMayLock(root: string): boolean {
+    return this.ownerOf(root) === this.me
   }
   setPassword(hashed: Hashed | null): void {
-    this.hashed = hashed && { ...hashed, at: Date.now() }
-    keepJson(PASSWORD_KEY, this.hashed)
-    this.owner = null
-    forget(OWNER_KEY)
-    if (this.hashed)
+    const me = this.me
+    this.keepPassword(me, hashed && { ...hashed, at: Date.now() })
+    if (hashed && me !== DEVICE)
       void synced()
         .then((one) => one.pushPassword())
         .catch(() => undefined)
   }
   adoptPassword(theirs: Hashed | null, accountId: string): boolean {
-    const foreign = this.owner !== null && this.owner !== accountId
-    const mine = foreign ? null : this.hashed
+    this.ownedBy(accountId)
+    const mine = this.passwords[accountId] ?? null
     if (theirs && (!mine || (mine.at ?? 0) < (theirs.at ?? 0))) {
-      this.hashed = theirs
-      keepJson(PASSWORD_KEY, theirs)
-      this.ownedBy(accountId)
+      this.keepPassword(accountId, theirs)
       return false
     }
     if (!mine) return false
-    this.ownedBy(accountId)
     return !theirs || (mine.at ?? 0) > (theirs.at ?? 0)
   }
   ownedBy(accountId: string): void {
-    if (this.owner === accountId) return
-    this.owner = accountId
-    keep(OWNER_KEY, accountId)
+    const unowned = this.passwords[DEVICE]
+    if (!unowned || accountId === DEVICE) return
+    const rest = without(this.passwords, DEVICE)
+    this.passwords = accountId in rest ? rest : { ...rest, [accountId]: unowned }
+    this.keepPasswords()
+  }
+  private keepPassword(who: string, hashed: Hashed | null): void {
+    const rest = without(this.passwords, who)
+    this.passwords = hashed ? { ...rest, [who]: hashed } : rest
+    this.keepPasswords()
+  }
+  private keepPasswords(): void {
+    keepJson(PASSWORDS_KEY, this.passwords)
+    forget(PASSWORD_KEY)
+    forget(OWNER_KEY)
   }
   adopt(root: string, theirs: Record<string, Way>, accountId: string): boolean {
     this.reread()
@@ -451,7 +488,7 @@ export class Protection {
     await rehomed
   }
   private put(root: string, ways: Record<string, Way>): void {
-    const account = this.spaces[root]?.account ?? null
+    const account = this.spaces[root]?.account ?? this.who()
     this.spaces = { ...this.spaces, [root]: { ways, account, sent: false } }
     this.write()
     void synced()

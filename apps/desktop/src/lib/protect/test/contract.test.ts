@@ -1,6 +1,14 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
+import type { AccountDouble } from '../../accounts/test/fakes'
+import './storage'
 import { DEFAULT_RELOCK, NEVER, protection, RELOCK_MINUTES, unlocks } from '../src/api'
 import { scrypt } from '../src/scrypt'
+
+const signedIn = vi.hoisted(() => ({ account: null as AccountDouble | null }))
+vi.mock('../../accounts/src/api', async () => {
+  signedIn.account = (await import('../../accounts/test/fakes')).accountDouble('first')
+  return { account: signedIn.account }
+})
 
 describe('the module stands on its own', () => {
   test('the protection and the unlocks are there to read', () => {
@@ -25,5 +33,18 @@ describe('passwords', () => {
   test('refuse a cost that is not a power of two', async () => {
     const one = new Uint8Array(1)
     await expect(scrypt(one, one, { n: 12, r: 1, p: 1 }, 16)).rejects.toThrow()
+  })
+})
+describe('another account signing in on this device', () => {
+  test('neither holds the password of the account before it nor finds its unlocks open', async () => {
+    const hashed = { n: 16, r: 1, p: 1, salt: 'c2FsdA==', hash: 'aGFzaA==' }
+    protection.setPassword(hashed)
+    protection.set('/space', '/space/Diary', 'password')
+    unlocks.unlock(protection.covering('/space/Diary/today.md'))
+    await new Promise((done) => setTimeout(done, 0))
+    signedIn.account?.signInAs('second')
+    expect(protection.password).toBeNull()
+    expect(protection.locked('/space/Diary/today.md')).toBe(true)
+    expect(protection.passwordFor('/space/Diary/today.md')?.hash).toBe('aGFzaA==')
   })
 })

@@ -16,12 +16,15 @@ vi.mock('../../accounts/src/client', async (importOriginal) => ({
 }))
 const { protection } = await import('./protection.svelte')
 const { pulled } = await import('./synced')
+const { account } = await import('../../accounts/src/api')
+const signedIn = (id: string) => (account.user = { id, email: `${id}@example.com`, name: null })
 const ROOT = '/space'
 const PAIRS = [{ root: ROOT, spaceId: 's1' }]
 const HASH = { n: 16, r: 1, p: 1, salt: 'c2FsdA==', hash: 'aGFzaA==', at: Date.now() + 60_000 }
 beforeEach(async () => {
   server.answer = undefined
   server.sent = []
+  signedIn('u1')
   await protection.forget(ROOT)
 })
 describe('protection on the account', () => {
@@ -41,13 +44,17 @@ describe('protection on the account', () => {
     server.answer = { password: HASH, spaces: {} }
     await pulled('first', 'u1', PAIRS)
     expect(protection.password?.hash).toBe('aGFzaA==')
+    signedIn('u2')
     server.answer = { password: null, spaces: {} }
     await pulled('second', 'u2', PAIRS)
+    expect(protection.password).toBeNull()
     expect(server.sent.filter((one) => one.path === '/v1/protected/password')).toEqual([])
     const theirs = { ...HASH, salt: 'b3RoZXI=', hash: 'b3RoZXI=', at: 1 }
     server.answer = { password: theirs, spaces: {} }
     await pulled('second', 'u2', PAIRS)
     expect(protection.password?.hash).toBe('b3RoZXI=')
     expect(server.sent).toEqual([])
+    signedIn('u1')
+    expect(protection.password?.hash).toBe('aGFzaA==')
   })
 })

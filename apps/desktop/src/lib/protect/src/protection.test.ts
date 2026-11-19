@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import '../test/storage'
 import { Protection, protectedMap, SPACE, STORAGE_KEY } from './protection.svelte'
 import { unlocks } from './unlocked.svelte'
+import { account } from '../../accounts/src/api'
 
 const os = vi.hoisted(() => ({ name: '' }))
 vi.mock('../../platform/src/tauri', async (original) => ({
@@ -157,6 +158,7 @@ describe('what the account holds of it', () => {
   test('keeps the newer of two passwords', () => {
     const older = { n: 16, r: 1, p: 1, salt: 'c2FsdA==', hash: 'b2xkZXI=', at: 1 }
     const newer = { ...older, hash: 'bmV3ZXI=', at: Date.now() + 1000 }
+    protection = new Protection(() => 'u1')
     protection.setPassword(older)
     expect(protection.adoptPassword(newer, 'u1')).toBe(false)
     expect(protection.password?.hash).toBe('bmV3ZXI=')
@@ -311,5 +313,60 @@ describe('a path Windows reads as a protected one', () => {
     protection.set(ROOT, at('Private'), 'password')
     expect(protection.agentsMay(at('Private./Diary.md'))).toBe(true)
     expect(protection.locked(at('Private./Diary.md'))).toBe(false)
+  })
+})
+describe('another account signed in on this device', () => {
+  const FIRST = { n: 16, r: 1, p: 1, salt: 'c2FsdA==', hash: 'Zmlyc3Q=', at: 1 }
+  const SECOND = { ...FIRST, hash: 'c2Vjb25k' }
+  let who: string | null = 'a'
+  beforeEach(() => {
+    who = 'a'
+    protection = new Protection(() => who)
+  })
+  test('does not lock with the password of the account before it', () => {
+    protection.setPassword(FIRST)
+    who = 'b'
+    expect(protection.password).toBeNull()
+    expect(protection.adoptPassword(null, 'b')).toBe(false)
+    expect(protection.password).toBeNull()
+    who = 'a'
+    expect(protection.password?.hash).toBe('Zmlyc3Q=')
+    expect(new Protection(() => 'a').password?.hash).toBe('Zmlyc3Q=')
+  })
+  test('cannot open its locks with a password of its own', () => {
+    protection.adopt(ROOT, { Diary: 'password' }, 'a')
+    protection.setPassword(FIRST)
+    who = 'b'
+    protection.setPassword(SECOND)
+    expect(protection.passwordFor(at('Diary/today.md'))?.hash).toBe('Zmlyc3Q=')
+    expect(protection.passwordMayLock(ROOT)).toBe(false)
+    protection.set(OTHER, `${OTHER}/Plans.md`, 'password')
+    expect(protection.passwordMayLock(OTHER)).toBe(true)
+    expect(protection.passwordFor(`${OTHER}/Plans.md`)?.hash).toBe('c2Vjb25k')
+  })
+  test('finds the locks shut that the account before it left open', async () => {
+    protection.set(ROOT, at('Diary'), 'password')
+    unlocks.unlock(protection.covering(at('Diary/today.md')))
+    expect(protection.locked(at('Diary/today.md'))).toBe(false)
+    await new Promise((done) => setTimeout(done, 0))
+    await account.signOut()
+    expect(protection.locked(at('Diary/today.md'))).toBe(true)
+    expect(unlocks.stillProven(protection.covering(at('Diary/today.md')))).toBe(false)
+  })
+  test('takes over a password chosen while no one was signed in', () => {
+    who = null
+    protection.setPassword(FIRST)
+    who = 'a'
+    expect(protection.password).toBeNull()
+    expect(protection.adoptPassword(null, 'a')).toBe(true)
+    expect(protection.password?.hash).toBe('Zmlyc3Q=')
+    who = null
+    expect(protection.password).toBeNull()
+  })
+  test('keeps the password this device held before passwords were kept per account', () => {
+    localStorage.setItem('orden:protect-password', JSON.stringify(FIRST))
+    localStorage.setItem('orden:protect-password-account', 'a')
+    expect(new Protection(() => 'a').password?.hash).toBe('Zmlyc3Q=')
+    expect(new Protection(() => 'b').password).toBeNull()
   })
 })
