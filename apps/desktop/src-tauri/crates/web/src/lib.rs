@@ -19,6 +19,7 @@ pub mod web_clear;
 pub mod web_cookies;
 pub mod web_cut;
 pub mod web_dialog;
+pub mod web_drawing;
 pub mod web_find;
 pub mod web_follow;
 pub mod web_handed;

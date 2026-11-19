@@ -346,6 +346,7 @@ macro_rules! desktop_commands {
             orden_web::web_find::web_find_stop,
             orden_web::web_tabs::web_shot,
             orden_web::web_tint::web_tint,
+            orden_web::web_drawing::web_watch_drawing,
             orden_web::page_style::web_ground,
             orden_web::web_menu::web_menu_pick,
             orden_web::web_dialog::web_dialog_answer,
