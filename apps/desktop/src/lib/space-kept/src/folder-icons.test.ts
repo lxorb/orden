@@ -190,6 +190,11 @@ describe('reading a map somebody else wrote', () => {
       }),
     ).toEqual({ Work: 'rocket' })
   })
+  test('keeps a picture up to its longest, and a tint only as long as a name', () => {
+    const picture = (length: number) => `data:image/png;base64,${'A'.repeat(length - 22)}`
+    expect(folderIconMap({ Work: picture(2048), Notes: picture(2049) })).toEqual({ Work: picture(2048) })
+    expect(folderIconMap({ Work: 'a'.repeat(64), Notes: 'a'.repeat(65) }, 64)).toEqual({ Work: 'a'.repeat(64) })
+  })
   test('and nothing at all from something that is not a map', () => {
     expect(folderIconMap(null)).toEqual({})
     expect(folderIconMap('rocket')).toEqual({})

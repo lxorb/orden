@@ -17,16 +17,17 @@ import { carried, type Moving, moving } from '../../file-ops/src/api'
 
 export const STORAGE_KEY = 'orden:folder-icons'
 export const MOST_FOLDER_ICONS = 400
-const LONGEST_NAME = 64
+const LONGEST_ICON = 2048
+const LONGEST_TINT = 64
 const SETTLING = 700
-export function folderIconMap(value: unknown): Record<string, string> {
+export function folderIconMap(value: unknown, longest = LONGEST_ICON): Record<string, string> {
   if (!isRecord(value)) return {}
   const out: Record<string, string> = {}
   for (const [path, name] of Object.entries(value)) {
     if (Object.keys(out).length >= MOST_FOLDER_ICONS) break
     if (!insideItsSpace(path) || !isString(name)) continue
     const said = name.trim()
-    if (said && said.length <= LONGEST_NAME) out[path] = said
+    if (said && said.length <= longest) out[path] = said
   }
   return out
 }
@@ -38,7 +39,7 @@ interface Held extends Folded {
 function read(saved: unknown): Record<string, Held> {
   return spacesOf(saved, (one) => ({
     icons: folderIconMap(one.icons),
-    colors: folderIconMap(one.colors),
+    colors: folderIconMap(one.colors, LONGEST_TINT),
     sent: one.sent !== false,
   }))
 }
@@ -84,7 +85,7 @@ export class FolderIcons {
     const root = this.root()
     if (root === null) return
     const at = relativeTo(root, path)
-    if (!insideItsSpace(at)) return
+    if (!insideItsSpace(at) || (name?.length ?? 0) > LONGEST_ICON || (tint?.length ?? 0) > LONGEST_TINT) return
     const held = this.of(root)
     const colour = name === null ? null : tint
     if ((held[at] ?? null) === name && (this.colorsOf(root)[at] ?? null) === colour) return
@@ -163,7 +164,7 @@ export class FolderIcons {
     const icons = folderIconMap(theirs)
     const held = this.spaces[root]
     const mine = { icons: held?.icons ?? {}, colors: held?.colors ?? {} }
-    const colors = theirTints === undefined ? mine.colors : folderIconMap(theirTints)
+    const colors = theirTints === undefined ? mine.colors : folderIconMap(theirTints, LONGEST_TINT)
     const met = meet(held, accountId, mine, { icons, colors }, MAPS)
     if (!met) return
     this.spaces = { ...this.spaces, [root]: { ...met.value, account: accountId, sent: true } }
