@@ -12,6 +12,7 @@ import {
   luminance,
   over,
   percent,
+  POINTING,
   ratio,
   rgbOf,
   tidyPath,
@@ -75,5 +76,10 @@ describe('picked paths', () => {
   test('are tidied to forward slashes with nothing in front', () => {
     expect(tidyPath('.\\Notes\\a.md')).toBe('Notes/a.md')
     expect(tidyPath('//a/b')).toBe('a/b')
+  })
+})
+describe('a pointer press', () => {
+  test('is marked on the root under one name the theme hides focus rings by', () => {
+    expect(POINTING).toBe('data-pointing')
   })
 })

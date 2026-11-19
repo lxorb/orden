@@ -25,7 +25,7 @@ vi.mock('../../windows/src/api', async (importOriginal) => ({
 }))
 const { IN_PAGE } = await import('./keyboard-home')
 const { overlays } = await import('../../ui-kit/src/overlays')
-const { IN_A_PAGE } = await import('./trap')
+const { IN_A_PAGE, POINTING } = await import('./trap')
 async function pageTookIt() {
   await vi.waitFor(() => expect(crate.heard.has(IN_PAGE)).toBe(true))
   crate.heard.get(IN_PAGE)?.()
@@ -67,6 +67,7 @@ afterEach(async () => {
   ;(document.activeElement as HTMLElement | null)?.blur()
   document.body.replaceChildren()
   document.documentElement.removeAttribute(IN_A_PAGE)
+  document.documentElement.removeAttribute(POINTING)
   vi.restoreAllMocks()
 })
 describe('a site taking the keyboard', () => {
@@ -195,6 +196,52 @@ describe('words typed while the keyboard is on something else', () => {
     const typed = new InputEvent('beforeinput', { inputType, bubbles: true, cancelable: true })
     editor.dispatchEvent(typed)
     expect(typed.defaultPrevented).toBe(false)
+  })
+})
+function key(name: string, trusted = true): void {
+  const event = new KeyboardEvent('keydown', { key: name, bubbles: true })
+  if (!trusted) {
+    document.dispatchEvent(event)
+    return
+  }
+  const inner = Object.getOwnPropertySymbols(event)
+    .map((symbol) => [symbol, Reflect.get(event, symbol) as unknown] as const)
+    .find(([, one]) => one !== null && typeof one === 'object' && 'isTrusted' in one)
+  if (!inner) throw new Error('no event inside')
+  Reflect.set(inner[1] as object, 'isTrusted', true)
+  const target = Reflect.get(document, inner[0]) as { _dispatch(event: unknown): boolean }
+  target._dispatch(inner[1])
+  expect(event.isTrusted).toBe(true)
+}
+describe('a focus ring', () => {
+  const pointing = () => document.documentElement.hasAttribute(POINTING)
+  test('is put away by a pointer press and back by a key that moves or types', () => {
+    const button = control('<button>Chip</button>')
+    expect(pointing()).toBe(false)
+    button.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+    expect(pointing()).toBe(true)
+    for (const alone of ['Shift', 'Control', 'Alt', 'Meta', 'AltGraph']) {
+      key(alone)
+      expect(pointing()).toBe(true)
+    }
+    key('Tab', false)
+    expect(pointing()).toBe(true)
+    key('Tab')
+    expect(pointing()).toBe(false)
+    button.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+    key('a')
+    expect(pointing()).toBe(false)
+  })
+  test('comes back on a key even with a menu open', () => {
+    const menu = control('<div role="menu"><button>Reload</button></div>')
+    const off = overlays.show(
+      () => undefined,
+      () => [menu],
+    )
+    menu.dispatchEvent(new Event('pointerdown', { bubbles: true }))
+    key('ArrowDown')
+    expect(pointing()).toBe(false)
+    off()
   })
 })
 test('the crate and the page name the word the same', () => {

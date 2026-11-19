@@ -22,6 +22,7 @@ function lands(node: HTMLElement): HTMLElement | null {
   return node.querySelector<HTMLElement>('[data-lands]:not(:disabled)')
 }
 export const IN_A_PAGE = 'data-keyboard-in-page'
+export const POINTING = 'data-pointing'
 export function trap(node: HTMLElement, holds = true) {
   if (!holds) return { destroy: () => undefined }
   const from = document.documentElement.hasAttribute(IN_A_PAGE) ? null : document.activeElement
