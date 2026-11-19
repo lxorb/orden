@@ -332,6 +332,7 @@ fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
         crate::web_opens::script(),
         crate::web_swipe::script().to_string(),
         crate::web_pointer::script().to_string(),
+        crate::web_painted::script().to_string(),
         crate::web_media::script().to_string(),
     ];
     #[cfg(windows)]
@@ -392,6 +393,7 @@ impl Profile {
     }
 }
 #[tauri::command]
+#[allow(clippy::too_many_arguments)]
 pub async fn web_open(
     webview: Webview,
     tabs: tauri::State<'_, WebTabs>,
@@ -400,6 +402,7 @@ pub async fn web_open(
     pane: Pane,
     revived: Revived,
     profile: Profile,
+    ground: Option<String>,
 ) -> Result<crate::web_cut::Layering, String> {
     let address = address(&url)?;
     let (store, private) = profile.checked()?;
@@ -431,6 +434,10 @@ pub async fn web_open(
             going
         })
         .disable_drag_drop_handler();
+    let builder = match crate::page_style::ground_for(webview.window().label(), ground.as_deref()) {
+        Some(colour) => builder.background_color(colour),
+        None => builder,
+    };
     mark_private(&label_of(&tab), private);
     let builder = crate::engine::web_store(builder, &app, store.as_deref())?.incognito(private);
     let builder = windows_asked(builder, &app, &tab, webview.window().label(), private);
@@ -1166,10 +1173,11 @@ mod tests {
         assert_eq!(
             opening(None, "https://a.example/page", true),
             format!(
-                "{};\n{};\n{};\n{};\n{}{};\n",
+                "{};\n{};\n{};\n{};\n{};\n{}{};\n",
                 crate::web_opens::script(),
                 crate::web_swipe::script(),
                 crate::web_pointer::script(),
+                crate::web_painted::script(),
                 crate::web_media::script(),
                 if cfg!(windows) { format!("{};\n", super::bars()) } else { String::new() },
                 crate::web_pass::script()
