@@ -31,13 +31,19 @@ export async function addTask(text: string, options: { typed?: boolean } = {}): 
     const made = await todos.add(titledOf(said))
     return made.ok ? { id: made.value.id } : null
   }
-  const [{ parseQuickAdd }, { region }] = await Promise.all([
+  const [{ parseTodo }, { region }] = await Promise.all([
     import('@orden/bases/language'),
     import('../../platform/src/api'),
   ])
-  const read = parseQuickAdd(said, [region()], new Date())
-  const made = await addEntry({ text: read.text || said, fields: read.fields })
-  return made ? { id: made.id } : null
+  const read = parseTodo(said, [region()], new Date())
+  const made = await todos.add({
+    ...titledOf(read.title.trim() || said),
+    labels: read.labels,
+    start: read.start ?? null,
+    deadline: read.deadline ?? null,
+    priority: read.priority ?? 0,
+  })
+  return made.ok ? { id: made.value.id } : null
 }
 export interface Asked {
   readonly text: string

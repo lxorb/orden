@@ -9,7 +9,7 @@
     todos,
     type TodoPatch,
   } from '../../tasks-model/src/api'
-  import { addTodo, doWithAi, patchTodo, removeTodo } from './acts'
+  import { addTodo, doWithAi, patchTodo, removeTodo, typedPatch, type Typing } from './acts'
   import { Carrying } from './carrying.svelte'
   import { away, glider } from './glide'
   import Filters from './Filters.svelte'
@@ -17,13 +17,14 @@
   import { openNote } from './notes'
   import { shellWorld, Shown } from './shown.svelte'
   import TodoEditor from './TodoEditor.svelte'
+  import TodoField from './TodoField.svelte'
   import { previewed, edgeScroll } from './todo-drag.svelte'
   import { rowKeys, TodoRows } from './rows.svelte'
   import TodoRow from './TodoRow.svelte'
 
   startTodos()
   const shown = new Shown(shellWorld(() => todos.todos))
-  let typed = $state('')
+  let field = $state<Typing>()
   let openId = $state<string | null>(null)
   const LIST = 'panel:'
   const NONE = 'none'
@@ -66,10 +67,8 @@
     if (laid) glide.after()
   })
   async function add() {
-    const title = typed.trim()
-    if (title === '') return
-    typed = ''
-    await addTodo(shown, title)
+    const read = field?.taken()
+    if (read) await addTodo(shown, read.title, typedPatch(read))
   }
 </script>
 
@@ -96,7 +95,13 @@
   >
     <label class="orden-field">
       <svg class="orden-field-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9" /></svg>
-      <input type="text" placeholder="Add a todo" aria-label="Add a todo" data-todos-add bind:value={typed} />
+      <TodoField
+        bind:this={field}
+        labels={shown.labels}
+        placeholder="Add a todo"
+        aria-label="Add a todo"
+        data-todos-add
+      />
     </label>
   </form>
   {#if !shown.todos.length}

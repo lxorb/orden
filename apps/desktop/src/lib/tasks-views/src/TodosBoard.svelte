@@ -13,7 +13,7 @@
   import { cubicOut } from 'svelte/easing'
   import { tick } from 'svelte'
   import { dur, fly, slide } from '../../platform/src/api'
-  import { addTodo, doWithAi, patchTodo, removeTodo } from './acts'
+  import { addTodo, doWithAi, patchTodo, removeTodo, typedPatch, type Typing } from './acts'
   import { Carrying, columnPreview } from './carrying.svelte'
   import Filters from './Filters.svelte'
   import Pick from './Pick.svelte'
@@ -21,6 +21,7 @@
   import { openNote } from './notes'
   import { shellWorld, Shown, SORT_NAMES } from './shown.svelte'
   import TodoEditor from './TodoEditor.svelte'
+  import TodoField from './TodoField.svelte'
   import { edgeScroll, previewed } from './todo-drag.svelte'
   import { rowKeys, TodoRows } from './rows.svelte'
   import TodoRow from './TodoRow.svelte'
@@ -30,11 +31,11 @@
     shellWorld(() => todos.todos),
     'board',
   )
-  let typed = $state('')
+  let field = $state<Typing>()
   let openId = $state<string | null>(null)
   let adding = $state<string | null>(null)
-  let columnTyped = $state('')
-  let columnField = $state<HTMLInputElement | null>(null)
+  let columnField = $state<Typing>()
+  let columnInput = $state<HTMLInputElement | undefined>()
   const columns = $derived(shown.columns)
   const carrying: Carrying = new Carrying({
     shown,
@@ -69,25 +70,20 @@
     if (laid) glide.after()
   })
   async function add() {
-    const title = typed.trim()
-    if (title === '') return
-    typed = ''
-    await addTodo(shown, title)
+    const read = field?.taken()
+    if (read) await addTodo(shown, read.title, typedPatch(read))
   }
   async function startAdding(key: string) {
     adding = key
-    columnTyped = ''
     await tick()
-    columnField?.focus()
+    columnInput?.focus()
   }
   async function addInColumn(key: string) {
-    const title = columnTyped.trim()
-    if (title === '') return
-    columnTyped = ''
+    const read = columnField?.taken()
+    if (!read) return
     const patch = columnPatch(shown.grouping, key, shown.filter.today) ?? {}
-    const labels =
-      shown.grouping === 'label' ? (patch.labels ?? []) : shown.filter.label === null ? [] : [shown.filter.label]
-    await addTodo(shown, title, { ...patch, labels })
+    const typed = typedPatch(read)
+    await addTodo(shown, read.title, { ...patch, ...typed, labels: [...(patch.labels ?? []), ...(typed.labels ?? [])] })
   }
 </script>
 
@@ -117,7 +113,13 @@
     >
       <label class="orden-field">
         <svg class="orden-field-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9" /></svg>
-        <input type="text" placeholder="Add a todo" aria-label="Add a todo" data-todos-add bind:value={typed} />
+        <TodoField
+          bind:this={field}
+          labels={shown.labels}
+          placeholder="Add a todo"
+          aria-label="Add a todo"
+          data-todos-add
+        />
       </label>
     </form>
   </header>
@@ -170,22 +172,22 @@
                 void addInColumn(column.key)
               }}
             >
-              <input
+              <TodoField
                 bind:this={columnField}
-                bind:value={columnTyped}
+                bind:input={columnInput}
+                labels={shown.labels}
                 class="orden-field"
-                type="text"
                 placeholder="Add a todo"
                 aria-label={`Add a todo to ${column.name}`}
                 data-todos-column-field
-                onkeydown={(event) => {
+                onkeydown={(event: KeyboardEvent) => {
                   if (event.key === 'Escape') {
                     event.preventDefault()
                     adding = null
                   }
                 }}
                 onblur={() => {
-                  if (columnTyped.trim() === '') adding = null
+                  if (columnField?.empty() ?? true) adding = null
                 }}
               />
             </form>
@@ -341,9 +343,6 @@
   }
   .column-adder {
     margin: 0 0 var(--space-2);
-  }
-  .column-adder input {
-    width: 100%;
   }
   ul {
     display: flex;
