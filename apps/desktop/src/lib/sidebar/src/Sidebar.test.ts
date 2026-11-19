@@ -271,6 +271,17 @@ describe('a shut side', () => {
     expect(html).toMatch(/class="column[^"]*\bshut\b[^"]*"[^>]*\binert\b/)
     expect(html).toContain('<aside')
   })
+  test('peeking out at the window’s edge is a layer a web page is cut round, and shut is none', async () => {
+    const { edgePeek } = await import('../../ui-kit/src/api')
+    open('# Head\n')
+    workspace.panel = 'tree'
+    workspace.closePanel()
+    const aside = () => /<aside[^>]*>/.exec(render(Sidebar, { props: { side: 'left' as const } }).body)?.[0] ?? ''
+    expect(aside()).not.toContain('data-covers')
+    edgePeek.out = true
+    expect(aside()).toContain('data-covers')
+    edgePeek.out = false
+  })
   test('and an open one is the same column, open and reachable', () => {
     open('# Head\n')
     const html = drawn('tree')

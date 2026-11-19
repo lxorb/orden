@@ -4,7 +4,7 @@ import { replay } from '../../ui-kit/src/api'
 import { isNumber, isRecord, isString, stored, storedText, invoke, isDesktop } from '../../platform/src/api'
 import { isExtensionPage, isWebAddress, keysOf } from '@orden/scan/web-address'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
-import type { Cut } from './covers'
+import { heldUntil, type Cut } from './covers'
 import type { NotArrived } from './heard'
 import { Latest } from './latest'
 import { placeOf, placeKept } from './place'
@@ -267,7 +267,12 @@ class Pages {
   typedInto(tabId: string): boolean {
     return (this.held.get(tabId)?.halfTyped ?? null) !== null
   }
-  async show(tabId: string, url: string, pane: Rect, visible = true, over: Over = NOTHING): Promise<void> {
+  show(tabId: string, url: string, pane: Rect, visible = true, over: Over = NOTHING): Promise<void> {
+    const going = this.showing(tabId, url, pane, visible, over)
+    heldUntil(going)
+    return going
+  }
+  private async showing(tabId: string, url: string, pane: Rect, visible: boolean, over: Over): Promise<void> {
     this.gone.delete(tabId)
     const page = this.of(tabId)
     this.wake(page)
@@ -455,14 +460,15 @@ class Pages {
   }
   private async cover(tabId: string, page: Page, pane: Rect, over: Over): Promise<void> {
     if (__EVEN_PLUGIN__ || !over.cut) return
-    if (page.shot === null || over.cut.all) void this.shoot(tabId)
-    await this.put(tabId, page, {
+    const placed = this.put(tabId, page, {
       pane,
       visible: true,
       frame: over.frame,
       cut: over.cut,
       corner: over.corner,
     })
+    if (page.shot === null || over.cut.all) void this.shoot(tabId)
+    await placed
   }
   private async put(tabId: string, page: Page, one: Placement): Promise<void> {
     if (__EVEN_PLUGIN__) return

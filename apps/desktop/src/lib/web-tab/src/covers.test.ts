@@ -1,6 +1,21 @@
 // @vitest-environment jsdom
-import { describe, expect, test } from 'vitest'
-import { ALL, bringsLayer, cutOf, layersOver, noticeRows, settled, watchArrivals, type Cut, type Layer } from './covers'
+import { afterEach, describe, expect, test, vi } from 'vitest'
+import {
+  ALL,
+  bringsLayer,
+  cutOf,
+  HELD,
+  heldUntil,
+  HOLDS_AT_MOST,
+  layersOver,
+  moving,
+  noticeRows,
+  settled,
+  TRAIL,
+  watchArrivals,
+  type Cut,
+  type Layer,
+} from './covers'
 
 const PAGE = { x: 300, y: 100, width: 900, height: 600 }
 function float(x: number, y: number, width: number, height: number, radius = 8): Layer {
@@ -189,5 +204,165 @@ describe('what is told of a cut', () => {
     const menu: Cut = { all: false, hollows: [{ x: 1, y: 2, width: 3, height: 4, radius: 5 }] }
     expect(settled(menu, true, true)).toBe(menu)
     expect(settled(null, true, true)).toBeNull()
+  })
+})
+describe('a layer going', () => {
+  const changed = (target: Node, attributeName: string, oldValue: string | null) => ({
+    target,
+    addedNodes: [] as unknown as NodeList,
+    removedNodes: [] as unknown as NodeList,
+    type: 'attributes' as const,
+    attributeName,
+    oldValue,
+  })
+  test('is heard as its mark comes off, so the page takes back its place', () => {
+    document.body.innerHTML = '<aside class="side"></aside><p class="words"></p>'
+    const side = document.querySelector('aside')!
+    expect(bringsLayer(changed(side, 'data-covers', ''))).toBe(true)
+    expect(bringsLayer(changed(side, 'class', 'side orden-layer'))).toBe(true)
+    expect(bringsLayer(changed(document.querySelector('p')!, 'class', 'words old'))).toBe(false)
+  })
+})
+describe('a layer on its way in', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(document, 'getAnimations')
+  })
+  function sliding(from: number, to: number) {
+    document.body.innerHTML = '<div class="hole"></div><aside data-covers></aside>'
+    const hole = document.querySelector<HTMLElement>('.hole')!
+    const side = document.querySelector('aside')!
+    let ended = false
+    const box = (x: number) => ({ x, y: 6, width: 280, height: 700, top: 6, left: x, right: x + 280, bottom: 706 })
+    side.getBoundingClientRect = () => box(ended ? to : from) as DOMRect
+    hole.getBoundingClientRect = () => box(0) as DOMRect
+    const slide = {
+      playState: 'running',
+      playbackRate: 1,
+      effect: {
+        target: side,
+        pseudoElement: null,
+        getComputedTiming: () => ({ endTime: 130 }),
+        getKeyframes: () => [
+          { offset: 0, transform: `translateX(${from - to}px)` },
+          { offset: 1, easing: 'ease-out', transform: 'none' },
+        ],
+      },
+    }
+    const asked: Keyframe[][] = []
+    side.animate = ((frames: Keyframe[]) => {
+      asked.push(frames)
+      ended = true
+      return { cancel: () => (ended = false) }
+    }) as unknown as typeof side.animate
+    Object.defineProperty(document, 'getAnimations', {
+      value: () => [slide as unknown as Animation],
+      configurable: true,
+    })
+    return { hole, side, asked, ended: () => ended }
+  }
+  test('is cut where it comes to rest, from its first frame, and not a frame behind its slide', () => {
+    const { hole, asked, ended } = sliding(-290, 6)
+    const [found] = layersOver(hole)
+    expect(found?.box).toEqual({ x: -290, y: 6, width: 576, height: 700 })
+    expect(asked).toEqual([[{ transform: 'none' }]])
+    expect(ended()).toBe(false)
+    expect(moving(hole)).toBe(true)
+  })
+  test('keeps whatever it covers at each step on its way out', () => {
+    const { hole } = sliding(6, -290)
+    expect(layersOver(hole)[0]?.box).toEqual({ x: -290, y: 6, width: 576, height: 700 })
+  })
+})
+describe('a layer arriving over a page', () => {
+  afterEach(() => vi.useRealTimers())
+  const tick = () => new Promise<void>((go) => setTimeout(go, 0))
+  test('is held unseen until the page has been cut round it, so no frame shows the page over it', async () => {
+    document.body.innerHTML = '<main></main>'
+    let placed: () => void = () => undefined
+    const stop = watchArrivals(() => heldUntil(new Promise<void>((go) => (placed = go))))
+    const menu = Object.assign(document.createElement('div'), { className: 'orden-layer' })
+    document.querySelector('main')!.append(menu)
+    await Promise.resolve()
+    expect(menu.hasAttribute(HELD)).toBe(true)
+    expect(document.getElementById(HELD)?.textContent).toContain('clip-path')
+    placed()
+    await tick()
+    expect(menu.hasAttribute(HELD)).toBe(false)
+    stop()
+  })
+  test('is held as it comes, and not again as it moves or changes while shown', async () => {
+    document.body.innerHTML = '<main></main>'
+    let placed: () => void = () => undefined
+    const stop = watchArrivals(() => heldUntil(new Promise<void>((go) => (placed = go))))
+    const ghost = Object.assign(document.createElement('div'), { className: 'ghost' })
+    ghost.dataset.covers = ''
+    Object.assign(ghost, { checkVisibility: () => !ghost.hidden })
+    document.querySelector('main')!.append(ghost)
+    await Promise.resolve()
+    expect(ghost.hasAttribute(HELD)).toBe(true)
+    placed()
+    await tick()
+    ghost.style.left = '40px'
+    await Promise.resolve()
+    expect(ghost.hasAttribute(HELD)).toBe(false)
+    ghost.hidden = true
+    await Promise.resolve()
+    ghost.hidden = false
+    await Promise.resolve()
+    expect(ghost.hasAttribute(HELD)).toBe(true)
+    placed()
+    await tick()
+    ghost.remove()
+    await Promise.resolve()
+    document.querySelector('main')!.append(ghost)
+    await Promise.resolve()
+    expect(ghost.hasAttribute(HELD)).toBe(true)
+    placed()
+    await tick()
+    stop()
+  })
+  test('is shown at once when no page had to move for it', async () => {
+    document.body.innerHTML = '<main></main>'
+    const stop = watchArrivals(() => undefined)
+    const menu = Object.assign(document.createElement('div'), { className: 'orden-layer' })
+    document.querySelector('main')!.append(menu)
+    await Promise.resolve()
+    expect(menu.hasAttribute(HELD)).toBe(false)
+    stop()
+  })
+  test('is never held longer than a page takes to answer at most', async () => {
+    vi.useFakeTimers()
+    document.body.innerHTML = '<main></main>'
+    const stop = watchArrivals(() => heldUntil(new Promise<void>(() => undefined)))
+    const side = document.createElement('aside')
+    document.querySelector('main')!.append(side)
+    side.setAttribute('data-covers', '')
+    await Promise.resolve()
+    expect(side.hasAttribute(HELD)).toBe(true)
+    await vi.advanceTimersByTimeAsync(HOLDS_AT_MOST)
+    expect(side.hasAttribute(HELD)).toBe(false)
+    stop()
+  })
+})
+describe('a layer on the move', () => {
+  afterEach(() => vi.restoreAllMocks())
+  test('keeps the page cut where it was a moment ago too, as long as the screen may still show it there', () => {
+    document.body.innerHTML = '<div class="hole"></div><div class="ghost" data-covers></div>'
+    const hole = document.querySelector<HTMLElement>('.hole')!
+    const ghost = document.querySelector('.ghost')!
+    let x = 100
+    let now = 1000
+    vi.spyOn(Date, 'now').mockImplementation(() => now)
+    ghost.getBoundingClientRect = () => ({ x, y: 50, width: 40, height: 40 }) as DOMRect
+    expect(layersOver(hole)[0]?.box).toEqual({ x: 100, y: 50, width: 40, height: 40 })
+    expect(moving(hole)).toBe(false)
+    now += 16
+    x = 160
+    expect(layersOver(hole)[0]?.box).toEqual({ x: 100, y: 50, width: 100, height: 40 })
+    expect(moving(hole)).toBe(true)
+    now += TRAIL
+    expect(layersOver(hole)[0]?.box).toEqual({ x: 160, y: 50, width: 40, height: 40 })
+    now += TRAIL
+    expect(moving(hole)).toBe(false)
   })
 })

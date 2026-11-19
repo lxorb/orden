@@ -56,17 +56,77 @@ export function boxOf(node: Element): Rect {
   const box = node.getBoundingClientRect()
   return { x: box.x, y: box.y, width: box.width, height: box.height }
 }
+function joined(one: Rect, other: Rect): Rect {
+  if (one.width <= 0 || one.height <= 0) return other
+  if (other.width <= 0 || other.height <= 0) return one
+  const x = Math.min(one.x, other.x)
+  const y = Math.min(one.y, other.y)
+  const right = Math.max(one.x + one.width, other.x + other.width)
+  const bottom = Math.max(one.y + one.height, other.y + other.height)
+  return { x, y, width: right - x, height: bottom - y }
+}
+function running(): Animation[] {
+  if (typeof document.getAnimations !== 'function') return []
+  return document.getAnimations().filter((one) => one.playState === 'running')
+}
+function targetOf(one: Animation): Element | null {
+  const effect = one.effect as KeyframeEffect | null
+  const on = effect?.target
+  return on instanceof Element && !effect?.pseudoElement ? on : null
+}
+function moves(node: Element, among: readonly Animation[]): Animation[] {
+  return among.filter((one) => targetOf(one)?.contains(node) === true)
+}
+const TIMING = new Set(['offset', 'computedOffset', 'easing', 'composite'])
+function endOf(one: Animation): Keyframe | null {
+  const effect = one.effect as KeyframeEffect | null
+  if (!effect || typeof effect.getKeyframes !== 'function') return null
+  if (!Number.isFinite(Number(effect.getComputedTiming().endTime))) return null
+  const frames = effect.getKeyframes()
+  const last = one.playbackRate < 0 ? frames[0] : frames.at(-1)
+  if (!last) return null
+  return Object.fromEntries(Object.entries(last).filter(([key]) => !TIMING.has(key)))
+}
+function restingBox(node: Element, among: readonly Animation[] = running()): Rect {
+  const now = boxOf(node)
+  const ended: Animation[] = []
+  for (const one of moves(node, among)) {
+    const end = endOf(one)
+    const on = targetOf(one)
+    if (end && on && typeof on.animate === 'function') ended.push(on.animate([end], { fill: 'forwards' }))
+  }
+  if (ended.length === 0) return now
+  const rest = boxOf(node)
+  for (const one of ended) one.cancel()
+  return joined(now, rest)
+}
+export const TRAIL = 120
+const trails = new WeakMap<Element, { at: number; box: Rect }[]>()
+let movedAt = -Infinity
+function same(one: Rect, other: Rect): boolean {
+  return one.x === other.x && one.y === other.y && one.width === other.width && one.height === other.height
+}
+function trailed(node: Element, box: Rect): Rect {
+  const now = Date.now()
+  const kept = (trails.get(node) ?? []).filter((one) => now - one.at < TRAIL)
+  const last = kept.at(-1)
+  if (last && !same(last.box, box)) movedAt = now
+  kept.push({ at: now, box })
+  trails.set(node, kept)
+  return kept.reduce((all, one) => joined(all, one.box), box)
+}
 function seen(node: Element): boolean {
   if (typeof node.checkVisibility !== 'function') return true
   return node.checkVisibility({ visibilityProperty: true })
 }
 export function layersOver(hole: HTMLElement): Layer[] {
   const found: Layer[] = []
+  const among = running()
   for (const node of document.querySelectorAll(ANY)) {
     if (hole.contains(node) || !seen(node)) continue
     const scrim = node.matches(SCRIMS)
     found.push({
-      box: boxOf(node),
+      box: trailed(node, restingBox(node, among)),
       radius: scrim ? 0 : parseFloat(getComputedStyle(node).borderTopLeftRadius) || 0,
       scrim,
       node,
@@ -75,9 +135,12 @@ export function layersOver(hole: HTMLElement): Layer[] {
   return found
 }
 export function moving(hole: HTMLElement): boolean {
+  if (Date.now() - movedAt < TRAIL) return true
+  const among = running()
+  if (among.length === 0) return false
   for (const node of document.querySelectorAll(ANY)) {
     if (hole.contains(node)) continue
-    if (node.getAnimations().some((one) => one.playState === 'running')) return true
+    if (moves(node, among).length > 0) return true
   }
   return false
 }
@@ -96,14 +159,21 @@ export function strangerOver(hole: HTMLElement): boolean {
 export function noticeRows(): Element[] {
   return [...document.querySelectorAll(NOTICES)]
 }
-export function bringsLayer(
-  record: Pick<MutationRecord, 'target' | 'addedNodes' | 'removedNodes'> & {
-    type?: MutationRecordType
-  },
-): boolean {
+type Change = Pick<MutationRecord, 'target' | 'addedNodes' | 'removedNodes'> & {
+  type?: MutationRecordType
+  attributeName?: string | null
+  oldValue?: string | null
+}
+const MARKS = new Set<string>([...COVERS.floating, ...COVERS.whole])
+function wasLayer(record: Change): boolean {
+  if (record.attributeName === 'data-covers') return true
+  if (record.attributeName !== 'class' || !record.oldValue) return false
+  return record.oldValue.split(/\s+/).some((one) => MARKS.has(one))
+}
+export function bringsLayer(record: Change): boolean {
   if (record.type === 'attributes') {
     const on = record.target
-    return on instanceof Element && (on.matches(ANY) || on.querySelector(ANY) !== null)
+    return on instanceof Element && (on.matches(ANY) || on.querySelector(ANY) !== null || wasLayer(record))
   }
   if (record.target instanceof Element && record.target.matches(NOTICES)) return true
   for (const nodes of [record.addedNodes, record.removedNodes]) {
@@ -114,6 +184,55 @@ export function bringsLayer(
   }
   return false
 }
+const drawn = new WeakSet<Element>()
+function layersIn(nodes: Iterable<Node>): Element[] {
+  return [...nodes].flatMap((node) => {
+    if (!(node instanceof Element)) return []
+    const within = [...node.querySelectorAll(ANY)]
+    return node.matches(ANY) ? [node, ...within] : within
+  })
+}
+function arrivals(records: readonly Change[]): Element[] {
+  for (const one of layersIn(records.flatMap((record) => [...record.removedNodes]))) drawn.delete(one)
+  const touched = layersIn(
+    records.flatMap((record) => (record.type === 'attributes' ? [record.target] : [...record.addedNodes])),
+  )
+  const came: Element[] = []
+  for (const one of new Set(touched)) {
+    if (!one.isConnected || !seen(one)) {
+      drawn.delete(one)
+      continue
+    }
+    if (!drawn.has(one)) came.push(one)
+    drawn.add(one)
+  }
+  return came
+}
+export const HOLDS_AT_MOST = 150
+export const HELD = 'data-covers-held'
+let owing: Promise<unknown>[] | null = null
+export function heldUntil(going: Promise<unknown>): void {
+  owing?.push(going)
+}
+function holdRule(): void {
+  if (document.getElementById(HELD)) return
+  const rule = Object.assign(document.createElement('style'), { id: HELD })
+  rule.textContent = `[${HELD}] { clip-path: inset(50%) !important; }`
+  document.head.append(rule)
+}
+function hold(nodes: readonly Element[], owed: readonly Promise<unknown>[]): void {
+  const fresh = nodes.filter((one) => !one.hasAttribute(HELD))
+  if (fresh.length === 0) return
+  holdRule()
+  for (const one of fresh) one.setAttribute(HELD, '')
+  let free = (): void => undefined
+  const waited = new Promise<void>((go) => (free = go))
+  const cap = setTimeout(free, HOLDS_AT_MOST)
+  void Promise.race([Promise.allSettled(owed), waited]).then(() => {
+    clearTimeout(cap)
+    for (const one of fresh) one.removeAttribute(HELD)
+  })
+}
 const SHOWN_BY = ['class', 'style', 'hidden', 'data-covers']
 const told = new Set<() => void>()
 let arriving: MutationObserver | null = null
@@ -122,13 +241,22 @@ export function watchArrivals(tell: () => void): () => void {
   told.add(tell)
   arriving ??= new MutationObserver((records) => {
     if (!records.some(bringsLayer)) return
-    for (const one of told) one()
+    const came = arrivals(records)
+    const owed: Promise<unknown>[] = []
+    owing = owed
+    try {
+      for (const one of told) one()
+    } finally {
+      owing = null
+    }
+    if (owed.length > 0 && came.length > 0) hold(came, owed)
   })
   if (told.size === 1) {
     arriving.observe(document.body, {
       childList: true,
       subtree: true,
       attributes: true,
+      attributeOldValue: true,
       attributeFilter: SHOWN_BY,
     })
   }

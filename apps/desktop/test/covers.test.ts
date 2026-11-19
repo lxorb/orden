@@ -23,6 +23,7 @@ const NEVER_OVER_A_PAGE: Record<string, string> = {
   'lib/ui-controls/src/Select.svelte .sheet': 'a touch screen only, and over its own .orden-scrim',
   'lib/surfaces/src/FormatBar.svelte .docked': 'a touch screen only, docked over the keyboard',
   'lib/frame/src/StatusBar.svelte .mode': 'the vim mode, drawn in the corner of a note’s own pane',
+  'lib/frame/src/StatusBar.svelte footer': 'the note’s counts, drawn in the corner of a note’s own pane',
   'lib/overview/src/Offstage.svelte .offstage': 'drawn off the window, where no page is',
   'lib/overview/src/Overview.svelte .under':
     'the tab overview, which holds every page still as its picture while it is up (`holdStill` in web-tab/src/pages.svelte.ts)',
@@ -104,7 +105,11 @@ function* rules(node: unknown): Generator<Rule> {
     if (key !== 'parent' && value && typeof value === 'object') yield* rules(value)
   }
 }
-function subjects(prelude: string): string[][] {
+interface Subject {
+  tag: string | null
+  classes: string[]
+}
+function subjects(prelude: string): Subject[] {
   return prelude.split(',').map((selector) => {
     const last =
       selector
@@ -112,7 +117,10 @@ function subjects(prelude: string): string[][] {
         .split(/\s*[\s>+~]\s*/)
         .pop() ?? ''
     const plain = last.replace(/:global\(([^)]*)\)/g, '$1')
-    return [...plain.matchAll(/\.([\w-]+)/g)].map((match) => match[1] ?? '')
+    return {
+      tag: /^[a-z][\w-]*/.exec(plain)?.[0] ?? null,
+      classes: [...plain.matchAll(/\.([\w-]+)/g)].map((match) => match[1] ?? ''),
+    }
   })
 }
 interface Found {
@@ -133,10 +141,14 @@ function layersOfTheWindow(): Found[] {
       const body = source.slice(rule.block.start, rule.block.end)
       if (!/position:\s*fixed/.test(body) && !RUNG.test(body)) continue
       const prelude = source.slice(rule.prelude.start, rule.prelude.end).replace(/\s+/g, ' ')
-      for (const classes of subjects(prelude)) {
-        if (classes.length === 0) continue
-        const key = `${file} .${classes.join('.')}`
-        const hits = all.filter((one) => classes.every((name) => classesOf(one.node).includes(name)))
+      for (const { tag, classes } of subjects(prelude)) {
+        if (classes.length === 0 && tag === null) continue
+        const key = `${file} ${tag ?? ''}${classes.map((one) => `.${one}`).join('')}`
+        const hits = all.filter(
+          (one) =>
+            (tag === null || one.node.name === tag) && classes.every((name) => classesOf(one.node).includes(name)),
+        )
+        if (tag !== null && hits.length === 0) continue
         found.push({
           key,
           file,
@@ -191,7 +203,9 @@ test('every bubble is placed in the window, where nothing that holds it can cut 
     const source = readFileSync(path, 'utf8')
     const tree = parse(source, { modern: true })
     const placing = [...rules(tree.css?.children ?? [])].map((rule) => ({
-      subjects: subjects(source.slice(rule.prelude.start, rule.prelude.end).replace(/\s+/g, ' ')),
+      subjects: subjects(source.slice(rule.prelude.start, rule.prelude.end).replace(/\s+/g, ' ')).map(
+        (one) => one.classes,
+      ),
       body: source.slice(rule.block.start, rule.block.end),
     }))
     for (const { node } of elements(tree.fragment)) {
