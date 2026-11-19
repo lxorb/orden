@@ -229,13 +229,15 @@ export interface TypedTodo {
   start?: string
   deadline?: string
   priority?: 0 | 1 | 2 | 3
+  repeat?: string
   chips: Chip[]
 }
-const TODO_KINDS = new Set<ChipKind>(['tag', 'priority', 'when', 'deadline'])
+const TODO_KINDS = new Set<ChipKind>(['tag', 'priority', 'when', 'deadline', 'repeat'])
 export function parseTodo(text: string, langs: readonly string[], now: Date, options: QuickAddOptions = {}): TypedTodo {
   const { text: title, fields, chips } = scan(text, langs, now, options, true)
   const out: TypedTodo = { title, labels: fields.tags, chips }
   if (fields.due !== undefined) out.start = fields.due
+  if (fields.recurrence !== undefined) out.repeat = fields.recurrence
   if (fields.deadline !== undefined) out.deadline = fields.deadline
   if (fields.priority !== undefined) out.priority = (4 - fields.priority) as 0 | 1 | 2 | 3
   return out
