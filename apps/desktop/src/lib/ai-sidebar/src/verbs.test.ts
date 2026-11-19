@@ -8,6 +8,13 @@ describe('a tool row', () => {
     expect(verbOf('browser_click')).toBe('Clicked')
     expect(bareName('mcp__orden__create_note')).toBe('create_note')
   })
+  test('gives another server’s tool no Orden verb, even under an Orden tool’s name (#2227)', () => {
+    expect(verbOf('mcp__nib__read_note')).toBe('Read')
+    expect(bareName('mcp__notes__read_note')).toBe('mcp__notes__read_note')
+    expect(verbOf('mcp__notes__read_note')).toBeNull()
+    expect(verbOf('mcp__orden_extra__read_note')).toBeNull()
+    expect(helperOf({ verb: 'mcp__other__run_agent', result: { text: '{"agent":"h-5"}' } })).toBeNull()
+  })
   test('leaves a tool it does not know to its own name', () => {
     expect(verbOf('something_new')).toBeNull()
   })

@@ -1,4 +1,5 @@
 import { nameOf } from '../../platform/src/api'
+import { verbOf as ownName } from './chat-parts'
 
 const VERBS: Record<string, string> = Object.fromEntries(
   Object.entries({
@@ -22,9 +23,7 @@ const VERBS: Record<string, string> = Object.fromEntries(
     Delegated: 'run_agent',
   }).flatMap(([verb, names]) => names.split(' ').map((name) => [name, verb])),
 )
-export function bareName(verb: string): string {
-  return verb.replace(/^mcp__.+?__/, '')
-}
+export const bareName: (verb: string) => string = ownName
 export function verbOf(verb: string): string | null {
   return VERBS[bareName(verb)] ?? null
 }
