@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { settleFiles } from './files'
+import { settleDisk } from './pass'
 import { MemoryDisk } from './memory-disk'
 import { SpaceState } from './places'
 import type { Change, EntryRow } from './store'
@@ -45,6 +46,10 @@ function fixture(bytes: string, role = 'owner') {
     by: new Map(),
     events: {},
     isHeld: (id: string) => held.has(id),
+    hasPending: () => false,
+    inHand: new Set<string>(),
+    forgetChanges: () => [],
+    entryChanges: () => [],
     holdChanges: (holding: { row: { id: string } }) => {
       held.add(holding.row.id)
       return []
@@ -184,5 +189,46 @@ describe('a file changed here whose bytes the account says it lacks', () => {
     core.touched.add('a')
     expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
     expect(core.touched.has('a')).toBe(true)
+  })
+})
+describe('a file changed here whose delete is heard from the account (#2247)', () => {
+  function heard(bytes: string) {
+    const made = fixture(bytes, 'write')
+    made.entry.local_path = 'App.application'
+    made.entry.written_hash = 'hash:old'
+    made.entry.file_key = 'hash:old'
+    made.entry.deleted = true
+    made.core.touched.add('a')
+    return made
+  }
+  const read = async (disk: MemoryDisk) => {
+    const bytes = await disk.readBytes(`${ROOT}/App.application`)
+    return bytes ? new TextDecoder().decode(bytes) : null
+  }
+  test('stays on the disk and goes up, which brings it back on the account', async () => {
+    const { disk, entry, space, core, sent } = heard('edited here')
+    await settleDisk(core as never, space, true)
+    expect(await read(disk)).toBe('edited here')
+    expect(entry.local_path).toBe('App.application')
+    expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
+    expect(sent).toEqual(['up hash:edited here', 'replace a hash:edited here'])
+    expect(entry.file_key).toBe('hash:edited here')
+    await settleDisk(core as never, space, true)
+    expect(await read(disk)).toBe('edited here')
+  })
+  test('that the account has let go of for good stays on the disk', async () => {
+    const { disk, space, core, answers } = heard('edited here')
+    answers.replaced = { gone: true }
+    expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
+    await settleDisk(core as never, space, true)
+    expect(await read(disk)).toBe('edited here')
+  })
+  test('with the bytes it had is taken off the disk, as the delete said', async () => {
+    const { disk, entry, space, core, sent } = heard('old')
+    expect(await settleFiles(core as never, space, () => true, { full: false })).toBe(true)
+    expect(sent).toEqual([])
+    await settleDisk(core as never, space, true)
+    expect(await read(disk)).toBeNull()
+    expect(entry.local_path).toBe('')
   })
 })

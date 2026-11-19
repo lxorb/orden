@@ -53,7 +53,7 @@ export async function pass(core: Core, space: SpaceState): Promise<Passed> {
   if (!unsent) return passed
   if (!(await sendOps(core, space, alive, unsent))) return passed
   if (!(await readFeed(core, space, alive))) return passed
-  await settleDisk(core, space)
+  await settleDisk(core, space, true)
   if (!alive()) return passed
   if (!(await settleFiles(core, space, alive, passed))) return passed
   if (!(await recoverLost(core, space, alive, passed))) return passed
@@ -413,12 +413,15 @@ export async function readFeed(
   }
   return true
 }
-export async function settleDisk(core: Core, space: SpaceState) {
+export async function settleDisk(core: Core, space: SpaceState, sending = false) {
   const forgets: Change[] = []
   const moved = await settle(space, {
     disk: core.world.disk,
     join: (folder, path) => core.world.join(folder, path),
-    keeps: (id) => core.hasPending(id) || core.isHeld(id),
+    keeps: (id) =>
+      core.hasPending(id) ||
+      core.isHeld(id) ||
+      (sending && core.touched.has(id) && space.entries.get(id)?.deleted === true),
     forget: (id) => forgets.push(...core.forgetChanges(id)),
     busy: (id) => core.inHand.has(id),
   })

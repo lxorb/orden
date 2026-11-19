@@ -113,8 +113,10 @@ export async function settleFiles(core: Core, space: SpaceState, alive: () => bo
   if (!blobs) return true
   const wanted = space.paths()
   for (const entry of [...space.entries.values()]) {
-    if (entry.kind !== 'file' || entry.deleted || entry.seq === null) continue
-    if (core.isHeld(entry.id) || !space.isLive(entry.id) || space.foreign(entry.id)) continue
+    if (entry.kind !== 'file' || entry.seq === null) continue
+    const heardGone = entry.deleted && entry.local_path !== '' && core.touched.has(entry.id)
+    if (entry.deleted && !heardGone) continue
+    if (core.isHeld(entry.id) || (!heardGone && !space.isLive(entry.id)) || space.foreign(entry.id)) continue
     if (waitingCreate(space, entry.id)) continue
     const path = entry.local_path || wanted.get(entry.id)
     if (!path) continue
@@ -129,6 +131,7 @@ export async function settleFiles(core: Core, space: SpaceState, alive: () => bo
     }
     readFine(core, entry.id)
     const changedHere = here !== null && here.hash !== entry.written_hash
+    if (heardGone && !changedHere) continue
     if (here?.hash === entry.file_key) {
       const stamped = stampLanded(core, entry)
       if (entry.written_hash !== here.hash || stamped) {
@@ -156,11 +159,15 @@ export async function settleFiles(core: Core, space: SpaceState, alive: () => bo
         entry.file_key = here.hash
         stampLanded(core, entry)
         await written(core, entry, here.hash, here.bytes)
+        if (heardGone) core.touched.add(entry.id)
       } else if ('moved' in answer) {
         entry.file_key = answer.moved.hash
         await core.commit(holdFile(core, entry, here.hash, answer.moved.at))
       } else if ('lost' in answer) {
         core.touched.add(entry.id)
+      } else if ('gone' in answer && heardGone) {
+        core.touched.add(entry.id)
+        core.refusedBytes.set(entry.id, { at: core.world.now(), hash: here.hash, full: false })
       }
       if (!('refused' in answer)) continue
       if (!(await readOnlyHere(core, space, entry))) continue
