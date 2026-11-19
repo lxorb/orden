@@ -2,6 +2,7 @@ import { isDesktop, invoke } from '../../../platform/src/api'
 import type { Provider } from '../../../ai-providers/src/api'
 import { READER_TABS, rightsKey } from '../../../ai-providers/src/api'
 import type { Mode, ToolOutput } from '../../../ai-providers/src/api'
+import { heardTools } from './outside'
 import { record, text, type ToolDef } from './wire'
 
 export interface Tools {
@@ -51,11 +52,10 @@ export const crateTools: Tools = {
   async list(provider, mode) {
     if (!isDesktop) return { instructions: '', tools: [] }
     const listed = record(await invoke<unknown>('ai_agent_tools', { agent: agentOf(provider), mode }))
-    const tools = Array.isArray(listed.tools) ? listed.tools : []
-    return {
-      instructions: text(listed.instructions),
-      tools: tools.map(toolIn).filter((one): one is ToolDef => one !== null),
-    }
+    const given = Array.isArray(listed.tools) ? listed.tools : []
+    const tools = given.map(toolIn).filter((one): one is ToolDef => one !== null)
+    heardTools(tools)
+    return { instructions: text(listed.instructions), tools }
   },
   async context(provider, thread) {
     if (!isDesktop) return ''

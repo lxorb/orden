@@ -1,5 +1,6 @@
 export { alwaysOffered, crateAnswers, sayAlways } from './chat/approvals'
 export { ordered } from './chat/effort'
+export { outsideTool } from './chat/outside'
 export { compactsAt, estimate, estimateText, filled } from './chat/usage'
 export { quick, side } from './quick.svelte'
 export { citationLinks, citedIn, linkedAnswer } from './retrieve'
