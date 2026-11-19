@@ -272,12 +272,6 @@ macro_rules! desktop_commands {
             orden_pty::terminal::pty_resize,
             orden_pty::terminal::pty_seen,
             orden_pty::terminal::pty_busy,
-            orden_apps::apps_host::apps_installed,
-            orden_apps::apps_host::apps_start,
-            orden_apps::apps_host::apps_watch,
-            orden_apps::apps_host::apps_stop,
-            orden_apps::apps_host::apps_signal,
-            orden_apps::apps_host::apps_view,
             orden_pty::terminal::pty_folder,
             orden_pty::terminal::pty_usage,
             orden_pty::terminal::pty_program,
@@ -473,8 +467,6 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     let builder = orden_placement::placement::managed(orden_web::web_tabs::managed(builder));
     #[cfg(desktop)]
     let builder = orden_pty::terminal::managed(builder);
-    #[cfg(desktop)]
-    let builder = builder.manage(orden_apps::apps_host::Hosted::default());
     #[cfg(desktop)]
     let builder = builder
         .manage(orden_explorer::explorer::reach::Explored::default())

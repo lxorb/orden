@@ -5,9 +5,8 @@ use tauri::AppHandle;
 
 use orden_base::clock;
 use orden_base::paths::{
-    cannot, held_paper, inside, is_application, is_base, is_canvas, is_chat, is_markdown, is_pages,
-    is_pdf, is_shortcut, is_term, paper_of, space_root, spaces_dir, walked_in_spaces, Seen,
-    MAX_DEPTH,
+    cannot, held_paper, inside, is_base, is_canvas, is_chat, is_markdown, is_pages, is_pdf,
+    is_shortcut, is_term, paper_of, space_root, spaces_dir, walked_in_spaces, Seen, MAX_DEPTH,
 };
 
 pub const MAX_ENTRIES: usize = 100_000;
@@ -100,8 +99,7 @@ fn walk(
                         || is_base(&child)
                         || is_shortcut(&child)
                         || is_chat(&child)
-                        || is_term(&child)
-                        || is_application(&child))
+                        || is_term(&child))
                         && (options.papers || !held_paper(&child)))
                 {
                     room(left)?;
@@ -240,7 +238,6 @@ mod tests {
                 "Reading",
                 "Board.canvas",
                 "Build.term",
-                "GIMP.application",
                 "Idea.md",
                 "Journal.pages",
                 "paper.pdf",

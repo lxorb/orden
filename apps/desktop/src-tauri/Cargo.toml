@@ -94,55 +94,7 @@ objc2-app-kit = { version = "0.3", default-features = false, features = [
   "NSWindow",
   "NSWorkspace",
 ] }
-objc2-screen-capture-kit = { version = "0.3", default-features = false, features = [
-  "std",
-  "block2",
-  "libc",
-  "objc2-core-media",
-  "objc2-core-graphics",
-  "dispatch2",
-  "SCError",
-  "SCShareableContent",
-  "SCStream",
-] }
-objc2-core-media = { version = "0.3", default-features = false, features = [
-  "std",
-  "objc2-core-video",
-  "CMSampleBuffer",
-  "CMBase",
-  "CMTime",
-] }
-objc2-core-foundation = { version = "0.3", default-features = false, features = [
-  "std",
-  "CFArray",
-  "CFCGTypes",
-  "CFDictionary",
-  "CFNumber",
-  "CFString",
-] }
-objc2-core-video = { version = "0.3", default-features = false, features = [
-  "std",
-  "CVBase",
-  "CVBuffer",
-  "CVImageBuffer",
-  "CVPixelBuffer",
-  "CVReturn",
-] }
-objc2-core-graphics = { version = "0.3", default-features = false, features = [
-  "std",
-  "libc",
-  "CGDirectDisplay",
-  "CGDisplayConfiguration",
-  "CGError",
-  "CGEvent",
-  "CGEventSource",
-  "CGEventTypes",
-  "CGRemoteOperation",
-  "CGWindowLevel",
-] }
-dispatch2 = { version = "0.3", default-features = false, features = ["std", "objc2"] }
 x11rb = { version = "0.13", default-features = false, features = ["cursor", "damage", "randr", "resource_manager", "screensaver", "shape", "shm", "xfixes", "xinput", "xtest"] }
-str0m = { version = "0.25", default-features = false, features = ["rust-crypto"] }
 windows-registry = "0.6"
 flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
@@ -228,7 +180,6 @@ orden-secrets = { path = "crates/secrets" }
 orden-agent-web = { path = "crates/agent-web" }
 orden-agents = { path = "crates/agents" }
 orden-ai = { path = "crates/ai" }
-orden-apps = { path = "crates/apps" }
 orden-browsers = { path = "crates/browsers" }
 orden-carry = { path = "crates/carry" }
 orden-crashes = { path = "crates/crashes" }
@@ -270,20 +221,11 @@ objc2.workspace = true
 block2.workspace = true
 objc2-foundation.workspace = true
 objc2-app-kit.workspace = true
-objc2-screen-capture-kit.workspace = true
-objc2-core-media.workspace = true
-objc2-core-foundation.workspace = true
-objc2-core-video.workspace = true
-objc2-core-graphics.workspace = true
-dispatch2.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]
 zbus.workspace = true
 x11rb.workspace = true
 libc.workspace = true
-
-[target.'cfg(any(target_os = "linux", target_os = "windows", target_os = "macos"))'.dependencies]
-str0m.workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
 file-id.workspace = true
