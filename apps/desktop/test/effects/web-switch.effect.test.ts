@@ -735,6 +735,37 @@ describe('a page held still while its hole moves, and let go', () => {
     })
   }
 })
+describe('a page held still whose tab another takes the place of meanwhile is not put back when let go', () => {
+  for (const cutting of [true, false, 'under'] as const) {
+    test(cutting === 'under' ? 'drawn under the app' : cutting ? 'cut' : 'out of the way', async () => {
+      cuts = cutting
+      const { tab, app } = await opened(`https://example.com/taken-${String(cutting)}`)
+      const page = pages.of(tab.id)
+      page.shot = 'data:image/png;base64,iVBORw0KGgo='
+      page.shotAt = Date.now()
+      await settle()
+      await frames()
+      await pages.holdStill()
+      await settle()
+      void unmount(app)
+      flushSync()
+      await frames()
+      asked.length = 0
+      await pages.letGo()
+      await settle()
+      await frames()
+      const shown = asked.filter(
+        (one) =>
+          one.command === 'web_place' &&
+          one.args.tab === tab.id &&
+          one.args.visible === true &&
+          !(one.args.cut as { all?: boolean } | null)?.all,
+      )
+      expect(shown).toEqual([])
+      expect(page.heldAt).toBe(null)
+    })
+  }
+})
 test('a hole with no room puts its page out of sight, and the room back brings it back', async () => {
   const { tab, app } = await opened('https://example.com/no-room')
   const hole = target.querySelector('.hole')

@@ -522,7 +522,7 @@ class Pages {
     if (!at) return
     if (!page.heldAt) {
       await this.shoot(tabId)
-      if (!this.still) return
+      if (!this.still || !page.onScreen) return
       page.heldAt = at
     }
     await this.put(
@@ -549,6 +549,7 @@ class Pages {
     const page = this.held.get(tabId)
     if (!page) return
     page.onScreen = false
+    page.heldAt = null
     page.looked = Date.now()
     if (isDesktop && page.live && (page.shooting || page.lent)) void this.aside(tabId, page, pane)
     else void this.place(tabId, pane, false)
