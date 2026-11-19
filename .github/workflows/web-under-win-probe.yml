@@ -1,8 +1,6 @@
 name: web-under-win-probe
 
 on:
-  push:
-    branches: ['tmp/ci-2224-under']
   workflow_dispatch:
 
 concurrency:

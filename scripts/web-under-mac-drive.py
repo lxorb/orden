@@ -494,7 +494,7 @@ def main() -> int:
         print(f"the page with the window's HTML at no opacity: {colour_at(bare, middle, ratio)}", flush=True)
         top = page_edge(bare, middle, (0, -1), ratio)[1]
         left = page_edge(bare, (middle[0], hole[3] - 40), (-1, 0), ratio)[0]
-        if (left, top) != hole[:2]:
+        if (left, top) != hole[:2] and abs(left - hole[0]) < 40 and abs(top - hole[1]) < 40:
             print(f"the page itself begins at {(left, top)}, not at the pane's corner {hole[:2]}", flush=True)
             hole = (left, top, hole[2], hole[3])
         app.eval("document.documentElement.style.opacity = ''; return true")

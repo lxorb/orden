@@ -904,6 +904,9 @@ impl<T: UserEvent> WinitCefApp<T> {
     {
       callback(&mut settings);
     }
+    if clear_ground {
+      settings.background_color = 0;
+    }
     let settings = settings;
     // CEF has no per-browser user agent — `CefSettings.user_agent` is fixed for the whole
     // process before any browser exists — so the per-webview attribute is served through
@@ -994,7 +997,7 @@ impl<T: UserEvent> WinitCefApp<T> {
         if let Some(user_agent) = &user_agent {
           apply_user_agent_override(&host, user_agent);
         }
-        if clear_ground {
+        if clear_ground && !ground_by_settings_alone() {
           apply_clear_ground(&host);
         }
         load_initial_url_after_registering_initialization_scripts(
@@ -2389,21 +2392,13 @@ fn pages_under() -> bool {
 const CLEAR_FIRST_GROUND: &str = r"(() => {
   if (!('adoptedStyleSheets' in document)) return;
   const clear = new CSSStyleSheet();
-  clear.replaceSync('html { background: transparent !important }');
+  clear.replaceSync('html, body { background: transparent !important }');
   document.adoptedStyleSheets = [...document.adoptedStyleSheets, clear];
-  const done = () => setTimeout(() => {
-    document.adoptedStyleSheets = document.adoptedStyleSheets.filter((one) => one !== clear);
-  }, 1500);
-  try {
-    new PerformanceObserver((list, seen) => {
-      if (!list.getEntries().some((one) => one.name === 'first-contentful-paint')) return;
-      seen.disconnect();
-      done();
-    }).observe({ type: 'paint', buffered: true });
-  } catch (error) {
-    addEventListener('load', done, { once: true });
-  }
 })();";
+
+fn ground_by_settings_alone() -> bool {
+  std::env::var_os("ORDEN_PAGES_UNDER_GROUND").is_some_and(|said| said == "cef")
+}
 
 fn clears_ground(own_window: bool, offscreen: bool, asked: bool) -> bool {
   cfg!(any(target_os = "macos", windows)) && own_window && !offscreen && asked
@@ -2608,8 +2603,7 @@ mod tests {
     assert_eq!(said["id"], 7);
     assert_eq!(said["method"], "Emulation.setDefaultBackgroundColorOverride");
     assert_eq!(said["params"]["color"]["a"], 0);
-    assert!(CLEAR_FIRST_GROUND.contains("html { background: transparent !important }"));
-    assert!(CLEAR_FIRST_GROUND.contains("first-contentful-paint"));
+    assert!(CLEAR_FIRST_GROUND.contains("html, body { background: transparent !important }"));
   }
 
   #[test]
