@@ -77,7 +77,7 @@ describe('the account’s own spaces', () => {
       '# Finances\n- [ ] Pay rent\nmine alone\n',
     )
     expect(await tool('list_notes', { space: 'Home' })).toBe('Finances.md')
-    expect(await tool('list_tasks', { space: 'Home' })).not.toContain('untrusted')
+    expect(await tool('list_tasks', {})).not.toContain('untrusted')
   })
   test('one shared with somebody is marked', async () => {
     await call(env, `/v1/spaces/${home}/share/invite`, {

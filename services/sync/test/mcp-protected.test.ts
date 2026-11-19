@@ -46,7 +46,7 @@ describe('an agent reaching the account', () => {
     expect(found).toContain('Plans.md')
     expect(found).not.toContain('Diary')
     expect(await tool('list_backlinks', { space: 'Home', path: 'Plans.md' })).not.toContain('Diary')
-    expect(await tool('list_tasks', { space: 'Home' })).not.toContain('Call her')
+    expect(await tool('list_tasks', {})).not.toContain('Call her')
   })
   test('cannot write into it', async () => {
     expect(await tool('write_note', { space: 'Home', path: 'Diary/Today.md', content: 'gone' })).toContain(
@@ -69,7 +69,7 @@ describe('an agent reaching the account', () => {
   })
   test('cannot reach into it through the to-do tools', async () => {
     const before = await tool('read_note', { space: 'Home', path: 'Plans.md' })
-    expect(await tool('update_task', { space: 'Home', id: 'abc', done: true })).toContain('There is no todo abc')
+    expect(await tool('update_task', { id: 'abc', done: true })).toContain('There is no todo abc')
     expect(await tool('query_base', { space: 'Home', path: 'Diary/Tasks.base' })).toContain('is protected')
     expect(await tool('read_note', { space: 'Home', path: 'Diary/Today.md' })).toContain('is protected')
     expect(await tool('read_note', { space: 'Home', path: 'Plans.md' })).toBe(before)
