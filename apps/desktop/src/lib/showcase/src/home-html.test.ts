@@ -29,6 +29,7 @@ describe('the home page file', () => {
     expect(PAGE).not.toMatch(/<img|\.woff|\.jpe?g|\.webp/)
   })
   test('carries no middle dot or bullet between words', () => {
-    expect(PAGE).not.toMatch(/[·•—]/)
+    const between = new RegExp(`[${String.fromCharCode(0xb7, 0x2022, 0x2014)}]`)
+    expect(PAGE).not.toMatch(between)
   })
 })
