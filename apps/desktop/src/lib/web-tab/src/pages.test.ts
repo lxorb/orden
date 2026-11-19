@@ -288,6 +288,24 @@ describe('a page whose engine cuts only what floats over it', () => {
     })
     expect(commands()).toContain('web_shot')
   })
+  for (const engine of ['hollows', true] as const) {
+    test(`keeps its picture fresh while a scrim covers it, and stops once it is shown (${String(engine)})`, async () => {
+      cuts = engine
+      photo = 'data:image/png;base64,AAAA'
+      await built()
+      await settle()
+      calls.length = 0
+      const shots = () => commands().filter((one) => one === 'web_shot').length
+      await pages.show('a', SITE, PANE, false, { cut: { all: true, hollows: [] }, frame: null })
+      await vi.waitFor(() => expect(shots()).toBeGreaterThanOrEqual(3), { timeout: 2000 })
+      await pages.show('a', SITE, PANE, true)
+      await settle()
+      const then = shots()
+      await new Promise<void>((go) => setTimeout(go, 300))
+      expect(shots()).toBe(then)
+      photo = null
+    })
+  }
 })
 describe('a page drawn under the app', () => {
   const over = {
