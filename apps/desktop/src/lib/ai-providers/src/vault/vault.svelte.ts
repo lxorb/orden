@@ -2,6 +2,7 @@ import { commitment, digits as pairingDigits, newNonce } from '../pairing'
 import { authOf, type DeviceKey, deviceKeyIn, fingerprint, idOf, newDeviceKey } from './crypto'
 import { newVaultKey, open, seal, unwrap, wrap } from './crypto'
 import { SvelteMap } from 'svelte/reactivity'
+import type { Accounts } from '../accounts'
 import { agrees, type Base, baseOf, type Contents, contentsIn, merged, type Side } from './merge'
 
 const DIGITS = 'nib ai vault digits'
@@ -59,6 +60,9 @@ export interface VaultWorld {
   apply(contents: Contents, before: Contents, moved: Record<string, string>): Promise<void>
   loadBase(account: string): Base | null
   keepBase(account: string, base: Base | null): void
+  served(): string | null
+  serve(account: string | null): void
+  drop(gone: Accounts['accounts']): Promise<void>
 }
 function isConflict(error: unknown): boolean {
   return typeof error === 'object' && error !== null && (error as { status?: unknown }).status === 409
@@ -131,6 +135,11 @@ export class Vault {
     if (!account) {
       this.signedOut()
       return
+    }
+    const was = this.world.served()
+    if (was !== account) {
+      if (was) await this.left()
+      this.world.serve(account)
     }
     if (this.standing === 'off') this.standing = 'opening'
     const device = await this.mine()
@@ -335,6 +344,7 @@ export class Vault {
     const base = this.world.loadBase(account)
     const { contents, moved } = remote ? merged(base, here, remote) : { contents: here.contents, moved: {} }
     const prints = await printsOf(contents.keys)
+    if (this.world.account() !== account) return true
     this.seen = contents.seen
     if (!agrees(baseOf(here.contents, here.prints), contents, prints)) {
       await this.world.apply(contents, local, moved)
@@ -344,6 +354,7 @@ export class Vault {
       this.world.keepBase(account, baseOf(contents, prints))
       return true
     }
+    if (this.world.account() !== account) return true
     try {
       await this.world.call('/v2/ai/vault', 'PUT', {
         rev: read.rev,
@@ -457,8 +468,18 @@ export class Vault {
     }
     this.signedOut()
   }
+  async left(kept = false): Promise<void> {
+    const was = this.world.served()
+    this.signedOut()
+    if (!was) return
+    const base = this.world.loadBase(was)
+    this.world.keepBase(was, null)
+    this.world.serve(null)
+    if (base && !kept) await this.world.drop(base.accounts.accounts)
+  }
   signedOut(): void {
     this.standing = 'off'
+    this.seen = {}
     this.key = null
     this.registered = ''
     this.mineAsking = null

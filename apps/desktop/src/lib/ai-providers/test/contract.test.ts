@@ -1,6 +1,17 @@
-import { describe, expect, expectTypeOf, test } from 'vitest'
-import { firstModel, isLocal, KIND_NAMES, localCli, MODES, modeIn, modeOfGrant } from '../src/api'
-import { noMoreThan, offeredKinds, sseJson, sseLines, talkable, type Thread } from '../src/api'
+import { describe, expect, expectTypeOf, test, vi } from 'vitest'
+import { ai, firstModel, isLocal, KIND_NAMES, localCli, MODES, modeIn, modeOfGrant } from '../src/api'
+import { noMoreThan, offeredKinds, signOut, sseJson, sseLines, talkable, type Thread, vault } from '../src/api'
+
+const kept = vi.hoisted(() => {
+  const held = new Map<string, string>()
+  const storage = {
+    getItem: (key: string) => held.get(key) ?? null,
+    setItem: (key: string, value: string) => void held.set(key, value),
+    removeItem: (key: string) => void held.delete(key),
+  }
+  Object.defineProperty(globalThis, 'localStorage', { value: storage, configurable: true })
+  return held
+})
 
 describe('the module stands on its own', () => {
   test('signing in to a local program answers no while no module lends a terminal', async () => {
@@ -49,5 +60,20 @@ describe('a thread', () => {
     expectTypeOf<Thread['only']>().toEqualTypeOf<string[] | undefined>()
     const none: Pick<Thread, 'only'> = { only: [] }
     expect(none.only).toEqual([])
+  })
+})
+describe('an Orden account leaving the device', () => {
+  test('takes the AI accounts of its vault and their keys with it, and leaves the ones only ever here', async () => {
+    const theirs = ai.add('anthropic')
+    const mine = ai.add('openai')
+    await ai.written()
+    const accounts = { accounts: [theirs], active: {}, defaultVendor: '', uses: {} }
+    kept.set('orden:ai-vault-account', 'u1')
+    kept.set('orden:ai-vault-base:u1', JSON.stringify({ accounts, keys: {}, seen: {} }))
+    vault.seen = { [theirs.id]: 'a@example.com' }
+    await signOut()
+    await vi.waitFor(() => expect(ai.accounts.map((one) => one.id)).toEqual([mine.id]))
+    expect(vault.seen).toEqual({})
+    expect(kept.has('orden:ai-vault-base:u1')).toBe(false)
   })
 })
