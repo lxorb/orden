@@ -129,18 +129,6 @@
   if (isDesktop && !__EVEN_PLUGIN__ && crashAskDue()) {
     void startup.turn('rooms').then(() => crashAsk.ask())
   }
-  $effect(() => {
-    if (!isDesktop || __EVEN_PLUGIN__ || !modes.coder || !account.accountToken) return
-    let stop: (() => void) | null = null
-    const off = whenLoaded(
-      () => import('./lib/apps/src/api'),
-      ({ hostApps }) => (stop = hostApps()),
-    )
-    return () => {
-      off()
-      stop?.()
-    }
-  })
   const view = $derived(views.of(workspace.panes.focusedId))
   const padOver = $derived(viewport.touch && pad.on)
   const writingIn = $derived(padOver ? (pad.view ?? view) : view)

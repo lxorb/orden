@@ -6,12 +6,24 @@ vi.stubGlobal('localStorage', {
   setItem: (key: string, value: string) => void held.set(key, value),
   removeItem: (key: string) => void held.delete(key),
 })
-const { clipboardSharing } = await import('../src/api')
-describe('sharing the clipboard with applications', () => {
-  test('is on until turned off, and stays off', () => {
-    expect(clipboardSharing.on).toBe(true)
-    clipboardSharing.set(false)
-    expect(clipboardSharing.on).toBe(false)
-    expect([...held.values()]).toEqual(['no'])
+const { settingSchema } = await import('../src/api')
+describe('the schema it hands out', () => {
+  test('describes a switch as a boolean with its default, and refuses a value of another type', async () => {
+    const { refusal, schemaOf } = await settingSchema()
+    const schema = schemaOf([
+      {
+        kind: 'switch',
+        key: 'editor.wrap',
+        label: 'Wrap',
+        hint: 'Wraps long lines',
+        initial: true,
+        get: () => true,
+        set: () => undefined,
+      },
+    ])
+    expect(schema).toEqual({ 'editor.wrap': { type: 'boolean', default: true, description: 'Wraps long lines' } })
+    const wrap = { type: 'boolean', description: 'Wraps long lines' } as const
+    expect(refusal(wrap, 'yes')).toBe('should be a boolean')
+    expect(refusal(wrap, false)).toBeNull()
   })
 })

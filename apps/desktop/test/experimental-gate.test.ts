@@ -22,7 +22,6 @@ vi.mock('../src/lib/ui-kit/src/prompt.svelte', () => ({
 }))
 const settings = await import('../src/lib/gates/src/api')
 const {
-  appsOn,
   basesOn,
   chatsOn,
   EXPERIMENTAL_WORD,
@@ -37,19 +36,10 @@ const {
 const { receive } = await import('../src/lib/gates/src/api')
 const { experimentalPane } = await import('../src/lib/settings/src/experimental-pane')
 const { kindsPane } = await import('../src/lib/settings/src/kinds-pane')
-const { openApplication } = await import('../src/lib/apps/src/open')
 const { account } = await import('../src/lib/accounts/src/account.svelte')
 Object.defineProperty(account, 'accountToken', { get: () => 'token', configurable: true })
-const FEATURES = [
-  'chats',
-  'applications',
-  'explorer',
-  'passwordManager',
-  'timeTracker',
-  'databases',
-  'glasses',
-] as const
-const ON = [chatsOn, appsOn, explorerOn, passOn, timeOn, basesOn, settings.glassesOn]
+const FEATURES = ['chats', 'explorer', 'passwordManager', 'timeTracker', 'databases', 'glasses'] as const
+const ON = [chatsOn, explorerOn, passOn, timeOn, basesOn, settings.glassesOn]
 function fields() {
   return experimentalPane().groups.flatMap((group) => group.fields)
 }
@@ -95,12 +85,11 @@ describe('the Experimental section', () => {
     await vi.waitFor(() => expect(experimentalOn()).toBe(true))
     for (const name of FEATURES) feature(name).set(true)
     expect(ON.every((on) => on())).toBe(true)
-    expect(kindsHere()).toEqual(expect.arrayContaining(['chat', 'application', 'explorer', 'pass']))
+    expect(kindsHere()).toEqual(expect.arrayContaining(['chat', 'explorer', 'pass']))
     master().set(false)
     expect(asked.titles).toHaveLength(1)
     expect(anyOn()).toBe(false)
-    expect(kindsHere()).not.toContain('application')
-    expect(openApplication('/s/Box.application')).toBeNull()
+    expect(kindsHere()).not.toContain('chat')
     for (const name of FEATURES) expect(feature(name).get()).toBe(true)
     master().set(true)
     await vi.waitFor(() => expect(experimentalOn()).toBe(true))
@@ -113,7 +102,7 @@ describe('the Experimental section', () => {
     const keys = kindsPane()
       .groups.flatMap((group) => group.fields)
       .map((one) => one.key)
-    for (const kind of ['chat', 'application', 'explorer', 'pass']) {
+    for (const kind of ['chat', 'explorer', 'pass']) {
       expect(keys).not.toContain(`kinds.${kind}`)
     }
   })
@@ -129,11 +118,10 @@ describe('the Experimental section', () => {
     for (const name of FEATURES) expect(feature(name).get()).toBe(false)
   })
   test('follows the account, master and features alike', () => {
-    receive({ hiddenKinds: [EXPERIMENTAL_WORD, settings.APPS_WORD, settings.CHATS_WORD] })
-    expect(appsOn()).toBe(true)
+    receive({ hiddenKinds: [EXPERIMENTAL_WORD, settings.CHATS_WORD] })
     expect(chatsOn()).toBe(true)
     expect(passOn()).toBe(false)
-    receive({ hiddenKinds: [settings.APPS_WORD, settings.CHATS_WORD] })
+    receive({ hiddenKinds: [settings.CHATS_WORD] })
     expect(anyOn()).toBe(false)
   })
 })
