@@ -1,0 +1,19 @@
+{
+  "numStartups": 12,
+  "projects": { "/home/me/work": { "mcpServers": { "project-only": { "command": "x" } } } },
+  "mcpServers": {
+    "github": {
+      "type": "http",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": { "Authorization": "Bearer ghp_example" }
+    },
+    "local": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["mcp-server-fetch"],
+      "env": { "API_KEY": "key-one" }
+    },
+    "events": { "type": "sse", "url": "http://127.0.0.1:9/sse" },
+    "orden": { "type": "stdio", "command": "C:\\Program Files\\Orden\\orden.exe", "args": ["mcp"], "env": {} }
+  }
+}

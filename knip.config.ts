@@ -33,6 +33,7 @@ export default {
     'apps/desktop/src-tauri/crates/carry/src/kept.js',
     'apps/desktop/src-tauri/crates/agent-web/src/snapshot.js',
     'apps/desktop/src-tauri/crates/extensions/src/extensions/firefox/*.js',
+    'apps/desktop/src-tauri/crates/mcp-client/tests/fake-server.mjs',
   ],
   workspaces: {
     '.': {

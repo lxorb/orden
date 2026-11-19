@@ -1,0 +1,16 @@
+model = "gpt-5"
+
+[mcp_servers.docs]
+command = "npx"
+args = ["-y", "docs-mcp"]
+env = { A = "1" }
+cwd = "/home/me"
+
+[mcp_servers.remote]
+url = "https://remote.example.com/mcp"
+bearer_token_env_var = "REMOTE_TOKEN"
+http_headers = { "X-Team" = "t1" }
+
+[mcp_servers.missing]
+url = "https://missing.example.com/mcp"
+bearer_token_env_var = "ABSENT_TOKEN"

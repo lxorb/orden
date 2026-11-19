@@ -435,6 +435,7 @@ export default tseslint.config(
       'apps/desktop/src-tauri/crates/carry/src/former.js',
       'apps/desktop/src-tauri/crates/agent-web/src/snapshot.js',
       'apps/desktop/src-tauri/crates/extensions/src/extensions/firefox/*.js',
+      'apps/desktop/src-tauri/crates/mcp-client/tests/fake-server.mjs',
       'packages/editor/src/frame-script.js',
     ],
     ...tseslint.configs.disableTypeChecked,

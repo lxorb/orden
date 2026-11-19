@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "/Users/me/Desktop"]
+    },
+    "orden": {
+      "command": "/Applications/Orden.app/Contents/MacOS/Orden",
+      "args": ["mcp"]
+    }
+  },
+  "globalShortcut": ""
+}

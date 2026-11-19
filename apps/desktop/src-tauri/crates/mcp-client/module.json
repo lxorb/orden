@@ -1,0 +1,6 @@
+{
+  "name": "mcp-client",
+  "layer": "native",
+  "lang": "rust",
+  "dependsOn": ["base", "secrets"]
+}

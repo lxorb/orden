@@ -1,0 +1,12 @@
+{
+  "inputs": [{ "type": "promptString", "id": "key", "description": "The key", "password": true }],
+  "servers": {
+    "memory": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["server.js"],
+      "env": { "KEY": "${input:key}" },
+    },
+    "docs": { "type": "http", "url": "https://docs.example.com/mcp", "headers": { "Authorization": "Bearer d0c5" } },
+  },
+}
