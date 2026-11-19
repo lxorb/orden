@@ -69,7 +69,7 @@ jobs:
         run: |
           case "$RUNNER_OS" in
             Linux)
-              sudo apt-get install -y xvfb dbus-x11 openbox xdotool
+              sudo apt-get install -y xvfb dbus-x11 openbox xdotool at-spi2-core
               sandbox="$(dirname "$EXE")/chrome-sandbox"
               if [ -f "$sandbox" ]; then
                 sudo chown root:root "$sandbox"
