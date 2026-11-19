@@ -104,6 +104,7 @@ export {
   type TabPanel,
 } from './shell'
 export {
+  hearSidebarParts,
   registerSidebarPart,
   type SidebarMenuEntry,
   type SidebarMenuItem,

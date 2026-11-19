@@ -7,7 +7,7 @@
   import SpaceBadge from './SpaceBadge.svelte'
   import { SpacePlace } from '../../space-pick/src/api'
   import { isNumber } from '../../space-pick/src/api'
-  import { spaceSound } from './api'
+  import { chatsUnreadIn, spaceSound } from './api'
   import { sync } from '../../sync-store/src/api'
   import type { Space } from '../../workspace/src/api'
 
@@ -26,7 +26,7 @@
   })
 </script>
 
-<SpacePlace {place} {typed} {held}><SpaceBadge {space} {on} /></SpacePlace>
+<SpacePlace {place} {typed} {held}><SpaceBadge {space} {on} unread={chatsUnreadIn(space.root)} /></SpacePlace>
 <span class="orden-row-label" dir="auto"
   >{#each name as piece, at (at)}{#if piece.hit}<b>{piece.text}</b>{:else}{piece.text}{/if}{/each}</span
 >
