@@ -1,6 +1,7 @@
 <script lang="ts">
   import { TabMark } from '../../marks/src/api'
   import type { Tab } from '../../documents/src/api'
+  import { autoDir } from './direction'
 
   const { tab, left, top, width }: { tab: Tab; left: number; top: number; width: number } = $props()
   function portal(node: HTMLElement) {
@@ -18,7 +19,7 @@
   aria-hidden="true"
 >
   <TabMark {tab} />
-  <span class="label" dir="auto">{tab.shown}</span>
+  <span class="label" use:autoDir={tab.shown}>{tab.shown}</span>
 </div>
 
 <style>
@@ -59,7 +60,7 @@
   .label:dir(rtl) {
     mask-image: linear-gradient(to left, #000 calc(100% - var(--fade)), transparent);
   }
-  [dir='auto'] {
+  .label {
     text-align: -webkit-match-parent;
     text-align: match-parent;
   }

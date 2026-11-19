@@ -75,6 +75,7 @@
   import { flushStart } from './flush'
   import { siteLook, twins } from './twins'
   import { revealed } from './scroll'
+  import { autoDir } from './direction'
   import { wheelAlong } from './wheel'
   import { insideSpace, nameOf, shownName, dur, fade, stillness } from '../../platform/src/api'
   import type { Tab } from '../../documents/src/api'
@@ -140,11 +141,20 @@
   let fits = $state<Record<string, number>>({})
   let names: Record<string, number> = {}
   let namesFont = ''
+  let font = $state('')
   let pen: CanvasRenderingContext2D | null | undefined
+  $effect(() => {
+    const node = measurer
+    if (!node) return
+    const watch = new ResizeObserver(() => {
+      const type = getComputedStyle(node)
+      font = `${type.fontStyle} ${type.fontWeight} ${type.fontSize} ${type.fontFamily}`
+    })
+    watch.observe(node)
+    return () => watch.disconnect()
+  })
   function measured(name: string): number {
-    if (!measurer) return 0
-    const type = getComputedStyle(measurer)
-    const font = `${type.fontStyle} ${type.fontWeight} ${type.fontSize} ${type.fontFamily}`
+    if (!font) return 0
     if (font !== namesFont) {
       names = {}
       namesFont = font
@@ -161,7 +171,7 @@
   }
   $effect(() => {
     const next: Record<string, number> = {}
-    if (fitTabs.on && measurer) {
+    if (fitTabs.on && font) {
       for (const tab of tabs) {
         const name = measured(tab.shown)
         if (name <= 0) continue
@@ -323,6 +333,7 @@
     const frame = requestAnimationFrame(() => (resizing = false))
     return () => cancelAnimationFrame(frame)
   })
+  let scrolled = 0
   $effect(() => {
     const id = activeId
     const node = strip
@@ -330,9 +341,9 @@
     untrack(() => {
       const box = layout.boxes[id]
       if (!box) return
-      const at = node.scrollLeft
-      const to = revealed(at, stripWidth, span, box.x, box.x + box.width + lead + LEAD)
-      if (Math.abs(to - at) < 1) return
+      const to = revealed(scrolled, stripWidth, span, box.x, box.x + box.width + lead + LEAD)
+      if (Math.abs(to - scrolled) < 1) return
+      scrolled = to
       node.scrollTo({
         left: to,
         behavior: stillness() || resizing ? 'instant' : 'smooth',
@@ -697,6 +708,7 @@
     data-tauri-drag-region={caption ? '' : undefined}
     bind:this={strip}
     bind:clientWidth={stripWidth}
+    onscroll={(event) => (scrolled = event.currentTarget.scrollLeft)}
     style:--lead="{lead}px"
     style:--tab-top="{TOP}px"
     use:roving={{
@@ -732,7 +744,7 @@
     oncontextmenu={showStripMenu}
     use:longPress={showStripMenu}
   >
-    <span class="measure" aria-hidden="true" bind:this={measurer}></span>
+    <span class="measure" aria-hidden="true" bind:this={measurer}>Mm</span>
     <div class="lane" class:shrinking style:width="max(100%, {span}px)">
       {#each tabs as tab, at (tab.id)}
         {@const seen = rooms.seen[tab.note.key]}
@@ -837,7 +849,7 @@
               class:hidden={!parts.title && !icon}
               class:quiet={icon}
               class:naming={tab.naming}
-              dir="auto">{tab.shown}</span
+              use:autoDir={tab.shown}>{tab.shown}</span
             >
             {#if isDraft(tab.note) && !icon && parts.title}
               <UnsavedDot pressable />
@@ -1441,7 +1453,7 @@
     stroke-width: 1.3;
     stroke-linecap: round;
   }
-  [dir='auto'] {
+  .label {
     text-align: -webkit-match-parent;
     text-align: match-parent;
   }
