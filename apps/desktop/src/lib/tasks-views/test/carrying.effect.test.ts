@@ -1,10 +1,11 @@
 import 'fake-indexeddb/auto'
 import { providePort } from '@orden/contracts'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { addTask, type Board, todos } from '../../tasks-model/src/api'
 import { patchTodo } from '../src/acts'
-import { Carrying } from '../src/carrying.svelte'
+import { Carrying, columnPreview } from '../src/carrying.svelte'
 import { Shown, type ShownWorld } from '../src/shown.svelte'
+import { previewed } from '../src/todo-drag.svelte'
 
 providePort('sync.account', {
   token: null,
@@ -53,6 +54,53 @@ async function made(mine: string, title: string, labels: string[] = []) {
 }
 const titles = (list: readonly { title: string }[], mine: string) => list.map((one) => one.title.slice(mine.length + 1))
 describe('a carried todo', () => {
+  test('let go keeps its preview until the todos hold the new place, so the list never shows the old one between', async () => {
+    const mine = prefix()
+    const a = await made(mine, 'a', ['home'])
+    await made(mine, 'b', ['work'])
+    await made(mine, 'c', ['work'])
+    const { shown, carrying } = shownOf(mine)
+    shown.setSort('manual')
+    const work = () => shown.columns.find((one) => one.key === 'work')?.todos ?? []
+    const shownIn = (key: string) =>
+      titles(previewed(shown.columns.find((one) => one.key === key)?.todos ?? [], key, carrying.drag), mine)
+    carrying.started(a, 'home')
+    carrying.aim('work', work()[0]?.id ?? null, true)
+    expect(shownIn('work')).toEqual(['b', 'a', 'c'])
+    const seen: string[][] = []
+    const clear = carrying.drag.clear.bind(carrying.drag)
+    const spy = vi.spyOn(carrying.drag, 'clear').mockImplementation(() => {
+      seen.push(titles(work(), mine))
+      clear()
+    })
+    const landing = carrying.land()
+    expect(carrying.drag.on).toBe(true)
+    expect(carrying.drag.settling).toBe(true)
+    await landing
+    spy.mockRestore()
+    expect(seen).toEqual([['b', 'a', 'c']])
+    expect(shownIn('work')).toEqual(['b', 'a', 'c'])
+    expect(shownIn('home')).toEqual([])
+  })
+  test('a column let go stays where it was dropped until the board holds its new place', async () => {
+    const mine = prefix()
+    await made(mine, 'a', ['home'])
+    await made(mine, 'b', ['work'])
+    const { shown, carrying } = shownOf(mine)
+    const keys = () => columnPreview(shown.columns, carrying.drag).map((one) => one.key)
+    expect(keys()).toEqual(['home', 'work', ''])
+    carrying.drag.startColumn('work')
+    carrying.drag.overColumn(0)
+    let answer: () => void = () => undefined
+    const told = new Promise<void>((done) => (answer = done))
+    const landing = carrying.drag.settle(told.then(() => shown.moveColumn('work', 0)))
+    expect(carrying.drag.settling).toBe(true)
+    expect(keys()).toEqual(['work', 'home', ''])
+    answer()
+    await landing
+    expect(carrying.drag.column).toBeNull()
+    expect(keys()).toEqual(['work', 'home', ''])
+  })
   test('let go further down a list takes that place and the list is sorted by hand from then on', async () => {
     const mine = prefix()
     const a = await made(mine, 'a')

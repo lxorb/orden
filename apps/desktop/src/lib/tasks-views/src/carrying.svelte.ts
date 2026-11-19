@@ -2,7 +2,7 @@ import { type Grouping, movedPatch, type Todo } from '../../tasks-model/src/api'
 import { carryTodo, carryTodoColumn, dragged, isTodoColumnDrag, isTodoDrag, isTreeDrag } from '../../ui-kit/src/api'
 import { linkNotes, patchTodo, placeTodo } from './acts'
 import type { Shown } from './shown.svelte'
-import { placeOf, TodoDrag } from './todo-drag.svelte'
+import { placeOf, type Spot, TodoDrag } from './todo-drag.svelte'
 import { touchLift } from './touch-lift'
 
 export interface CarryHost {
@@ -34,12 +34,11 @@ export class Carrying {
     this.drag.over(column, this.host.list(column), beside, after)
   }
   async land(): Promise<void> {
-    const drag = this.drag
-    const todo = drag.todo
-    const spot = drag.spot
-    const from = drag.from
-    drag.clear()
-    if (!todo || !spot || from === null) return
+    const { todo, spot, from } = this.drag
+    if (!todo || !spot || from === null) this.drag.clear()
+    else await this.drag.settle(this.put(todo, spot, from))
+  }
+  private async put(todo: Todo, spot: Spot, from: string): Promise<void> {
     const shown = this.host.shown
     const list = this.host.list(spot.column)
     const without = list.filter((one) => one.id !== todo.id)
@@ -83,7 +82,7 @@ export class Carrying {
       })
     }
     const end = () => {
-      if (this.drag.on) this.drag.clear()
+      if (this.drag.on && !this.drag.settling) this.drag.clear()
       this.taking = null
     }
     const over = (event: DragEvent) => {
@@ -211,7 +210,9 @@ export class Carrying {
       carryTodoColumn(event.dataTransfer, mine)
       this.drag.startColumn(mine)
     }
-    const end = () => this.drag.clear()
+    const end = () => {
+      if (!this.drag.settling) this.drag.clear()
+    }
     node.addEventListener('dragstart', start)
     node.addEventListener('dragend', end)
     return {
@@ -224,7 +225,7 @@ export class Carrying {
       },
     }
   }
-  row = (node: HTMLElement, moveColumn: (key: string, at: number) => void) => {
+  row = (node: HTMLElement, moveColumn: (key: string, at: number) => Promise<unknown>) => {
     let move = moveColumn
     const at = (x: number): number => {
       const columns = [...node.querySelectorAll<HTMLElement>('[data-todos-column]')].filter(
@@ -247,14 +248,14 @@ export class Carrying {
       event.preventDefault()
       const key = this.drag.column
       const to = this.drag.columnAt
-      this.drag.clear()
-      if (key !== null && to !== null) move(key, to)
+      if (key === null || to === null) this.drag.clear()
+      else void this.drag.settle(move(key, to))
     }
     node.addEventListener('dragover', over)
     node.addEventListener('dragenter', over)
     node.addEventListener('drop', dropped)
     return {
-      update(next: (key: string, at: number) => void) {
+      update(next: (key: string, at: number) => Promise<unknown>) {
         move = next
       },
       destroy() {

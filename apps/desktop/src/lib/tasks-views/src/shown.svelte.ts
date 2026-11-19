@@ -38,7 +38,7 @@ export interface ShownWorld {
   kept(): unknown
   keep(value: unknown): void
   board(): Board
-  arrange(board: Board): void
+  arrange(board: Board): unknown
 }
 export type Where = 'panel' | 'board'
 interface Kept {
@@ -106,14 +106,14 @@ export class Shown {
       this.world.board().columns[grouping],
     )
   }
-  moveColumn(key: string, to: number): void {
+  async moveColumn(key: string, to: number): Promise<void> {
     const board = this.world.board()
     const keys = movedColumns(
       this.columns.map((one) => one.key),
       key,
       to,
     )
-    this.world.arrange({ ...board, columns: { ...board.columns, [board.grouping]: keys } })
+    await this.world.arrange({ ...board, columns: { ...board.columns, [board.grouping]: keys } })
   }
   setOnlySpace(value: boolean): void {
     this.onlySpace = value
@@ -191,6 +191,6 @@ export function shellWorld(todos: () => readonly Todo[]): ShownWorld {
     kept: () => storage()?.json(KEPT),
     keep: (value) => void storage()?.keepJson(KEPT, value),
     board: () => held.board,
-    arrange: (board) => void held.arrange(board),
+    arrange: (board) => held.arrange(board),
   }
 }

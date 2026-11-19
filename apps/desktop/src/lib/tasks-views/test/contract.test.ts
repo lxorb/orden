@@ -211,7 +211,7 @@ describe('tasks-views contract', () => {
     const { world: w, board } = world(list)
     const shown = new Shown(w, 'board')
     expect(shown.columns.map((one) => one.key)).toEqual(['x', 'y', ''])
-    shown.moveColumn('y', 0)
+    void shown.moveColumn('y', 0)
     expect(board().columns.label).toEqual(['y', 'x', ''])
     expect(shown.columns.map((one) => one.key)).toEqual(['y', 'x', ''])
     expect(shown.todos.map((t) => t.id)).not.toContain('c')
