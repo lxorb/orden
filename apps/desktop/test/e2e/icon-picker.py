@@ -1,4 +1,6 @@
+import time
 from harness import Drive
+from playwright.sync_api import TimeoutError as PlaywrightTimeout
 from settling import quiet
 
 DRIVE = Drive(__file__)
@@ -40,6 +42,9 @@ LAID = """
     remove: [...sheet.querySelectorAll('button')].some((one) => one.textContent.trim() === 'Remove icon'),
   }
 }
+"""
+TWENTIETH = """
+([selector, was]) => document.querySelectorAll(`${selector} .grid .cell`)[20]?.innerHTML !== was
 """
 def opened(page, path: str) -> None:
     page.evaluate("(path) => window.ordenApp.iconChoice.file(path)", path)
@@ -89,13 +94,17 @@ def drive(browser) -> None:
     page.set_viewport_size({"width": 1280, "height": 720})
     opened(page, path)
     glyph = page.locator(f"{PICKER} .grid .cell").nth(20).inner_html()
+    ticked = time.monotonic()
     page.locator(f"{PICKER} label.tick").click()
+    try:
+        page.wait_for_function(TWENTIETH, arg=[PICKER, glyph], timeout=10000)
+        say(f"the outlines came in {round((time.monotonic() - ticked) * 1000)} ms")
+    except PlaywrightTimeout:
+        wrong("ticking One colour left the icons as they were")
     quiet(page)
     laid = page.evaluate(LAID, PICKER)
     if laid["checked"] is not True:
         wrong("the One colour checkbox did not tick")
-    if page.locator(f"{PICKER} .grid .cell").nth(20).inner_html() == glyph:
-        wrong("ticking One colour left the icons as they were")
     shot(page, "picker-one-colour")
     page.fill(f"{PICKER} input.orden-field", "star")
     quiet(page)
