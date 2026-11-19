@@ -10,7 +10,12 @@ for (let i = 0; i < 1500; i++) {
   html += `<section><h2>Section ${i}</h2><p>${words.repeat(4)}</p><div style="height:60px;border-radius:8px;background:hsl(${(i * 37) % 360},60%,75%)"></div></section>`;
 }
 document.getElementById('m').innerHTML = html;
+let frames = 0, moved = 0, last = scrollY;
+setInterval(() => console.log('SPIKE scroll frames=' + frames + ' px=' + Math.round(moved)), 10000);
 addEventListener('scroll', () => {
+  frames++;
+  moved += Math.abs(scrollY - last);
+  last = scrollY;
   if (scrollY + innerHeight > document.documentElement.scrollHeight - 3000) scrollTo(0, 0);
 }, { passive: true });
 </script>

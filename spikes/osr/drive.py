@@ -38,6 +38,31 @@ u32.GetClassNameW.argtypes = [W.HWND, W.LPWSTR, ctypes.c_int]
 u32.PostMessageW.argtypes = [W.HWND, W.UINT, W.WPARAM, W.LPARAM]
 u32.SetForegroundWindow.argtypes = [W.HWND]
 WIDE, HIGH = u32.GetSystemMetrics(0), u32.GetSystemMetrics(1)
+k32.OpenThread.restype = W.HANDLE
+k32.OpenThread.argtypes = [W.DWORD, W.BOOL, W.DWORD]
+k32.CloseHandle.argtypes = [W.HANDLE]
+k32.GetThreadDescription.argtypes = [W.HANDLE, ctypes.POINTER(ctypes.c_wchar_p)]
+k32.LocalFree.argtypes = [ctypes.c_void_p]
+
+
+def thread_name(tid: int) -> str:
+    handle = k32.OpenThread(0x0800, False, tid)
+    if not handle:
+        return "?"
+    said = ctypes.c_wchar_p()
+    name = "?"
+    if k32.GetThreadDescription(handle, ctypes.byref(said)) >= 0 and said.value is not None:
+        name = said.value or "(unnamed)"
+        k32.LocalFree(ctypes.cast(said, ctypes.c_void_p))
+    k32.CloseHandle(handle)
+    return name
+
+
+def threads(pid: int) -> dict[int, tuple[str, float]]:
+    try:
+        return {t.id: (thread_name(t.id), t.user_time + t.system_time) for t in psutil.Process(pid).threads()}
+    except psutil.Error:
+        return {}
 
 
 def qpc() -> int:
@@ -67,26 +92,62 @@ class Input(ctypes.Structure):
     _fields_ = [("type", W.DWORD), ("u", Either)]
 
 
-def send(flags: int, x: int = 0, y: int = 0, data: int = 0) -> None:
+POSTED = False
+u32.WindowFromPoint.argtypes = [W.POINT]
+u32.WindowFromPoint.restype = W.HWND
+u32.ScreenToClient.argtypes = [W.HWND, ctypes.POINTER(W.POINT)]
+u32.GetCursorPos.argtypes = [ctypes.POINTER(W.POINT)]
+
+
+def send(flags: int, x: int = 0, y: int = 0, data: int = 0) -> int:
     sent = Input(type=0)
     sent.mi = Mouse(int(x * 65535 / (WIDE - 1)), int(y * 65535 / (HIGH - 1)), data & 0xFFFFFFFF, flags, 0, 0)
-    u32.SendInput(1, ctypes.byref(sent), ctypes.sizeof(Input))
+    return u32.SendInput(1, ctypes.byref(sent), ctypes.sizeof(Input))
+
+
+def post(x: int, y: int, msg: int, wp: int, screen: bool = False) -> None:
+    hwnd = u32.WindowFromPoint(W.POINT(x, y))
+    pt = W.POINT(x, y)
+    if not screen:
+        u32.ScreenToClient(hwnd, ctypes.byref(pt))
+    u32.PostMessageW(hwnd, msg, wp, ((pt.y & 0xFFFF) << 16) | (pt.x & 0xFFFF))
+
+
+def input_check() -> dict:
+    got = send(0x8001, 123, 77)
+    err = ctypes.get_last_error()
+    time.sleep(0.3)
+    p = W.POINT()
+    u32.GetCursorPos(ctypes.byref(p))
+    return {"sendinput_returned": got, "last_error": err, "cursor": [p.x, p.y], "moved": abs(p.x - 123) <= 2 and abs(p.y - 77) <= 2}
 
 
 def move(x: int, y: int) -> None:
-    send(0x8001, x, y)
+    if POSTED:
+        post(x, y, 0x0200, 0)
+    else:
+        send(0x8001, x, y)
 
 
 def wheel(x: int, y: int, delta: int) -> None:
-    send(0x8800 | 0x0001, x, y, delta)
+    if POSTED:
+        post(x, y, 0x020A, (delta & 0xFFFF) << 16, screen=True)
+    else:
+        send(0x8800 | 0x0001, x, y, delta)
 
 
 def down(x: int, y: int) -> None:
-    send(0x8002 | 0x0001, x, y)
+    if POSTED:
+        post(x, y, 0x0201, 1)
+    else:
+        send(0x8002 | 0x0001, x, y)
 
 
 def up(x: int, y: int) -> None:
-    send(0x8004 | 0x0001, x, y)
+    if POSTED:
+        post(x, y, 0x0202, 0)
+    else:
+        send(0x8004 | 0x0001, x, y)
 
 
 class Header(ctypes.Structure):
@@ -364,6 +425,8 @@ class Spike:
         gproc, gout = self.gpu_start(f"{mode}-{name}")
         time.sleep(1.0)
         c0 = self.cpu(proc.pid)
+        watched = {pid for pid, (role, _) in c0.items() if role in ("browser", "gpu")}
+        th0 = {pid: threads(pid) for pid in watched}
         q0 = qpc()
         t0 = time.perf_counter()
         notches = 0
@@ -376,10 +439,24 @@ class Spike:
                 time.sleep(0.5)
         took = time.perf_counter() - t0
         c1 = self.cpu(proc.pid)
+        th1 = {pid: threads(pid) for pid in watched}
         q1 = qpc()
         roles = {pid: role for pid, (role, _) in c1.items()}
         gpu = self.gpu_end(gproc, gout, roles)
         self.close(proc)
+        hot = {}
+        for pid in watched:
+            role = c0[pid][0]
+            rows = []
+            for tid, (tname, spent) in th1.get(pid, {}).items():
+                was = th0.get(pid, {}).get(tid, (tname, 0.0))[1]
+                rows.append((round((spent - was) / WINDOW * 100.0, 2), tname))
+            rows.sort(reverse=True)
+            hot[role] = [f"{n} {v}" for v, n in rows[:8] if v > 0.2]
+        per_process = sorted(
+            ((role, round((spent - c0.get(pid, (role, 0.0))[1]) / WINDOW * 100.0, 2)) for pid, (role, spent) in c1.items()),
+            key=lambda x: -x[1],
+        )
         cpu_role: dict[str, float] = {}
         renderers = 0
         for pid, (role, spent) in c1.items():
@@ -404,6 +481,8 @@ class Spike:
             "cpu_pct": {k: round(v, 2) for k, v in sorted(cpu_role.items())},
             "cpu_total_pct": round(sum(cpu_role.values()), 2),
             "renderers": renderers,
+            "per_process": per_process,
+            "hot_threads": hot,
             "gpu": gpu,
             "wheel_notches": notches,
             "console": [e.get("msg") for e in self.events(log) if e.get("ev") == "console"],
@@ -459,6 +538,7 @@ class Spike:
         times = []
         sent = []
         timeouts = 0
+        first_pixels = grab.take()[:8].hex()
         for i in range(trials + 1):
             before = grab.take()
             t0 = qpc()
@@ -480,7 +560,7 @@ class Spike:
                     sent.append(t0)
             time.sleep(0.3 + random.random() * 0.2)
         self.close(proc)
-        result: dict = {"mode": mode, "trials": trials, "timeouts": timeouts, "refresh_hz": refresh}
+        result: dict = {"mode": mode, "trials": trials, "timeouts": timeouts, "refresh_hz": refresh, "first_pixels": first_pixels, "injection": "PostMessage" if POSTED else "SendInput"}
         if times:
             ordered = sorted(times)
             frame = 1000.0 / refresh
@@ -528,7 +608,12 @@ def main() -> None:
     out = pathlib.Path(a.out).resolve()
     out.mkdir(parents=True, exist_ok=True)
     spike = Spike(a.exe, out)
-    results: dict = {"label": a.label, "screen": [WIDE, HIGH], "window": [spike.w, spike.h], "hole": spike.hole}
+    global POSTED
+    check = input_check()
+    POSTED = not check["moved"]
+    check["injection"] = "PostMessage" if POSTED else "SendInput"
+    print("input", json.dumps(check), flush=True)
+    results: dict = {"input": check, "label": a.label, "screen": [WIDE, HIGH], "window": [spike.w, spike.h], "hole": spike.hole}
     variants = [
         [],
         ["--ignore-gpu-blocklist"],

@@ -64,6 +64,8 @@ struct Comp {
     ps: ID3D11PixelShader,
     cb: ID3D11Buffer,
     query: ID3D11Query,
+    fence: Option<(ID3D11Fence, ID3D11DeviceContext4, HANDLE)>,
+    fence_value: u64,
     layers: [Layer; 3],
     pending: bool,
     dirty: Vec<RECT>,
@@ -240,6 +242,15 @@ unsafe fn make(hwnd: HWND, cfg: &Config) -> Result<Comp> {
     device.CreateBuffer(&cb_desc, Some(&init), Some(&mut cb))?;
     let mut query = None;
     device.CreateQuery(&D3D11_QUERY_DESC { Query: D3D11_QUERY_EVENT, MiscFlags: 0 }, Some(&mut query))?;
+    let fence = (|| -> Result<(ID3D11Fence, ID3D11DeviceContext4, HANDLE)> {
+        let d5: ID3D11Device5 = device.cast()?;
+        let mut fence: Option<ID3D11Fence> = None;
+        d5.CreateFence(0, D3D11_FENCE_FLAG_NONE, &mut fence)?;
+        let ctx4: ID3D11DeviceContext4 = ctx.cast()?;
+        Ok((fence.unwrap(), ctx4, CreateEventW(None, false, false, None)?))
+    })();
+    log::line(format!(r#"{{"ev":"sync","fence":{}}}"#, fence.is_ok()));
+    let fence = fence.ok();
     let dirty_event = CreateEventW(None, false, false, None)?;
     let reply = CreateEventW(None, false, false, None)?;
     REPLY = reply.0 as usize;
@@ -256,6 +267,8 @@ unsafe fn make(hwnd: HWND, cfg: &Config) -> Result<Comp> {
         ps: ps.unwrap(),
         cb: cb.unwrap(),
         query: query.unwrap(),
+        fence,
+        fence_value: 0,
         layers: Default::default(),
         pending: false,
         dirty: Vec::new(),
@@ -446,26 +459,35 @@ impl Comp {
                 back: 1,
             };
             self.ctx.CopySubresourceRegion(&layer, 0, area.x as u32, area.y as u32, 0, &shared, 0, Some(&bx));
-            self.ctx.End(&self.query);
-            self.ctx.Flush();
             let tw = log::qpc();
-            let limit = log::freq() / 2;
-            loop {
-                let mut done = windows::core::BOOL(0);
-                let _ = self.ctx.GetData(
-                    &self.query,
-                    Some(&mut done as *mut _ as *mut c_void),
-                    std::mem::size_of::<windows::core::BOOL>() as u32,
-                    0,
-                );
-                if done.as_bool() {
-                    break;
+            if let Some((fence, ctx4, event)) = &self.fence {
+                self.fence_value += 1;
+                let _ = ctx4.Signal(fence, self.fence_value);
+                self.ctx.Flush();
+                if fence.SetEventOnCompletion(self.fence_value, *event).is_ok() {
+                    WaitForSingleObject(*event, 500);
                 }
-                if log::qpc() - tw > limit {
-                    log::line(r#"{"ev":"error","what":"copy fence timeout"}"#.into());
-                    break;
+            } else {
+                self.ctx.End(&self.query);
+                self.ctx.Flush();
+                let limit = log::freq() / 2;
+                loop {
+                    let mut done = windows::core::BOOL(0);
+                    let _ = self.ctx.GetData(
+                        &self.query,
+                        Some(&mut done as *mut _ as *mut c_void),
+                        std::mem::size_of::<windows::core::BOOL>() as u32,
+                        0,
+                    );
+                    if done.as_bool() {
+                        break;
+                    }
+                    if log::qpc() - tw > limit {
+                        log::line(r#"{"ev":"error","what":"copy fence timeout"}"#.into());
+                        break;
+                    }
+                    std::thread::yield_now();
                 }
-                std::thread::yield_now();
             }
             wait = log::qpc() - tw;
         }
