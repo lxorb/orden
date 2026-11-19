@@ -235,6 +235,7 @@ const nameLength = (path: string) => path.length - path.lastIndexOf('/') - 1
 export interface Saving {
   docBy?: string
   epoch?: number
+  staysDeleted?: boolean
   versionBy?: string
 }
 export async function saveNote(
@@ -255,7 +256,7 @@ export async function saveNote(
     seq: 0,
     version: note.version + 1,
     updated_at: now(),
-    deleted: 0,
+    deleted: saving.staysDeleted ? note.deleted : 0,
     size,
     hash,
     front: writeFront(content),
@@ -267,7 +268,8 @@ export async function saveNote(
     env,
     note.space_id,
     env.DB.prepare(
-      `update notes set path = ?2, seq = ${TAKEN_SEQ}, version = ?3, updated_at = ?4, deleted = 0,
+      `update notes set path = ?2, seq = ${TAKEN_SEQ}, version = ?3, updated_at = ?4,
+                        deleted = ${saving.staysDeleted ? 'deleted' : '0'},
                         size = ?5, hash = ?6, front = ?7, front_rev = ?8,
                         doc_seq = case when ?9 then ${TAKEN_SEQ} else ?10 end, doc_by = ?11,
                         updated_by = ?12, ${changesBy('?12')},
