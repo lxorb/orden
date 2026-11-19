@@ -156,6 +156,10 @@ export function start(): () => void {
       .turn('right')
       .then(() => import('./overview/src/api'))
       .then((one) => one.wakeFaces())
+    void startup
+      .turn('right')
+      .then(() => import('./auto-tidy/src/api'))
+      .then((one) => stops.keep(one.startAutoTidy()))
     void startup.turn('rooms').then(() =>
       import('./sync-client/src/api').then(({ connect }) => {
         connect()
