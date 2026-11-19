@@ -111,6 +111,7 @@ export const settingsWindow = (): SettingsWindowPort =>
     open: false,
     at: null,
     historyOpen: false,
+    space: null,
     show: () => undefined,
   }
 export function askSheet(id: SheetId): Promise<void> {

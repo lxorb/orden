@@ -4,6 +4,7 @@ export interface SettingsWindowPort {
   open: boolean
   at: 'access' | null
   historyOpen: boolean
+  readonly space: string | null
   show(section?: SettingsSectionId, space?: string | null, landsOnField?: boolean): void
 }
 export interface SettingsAskPort {

@@ -53,6 +53,7 @@ import {
   portOf,
   portProvided,
   providePort,
+  settingsWindow,
   sayNotice,
   runCommand,
   startHearings,
@@ -197,6 +198,14 @@ describe('shell extension points', () => {
     dropSecond()
     expect(sidebarPart('ask')).toBe(null)
     expect(sidebarPart('time')).toBe(null)
+  })
+  it('says which space Settings is about, and none while nothing provides the window', () => {
+    expect(settingsWindow().space).toBe(null)
+    const window = { open: true, at: null, historyOpen: false, space: '/s', show: () => undefined }
+    const unbind = providePort('settings.window', window)
+    expect(settingsWindow().space).toBe('/s')
+    unbind()
+    expect(settingsWindow().space).toBe(null)
   })
   it('asks a port for each kind of thing quitting would stop', async () => {
     expect([...STOPPING_KINDS]).toEqual(['terminal', 'thread'])
