@@ -1798,6 +1798,9 @@
   outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
+:root[data-pointing] #write .orden-cover-drag:focus-visible::after {
+  outline: none;
+}
 .orden-chart {
   margin: 0.4em 0;
   white-space: normal;

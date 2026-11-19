@@ -56,6 +56,23 @@ button {
   outline: var(--focus-ring);
   outline-offset: var(--focus-ring-offset);
 }
+:root[data-pointing]
+  :focus-visible:not(
+    textarea,
+    [contenteditable],
+    input:not(
+      [type='checkbox'],
+      [type='radio'],
+      [type='range'],
+      [type='button'],
+      [type='submit'],
+      [type='reset'],
+      [type='color'],
+      [type='file']
+    )
+  ) {
+  outline: none;
+}
 .orden-host:focus-visible,
 .cm-content:focus-visible {
   outline: none;

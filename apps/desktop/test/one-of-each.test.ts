@@ -116,6 +116,24 @@ describe('the ring a keyboard leaves', () => {
     expect(tokens).toContain('--focus-ring-offset:')
     expect(shared).toContain('outline: var(--focus-ring)')
   })
+  test('is never left by a pointer press, only text fields keeping theirs', () => {
+    const sheet = ['base.css', 'editor.css'].map((name) => readFileSync(join(THEMES, name), 'utf8')).join('\n')
+    const POINTING = /^:root\[data-pointing\]\s*/
+    const parts = (selector: string) => selector.split(/,(?![^(]*\))/).map((one) => one.trim())
+    const taken = rules(sheet)
+      .filter((rule) => POINTING.test(rule.selector) && outlines(rule.declarations).includes('none'))
+      .map((rule) => rule.selector.replace(POINTING, '').replace(/\s+/g, ' '))
+    const everything = taken.find((one) => one.startsWith(':focus-visible')) ?? ''
+    expect(everything).toContain('textarea')
+    expect(everything).toContain('[contenteditable]')
+    const left = rules(sheet)
+      .filter((rule) => !POINTING.test(rule.selector))
+      .filter((rule) => outlines(rule.declarations).some((value) => value !== 'none'))
+      .flatMap((rule) => parts(rule.selector))
+      .filter((part) => part.includes(':focus-visible'))
+      .filter((part) => (part.includes('::') ? !taken.includes(part) : !everything))
+    expect(left, `a pointer press leaves these rings: ${left.join(', ')}`).toEqual([])
+  })
   test('and no component draws one of its own', () => {
     const own = components
       .filter((one) =>
