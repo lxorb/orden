@@ -398,6 +398,74 @@ class Linux:
         if name in X_NAMES:
             return X_NAMES[name]
         return f"{name}:{shape}" if name else f"shape:{shape}"
+class LinuxPad(Linux):
+    def __init__(self) -> None:
+        super().__init__()
+        from evdev import AbsInfo, UInput, ecodes
+        self.e = ecodes
+        wide, tall = AbsInfo(0, 0, 4000, 0, 0, 40), AbsInfo(0, 0, 2500, 0, 0, 40)
+        self.pad = UInput(
+            {
+                ecodes.EV_KEY: [ecodes.BTN_LEFT, ecodes.BTN_TOOL_FINGER, ecodes.BTN_TOOL_DOUBLETAP, ecodes.BTN_TOOL_TRIPLETAP, ecodes.BTN_TOUCH],
+                ecodes.EV_ABS: [
+                    (ecodes.ABS_X, wide), (ecodes.ABS_Y, tall),
+                    (ecodes.ABS_MT_SLOT, AbsInfo(0, 0, 4, 0, 0, 0)),
+                    (ecodes.ABS_MT_TRACKING_ID, AbsInfo(0, 0, 65535, 0, 0, 0)),
+                    (ecodes.ABS_MT_POSITION_X, wide), (ecodes.ABS_MT_POSITION_Y, tall),
+                ],
+            },
+            name="Orden parity touchpad",
+            bustype=0x18,
+            input_props=[ecodes.INPUT_PROP_POINTER, ecodes.INPUT_PROP_BUTTONPAD],
+        )
+        time.sleep(2)
+    def fingers(self, at: list[tuple[int, int] | None]) -> None:
+        e, pad = self.e, self.pad
+        for slot, where in enumerate(at):
+            pad.write(e.EV_ABS, e.ABS_MT_SLOT, slot)
+            if where is None:
+                pad.write(e.EV_ABS, e.ABS_MT_TRACKING_ID, -1)
+                continue
+            pad.write(e.EV_ABS, e.ABS_MT_TRACKING_ID, 100 + slot)
+            pad.write(e.EV_ABS, e.ABS_MT_POSITION_X, where[0])
+            pad.write(e.EV_ABS, e.ABS_MT_POSITION_Y, where[1])
+        down = sum(1 for where in at if where)
+        pad.write(e.EV_KEY, e.BTN_TOUCH, int(down > 0))
+        pad.write(e.EV_KEY, e.BTN_TOOL_DOUBLETAP, int(down == 2))
+        first = next((where for where in at if where), None)
+        if first:
+            pad.write(e.EV_ABS, e.ABS_X, first[0])
+            pad.write(e.EV_ABS, e.ABS_Y, first[1])
+        pad.syn()
+        time.sleep(0.012)
+    def two(self, dx: float, dy: float, steps: int) -> None:
+        x, y = 2000.0, 1250.0
+        for step in range(steps + 1):
+            at = (round(x + dx * step / steps), round(y + dy * step / steps))
+            self.fingers([(at[0] - 300, at[1]), (at[0] + 300, at[1])])
+        self.fingers([None, None])
+        time.sleep(0.05)
+    def fine(self, down: float, steps: int) -> None:
+        self.two(0, max(-1100.0, min(1100.0, down * 2)), steps)
+    def sideways(self, across: float, steps: int) -> None:
+        self.two(max(-1600.0, min(1600.0, across * 1.5)), 0, steps)
+    def pinch(self, at: tuple[float, float], out: bool) -> None:
+        self.move(*at)
+        time.sleep(0.3)
+        for step in range(60):
+            apart = 300 + (step if out else 59 - step) * 15
+            self.fingers([(2000 - apart, 1250), (2000 + apart, 1250)])
+        self.fingers([None, None])
+def linux_hand() -> Any:
+    if os.access("/dev/uinput", os.W_OK):
+        try:
+            return LinuxPad()
+        except (ImportError, OSError) as error:
+            print(f"::warning::no touchpad could be made: {error}", flush=True)
+    return Linux()
+NAMED_CURSORS = {"arrow", "ibeam", "hand", "resize-we", "resize-ns", "resize-nwse", "resize-nesw", "move", "no", "wait", "busy", "cross"}
+def named(cursor: Any) -> bool:
+    return isinstance(cursor, str) and cursor in NAMED_CURSORS
 def borrowed(name: str) -> Any:
     spec = importlib.util.spec_from_file_location(name.replace("-", "_"), HERE / f"{name}.py")
     if spec is None or spec.loader is None:
@@ -502,6 +570,18 @@ class Drive:
         one = {"item": item, "check": check, "platform": PLATFORM, "web": web, "note": note, "ok": bool(ok)}
         self.rows.append(one)
         print(f"{'ok ' if ok else 'BAD'} [{item}] {check}: web {json.dumps(web)} note {json.dumps(note)}", flush=True)
+    def cursor_row(self, check: str, web: Any, note: Any, ok: bool) -> None:
+        if not named(note):
+            self.unmeasurable(3, check, f"this machine shows no cursor the drive can name (the note side reads {note!r})")
+        else:
+            self.row(3, check, web, note, ok)
+    def answering(self, seconds: float = 90) -> float | None:
+        began = time.monotonic()
+        while time.monotonic() - began < seconds:
+            if self.app.eval("1 + 1", 10) == 2:
+                return time.monotonic() - began
+            time.sleep(1)
+        return None
     def unmeasurable(self, item: int, check: str, why: str) -> None:
         self.unmeasured.append(f"[{item}] {check}: {why}")
         print(f"::notice::not measured on {PLATFORM}: [{item}] {check}: {why}", flush=True)
@@ -509,6 +589,18 @@ class Drive:
         said = self.app.eval(INNER)
         if not isinstance(said, dict) or "x" not in said:
             raise SystemExit(f"where the window is was not said: {said}")
+        if sys.platform == "darwin":
+            import Quartz
+            seen = [
+                dict(one["kCGWindowBounds"])
+                for one in Quartz.CGWindowListCopyWindowInfo(Quartz.kCGWindowListOptionOnScreenOnly, Quartz.kCGNullWindowID) or []
+                if int(one.get("kCGWindowOwnerPID", 0)) == self.pid and int(one.get("kCGWindowLayer", 0)) == 0
+            ]
+            if seen:
+                bounds = max(seen, key=lambda one: one["Width"] * one["Height"])
+                if (bounds["X"], bounds["Y"]) != (said["x"] / said["scale"], said["y"] / said["scale"]):
+                    print(f"the app says its window is at {said}, the screen shows it at {bounds}", flush=True)
+                said = {**said, "x": bounds["X"] * said["scale"], "y": bounds["Y"] * said["scale"]}
         return said
     def screen(self, x: float, y: float) -> tuple[float, float]:
         inner = self.where
@@ -615,6 +707,8 @@ class Drive:
         time.sleep(1.2)
     def show(self, kind: str) -> dict[str, Any]:
         tab = self.ids["W"] if kind == "web" else self.ids["N"]
+        if self.answering(60) is None:
+            raise SystemExit(f"the app stopped answering before the {kind} tab was shown")
         self.js("orden.workspace.focusPane(@S@); orden.workspace.activate(@T@); return true", S=self.ids["S"], T=tab)
         if kind == "web":
             ready = self.until("const p = orden.pages.of(@W@); return !!(p && p.sent && p.sent.visible && p.live)", 40, W=tab)
@@ -752,18 +846,21 @@ class Drive:
                 continue
             self.row(3, f"from the pane onto {what}: the app hears the pointer (ms)", w["heard ms"], n["heard ms"], soon(w["heard ms"], n["heard ms"]))
             self.row(3, f"from the pane onto {what}: its hover shows (ms)", w["hover ms"], n["hover ms"], soon(w["hover ms"], n["hover ms"]))
-            self.row(3, f"from the pane onto {what}: the cursor", w["cursor"], n["cursor"], w["cursor"] == n["cursor"] and not n["cursor"].startswith("unknown"))
+            self.cursor_row(f"from the pane onto {what}: the cursor", w["cursor"], n["cursor"], w["cursor"] == n["cursor"])
         w, n = web["corner"], note["corner"]
         self.row(3, "at the pane's rounded corner: the app hears the pointer (ms)", w["heard ms"], n["heard ms"], soon(w["heard ms"], n["heard ms"]))
-        self.row(3, "at the pane's rounded corner: the cursor", w["cursor"], n["cursor"], w["cursor"] == n["cursor"] and not n["cursor"].startswith("unknown"))
+        self.cursor_row("at the pane's rounded corner: the cursor", w["cursor"], n["cursor"], w["cursor"] == n["cursor"])
         if web.get("band") and note.get("band"):
             def wide(band: list[str]) -> int:
                 return sum(1 for one in band if one.startswith("resize"))
-            self.row(3, "the divider's resize cursor band, px of -6..6 around its line", {"px": wide(web["band"]), "cursors": web["band"]},
-                     {"px": wide(note["band"]), "cursors": note["band"]}, wide(note["band"]) > 0 and wide(web["band"]) == wide(note["band"]))
-        self.row(3, "the cursor over the pane's words", web["text"], note["text"], note["text"] == "ibeam" and web["text"] == note["text"])
-        self.row(3, "the cursor over a link (the page's link, the app's own pointer cursor)", web["link"], note["link"],
-                 note["link"] == "hand" and web["link"] == note["link"])
+            if not any(named(one) for one in note["band"]):
+                self.unmeasurable(3, "the divider's resize cursor band", f"this machine names no cursor the drive can read: {sorted(set(note['band']))}")
+            else:
+                self.row(3, "the divider's resize cursor band, px of -6..6 around its line", {"px": wide(web["band"]), "cursors": web["band"]},
+                         {"px": wide(note["band"]), "cursors": note["band"]}, wide(note["band"]) > 0 and wide(web["band"]) == wide(note["band"]))
+        self.cursor_row("the cursor over the pane's words", web["text"], note["text"], note["text"] == "ibeam" and web["text"] == note["text"])
+        self.cursor_row("the cursor over a link (the page's link, the app's own pointer cursor)", web["link"], note["link"],
+                        note["link"] == "hand" and web["link"] == note["link"])
         w, n = web["leak"], note["leak"]
         self.row(3, "an app layer over the pane keeps the pane's hover from showing through", w, n,
                  n["layer heard"] > 0 and n["pane heard"] == 0 and w["layer heard"] > 0 and w["pane heard"] == 0 and not w.get("page hover"))
@@ -939,6 +1036,10 @@ class Drive:
                 drops = self.site.fresh().get("drops", []) if kind == "web" else []
                 one["system file"] = {"how": how, "page note opened": opened, "page took": any(pdf.name in drop.get("files", []) for drop in drops)}
                 self.close_like("one.kind === 'pages'")
+                waited = self.answering()
+                if waited is None or waited > 2:
+                    print(f"::warning::after a file dropped from the system on the {kind}, the app took {waited} s to answer again", flush=True)
+                    one["system file"]["app answered after s"] = None if waited is None else round(waited, 1)
             got[kind] = one
             print(f"{kind}: {json.dumps(one)}", flush=True)
         web, note = got["web"], got["note"]
@@ -1196,10 +1297,8 @@ def main() -> int:
     (config / "automation.json").write_text(json.dumps({"port": 0, "secret": secret, "eval": True}), encoding="utf-8")
     spaces = pathlib.Path(tempfile.mkdtemp(prefix="orden-parity-pointer-spaces-"))
     outside = pathlib.Path(tempfile.mkdtemp(prefix="orden-parity-pointer-files-"))
-    hand: Any = Windows() if sys.platform == "win32" else Mac() if sys.platform == "darwin" else Linux()
-    if PLATFORM == "linux":
-        for name in ("fine", "sideways", "pinch"):
-            assert not hasattr(hand, name)
+    hand: Any = Windows() if sys.platform == "win32" else Mac() if sys.platform == "darwin" else linux_hand()
+    print(f"the hand: {type(hand).__name__}", flush=True)
     process = subprocess.Popen([str(args.exe)], env={**os.environ, "ORDEN_SPACES_DIR": str(spaces)}, cwd=str(args.exe.parent))
     drive: Drive | None = None
     failed: str | None = None
