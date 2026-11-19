@@ -37,6 +37,7 @@ pub struct Engine {
     pub dialog_answer: fn(u64, bool, Option<String>) -> bool,
     pub permissions: fn(Page, Permissions) -> Page,
     pub permission_answer: fn(u64, bool) -> bool,
+    pub zoom: fn(&PlatformWebview) -> f64,
 }
 static ENGINE: std::sync::OnceLock<Engine> = std::sync::OnceLock::new();
 pub fn hand(engine: Engine) {

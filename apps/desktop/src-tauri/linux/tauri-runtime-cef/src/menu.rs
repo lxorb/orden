@@ -94,7 +94,7 @@ fn said(text: String) -> Option<String> {
   (!text.is_empty()).then_some(text)
 }
 
-pub(crate) fn zoom_factor(level: f64) -> f64 {
+pub fn zoom_factor(level: f64) -> f64 {
   let factor = 1.2_f64.powf(level);
   if factor.is_finite() && factor > 0.0 { factor } else { 1.0 }
 }

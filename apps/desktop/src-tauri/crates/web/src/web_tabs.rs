@@ -333,6 +333,7 @@ fn opening(place: Option<Place>, url: &str, pass: bool) -> String {
         crate::web_swipe::script().to_string(),
         crate::web_pointer::script().to_string(),
         crate::web_painted::script().to_string(),
+        crate::web_select::script().to_string(),
         crate::web_media::script().to_string(),
     ];
     #[cfg(windows)]
@@ -1230,11 +1231,12 @@ mod tests {
         assert_eq!(
             opening(None, "https://a.example/page", true),
             format!(
-                "{};\n{};\n{};\n{};\n{};\n{}{};\n",
+                "{};\n{};\n{};\n{};\n{};\n{};\n{}{};\n",
                 crate::web_opens::script(),
                 crate::web_swipe::script(),
                 crate::web_pointer::script(),
                 crate::web_painted::script(),
+                crate::web_select::script(),
                 crate::web_media::script(),
                 if cfg!(windows) { format!("{};\n", super::bars()) } else { String::new() },
                 crate::web_pass::script()
