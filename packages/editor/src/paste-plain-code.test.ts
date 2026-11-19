@@ -5,11 +5,13 @@ import { EditorView } from '@codemirror/view'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { ordenMarkdownExtensions } from './markdown/extensions'
+import { loadLineCommands } from './line-door'
 import { pastePlain } from './paste'
 
-beforeAll(() => {
+beforeAll(async () => {
   Range.prototype.getClientRects = () => [] as unknown as DOMRectList
   Range.prototype.getBoundingClientRect = () => new DOMRect()
+  await loadLineCommands()
 })
 async function pastedPlainly(marked: string, text: string): Promise<string> {
   const caret = marked.indexOf('|')
