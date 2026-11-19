@@ -91,7 +91,7 @@
 {/snippet}
 
 <div class="date" bind:this={host}>
-  <div class={bare ? 'bare' : 'orden-field is-value'} class:open>
+  <div class={bare ? 'bare' : 'box orden-field is-value'} class:open>
     <input
       bind:this={field}
       type="text"
@@ -195,6 +195,10 @@
   }
   .pop {
     z-index: var(--z-menu);
+  }
+  :global([data-touch]) .box {
+    min-height: var(--touch-target);
+    font-size: var(--touch-text);
   }
   .foot {
     display: flex;

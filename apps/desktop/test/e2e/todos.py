@@ -102,6 +102,29 @@ def lacks(page: Page, name: str, title: str) -> None:
         page.evaluate(AGAIN)
         page.wait_for_timeout(1000)
     wrong(f"[{name}] the todos still hold {title}: {now}")
+def gone_from(page: Page, scope: str, *wanted: str) -> None:
+    page.wait_for_function(f"(wanted) => ![...document.querySelectorAll('{scope} [data-todo] .title')].some((one) => wanted.includes(one.textContent.trim()))", arg=list(wanted))
+    left = [str(one[0]) for one in held(page)]
+    if any(one in left for one in wanted):
+        wrong(f"{wanted} are still held: {left}")
+def row_acts(page: Page, scope: str) -> None:
+    for title in ["Menu away", "Key away", "Pick one", "Pick two"]:
+        add(page, title)
+    row = lambda title: page.locator(f"{scope} [data-todo]", has_text=title).first
+    row("Menu away").locator(".body").click(button="right")
+    page.locator(".menu [role=menuitem]", has_text="Delete").first.click()
+    gone_from(page, scope, "Menu away")
+    row("Key away").locator(".body").focus()
+    page.keyboard.press("Delete")
+    gone_from(page, scope, "Key away")
+    row("Pick one").locator(".body").click(modifiers=["Alt"])
+    row("Pick two").locator(".body").click(modifiers=["Alt"])
+    if page.locator(f"{scope} [data-todo].is-picked").count() != 2:
+        wrong("an alt click does not pick a todo row")
+    shot(page, "08-picked")
+    page.keyboard.press("Delete")
+    page.locator("[role=dialog] button[type=submit]", has_text="Delete").click()
+    gone_from(page, scope, "Pick one", "Pick two")
 def pick_label(page: Page, scope: str, name: str) -> None:
     page.locator(f"{scope} [data-todos-label]").click()
     page.locator(f"{scope} .search").fill(name)
@@ -190,6 +213,8 @@ def main() -> int:
         desk.wait_for_function("() => [...document.querySelectorAll('[data-todos-board] [data-todo] .title')].some((one) => one.textContent.trim() === 'Throw this away too')")
         delete(desk, "[data-todos-board]", "Throw this away too")
         say("Delete todo on the board deletes it")
+        row_acts(desk, "[data-todos-panel]")
+        say("a todo row deletes from its menu, by the Delete key, and with others picked")
         signed_in(desk, token)
         holds(desk, "desk", "Call the bank", "Water the plants", "Read a book", "Starts next week")
         say("signed in, the local todos went into the account")

@@ -49,20 +49,22 @@
 <div class="labels" bind:this={root} onfocusout={away}>
   <button
     type="button"
-    class="pick"
+    class="pick orden-chip"
+    class:is-on={chosen !== null}
     aria-haspopup="listbox"
     aria-expanded={open}
     data-todos-label
     onclick={() => (open ? (open = false) : void show())}
   >
-    {chosen ?? 'All labels'}
+    <span class="text">{chosen ?? 'All labels'}</span>
+    <svg class="chevron" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 4l3 3 3-3" /></svg>
   </button>
   {#if open}
-    <div class="list" role="listbox" aria-label="Label" data-covers>
+    <div class="list orden-layer" role="listbox" aria-label="Label" data-covers>
       <input
         bind:this={field}
         bind:value={typed}
-        class="search"
+        class="search orden-field"
         type="search"
         placeholder="Search labels"
         {onkeydown}
@@ -71,8 +73,8 @@
         type="button"
         role="option"
         aria-selected={chosen === null}
-        class="one"
-        class:on={chosen === null}
+        class="one orden-row is-short"
+        class:is-on={chosen === null}
         onclick={() => choose(null)}
       >
         All labels
@@ -82,8 +84,8 @@
           type="button"
           role="option"
           aria-selected={chosen === label}
-          class="one"
-          class:on={chosen === label}
+          class="one orden-row is-short"
+          class:is-on={chosen === label}
           onclick={() => choose(label)}
         >
           {label}
@@ -102,17 +104,29 @@
     min-width: 0;
   }
   .pick {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
     max-width: 100%;
-    padding: var(--space-1) var(--space-2);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: var(--surface);
-    color: var(--text);
-    font: inherit;
-    font-size: var(--text-sm);
+  }
+  .text {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .chevron {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  [aria-expanded='true'] .chevron {
+    transform: rotate(180deg);
   }
   .list {
     position: absolute;
@@ -121,43 +135,19 @@
     z-index: var(--z-popover);
     display: flex;
     flex-direction: column;
+    gap: 1px;
     width: max-content;
     min-width: 12rem;
     max-width: 20rem;
     max-height: 18rem;
     overflow: auto;
     padding: var(--space-1);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: var(--surface);
-    box-shadow: var(--shadow-md);
   }
   .search {
     margin-bottom: var(--space-1);
-    padding: var(--space-1) var(--space-2);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: var(--surface-2);
-    color: var(--text);
-    font: inherit;
-    font-size: var(--text-sm);
   }
   .one {
-    padding: var(--space-1) var(--space-2);
-    border: none;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text);
-    font: inherit;
-    font-size: var(--text-sm);
-    text-align: start;
-  }
-  .one:hover,
-  .one:focus-visible {
-    background: var(--surface-hover);
-  }
-  .one.on {
-    background: var(--surface-selected);
+    flex: none;
   }
   .none {
     margin: 0;

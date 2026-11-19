@@ -9,6 +9,7 @@
   <label class="only">
     <input
       type="checkbox"
+      class="orden-checkbox"
       data-todos-only-space
       checked={shown.onlySpace}
       disabled={shown.space === null}
@@ -32,9 +33,9 @@
   }
   .only {
     display: inline-flex;
-    gap: var(--space-1);
     align-items: center;
-    color: var(--text);
+    color: var(--muted-strong);
+    font-family: var(--font-ui);
     font-size: var(--text-sm);
     white-space: nowrap;
   }

@@ -25,6 +25,15 @@ COVERED = """
   })
 }
 """
+SWIPE = """(selector) => {
+  const row = document.querySelector(selector)
+  const box = row.getBoundingClientRect()
+  const y = box.top + box.height / 2
+  const finger = (type, x) => row.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerType: 'touch', pointerId: 9, clientX: x, clientY: y }))
+  finger('pointerdown', box.right - 20)
+  for (const step of [0.2, 0.4, 0.6, 0.8]) finger('pointermove', box.right - 20 - box.width * step)
+  finger('pointerup', box.right - 20 - box.width * 0.8)
+}"""
 def bar_seen(page: Page) -> bool:
     return bool(page.evaluate(BAR_SEEN))
 def tab(page: Page, name: str) -> None:
@@ -107,6 +116,11 @@ def phone(browser: Browser, dark: bool) -> None:
     page.locator("[data-panel=tasks] [data-todo] .body").first.tap()
     page.locator("[data-panel=tasks] [data-todo-editor] button", has_text="Delete todo").tap()
     wait_for(page, "!document.querySelector('[data-panel=tasks] [data-todo]')", "the todo deleted")
+    page.locator("[data-panel=tasks] [data-todos-add]").fill("eggs")
+    page.locator("[data-panel=tasks] [data-todos-add]").press("Enter")
+    wait_for(page, "document.querySelector('[data-panel=tasks]')?.innerText.includes('eggs')", "the next todo listed")
+    page.evaluate(SWIPE, "[data-panel=tasks] [data-todo]")
+    wait_for(page, "!document.querySelector('[data-panel=tasks] [data-todo]')", "the todo swiped away")
     page.wait_for_timeout(300)
     if page.evaluate(COVERED):
         wrong("[phone] a notice covers the tab bar")

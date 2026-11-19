@@ -1,17 +1,26 @@
 <script lang="ts">
   import { placedBetween, SORTS, startTodos, todos, type Todo, type TodoPatch } from '../../tasks-model/src/api'
+  import { cubicOut } from 'svelte/easing'
+  import { dur, fly } from '../../platform/src/api'
   import { Select } from '../../ui-controls/src/api'
   import { addTodo, patchTodo, removeTodo } from './acts'
   import { dropAt } from './drop-at'
   import Filters from './Filters.svelte'
   import { shellWorld, Shown, SORT_NAMES } from './shown.svelte'
   import TodoEditor from './TodoEditor.svelte'
+  import { rowKeys, TodoRows } from './rows.svelte'
   import TodoRow from './TodoRow.svelte'
 
   startTodos()
   const shown = new Shown(shellWorld(() => todos.todos))
   let typed = $state('')
   let openId = $state<string | null>(null)
+  const rows = new TodoRows({
+    order: () => shown.groups.flatMap((group) => group.todos),
+    opened: () => openId,
+    open: (id) => (openId = id),
+  })
+  $effect(() => rows.keep())
   let dragged = $state<string | null>(null)
   const open = $derived(openId === null ? null : todos.todo(openId))
   async function add() {
@@ -52,19 +61,15 @@
         void add()
       }}
     >
-      <input
-        class="field"
-        type="text"
-        placeholder="Add a todo"
-        aria-label="Add a todo"
-        data-todos-add
-        bind:value={typed}
-      />
+      <label class="orden-field">
+        <svg class="orden-field-mark" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9" /></svg>
+        <input type="text" placeholder="Add a todo" aria-label="Add a todo" data-todos-add bind:value={typed} />
+      </label>
     </form>
   </header>
 
   <div class="body">
-    <div class="columns">
+    <div class="columns" use:rowKeys={rows}>
       {#each shown.groups as group (group.label ?? '')}
         <section class="column" aria-label={group.label ?? 'No label'} data-todos-column>
           <h2>
@@ -74,6 +79,7 @@
           <ul>
             {#each group.todos as todo, at (todo.id)}
               <li
+                class="card"
                 draggable={shown.sort === 'manual'}
                 class:dragging={dragged === todo.id}
                 ondragstart={(event) => {
@@ -99,7 +105,11 @@
                   open={openId === todo.id}
                   showLabels={todo.labels.length > 1}
                   ontoggle={(done: boolean) => void patchTodo(todo.id, { done })}
+                  picked={rows.picking.has(todo.id)}
                   onopen={() => (openId = openId === todo.id ? null : todo.id)}
+                  onpick={(event: MouseEvent) => rows.click(event, todo.id)}
+                  onmenu={(event: MouseEvent) => rows.menu(event, todo)}
+                  onaway={() => void rows.remove([todo.id])}
                 />
               </li>
             {/each}
@@ -123,7 +133,7 @@
       {/each}
     </div>
     {#if open}
-      <aside class="side">
+      <aside class="side" in:fly={{ x: 24, duration: dur(200), easing: cubicOut }}>
         <TodoEditor
           todo={open}
           spaces={shown.spaces}
@@ -146,11 +156,12 @@
     flex-direction: column;
     height: 100%;
     min-height: 0;
+    font-family: var(--font-ui);
   }
   .bar {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-3);
+    gap: var(--space-2) var(--space-3);
     align-items: center;
     padding: var(--space-2) var(--space-3);
     border-bottom: 1px solid var(--line);
@@ -162,22 +173,9 @@
     color: var(--muted);
     font-size: var(--text-sm);
   }
-  .field {
-    padding: var(--space-1) var(--space-2);
-    border: 1px solid var(--line);
-    border-radius: var(--radius-sm);
-    background: var(--surface-2);
-    color: var(--text);
-    font: inherit;
-    font-size: var(--text-sm);
-  }
   .adder {
     flex: 1;
     min-width: 12rem;
-  }
-  .field {
-    width: 100%;
-    color: var(--text-strong);
   }
   .body {
     display: flex;
@@ -199,21 +197,30 @@
     max-height: 100%;
     overflow: auto;
     padding: var(--space-2);
-    border-radius: var(--radius-md);
-    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
   }
   h2 {
     display: flex;
     gap: var(--space-2);
-    align-items: baseline;
+    align-items: center;
     margin: 0 0 var(--space-2);
-    padding: 0 var(--space-2);
+    padding: var(--space-1) var(--space-2) 0;
+    color: var(--text-strong);
     font-size: var(--text-sm);
     font-weight: var(--weight-strong);
   }
   .count {
-    color: var(--muted);
-    font-weight: normal;
+    min-width: 18px;
+    padding: 0 5px;
+    border-radius: 99px;
+    background: var(--surface-3);
+    color: var(--muted-strong);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-row);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
   }
   ul {
     display: flex;
@@ -223,20 +230,27 @@
     padding: 0;
     list-style: none;
   }
-  li {
-    border-radius: var(--radius-row);
-    background: var(--surface);
+  .card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    box-shadow: var(--shadow-sm);
+    transition:
+      opacity var(--dur-fast) var(--ease-out),
+      transform var(--dur-fast) var(--ease-out);
   }
-  li.dragging {
+  .card.dragging {
     opacity: 0.5;
+    transform: scale(0.98);
   }
   .tail {
     min-height: var(--space-3);
-    background: none;
   }
   .empty {
     margin: 0;
+    padding: var(--space-5);
     color: var(--muted);
+    font-size: var(--text-sm);
   }
   .side {
     flex: none;

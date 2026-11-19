@@ -51,7 +51,7 @@ function world(list: Fake[], active: string | null = 'home') {
   return { world: made, read: () => kept }
 }
 describe('tasks-views contract', () => {
-  test('the module reads the model and the shared controls only through their apis and nothing from the shell', () => {
+  test('the module reads the model, the motion, the shortcuts and the shared controls only through their apis and nothing from the shell', () => {
     const src = join(import.meta.dirname, '..', 'src')
     for (const name of readdirSync(src)) {
       const text = readFileSync(join(src, name), 'utf8')
@@ -61,8 +61,12 @@ describe('tasks-views contract', () => {
           one.startsWith('./') ||
           one === 'svelte' ||
           one === '@orden/contracts' ||
+          one === 'svelte/easing' ||
           one === '../../tasks-model/src/api' ||
-          one === '../../ui-controls/src/api'
+          one === '../../platform/src/api' ||
+          one === '../../ui-controls/src/api' ||
+          one === '../../ui-kit/src/api' ||
+          one === '../../shortcuts/src/api'
         expect(allowed, `${name} imports ${one}`).toBe(true)
       }
     }
