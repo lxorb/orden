@@ -62,6 +62,40 @@ describe('the pointer at the edge', () => {
     expect(peek.out).toBe(false)
   })
 })
+describe('measuring where the list starts (#2279)', () => {
+  const measured = () => {
+    const top = vi.fn(() => 0)
+    room.top = top
+    return top
+  }
+  test('waits for a pointer at the edge: a move anywhere else lays nothing out', () => {
+    const top = measured()
+    for (const x of [400, 600, EDGE + 1, 900]) at(x)
+    expect(top).not.toHaveBeenCalled()
+    at(0)
+    expect(top).toHaveBeenCalledTimes(1)
+    expect(peek.out).toBe(true)
+  })
+  test('and for the list to be allowed out, held or touched', () => {
+    const top = measured()
+    room.allowed = false
+    at(0)
+    at(0, 1)
+    at(0, 0, 'touch')
+    expect(top).not.toHaveBeenCalled()
+    expect(peek.out).toBe(false)
+  })
+  test('and out, a move over the list or away from the edge lays nothing out either', () => {
+    at(0)
+    const top = measured()
+    at(100)
+    at(600)
+    expect(top).not.toHaveBeenCalled()
+    room.over = () => false
+    at(0)
+    expect(top).toHaveBeenCalledTimes(1)
+  })
+})
 describe('the list out over the note', () => {
   beforeEach(() => {
     at(0)

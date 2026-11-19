@@ -30,13 +30,13 @@ export class EdgePeek {
     const room = this.room
     if (!room) return
     const edge = event.clientX <= EDGE
-    const beside = event.clientY >= (room.top?.() ?? 0)
+    const beside = () => event.clientY >= (room.top?.() ?? 0)
     if (this.out) {
-      if (room.over(event.clientX, event.clientY) || (edge && beside)) this.stay()
+      if (room.over(event.clientX, event.clientY) || (edge && beside())) this.stay()
       else this.leave()
       return
     }
-    if (edge && beside && event.buttons === 0 && event.pointerType !== 'touch' && room.may()) this.out = true
+    if (edge && event.buttons === 0 && event.pointerType !== 'touch' && room.may() && beside()) this.out = true
   }
   away() {
     if (this.out) this.leave()
