@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { type Importer, providePort } from '@orden/contracts'
 import { beginSetup, gate, loadGuide, loadSetup } from '../src/api'
-import { bringing } from '../src/bring'
+import { bringing, mcpImporting } from '../src/bring'
 import { BROWSERS } from '../src/catalog'
 import { type Reach, stepAfter } from '../src/flow'
 
@@ -22,6 +22,7 @@ const reach = (here: ReadonlySet<Importer>): Reach => ({
   phone: false,
   heard: true,
   connected: false,
+  mcpFound: false,
 })
 const answers = { browser: 'chrome', notes: null, code: null }
 describe('what the setup asks of import', () => {
@@ -49,5 +50,23 @@ describe('what the setup asks of import', () => {
     expect(await bringing().notes('vault')).toEqual({ picked: true, trouble: null })
     unbind()
     expect(await bringing().notes('vault')).toEqual({ picked: false, trouble: null })
+  })
+})
+describe('what the setup asks of the MCP import', () => {
+  test('finds nothing to bring while no module lends the port', async () => {
+    expect(await mcpImporting().scan()).toEqual([])
+    expect(mcpImporting().importable([{ servers: [{ already: false, orden: false }] }])).toBe(false)
+    await expect(mcpImporting().picker()).rejects.toThrow()
+  })
+  test('asks the port that lends it', async () => {
+    const unbind = providePort('import.mcp', {
+      scan: () => Promise.resolve(['found']),
+      importable: (found) => found.length > 0,
+      picker: () => Promise.resolve({ default: 'picker' }),
+    })
+    expect(await mcpImporting().scan()).toEqual(['found'])
+    expect(mcpImporting().importable(['found'])).toBe(true)
+    expect(await mcpImporting().picker()).toEqual({ default: 'picker' })
+    unbind()
   })
 })

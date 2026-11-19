@@ -12,6 +12,7 @@
   import CodeStep from './CodeStep.svelte'
   import HeardStep from './HeardStep.svelte'
   import ImportStep from './ImportStep.svelte'
+  import McpStep from './McpStep.svelte'
   import NotesStep from './NotesStep.svelte'
   import { setup } from './setup-state.svelte'
   import WelcomeStep from './WelcomeStep.svelte'
@@ -25,6 +26,7 @@
     notes: NotesStep,
     code: CodeStep,
     ai: AiStep,
+    mcp: McpStep,
     welcome: WelcomeStep,
   }
   setup.resume()

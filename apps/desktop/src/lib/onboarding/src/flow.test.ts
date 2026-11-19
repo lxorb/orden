@@ -30,6 +30,7 @@ const reach = (change: Partial<Reach> = {}): Reach => ({
   phone: false,
   heard: false,
   connected: false,
+  mcpFound: true,
   ...change,
 })
 function walk(given: Answers, at: Reach): Step[] {
@@ -39,7 +40,18 @@ function walk(given: Answers, at: Reach): Step[] {
 }
 describe('the setup', () => {
   test('asks in the order David settled', () => {
-    expect(STEPS).toEqual(['account', 'appearance', 'heard', 'browser', 'import', 'notes', 'code', 'ai', 'welcome'])
+    expect(STEPS).toEqual([
+      'account',
+      'appearance',
+      'heard',
+      'browser',
+      'import',
+      'notes',
+      'code',
+      'ai',
+      'mcp',
+      'welcome',
+    ])
   })
   test('walks every step for a known browser it can read', () => {
     expect(walk(answers({ browser: 'chrome' }), reach())).toEqual(STEPS)
@@ -54,7 +66,7 @@ describe('the setup', () => {
     expect(stepAfter('browser', answers(), reach())).toBe('notes')
   })
   test('ends on the welcome screen and stays there', () => {
-    expect(stepAfter('ai', answers(), reach())).toBe('welcome')
+    expect(stepAfter('mcp', answers(), reach())).toBe('welcome')
     expect(stepAfter('welcome', answers(), reach())).toBe('welcome')
   })
   test('drops the AI step only where nothing could be connected', () => {
@@ -63,6 +75,12 @@ describe('the setup', () => {
     expect(shows('ai', answers({ code: 'yes' }), web)).toBe(true)
     expect(shows('ai', answers(), web)).toBe(true)
     expect(shows('ai', answers({ code: 'no' }), reach())).toBe(true)
+  })
+  test('offers the MCP servers of other apps right after the AI, and only when some were found', () => {
+    expect(stepAfter('ai', answers(), reach())).toBe('mcp')
+    expect(stepAfter('ai', answers(), reach({ mcpFound: false }))).toBe('welcome')
+    expect(walk(answers({ browser: 'chrome' }), reach({ mcpFound: false }))).not.toContain('mcp')
+    expect(stepAfter('code', answers({ code: 'no' }), reach({ signIns: false }))).toBe('mcp')
   })
 })
 describe('the setup on a phone', () => {
@@ -76,6 +94,10 @@ describe('the setup on a phone', () => {
       'ai',
       'welcome',
     ])
+  })
+  test('never offers the MCP servers of other apps', () => {
+    expect(walk(answers(), phone())).not.toContain('mcp')
+    expect(shows('mcp', answers(), phone())).toBe(false)
   })
   test('does not ask again how people heard of Orden', () => {
     expect(walk(answers(), phone({ heard: true }))).not.toContain('heard')

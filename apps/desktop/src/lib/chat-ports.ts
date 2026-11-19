@@ -1,4 +1,6 @@
 import { providePort } from '@orden/contracts'
+import type { Found } from './mcp-servers/src/api'
+import { isDesktop } from './platform/src/api'
 
 const chatsStore = () => import('./chats-client/src/api').then((one) => one.chatStore()).then(({ chats }) => chats)
 providePort('chats', {
@@ -101,6 +103,16 @@ providePort('import.bring', {
   shared: (json) => (__EVEN_PLUGIN__ ? Promise.resolve(null) : importing().then((one) => one.readShared(json))),
   landShared: (shared, bytes, root, folder) =>
     __EVEN_PLUGIN__ ? Promise.resolve(null) : importing().then((one) => one.landShared(shared, bytes, root, folder)),
+})
+const mcpServers = () => import('./mcp-servers/src/api')
+providePort('import.mcp', {
+  scan: () => (__EVEN_PLUGIN__ || !isDesktop ? Promise.resolve([]) : mcpServers().then((one) => one.scanMcp())),
+  importable: (found) =>
+    (found as readonly Found[]).some((one) => one.servers.some((server) => !server.already && !server.orden)),
+  picker: () =>
+    __EVEN_PLUGIN__ || !isDesktop
+      ? Promise.reject(new Error('no MCP servers here'))
+      : mcpServers().then((one) => one.loadMcpImport()),
 })
 providePort('account.signingOut', {
   signOut: async () => {

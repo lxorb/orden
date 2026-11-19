@@ -1,5 +1,5 @@
 import type { Importer } from '@orden/contracts'
-import { bringing } from './bring'
+import { bringing, mcpImporting } from './bring'
 import { BROWSERS, type Preset, type PresetSetting } from './catalog'
 import { type Answers, firstStep, markdownStyleFor, type Reach, shows, type Step, stepAfter } from './flow'
 import { gate } from './gate.svelte'
@@ -27,6 +27,8 @@ class Setup {
   signIns = $state(false)
   phone = $state(isMobile)
   connected = $state(false)
+  mcp = $state.raw<readonly unknown[]>([])
+  mcpFound = $state(false)
   brought = $state<Brought>({ notes: false, browser: false, ai: false })
   get showing(): boolean {
     return gate.showing
@@ -57,6 +59,7 @@ class Setup {
     stepped(`setup-${step}`)
   }
   async look() {
+    void this.lookForMcp()
     const { signInKind } = await import('./connect')
     this.signIns = (['claude', 'chatgpt', 'gemini'] as const).some((one) => signInKind(one))
     if (this.phone) {
@@ -64,6 +67,17 @@ class Setup {
       this.connected = ai.accounts.length > 0
     } else {
       this.here = await bringing().here()
+    }
+  }
+  private async lookForMcp() {
+    if (this.phone) return
+    const port = mcpImporting()
+    try {
+      this.mcp = await port.scan()
+      this.mcpFound = port.importable(this.mcp)
+    } catch {
+      this.mcp = []
+      this.mcpFound = false
     }
   }
   get reach(): Reach {
@@ -77,6 +91,7 @@ class Setup {
       phone: this.phone,
       heard: heardBefore(),
       connected: this.connected,
+      mcpFound: this.mcpFound,
     }
   }
   private get earlier(): Step[] {
