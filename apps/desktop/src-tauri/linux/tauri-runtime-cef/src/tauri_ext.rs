@@ -443,6 +443,12 @@ pub trait WebviewBuilderCefExt {
   #[must_use]
   fn on_zoom_command<F: Fn(crate::ZoomCommand) + Send + Sync + 'static>(self, handler: F) -> Self;
 
+  #[must_use]
+  fn on_context_menu<F: Fn(crate::ContextMenu) -> bool + Send + Sync + 'static>(
+    self,
+    handler: F,
+  ) -> Self;
+
   /// Keeps the named families of Chrome commands rather than swallowing them.
   ///
   /// A Chrome style browser keeps its whole accelerator table live even hosted as a
@@ -510,6 +516,17 @@ where
     let handler = Arc::new(handler);
     with_cef_webview_attributes(self.runtime_specific_attributes_mut(), |attributes| {
       attributes.zoom_command_handler = Some(handler);
+    });
+    self
+  }
+
+  fn on_context_menu<F: Fn(crate::ContextMenu) -> bool + Send + Sync + 'static>(
+    mut self,
+    handler: F,
+  ) -> Self {
+    let handler = Arc::new(handler);
+    with_cef_webview_attributes(self.runtime_specific_attributes_mut(), |attributes| {
+      attributes.context_menu_handler = Some(handler);
     });
     self
   }

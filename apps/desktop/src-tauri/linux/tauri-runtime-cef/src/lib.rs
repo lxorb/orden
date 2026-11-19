@@ -28,6 +28,8 @@ pub use keys::{FocusHook, KeyHook, hear_keys};
 /// The languages the user asked their operating system for.
 mod locale;
 mod macros;
+mod menu;
+pub use menu::{ContextMenu, ContextMenuHandler, ContextMenuItem, answer_context_menu};
 mod offscreen;
 pub use offscreen::{CursorHandler, Offscreen, OffscreenView};
 mod platform;
