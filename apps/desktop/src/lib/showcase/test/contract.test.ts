@@ -10,6 +10,8 @@ import {
   isDemoCue,
   isDemoReady,
   LATEST_RELEASE,
+  LATEST_RELEASE_API,
+  releaseAssets,
   storyAt,
   type DemoCue,
 } from '../src/api'
@@ -27,6 +29,26 @@ const ANDROID =
 const IPHONE =
   'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148'
 const asset = (name: string) => `https://github.com/lxorb/orden/releases/download/v0.21.1/Orden-0.21.1-${name}`
+const NAMES = [
+  'latest.json',
+  'Orden-0.21.1-android.apk',
+  'Orden-0.21.1-linux-arm64.AppImage',
+  'Orden-0.21.1-linux-arm64.deb',
+  'Orden-0.21.1-linux-x64.AppImage',
+  'Orden-0.21.1-linux-x64.rpm',
+  'Orden-0.21.1-macos-universal.dmg',
+  'Orden-0.21.1-windows-arm64-setup.exe',
+  'Orden-0.21.1-windows-arm64.msi',
+  'Orden-0.21.1-windows-x64-setup.exe',
+  'Orden-0.21.1-windows-x64.msi',
+]
+const ASSETS = releaseAssets({
+  tag_name: 'v0.21.1',
+  assets: NAMES.map((name) => ({
+    name,
+    browser_download_url: `https://github.com/lxorb/orden/releases/download/v0.21.1/${name}`,
+  })),
+})
 describe('the cue the home page sends its demo', () => {
   test('names each scene the demo plays, in the order the page tells them', () => {
     expect(DEMO_SCENES).toEqual(['canvas', 'write', 'browse', 'organize', 'overview'])
@@ -102,28 +124,47 @@ describe('the story the page scrolls through', () => {
   })
 })
 describe('the download button', () => {
-  test('offers the file for the system the visitor is on', () => {
-    expect(downloadFor({ userAgent: MAC }, '0.21.1')).toEqual({
+  test('offers the latest release file for the system the visitor is on, found by its ending', () => {
+    expect(downloadFor({ userAgent: MAC }, ASSETS)).toEqual({
       label: 'Download for macOS',
       href: asset('macos-universal.dmg'),
     })
-    expect(downloadFor({ userAgent: WINDOWS }, '0.21.1').href).toBe(asset('windows-x64-setup.exe'))
-    expect(downloadFor({ userAgent: WINDOWS, architecture: 'arm' }, '0.21.1').href).toBe(
-      asset('windows-arm64-setup.exe'),
-    )
-    expect(downloadFor({ userAgent: LINUX }, '0.21.1')).toEqual({
+    expect(downloadFor({ userAgent: WINDOWS }, ASSETS)).toEqual({
+      label: 'Download for Windows',
+      href: asset('windows-x64-setup.exe'),
+    })
+    expect(downloadFor({ userAgent: WINDOWS, architecture: 'arm' }, ASSETS).href).toBe(asset('windows-arm64-setup.exe'))
+    expect(downloadFor({ userAgent: LINUX }, ASSETS)).toEqual({
       label: 'Download for Linux',
       href: asset('linux-x64.AppImage'),
     })
-    expect(downloadFor({ userAgent: LINUX_ARM }, '0.21.1').href).toBe(asset('linux-arm64.AppImage'))
-    expect(downloadFor({ userAgent: ANDROID }, '0.21.1').href).toBe(asset('android.apk'))
+    expect(downloadFor({ userAgent: LINUX_ARM }, ASSETS).href).toBe(asset('linux-arm64.AppImage'))
+    expect(downloadFor({ userAgent: ANDROID }, ASSETS)).toEqual({
+      label: 'Download for Android',
+      href: asset('android.apk'),
+    })
+  })
+  test('names the system before the release is known, and links the release page meanwhile', () => {
+    expect(downloadFor({ userAgent: MAC })).toEqual({ label: 'Download for macOS', href: LATEST_RELEASE })
+    expect(downloadFor({ userAgent: LINUX }, releaseAssets(null))).toEqual({
+      label: 'Download for Linux',
+      href: LATEST_RELEASE,
+    })
   })
   test('sends anyone it has no file for to the latest release', () => {
     const latest = { label: 'Download', href: LATEST_RELEASE }
-    expect(downloadFor({ userAgent: IPHONE }, '0.21.1')).toEqual(latest)
-    expect(downloadFor({ userAgent: MAC, touchPoints: 5 }, '0.21.1')).toEqual(latest)
-    expect(downloadFor({ userAgent: 'curl/8.0' }, '0.21.1')).toEqual(latest)
-    expect(downloadFor({ userAgent: MAC }, 'under test')).toEqual(latest)
+    expect(downloadFor({ userAgent: IPHONE }, ASSETS)).toEqual(latest)
+    expect(downloadFor({ userAgent: MAC, touchPoints: 5 }, ASSETS)).toEqual(latest)
+    expect(downloadFor({ userAgent: 'curl/8.0' }, ASSETS)).toEqual(latest)
+  })
+  test('takes nothing from a release but its own files', () => {
+    const elsewhere = releaseAssets({
+      assets: [{ name: 'Orden-9.9.9-macos-universal.dmg', browser_download_url: 'https://example.com/x.dmg' }],
+    })
+    expect(downloadFor({ userAgent: MAC }, elsewhere).href).toBe(LATEST_RELEASE)
+    expect(releaseAssets({ assets: [{ name: 1 }, null, 'x'] })).toEqual([])
+    expect(releaseAssets('not json')).toEqual([])
+    expect(LATEST_RELEASE_API).toBe('https://api.github.com/repos/lxorb/orden/releases/latest')
   })
   test('and Try it out opens the app', () => {
     expect(APP_HREF).toBe('/')

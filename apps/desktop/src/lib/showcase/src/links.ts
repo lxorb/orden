@@ -1,18 +1,28 @@
 export const APP_HREF = '/'
-const RELEASES = 'https://github.com/lxorb/orden/releases'
-export const LATEST_RELEASE = `${RELEASES}/latest`
+export const LATEST_RELEASE = 'https://github.com/lxorb/orden/releases/latest'
+export const LATEST_RELEASE_API = 'https://api.github.com/repos/lxorb/orden/releases/latest'
+const ASSET_HOME = 'https://github.com/lxorb/orden/releases/download/'
 export interface Visitor {
   userAgent: string
   touchPoints?: number
   architecture?: string
+}
+export interface ReleaseAsset {
+  name: string
+  url: string
 }
 interface Download {
   label: string
   href: string
 }
 type System = 'android' | 'ios' | 'macos' | 'windows' | 'linux'
-const VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/
 const ARM_AGENT = /\b(?:aarch64|arm64|armv[78]l?)\b/i
+const LABELS: Record<Exclude<System, 'ios'>, string> = {
+  android: 'Download for Android',
+  macos: 'Download for macOS',
+  windows: 'Download for Windows',
+  linux: 'Download for Linux',
+}
 function systemOf({ userAgent, touchPoints = 0 }: Visitor): System | null {
   if (/android/i.test(userAgent)) return 'android'
   if (/iphone|ipad|ipod/i.test(userAgent)) return 'ios'
@@ -25,14 +35,26 @@ function systemOf({ userAgent, touchPoints = 0 }: Visitor): System | null {
 function onArm({ userAgent, architecture }: Visitor): boolean {
   return ARM_AGENT.test(userAgent) || /^arm/i.test(architecture ?? '')
 }
-export function downloadFor(visitor: Visitor, version: string): Download {
+function endingFor(system: Exclude<System, 'ios'>, arm: boolean): string {
+  if (system === 'android') return '-android.apk'
+  if (system === 'macos') return '-macos-universal.dmg'
+  if (system === 'windows') return arm ? '-windows-arm64-setup.exe' : '-windows-x64-setup.exe'
+  return arm ? '-linux-arm64.AppImage' : '-linux-x64.AppImage'
+}
+export function downloadFor(visitor: Visitor, assets: readonly ReleaseAsset[] = []): Download {
   const system = systemOf(visitor)
-  if (!system || system === 'ios' || !VERSION.test(version)) return { label: 'Download', href: LATEST_RELEASE }
-  const file = (rest: string) => `${RELEASES}/download/v${version}/Orden-${version}-${rest}`
-  const arm = onArm(visitor)
-  if (system === 'android') return { label: 'Download for Android', href: file('android.apk') }
-  if (system === 'macos') return { label: 'Download for macOS', href: file('macos-universal.dmg') }
-  if (system === 'windows')
-    return { label: 'Download for Windows', href: file(arm ? 'windows-arm64-setup.exe' : 'windows-x64-setup.exe') }
-  return { label: 'Download for Linux', href: file(arm ? 'linux-arm64.AppImage' : 'linux-x64.AppImage') }
+  if (!system || system === 'ios') return { label: 'Download', href: LATEST_RELEASE }
+  const ending = endingFor(system, onArm(visitor))
+  const asset = assets.find(
+    ({ name, url }) => name.startsWith('Orden-') && name.endsWith(ending) && url.startsWith(ASSET_HOME),
+  )
+  return { label: LABELS[system], href: asset?.url ?? LATEST_RELEASE }
+}
+export function releaseAssets(body: unknown): ReleaseAsset[] {
+  const assets = (body as { assets?: unknown } | null)?.assets
+  if (!Array.isArray(assets)) return []
+  return assets.flatMap((one: unknown) => {
+    const { name, browser_download_url: url } = (one ?? {}) as { name?: unknown; browser_download_url?: unknown }
+    return typeof name === 'string' && typeof url === 'string' ? [{ name, url }] : []
+  })
 }
