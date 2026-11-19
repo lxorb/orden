@@ -494,6 +494,7 @@ export async function freshDevice(
   account: { handle(device: string, route: string, body: Uint8Array): Promise<Uint8Array> },
   id: string,
   files: Record<string, string> = {},
+  answers: (route: string, body: unknown) => unknown = () => undefined,
 ): Promise<FreshDevice> {
   const root = `/fresh/${id}`
   const disk = new MemoryDisk()
@@ -507,6 +508,8 @@ export async function freshDevice(
       ask: async (route, body) => {
         routes.push(route)
         if (route === 'prepare') return {}
+        const answered = answers(route, body)
+        if (answered !== undefined) return answered
         return unframe(await account.handle(id, route, frame(body)))
       },
     },

@@ -19,7 +19,7 @@ import { MemoryDisk, MemoryStore } from '../src/api'
 import { firstPass } from '../src/migrate'
 import { madeTwice } from '../src/twins'
 import { SpaceState } from '../src/places'
-import type { EntryRow } from '../src/store'
+import { scan, type EntryRow } from '../src/store'
 import { EngineDevice, type FreshDevice, freshDevice } from './sim-device'
 
 const settle: Step = { t: 'wait', ticks: 40 }
@@ -275,6 +275,51 @@ describe('a delete heard from the account', () => {
     expect((await account.view()).entries.find((one) => one.id === id)?.name).toBe('Board.canvas')
     expect(here.disk.files.get(at(here))).toContain('mk941z')
     expect(there.disk.files.get(at(there))).toContain('mk941z')
+  })
+})
+describe('words the account refuses once the space is only read here (#2249)', () => {
+  async function lowered(name: string, first: string, mine: string) {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const reading = { on: false }
+    const member = await freshDevice(account, 'member', {}, (route, body) =>
+      reading.on && route === 'push'
+        ? { docs: (body as { docs: { id: string }[] }).docs.map(({ id }) => ({ id, refused: 'role' })) }
+        : undefined,
+    )
+    const owner = await freshDevice(account, 'owner')
+    for (const one of [owner, member]) {
+      expect(await firstPass(one.engine.core, one.space(), null)).toBe(true)
+      await one.engine.pass('sim')
+    }
+    const at = (one: FreshDevice) => `${one.space().row.root}/${name}`
+    if (!owner.disk.files.has(at(owner))) {
+      await owner.disk.write(at(owner), first)
+      await owner.engine.created(at(owner), false, first)
+      await owner.engine.pass('sim')
+      await member.engine.pass('sim')
+    }
+    const theirs = member.disk.files.get(at(member))
+    await member.disk.write(at(member), mine)
+    await member.engine.foreign(at(member))
+    reading.on = true
+    await member.engine.pass('sim')
+    const [rows] = await member.engine.core.store.read([scan('log')])
+    return { member, theirs, file: at(member), logged: rows.flatMap((row) => row.failed ?? []) }
+  }
+  const board = (text: string) =>
+    JSON.stringify({ nodes: [{ id: 'a', type: 'text', text, x: 0, y: 0, width: 100, height: 50 }], edges: [] })
+  test.each([
+    ['Plan.md', '', 'Written here while away mk951z\n'],
+    ['Board.canvas', board('first'), board('mk952z')],
+    ['Book.pages', board('first'), board('mk953z')],
+  ])('in %s go to this device’s Recently deleted, said with their place', async (name, first, mine) => {
+    const { member, theirs, file, logged } = await lowered(name, first, mine)
+    const marker = markersIn(mine)[0] ?? ''
+    expect(member.disk.trashed.map((one) => one.path)).toEqual([file])
+    expect(member.disk.trashed[0]?.text).toContain(marker)
+    expect(member.disk.files.get(file)).toBe(theirs)
+    expect(logged).toEqual([`you can only read this space, so your change to ${name} went to Recently deleted`])
+    expect(member.engine.core.hasPending(member.engine.entryAt(file)?.id ?? '')).toBe(false)
   })
 })
 describe('ports', () => {

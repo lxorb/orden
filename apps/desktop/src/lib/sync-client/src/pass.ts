@@ -26,7 +26,7 @@ import { fileOfUpdates, holdsDocument, judge, shapeOf, turn, unixLines } from '.
 import { dropUnmade, made, unstackedNames } from './create'
 import { type Outboxed, settle, type SpaceState } from './places'
 import { keepingChange, keptHere } from './keeping'
-import { notWritten, project } from './project'
+import { notWritten, project, setAside } from './project'
 import { againstBytes, type Merging, type Outgoing, outgoingBytes } from './records'
 import { isOwnFile as carriedOwn, withBlocksOf as withTasksOf } from '@orden/sync-core'
 import { keepLosers, rejoin } from './rejoin'
@@ -732,8 +732,9 @@ async function pushDocs(core: Core, space: SpaceState, alive: () => boolean): Pr
       if ('refused' in one && one.refused === 'role') {
         doc.land()
         refusals.get(core)?.delete(one.id)
-        said.add(one.refused)
-        changes.push(...(await readOnly(core, space, entry, doc)))
+        const aside = await readOnly(core, space, entry, doc)
+        if (!aside.told) said.add(one.refused)
+        changes.push(...aside.changes)
         continue
       }
       if ('refused' in one) {
@@ -765,15 +766,21 @@ async function pushDocs(core: Core, space: SpaceState, alive: () => boolean): Pr
   }
   return pushed
 }
-async function readOnly(core: Core, space: SpaceState, entry: EntryRow, doc: Doc): Promise<Change[]> {
+async function readOnly(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  doc: Doc,
+): Promise<{ changes: Change[]; told: boolean }> {
   const local = doc.text()
-  if (entry.local_path && local.trim()) {
-    const full = core.world.join(space.row.root, entry.local_path)
-    const was = await core.world.disk.read(full)
-    if (was === null || unixLines(was) !== local) await core.world.disk.keep(full, local)
-  }
   doc.letPendingGo(core.freshClient())
-  return [...core.docChanges(doc), ...(await project(core, space, entry, doc))]
+  const theirs = doc.text()
+  const lost = entry.local_path !== '' && local.trim() !== '' && local !== theirs
+  const aside = lost ? await setAside(core, space, entry.local_path, local, theirs) : []
+  return {
+    changes: [...aside, ...core.docChanges(doc), ...(await project(core, space, entry, doc))],
+    told: aside.length > 0,
+  }
 }
 async function newEpoch(core: Core, space: SpaceState, entry: EntryRow, doc: Doc, epoch: number): Promise<Change[]> {
   const reply = await ask(core, space, 'pull', {

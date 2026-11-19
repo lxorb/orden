@@ -44,6 +44,13 @@ export class MemoryDisk implements Disk {
     }
     return Promise.resolve()
   }
+  readonly trashed: { path: string; text: string }[] = []
+  async trash(path: string): Promise<void> {
+    const text = this.files.get(path)
+    if (text === undefined) throw new Error(`nothing is at ${path}`)
+    this.trashed.push({ path, text })
+    await this.remove(path)
+  }
   remove(path: string): Promise<void> {
     for (const held of [this.files, this.bytes] as Map<string, unknown>[]) {
       for (const one of [...held.keys()]) {

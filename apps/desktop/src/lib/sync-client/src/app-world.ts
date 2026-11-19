@@ -32,6 +32,15 @@ const stamped = (path: string) =>
 const thereOrUnsure = (path: string): Promise<boolean> =>
   isNative() ? invoke<boolean>('file_there', { path }).catch(() => true) : stamped(path)
 function diskOf(telling: Telling): Disk {
+  const trashed = async (path: string, kind: FileKind) => {
+    const { id } = await invoke<{ id: string }>('trash_item', {
+      path,
+      kind: kind === 'folder' ? 'folder' : 'note',
+      alone: true,
+      arrived: true,
+    })
+    await telling.gone(path, kind, id)
+  }
   return {
     read: (path) => invoke<string>('read_note', { path, ...raw() }).catch(() => null),
     async write(path, text) {
@@ -71,19 +80,14 @@ function diskOf(telling: Telling): Disk {
         const words = await invoke<string>('read_note', { path, ...raw() }).catch(() => null)
         if (words?.trim()) await invoke('snapshot_note', { path, content: words }).catch(() => undefined)
       }
-      let back: string | undefined
-      if (syncDeletes(path, kind)) await invoke('delete_note', { path })
-      else
-        back = (
-          await invoke<{ id: string }>('trash_item', {
-            path,
-            kind: kind === 'folder' ? 'folder' : 'note',
-            alone: true,
-            arrived: true,
-          })
-        ).id
-      await telling.gone(path, kind, back)
+      if (!syncDeletes(path, kind)) {
+        await trashed(path, kind)
+        return
+      }
+      await invoke('delete_note', { path })
+      await telling.gone(path, kind)
     },
+    trash: (path) => trashed(path, 'file'),
     mkdir: (path) => invoke('create_folder', { path, arrived: true }).then(() => undefined),
     holds,
     exists: thereOrUnsure,

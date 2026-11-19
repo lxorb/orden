@@ -10,6 +10,7 @@ export interface Disk {
   keep(path: string, text: string): Promise<void>
   move(from: string, to: string, kind: FileKind): Promise<void>
   remove(path: string, kind: FileKind): Promise<void>
+  trash?(path: string): Promise<void>
   mkdir(path: string): Promise<void>
   exists(path: string): Promise<boolean>
   evicted(path: string): Promise<boolean>

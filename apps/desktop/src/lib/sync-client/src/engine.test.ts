@@ -24,7 +24,7 @@ import { MemoryDisk } from './memory-disk'
 import { MemoryStore } from './memory-store'
 import { put, scan, StoreError, type Change } from './store'
 import { GONE_KEPT, numbersRow, wantedRow } from './records'
-import type { Disk, World } from './world'
+import type { World } from './world'
 import type { SpaceChange, SpaceNews } from '../../crate/src/api'
 import * as Y from 'yjs'
 
@@ -144,14 +144,6 @@ async function device(
 const PLAN = 'n1'
 function settled(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 20))
-}
-function keptOn(disk: Disk): string[] {
-  const kept: string[] = []
-  disk.keep = (_path, text) => {
-    kept.push(text)
-    return Promise.resolve()
-  }
-  return kept
 }
 async function textOn(account: ReferenceAccount, id: string): Promise<string> {
   return (await account.view()).texts[id] ?? ''
@@ -781,7 +773,7 @@ describe('a push the account refuses', () => {
     expect(await logged()).toHaveLength(1)
     expect((await one.engine.core.doc(PLAN))?.text().startsWith('kept ')).toBe(true)
   })
-  test('in a space this device may only read lets the edit go, kept as a version, and takes the owner’s words again', async () => {
+  test('in a space this device may only read puts the edit in Recently deleted, and takes the owner’s words again (#2249)', async () => {
     const account = new ReferenceAccount(new Clock(), SEEDED)
     const reader = await device(account, 'd0')
     const owner = await device(account, 'd1')
@@ -791,12 +783,11 @@ describe('a push the account refuses', () => {
       if (route !== 'push') return await ask(route, body, space)
       return { docs: (body as PushRequest).docs.map((doc) => ({ id: doc.id, refused: 'role' })) }
     }
-    const kept = keptOn(reader.disk)
     const file = `${ROOT}/Plan.md`
     reader.disk.files.set(file, 'Changed in another editor.\n')
     await reader.engine.foreign(file)
     await reader.engine.pass(SPACE)
-    expect(kept).toContain('Changed in another editor.\n')
+    expect(reader.disk.trashed).toEqual([{ path: file, text: 'Changed in another editor.\n' }])
     expect(reader.engine.core.hasPending(PLAN)).toBe(false)
     const doc = await owner.engine.hold(PLAN)
     doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'From the owner. '), HERE)
@@ -806,14 +797,14 @@ describe('a push the account refuses', () => {
     expect(reader.disk.files.get(file)).toBe(await textOn(account, PLAN))
     expect(reader.disk.files.get(file)?.startsWith('From the owner. ')).toBe(true)
   })
-  test('lowered to reading while offline with an edit, keeps the edit as a version and the owner’s words', async () => {
+  test('lowered to reading while offline with an edit, puts the edit in Recently deleted, says where, and keeps the owner’s words (#2249)', async () => {
     const { one, pushes, logged } = await refusing('role')
-    const kept = keptOn(one.disk)
     await one.engine.pass(SPACE)
     expect(pushes()).toBe(1)
-    expect(kept.some((text) => text.startsWith('kept '))).toBe(true)
+    expect(one.disk.trashed.map((one) => one.path)).toEqual([`${ROOT}/Plan.md`])
+    expect(one.disk.trashed[0]?.text.startsWith('kept ')).toBe(true)
     expect(one.disk.files.get(`${ROOT}/Plan.md`)).toBe(await textOn(one.account, PLAN))
-    expect(await logged()).toEqual(['you can only read this space'])
+    expect(await logged()).toEqual(['you can only read this space, so your change to Plan.md went to Recently deleted'])
     await one.engine.pass(SPACE)
     expect(pushes()).toBe(1)
     expect(one.engine.waiting(SPACE)).toBe(false)

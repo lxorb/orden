@@ -1,5 +1,5 @@
 import type { Core, Holding } from './core'
-import { readFine, readRefused, saidUnsynced } from './project'
+import { readFine, readOnlyLine, readRefused, saidUnsynced } from './project'
 import { againstBytes, outgoingBytes } from './records'
 import type { Outboxed, SpaceState } from './places'
 import { put, type Change, type EntryRow } from './store'
@@ -323,11 +323,7 @@ async function readOnlyHere(core: Core, space: SpaceState, entry: EntryRow): Pro
     return false
   }
   entry.local_path = ''
-  const failed = `you can only read this space, so your change to ${path} went to Recently deleted`
-  await core.commit([
-    put('entries', { ...entry }),
-    put('log', { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed }),
-  ])
+  await core.commit([put('entries', { ...entry }), readOnlyLine(core, space, path)])
   return true
 }
 function holdFile(core: Core, entry: EntryRow, mine: string, at = core.world.now()): Change[] {
