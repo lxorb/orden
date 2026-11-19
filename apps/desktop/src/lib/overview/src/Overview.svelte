@@ -371,7 +371,19 @@
   )
   const byId = $derived(new Map(workspace.tabs.map((tab) => [tab.id, tab])))
   const slotOf = $derived(new Map(laid.slots.map((slot) => [slot.id, slot])))
-  const unzoom = $derived(Math.max(1, 1 / camera.zoom))
+  let restZoom = $state(1)
+  const ZOOM_RESTS = 120
+  $effect(() => {
+    const zoom = camera.zoom
+    if (zoom === untrack(() => restZoom)) return
+    if (stillness()) {
+      restZoom = zoom
+      return
+    }
+    const rest = setTimeout(() => (restZoom = zoom), ZOOM_RESTS)
+    return () => clearTimeout(rest)
+  })
+  const unzoom = $derived(Math.max(1, 1 / restZoom))
   const windows = $derived(
     laid.slots.flatMap((slot) => {
       const tab = byId.get(slot.id)
@@ -746,6 +758,7 @@
       measure()
       arrange(shownKeys)
       lookAtAll()
+      restZoom = camera.zoom
       unmoved = true
       panesAsWindows.clear()
       riders.clear()
@@ -1369,7 +1382,7 @@
     <div
       class="world"
       style:transform="translate({camera.x}px, {camera.y}px) scale({camera.zoom})"
-      style:--overview-line={1 / camera.zoom}
+      style:--overview-line={1 / restZoom}
       style:--overview-names={Math.min(unzoom, NAMES_MOST)}
       style:--overview-space-names={Math.min(unzoom, SPACE_NAMES_MOST)}
     >
@@ -1468,7 +1481,7 @@
             <span class="chip-inner"><TabMark {tab} /><span class="chip-name">{tab.shown}</span></span>
           {/if}
         </span>
-        <span class="ring" style:--overview-line={1 / camera.zoom} aria-hidden="true"></span>
+        <span class="ring" style:--overview-line={1 / restZoom} aria-hidden="true"></span>
       </button>
       <button
         class="closer"
