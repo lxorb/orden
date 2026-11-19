@@ -1125,6 +1125,8 @@ fn files_of(
     asked
         .iter()
         .map(|one| {
+            orden_agents::files::on_this_computer(one.trim())
+                .map_err(|why| Answer::error(Code::BadArguments, why))?;
             let given = PathBuf::from(one);
             let path = if given.is_absolute() {
                 given

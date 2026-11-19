@@ -160,8 +160,25 @@ fn changes(op: FilesOp) -> bool {
 pub fn absolute(app: &AppHandle, asked: &str) -> Result<PathBuf, String> {
     under_home(asked, app.path().home_dir().ok().as_deref())
 }
+pub fn on_this_computer(asked: &str) -> Result<(), String> {
+    let parted = |one: u8| one == b'\\' || one == b'/';
+    let bytes = asked.as_bytes();
+    let twice = bytes.len() >= 2 && parted(bytes[0]) && parted(bytes[1]);
+    let nt = bytes.len() >= 4 && parted(bytes[0]) && &bytes[1..3] == b"??" && parted(bytes[3]);
+    let local_drive = bytes.starts_with(br"\\?\")
+        && bytes.get(4).is_some_and(u8::is_ascii_alphabetic)
+        && bytes.get(5) == Some(&b':')
+        && bytes.get(6).is_none_or(|one| *one == b'\\');
+    if (twice || nt) && !local_drive {
+        return Err(format!(
+            "{asked} is on another computer or a device: agents reach only this computer's files"
+        ));
+    }
+    Ok(())
+}
 pub fn under_home(asked: &str, home: Option<&Path>) -> Result<PathBuf, String> {
     let asked = asked.trim();
+    on_this_computer(asked)?;
     let rest = asked
         .strip_prefix("~/")
         .or_else(|| asked.strip_prefix("~\\"))
@@ -170,6 +187,7 @@ pub fn under_home(asked: &str, home: Option<&Path>) -> Result<PathBuf, String> {
         Some(rest) => home.ok_or_else(|| "this account has no home folder".to_owned())?.join(rest),
         None => PathBuf::from(asked),
     };
+    on_this_computer(&given.to_string_lossy())?;
     if !given.is_absolute() {
         return Err(format!(
             "{asked} is not an absolute path: say where it is, or start it with ~/"
@@ -570,6 +588,39 @@ pub fn hidden_within(root: &Path, path: &Path) -> bool {
 mod tests {
     use super::*;
 
+    #[test]
+    fn a_path_on_another_computer_or_a_device_is_refused_before_any_file_is_touched() {
+        let home = std::env::temp_dir();
+        for far in [
+            r"\\attacker.example\share\report.md",
+            "//attacker.example/share/report.md",
+            r"\/attacker.example/share",
+            r"/\attacker.example\share",
+            r"\\?\UNC\attacker.example\share\a.md",
+            "//?/UNC/attacker.example/share/a.md",
+            r"\\.\pipe\x",
+            r"\\.\C:\a.md",
+            r"\??\UNC\attacker.example\share",
+            r"\??\C:\a.md",
+            r"\\?\C:..\a.md",
+            r"\\?\Volume{1234}\a.md",
+            r"  \\attacker.example\share  ",
+        ] {
+            let said = under_home(far, Some(&home)).expect_err(far);
+            assert!(said.contains("on another computer"), "{far}: {said}");
+        }
+        let far_home = PathBuf::from(r"\\attacker.example\home");
+        assert!(under_home("~/a.md", Some(&far_home)).is_err());
+        assert!(on_this_computer(r"\\?\C:\Users\me\a.md").is_ok());
+        assert!(on_this_computer(r"\\?\C:").is_ok());
+        assert!(on_this_computer("/home/me/a.md").is_ok());
+        assert!(on_this_computer(r"C:\Users\me\a.md").is_ok());
+        assert!(on_this_computer("~/a.md").is_ok());
+        assert_eq!(
+            under_home("~/a.md", Some(&home)).expect("home"),
+            orden_base::paths::folded(&home.join("a.md"))
+        );
+    }
     #[test]
     fn a_glob_reads_as_a_shell_reads_one() {
         assert!(globbed("*.rs", "main.rs"));
