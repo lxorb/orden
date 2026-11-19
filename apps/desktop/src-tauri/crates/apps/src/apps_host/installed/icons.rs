@@ -1,7 +1,6 @@
 use base64::Engine;
 
 pub const SIDE: u32 = 32;
-pub const KIND_SIDE: u32 = 64;
 #[cfg(any(target_os = "linux", test))]
 pub const MOST_FILE: u64 = 4 * 1024 * 1024;
 #[cfg(any(target_os = "linux", test))]
@@ -158,17 +157,6 @@ mod tests {
         let (rgba, width, _) = read_png(&one).unwrap();
         assert_eq!(width, 32);
         assert_eq!(&rgba[..4], &[255, 255, 255, 127]);
-    }
-    #[test]
-    fn a_kind_s_icon_is_kept_larger_than_an_application_s() {
-        let large = png_of(&[0, 255, 0, 255].repeat(256 * 256), 256, 256);
-        let url = png_url_within(&large, KIND_SIDE).unwrap();
-        let bytes = base64::engine::general_purpose::STANDARD
-            .decode(url.trim_start_matches("data:image/png;base64,"))
-            .unwrap();
-        assert_eq!(png_size(&bytes), Some((KIND_SIDE, KIND_SIDE)));
-        let shrunk = rgba_png_within(&[0, 255, 0, 255].repeat(48 * 48), 48, 48, KIND_SIDE).unwrap();
-        assert_eq!(png_size(&shrunk), Some((48, 48)));
     }
     #[test]
     fn is_nothing_for_what_is_not_a_png() {

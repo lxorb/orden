@@ -3986,10 +3986,14 @@ dependencies = [
 name = "orden-explorer"
 version = "0.1.0"
 dependencies = [
+ "base64 0.22.1",
+ "dirs",
  "notify",
+ "objc2",
+ "objc2-app-kit",
  "objc2-foundation",
- "orden-apps",
  "orden-base",
+ "png 0.18.1",
  "serde",
  "tauri",
  "tauri-plugin-opener",

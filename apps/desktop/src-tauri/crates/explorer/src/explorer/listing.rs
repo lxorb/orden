@@ -289,7 +289,7 @@ pub async fn explorer_open(app: AppHandle, path: String) -> Result<(), String> {
 }
 #[tauri::command]
 pub async fn explorer_icon(ending: String) -> Option<String> {
-    orden_base::lane::off_the_runtime(move || orden_apps::apps_host::kinds::icon(&ending)).await
+    orden_base::lane::off_the_runtime(move || super::kinds::icon(&ending)).await
 }
 #[cfg(test)]
 mod tests {

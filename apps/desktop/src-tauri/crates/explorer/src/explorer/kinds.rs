@@ -1,8 +1,12 @@
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
-#[cfg(any(target_os = "windows", target_os = "macos"))]
-use super::icons;
+#[cfg(any(target_os = "linux", target_os = "macos", target_os = "windows", test))]
+mod icons;
+#[cfg(target_os = "windows")]
+mod shell;
+#[cfg(target_os = "linux")]
+mod theme;
 
 pub fn icon(ending: &str) -> Option<String> {
     static KNOWN: OnceLock<Mutex<HashMap<String, Option<String>>>> = OnceLock::new();
@@ -36,7 +40,7 @@ fn drawn(ending: &str) -> Option<String> {
     };
     use windows::Win32::UI::WindowsAndMessaging::DestroyIcon;
 
-    let _com = super::windows::Com::start();
+    let _com = shell::Com::start();
     let named = if ending.is_empty() { "file".to_owned() } else { format!("file.{ending}") };
     let name = HSTRING::from(named.as_str());
     let size = u32::try_from(std::mem::size_of::<SHFILEINFOW>()).ok()?;
@@ -95,10 +99,8 @@ fn icon_rgba(icon: windows::Win32::UI::WindowsAndMessaging::HICON) -> Option<(Ve
 
     let mut info = ICONINFO::default();
     unsafe { GetIconInfo(icon, &raw mut info) }.ok()?;
-    let color =
-        (!info.hbmColor.is_invalid()).then(|| super::windows::bitmap_rgba(info.hbmColor)).flatten();
-    let mask =
-        (!info.hbmMask.is_invalid()).then(|| super::windows::bitmap_rgba(info.hbmMask)).flatten();
+    let color = (!info.hbmColor.is_invalid()).then(|| shell::bitmap_rgba(info.hbmColor)).flatten();
+    let mask = (!info.hbmMask.is_invalid()).then(|| shell::bitmap_rgba(info.hbmMask)).flatten();
     unsafe {
         let _ = DeleteObject(info.hbmColor);
         let _ = DeleteObject(info.hbmMask);
@@ -172,9 +174,9 @@ fn drawn(ending: &str) -> Option<String> {
 }
 #[cfg(target_os = "linux")]
 fn drawn(ending: &str) -> Option<String> {
-    static FOUND: OnceLock<(Mime, super::linux::Icons)> = OnceLock::new();
+    static FOUND: OnceLock<(Mime, theme::Icons)> = OnceLock::new();
     let (mime, icons) = FOUND.get_or_init(|| {
-        let folders = super::linux::data_dirs();
+        let folders = theme::data_dirs();
         let read = |file: &str| -> Vec<String> {
             folders
                 .iter()
@@ -182,7 +184,7 @@ fn drawn(ending: &str) -> Option<String> {
                 .collect()
         };
         let mime = Mime::read(&read("globs2"), &read("icons"), &read("generic-icons"));
-        let icons = super::linux::Icons::kinds(&folders, &super::linux::current_theme());
+        let icons = theme::Icons::kinds(&folders, &theme::current_theme());
         (mime, icons)
     });
     mime.names(ending).iter().find_map(|name| icons.find(name))
