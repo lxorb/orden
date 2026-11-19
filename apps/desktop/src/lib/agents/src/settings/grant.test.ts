@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import type { Grant, Scope } from '../../../agent-protocol/src/api'
 import { readGrant } from './crate'
+import { CATEGORY_WORDS } from './words'
 import {
   asks,
   ownGrant,
@@ -181,5 +182,24 @@ describe('the trifecta', () => {
     expect(trifecta(only('browser', 'browser.reader'))).toBe(false)
     expect(trifecta(withScope(own(), 'notes.read', false))).toBe(true)
     expect(trifecta(withScope(withScope(own(), 'notes.read', false), 'context', false))).toBe(false)
+  })
+})
+describe('the questions an agent is asked', () => {
+  it('names every category the crate asks under, and reads each one back', () => {
+    const verbs = readFileSync(
+      fileURLToPath(new URL('../../../../../src-tauri/crates/agents/src/verbs.rs', import.meta.url)),
+      'utf8',
+    )
+    const body = /pub enum Category \{([^}]*)\}/.exec(verbs)?.[1] ?? ''
+    const crate = [...body.matchAll(/(\w+),/g)].map((one) =>
+      (one[1] ?? '').replace(/(?<!^)([A-Z])/g, '_$1').toLowerCase(),
+    )
+    expect(crate).toContain('tools')
+    expect(Object.keys(CATEGORY_WORDS).sort()).toEqual([...crate].sort())
+    expect(CATEGORY_WORDS.tools()).toBe('Tools from MCP servers')
+    const asks = Object.fromEntries(crate.map((one) => [one, false]))
+    const read = readGrant({ ...own(), asks, always: { 'shop.example': crate } })
+    expect(read?.asks).toEqual(asks)
+    expect(read?.always['shop.example']).toEqual(crate)
   })
 })

@@ -251,6 +251,7 @@ mod tests {
             Category::Writing,
             Category::Showing,
             Category::Takeover,
+            Category::Tools,
         ] {
             assert!(!grant.asks(category), "{category:?}");
         }

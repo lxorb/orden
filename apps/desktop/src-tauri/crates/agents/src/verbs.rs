@@ -899,6 +899,7 @@ pub enum Category {
     Showing,
     Takeover,
     Pairing,
+    Tools,
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

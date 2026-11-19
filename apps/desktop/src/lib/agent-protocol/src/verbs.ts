@@ -115,6 +115,7 @@ export type Category =
   | 'showing'
   | 'takeover'
   | 'pairing'
+  | 'tools'
 export type SiteRule = 'allow' | 'deny' | 'agent-store'
 export interface Grant {
   id: string
