@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte'
   import { account, request } from '../../accounts/src/api'
   import { message } from '../../ui-kit/src/api'
   import { dur, fade } from '../../platform/src/api'
@@ -16,17 +17,32 @@
   let fromApp = $state('')
   let busy = $state(false)
   let wrong = $state<string | null>(null)
+  const LEFT = new Error('another account')
   async function asked<T>(path: string, options: Parameters<typeof request>[1] = {}) {
     const token = account.accountToken
     if (!token) throw new Error('signed out')
-    return await request<T>(`/v1/account/addresses${path}`, { token, ...options })
+    const answer = await request<T>(`/v1/account/addresses${path}`, { token, ...options })
+    if (account.accountToken !== token) throw LEFT
+    return answer
   }
   function took(held: Held) {
     second = held.second
     if (account.user && account.user.email !== held.email) void account.reread()
   }
   $effect(() => {
-    if (account.user) void asked<Held>('').then(took, () => undefined)
+    if (!account.accountToken) return
+    untrack(() => {
+      second = null
+      adding = null
+      address = ''
+      sent = false
+      code = ''
+      asksApp = false
+      fromApp = ''
+      busy = false
+      wrong = null
+    })
+    void asked<Held>('').then(took, () => undefined)
   })
   function start(as: 'primary' | 'second') {
     adding = as
@@ -38,14 +54,15 @@
   }
   async function run(work: () => Promise<void>, fallback: string) {
     if (busy) return
+    const token = account.accountToken
     busy = true
     wrong = null
     try {
       await work()
     } catch (error) {
-      wrong = message(error, fallback)
+      if (error !== LEFT) wrong = message(error, fallback)
     } finally {
-      busy = false
+      if (account.accountToken === token) busy = false
     }
   }
   const mail = () =>

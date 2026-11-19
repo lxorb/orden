@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { untrack } from 'svelte'
   import { account } from '../../accounts/src/api'
   import { api, type RemoteSession, type SecondState } from '../../accounts/src/api'
   import { Copyable, QrCode } from '../../ui-controls/src/api'
@@ -13,91 +14,91 @@
   let secret = $state<{ holding: string; secret: string; uri: string } | null>(null)
   let code = $state('')
   let codes = $state<string[] | null>(null)
+  const still = (token: string) => account.accountToken === token
   async function look() {
     const token = account.accountToken
     if (!token) return
     try {
-      factor = await api.second(token)
-      sessions = (await api.sessions(token)).sessions
+      const state = await api.second(token)
+      const listed = (await api.sessions(token)).sessions
+      if (!still(token)) return
+      factor = state
+      sessions = listed
     } catch {
-      factor = null
+      if (still(token)) factor = null
     }
   }
   $effect(() => {
-    void look()
-  })
-  async function begin() {
-    const token = account.accountToken
-    if (!token || busy) return
-    busy = true
-    wrong = null
-    try {
-      secret = await api.beginSecond(token)
-      codes = null
-    } catch (error) {
-      wrong = error instanceof Error ? error.message : 'That did not work.'
-    } finally {
+    if (!account.accountToken) return
+    untrack(() => {
+      factor = null
+      sessions = []
       busy = false
-    }
-  }
-  async function confirm() {
-    const token = account.accountToken
-    if (!token || !secret || busy) return
-    busy = true
-    wrong = null
-    try {
-      codes = (await api.confirmSecond(token, secret.holding, code)).recovery
+      wrong = null
       secret = null
       code = ''
-      await look()
-    } catch (error) {
-      wrong = error instanceof Error ? error.message : 'That code is not right.'
-    } finally {
-      busy = false
-    }
-  }
-  async function turnOff() {
+      codes = null
+    })
+    void look()
+  })
+  async function act(work: (token: string) => Promise<boolean>, fallback: string) {
     const token = account.accountToken
     if (!token || busy) return
     busy = true
     wrong = null
     try {
+      if (await work(token)) await look()
+    } catch (error) {
+      if (still(token)) wrong = error instanceof Error ? error.message : fallback
+    } finally {
+      if (still(token)) busy = false
+    }
+  }
+  const begin = () =>
+    act(async (token) => {
+      const begun = await api.beginSecond(token)
+      if (!still(token)) return false
+      secret = begun
+      codes = null
+      return false
+    }, 'That did not work.')
+  const confirm = () =>
+    act(async (token) => {
+      if (!secret) return false
+      const { recovery } = await api.confirmSecond(token, secret.holding, code)
+      if (!still(token)) return false
+      codes = recovery
+      secret = null
+      code = ''
+      return true
+    }, 'That code is not right.')
+  const turnOff = () =>
+    act(async (token) => {
       await api.endSecond(token, code)
+      if (!still(token)) return false
       code = ''
       codes = null
-      await look()
-    } catch (error) {
-      wrong = error instanceof Error ? error.message : 'That code is not right.'
-    } finally {
-      busy = false
-    }
-  }
-  async function freshCodes() {
-    const token = account.accountToken
-    if (!token || busy) return
-    busy = true
-    wrong = null
-    try {
-      codes = (await api.freshRecovery(token, code)).recovery
+      return true
+    }, 'That code is not right.')
+  const freshCodes = () =>
+    act(async (token) => {
+      const { recovery } = await api.freshRecovery(token, code)
+      if (!still(token)) return false
+      codes = recovery
       code = ''
-      await look()
-    } catch (error) {
-      wrong = error instanceof Error ? error.message : 'That code is not right.'
-    } finally {
-      busy = false
-    }
-  }
+      return true
+    }, 'That code is not right.')
   async function end(session: RemoteSession) {
     const token = account.accountToken
     if (!token) return
     await api.endSession(token, session.id).catch(() => undefined)
-    await look()
+    if (still(token)) await look()
   }
   async function endOthers() {
     const token = account.accountToken
     if (!token) return
     await api.endOtherSessions(token).catch(() => undefined)
-    await look()
+    if (still(token)) await look()
   }
   const when = (stamp: number | null) =>
     stamp === null ? 'Never' : localDate(stamp, { dateStyle: 'short', timeStyle: 'short' })
