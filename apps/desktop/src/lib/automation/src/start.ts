@@ -79,7 +79,7 @@ async function follow(uri: string, depth = 0): Promise<void> {
   }
   const link = readUri(uri)
   if (!link) {
-    refuse(uri, 'not a nib link')
+    refuse(uri, 'not an Orden link')
     return
   }
   const verb = verbForAction(link.action)

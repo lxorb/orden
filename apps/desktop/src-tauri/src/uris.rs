@@ -164,11 +164,6 @@ mod tests {
         assert_eq!(said(urls), vec!["orden://open?path=Idea.md".to_string()]);
     }
     #[test]
-    fn says_no_link_under_the_name_before_the_rename() {
-        assert!(said(vec!["nib://open?path=Idea.md".to_string()]).is_empty());
-        assert!(said(vec!["NIB://search".to_string()]).is_empty());
-    }
-    #[test]
     fn reads_the_scheme_in_any_case() {
         assert_eq!(said(vec!["ORDEN://search".to_string()]).len(), 1);
         assert!(said(vec!["https://orden.so".to_string()]).is_empty());

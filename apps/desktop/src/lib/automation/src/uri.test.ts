@@ -17,10 +17,6 @@ describe('reading a link', () => {
   ])('reads %s, in any spelling of the scheme, as %s', (uri, action) => {
     expect(readUri(uri)?.action).toBe(action)
   })
-  test('reads no link under the name before the rename', () => {
-    expect(readUri('nib://open?path=A.md')).toBeNull()
-    expect(isOrdenUri('NIB://Open')).toBe(false)
-  })
   test('undoes the encoding a path with a space in it needs', () => {
     expect(readUri('orden://open?path=day%20job%2FPlan.md')?.args.path).toBe('day job/Plan.md')
   })

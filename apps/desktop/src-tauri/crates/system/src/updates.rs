@@ -94,7 +94,7 @@ mod tests {
     use tauri::Url;
 
     fn bundle(version: &str) -> String {
-        format!("{}v{version}/Nib-{version}-windows-x64-setup.exe", RELEASES[0])
+        format!("{}v{version}/Orden-{version}-windows-x64-setup.exe", RELEASES[1])
     }
     #[test]
     fn a_release_that_says_what_it_serves_is_installed() {
@@ -113,14 +113,14 @@ mod tests {
     #[test]
     fn a_file_from_anywhere_else_is_no_update() {
         for address in [
-            "https://evil.example/Nib-99.0.0-windows-x64-setup.exe",
-            "http://github.com/lxorb/nibeditor/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
-            "https://github.com/someone/else/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
-            "https://github.com.evil.example/lxorb/nibeditor/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
-            "http://github.com/lxorb/orden/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
-            "https://github.com.evil.example/lxorb/orden/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
-            "https://github.com/lxorb/ordenx/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
-            "https://github.com/lxorb/orden.evil.example/releases/download/v99.0.0/Nib-99.0.0-windows-x64-setup.exe",
+            "https://evil.example/Orden-99.0.0-windows-x64-setup.exe",
+            "http://github.com/lxorb/nibeditor/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
+            "https://github.com/someone/else/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
+            "https://github.com.evil.example/lxorb/nibeditor/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
+            "http://github.com/lxorb/orden/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
+            "https://github.com.evil.example/lxorb/orden/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
+            "https://github.com/lxorb/ordenx/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
+            "https://github.com/lxorb/orden.evil.example/releases/download/v99.0.0/Orden-99.0.0-windows-x64-setup.exe",
         ] {
             assert!(
                 offered("stable", "99.0.0", address).is_err(),

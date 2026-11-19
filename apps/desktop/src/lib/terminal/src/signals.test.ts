@@ -34,7 +34,7 @@ describe('a program asking to be looked at', () => {
       body: 'Claude is waiting for your input',
     })
   })
-  it.each(['9;/home/nib', '4;1;50', '1;500', '4', ''])('not ConEmu’s numbered ones: %j', (data) => {
+  it.each(['9;/home/ada', '4;1;50', '1;500', '4', ''])('not ConEmu’s numbered ones: %j', (data) => {
     expect(osc9Notice(data)).toBeNull()
   })
   it('reads OSC 777’s notify, with a title and words that may hold semicolons', () => {
