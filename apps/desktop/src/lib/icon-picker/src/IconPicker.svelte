@@ -11,6 +11,7 @@
     readIcon,
     sameIcon,
     SITE_ICONS,
+    siteOfIcon,
     takesTint,
     viewport,
     writtenIcon,
@@ -22,6 +23,7 @@
   import { iconLibrary } from '../../glyphs/src/api'
   import {
     iconRecent,
+    keptSitePicture,
     LATER_SETS,
     type LoadedSet,
     mergeSets,
@@ -30,6 +32,7 @@
     refreshSites,
   } from '../../icons/src/api'
   import { dur, fade, LAYER, scale } from '../../platform/src/api'
+  import { sayNotice } from '@orden/contracts'
   import { untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
 
@@ -171,10 +174,21 @@
   function chose(said: string | null) {
     const asked = iconChoice.target
     if (!asked) return
-    const colour = takesTint(readIcon(said)) ? tint : null
-    wear(asked, said, colour)
-    iconRecent.add(said)
+    const site = siteOfIcon(said)
     iconChoice.close()
+    if (site === null) {
+      wear(asked, said, takesTint(readIcon(said)) ? tint : null)
+      iconRecent.add(said)
+      return
+    }
+    void keptSitePicture(site).then((kept) => {
+      if (kept === null) {
+        sayNotice('That web icon could not be kept.')
+        return
+      }
+      wear(asked, kept, null)
+      iconRecent.add(kept)
+    })
   }
   function remove() {
     const asked = iconChoice.target
@@ -252,11 +266,12 @@
     {#if iconRecent.list.length}
       <div class="recent">
         {#each iconRecent.list as one (one)}
+          {@const label = readIcon(one)?.kind === 'picture' ? 'Web icon' : one}
           <button
             type="button"
             class="cell"
-            title={one}
-            aria-label={one}
+            title={label}
+            aria-label={label}
             class:active={sameIcon(one, worn)}
             onclick={() => chose(one)}
           >

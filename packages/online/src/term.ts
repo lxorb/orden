@@ -2,7 +2,7 @@ import type { Term } from './types'
 
 export const TERM_EXTENSION = '.term'
 const LONGEST_ID = 200
-const LONGEST_ICON = 120
+const LONGEST_ICON = 2048
 const iconField = (value: unknown): string | null =>
   typeof value === 'string' && value.length > 0 && value.length <= LONGEST_ICON ? value : null
 const isRecord = (value: unknown): value is Record<string, unknown> =>

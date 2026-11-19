@@ -17,7 +17,7 @@ export function chatOf(text: string): Pointer | null {
   if (v !== 1 || !isChatId(chat)) return null
   return withIcon({ v, chat }, worn(value.icon), worn(value.iconColor))
 }
-const MOST_WORN = 100
+const MOST_WORN = 2048
 const worn = (value: unknown): string | null =>
   typeof value === 'string' && value.trim() !== '' && value.length <= MOST_WORN ? value : null
 export function withIcon(pointer: Pointer, icon: string | null, iconColor: string | null): Pointer {

@@ -32,3 +32,10 @@ export function refreshSites(): void {
   const sites = portOf('web.siteIcons')
   if (sites.ok) void sites.value.held().then((held) => held.refresh())
 }
+export async function sitePicture(site: string): Promise<string | null> {
+  const sites = portOf('web.siteIcons')
+  if (!sites.ok) return null
+  const held = await sites.value.held()
+  if (held.picture(site) === null) await held.refresh()
+  return held.picture(site)
+}

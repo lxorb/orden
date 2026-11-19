@@ -29,4 +29,14 @@ describe('the icon picker', () => {
     expect(wornBy(target)).toBe('rocket')
     expect(tintOf(target)).toBeNull()
   })
+  test('never wears a web icon that only names its site: a chosen icon is kept in the value itself (#2257)', () => {
+    const took: (string | null)[] = []
+    const target = { kind: 'pass', worn: null, take: (icon: string | null) => void took.push(icon) } as const
+    wear(target, 'site:github.com', null)
+    expect(took).toEqual([])
+    const kept = 'data:image/png;base64,iVBORw0KGgo='
+    wear(target, kept, null)
+    wear(target, null, null)
+    expect(took).toEqual([kept, null])
+  })
 })

@@ -38,6 +38,12 @@ describe('a .chat file', () => {
     expect(chatOf(chatText(worn))).toEqual(worn)
     expect(chatOf(chatText({ v: 1, chat: ID, icon: '🚀' }))).toEqual({ v: 1, chat: ID, icon: '🚀' })
   })
+  it('keeps a picture written into the icon, up to 2048 characters', () => {
+    const head = 'data:image/png;base64,'
+    const picture = `${head}${'A'.repeat(2048 - head.length)}`
+    const worn = { v: 1, chat: ID, icon: picture } as const
+    expect(chatOf(chatText(worn))).toEqual(worn)
+  })
   it('is the same chat to a reader that knows nothing of icons', () => {
     const text = chatText({ v: 1, chat: ID, icon: 'rocket' })
     const { v, chat } = JSON.parse(text) as { v: unknown; chat: unknown }
@@ -47,7 +53,7 @@ describe('a .chat file', () => {
     ['a colour with no icon', '"iconColor":"violet"', pointer],
     ['an icon that is not a string', '"icon":7', pointer],
     ['an empty icon', '"icon":" "', pointer],
-    ['an icon too long to be one', `"icon":"${'a'.repeat(101)}"`, pointer],
+    ['an icon too long to be one', `"icon":"${'a'.repeat(2049)}"`, pointer],
     ['a colour that is not a string', '"icon":"rocket","iconColor":[1]', { ...pointer, icon: 'rocket' }],
   ])('drops %s', (_said, fields, read) => {
     expect(chatOf(`{"v":1,"chat":"${ID}",${fields}}`)).toEqual(read)

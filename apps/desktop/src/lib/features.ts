@@ -328,6 +328,9 @@ export async function warmDoors(): Promise<void> {
             one.keepFirstScreens(workspace),
           ),
     () => reloadWhen(),
+    __EVEN_PLUGIN__
+      ? undefined
+      : () => import('./icon-picker/src/api').then((one) => one.loadWebIcons()).then((one) => one.watchWebIcons()),
     () => import('./ui-controls/src/api').then((one) => one.watchKeyboard()),
     __EVEN_PLUGIN__ ? undefined : () => import('./back-swipe/src/api').then((one) => one.listenSwipes()),
   ])

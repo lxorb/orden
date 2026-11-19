@@ -178,7 +178,7 @@ describe('what each kind of icon is written as', () => {
       expect(read, said).not.toBeNull()
       if (read?.kind === 'emoji') expect(read.text).toBe(name)
       else if (read?.kind === 'set') expect(read.name).toBe(name)
-      else expect(keyNamed(LIBRARY, read?.name ?? '')).toBe(name)
+      else expect(keyNamed(LIBRARY, read?.kind === 'lucide' ? read.name : '')).toBe(name)
     }
   })
 })

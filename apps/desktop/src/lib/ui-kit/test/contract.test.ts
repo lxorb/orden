@@ -6,7 +6,10 @@ import {
   busy,
   DIVIDER,
   initial,
+  inOneColour,
+  isKeptPicture,
   isSubmenu,
+  LONGEST_PICTURE,
   matchesCombination,
   message,
   opensAt,
@@ -16,6 +19,9 @@ import {
   sameCombination,
   sameIcon,
   showCombination,
+  SITE_ICONS,
+  siteOfIcon,
+  takesTint,
   UNARCHIVE_MARK,
   walk,
   walkableRows,
@@ -117,6 +123,37 @@ describe('icons', () => {
     expect(sameIcon('🍎', '🍎')).toBe(true)
     expect(sameIcon('🍎', '🍐')).toBe(false)
     expect(sameIcon(null, '🍎')).toBe(false)
+  })
+  test('a kept picture is a small png written into the value itself, never a link to a site', () => {
+    const png = `data:image/png;base64,${'A'.repeat(64)}==`
+    expect(readIcon(png)).toEqual({ kind: 'picture', src: png })
+    expect(isKeptPicture(png)).toBe(true)
+    expect(takesTint(readIcon(png))).toBe(false)
+    expect(inOneColour(readIcon(png))).toBe(false)
+    expect(sameIcon(png, png)).toBe(true)
+    expect(sameIcon(png, `data:image/png;base64,${'B'.repeat(64)}==`)).toBe(false)
+    const head = 'data:image/png;base64,'
+    const longest = `${head}${'A'.repeat(LONGEST_PICTURE - head.length)}`
+    expect(readIcon(longest)?.kind).toBe('picture')
+    for (const not of [
+      `${longest}A`,
+      'data:image/jpeg;base64,AAAA',
+      'data:image/svg+xml;base64,AAAA',
+      'data:image/png;base64,AA AA',
+      'data:image/png;base64,<svg>',
+      'data:image/png,AAAA',
+    ]) {
+      expect(readIcon(not)?.kind).not.toBe('picture')
+      expect(isKeptPicture(not)).toBe(false)
+    }
+    expect(LONGEST_PICTURE).toBe(2048)
+  })
+  test('a web icon names the site it came from, and only a web icon does', () => {
+    expect(siteOfIcon(writtenIcon(SITE_ICONS, 'github.com'))).toBe('github.com')
+    expect(siteOfIcon('site:github.com')).toBe('github.com')
+    for (const not of [null, '', 'star', '🍎', 'simple-icons:github', 'data:image/png;base64,AAAA']) {
+      expect(siteOfIcon(not)).toBeNull()
+    }
   })
 })
 describe('the panel marks', () => {

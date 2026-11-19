@@ -2,6 +2,7 @@ import { chosenIcon, chosenTint } from '../../marks/src/api'
 import { setFileIcon } from './file-icon'
 import type { IconTarget } from './icon-choice.svelte'
 import { tabKindParts } from '@orden/contracts'
+import { siteOfIcon } from '../../ui-kit/src/api'
 import { workspace } from '../../workspace/src/api'
 
 const terminalIcon = () => tabKindParts('terminal').icon
@@ -18,9 +19,13 @@ export function tintOf(target: IconTarget): string | null {
   return chosenTint(target.path)
 }
 export function wear(target: IconTarget, icon: string | null, colour: string | null): void {
+  void putOn(target, icon, colour)
+}
+export async function putOn(target: IconTarget, icon: string | null, colour: string | null): Promise<void> {
+  if (siteOfIcon(icon) !== null) return
   if (target.kind === 'pass') target.take(icon)
   else if (target.kind === 'space') workspace.setIcon(target.id, icon, colour)
   else if (target.kind === 'folder') workspace.setFolderIcon(target.path, icon, colour)
   else if (target.kind === 'terminal') terminalIcon()?.wear(target.tab, icon, colour)
-  else void setFileIcon(target.path, icon, colour)
+  else await setFileIcon(target.path, icon, colour)
 }

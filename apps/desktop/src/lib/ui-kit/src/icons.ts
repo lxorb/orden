@@ -17,14 +17,23 @@ export function shapeFor(library: Record<string, IconNode>, chosen: string | nul
   return chosen && Object.hasOwn(library, chosen) ? (library[chosen] ?? null) : null
 }
 export type WrittenIcon =
-  { kind: 'lucide'; name: string } | { kind: 'emoji'; text: string } | { kind: 'set'; set: string; name: string }
+  | { kind: 'lucide'; name: string }
+  | { kind: 'emoji'; text: string }
+  | { kind: 'set'; set: string; name: string }
+  | { kind: 'picture'; src: string }
 const EMOJI = /^(?:\p{Extended_Pictographic}|\p{Emoji_Component}|\p{Regional_Indicator})+$/u
 const PICTURE = /\p{Extended_Pictographic}|\p{Regional_Indicator}/u
 const LONGEST = 16
 const PREFIXED = /^([a-z][a-z\d-]*):(.+)$/
+export const LONGEST_PICTURE = 2048
+const KEPT_PICTURE = /^data:image\/png;base64,[A-Za-z\d+/]+={0,2}$/
+export function isKeptPicture(value: string | null | undefined): boolean {
+  return !!value && value.length <= LONGEST_PICTURE && KEPT_PICTURE.test(value)
+}
 export function readIcon(value: string | null | undefined): WrittenIcon | null {
   const said = (value ?? '').trim()
   if (!said) return null
+  if (isKeptPicture(said)) return { kind: 'picture', src: said }
   if (said.length <= LONGEST && PICTURE.test(said) && EMOJI.test(said)) {
     return { kind: 'emoji', text: said }
   }
@@ -39,6 +48,10 @@ export const EMOJI_SET = 'emoji'
 export const BRANDS = 'simple-icons'
 export const EMOJI_OUTLINE = 'fluent-emoji-high-contrast'
 export const SITE_ICONS = 'site'
+export function siteOfIcon(value: string | null | undefined): string | null {
+  const icon = readIcon(value)
+  return icon?.kind === 'set' && icon.set === SITE_ICONS ? icon.name : null
+}
 const TINTED_SETS: ReadonlySet<string> = new Set([EMOJI_OUTLINE])
 export function takesTint(icon: WrittenIcon | null): boolean {
   if (!icon) return false

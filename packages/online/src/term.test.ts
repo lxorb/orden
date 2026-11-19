@@ -32,6 +32,12 @@ describe('a .term file', () => {
     })
     expect(termText({ ...term, iconColor: 'red' })).toBe(termText(term))
   })
+  it('keeps a picture written into the icon, up to 2048 characters, and drops a longer one', () => {
+    const head = 'data:image/png;base64,'
+    const picture = `${head}${'A'.repeat(2048 - head.length)}`
+    expect(termOf(termText({ ...term, icon: picture }))).toEqual({ ...term, icon: picture })
+    expect(termOf(termText({ ...term, icon: `${picture}A` }))).toEqual(term)
+  })
   it.each([
     '',
     'Terminal',
