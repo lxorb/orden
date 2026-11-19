@@ -380,7 +380,7 @@ def main() -> int:
         took = came(
             member,
             "() => [...document.querySelectorAll('.chats .entry')].some((one) =>"
-            " one.classList.contains('unread') && one.querySelector('.badge')?.textContent.trim() === '1')",
+            " one.classList.contains('unread') && one.querySelector('.count:not(.orden-row-meta)')?.textContent.trim() === '1')",
             "[Lucile] the chat unread, with a mention badge",
         )
         if took is not None:
@@ -392,7 +392,7 @@ def main() -> int:
         took = came(
             member,
             "() => [...document.querySelectorAll('.chats .entry')].every((one) =>"
-            " !one.classList.contains('unread') && !one.querySelector('.badge'))",
+            " !one.classList.contains('unread') && !one.querySelector('.count:not(.orden-row-meta)'))",
             "[Lucile] the chat read, once it is open in front",
         )
         if took is not None:

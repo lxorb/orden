@@ -11,9 +11,10 @@
   import { Select } from '../../../ui-controls/src/api'
   import { chatName, makeChat, nameChat, openChat } from './open'
   import { chatsView } from './chats-view.svelte'
+  import { unreadCount } from '../unread'
   import { messagesFor } from './found'
   import { chatRowMenu, renamed } from './row-menu'
-  import { longPress, menu, selectAll } from '../../../ui-kit/src/api'
+  import { CountBadge, longPress, menu, selectAll } from '../../../ui-kit/src/api'
   import type { Who } from '@orden/chats'
   import { Avatar } from '../../../accounts-ui/src/api'
   import { firstLine } from './body'
@@ -46,8 +47,8 @@
       since: entry.lastAt,
     }))
     return {
-      pending: ranked.filter((one) => one.entry.unread > 0).sort(byPriority),
-      rest: ranked.filter((one) => one.entry.unread === 0),
+      pending: ranked.filter((one) => unreadCount(one.entry, now) > 0).sort(byPriority),
+      rest: ranked.filter((one) => unreadCount(one.entry, now) === 0),
     }
   })
   function moved(entry: ChatEntry, value: string) {
@@ -164,7 +165,8 @@
   {/if}
 
   {#snippet ranked(one: { entry: ChatEntry; level: Level | null })}
-    <div class="ranked" class:unread={one.entry.unread > 0}>
+    {@const count = unreadCount(one.entry, now)}
+    <div class="ranked" class:unread={count > 0}>
       <button
         type="button"
         class="orden-row entry"
@@ -174,7 +176,7 @@
       >
         <span class="orden-row-mark"><ChatMark path={one.entry.path} /></span>
         <span class="orden-row-label">{one.entry.name ?? 'Chat'}</span>
-        {#if one.entry.unread}<span class="orden-row-meta count">{localNumber(one.entry.unread)}</span>{/if}
+        {#if count}<span class="orden-row-meta count">{localNumber(count)}</span>{/if}
       </button>
       <span class="level">
         <Select
@@ -229,7 +231,7 @@
     >
       <span class="orden-row-mark"><Glyph name="mention" /></span>
       <span class="orden-row-label">Activity</span>
-      {#if mentions}<span class="badge">{localNumber(mentions)}</span>{/if}
+      <CountBadge count={mentions} />
     </button>
     <button type="button" class="orden-row" onclick={() => (showing = 'saved')}>
       <span class="orden-row-mark"><Glyph name="saved" /></span>
@@ -261,7 +263,8 @@
       {#if grouped.length > 1}<p class="space">{group.name}</p>{/if}
       {#each group.chats as chat (chat.id)}
         {@const muted = chat.mutedUntil !== null && chat.mutedUntil > now}
-        {@const unread = chat.unread > 0 && !muted}
+        {@const count = unreadCount(chat, now)}
+        {@const unread = count > 0}
         {@const on = workspace.active?.path === chat.path && chat.path !== null}
         {#if chatsView.renaming === chat.id}
           {@render namer(
@@ -287,9 +290,9 @@
             <span class="orden-row-mark"><ChatMark path={chat.path} /></span>
             <span class="orden-row-label">{chat.name ?? 'Chat'}</span>
             {#if chat.mentions && !muted}
-              <span class="badge">{localNumber(chat.mentions)}</span>
+              <CountBadge count={chat.mentions} />
             {:else if unread}
-              <span class="orden-row-meta count">{localNumber(chat.unread)}</span>
+              <span class="orden-row-meta count">{localNumber(count)}</span>
             {/if}
           </button>{/if}
       {/each}
@@ -404,20 +407,6 @@
   .level {
     flex: none;
     max-width: 7.5em;
-  }
-  .badge {
-    flex: none;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    border-radius: 99px;
-    background: var(--accent);
-    color: var(--accent-ink);
-    font-size: var(--text-xs);
-    font-weight: var(--weight-strong);
-    line-height: 18px;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
   }
   .back {
     color: var(--muted-strong);
