@@ -10,6 +10,7 @@ wrap_load_handler! {
   pub struct TauriCefLoadHandler {
     on_page_load_handler: Option<Arc<tauri_runtime::webview::OnPageLoadHandler>>,
     frame_event_handler: Option<Arc<crate::FrameEventHandler>>,
+    own_window: Option<tauri_runtime::window::WindowId>,
   }
 
   impl LoadHandler {
@@ -40,6 +41,9 @@ wrap_load_handler! {
       let Some(frame) = frame else {
         return;
       };
+      if let Some(window) = self.own_window.filter(|_| frame.is_main() != 0) {
+        crate::js_dialog::drop_where(|_, one| one == window);
+      }
       let url = cef::CefString::from(&frame.url()).to_string();
       if let Ok(url) = url::Url::parse(&url) {
         let is_main = frame.is_main() != 0;

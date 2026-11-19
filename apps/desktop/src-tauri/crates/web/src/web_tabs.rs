@@ -444,6 +444,7 @@ pub async fn web_open(
     let builder = crate::downloads::saving(builder, &app, &tab, webview.window().label());
     let builder = reporting(builder, &app, &tab, private);
     let builder = crate::web_menu::asking(builder, &app, &tab, webview.window().label());
+    let builder = crate::web_dialog::asking(builder, &app, &tab, webview.window().label());
     let stepping = (app.clone(), tab.clone());
     let builder = crate::engine::zooms(
         builder,

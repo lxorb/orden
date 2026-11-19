@@ -164,10 +164,20 @@ pub(crate) fn menus(
     menus: orden_web::engine::Menus,
 ) -> orden_web::engine::Page {
     use tauri_runtime_cef::WebviewBuilderCefExt as _;
-    page.on_context_menu(move |asked| serde_json::to_value(asked).is_ok_and(|said| menus(said)))
+    page.on_context_menu(move |asked| serde_json::to_value(asked).is_ok_and(&*menus))
 }
 pub(crate) fn menu_pick(id: u64, command: Option<i32>) -> bool {
     tauri_runtime_cef::answer_context_menu(id, command)
+}
+pub(crate) fn dialogs(
+    page: orden_web::engine::Page,
+    dialogs: orden_web::engine::Dialogs,
+) -> orden_web::engine::Page {
+    use tauri_runtime_cef::WebviewBuilderCefExt as _;
+    page.on_js_dialog(move |said| serde_json::to_value(said).is_ok_and(&*dialogs))
+}
+pub(crate) fn dialog_answer(id: u64, ok: bool, text: Option<String>) -> bool {
+    tauri_runtime_cef::answer_js_dialog(id, ok, text.as_deref())
 }
 #[allow(
     clippy::cast_possible_truncation,

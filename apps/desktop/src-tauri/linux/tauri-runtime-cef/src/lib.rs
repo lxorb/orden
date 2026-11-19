@@ -28,6 +28,8 @@ pub use keys::{FocusHook, KeyHook, hear_keys};
 /// The languages the user asked their operating system for.
 mod locale;
 mod macros;
+mod js_dialog;
+pub use js_dialog::{JsDialog, JsDialogEvent, JsDialogHandler, answer_js_dialog};
 mod menu;
 pub use menu::{ContextMenu, ContextMenuHandler, ContextMenuItem, answer_context_menu};
 mod offscreen;
