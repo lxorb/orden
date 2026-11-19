@@ -18,6 +18,7 @@ export interface SidebarPart {
   readonly id: SidebarPartId
   readonly tools?: readonly SidebarTool[]
   readonly unread?: () => boolean
+  readonly unreadIn?: (root: string) => number
   readonly open?: () => boolean
   readonly toggle?: () => void
   readonly covers?: () => boolean
@@ -26,10 +27,21 @@ export interface SidebarPart {
   readonly toTab?: () => Promise<void>
 }
 const parts = new Map<SidebarPartId, SidebarPart>()
+const hearing = new Set<() => void>()
+const told = () => {
+  for (const one of hearing) one()
+}
 export function registerSidebarPart(part: SidebarPart): () => void {
   parts.set(part.id, part)
+  told()
   return () => {
-    if (parts.get(part.id) === part) parts.delete(part.id)
+    if (parts.get(part.id) !== part) return
+    parts.delete(part.id)
+    told()
   }
+}
+export function hearSidebarParts(then: () => void): () => void {
+  hearing.add(then)
+  return () => void hearing.delete(then)
 }
 export const sidebarPart = (id: SidebarPartId): SidebarPart | null => parts.get(id) ?? null

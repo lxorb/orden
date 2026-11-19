@@ -2,7 +2,7 @@
   import { arrive, leave, SharedMark, overlays, Door } from '../../ui-kit/src/api'
   import NameField from './NameField.svelte'
   import { shortcuts } from '../../shortcuts/src/api'
-  import { commitSpaceName, SpaceBadge } from '../../spaces/src/api'
+  import { chatsUnreadBesides, commitSpaceName, SpaceBadge } from '../../spaces/src/api'
   import { spacesMenu } from '../../surfaces/src/api'
   import { isShared } from '../../sharing/src/api'
   import { workspace } from '../../workspace/src/api'
@@ -28,7 +28,7 @@
     <span class="mark">
       {#key space.id}
         <span class="fade" in:arrive={{ y: 0 }} out:leave={{ y: 0 }}>
-          <SpaceBadge {space} />
+          <SpaceBadge {space} unread={chatsUnreadBesides(workspace.shownSpaces, space.root)} />
         </span>
       {/key}
     </span>
@@ -102,6 +102,7 @@
     background: var(--surface-press);
   }
   .mark {
+    position: relative;
     flex: none;
     display: grid;
     margin-inline-end: calc(var(--row-gap) - var(--space-1));

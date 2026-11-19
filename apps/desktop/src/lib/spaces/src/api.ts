@@ -12,7 +12,8 @@ import {
   trustAgain,
   protectEntries,
 } from '../../sharing/src/api'
-import { portOf, registerSettingsPart, settingsWindow } from '@orden/contracts'
+import { hearSidebarParts, portOf, registerSettingsPart, settingsWindow, sidebarPart } from '@orden/contracts'
+import { createSubscriber } from 'svelte/reactivity'
 import { type Space, spaceChanges, workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import { AGENTS_NAME, joinPath } from '../../platform/src/api'
@@ -159,4 +160,12 @@ export const loadSpaceMenu = () => import('./SpaceMenu.svelte')
 export const loadSpacePicker = () => import('./SpacePicker.svelte')
 export function toggleSpacePicker(): void {
   void import('./space-picker.svelte').then(({ spacePicker }) => spacePicker.toggle())
+}
+const heard = createSubscriber((update) => hearSidebarParts(update))
+export function chatsUnreadIn(root: string): number {
+  heard()
+  return sidebarPart('chats')?.unreadIn?.(root) ?? 0
+}
+export function chatsUnreadBesides(spaces: readonly { root: string }[], here: string): number {
+  return spaces.reduce((sum, one) => (one.root === here ? sum : sum + chatsUnreadIn(one.root)), 0)
 }

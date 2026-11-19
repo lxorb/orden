@@ -37,6 +37,7 @@ import {
   registerPaletteKind,
   registerSettingFields,
   registerSettingsPart,
+  hearSidebarParts,
   registerSidebarPart,
   registerCommand,
   registerCommandRows,
@@ -206,6 +207,19 @@ describe('shell extension points', () => {
     expect(settingsWindow().space).toBe('/s')
     unbind()
     expect(settingsWindow().space).toBe(null)
+  })
+  it('tells those who listen each time a sidebar part comes or goes, and stops when they leave', () => {
+    let heard = 0
+    const leave = hearSidebarParts(() => heard++)
+    const drop = registerSidebarPart({ id: 'chats', unreadIn: (root) => (root === '/s' ? 3 : 0) })
+    expect(heard).toBe(1)
+    expect(sidebarPart('chats')?.unreadIn?.('/s')).toBe(3)
+    drop()
+    drop()
+    expect(heard).toBe(2)
+    leave()
+    registerSidebarPart({ id: 'chats' })()
+    expect(heard).toBe(2)
   })
   it('asks a port for each kind of thing quitting would stop', async () => {
     expect([...STOPPING_KINDS]).toEqual(['terminal', 'thread'])
