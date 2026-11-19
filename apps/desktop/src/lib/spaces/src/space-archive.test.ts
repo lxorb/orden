@@ -25,12 +25,13 @@ const workspace = vi.hoisted(() => {
   const held = {
     spaces: [] as Space[],
     activeSpaceId: null as string | null,
+    openedArchived: null as string | null,
     archivedSpaces: null as unknown as InstanceType<typeof ArchivedSpaces>,
     get activeSpace(): Space | null {
       return this.spaces.find((one) => one.id === this.activeSpaceId) ?? null
     },
     get shownSpaces(): Space[] {
-      return this.spaces.filter((one) => !this.archivedSpaces.has(one.root))
+      return this.spaces.filter((one) => !this.archivedSpaces.has(one.root) || one.id === this.openedArchived)
     },
     showSpace(id: string) {
       this.activeSpaceId = id
@@ -40,7 +41,7 @@ const workspace = vi.hoisted(() => {
   }
   async function leave(): Promise<void> {
     const open = held.activeSpace
-    if (!open || !held.archivedSpaces.has(open.root)) return
+    if (!open || !held.archivedSpaces.has(open.root) || open.id === held.openedArchived) return
     const next = held.shownSpaces[0]
     if (next) await held.showSpace(next.id)
     else held.archivedSpaces.set(open.root, false)
@@ -82,6 +83,7 @@ beforeEach(() => {
   workspace.archivedSpaces = new ArchivedSpaces()
   workspace.spaces = [space('Notes'), space('Work'), space('Old'), space('Local')]
   workspace.activeSpaceId = 'Notes'
+  workspace.openedArchived = null
   told.sent.length = 0
   told.fails = false
   workspace.leaveArchived.mockClear()
@@ -153,5 +155,17 @@ describe('the account', () => {
     workspace.spaces = [space('Notes'), space('Work')]
     await archive.receive({ archivedSpaces: ['id-Notes', 'id-Work'] })
     expect(workspace.shownSpaces).toHaveLength(1)
+  })
+})
+describe('an archived space opened to look at it', () => {
+  test('stays open when the account says again it is archived, and any other archived space open is still left', async () => {
+    await archive.archiveSpace(at(2))
+    workspace.openedArchived = 'Old'
+    workspace.activeSpaceId = 'Old'
+    await archive.receive({ archivedSpaces: ['id-Old'] })
+    expect(workspace.activeSpaceId).toBe('Old')
+    workspace.openedArchived = null
+    await archive.receive({ archivedSpaces: ['id-Old'] })
+    expect(workspace.activeSpaceId).toBe('Notes')
   })
 })
