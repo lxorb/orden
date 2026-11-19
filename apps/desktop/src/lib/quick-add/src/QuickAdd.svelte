@@ -13,10 +13,19 @@
   import Timer from 'lucide/dist/esm/icons/timer.mjs'
   import { onMount, tick, untrack } from 'svelte'
   import type { Dictates } from '../../dictation/src/api'
-  import { DateAsk, longPaste } from '../../ui-controls/src/api'
+  import {
+    carried,
+    chosen,
+    DateAsk,
+    longPaste,
+    piecesOf,
+    type Spot as Span,
+    suggestions,
+    tokenAt,
+  } from '../../ui-controls/src/api'
   import type { Provider } from '../../ai-providers/src/api'
   import type { Entry, Prefill } from './entry'
-  import { carried, chosen, pastedLines, piecesOf, type Span, suggestions, tokenAt, without } from './field'
+  import { pastedLines, without } from './field'
   import Glyph from './Glyph.svelte'
   import { priorityOf, priorityTone } from '../../tasks-model/src/api'
   import { dayWords, durationLabel } from './labels'
@@ -139,9 +148,10 @@
     caret = input && input.selectionStart === input.selectionEnd ? (input.selectionStart ?? -1) : -1
   }
   let caret = $state(-1)
+  const SIGNS = ['#', '@', '%']
   let dismissed = $state(-1)
   let active = $state(0)
-  const token = $derived(smart && caret >= 0 ? tokenAt(text, caret) : null)
+  const token = $derived(smart && caret >= 0 ? tokenAt(text, caret, SIGNS) : null)
   const offered = $derived.by((): string[] => {
     if (!token || token.from === dismissed) return []
     return suggestions(token.query, tags)

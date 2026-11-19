@@ -45,3 +45,6 @@ export { chooseFiles, PICTURES } from './choose-files'
 export { droppedFiles, filesUnder, pickFiles, pickFolder, tidyPath } from './picking'
 export { hidePointerWhileTyping, takesWords, writes } from './typing-pointer'
 export const watchKeyboard = () => import('./keyboard-home')
+export { carried, chipEndingAt, chosen, piecesOf, suggestions, tokenAt } from './chip-field'
+export type { Marked, Offer, Piece, Spot, Token } from './chip-field'
+export { default as ChipInput } from './ChipInput.svelte'

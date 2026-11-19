@@ -7,7 +7,7 @@ import { DE } from './de'
 import { EN, EN_US } from './en'
 import type { Grammar } from './grammar'
 import { repeatAt } from './repeat'
-import { type Clock, clockOf, dayAt, timeAt, whenAt } from './when'
+import { askedDay, type Clock, clockOf, dayAt, timeAt, whenAt } from './when'
 import { bare, type Word, wordsOf } from './words'
 
 export type ChipKind = 'when' | 'repeat' | 'priority' | 'tag' | 'assignee' | 'remind' | 'deadline' | 'duration'
@@ -155,7 +155,7 @@ function wordAt(words: readonly Word[], at: number): Found | null {
   }
   return null
 }
-function foundAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): Found | null {
+function foundAt(words: readonly Word[], at: number, g: Grammar, clock: Clock, todo: boolean): Found | null {
   const marked = wordAt(words, at) ?? remindAt(words, at, g, clock) ?? deadlineAt(words, at, g, clock)
   if (marked) return marked
   const repeat = repeatAt(words, at, g, clock)
@@ -182,7 +182,7 @@ function foundAt(words: readonly Word[], at: number, g: Grammar, clock: Clock): 
   }
   const duration = durationAt(words, at, g)
   if (duration) return duration
-  const when = whenAt(words, at, g, clock)
+  const when = todo ? askedDay(words, at, g, clock, false) : whenAt(words, at, g, clock)
   if (!when) return null
   const { day, time } = when
   if (day && !time && g.deadlineWords.has(bare(words[at]))) {
@@ -221,6 +221,26 @@ export function parseQuickAdd(
   now: Date,
   options: QuickAddOptions = {},
 ): QuickAdd {
+  return scan(text, langs, now, options, false)
+}
+export interface TypedTodo {
+  title: string
+  labels: string[]
+  start?: string
+  deadline?: string
+  priority?: 0 | 1 | 2 | 3
+  chips: Chip[]
+}
+const TODO_KINDS = new Set<ChipKind>(['tag', 'priority', 'when', 'deadline'])
+export function parseTodo(text: string, langs: readonly string[], now: Date, options: QuickAddOptions = {}): TypedTodo {
+  const { text: title, fields, chips } = scan(text, langs, now, options, true)
+  const out: TypedTodo = { title, labels: fields.tags, chips }
+  if (fields.due !== undefined) out.start = fields.due
+  if (fields.deadline !== undefined) out.deadline = fields.deadline
+  if (fields.priority !== undefined) out.priority = (4 - fields.priority) as 0 | 1 | 2 | 3
+  return out
+}
+function scan(text: string, langs: readonly string[], now: Date, options: QuickAddOptions, todo: boolean): QuickAdd {
   const words = wordsOf(text)
   const grammars = grammarsFor(langs)
   const clock = clockOf(now)
@@ -230,13 +250,13 @@ export function parseQuickAdd(
   for (let at = 0; at < words.length;) {
     let best: Found | null = null
     for (const g of grammars) {
-      const one = foundAt(words, at, g, clock)
+      const one = foundAt(words, at, g, clock, todo)
       if (one && (!best || one.end > best.end)) best = one
     }
     const from = words[at]?.from ?? 0
     const to = words[(best?.end ?? at + 1) - 1]?.to ?? from
     if (best && !kept(keep, from, to)) {
-      found.push(best)
+      if (!todo || TODO_KINDS.has(best.kind)) found.push(best)
       at = best.end
     } else {
       at++
