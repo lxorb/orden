@@ -4,6 +4,7 @@
   import { dur, fade, fly } from '../../platform/src/api'
   import { SpaceMark } from '../../marks/src/api'
   import type { Shown } from './hover-card.svelte'
+  import { autoDir } from './direction'
 
   const { hovering }: { hovering: { readonly card: Shown | null; readonly facts: readonly (readonly string[])[] } } =
     $props()
@@ -21,7 +22,7 @@
   >
     {#key card.id}
       <div class="words" in:fade={{ duration: dur(120) }}>
-        <strong class="name" dir="auto">{card.title}</strong>
+        <strong class="name" use:autoDir={card.title}>{card.title}</strong>
         {#if card.where || card.from}
           <span class="where">
             {#if card.where}<span class="site">{card.where}</span>{/if}
@@ -117,7 +118,7 @@
     object-position: top;
     border-top: 1px solid var(--line-strong);
   }
-  [dir='auto'] {
+  .name {
     text-align: -webkit-match-parent;
     text-align: match-parent;
   }
