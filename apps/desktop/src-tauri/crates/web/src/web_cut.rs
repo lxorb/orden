@@ -5,6 +5,9 @@ use std::sync::{LazyLock, Mutex};
 use serde::Deserialize;
 use tauri::Webview;
 
+#[cfg(target_os = "macos")]
+mod under;
+
 #[derive(Clone, Copy, Debug, Deserialize, PartialEq)]
 pub struct Hollow {
     pub x: f64,
@@ -134,14 +137,61 @@ const HOLLOWS: bool = cfg!(any(windows, target_os = "macos"));
 pub enum Layering {
     Cuts(bool),
     Hollows(&'static str),
+    Under(&'static str),
 }
 pub fn layering(label: &str) -> Layering {
-    let _ = label;
-    if HOLLOWS {
+    if lowered(label) {
+        Layering::Under("under")
+    } else if HOLLOWS {
         Layering::Hollows("hollows")
     } else {
         Layering::Cuts(CUTS)
     }
+}
+#[must_use]
+pub fn pages_under() -> bool {
+    static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+    *ON.get_or_init(|| std::env::var_os("ORDEN_PAGES_UNDER").is_some_and(|said| said == "1"))
+}
+static LOWERED: LazyLock<Mutex<std::collections::HashSet<String>>> = LazyLock::new(Mutex::default);
+fn lowered(label: &str) -> bool {
+    LOWERED.held().contains(label)
+}
+pub(crate) fn lay_under(label: &str, under: bool) {
+    let mut all = LOWERED.held();
+    if under {
+        all.insert(label.to_owned());
+    } else {
+        all.remove(label);
+    }
+}
+#[must_use]
+pub fn takes(cut: Option<&Cut>, x: f64, y: f64) -> bool {
+    cut.is_none_or(|cut| !cut.all && !cut.hollows.iter().any(|one| holds(one, x, y)))
+}
+fn holds(layer: &Hollow, x: f64, y: f64) -> bool {
+    let (right, bottom) = (layer.x + layer.width, layer.y + layer.height);
+    if x < layer.x || y < layer.y || x >= right || y >= bottom {
+        return false;
+    }
+    let round = layer.radius.min(layer.width / 2.0).min(layer.height / 2.0).max(0.0);
+    let (nearest_x, nearest_y) =
+        (x.clamp(layer.x + round, right - round), y.clamp(layer.y + round, bottom - round));
+    (x - nearest_x).powi(2) + (y - nearest_y).powi(2) <= round * round
+}
+pub fn lay_page_under(window: &tauri::Window, view: &Webview) {
+    #[cfg(target_os = "macos")]
+    if pages_under() {
+        under::lower(window, view);
+    }
+    let _ = (window, view);
+}
+pub fn opacity(view: &Webview, opacity: f64) {
+    #[cfg(target_os = "macos")]
+    if lowered(view.label()) {
+        under::opacity(view, opacity);
+    }
+    let _ = (view, opacity);
 }
 static GIVEN: LazyLock<Mutex<Given>> = LazyLock::new(Mutex::default);
 type Given = HashMap<String, (Option<Cut>, Foot, Shape)>;
@@ -149,7 +199,12 @@ fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
     look(&mut GIVEN.held())
 }
 pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: Foot) {
-    let shape = shape_of(cut.as_ref(), wide, tall, scale, corner);
+    let under = lowered(view.label());
+    #[cfg(target_os = "macos")]
+    if under {
+        under::cut(view, cut.clone(), f64::from(wide) / scale.max(0.01));
+    }
+    let shape = shape_of(drawn(under, cut.as_ref()), wide, tall, scale, corner);
     let label = view.label().to_string();
     let changed = given(|all| {
         let before = all.get(&label).and_then(|(_, _, one)| one.clone());
@@ -171,6 +226,16 @@ pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
 }
 pub fn uncut(label: &str) {
     given(|all| all.remove(label));
+    lay_under(label, false);
+    #[cfg(target_os = "macos")]
+    under::forget(label);
+}
+fn drawn(under: bool, cut: Option<&Cut>) -> Option<&Cut> {
+    if under {
+        None
+    } else {
+        cut
+    }
 }
 #[cfg(target_os = "linux")]
 mod engine {
@@ -527,7 +592,7 @@ mod engine {
 }
 #[cfg(test)]
 mod tests {
-    use super::{lower, rectangles, shape_of, Cut, Foot, Hollow};
+    use super::{drawn, holds, lay_under, lower, rectangles, shape_of, takes, Cut, Foot, Hollow};
 
     fn cut(all: bool, hollows: &[(f64, f64, f64, f64, f64)]) -> Cut {
         let hollows = hollows
@@ -596,6 +661,41 @@ mod tests {
             serde_json::json!(false)
         };
         assert_eq!(said, wanted);
+    }
+    #[test]
+    fn a_page_laid_under_the_app_says_so_and_is_drawn_whole() {
+        lay_under("web-under-said", true);
+        let said = serde_json::to_value(super::layering("web-under-said")).expect("said");
+        assert_eq!(said, serde_json::json!("under"));
+        let menu = cut(false, &[(10.0, 20.0, 200.0, 100.0, 0.0)]);
+        assert_eq!(drawn(true, Some(&menu)), None);
+        assert_eq!(drawn(false, Some(&menu)), Some(&menu));
+        assert_eq!(
+            shape_of(drawn(true, Some(&menu)), 800, 600, 1.0, Foot::Even(10.0)),
+            Some(vec![(0, 0, 800, 600, 20, 20)])
+        );
+        super::uncut("web-under-said");
+        let said = serde_json::to_value(super::layering("web-under-said")).expect("said");
+        assert_ne!(said, serde_json::json!("under"));
+    }
+    #[test]
+    fn a_page_under_the_app_takes_what_no_layer_is_over() {
+        assert!(takes(None, 10.0, 10.0));
+        let menu = cut(false, &[(100.0, 0.0, 200.0, 300.0, 0.0)]);
+        assert!(!takes(Some(&menu), 150.0, 10.0));
+        assert!(takes(Some(&menu), 50.0, 10.0));
+        assert!(takes(Some(&menu), 300.0, 10.0));
+        assert!(!takes(Some(&cut(true, &[])), 10.0, 10.0));
+        let card = Hollow { x: 0.0, y: 0.0, width: 100.0, height: 100.0, radius: 20.0 };
+        assert!(holds(&card, 50.0, 50.0));
+        assert!(holds(&card, 20.0, 2.0));
+        assert!(!holds(&card, 1.0, 1.0));
+        assert!(!holds(&card, 99.0, 99.0));
+        assert!(holds(
+            &Hollow { x: 0.0, y: 0.0, width: 10.0, height: 100.0, radius: 50.0 },
+            5.0,
+            50.0
+        ));
     }
     #[test]
     fn a_page_is_rounded_at_each_bottom_corner_its_card_rounds() {

@@ -41,7 +41,12 @@ jobs:
         run: |
           python3 -m venv "$RUNNER_TEMP/drive"
           "$RUNNER_TEMP/drive/bin/pip" install --quiet pillow pyobjc-framework-Quartz pyobjc-framework-Cocoa pyobjc-framework-ApplicationServices
-          "$RUNNER_TEMP/drive/bin/python" scripts/web-under-mac-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out drive
+          "$RUNNER_TEMP/drive/bin/python" scripts/web-under-mac-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out drive/default
+
+      - name: Driven with the page under the app
+        if: always() && env.EXE != ''
+        run: |
+          "$RUNNER_TEMP/drive/bin/python" scripts/web-under-mac-drive.py --exe "$EXE" --identifier "$IDENTIFIER" --out drive/under --under
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()

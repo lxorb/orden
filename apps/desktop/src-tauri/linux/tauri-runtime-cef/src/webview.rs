@@ -885,6 +885,11 @@ impl<T: UserEvent> WinitCefApp<T> {
     // the DevTools protocol instead, which overrides both the header and
     // `navigator.userAgent` for this one target.
     let user_agent = pending.webview_attributes.user_agent.clone();
+    let clear_ground = clears_ground(
+      drag_drop_event_target == browser_client::DragDropEventTarget::Window,
+      offscreen.is_some(),
+      pages_under(),
+    );
 
     warn_about_unsupported_attributes(
       &pending.label,
@@ -968,6 +973,9 @@ impl<T: UserEvent> WinitCefApp<T> {
         // Before the initial navigation below, so the first request already carries it.
         if let Some(user_agent) = &user_agent {
           apply_user_agent_override(&host, user_agent);
+        }
+        if clear_ground {
+          apply_clear_ground(&host);
         }
         load_initial_url_after_registering_initialization_scripts(
           &browser,
@@ -2353,6 +2361,35 @@ fn apply_user_agent_override(host: &BrowserHost, user_agent: &str) {
   }
 }
 
+fn pages_under() -> bool {
+  static ON: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+  *ON.get_or_init(|| std::env::var_os("ORDEN_PAGES_UNDER").is_some_and(|said| said == "1"))
+}
+
+fn clears_ground(own_window: bool, offscreen: bool, asked: bool) -> bool {
+  cfg!(target_os = "macos") && own_window && !offscreen && asked
+}
+
+fn clear_ground_message(id: i32) -> String {
+  serde_json::json!({
+    "id": id,
+    "method": "Emulation.setDefaultBackgroundColorOverride",
+    "params": { "color": { "r": 0, "g": 0, "b": 0, "a": 0 } },
+  })
+  .to_string()
+}
+
+fn apply_clear_ground(host: &BrowserHost) {
+  let Ok(message_id) = crate::devtools::allocate_runtime_devtools_message_id() else {
+    log::warn!("could not clear the window's ground: no DevTools message id was available");
+    return;
+  };
+  let message = clear_ground_message(message_id);
+  if host.send_dev_tools_message(Some(message.as_bytes())) != 1 {
+    log::warn!("failed to clear the window's ground through the DevTools protocol");
+  }
+}
+
 pub(crate) fn add_dev_tools_observer(
   browser: &Browser,
   handlers: Arc<Mutex<Vec<Arc<DevToolsProtocolHandler>>>>,
@@ -2521,6 +2558,18 @@ fn load_initial_url(browser: &Browser, initial_url: &str) {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn only_a_window_s_own_browser_on_a_mac_clears_its_ground_and_only_when_asked() {
+    assert_eq!(clears_ground(true, false, true), cfg!(target_os = "macos"));
+    assert!(!clears_ground(false, false, true));
+    assert!(!clears_ground(true, true, true));
+    assert!(!clears_ground(true, false, false));
+    let said: serde_json::Value = serde_json::from_str(&clear_ground_message(7)).unwrap();
+    assert_eq!(said["id"], 7);
+    assert_eq!(said["method"], "Emulation.setDefaultBackgroundColorOverride");
+    assert_eq!(said["params"]["color"]["a"], 0);
+  }
 
   #[test]
   fn offscreen_background_is_transparent_only_on_request() {

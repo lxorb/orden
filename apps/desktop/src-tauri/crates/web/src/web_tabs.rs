@@ -371,6 +371,7 @@ fn page_built(
     }
     crate::web_follow::put(&view, bounds, scale)
         .map_err(|error| format!("that page could not be placed: {error}"))?;
+    crate::web_cut::lay_page_under(window, &view);
     Ok(())
 }
 pub fn warm(_app: &AppHandle) {}
@@ -658,7 +659,9 @@ pub fn web_place(
         crate::web_follow::put(&view, bounds, scale)
             .map_err(|error| format!("that page could not be placed: {error}"))?;
     }
-    let _ = opacity;
+    if let Some(opacity) = opacity.filter(|_| visible) {
+        crate::web_cut::opacity(&view, opacity);
+    }
     if visible {
         let _doing = orden_crashes::stall::doing("web_place: cut");
         crate::web_cut::apply(
