@@ -1,5 +1,15 @@
 {
   "name": "demo",
   "layer": "features",
-  "dependsOn": ["canvas", "collab", "editor", "markdown", "platform", "showcase", "undo-toast", "workspace"]
+  "dependsOn": [
+    "contracts",
+    "canvas",
+    "collab",
+    "editor",
+    "markdown",
+    "platform",
+    "showcase",
+    "undo-toast",
+    "workspace"
+  ]
 }

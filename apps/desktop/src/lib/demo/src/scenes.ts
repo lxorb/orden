@@ -42,7 +42,7 @@ const glide = (from: View, to: View, by: number): View => ({
 })
 const RIDE_FROM = { x: -60, y: 150 }
 const RIDE_TO = { x: -100, y: -260 }
-const GRIP = { x: 70, y: 40 }
+const GRIP = { x: 230, y: 105 }
 const ROUTES_FROM = { x: 280, y: -260 }
 const ROUTES_TO = { x: 280, y: -130 }
 const WIDE: View = { x: 10, y: -10, scale: 1 }
@@ -51,11 +51,20 @@ const INTO_PLAN: View = { x: -360, y: -135, scale: 2.4 }
 const INTO_PAGE: View = { x: 430, y: -215, scale: 2.2 }
 const BY_ROUTES: View = { x: 380, y: -150, scale: 1.5 }
 const ASIDE: View = { x: 60, y: -10, scale: 0.95 }
+const NARROW: View = { x: 40, y: -110, scale: 0.62 }
+const NARROW_PLAN: View = { x: -360, y: -135, scale: 1.15 }
+const NARROW_PAGE: View = { x: 430, y: -215, scale: 1 }
+const NARROW_ROUTES: View = { x: 430, y: -150, scale: 0.8 }
+const NARROW_PRESS: View = { x: 430, y: 95, scale: 0.7 }
 const REST: readonly [Point, Point, Point] = [
   { x: -250, y: 230 },
-  { x: -150, y: -60 },
-  { x: 120, y: 60 },
+  { x: -150, y: 150 },
+  { x: 60, y: 135 },
 ]
+const ARROW_FROM = { x: -190, y: -135 }
+const ARROW_TO = { x: -100, y: -195 }
+const DROP = { x: 50, y: 10 }
+const AIKO_FROM = { x: 470, y: 250 }
 function cardsAt(origin: string, ride: Point, picture: number, routes: Point | null, moved: boolean) {
   const nodes: CanvasNode[] = [
     { id: 'week', type: 'group', label: 'Launch week', x: -560, y: -300, width: 400, height: 470 },
@@ -80,7 +89,15 @@ function cardsAt(origin: string, ride: Point, picture: number, routes: Point | n
       height: 130,
       color: '4',
     },
-    { id: 'page', type: 'link', url: origin + PAGE, x: 280, y: -260, width: 300, height: 90 },
+    {
+      id: 'page',
+      type: 'text',
+      text: `### [Kestrel One](${origin}${PAGE})\nThe launch page, live`,
+      x: 280,
+      y: -260,
+      width: 300,
+      height: 100,
+    },
     {
       id: 'press',
       type: 'file',
@@ -108,12 +125,12 @@ function cardsAt(origin: string, ride: Point, picture: number, routes: Point | n
   if (routes)
     nodes.push({
       id: 'routes',
-      type: 'link',
-      url: origin + ROUTES,
+      type: 'text',
+      text: `### [Weekend routes](${origin}${ROUTES})\nThree flat rides, done by lunch`,
       x: Math.round(routes.x),
       y: Math.round(routes.y),
       width: 300,
-      height: 90,
+      height: 100,
     })
   return nodes
 }
@@ -139,7 +156,7 @@ export const drifted = (hands: readonly Point[], time: number): Point[] =>
     x: one.x + 7 * Math.sin(time * 0.8 + at * 2.1),
     y: one.y + 5 * Math.sin(time * 1.1 + at * 1.3),
   }))
-export function frameAt(scene: Scene, given: number, origin: string): Frame {
+export function frameAt(scene: Scene, given: number, origin: string, phone = false): Frame {
   const at = clamp(given)
   const order = SCENES.indexOf(scene)
   const past = (one: Scene) => order > SCENES.indexOf(one)
@@ -153,28 +170,33 @@ export function frameAt(scene: Scene, given: number, origin: string): Frame {
   const nodes = cardsAt(origin, ride, picture, routes, moved)
   const edges = linesAt(arrow, past('browse') || (scene === 'browse' && at >= 0.9))
   let hands: [Point, Point, Point] = [...REST]
-  let view = WIDE
+  const wide = phone ? NARROW : WIDE
+  let view = wide
   let shown: Shown = 'canvas'
   if (scene === 'canvas') {
     const grip = { x: ride.x + GRIP.x, y: ride.y + GRIP.y }
     hands = [
       at < 0.12 ? toward({ x: -300, y: 260 }, grip, span(at, 0, 0.12)) : grip,
-      at < 0.45 ? REST[1] : toward({ x: -190, y: -135 }, { x: -100, y: -195 }, span(at, 0.45, 0.58)),
-      at < 0.6 ? { x: 470, y: 250 } : toward({ x: 470, y: 250 }, { x: 50, y: 10 }, span(at, 0.6, 0.72)),
+      at < 0.45
+        ? REST[1]
+        : at < 0.6
+          ? toward(ARROW_FROM, ARROW_TO, span(at, 0.45, 0.58))
+          : toward(ARROW_TO, REST[1], span(at, 0.6, 0.7)),
+      at < 0.8 ? toward(AIKO_FROM, DROP, span(at, 0.6, 0.72)) : toward(DROP, REST[2], span(at, 0.8, 0.9)),
     ]
-    view = glide(START, WIDE, span(at, 0, 1))
+    view = phone ? { x: ride.x + 140, y: ride.y + 145, scale: NARROW.scale } : glide(START, WIDE, span(at, 0, 1))
   } else if (scene === 'write') {
     const close = span(at, 0, 0.3)
     hands = [toward(REST[0], { x: -400, y: -180 }, close), toward(REST[1], { x: -300, y: -60 }, close), REST[2]]
-    view = glide(WIDE, INTO_PLAN, close)
+    view = glide(wide, phone ? NARROW_PLAN : INTO_PLAN, close)
     if (at >= 0.3) shown = 'note'
   } else if (scene === 'browse') {
-    if (at < 0.6) view = glide(WIDE, INTO_PAGE, span(at, 0, 0.25))
-    else view = glide(BY_ROUTES, WIDE, span(at, 0.85, 1))
+    if (at < 0.6) view = glide(wide, phone ? NARROW_PAGE : INTO_PAGE, span(at, 0, 0.25))
+    else view = glide(phone ? NARROW_ROUTES : BY_ROUTES, wide, span(at, 0.85, 1))
     if (at >= 0.25 && at < 0.6) shown = 'page'
-    hands = [REST[0], REST[1], routes ? { x: routes.x + 150, y: routes.y + 45 } : { x: 430, y: -120 }]
+    hands = [REST[0], REST[1], routes ? { x: routes.x + 20, y: routes.y + 112 } : { x: 300, y: -148 }]
   } else if (scene === 'organize') {
-    view = glide(WIDE, ASIDE, span(at, 0, 0.2))
+    view = glide(wide, phone ? NARROW_PRESS : ASIDE, span(at, 0, 0.2))
     hands = [REST[0], toward(REST[1], { x: 430, y: 90 }, span(at, 0.25, 0.5)), REST[2]]
   }
   const typed: [number, number] =

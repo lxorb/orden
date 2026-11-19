@@ -5,6 +5,7 @@ export const PLAN = 'Plan.md'
 export const PRESS = 'Press kit.md'
 export const LAUNCH = 'Launch'
 export const PAGE = '/demo/web/kestrel.html'
+export const PAGE_TITLE = 'Kestrel One'
 export const ROUTES = '/demo/web/routes.html'
 export const PICTURES = ['Design/bike.svg', 'Design/route.svg'] as const
 export const PLAN_TEXT = `# Launch plan
