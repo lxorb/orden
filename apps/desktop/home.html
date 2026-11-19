@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' 'sha256-jey9sZjHO/mRDTQyAi8bUIZLiVLk3oiJiXFERNqsckw='; style-src 'self'; img-src 'self'; connect-src 'self'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0e1013" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#fbfcfd" media="(prefers-color-scheme: light)" />
+    <meta
+      name="description"
+      content="Orden, the workspace your team shares: notes, canvas, web and files, live together."
+    />
+    <link rel="icon" href="/icon-256.png" />
+    <title>Orden</title>
+    <script>
+      document.documentElement.dataset.theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+    </script>
+    <script type="module" src="/src/home.ts"></script>
+  </head>
+  <body>
+    <main class="track">
+      <header class="hero" data-scene="hero">
+        <h1 class="title">Orden</h1>
+        <p class="slogan">Workspace, done differently.</p>
+        <div class="actions">
+          <a class="orden-button is-big" data-download href="https://github.com/lxorb/orden/releases/latest"
+            >Download</a
+          >
+          <a class="orden-button is-quiet is-soft is-big" data-app href="/">Try it out</a>
+        </div>
+      </header>
+      <div class="stage">
+        <h2 class="caption">Lay it out together.</h2>
+        <h2 class="caption">Write side by side.</h2>
+        <h2 class="caption">Browse without leaving.</h2>
+        <h2 class="caption">Everything in its place.</h2>
+        <h2 class="caption">Everyone, in one place.</h2>
+        <div class="device" aria-hidden="true">
+          <div class="screen">
+            <div class="poster"></div>
+            <iframe class="demo" title="Orden, live" tabindex="-1" inert aria-hidden="true"></iframe>
+          </div>
+        </div>
+        <div class="coda-actions">
+          <a class="orden-button is-big" data-download href="https://github.com/lxorb/orden/releases/latest"
+            >Download</a
+          >
+          <a class="orden-button is-quiet is-soft is-big" data-app href="/">Try it out</a>
+        </div>
+      </div>
+      <section class="chapter" data-scene="canvas" aria-hidden="true"></section>
+      <section class="chapter" data-scene="write" aria-hidden="true"></section>
+      <section class="chapter" data-scene="browse" aria-hidden="true"></section>
+      <section class="chapter" data-scene="organize" aria-hidden="true"></section>
+      <section class="chapter" data-scene="overview" aria-hidden="true"></section>
+      <div class="coda" aria-hidden="true"></div>
+    </main>
+  </body>
+</html>

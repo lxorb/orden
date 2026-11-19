@@ -1,0 +1,221 @@
+html,
+body {
+  height: auto;
+  overflow: visible;
+  overflow-x: clip;
+  overscroll-behavior: auto;
+}
+body {
+  background: var(--bg);
+}
+.track {
+  position: relative;
+}
+.hero {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100svh;
+  margin-bottom: -100svh;
+  padding: 0 var(--space-5) 28svh;
+  text-align: center;
+  pointer-events: none;
+  will-change: opacity;
+}
+.title {
+  margin: 0;
+  color: var(--text-strong);
+  font-size: clamp(76px, 13vw, 184px);
+  font-weight: var(--weight-strong);
+  letter-spacing: -0.055em;
+  line-height: 0.92;
+}
+.slogan {
+  margin: 0.45em 0 0;
+  color: var(--muted-strong);
+  font-size: clamp(25px, 3.3vw, 46px);
+  font-weight: 500;
+  letter-spacing: -0.028em;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+.actions,
+.coda-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  pointer-events: auto;
+}
+.actions {
+  margin-top: clamp(28px, 5.5svh, 52px);
+}
+.orden-button.is-big {
+  min-width: 14em;
+  min-height: 48px;
+  padding: 0 var(--space-5);
+  font-size: 16px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.stage {
+  --band: clamp(96px, 17svh, 168px);
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+.stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(56% 48% at 50% 72%, var(--accent-soft), transparent 72%);
+  pointer-events: none;
+}
+.caption {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--band);
+  margin: 0;
+  padding: 0 var(--space-5);
+  color: var(--text-strong);
+  font-size: clamp(26px, 3.2vw, 44px);
+  font-weight: var(--weight-strong);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  text-align: center;
+  opacity: 0;
+  will-change: opacity;
+}
+.device {
+  --w: min(1180px, 92vw, (100svh - var(--band) - 7svh) * 1.6);
+  position: absolute;
+  top: var(--band);
+  left: 50%;
+  width: var(--w);
+  height: calc(var(--w) / 1.6);
+  margin-left: calc(var(--w) / -2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  box-shadow: var(--shadow-lg);
+  transform-origin: 50% 0;
+  will-change: transform;
+}
+.screen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.poster,
+.demo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: opacity var(--dur-slower) var(--ease-out);
+}
+.poster {
+  right: 0;
+  bottom: 0;
+  background-color: var(--bg);
+  background-image: radial-gradient(var(--canvas-dot) 1px, transparent 1.6px);
+  background-position: 11px 11px;
+  background-size: 22px 22px;
+}
+.poster::before,
+.poster::after {
+  content: '';
+  position: absolute;
+  top: 0;
+}
+.poster::before {
+  bottom: 0;
+  left: 0;
+  width: 19%;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+}
+.poster::after {
+  right: 0;
+  left: 19%;
+  height: 5.5%;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.demo {
+  width: 1280px;
+  height: 800px;
+  border: 0;
+  background: var(--bg);
+  opacity: 0;
+  transform: scale(var(--fit, 0.5));
+  transform-origin: 0 0;
+}
+.device.is-ready .demo {
+  opacity: 1;
+}
+.device.is-ready .poster {
+  opacity: 0;
+}
+.coda-actions {
+  position: absolute;
+  right: 0;
+  bottom: max(5svh, var(--space-5));
+  left: 0;
+  padding: 0 var(--space-5);
+  opacity: 0;
+  visibility: hidden;
+}
+.chapter {
+  height: 150svh;
+  pointer-events: none;
+}
+.coda {
+  height: 100svh;
+  pointer-events: none;
+}
+@media (max-width: 719.98px) {
+  .stage {
+    --band: clamp(84px, 15svh, 128px);
+  }
+  .device {
+    --h: calc(100svh - var(--band) - 5svh);
+    --w: calc((var(--h) - 20px) * 0.4621 + 20px);
+    height: var(--h);
+    border-radius: 46px;
+    background: var(--surface-3);
+    box-shadow:
+      var(--shadow-lg),
+      inset 0 0 0 1px var(--line);
+  }
+  .screen {
+    inset: 10px;
+    border-radius: 36px;
+    background: var(--bg);
+  }
+  .demo {
+    width: 390px;
+    height: 844px;
+  }
+  .poster::before {
+    display: none;
+  }
+  .poster::after {
+    left: 0;
+    height: 7%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero {
+    background: var(--bg);
+  }
+}
