@@ -31,6 +31,8 @@
     "modes",
     "gates",
     "panes",
-    "agent-protocol"
+    "agent-protocol",
+    "files-out",
+    "marks"
   ]
 }

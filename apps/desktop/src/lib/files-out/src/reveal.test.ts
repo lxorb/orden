@@ -86,6 +86,7 @@ describe('showing a file where it sits', () => {
       .map((path) => relative(LIB, path).replaceAll('\\', '/'))
       .sort()
     expect(callers).toEqual([
+      'ai-chat/src/store/path-open.ts',
       'commands/src/commands.ts',
       'explorer/src/menu.ts',
       'files-out/src/save.ts',
