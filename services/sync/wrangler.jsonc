@@ -21,7 +21,6 @@
       { "name": "HUB", "class_name": "AccountHub" },
       { "name": "MACHINES", "class_name": "Machine" },
       { "name": "CHATS", "class_name": "ChatLog" },
-      { "name": "APPS", "class_name": "AppRelay" },
     ],
   },
   "migrations": [
@@ -30,6 +29,7 @@
     { "tag": "v3", "new_sqlite_classes": ["Machine"] },
     { "tag": "v4", "new_sqlite_classes": ["ChatLog"] },
     { "tag": "v5", "new_sqlite_classes": ["AppRelay"] },
+    { "tag": "v6", "deleted_classes": ["AppRelay"] },
   ],
 
   "containers": [
