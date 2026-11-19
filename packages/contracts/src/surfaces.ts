@@ -3,7 +3,6 @@ import type { CommandExtension } from './shell'
 export type SurfaceId =
   | 'agent-rows'
   | 'agent-session'
-  | 'application'
   | 'archive'
   | 'archived-strip'
   | 'ask'
