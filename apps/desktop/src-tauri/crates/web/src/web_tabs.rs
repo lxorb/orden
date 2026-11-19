@@ -852,23 +852,60 @@ pub async fn web_close(
     Ok(())
 }
 #[tauri::command]
-pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, String> {
-    photographed(found(&app, &tab)?).await
+pub async fn web_shot(
+    app: AppHandle,
+    tab: String,
+    quick: Option<bool>,
+) -> Result<Option<String>, String> {
+    photographed(found(&app, &tab)?, quick.unwrap_or(false)).await
 }
-async fn photographed(view: Webview) -> Result<Option<String>, String> {
+const QUICK_SCALE: f64 = 0.5;
+const QUICK_QUALITY: u8 = 60;
+fn shot_asked(quick: Option<(f64, f64)>) -> (serde_json::Value, &'static str) {
+    match quick {
+        None => (serde_json::json!({ "format": "png", "fromSurface": true }), "image/png"),
+        Some((width, height)) => (
+            serde_json::json!({
+                "format": "jpeg",
+                "quality": QUICK_QUALITY,
+                "fromSurface": true,
+                "clip": { "x": 0, "y": 0, "width": width, "height": height, "scale": QUICK_SCALE },
+            }),
+            "image/jpeg",
+        ),
+    }
+}
+fn seen_size(metrics: &serde_json::Value) -> Option<(f64, f64)> {
+    let seen = metrics.get("cssVisualViewport").or_else(|| metrics.get("visualViewport"))?;
+    let width = seen.get("clientWidth")?.as_f64()?;
+    let height = seen.get("clientHeight")?.as_f64()?;
+    (width > 0.0 && height > 0.0).then_some((width, height))
+}
+async fn photographed(view: Webview, quick: bool) -> Result<Option<String>, String> {
     let taken = tauri::async_runtime::spawn_blocking(move || {
-        crate::engine::devtools::call(
-            &view,
-            None,
-            "Page.captureScreenshot",
-            &serde_json::json!({ "format": "png", "fromSurface": true }),
-            std::time::Duration::from_secs(2),
-        )
+        let patience = std::time::Duration::from_secs(2);
+        let size = quick
+            .then(|| {
+                crate::engine::devtools::call(
+                    &view,
+                    None,
+                    "Page.getLayoutMetrics",
+                    &serde_json::json!({}),
+                    patience,
+                )
+                .ok()
+                .as_ref()
+                .and_then(seen_size)
+            })
+            .flatten();
+        let (asked, kind) = shot_asked(size);
+        crate::engine::devtools::call(&view, None, "Page.captureScreenshot", &asked, patience)
+            .map(|shot| (shot, kind))
     })
     .await
     .map_err(|error| error.to_string())?;
     Ok(match taken {
-        Ok(shot) => shot["data"].as_str().map(|data| format!("data:image/png;base64,{data}")),
+        Ok((shot, kind)) => shot["data"].as_str().map(|data| format!("data:{kind};base64,{data}")),
         Err(error) => {
             eprintln!("web_shot: {error}");
             None
@@ -1167,6 +1204,28 @@ mod tests {
                 assert!(!scripts.contains(written), "{written}");
             }
         }
+    }
+    #[test]
+    fn a_quick_shot_is_a_half_scale_jpeg_of_the_seen_page_and_a_plain_one_stays_a_png() {
+        let (plain, kind) = super::shot_asked(None);
+        assert_eq!(plain, serde_json::json!({ "format": "png", "fromSurface": true }));
+        assert_eq!(kind, "image/png");
+        let (quick, kind) = super::shot_asked(Some((800.0, 600.0)));
+        assert_eq!(kind, "image/jpeg");
+        assert_eq!(quick["format"], "jpeg");
+        assert_eq!(quick["quality"], 60);
+        assert_eq!(quick["fromSurface"], true);
+        assert_eq!(
+            quick["clip"],
+            serde_json::json!({ "x": 0, "y": 0, "width": 800.0, "height": 600.0, "scale": 0.5 })
+        );
+        let metrics =
+            serde_json::json!({ "cssVisualViewport": { "clientWidth": 800, "clientHeight": 600 } });
+        assert_eq!(super::seen_size(&metrics), Some((800.0, 600.0)));
+        assert_eq!(super::seen_size(&serde_json::json!({})), None);
+        let empty =
+            serde_json::json!({ "cssVisualViewport": { "clientWidth": 0, "clientHeight": 600 } });
+        assert_eq!(super::seen_size(&empty), None);
     }
     #[test]
     fn a_page_on_chromium_is_handed_the_keys_script_and_nothing_else() {
