@@ -49,11 +49,13 @@ jobs:
 
       - name: Beside
         run: |
+          set +e
           bash scripts/cef-beside.sh spikes/osr/target/release
           ls spikes/osr/target/release | head -40
           spikes/osr/target/release/osr-spike.exe --spike-exit-after=4 --spike-log=first.jsonl; echo "exit $?"
           cat first.jsonl || true
 
+      - name: Measure
         run: |
           python -m pip install --quiet psutil
           python spikes/osr/drive.py --exe "$(cygpath -w "$PWD/spikes/osr/target/release/osr-spike.exe")" --out spike-out --label ${{ matrix.runner }}
