@@ -3,7 +3,8 @@ import { sync } from '../../sync-store/src/api'
 import { invoke, isDesktop } from '../../platform/src/api'
 import { workspace } from '../../workspace/src/api'
 import { timeOn } from '../../gates/src/api'
-import { MinuteFold, SAMPLE_EVERY } from './minutes'
+import { SAMPLE_EVERY } from './minutes'
+import { Sampler } from './sampler'
 import { type Sensed, sensedOf, withIdle } from './sensed'
 import { time } from './time.svelte'
 import { type Place, siteOf, Tracker } from './tracker'
@@ -18,7 +19,6 @@ const tracker = new Tracker({
     return true
   },
 })
-const fold = new MinuteFold()
 let lastInput = Date.now()
 let leading = false
 const locks = 'locks' in navigator ? navigator.locks : null
@@ -47,36 +47,25 @@ function siteInFront(): Place | null {
   return site ? { key: site, name: site } : null
 }
 const shown = () => document.visibilityState === 'visible'
-async function sense(): Promise<Sensed> {
-  if (isDesktop) {
-    const said = sensedOf(await invoke<unknown>('time_sense').catch(() => null))
-    if (said) return withIdle(said, Date.now() - lastInput)
-  }
-  return {
-    idleMs: Date.now() - lastInput,
-    front: shown() && document.hasFocus(),
-    app: null,
-    cpu: null,
-    memory: null,
-    battery: null,
-    charging: null,
-    lid: null,
-    locked: null,
-  }
-}
-let looking = false
-async function look(): Promise<void> {
-  if (looking || !time.ready) return
-  if (!timeOn() || !time.recording) {
-    tracker.flush()
-    const last = fold.flush()
-    if (last && timeOn()) time.keepMinutes([last])
-    return
-  }
-  looking = true
-  try {
-    const sensed = await sense()
-    const at = Date.now()
+const near = (): Sensed => ({
+  idleMs: Date.now() - lastInput,
+  front: shown() && document.hasFocus(),
+  app: null,
+  cpu: null,
+  memory: null,
+  battery: null,
+  charging: null,
+  lid: null,
+  locked: null,
+})
+const sampler = new Sampler({
+  asked: async () => {
+    if (!isDesktop) return null
+    const said = sensedOf(await invoke<unknown>('time_sense'))
+    return said && withIdle(said, Date.now() - lastInput)
+  },
+  near,
+  seen: (sensed, at) => {
     const here = (sensed.idleMs ?? 0) < AWAY && sensed.locked !== true && sensed.lid !== false
     const front = here && (sensed.front ?? shown()) && document.hasFocus()
     tracker.seen({
@@ -90,12 +79,18 @@ async function look(): Promise<void> {
           }
         : {},
     })
-    if (!leading) return
-    const closed = fold.add({ at, ...sensed })
-    if (closed) time.keepMinutes([closed])
-  } finally {
-    looking = false
+  },
+  leading: () => leading,
+  kept: (minutes) => time.keepMinutes(minutes),
+})
+async function look(): Promise<void> {
+  if (!time.ready) return
+  if (!timeOn() || !time.recording) {
+    tracker.flush()
+    sampler.flush(timeOn())
+    return
   }
+  await sampler.look()
 }
 $effect.root(() => {
   $effect(() => {
@@ -112,7 +107,6 @@ for (const kind of ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstar
 document.addEventListener('visibilitychange', () => void look())
 window.addEventListener('pagehide', () => {
   tracker.flush()
-  const last = fold.flush()
-  if (last) time.keepMinutes([last])
+  sampler.flush()
 })
 setInterval(() => void look(), SAMPLE_EVERY)

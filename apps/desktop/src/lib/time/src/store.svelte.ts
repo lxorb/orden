@@ -121,11 +121,20 @@ export class TimeStore {
     const local = await this.open(null)
     try {
       const rows = await local.rows()
-      if (!rows.length) return
+      const minutes = await local.minutes(0, Infinity)
+      if (!rows.length && !minutes.length) return
       const carried = rows
         .filter((row) => row.value !== null && !into.get(row.kind, row.id))
         .map((row) => into.write(row.kind, row.id, row.value, row.at))
       await disk.put(carried)
+      const first = minutes[0]?.at ?? 0
+      const held: Record<number, true> = Object.fromEntries(
+        (await disk.minutes(first, (minutes.at(-1)?.at ?? first) + 1)).map((one) => [one.at, true]),
+      )
+      await disk.keepMinutes(
+        minutes.filter((one) => !Object.hasOwn(held, one.at)),
+        Date.now() - KEEP_MINUTES,
+      )
       await local.clear()
     } finally {
       local.close()

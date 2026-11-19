@@ -20,13 +20,14 @@
   const { tab }: { tab: Tab } = $props()
   const first = untrack(() => readSpec(tab.doc))
   let view = $state<View>(first.view)
-  let day = $state(midnightOf(first.day ?? Date.now()))
+  let chosen = $state<number | null>(null)
   let period = $state<'week' | 'month'>('week')
   let picked = $state<Picked | null>(null)
   const ticker = ticking()
   const now = $derived(ticker.now)
+  const day = $derived(chosen ?? midnightOf(now))
   $effect(() => {
-    const text = writeSpec({ view, day })
+    const text = writeSpec({ view })
     untrack(() => {
       if (text !== tab.doc) tab.note.replace(text, false)
     })
@@ -64,14 +65,17 @@
     if (view === 'reports' && period === 'month') return localDate(range[0], { month: 'long', year: 'numeric' })
     return `${localDate(range[0], { day: 'numeric', month: 'short' })} – ${localDate(daysAfter(range[1], -1), { day: 'numeric', month: 'short', year: 'numeric' })}`
   })
+  function choose(one: number) {
+    chosen = one === midnightOf(now) ? null : one
+  }
   function step(by: number) {
     picked = null
-    if (view === 'day') day = daysAfter(day, by)
-    else if (view === 'week' || period === 'week') day = daysAfter(startOf('week', day), 7 * by)
-    else day = stepped('month', startOf('month', day), by)
+    if (view === 'day') choose(daysAfter(day, by))
+    else if (view === 'week' || period === 'week') choose(daysAfter(startOf('week', day), 7 * by))
+    else choose(stepped('month', startOf('month', day), by))
   }
   function toDay(one: number) {
-    day = one
+    choose(one)
     view = 'day'
     picked = null
   }
@@ -127,7 +131,7 @@
           type="button"
           class="orden-chip"
           onclick={() => {
-            day = midnightOf(Date.now())
+            chosen = null
             picked = null
           }}>Today</button
         >

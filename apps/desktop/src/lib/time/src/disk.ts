@@ -68,9 +68,10 @@ export async function openTimeDisk(owner: string | null): Promise<TimeDisk> {
       await finished(tx)
     },
     clear: async () => {
-      const tx = await held.transaction([ROWS, META], 'readwrite')
+      const tx = await held.transaction([ROWS, META, MINUTES], 'readwrite')
       tx.objectStore(ROWS).clear()
       tx.objectStore(META).clear()
+      tx.objectStore(MINUTES).clear()
       await finished(tx)
     },
     minutes: async (from, to) => {

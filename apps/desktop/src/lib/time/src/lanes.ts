@@ -32,6 +32,8 @@ export function bandsOf(spans: readonly Span[], lane: Lane, from: number, to: nu
   }
   return out.sort((one, other) => one.from - other.from)
 }
+export const activeIn = (minutes: readonly Minute[], from: number, to: number): number =>
+  minutes.reduce((sum, one) => (one.at >= from && one.at < to ? sum + one.active * 1000 : sum), 0)
 export interface Within {
   said: Total[]
   saidMs: number
@@ -54,7 +56,7 @@ export function within(
   return {
     said: totalsOf(said),
     saidMs: wholeOf(said),
-    active: inside.reduce((sum, one) => sum + one.active * 1000, 0),
+    active: activeIn(inside, from, to),
     locked: inside.filter((one) => one.locked === true || one.lid === false).length * MINUTE,
     watched: inside.length * MINUTE,
     places,
