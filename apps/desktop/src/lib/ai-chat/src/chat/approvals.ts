@@ -13,7 +13,7 @@ export interface Answers {
   answered(id: string, signal: AbortSignal): Promise<boolean>
   asked(on: (asked: Asked) => void): Promise<() => void>
 }
-const EVERYDAY = new Set(['writing', 'settings', 'showing'])
+const EVERYDAY = new Set(['writing', 'settings', 'showing', 'tools'])
 export function alwaysOffered(category: string | undefined): boolean {
   return category !== undefined && EVERYDAY.has(category)
 }

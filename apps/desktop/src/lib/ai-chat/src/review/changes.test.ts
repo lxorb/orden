@@ -118,6 +118,18 @@ describe('the rewind plan', () => {
     expect(planFor({ turns: clicked }, 'm1', [])?.lasting).toBe(true)
     expect(verbOf('mcp__orden__edit_note')).toBe('edit_note')
   })
+  test('is not fooled by a tool of the same name from another MCP server', () => {
+    expect(verbOf('mcp__github__move_file')).toBe('mcp__github__move_file')
+    const turns = [
+      you('m1', 10),
+      model('a1', 11, [
+        tool('mcp__drive__move_file', { path: 'Plan', to: 'Old/Plan' }, '{"from":"Plan.md","to":"Old/Plan.md"}'),
+        tool('mcp__drive__create_note', { path: 'Plan' }, '{"path":"Plan.md","created":true}'),
+      ]),
+    ]
+    expect(fileChangesOf(turns, new Set())).toEqual([])
+    expect(planFor({ turns }, 'm1', [])?.made ?? []).toEqual([])
+  })
   test('takes a note moved or deleted since back, rather than calling it lasting', () => {
     const turns = [
       you('m1', 10),

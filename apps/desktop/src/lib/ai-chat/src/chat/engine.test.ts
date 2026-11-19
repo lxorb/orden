@@ -15,6 +15,7 @@ const { always: alwaysCovers, alwaysOffered, sayAlways } = await import('./appro
 import type { Provider } from '../../../ai-providers/src/providers'
 import type { EngineEvent, Mode, Thread, ToolOutput } from '../../../ai-providers/src/chat/types'
 import type { Tools } from './tools'
+import type { ToolDef } from './wire'
 const PROVIDERS: Record<string, Provider> = {
   anthropic: { id: 'anthropic', kind: 'anthropic', name: 'Claude', model: '' },
   openai: { id: 'openai', kind: 'openai', name: 'OpenAI', model: '' },
@@ -77,6 +78,7 @@ const calls: { name: string; args: unknown; mode: Mode }[] = []
 let onCall: () => unknown = () => undefined
 let where = ''
 const contextFor: (string | undefined)[] = []
+const outside: ToolDef[] = []
 const tools: Tools = {
   list: () =>
     Promise.resolve({
@@ -88,6 +90,7 @@ const tools: Tools = {
           inputSchema: { type: 'object' },
           annotations: { readOnlyHint: true },
         },
+        ...outside,
       ],
     }),
   context: (_provider, thread) => {
@@ -116,6 +119,7 @@ beforeEach(() => {
   calls.length = 0
   onCall = () => undefined
   where = ''
+  outside.length = 0
   forgetLearnt()
 })
 describe('a call made and answered', () => {
@@ -333,6 +337,7 @@ describe('Always in a thread', () => {
     expect(alwaysCovers(before, 'browser_click', 'writing')).toBe(true)
     expect(alwaysOffered('terminal')).toBe(false)
     expect(alwaysOffered('writing')).toBe(true)
+    expect(alwaysOffered('tools')).toBe(true)
   })
 })
 describe('where the reader is', () => {
@@ -360,6 +365,92 @@ describe('where the reader is', () => {
     contextFor.length = 0
     await send(thread, 'What is this note about?')
     expect(contextFor).toEqual([thread.id])
+  })
+})
+describe('a tool from an MCP server', () => {
+  const SEARCH: ToolDef = {
+    name: 'mcp__github__search_issues',
+    description: 'GitHub: Searches the issues of a repository.',
+    inputSchema: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] },
+  }
+  const ANSWER = 'Herons stand still for a long time.'
+  test('goes to Claude as it was listed, and its answer comes back in the next request', async () => {
+    outside.push(SEARCH)
+    answers = [
+      lines(
+        { type: 'message_start', message: { id: 'msg_9', usage: { input_tokens: 5, output_tokens: 1 } } },
+        {
+          type: 'content_block_start',
+          index: 0,
+          content_block: { type: 'tool_use', id: 'toolu_9', name: SEARCH.name, input: {} },
+        },
+        {
+          type: 'content_block_delta',
+          index: 0,
+          delta: { type: 'input_json_delta', partial_json: '{"query":"herons"}' },
+        },
+        { type: 'content_block_stop', index: 0 },
+        { type: 'message_delta', delta: { stop_reason: 'tool_use' }, usage: { output_tokens: 9 } },
+        { type: 'message_stop' },
+      ),
+      stream('anthropic-2'),
+    ]
+    const thread = newThread('space', 'anthropic', 'claude-opus-5-5', 'high', 'full')
+    await send(thread, 'Any issues about herons?')
+    expect(sent[0]?.body.tools).toContainEqual({
+      name: SEARCH.name,
+      description: SEARCH.description,
+      input_schema: SEARCH.inputSchema,
+    })
+    expect(calls).toEqual([{ name: SEARCH.name, args: { query: 'herons' }, mode: 'full' }])
+    expect(thread.turns[1]?.parts.find((one) => one.kind === 'tool')).toMatchObject({ verb: SEARCH.name, state: 'ok' })
+    const second = sent[1]?.body as { messages: { role: string; content: unknown }[] }
+    expect(second.messages.at(-1)?.content).toEqual([
+      { type: 'tool_result', tool_use_id: 'toolu_9', content: [{ type: 'text', text: ANSWER }] },
+    ])
+  })
+  test('goes to a compatible server as it was listed, and its answer comes back in the next request', async () => {
+    outside.push(SEARCH)
+    answers = [
+      lines(
+        {
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: 'call_9',
+                    type: 'function',
+                    function: { name: SEARCH.name, arguments: '{"query":"herons"}' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+        { choices: [{ delta: {}, finish_reason: 'tool_calls' }] },
+      ),
+      lines({ choices: [{ delta: { content: 'Two issues.' } }] }, { choices: [{ delta: {}, finish_reason: 'stop' }] }),
+    ]
+    const thread = newThread('space', 'compatible-1', 'llama', 'auto', 'full')
+    await send(thread, 'Any issues about herons?')
+    expect(sent[0]?.body.tools).toContainEqual({
+      type: 'function',
+      function: { name: SEARCH.name, description: SEARCH.description, parameters: SEARCH.inputSchema },
+    })
+    expect(calls).toEqual([{ name: SEARCH.name, args: { query: 'herons' }, mode: 'full' }])
+    const second = sent[1]?.body as { messages: Record<string, unknown>[] }
+    expect(second.messages).toContainEqual({ role: 'tool', tool_call_id: 'call_9', content: ANSWER })
+    expect(second.messages).toContainEqual(
+      expect.objectContaining({
+        role: 'assistant',
+        tool_calls: [
+          expect.objectContaining({ id: 'call_9', function: expect.objectContaining({ name: SEARCH.name }) }),
+        ],
+      }),
+    )
+    expect(thread.turns[1]?.parts.at(-1)).toEqual({ kind: 'text', text: 'Two issues.' })
   })
 })
 describe('tools a model refuses', () => {

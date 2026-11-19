@@ -5,8 +5,7 @@ export type FileChange =
   | { id: string; kind: 'trashed'; path: string; space?: string }
 type Tool = Extract<Part, { kind: 'tool' }>
 export function verbOf(name: string): string {
-  const at = name.lastIndexOf('__')
-  return at < 0 ? name : name.slice(at + 2)
+  return name.replace(/^mcp__(?:orden|nib)__/, '')
 }
 export function answerOf(part: Tool): Record<string, unknown> | null {
   try {
