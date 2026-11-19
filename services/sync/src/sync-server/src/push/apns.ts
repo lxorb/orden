@@ -34,7 +34,7 @@ export async function sendApns(
       aps: {
         alert: { title: alert.title, body: alert.body },
         sound: 'default',
-        category: 'nib.reminder',
+        category: 'orden.reminder',
       },
       id: alert.id,
     }),

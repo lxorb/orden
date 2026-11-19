@@ -125,7 +125,7 @@ describe('sending', () => {
     )) as CryptoKeyPair
     const der = new Uint8Array((await crypto.subtle.exportKey('pkcs8', pair.privateKey)) as ArrayBuffer)
     const pem = `-----BEGIN PRIVATE KEY-----\n${btoa(String.fromCharCode(...der))}\n-----END PRIVATE KEY-----\n`
-    return JSON.stringify({ client_email: 'nib@x.iam', private_key: pem, project_id: 'orden-test' })
+    return JSON.stringify({ client_email: 'orden@x.iam', private_key: pem, project_id: 'orden-test' })
   }
   test('a due reminder goes to a phone once, as data the app decides on', async () => {
     env.FCM_SERVICE_ACCOUNT = await serviceAccount()
@@ -191,6 +191,23 @@ describe('sending', () => {
     expect(await sendDue(env, AT, none.send)).toBe(0)
     expect(none.asked).toEqual([])
     expect(env.db.prepare('select kind from push_targets').all()).toEqual([{ kind: 'apns' }])
+  })
+  test('a due reminder goes to an iPhone under the category whose buttons the app registers', async () => {
+    const pair = (await crypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, [
+      'sign',
+    ])) as CryptoKeyPair
+    const der = new Uint8Array((await crypto.subtle.exportKey('pkcs8', pair.privateKey)) as ArrayBuffer)
+    env.APNS_KEY = `-----BEGIN PRIVATE KEY-----\n${btoa(String.fromCharCode(...der))}\n-----END PRIVATE KEY-----\n`
+    env.APNS_KEY_ID = 'key-id'
+    env.APNS_TEAM_ID = 'team-id'
+    env.APNS_TOPIC = 'so.orden.Orden'
+    await register({ kind: 'apns', token: 'iphone-token', zone: ZONE })
+    remind(AT)
+    const apple = recorded(() => new Response('', { status: 200 }))
+    expect(await sendDue(env, AT, apple.send)).toBe(1)
+    expect(apple.asked[0]?.url).toBe('https://api.push.apple.com/3/device/iphone-token')
+    const sent = JSON.parse(apple.asked[0]?.init?.body as string) as { aps: { category: string } }
+    expect(sent.aps.category).toBe('orden.reminder')
   })
   describe('a push no service took', () => {
     const OK = () => Response.json({ name: 'projects/orden-test/messages/1' })
