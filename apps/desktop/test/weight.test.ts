@@ -311,7 +311,7 @@ describe('what the app evaluates before it draws anything', () => {
   })
   const OVERRIDE = '@codemirror/lang-markdown>@codemirror/lang-html'
   const DOOR = join(ROOT, 'packages/lang-html/src/index.ts')
-  test('and the HTML grammar comes through nib’s own door, as the manifest says', () => {
+  test('and the HTML grammar comes through Orden’s own door, as the manifest says', () => {
     const manifest = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as {
       pnpm?: { overrides?: Record<string, string> }
     }
@@ -333,7 +333,7 @@ describe('what the app evaluates before it draws anything', () => {
     expect(readFileSync(DOOR, 'utf8')).toContain("import('@codemirror/lang-html')")
   })
   const CRATE = join(ROOT, 'apps/desktop/src/lib/crate/src/native.ts')
-  test('and the crate comes through nib’s own door', () => {
+  test('and the crate comes through Orden’s own door', () => {
     expect(existsSync(CRATE)).toBe(true)
     expect(readFileSync(CRATE, 'utf8')).toContain("from '@tauri-apps/api/core'")
   })
