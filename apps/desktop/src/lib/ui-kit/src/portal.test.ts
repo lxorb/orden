@@ -32,6 +32,18 @@ describe('where a bubble goes', () => {
     const start = { left: 2, top: 100, right: 40, bottom: 120 }
     expect(placeOf(start, size, room, below, false).left).toBe(8)
   })
+  test('end aligned, its end edge in from the element’s, and still inside the window (#2258)', () => {
+    const end = { ...below, align: 'end' } as const
+    expect(placeOf(at, size, room, end, false).left).toBe(300 + 3 - 150)
+    expect(placeOf(at, size, room, end, true).left).toBe(97)
+    const right = { left: 900, top: 100, right: 992, bottom: 120 }
+    expect(placeOf(right, size, room, { ...end, inset: 0 }, false).left).toBe(992 - 150)
+    const left = { left: 2, top: 100, right: 40, bottom: 120 }
+    expect(placeOf(left, size, room, end, false).left).toBe(8)
+    const edge = { left: 940, top: 100, right: 990, bottom: 120 }
+    expect(placeOf(edge, size, room, end, true).left).toBe(1000 - 8 - 150)
+    expect(placeOf(at, size, room, { ...below, align: 'start' }, false)).toEqual(placeOf(at, size, room, below, false))
+  })
 })
 describe('whether the element is in sight', () => {
   test('while any of it is left inside every box that clips it', () => {
