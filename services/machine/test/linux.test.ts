@@ -104,7 +104,9 @@ async function shows(seen: Watcher, what: (term: Watcher['term']) => boolean): P
   await until(async () => {
     await seen.caught()
     return what(seen.term)
-  }, 60_000)
+  }, 50_000).catch(() => {
+    throw new Error(`the screen never showed it; it shows:\n${text(seen.term)}`)
+  })
 }
 async function typed(
   one: Session,
@@ -159,7 +161,7 @@ describe.runIf(linux)('a session', () => {
       "printf '\\e[1;31mred \\e[38;5;200mpink \\e[38;2;1;2;3;48;5;22mtrue\\e[0m plain \\e[4mline\\n'\r",
       (term) => text(term).includes('plain line'),
     )
-    await typed(one, seen, 'vim -u NONE -N -i NONE notes.txt\r', second)
+    await typed(one, seen, 'vim -u NONE -N -i NONE -n notes.txt\r', second)
     await typed(one, seen, 'ihello from vim\x1b', wrote('hello from vim'))
     await typed(one, seen, ':set number\r', (term) => /^ +1 hello from vim/m.test(text(term)))
     const { answer, drawn, at } = await screenOf(one, on.frames)
@@ -169,7 +171,7 @@ describe.runIf(linux)('a session', () => {
     expect(drawn.buffer.active.type).toBe('alternate')
     expect(text(drawn)).toContain('joined')
     expect(cells(drawn)).toEqual(cells(seen.term))
-    one.input(bytes(':q!\r'))
+    await typed(one, seen, ':q!\r', (term) => !second(term))
   })
   test('a reconnect inside the kept megabyte is sent the bytes it missed, outside it the screen', async () => {
     const on = machine()
@@ -312,7 +314,7 @@ describe.runIf(linux)('through a restart of ordend', () => {
     const before = machine()
     const first = new Session('s_vim', COLS, ROWS, before)
     const seen = watcher(before.frames)
-    await typed(first, seen, 'vim -u NONE -N -i NONE notes.txt\r', second)
+    await typed(first, seen, 'vim -u NONE -N -i NONE -n notes.txt\r', second)
     await typed(first, seen, 'ihello from vim\x1b', wrote('hello from vim'))
     const saved = await first.save(Date.now())
     first.detach()
@@ -322,8 +324,16 @@ describe.runIf(linux)('through a restart of ordend', () => {
     expect(back.drawn.buffer.active.type).toBe('alternate')
     expect(text(back.drawn)).toContain('hello from vim')
     again.input(bytes('ojoined\x1b'))
-    await until(async () => wrote('joined')((await screenOf(again, after.frames)).drawn), 60_000)
+    let shown = ''
+    await until(async () => {
+      const { drawn } = await screenOf(again, after.frames)
+      shown = text(drawn)
+      return wrote('joined')(drawn)
+    }, 50_000).catch(() => {
+      throw new Error(`the screen never showed it; it shows:\n${shown}`)
+    })
     again.input(bytes(':q!\r'))
+    await until(async () => !second((await screenOf(again, after.frames)).drawn))
   })
   test('a shell that ended while ordend was away is said ended when it comes back', async () => {
     const before = machine()
