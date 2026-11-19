@@ -9,7 +9,7 @@
     type Todo,
     type TodoPatch,
   } from '../../tasks-model/src/api'
-  import { DateField, Select } from '../../ui-controls/src/api'
+  import { DateField, Select, Switch } from '../../ui-controls/src/api'
   import { Cross } from '../../ui-kit/src/api'
 
   const {
@@ -29,16 +29,19 @@
   } = $props()
   let title = $state('')
   let description = $state('')
+  let repeat = $state('')
   let newLabel = $state('')
   let newSubtask = $state('')
   let refused = $state<string | null>(null)
   let seen = $state<string | null>(null)
   let titleFrom = ''
   let descriptionFrom = ''
+  let repeatFrom = ''
   $effect(() => {
     const id = todo.id
     const nextTitle = todo.title
     const nextDescription = todo.description
+    const nextRepeat = todo.repeat ?? ''
     const fresh = seen !== id
     if (fresh) {
       seen = id
@@ -47,9 +50,11 @@
     untrack(() => {
       if (fresh || title === titleFrom) title = nextTitle
       if (fresh || description === descriptionFrom) description = nextDescription
+      if (fresh || repeat === repeatFrom) repeat = nextRepeat
     })
     titleFrom = nextTitle
     descriptionFrom = nextDescription
+    repeatFrom = nextRepeat
   })
   let labeling = $state(false)
   const suggestions = $derived(
@@ -92,6 +97,14 @@
     void change({ subtasks: todo.subtasks.filter((one) => one.id !== id) })
   }
   const dayOr = (value: string): string | null => (value === '' ? null : value)
+  const WHEN_DONE = ' when done'
+  const EVERY = ['every day', 'every week', 'every month', 'every year']
+  const afterDone = $derived((todo.repeat ?? '').endsWith(WHEN_DONE))
+  const rule = $derived((todo.repeat ?? '').slice(0, afterDone ? -WHEN_DONE.length : undefined))
+  function saveRepeat(next = repeat) {
+    const text = next.trim()
+    if (text !== (todo.repeat ?? '')) void change({ repeat: text === '' ? null : text })
+  }
   function fitting(field: HTMLTextAreaElement, _words: string) {
     const fit = () => {
       field.style.height = 'auto'
@@ -157,6 +170,43 @@
         value={todo.deadline ?? ''}
         onchange={(next: string) => void change({ deadline: dayOr(next) })}
       />
+    </div>
+    <div class="field wide">
+      <span class="name">Repeat</span>
+      <div class="repeat">
+        <input
+          class="orden-field"
+          type="text"
+          aria-label="Repeat"
+          placeholder="every 3 days"
+          bind:value={repeat}
+          onblur={() => saveRepeat()}
+          onkeydown={(event) => {
+            if (event.key !== 'Enter') return
+            event.preventDefault()
+            saveRepeat()
+          }}
+        />
+        <Select
+          label="Repeat every"
+          value={rule}
+          options={[
+            { value: '', label: 'None' },
+            ...EVERY.map((one) => ({ value: one, label: one.replace('every', 'Every') })),
+            ...(rule !== '' && !EVERY.includes(rule) ? [{ value: rule, label: 'Typed' }] : []),
+          ]}
+          onchange={(next: string) => saveRepeat(next === '' ? '' : next + (afterDone ? WHEN_DONE : ''))}
+        />
+      </div>
+      <span class="after">
+        <Switch
+          on={afterDone}
+          disabled={todo.repeat === null}
+          label="Count from when it's done"
+          onchange={(on: boolean) => saveRepeat(rule + (on ? WHEN_DONE : ''))}
+        />
+        Count from when it's done
+      </span>
     </div>
   </div>
 
@@ -320,6 +370,25 @@
     flex-direction: column;
     gap: var(--space-1);
     min-width: 0;
+  }
+  .wide {
+    grid-column: 1 / -1;
+  }
+  .repeat {
+    display: flex;
+    gap: var(--space-2);
+    align-items: center;
+  }
+  .repeat input {
+    flex: 1;
+    min-width: 0;
+  }
+  .after {
+    display: inline-flex;
+    gap: var(--space-2);
+    align-items: center;
+    color: var(--muted);
+    font-size: var(--text-sm);
   }
   .name {
     color: var(--muted-strong);

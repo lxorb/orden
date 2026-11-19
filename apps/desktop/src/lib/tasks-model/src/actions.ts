@@ -9,6 +9,7 @@ interface TaskOut {
   status?: string
   due?: string
   priority?: number
+  repeat?: string
 }
 export function priorityOf(quick: QuickPriority | undefined): Priority {
   if (quick === 1) return 3
@@ -22,6 +23,7 @@ const taskOut = (todo: Todo): TaskOut => ({
   ...(todo.done ? { status: 'x' } : {}),
   ...(todo.deadline === null ? {} : { due: todo.deadline }),
   ...(todo.priority === 0 ? {} : { priority: 4 - todo.priority }),
+  ...(todo.repeat === null ? {} : { repeat: todo.repeat }),
 })
 export async function addTask(text: string, options: { typed?: boolean } = {}): Promise<{ id: string } | null> {
   const said = text.trim()
@@ -53,6 +55,7 @@ export interface Asked {
     readonly due?: string
     readonly deadline?: string
     readonly priority?: QuickPriority
+    readonly recurrence?: string
   }
 }
 export async function addEntry(entry: Asked): Promise<Todo | null> {
@@ -65,6 +68,7 @@ export async function addEntry(entry: Asked): Promise<Todo | null> {
     start: entry.fields.due ?? null,
     deadline: entry.fields.deadline ?? null,
     priority: priorityOf(entry.fields.priority),
+    repeat: entry.fields.recurrence ?? null,
   })
   return made.ok ? made.value : null
 }

@@ -14,6 +14,7 @@ const todo: Todo = {
   done: false,
   doneAt: null,
   subtasks: [{ id: 's1', title: 'Pick a seat', done: true }],
+  repeat: null,
   order: 1,
   created: 1,
 }

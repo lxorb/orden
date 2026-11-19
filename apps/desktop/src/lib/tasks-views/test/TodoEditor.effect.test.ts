@@ -15,6 +15,7 @@ const todo = (over: Partial<Todo>): Todo => ({
   done: false,
   doneAt: null,
   subtasks: [],
+  repeat: null,
   order: 1,
   created: 1,
   ...over,
@@ -98,7 +99,7 @@ describe('the todo editor draws its fields with the app controls', () => {
     expect(
       document.querySelector('select, input[type="date"], input[type="time"], input[type="datetime-local"]'),
     ).toBeNull()
-    expect(document.querySelectorAll('[role="combobox"]')).toHaveLength(1)
+    expect(document.querySelectorAll('[role="combobox"]')).toHaveLength(2)
   })
   test('a start date typed into its field is written as a day', () => {
     const { onchange, field } = editor(todo({}))
