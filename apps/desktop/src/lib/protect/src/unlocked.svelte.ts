@@ -150,8 +150,12 @@ class Unlocks {
     this.timer = null
   }
   private watch(): void {
-    if (this.watching || typeof document === 'undefined') return
+    if (this.watching) return
     this.watching = true
+    void import('../../accounts/src/api')
+      .then(({ account }) => account.forgetWithSession(() => this.lockAll()))
+      .catch(() => undefined)
+    if (typeof document === 'undefined') return
     document.addEventListener('visibilitychange', () =>
       document.visibilityState === 'hidden' ? this.away() : this.back(),
     )

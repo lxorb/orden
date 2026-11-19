@@ -26,7 +26,7 @@ describe('protection set in another window', () => {
   })
   test('brings its password, so this window does not ask for a new one', () => {
     const hashed = { n: 16384, r: 8, p: 1, salt: 'c2FsdA==', hash: 'aGFzaA==', at: 1 }
-    anotherWindowWrote('orden:protect-password', JSON.stringify(hashed))
+    anotherWindowWrote('orden:protect-passwords', JSON.stringify({ '': hashed }))
     expect(protection.password).not.toBeNull()
   })
 })
