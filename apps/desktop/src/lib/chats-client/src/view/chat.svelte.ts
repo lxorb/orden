@@ -1,7 +1,8 @@
 import type { Member, Message, Who } from '@orden/chats'
 import { chatLink } from '@orden/chats/links'
 import { copyText } from '../../../ui-controls/src/api'
-import { paletteWords } from '../../../workspace/src/api'
+import { workspace } from '../../../workspace/src/api'
+import { chatsView } from './chats-view.svelte'
 import type { ChatEntry, ChatView, Draft, Shown } from '../shapes'
 import { trimmed } from './compose'
 import { type Item, rowsOf } from './rows'
@@ -139,7 +140,8 @@ export class ChatPage {
   }
   search(): void {
     const name = this.entry?.name ?? ''
-    paletteWords.words = /[\s"]/.test(name) ? `in:"${name.replace(/"/g, '')}" ` : `in:#${name} `
+    chatsView.query = /[\s"]/.test(name) ? `in:"${name.replace(/"/g, '')}" ` : `in:#${name} `
+    workspace.showPanel('chats')
   }
   copyLink(message: Message): Promise<void> {
     return copyText(chatLink(this.id, message.id))

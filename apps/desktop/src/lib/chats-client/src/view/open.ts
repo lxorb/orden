@@ -6,6 +6,7 @@ import { chatsOn } from '../../../gates/src/api'
 import { canWriteAt } from '../../../sharing/src/api'
 import { nameOf as fileName, samePath } from '../../../platform/src/api'
 import { workspace } from '../../../workspace/src/api'
+import { chatsView } from './chats-view.svelte'
 import { store } from './source.svelte'
 
 const jumps = new Map<string, string>()
@@ -49,6 +50,12 @@ export function hearJumps(hear: (path: string) => void): () => void {
   hearers.add(hear)
   return () => hearers.delete(hear)
 }
+export async function nameChat(typed: string): Promise<void> {
+  const dir = chatsView.naming
+  if (dir === null) return
+  chatsView.naming = null
+  await makeChat(dir, typed)
+}
 export async function makeChat(folder?: string, named?: string): Promise<void> {
   if (!chatsAreOn()) return
   if (!account.accountToken) {
@@ -58,10 +65,12 @@ export async function makeChat(folder?: string, named?: string): Promise<void> {
   const dir = folder ?? workspace.activeSpace?.root
   if (!dir || !canWriteAt(dir)) return
   if (named === undefined) {
-    workspace.showPanel('tree')
-    if (workspace.startNaming('chat', dir)) return
+    chatsView.renaming = null
+    chatsView.naming = dir
+    workspace.showPanel('chats')
+    return
   }
-  const name = chatName(named ?? workspace.freeName(dir, `Chat.chat`))
+  const name = chatName(named.trim() || workspace.freeName(dir, `Chat.chat`))
   const path = await store()
     .make(dir, name)
     .catch(() => null)

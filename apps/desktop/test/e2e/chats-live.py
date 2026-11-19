@@ -126,36 +126,29 @@ def offered(page: Page, words: str, what: str) -> None:
         what,
         words,
     )
+IN_CHAT = "in:#Chat "
+FOUND = """(words) => [...document.querySelectorAll('.chats .orden-row')]
+  .filter((one) => !one.classList.contains('entry') && one.textContent.includes(words))"""
 def everywhere(owner: Page, root: str) -> None:
     owner.keyboard.press("Escape")
-    owner.keyboard.press("Control+o")
-    owner.keyboard.type("second draft", delay=10)
-    found = came(
-        owner,
-        "() => [...document.querySelectorAll('#orden-palette-list .orden-row')]"
-        ".some((one) => one.textContent.includes('the second draft') && one.textContent.includes('#Chat'))",
-        "[Emil] the message in the palette",
-    )
+    owner.evaluate("() => window.ordenApp.workspace.showPanel('chats')")
+    owner.locator(".chats .find input").fill("second draft")
+    found = came(owner, f"() => ({FOUND})('the second draft').length > 0", "[Emil] the message in the Chats search")
     if found is not None:
-        DRIVE.shot(owner, "emil-palette")
-        say("the palette found the message beside the notes")
-    owner.keyboard.press("Escape")
+        DRIVE.shot(owner, "emil-chats-search")
+        say("the Chats search found the message beside the chats")
+    owner.locator(".chats .find input").fill("")
     owner.click(".chat-tab .main .composer .cm-content")
     owner.keyboard.press("Control+f")
     came(
         owner,
-        "() => document.querySelector('.palette input')?.value === 'in:#Chat '",
-        "[Emil] Ctrl+F in the chat, the palette on it",
+        "() => document.querySelector('.chats .find input')?.value === 'in:#Chat '",
+        "[Emil] Ctrl+F in the chat, the Chats search on it",
     )
-    owner.keyboard.type("figures", delay=10)
-    came(
-        owner,
-        "() => { const rows = [...document.querySelectorAll('#orden-palette-list .orden-row')];"
-        " return rows.length > 0 && rows.every((one) => one.textContent.includes('#Chat')) }",
-        "[Emil] the chat's own search, messages alone",
-    )
+    owner.locator(".chats .find input").fill(IN_CHAT + "figures")
+    came(owner, f"() => ({FOUND})('figures').length > 0", "[Emil] the chat's own search, its messages")
     DRIVE.shot(owner, "emil-chat-search")
-    owner.keyboard.press("Enter")
+    owner.locator(".chats .orden-row:not(.entry)", has_text="figures").first.click()
     came(owner, "() => !!document.querySelector('.chat-tab .message.flash')", "[Emil] the hit flashed")
     row_of(owner, "could you look at the figures").click(button="right")
     owner.get_by_role("menuitem", name="Add as task").click()
@@ -241,7 +234,7 @@ BLANK_ROWS = """
 """
 def deleted(worker: Any, tokens: dict[str, str], owner: Page, member: Page) -> None:
     owner.evaluate("async () => (await window.ordenApp.chats()).makeChat()")
-    field = owner.locator("input[aria-label='Name']")
+    field = owner.locator(".chats input[aria-label='New chat']")
     field.fill("Doomed")
     field.press("Enter")
     doomed = wait(owner, CHAT_PATH, "[Emil] the second chat's pointer", "Doomed", patience=SYNCED)
@@ -308,7 +301,7 @@ def main() -> int:
             say(f"[Emil] the shared space came in at {root}, among {roots}")
         wait(owner, "async () => (await window.ordenApp.chats()).chats.ready", "[Emil] the chats' store", patience=40)
         owner.evaluate("async () => (await window.ordenApp.chats()).makeChat()")
-        field = owner.locator("input[aria-label='Name']")
+        field = owner.locator(".chats input[aria-label='New chat']")
         field.fill("Chat")
         field.press("Enter")
         chat = open_chat(owner, "Emil", "Chat")

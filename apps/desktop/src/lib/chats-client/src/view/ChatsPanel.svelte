@@ -9,7 +9,11 @@
   import { bySpace } from './by-space'
   import { Glyph } from '../../../chat-kit/src/api'
   import { Select } from '../../../ui-controls/src/api'
-  import { makeChat, openChat } from './open'
+  import { chatName, makeChat, nameChat, openChat } from './open'
+  import { chatsView } from './chats-view.svelte'
+  import { messagesFor } from './found'
+  import { chatRowMenu, renamed } from './row-menu'
+  import { longPress, menu, selectAll } from '../../../ui-kit/src/api'
   import type { Who } from '@orden/chats'
   import { Avatar } from '../../../accounts-ui/src/api'
   import { firstLine } from './body'
@@ -23,12 +27,11 @@
   import type { Priority } from '@orden/markdown/task-line'
   import { showQuickAdd } from '@orden/contracts'
 
-  let query = $state('')
   let showing = $state<'chats' | 'activity' | 'saved'>('chats')
   let activity = $state.raw<Hit[]>([])
   let arranged = $state<'all' | 'priority'>('all')
   const chats = $derived.by(() => {
-    const asked = query.trim().toLowerCase()
+    const asked = chatsView.query.trim().toLowerCase()
     return [...store().list]
       .sort((a, b) => (b.lastAt ?? 0) - (a.lastAt ?? 0))
       .filter((one) => (one.name ?? '').toLowerCase().includes(asked))
@@ -71,6 +74,31 @@
   }
   const mentions = $derived(store().list.reduce((sum, one) => sum + one.mentions, 0))
   const now = Date.now()
+  let hits = $state.raw<Hit[]>([])
+  $effect(() => {
+    const asked = chatsView.query.trim()
+    if (!asked) {
+      hits = []
+      return
+    }
+    const timer = setTimeout(() => {
+      void messagesFor(asked).then((found) => {
+        if (chatsView.query.trim() === asked) hits = found
+      })
+    }, 200)
+    return () => clearTimeout(timer)
+  })
+  function rowMenu(event: MouseEvent, chat: ChatEntry) {
+    event.preventDefault()
+    menu.show(event, chatRowMenu(chat))
+  }
+  function seen(node: HTMLElement, on: boolean) {
+    const look = (yes: boolean) => {
+      if (yes) node.scrollIntoView({ block: 'nearest' })
+    }
+    look(on)
+    return { update: look }
+  }
   async function lookActive() {
     activity = await store().search('mentions:me')
   }
@@ -95,10 +123,30 @@
   </button>
 {/snippet}
 
+{#snippet namer(value: string, label: string, commit: (typed: string) => void, cancel: () => void)}
+  <input
+    class="orden-field namer"
+    {value}
+    aria-label={label}
+    use:selectAll
+    onkeydown={(event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        commit(event.currentTarget.value)
+      } else if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        cancel()
+      }
+    }}
+    onblur={(event) => commit(event.currentTarget.value)}
+  />
+{/snippet}
+
 <div class="chats">
   <label class="orden-field find">
     <Glyph name="hash" />
-    <input bind:value={query} type="search" aria-label="Search" placeholder="Search" />
+    <input bind:value={chatsView.query} type="search" aria-label="Search" placeholder="Search" />
   </label>
 
   {#if showing === 'chats' && priorities.on}
@@ -117,7 +165,13 @@
 
   {#snippet ranked(one: { entry: ChatEntry; level: Level | null })}
     <div class="ranked" class:unread={one.entry.unread > 0}>
-      <button type="button" class="orden-row entry" onclick={() => open(one.entry)}>
+      <button
+        type="button"
+        class="orden-row entry"
+        onclick={() => open(one.entry)}
+        oncontextmenu={(event) => rowMenu(event, one.entry)}
+        use:longPress={(event) => menu.show(event, chatRowMenu(one.entry))}
+      >
         <span class="orden-row-mark"><ChatMark path={one.entry.path} /></span>
         <span class="orden-row-label">{one.entry.name ?? 'Chat'}</span>
         {#if one.entry.unread}<span class="orden-row-meta count">{localNumber(one.entry.unread)}</span>{/if}
@@ -195,28 +249,49 @@
         >
       {/if}
     </div>
+    {#if chatsView.naming !== null}
+      {@render namer(
+        chatName(workspace.freeName(chatsView.naming, 'Chat.chat')),
+        'New chat',
+        (typed) => void nameChat(typed),
+        () => (chatsView.naming = null),
+      )}
+    {/if}
     {#each grouped as group (group.key)}
       {#if grouped.length > 1}<p class="space">{group.name}</p>{/if}
       {#each group.chats as chat (chat.id)}
         {@const muted = chat.mutedUntil !== null && chat.mutedUntil > now}
         {@const unread = chat.unread > 0 && !muted}
-        <button
-          type="button"
-          class="orden-row entry"
-          class:unread
-          class:muted
-          class:is-on={workspace.active?.path === chat.path && chat.path !== null}
-          disabled={!chat.path}
-          onclick={() => open(chat)}
-        >
-          <span class="orden-row-mark"><ChatMark path={chat.path} /></span>
-          <span class="orden-row-label">{chat.name ?? 'Chat'}</span>
-          {#if chat.mentions && !muted}
-            <span class="badge">{localNumber(chat.mentions)}</span>
-          {:else if unread}
-            <span class="orden-row-meta count">{localNumber(chat.unread)}</span>
-          {/if}
-        </button>
+        {@const on = workspace.active?.path === chat.path && chat.path !== null}
+        {#if chatsView.renaming === chat.id}
+          {@render namer(
+            chat.name ?? 'Chat',
+            'Rename',
+            (typed) => {
+              if (chatsView.renaming === chat.id) void renamed(chat, typed)
+            },
+            () => (chatsView.renaming = null),
+          )}
+        {:else}<button
+            type="button"
+            class="orden-row entry"
+            class:unread
+            class:muted
+            class:is-on={on}
+            disabled={!chat.path}
+            use:seen={on}
+            onclick={() => open(chat)}
+            oncontextmenu={(event) => rowMenu(event, chat)}
+            use:longPress={(event) => menu.show(event, chatRowMenu(chat))}
+          >
+            <span class="orden-row-mark"><ChatMark path={chat.path} /></span>
+            <span class="orden-row-label">{chat.name ?? 'Chat'}</span>
+            {#if chat.mentions && !muted}
+              <span class="badge">{localNumber(chat.mentions)}</span>
+            {:else if unread}
+              <span class="orden-row-meta count">{localNumber(chat.unread)}</span>
+            {/if}
+          </button>{/if}
       {/each}
     {/each}
   {:else}
@@ -237,6 +312,12 @@
         <p class="empty"><Glyph name="saved" /></p>
       {/each}
     {/if}
+  {/if}
+  {#if showing === 'chats' && hits.length}
+    <p class="orden-section">Messages</p>
+    {#each hits as one (`${one.chat}:${one.message.id}`)}
+      {@render found(one.chat, one.message.id, one.message.author, firstLine(one.message.body))}
+    {/each}
   {/if}
 </div>
 
@@ -264,6 +345,9 @@
     font-size: var(--text-xs);
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+  .namer {
+    margin: 0 0 var(--space-1);
   }
   .add {
     --glyph-size: 15px;
