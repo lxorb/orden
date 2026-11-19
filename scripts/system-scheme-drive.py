@@ -13,7 +13,7 @@ import threading
 import time
 from typing import Any
 from fresh_app import ended, fresh
-from native_app import config_of, endpoint, known
+from native_app import config_of, endpoint
 
 PAGE = b"""<!doctype html><title>scheme</title><p>a page
 <script>
@@ -227,10 +227,6 @@ def main() -> int:
         desk.close()
         shutil.rmtree(spaces, ignore_errors=True)
     (args.out / "seen.json").write_text(json.dumps({"seen": seen, "wrong": wrong}, indent=1), encoding="utf-8")
-    if wrong and sys.platform.startswith("linux"):
-        for one in wrong:
-            known(2218, f"{one}: nothing hears the portal's color-scheme on Linux yet")
-        return 0
     for one in wrong:
         print(f"::error::{one}", flush=True)
     return 1 if wrong else 0

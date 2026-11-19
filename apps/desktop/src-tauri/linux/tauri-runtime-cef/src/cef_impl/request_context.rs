@@ -31,7 +31,10 @@ fn theme_to_color_variant(theme: Option<Theme>) -> ColorVariant {
 
 pub(crate) fn apply_theme_scheme(request_context: Option<&RequestContext>, theme: Option<Theme>) {
   if let Some(request_context) = request_context {
-    request_context.set_chrome_color_scheme(theme_to_color_variant(theme), 0);
+    request_context.set_chrome_color_scheme(
+      theme_to_color_variant(theme.or_else(crate::system_theme::system_theme)),
+      0,
+    );
   }
 }
 

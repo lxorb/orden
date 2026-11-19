@@ -1618,6 +1618,7 @@ fn device_event_filter_to_winit(filter: DeviceEventFilter) -> winit::event_loop:
 
 pub(crate) enum EventLoopMessage {
   SetTheme(Option<Theme>),
+  SystemTheme,
   SetDeviceEventFilter(DeviceEventFilter),
   PrimaryMonitor(Sender<Result<Option<Monitor>>>),
   MonitorFromPoint(Sender<Result<Option<Monitor>>>, f64, f64),
@@ -2019,6 +2020,19 @@ impl<T: UserEvent> WinitCefApp<T> {
         *self.context.app_wide_theme.lock().unwrap() = theme;
         for appwindow in self.state.windows.values_mut() {
           appwindow.set_theme(theme);
+        }
+      }
+      EventLoopMessage::SystemTheme => {
+        let Some(theme) = crate::system_theme::system_theme() else {
+          return;
+        };
+        let mut told = Vec::new();
+        for (window_id, appwindow) in &self.state.windows {
+          appwindow.follow_system_theme();
+          told.push(*window_id);
+        }
+        for window_id in told {
+          self.emit_window_event(window_id, WindowEvent::ThemeChanged(theme));
         }
       }
       EventLoopMessage::PrimaryMonitor(tx) => {
@@ -3423,6 +3437,12 @@ impl<T: UserEvent> CefRuntime<T> {
       certificate_errors,
       devtools_allowed,
     };
+    crate::system_theme::tell_through({
+      let context = context.clone();
+      move || {
+        let _ = context.send_message(Message::EventLoop(EventLoopMessage::SystemTheme));
+      }
+    });
 
     internal_command_line_args.push(("--no-first-run".to_string(), None));
 
