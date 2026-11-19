@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte'
+  import { hang, overlays } from '../../ui-kit/src/api'
 
   const {
     labels,
@@ -14,6 +15,7 @@
   let typed = $state('')
   let field = $state<HTMLInputElement | null>(null)
   let root = $state<HTMLElement | null>(null)
+  let list = $state<HTMLElement | null>(null)
   const shown = $derived.by(() => {
     const needle = typed.trim().toLowerCase()
     return labels.filter((one) => needle === '' || one.toLowerCase().includes(needle))
@@ -41,9 +43,17 @@
   }
   function away(event: FocusEvent) {
     const next = event.relatedTarget
-    if (next instanceof Node && root?.contains(next)) return
+    if (next instanceof Node && (root?.contains(next) || list?.contains(next))) return
     open = false
   }
+  $effect(() =>
+    open
+      ? overlays.show(
+          () => (open = false),
+          () => [root, list],
+        )
+      : undefined,
+  )
 </script>
 
 <div class="labels" bind:this={root} onfocusout={away}>
@@ -60,7 +70,15 @@
     <svg class="chevron" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 4l3 3 3-3" /></svg>
   </button>
   {#if open}
-    <div class="list orden-layer" role="listbox" aria-label="Label" data-covers>
+    <div
+      class="list orden-layer"
+      role="listbox"
+      aria-label="Label"
+      data-covers
+      bind:this={list}
+      use:hang={{ side: 'below', gap: 4, from: root }}
+      onfocusout={away}
+    >
       <input
         bind:this={field}
         bind:value={typed}
@@ -129,10 +147,7 @@
     transform: rotate(180deg);
   }
   .list {
-    position: absolute;
-    inset-inline-start: 0;
-    top: calc(100% + var(--space-1));
-    z-index: var(--z-popover);
+    z-index: var(--z-menu);
     display: flex;
     flex-direction: column;
     gap: 1px;

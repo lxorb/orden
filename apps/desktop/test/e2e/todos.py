@@ -127,8 +127,8 @@ def row_acts(page: Page, scope: str) -> None:
     gone_from(page, scope, "Pick one", "Pick two")
 def pick_label(page: Page, scope: str, name: str) -> None:
     page.locator(f"{scope} [data-todos-label]").click()
-    page.locator(f"{scope} .search").fill(name)
-    page.locator(f"{scope} [role=option]", has_text=name).first.click()
+    page.locator("[role=listbox][aria-label='Label'] .search").fill(name)
+    page.locator("[role=listbox][aria-label='Label'] [role=option]", has_text=name).first.click()
 def sheet_controls(page: Page) -> None:
     sheet = "[data-todos-panel] [data-todo-editor]"
     if page.locator(f"{sheet} select, {sheet} input[type=date], {sheet} input[type=time]").count():
@@ -149,6 +149,65 @@ def sheet_controls(page: Page) -> None:
     page.keyboard.press("Escape")
     page.wait_for_selector("[role=dialog][aria-label='Start date']", state="detached")
     say("the todo sheet uses the app dropdown and date picker, and its title has one focus outline")
+INSIDE = """(selector) => {
+  const menu = document.querySelector(selector)
+  if (!menu) return 'not open'
+  const box = menu.getBoundingClientRect()
+  if (box.left < 0 || box.top < 0 || box.right > innerWidth || box.bottom > innerHeight) return `outside the window: ${Math.round(box.left)},${Math.round(box.top)} to ${Math.round(box.right)},${Math.round(box.bottom)} in ${innerWidth}x${innerHeight}`
+  const corners = [[box.left + 3, box.top + 3], [box.right - 3, box.top + 3], [box.left + 3, box.bottom - 3], [box.right - 3, box.bottom - 3]]
+  const under = corners.filter(([x, y]) => !menu.contains(document.elementFromPoint(x, y)))
+  return under.length ? `under ${under.map(([x, y]) => document.elementFromPoint(x, y)?.className || document.elementFromPoint(x, y)?.tagName).join(', ')}` : ''
+}"""
+RING = "(selector) => { const one = document.querySelector(selector); one.focus({ focusVisible: true }); return getComputedStyle(one).outlineStyle }"
+def inside(page: Page, selector: str, what: str, tag: str) -> None:
+    said = page.evaluate(INSIDE, selector)
+    if said:
+        wrong(f"[{tag}] the {what} is {said}")
+def menus_inside(page: Page, tag: str) -> None:
+    body = page.locator("[data-todos-panel]").bounding_box() or {}
+    page.mouse.move(body["x"] + body["width"] / 2, body["y"] + body["height"] / 2)
+    page.mouse.wheel(0, 400)
+    page.wait_for_timeout(200)
+    page.locator("[data-todos-panel] [data-todos-label]").click()
+    page.wait_for_selector("[role=listbox][aria-label='Label']")
+    inside(page, "[role=listbox][aria-label='Label']", "label menu", tag)
+    shot(page, f"08-{tag}-label-menu")
+    page.locator("[data-todos-panel] [data-todos-label]").click()
+    page.wait_for_selector("[role=listbox][aria-label='Label']", state="detached")
+    if not page.locator("[data-todos-panel] [data-todo-editor]").count():
+        open_editor(page, "Read a book")
+    sheet = "[data-todos-panel] [data-todo-editor]"
+    page.locator(f"{sheet} [role=combobox][aria-label='Space']").click()
+    page.wait_for_selector("[role=listbox][aria-label='Space'] [role=option]")
+    inside(page, "[role=listbox][aria-label='Space']", "Space dropdown", tag)
+    page.keyboard.press("Escape")
+    page.locator(f"{sheet} [aria-label='Choose a date']").first.click()
+    page.wait_for_selector("[role=dialog][aria-label='Start date'] [role=grid]")
+    inside(page, "[role=dialog][aria-label='Start date']", "date popup", tag)
+    page.keyboard.press("Escape")
+    page.locator(f"{sheet} .close").click()
+    say(f"[{tag}] the label menu, the Space dropdown and the date popup stay in the window and on top")
+def no_ring(page: Page) -> None:
+    chips = ["[data-todos-panel] [data-todos-label]", "[data-todos-panel] [data-todos-show-done]"]
+    page.locator(chips[0]).click()
+    page.locator(chips[0]).click()
+    page.locator(chips[1]).click()
+    page.locator(chips[1]).click()
+    rings = {one: page.evaluate(RING, one) for one in chips}
+    if not page.locator("[data-todos-panel] [data-todo-editor]").count():
+        open_editor(page, "Read a book")
+    space = "[data-todos-panel] [data-todo-editor] [role=combobox][aria-label='Space']"
+    page.locator(space).click()
+    page.locator(space).click()
+    rings[space] = page.evaluate(RING, space)
+    if any(one != "none" for one in rings.values()):
+        wrong(f"a press with the pointer left a focus ring: {rings}")
+    page.keyboard.press("Tab")
+    keyed = page.evaluate("() => getComputedStyle(document.activeElement).outlineStyle")
+    if keyed != "solid":
+        wrong(f"a control reached with Tab shows no ring: {keyed}")
+    page.locator("[data-todos-panel] [data-todo-editor] .close").click()
+    say("a pointer press leaves no focus ring and Tab still shows one")
 def main() -> int:
     worker = Worker()
     with DRIVE.session(playwright=True) as play:
@@ -189,7 +248,7 @@ def main() -> int:
         say("the label dropdown narrows the panel")
         shot(desk, "02-panel-label")
         desk.locator("[data-todos-panel] [data-todos-label]").click()
-        desk.locator("[data-todos-panel] [role=option]", has_text="All labels").click()
+        desk.locator("[role=listbox][aria-label='Label'] [role=option]", has_text="All labels").click()
         desk.wait_for_function("() => document.querySelectorAll('[data-todos-panel] [data-todo]').length === 3")
         add(desk, "Throw this away")
         delete(desk, "[data-todos-panel]", "Throw this away")
@@ -232,5 +291,13 @@ def main() -> int:
         lacks(desk, "desk", "From the phone")
         say("a todo deleted on the phone is gone on the desk")
         shot(phone, "04-phone")
+        label(desk, "Read a book", "Quaestur and a rather long label name")
+        for one in range(14):
+            add(desk, f"Filler todo {one + 1}")
+        menus_inside(desk, "wide")
+        desk.set_viewport_size({"width": 900, "height": 700})
+        desk.wait_for_timeout(300)
+        menus_inside(desk, "narrow")
+        no_ring(desk)
     return DRIVE.verdict("todos are per user, filtered by space and label, and a board in their own tab")
 raise SystemExit(main())
