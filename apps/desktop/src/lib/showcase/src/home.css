@@ -96,6 +96,7 @@ body {
   will-change: opacity;
 }
 .device {
+  --device-ground: var(--bg);
   --w: min(1180px, 92vw, (100svh - var(--band) - 7svh) * 1.6);
   position: absolute;
   top: var(--band);
@@ -107,14 +108,23 @@ body {
   border-radius: var(--radius-lg);
   background: var(--bg);
   box-shadow: var(--shadow-lg);
+  overflow: hidden;
   transform-origin: 50% 0;
   will-change: transform;
 }
 .screen {
+  --screen-radius: calc(var(--radius-lg) - 1px);
   position: absolute;
   inset: 0;
-  overflow: hidden;
+  border-radius: var(--screen-radius);
+}
+.screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   border-radius: inherit;
+  box-shadow: 0 0 0 24px var(--device-ground);
+  pointer-events: none;
 }
 .poster,
 .demo {
@@ -191,15 +201,13 @@ body {
     --h: calc(100svh - var(--band) - 5svh);
     --w: calc((var(--h) - 20px) * 0.4621 + 20px);
     height: var(--h);
+    --device-ground: var(--surface-3);
     border-radius: 46px;
-    background: var(--surface-3);
-    box-shadow:
-      var(--shadow-lg),
-      inset 0 0 0 1px var(--line);
+    background: var(--device-ground);
   }
   .screen {
+    --screen-radius: 36px;
     inset: 10px;
-    border-radius: 36px;
     background: var(--bg);
   }
   .demo {

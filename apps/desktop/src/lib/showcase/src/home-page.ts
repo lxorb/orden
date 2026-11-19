@@ -1,13 +1,13 @@
 import './home.css'
 import { DEMO_PHONE_SRC, DEMO_SRC, isDemoReady } from './demo-cue'
-import { APP_HREF, downloadFor, type Visitor } from './links'
+import { APP_HREF, downloadFor, LATEST_RELEASE_API, releaseAssets, type ReleaseAsset, type Visitor } from './links'
 import { cueOf, deviceTransform, frameOf, storyAt, type Track } from './story'
 
 const PHONE = '(max-width: 719.98px)'
 const STILL = '(prefers-reduced-motion: reduce)'
 const LIGHT = '(prefers-color-scheme: light)'
-const DESKTOP_WIDTH = 1280
-const PHONE_WIDTH = 390
+const DESKTOP_SIZE = [1280, 800] as const
+const PHONE_SIZE = [390, 844] as const
 interface Agent {
   userAgentData?: { getHighEntropyValues?: (hints: string[]) => Promise<{ architecture?: string }> }
 }
@@ -42,25 +42,38 @@ function followTheme(view: Window) {
   apply()
   light.addEventListener('change', apply)
 }
-function offerDownload(view: Window, version: string) {
+function offerDownload(view: Window) {
   const { navigator } = view
-  const visitor: Visitor = { userAgent: navigator.userAgent, touchPoints: navigator.maxTouchPoints }
-  const paint = (seen: Visitor) => {
-    const { label, href } = downloadFor(seen, version)
+  let visitor: Visitor = { userAgent: navigator.userAgent, touchPoints: navigator.maxTouchPoints }
+  let assets: ReleaseAsset[] = []
+  const paint = () => {
+    const { label, href } = downloadFor(visitor, assets)
     for (const link of view.document.querySelectorAll<HTMLAnchorElement>('a[data-download]')) {
       link.href = href
       link.textContent = label
     }
   }
-  paint(visitor)
+  paint()
   for (const link of view.document.querySelectorAll<HTMLAnchorElement>('a[data-app]')) link.href = APP_HREF
   const asked = (navigator as Agent).userAgentData?.getHighEntropyValues?.(['architecture'])
   asked?.then(
     ({ architecture }) => {
-      if (architecture) paint({ ...visitor, architecture })
+      if (!architecture) return
+      visitor = { ...visitor, architecture }
+      paint()
     },
     () => undefined,
   )
+  whenIdle(view, () => {
+    view
+      .fetch(LATEST_RELEASE_API, { headers: { Accept: 'application/vnd.github+json' } })
+      .then((answer) => (answer.ok ? answer.json() : null))
+      .then((body: unknown) => {
+        assets = releaseAssets(body)
+        paint()
+      })
+      .catch(() => undefined)
+  })
 }
 function whenIdle(view: Window, run: () => void) {
   const idle = (view as { requestIdleCallback?: Window['requestIdleCallback'] }).requestIdleCallback
@@ -68,9 +81,9 @@ function whenIdle(view: Window, run: () => void) {
   if (view.document.readyState === 'complete') later()
   else view.addEventListener('load', later, { once: true })
 }
-export function showHome(view: Window, version: string) {
+export function showHome(view: Window) {
   followTheme(view)
-  offerDownload(view, version)
+  offerDownload(view)
   const page = pageIn(view.document)
   if (!page) return
   const phone = view.matchMedia(PHONE)
@@ -107,8 +120,9 @@ export function showHome(view: Window, version: string) {
     track = { rise, span: first?.offsetHeight ?? 1 }
     const height = page.stage.offsetHeight
     drop = Math.max(0, height * (phone.matches ? 0.7 : 0.74) - page.device.offsetTop)
-    const width = phone.matches ? PHONE_WIDTH : DESKTOP_WIDTH
-    page.screen.style.setProperty('--fit', String(page.screen.clientWidth / width))
+    const [wide, tall] = phone.matches ? PHONE_SIZE : DESKTOP_SIZE
+    const fit = Math.max(page.screen.clientWidth / wide, page.screen.clientHeight / tall)
+    page.screen.style.setProperty('--fit', String(fit))
     render()
   }
   const load = () => {

@@ -17,6 +17,7 @@ describe('the home page file', () => {
       .find((one) => one.startsWith('script-src '))
     expect(script).toBe(`script-src 'self' 'sha256-${inline[0] ?? ''}'`)
     expect(policy()).toContain("frame-src 'self'")
+    expect(policy()).toContain("connect-src 'self' https://api.github.com;")
     expect(policy()).not.toContain('unsafe')
   })
   test('sets its theme before the first paint, from the system', () => {

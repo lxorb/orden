@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import PAGE from '../../../../home.html?raw'
+import { elapse } from '../../../../test/effects/settle'
 import { showHome } from './home-page'
 
 const BODY = /<body>([\s\S]*)<\/body>/.exec(PAGE)?.[1] ?? ''
@@ -25,6 +26,10 @@ function sayReady(source: Window | null) {
 beforeEach(() => {
   vi.useFakeTimers()
   document.body.innerHTML = BODY
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() => Promise.reject(new Error('offline'))),
+  )
   vi.stubGlobal('requestAnimationFrame', (run: FrameRequestCallback) => {
     run(0)
     return 1
@@ -39,30 +44,53 @@ afterEach(() => {
 describe('the home page', () => {
   test('follows the system theme', () => {
     vi.stubGlobal('matchMedia', media(['(prefers-color-scheme: light)']))
-    showHome(window, '0.21.1')
+    showHome(window)
     expect(document.documentElement.dataset.theme).toBe('light')
   })
-  test('points both Download buttons at the file for this system, and Try it out at the app', () => {
+  test('points both Download buttons at the file for this system once the release is read, and Try it out at the app', async () => {
     vi.stubGlobal('matchMedia', media([]))
     vi.spyOn(Object.getPrototypeOf(navigator) as Navigator, 'userAgent', 'get').mockReturnValue(
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36',
     )
-    showHome(window, '0.21.1')
+    const file = 'https://github.com/lxorb/orden/releases/download/v0.21.1/Orden-0.21.1-windows-x64-setup.exe'
+    const asked = vi.fn((_url: string, _init?: RequestInit) =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            assets: [
+              { name: 'Orden-0.21.1-windows-x64.msi', browser_download_url: file.replace('-setup.exe', '.msi') },
+              { name: 'Orden-0.21.1-windows-x64-setup.exe', browser_download_url: file },
+            ],
+          }),
+        ),
+      ),
+    )
+    vi.stubGlobal('fetch', asked)
+    showHome(window)
     const downloads = [...document.querySelectorAll<HTMLAnchorElement>('a[data-download]')]
     expect(downloads).toHaveLength(2)
     for (const link of downloads) {
       expect(link.textContent).toBe('Download for Windows')
-      expect(link.href).toBe(
-        'https://github.com/lxorb/orden/releases/download/v0.21.1/Orden-0.21.1-windows-x64-setup.exe',
-      )
+      expect(link.href).toBe('https://github.com/lxorb/orden/releases/latest')
     }
+    expect(asked).not.toHaveBeenCalled()
+    await elapse(1000)
+    expect(asked.mock.calls[0]?.[0]).toBe('https://api.github.com/repos/lxorb/orden/releases/latest')
+    for (const link of downloads) expect(link.href).toBe(file)
     const apps = [...document.querySelectorAll<HTMLAnchorElement>('a[data-app]')]
     expect(apps).toHaveLength(2)
     for (const link of apps) expect(link.getAttribute('href')).toBe('/')
   })
+  test('keeps the release page when the release cannot be read', async () => {
+    vi.stubGlobal('matchMedia', media([]))
+    showHome(window)
+    await elapse(1000)
+    for (const link of document.querySelectorAll<HTMLAnchorElement>('a[data-download]'))
+      expect(link.href).toBe('https://github.com/lxorb/orden/releases/latest')
+  })
   test('loads the demo only once the page has loaded and gone idle, as a phone on a phone', () => {
     vi.stubGlobal('matchMedia', media(['(max-width: 719.98px)']))
-    showHome(window, '0.21.1')
+    showHome(window)
     const { frame } = demo()
     expect(frame.getAttribute('src')).toBe(null)
     vi.advanceTimersByTime(1000)
@@ -72,7 +100,7 @@ describe('the home page', () => {
   })
   test('cues the demo once it says it is ready, and only then', () => {
     vi.stubGlobal('matchMedia', media(['(prefers-reduced-motion: reduce)']))
-    showHome(window, '0.21.1')
+    showHome(window)
     vi.advanceTimersByTime(1000)
     const { frame, inside } = demo()
     const sent = vi.spyOn(inside, 'postMessage').mockImplementation(() => undefined)
