@@ -4,14 +4,7 @@ export const N = 120
 export const PAD = 16
 export const CLEAR = 12
 const RATE = 13
-const BREATH = 0.8
-const BREATH_RATE = 0.22
-const WAVE = 0.6
-const WAVES: readonly { lobes: number; rate: number; phase: number }[] = [
-  { lobes: 2, rate: 0.09, phase: 0 },
-  { lobes: 3, rate: -0.13, phase: 1.7 },
-  { lobes: 5, rate: 0.17, phase: 4.1 },
-]
+const RESTS = 0.05
 const SEAM = 4
 const STEP = 8
 const TAU = 2 * Math.PI
@@ -163,7 +156,7 @@ export class Bubble {
     this.aim(boxes)
     this.h.set(this.goal)
     this.shown.set(this.goal)
-    this.draw(0, true)
+    this.draw()
   }
   private aim(boxes: readonly Box[]) {
     const tight = roundOf(boxes)
@@ -185,10 +178,11 @@ export class Bubble {
     const at = (share: number) => this.shown[Math.round(share * N) % N] ?? 0
     return { x: (at(0) - at(0.5)) / 2, y: (at(0.25) - at(0.75)) / 2 }
   }
-  step(seconds: number, t: number, boxes: readonly Box[], still = false) {
+  step(seconds: number, boxes: readonly Box[], still = false): boolean {
     this.aim(boxes)
     const dt = Math.min(Math.max(seconds, 0), 0.05)
     const fade = Math.exp(-RATE * dt)
+    let rests = true
     for (let i = 0; i < N; i++) {
       const goal = this.goal[i] ?? 0
       if (still) {
@@ -201,34 +195,25 @@ export class Bubble {
       const lead = v + RATE * off
       this.h[i] = goal + (off + lead * dt) * fade
       this.speed[i] = (v - RATE * lead * dt) * fade
+      rests &&= Math.abs((this.h[i] ?? 0) - goal) < RESTS && Math.abs(this.speed[i] ?? 0) < RESTS
+    }
+    if (rests) {
+      this.h.set(this.goal)
+      this.speed.fill(0)
     }
     for (let i = 0; i < N; i++) this.shown[i] = Math.max(this.h[i] ?? 0, this.floor[i] ?? 0)
     this.edges = []
-    this.draw(t, still)
+    this.draw()
+    return rests
   }
-  private t = 0
-  private still = false
-  private draw(t: number, still: boolean) {
-    this.t = t
-    this.still = still
+  private draw() {
     let points = even(hullOf(this.shown))
-    if (!still) {
-      const { x, y } = this.middle()
-      const breath = BREATH * Math.sin(t * BREATH_RATE * TAU)
-      points = points.map(([px, py]) => {
-        const angle = Math.atan2(py - y, px - x)
-        let rest = breath
-        for (const wave of WAVES) rest += WAVE * Math.sin(angle * wave.lobes + t * wave.rate * TAU + wave.phase)
-        const far = Math.hypot(px - x, py - y) || 1
-        return [px + ((px - x) / far) * rest, py + ((py - y) / far) * rest]
-      })
-    }
     for (const edge of this.edges) points = cut(points, edge)
     this.outline = even(points)
   }
   meet(edge: Edge) {
     this.edges.push(edge)
-    this.draw(this.t, this.still)
+    this.draw()
   }
   reach(i: number): number {
     return this.shown[((i % N) + N) % N] ?? 0

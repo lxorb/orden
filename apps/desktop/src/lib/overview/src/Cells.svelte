@@ -69,7 +69,8 @@
       one: keptOf(cell.key),
       boxes: boxesOf(cell.key, hand),
     }))
-    for (const { one, boxes } of all) one.bubble.step(seconds, now / 1000, boxes, still)
+    let rests = true
+    for (const { one, boxes } of all) rests = one.bubble.step(seconds, boxes, still) && rests
     for (let i = 0; i < all.length; i++) {
       for (let j = i + 1; j < all.length; j++) {
         const a = all[i]
@@ -83,15 +84,17 @@
       if (one.name) one.name.style.translate = `${crown.x}px ${crown.y}px`
     }
     const seen = JSON.stringify(all.map(({ boxes }) => boxes))
-    const moving = !still || hand !== null || seen !== last
+    const moving = !rests || hand !== null || seen !== last
     last = seen
     frame = moving ? requestAnimationFrame(tick) : 0
   }
+  export function wake() {
+    if (frame || (!cells.length && !holding)) return
+    before = performance.now()
+    frame = requestAnimationFrame(tick)
+  }
   $effect(() => {
-    if ((cells.length || holding) && !frame) {
-      before = performance.now()
-      frame = requestAnimationFrame(tick)
-    }
+    if (cells.length || holding) wake()
   })
   onDestroy(() => cancelAnimationFrame(frame))
 </script>

@@ -476,8 +476,10 @@
     last = performance.now()
     frameAsked = requestAnimationFrame(tick)
   }
+  let bubbles = $state<{ wake: () => void }>()
   function tick(now: number) {
     frameAsked = 0
+    bubbles?.wake()
     if (!started && ((unready > 0 && now - entered < READY) || (!stood && now - entered < STANDS))) {
       last = now
       frameAsked = requestAnimationFrame(tick)
@@ -1033,6 +1035,7 @@
     if (!box || !flight) return
     flight.hold(box.x, box.y, box.w, box.h)
     paint(id)
+    bubbles?.wake()
   }
   function up(event: PointerEvent) {
     if (pressed?.pointer !== event.pointerId) return
@@ -1371,7 +1374,7 @@
       style:--overview-space-names={Math.min(unzoom, SPACE_NAMES_MOST)}
     >
       {#if cellsShown.length}
-        <Cells cells={cellsShown} pushed={pushedNow} holding={held !== null} inside={insideOf} />
+        <Cells bind:this={bubbles} cells={cellsShown} pushed={pushedNow} holding={held !== null} inside={insideOf} />
       {/if}
       <svg class="seams" width="1" height="1">
         {#each laid.seams as seam (seam.id)}

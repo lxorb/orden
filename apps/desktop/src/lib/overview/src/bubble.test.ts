@@ -51,8 +51,8 @@ function farthest(one: Bubble, box: Box): number {
   return most
 }
 const reachPast = (box: Box) => 0.25 * (Math.max(box.w, box.h) / 2 + PAD) + PAD + 4
-const run = (one: Bubble, windows: () => readonly Box[], frames: number, from = 0) => {
-  for (let frame = 0; frame < frames; frame++) one.step(1 / 60, (from + frame) / 60, windows())
+const run = (one: Bubble, windows: () => readonly Box[], frames: number) => {
+  for (let frame = 0; frame < frames; frame++) one.step(1 / 60, windows())
 }
 test('round one window it is that window grown a little, and nowhere further', () => {
   const only = { x: 40, y: 900, w: 360, h: 260 }
@@ -107,7 +107,7 @@ test('a window pushed against its bubble from inside swells it round, never into
     for (let frame = 0; frame < 40; frame++) {
       held.x += dx * 30
       held.y += dy * 30
-      one.step(1 / 60, frame / 60, [still, held])
+      one.step(1 / 60, [still, held])
       expect(encloses(one, [still, held])).toBe(true)
       expect(tightestOf(one)).toBeGreaterThan(40)
     }
@@ -132,7 +132,7 @@ test('dragged at any speed, turned at once, or late a frame, it stays round', ()
         }
         held.x += dx * speed
         held.y += dy * speed
-        one.step(frame % 30 === 17 ? 0.12 : 1 / 60, frame / 60, windows())
+        one.step(frame % 30 === 17 ? 0.12 : 1 / 60, windows())
         expect(encloses(one, windows())).toBe(true)
         expect(tightestOf(one)).toBeGreaterThan(40)
       }
@@ -154,10 +154,10 @@ test('its one window dragged away takes the bubble and its name with it', () => 
   for (let frame = 0; frame < 120; frame++) {
     now.x = was.x + frame * 12
     now.y = was.y + frame * 4
-    one.step(1 / 60, frame / 60, [now])
+    one.step(1 / 60, [now])
     expect(encloses(one, [now])).toBe(true)
   }
-  run(one, () => [now], 60, 120)
+  run(one, () => [now], 60)
   expect(farthest(one, now)).toBeLessThan(reachPast(now))
   expect(insideOf(outline(one), was.x + was.w / 2, was.y + was.h / 2)).toBe(false)
   const crown = one.crown()
@@ -179,7 +179,7 @@ test('every window is inside it on every frame: dragged, thrown, arriving and le
     for (let frame = 0; frame < 90; frame++) {
       const count = 1 + (Math.floor(frame / 15 + round) % windows.length)
       const shown = windows.slice(0, count).map((w, i) => ({ ...w, x: w.x + Math.sin(frame / 7 + round + i) * 140 }))
-      one.step(1 / 60, frame / 60, shown)
+      one.step(1 / 60, shown)
       if (frame % 3 === 0) expect(encloses(one, shown)).toBe(true)
     }
   }
@@ -194,8 +194,8 @@ test('two bubbles that would overlap meet along a line between them, and never o
     const one = new Bubble(ones)
     const other = new Bubble(others)
     for (let frame = 0; frame < 60; frame++) {
-      one.step(1 / 60, frame / 60, ones)
-      other.step(1 / 60, frame / 60, others)
+      one.step(1 / 60, ones)
+      other.step(1 / 60, others)
       apart(one, other, ones, others)
     }
     const a = outline(one)
@@ -206,31 +206,29 @@ test('two bubbles that would overlap meet along a line between them, and never o
     expect(encloses(other, others, Math.min(CLEAR / 2, gap / 2 - 5))).toBe(true)
   }
 })
-test('it moves only slightly: a pixel or two, with nothing moving it', () => {
+test('with nothing moving it, it comes to rest and says so, and its path stays the same', () => {
   const box = { x: 0, y: 0, w: 400, h: 300 }
   const one = new Bubble([box])
-  const paths = new Set<string>()
-  const rights: number[] = []
-  for (let frame = 0; frame < 600; frame++) {
-    one.step(1 / 60, frame / 60, [box])
-    if (frame % 60 === 0) paths.add(one.pathOf())
-    rights.push(Math.max(...one.points().map(([x]) => x)))
-  }
-  expect(paths.size).toBeGreaterThan(5)
-  const spread = Math.max(...rights) - Math.min(...rights)
-  expect(spread).toBeGreaterThan(0.2)
-  expect(spread).toBeLessThan(5)
+  const moved = { ...box, x: 300 }
+  let frames = 0
+  while (!one.step(1 / 60, [moved]) && frames < 600) frames++
+  expect(frames).toBeGreaterThan(5)
+  expect(frames).toBeLessThan(600)
+  const rested = one.pathOf()
+  for (let frame = 0; frame < 120; frame++) expect(one.step(1 / 60, [moved])).toBe(true)
+  expect(one.pathOf()).toBe(rested)
+  expect(one.step(1 / 60, [{ ...moved, x: 320 }])).toBe(false)
 })
 test('asked for less movement it stands still, and follows its windows at once', () => {
   const box = { x: 0, y: 0, w: 400, h: 300 }
   const one = new Bubble([box])
-  one.step(1 / 60, 0.1, [box], true)
+  one.step(1 / 60, [box], true)
   const first = one.pathOf()
-  one.step(1 / 60, 0.9, [box], true)
+  one.step(1 / 60, [box], true)
   expect(one.pathOf()).toBe(first)
   expect(first).toMatch(/^M[-\d.]+ [-\d.]+C/)
   const moved = { ...box, x: 2000 }
-  one.step(1 / 60, 1, [moved], true)
+  one.step(1 / 60, [moved], true)
   expect(farthest(one, moved)).toBeLessThan(reachPast(moved))
   expect(insideOf(outline(one), 200, 150)).toBe(false)
 })
