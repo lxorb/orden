@@ -1,4 +1,5 @@
 import { tabKindParts, webPages } from '@orden/contracts'
+import { isChatTarget } from '@orden/markdown/links'
 import { agentMarks } from '../../workspace/src/api'
 import { DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
 import { archiveEntry, bookmarkAll, shareEntry, stackEntries, webDataEntry } from '../../row-menu/src/api'
@@ -100,7 +101,8 @@ function inListEntry(tab: Tab): MenuEntry[] {
   const root = workspace.activeSpace?.root
   const path = tab.path
   if (path === null || root === undefined || withinSpace(root, path) === null) return []
-  return [keyed('Show in the file list', 'app.reveal', () => workspace.revealNote(path))]
+  const label = tab.kind === 'channel' || isChatTarget(path) ? 'Show in Chats' : 'Show in the file list'
+  return [keyed(label, 'app.reveal', () => workspace.revealNote(path))]
 }
 function closeEntries(tab: Tab, close: () => void, others: number, after: () => void): MenuEntry[] {
   const around = (label: string, id: string, how: 'right' | 'all') =>

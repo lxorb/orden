@@ -24,4 +24,14 @@ describe('Show in the file list', () => {
     expect(labels(tab('/elsewhere/plan.md'))).not.toContain('Show in the file list')
     expect(labels(tab(null, 'graph'))).not.toContain('Show in the file list')
   })
+  test('is Show in Chats for a chat, which still reveals its path', () => {
+    const reveal = vi.spyOn(workspace, 'revealNote').mockImplementation(() => undefined)
+    for (const one of [tab('/s/Team.chat'), tab('/s/Team.chat', 'channel')]) {
+      const menu = tabMenu(one, workspace.panes.focusedId)
+      expect(labels(one)).not.toContain('Show in the file list')
+      menu.find((row) => row?.label === 'Show in Chats')?.run()
+    }
+    expect(reveal.mock.calls).toEqual([['/s/Team.chat'], ['/s/Team.chat']])
+    reveal.mockRestore()
+  })
 })
