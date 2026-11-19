@@ -742,11 +742,10 @@
   },
   {
     "name": "list_tasks",
-    "description": "The account's todos, open ones unless `done` is true: every space, or `space` alone; `label` narrows to one label. Each todo's `id` is what update_task takes.",
+    "description": "The account's todos, open ones unless `done` is true; `label` narrows to one label. Each todo's `id` is what update_task takes.",
     "inputSchema": {
       "type": "object",
       "properties": {
-        "space": { "type": "string" },
         "label": { "type": "string" },
         "done": { "type": "boolean" },
         "limit": { "type": "integer" }
@@ -756,14 +755,13 @@
   },
   {
     "name": "add_task",
-    "description": "Add a todo: `title`, and optionally `description`, `labels`, `space` (when left out, the thread's space or the one open), `start` and `deadline` as YYYY-MM-DD, `priority` 0 (none) to 3 (high).",
+    "description": "Add a todo: `title`, and optionally `description`, `labels`, `start` and `deadline` as YYYY-MM-DD, `priority` 0 (none) to 3 (high).",
     "inputSchema": {
       "type": "object",
       "properties": {
         "title": { "type": "string" },
         "description": { "type": "string" },
         "labels": { "type": "array", "items": { "type": "string" } },
-        "space": { "type": "string" },
         "start": { "type": "string" },
         "deadline": { "type": "string" },
         "priority": { "type": "integer" }
@@ -774,7 +772,7 @@
   },
   {
     "name": "update_task",
-    "description": "Change one todo by its `id`: `done`, `title`, `description`, `labels`, `space` (`\"\"` for none), `start`, `deadline` (`\"\"` takes a day off), `priority` 0 to 3.",
+    "description": "Change one todo by its `id`: `done`, `title`, `description`, `labels`, `start`, `deadline` (`\"\"` takes a day off), `priority` 0 to 3.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -783,7 +781,6 @@
         "title": { "type": "string" },
         "description": { "type": "string" },
         "labels": { "type": "array", "items": { "type": "string" } },
-        "space": { "type": "string" },
         "start": { "type": "string" },
         "deadline": { "type": "string" },
         "priority": { "type": "integer" }
