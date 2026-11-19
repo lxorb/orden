@@ -159,6 +159,16 @@ fn pressed(label: &str, event: &cef::KeyEvent) -> bool {
         },
     )
 }
+pub(crate) fn menus(
+    page: orden_web::engine::Page,
+    menus: orden_web::engine::Menus,
+) -> orden_web::engine::Page {
+    use tauri_runtime_cef::WebviewBuilderCefExt as _;
+    page.on_context_menu(move |asked| serde_json::to_value(asked).is_ok_and(|said| menus(said)))
+}
+pub(crate) fn menu_pick(id: u64, command: Option<i32>) -> bool {
+    tauri_runtime_cef::answer_context_menu(id, command)
+}
 #[allow(
     clippy::cast_possible_truncation,
     clippy::useless_conversion,

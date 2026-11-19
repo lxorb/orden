@@ -17,6 +17,7 @@ pub type Call =
     fn(&Webview, Option<&str>, &str, &Value, std::time::Duration) -> Result<Value, String>;
 pub type Tell = fn(&Webview, Option<&str>, Vec<(&'static str, Value)>);
 pub type Zooms = Box<dyn Fn(crate::web_page::Step) + Send + Sync>;
+pub type Menus = Box<dyn Fn(serde_json::Value) -> bool + Send + Sync>;
 pub type Page = WebviewBuilder<orden_base::Engine>;
 pub struct Engine {
     pub page_id: fn(&PlatformWebview) -> Option<NativeWindow>,
@@ -28,10 +29,18 @@ pub struct Engine {
     pub wear: fn(&PlatformWebview, crate::page_scheme::Scheme),
     pub served: fn(&PlatformWebview) -> Option<crate::web_certificate::Served>,
     pub zooms: fn(Page, Zooms) -> Page,
+    pub menus: fn(Page, Menus) -> Page,
+    pub menu_pick: fn(u64, Option<i32>) -> bool,
 }
 static ENGINE: std::sync::OnceLock<Engine> = std::sync::OnceLock::new();
 pub fn hand(engine: Engine) {
     let _ = ENGINE.set(engine);
+}
+pub fn menus(page: Page, menus: Menus) -> Page {
+    match engine() {
+        Ok(engine) => (engine.menus)(page, menus),
+        Err(_) => page,
+    }
 }
 pub fn engine() -> Result<&'static Engine, String> {
     ENGINE.get().ok_or_else(|| "the engine has not started".to_owned())

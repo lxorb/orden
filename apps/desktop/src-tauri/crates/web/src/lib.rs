@@ -24,6 +24,7 @@ pub mod web_handed;
 pub mod web_icons;
 pub mod web_keys;
 pub mod web_media;
+pub mod web_menu;
 pub mod web_opens;
 pub mod web_page;
 pub mod web_painted;

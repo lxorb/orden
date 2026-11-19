@@ -173,6 +173,7 @@ fn remove_redundant_separators(model: &MenuModel) {
 wrap_context_menu_handler! {
   pub struct TauriCefContextMenuHandler {
     devtools_enabled: bool,
+    menu: Option<std::sync::Arc<crate::ContextMenuHandler>>,
   }
 
   impl ContextMenuHandler {
@@ -204,6 +205,23 @@ wrap_context_menu_handler! {
 
       // An empty model is left empty on purpose: CEF then shows no menu at all,
       // which is the right outcome for a menu with nothing in it.
+    }
+
+    fn run_context_menu(
+      &self,
+      browser: Option<&mut Browser>,
+      _frame: Option<&mut Frame>,
+      params: Option<&mut ContextMenuParams>,
+      model: Option<&mut MenuModel>,
+      callback: Option<&mut RunContextMenuCallback>,
+    ) -> c_int {
+      let Some(menu) = &self.menu else {
+        return 0;
+      };
+      if model.as_ref().is_some_and(|model| model.count() == 0) {
+        return 0;
+      }
+      c_int::from(crate::menu::run(menu.as_ref(), browser, params, model, callback))
     }
   }
 }
