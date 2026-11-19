@@ -19,7 +19,7 @@ import mss
 import numpy
 from PIL import Image, ImageStat
 from fresh_app import ended, fresh
-from native_app import App, endpoint, known
+from native_app import App, endpoint
 
 COLOUR = (255, 0, 255)
 PAGE = b"<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%;background:#ff00ff}</style>"
@@ -104,13 +104,16 @@ if sys.platform == "win32":
             time.sleep(0.3)
 
         @staticmethod
-        def alt_alt() -> None:
+        def alt_alt() -> float:
             scan = user32.MapVirtualKeyW(VK_MENU, 0)
+            done = 0.0
             for _ in range(2):
                 user32.keybd_event(VK_MENU, scan, 0, 0)
                 time.sleep(0.03)
                 user32.keybd_event(VK_MENU, scan, KEYUP, 0)
+                done = time.time() * 1000
                 time.sleep(0.06)
+            return done
 
         @staticmethod
         def wheel(x: int, y: int, notches: int) -> None:
@@ -178,8 +181,9 @@ else:
             time.sleep(0.3)
 
         @staticmethod
-        def alt_alt() -> None:
+        def alt_alt() -> float:
             xdo("key", "--delay", "60", "Alt_L", "Alt_L")
+            return time.time() * 1000
 
         @staticmethod
         def wheel(x: int, y: int, notches: int) -> None:
@@ -251,8 +255,7 @@ SHOWN = "document.querySelector('button.orden-glyph.overview')?.getAttribute('ar
 def toggled(app: App, desk: Desk, up: bool, pressed: list[tuple[float, str]]) -> str:
 
     what = "open" if up else "close"
-    pressed.append((time.time() * 1000, what))
-    desk.alt_alt()
+    pressed.append((desk.alt_alt(), what))
     time.sleep(0.6)
     if app.eval(SHOWN) is up:
         return "keys"
@@ -331,7 +334,7 @@ def judged(name: str, frames: list[tuple[float, Image.Image]], log: dict[str, An
     kept = distinct(smalls)
     print(f"[{name}] {len(kept)} of them drawn anew", flush=True)
     for i, length, many, far in flashes(smalls, kept):
-        known(2205, f"[{name}] frames {i}-{i + length - 1} flash in {many} cells, up to {far} from both sides")
+        wrong.append(f"[{name}] frames {i}-{i + length - 1} flash in {many} cells, up to {far} from both sides")
     for k in range(1, len(kept)):
         share = sum(one > FAR for one in cells(smalls[kept[k - 1]], smalls[kept[k]])) / (CELLS[0] * CELLS[1])
         if share > MOST:

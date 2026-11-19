@@ -571,7 +571,7 @@ def main() -> int:
 
     hiding = [one for one in wrong if one.startswith("[overview] frame ")]
     for one in hiding:
-        known(2205, one)
+        known(2214, one)
     wrong = [one for one in wrong if one not in hiding]
     for one in unverified:
         print(f"::warning::{one}", flush=True)
