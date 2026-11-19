@@ -440,6 +440,7 @@
     bind:clientWidth={asideWidth}
     data-region={side === 'right' ? 'right' : undefined}
     data-sidebar
+    data-covers={floating || peek ? '' : undefined}
     aria-label={side === 'right' ? 'Right sidebar' : `${workspace.activeSpace?.name ?? 'Space'} panel`}
     class:resizing={size.dragging}
     class:right={side === 'right'}
