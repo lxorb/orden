@@ -302,6 +302,7 @@ describe('the badge in front of a name', () => {
       .sort()
     expect(asking).toEqual([
       'lib/accounts-ui/src/ShareSheet.svelte',
+      'lib/palette/src/Palette.svelte',
       'lib/publishing/src/PublishSheet.svelte',
       'lib/save-place/src/SavePlace.svelte',
       'lib/spaces/src/SpaceBadge.svelte',
