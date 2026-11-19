@@ -45,6 +45,7 @@ import {
 } from '../../../sync-server/src/api'
 import { MAX_NOTE_BYTES, noteBeside, noteKey, saveNote, UNREADABLE } from '../notes'
 import { revive } from '../sync2/ops'
+import { KEPT } from '../sync2/tree'
 import { ingested, seedOf, snapshotKey } from './epoch'
 import {
   fileOf,
@@ -707,7 +708,7 @@ export class NoteRoom implements DurableObject {
     if (!held) return false
     await this.state.flush()
     if ((held.epoch ?? 0) >= 1) return await this.settleDocument(held, crossing)
-    const file = await this.env.DB.prepare('select * from notes where id = ? and deleted = 0')
+    const file = await this.env.DB.prepare(`select * from notes where id = ? and ${KEPT}`)
       .bind(held.noteId)
       .first<Note>()
     if (!file) return false
@@ -747,14 +748,10 @@ export class NoteRoom implements DurableObject {
     if (held.version !== undefined && file.version !== held.version) {
       await this.keptBeside(file, settled, held.kind)
     }
-    const saved = await saveNote(
-      this.env,
-      file,
-      settled,
-      file.path,
-      this.settling,
-      this.settlingDevice === undefined ? {} : { versionBy: this.settlingDevice },
-    )
+    const saved = await saveNote(this.env, file, settled, file.path, this.settling, {
+      staysDeleted: !!file.deleted,
+      ...(this.settlingDevice === undefined ? {} : { versionBy: this.settlingDevice }),
+    })
     if (!saved) {
       await this.settleSoon()
       return false
@@ -894,9 +891,7 @@ export class NoteRoom implements DurableObject {
     if (crossing || (await sha256(settled)) !== held.hash) {
       if (file.deleted) {
         await revive(this.env, held.spaceId, this.settlingDevice, held.noteId, 'stays deleted')
-        file = await this.env.DB.prepare('select * from notes where id = ? and deleted = 0')
-          .bind(held.noteId)
-          .first<Note>()
+        file = await this.env.DB.prepare(`select * from notes where id = ? and ${KEPT}`).bind(held.noteId).first<Note>()
         if (!file) return false
       }
       if (size > file.size) {
@@ -907,6 +902,7 @@ export class NoteRoom implements DurableObject {
       }
       const saved = await saveNote(this.env, file, settled, file.path, this.settling, {
         epoch: held.epoch ?? 0,
+        staysDeleted: !!file.deleted,
         ...(this.settlingDevice === undefined ? {} : { docBy: this.settlingDevice }),
       })
       if (!saved) {

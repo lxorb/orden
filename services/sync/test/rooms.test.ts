@@ -75,6 +75,16 @@ describe('a room', () => {
     const { state } = room(env)
     expect(state.autoResponse).toEqual({ request: BEAT, response: BEAT_ANSWER })
   })
+  test('keeps words typed into a note deleted meanwhile in the deleted note, and leaves it deleted', async () => {
+    env.db.prepare('update notes set epoch = 0, epoch_base = null where id = ?').run(noteId)
+    const { room: made, state } = room(env)
+    const one = await arrive(made, state, { id: noteId, spaceId })
+    await call(env, `/v1/notes/${noteId}`, { method: 'DELETE', token })
+    await say(made, state, one.socket, one.type(11, 'written after\n'))
+    await made.alarm()
+    expect(env.db.prepare('select deleted from notes where id = ?').get(noteId)).toEqual({ deleted: 1 })
+    expect((await call(env, `/v1/notes/${noteId}`, { token })).json.content).toBe('# Together\nwritten after\n')
+  })
   test('opens on the note as the store holds it', async () => {
     const { room: made, state } = room(env)
     const one = await arrive(made, state, { id: noteId, spaceId })

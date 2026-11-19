@@ -138,16 +138,25 @@ describe('a room holding a note on sync v2', () => {
     expect(row(id).deleted).toBe(0)
     expect(await body(id)).toBe('one\nkept\n')
   })
-  test('leaves a note deleted when the words are the deleting device’s own (#413)', async () => {
+  test('leaves a note deleted when the words are the deleting device’s own, and keeps them in it (#413)', async () => {
     const id = await made('Plan.md', 'one\n')
     await prepare()
     const device = new Device(id, 'one\n', 'laptop')
     const typed = device.type(4, 'kept\n')
     await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    const deletedAt = (env.db.prepare('select deleted_at from notes where id = ?').get(id) as { deleted_at: number })
+      .deleted_at
     await device.push(typed)
     await rooms.settle()
     expect(row(id).deleted).toBe(1)
-    expect(await body(id)).toBe('one\n')
+    expect(env.db.prepare('select deleted_at from notes where id = ?').get(id)).toEqual({ deleted_at: deletedAt })
+    expect(await body(id)).toBe('one\nkept\n')
+    expect((await call(env, `/v1/notes/${id}`, { token })).json.content).toBe('one\nkept\n')
+    const trashed = await call<{ notes: { id: string }[] }>(env, '/v1/trash', { token })
+    expect(trashed.json.notes.map((one) => one.id)).toEqual([id])
+    expect((await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })).status).toBe(200)
+    expect(row(id).deleted).toBe(0)
+    expect((await call(env, `/v1/notes/${id}`, { token })).json.content).toBe('one\nkept\n')
   })
 })
 describe('whole texts', () => {
