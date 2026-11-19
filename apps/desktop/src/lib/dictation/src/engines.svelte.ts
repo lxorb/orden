@@ -2,15 +2,7 @@ import { shownHost } from '@orden/scan/web-address'
 import { account } from '../../accounts/src/api'
 import { transcriberNow } from '../../ai-providers/src/api'
 import type { Provider } from '../../ai-providers/src/api'
-import {
-  method,
-  forget,
-  keep,
-  storedText,
-  isNative,
-  platform,
-  speechRecogniser,
-} from '../../platform/src/api'
+import { method, forget, keep, storedText, isNative, platform, speechRecogniser } from '../../platform/src/api'
 import { local } from './local.svelte'
 
 export type Engine = 'auto' | 'local' | 'provider' | 'account' | 'device'

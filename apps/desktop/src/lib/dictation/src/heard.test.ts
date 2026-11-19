@@ -3,9 +3,7 @@ import { cleaned, promptOf } from './heard'
 
 describe('the prompt', () => {
   test('names the words around the field, then the text it continues', () => {
-    expect(promptOf('Kannst du bitte', ['Sync Worker', 'Emil'])).toBe(
-      'Sync Worker, Emil. Kannst du bitte',
-    )
+    expect(promptOf('Kannst du bitte', ['Sync Worker', 'Emil'])).toBe('Sync Worker, Emil. Kannst du bitte')
   })
 
   test('is the names alone in an empty field, and nothing with neither', () => {
@@ -43,12 +41,7 @@ describe('an answer', () => {
     ['Obrigado.', '', 0.4, ''],
     ['E aí', '', 0.2, ''],
     ['Danke.', '', 1.4, 'Danke.'],
-    [
-      'Sophie, Herr Bäumler, Daniel, Priya, Emil.',
-      'Sophie, Herr Bäumler, Daniel, Priya, Emil',
-      2,
-      '',
-    ],
+    ['Sophie, Herr Bäumler, Daniel, Priya, Emil.', 'Sophie, Herr Bäumler, Daniel, Priya, Emil', 2, ''],
     ['Emil', 'Sophie, Emil', 0.8, 'Emil'],
     ['Ask Emil about it.', 'Sophie, Emil', 2, 'Ask Emil about it.'],
   ])(

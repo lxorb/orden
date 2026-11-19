@@ -75,8 +75,7 @@ function isBridge(value: unknown): value is Bridge {
 }
 
 function hosted(): boolean {
-  const host = (globalThis as { flutter_inappwebview?: { callHandler?: unknown } })
-    .flutter_inappwebview
+  const host = (globalThis as { flutter_inappwebview?: { callHandler?: unknown } }).flutter_inappwebview
   return typeof host?.callHandler === 'function'
 }
 

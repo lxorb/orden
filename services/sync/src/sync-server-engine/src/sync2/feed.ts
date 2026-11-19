@@ -54,13 +54,10 @@ export async function feedPage(
   const whole = rows.slice(0, FEED_PAGE)
   const unnamed = whole.findIndex((row) => row.name === null)
   const page = unnamed === -1 ? whole : whole.slice(0, unnamed)
-  const safe = (row: Row) =>
-    row.deleted === 1 || (isEntryId(row.id) && (row.parent === null || isEntryId(row.parent)))
+  const safe = (row: Row) => row.deleted === 1 || (isEntryId(row.id) && (row.parent === null || isEntryId(row.parent)))
   return {
     items: page.flatMap((row) =>
-      row.name === null || !safe(row)
-        ? []
-        : [{ ...itemOf(row, row.name), name: heldName(row.name) }],
+      row.name === null || !safe(row) ? [] : [{ ...itemOf(row, row.name), name: heldName(row.name) }],
     ),
     cursor: page.at(-1)?.seq ?? since,
     more: unnamed === -1 ? rows.length > FEED_PAGE : page.length > 0,

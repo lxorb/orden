@@ -68,11 +68,7 @@ describe('the blocks drawn after an edit', () => {
     const contents = (set: DecorationSet) =>
       widgetsIn(set).flatMap((widget) =>
         widget instanceof TocWidget
-          ? [
-              (widget as unknown as { entries: readonly { text: string }[] }).entries.map(
-                (one) => one.text,
-              ),
-            ]
+          ? [(widget as unknown as { entries: readonly { text: string }[] }).entries.map((one) => one.text)]
           : [],
       )
     const before = widgetsIn(current.field(blockDecorations).decorations)
@@ -80,9 +76,7 @@ describe('the blocks drawn after an edit', () => {
 
     const at = doc.indexOf('## H40') + 4
     current = parsed(current.update({ changes: { from: at, insert: 'renamed ' } }).state)
-    current = parsed(
-      current.update({ changes: { from: current.doc.length, insert: '\n## Last\n' } }).state,
-    )
+    current = parsed(current.update({ changes: { from: current.doc.length, insert: '\n## Last\n' } }).state)
 
     const after = current.field(blockDecorations).decorations
     expect(looked.paragraphs).toBeLessThan(10)
@@ -106,8 +100,7 @@ describe('the blocks drawn after an edit', () => {
     const after = widgetsIn(current.field(blockDecorations).decorations)
     expect(after).toHaveLength(60)
     expect(after.slice(0, 30).filter((widget, index) => widget === before[index])).toHaveLength(30)
-    if (parsedWhole)
-      expect(after.filter((widget, index) => widget === before[index])).toHaveLength(59)
+    if (parsedWhole) expect(after.filter((widget, index) => widget === before[index])).toHaveLength(59)
     expect(described(current.field(blockDecorations).decorations, current.doc.toString())).toEqual(
       described(buildBlockDecorations(current), current.doc.toString()),
     )
@@ -186,9 +179,7 @@ describe('the blocks drawn after an edit', () => {
         const length = current.doc.length
         const at = random(length + 1)
         const kind = random(4)
-        const spread = [random(length + 1), random(length + 1), random(length + 1)].sort(
-          (one, other) => one - other,
-        )
+        const spread = [random(length + 1), random(length + 1), random(length + 1)].sort((one, other) => one - other)
         const spec: TransactionSpec =
           kind === 0
             ? { selection: EditorSelection.cursor(random(length + 1)) }
@@ -220,10 +211,7 @@ describe('the blocks drawn after an edit', () => {
   })
 
   test('are what drawing the whole note would draw while its parse catches up', () => {
-    const doc = Array.from(
-      { length: 400 },
-      (_, i) => `p ${i}\n\n${TABLE}\n$$\nx${i}\n$$\n\n- a\n`,
-    ).join('')
+    const doc = Array.from({ length: 400 }, (_, i) => `p ${i}\n\n${TABLE}\n$$\nx${i}\n$$\n\n- a\n`).join('')
     let current = EditorState.create({
       doc,
       selection: EditorSelection.cursor(0),

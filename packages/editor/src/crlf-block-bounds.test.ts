@@ -4,8 +4,7 @@ import { describe, expect, test } from 'vitest'
 
 const windows = (text: string) => text.replace(/\n/g, '\r\n')
 
-const shown = (source: string) =>
-  sectionOf(source, { heading: null, block: 'p' })?.replace(/\r/g, '')
+const shown = (source: string) => sectionOf(source, { heading: null, block: 'p' })?.replace(/\r/g, '')
 
 describe('a named block in a note with Windows line endings', () => {
   test.each([

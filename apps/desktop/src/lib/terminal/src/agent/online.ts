@@ -6,15 +6,7 @@ import { isOnlineTab } from '../../../online-terms/src/api'
 import { termOf } from '@orden/online/term'
 import { relativeTo, samePath, spaceHolding } from '../../../platform/src/api'
 import { runner } from '../../../sync-client/src/api'
-import {
-  asksFront,
-  type Call,
-  done,
-  openedBy,
-  reachable,
-  Refused,
-  tabsInReach,
-} from '../../../agent-verbs/src/api'
+import { asksFront, type Call, done, openedBy, reachable, Refused, tabsInReach } from '../../../agent-verbs/src/api'
 import { workspace } from '../../../workspace/src/api'
 
 const WHY: Record<Why, [Refused['code'], string]> = {
@@ -43,10 +35,7 @@ export async function newOnline(call: Call): Promise<string | null> {
 
 export async function listOnline(call: Call): Promise<AgentAnswer> {
   if (!account.accountToken) throw refusedOf('signed-out')
-  const [{ machine }, { listed }] = await Promise.all([
-    import('../online/machine.svelte'),
-    import('../online/calls'),
-  ])
+  const [{ machine }, { listed }] = await Promise.all([import('../online/machine.svelte'), import('../online/calls')])
   await machine.refresh()
   if (machine.refused) throw refusedOf(machine.refused)
 
@@ -73,8 +62,7 @@ function sessionOf(call: Call, one: Listed) {
   const tab = tabsInReach(call).find(
     (it) =>
       isOnlineTab(it) &&
-      ((file !== null && it.path !== null && samePath(it.path, file)) ||
-        termOf(it.doc)?.session === one.session),
+      ((file !== null && it.path !== null && samePath(it.path, file)) || termOf(it.doc)?.session === one.session),
   )
   return [
     {

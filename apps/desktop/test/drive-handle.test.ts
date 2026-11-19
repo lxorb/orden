@@ -79,12 +79,9 @@ describe('the handle a drive reads the app through', () => {
     expect(listed).toMatch(new RegExp(`(^|[\\s,])${name},`))
   })
 
-  test.each(['ai', 'importing', 'publish', 'rewriting', 'themeStore'])(
-    '%s arrives on it later',
-    (name) => {
-      const later = APP.slice(APP.indexOf('ordenApp: {') + listed.length)
-      expect(later).toContain(`Object.assign((window as unknown as { ordenApp: object }).ordenApp`)
-      expect(later).toMatch(new RegExp(`${name}[,:]`))
-    },
-  )
+  test.each(['ai', 'importing', 'publish', 'rewriting', 'themeStore'])('%s arrives on it later', (name) => {
+    const later = APP.slice(APP.indexOf('ordenApp: {') + listed.length)
+    expect(later).toContain(`Object.assign((window as unknown as { ordenApp: object }).ordenApp`)
+    expect(later).toMatch(new RegExp(`${name}[,:]`))
+  })
 })

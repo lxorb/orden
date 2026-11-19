@@ -53,9 +53,7 @@ describe('a Gemini CLI turn', () => {
 
   test('a failed turn says why, and whether it wants a sign-in or hit its quota', () => {
     const read = geminiReader()
-    const out = read(
-      '{"type":"result","status":"error","error":{"type":"Error","message":"401 Unauthorized"}}',
-    )
+    const out = read('{"type":"result","status":"error","error":{"type":"Error","message":"401 Unauthorized"}}')
     expect(out).toMatchObject({ ended: 'error', trouble: '401 Unauthorized', signedOut: true })
     const quota = read(
       '{"type":"result","status":"error","error":{"type":"Error","message":"RESOURCE_EXHAUSTED: Quota exceeded"}}',

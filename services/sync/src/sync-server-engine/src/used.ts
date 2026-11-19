@@ -1,12 +1,4 @@
-import {
-  type Env,
-  FRONT_REV,
-  hooks,
-  now,
-  picturesOf,
-  picturesOfVersion,
-  versionKey,
-} from '../../sync-server/src/api'
+import { type Env, FRONT_REV, hooks, now, picturesOf, picturesOfVersion, versionKey } from '../../sync-server/src/api'
 import { noteKey } from './notes'
 import { readSpaceFiles } from './spaces/files'
 import { blobKey } from './sync2/files'
@@ -195,12 +187,7 @@ async function heldFiles(env: Env, userId: string, done: Reading): Promise<Set<s
   return found
 }
 
-async function versionShows(
-  env: Env,
-  userId: string,
-  hash: string,
-  done: Reading,
-): Promise<'used' | 'unknown' | null> {
+async function versionShows(env: Env, userId: string, hash: string, done: Reading): Promise<'used' | 'unknown' | null> {
   if (!(await versionsRead(env, userId, done))) return 'unknown'
 
   const found = await env.DB.prepare(
@@ -245,9 +232,10 @@ async function versionsRead(env: Env, userId: string, done: Reading): Promise<bo
         return []
       }
       return [
-        env.DB.prepare(
-          'update note_versions set pictures = ?1 where hash = ?2 and pictures is null',
-        ).bind(pictures, one.hash),
+        env.DB.prepare('update note_versions set pictures = ?1 where hash = ?2 and pictures is null').bind(
+          pictures,
+          one.hash,
+        ),
       ]
     })
     if (writes.length) await env.DB.batch(writes)
@@ -315,11 +303,7 @@ export async function unreadUses(
   return complete
 }
 
-async function picturesIn(
-  env: Env,
-  space: string,
-  notes: readonly { id: string }[],
-): Promise<Set<string>> {
+async function picturesIn(env: Env, space: string, notes: readonly { id: string }[]): Promise<Set<string>> {
   const found = new Set<string>()
 
   for (let from = 0; from < notes.length; from += 25) {
@@ -369,9 +353,7 @@ export async function letGo(
     env.DB.prepare('delete from blobs where hash = ? and user_id = ?').bind(hash, userId),
   ])
 
-  const others = await env.DB.prepare('select 1 from blobs where hash = ? limit 1')
-    .bind(hash)
-    .first()
+  const others = await env.DB.prepare('select 1 from blobs where hash = ? limit 1').bind(hash).first()
   if (!others) await env.NOTES.delete(blobKey(hash))
   return true
 }

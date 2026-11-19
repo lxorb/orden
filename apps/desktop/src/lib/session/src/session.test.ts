@@ -95,10 +95,8 @@ describe('reading a session that was written down', () => {
 })
 
 describe('reading one tab', () => {
-  const plain = (extra: Record<string, unknown> = {}) =>
-    readDraft({ path: null, name: 'a', doc: '', ...extra })
-  const web = (extra: Record<string, unknown>) =>
-    readDraft({ kind: 'web', path: null, name: 'a', doc: '', ...extra })
+  const plain = (extra: Record<string, unknown> = {}) => readDraft({ path: null, name: 'a', doc: '', ...extra })
+  const web = (extra: Record<string, unknown>) => readDraft({ kind: 'web', path: null, name: 'a', doc: '', ...extra })
 
   test('needs a name and some text to be a tab at all', () => {
     expect(plain()).toMatchObject({ name: 'a', cursor: 0, scroll: 0 })
@@ -131,8 +129,7 @@ describe('reading one tab', () => {
     expect(web({ path: '/s/a.url', [field]: value })).not.toHaveProperty(field)
   })
 
-  const kindOf = (path: string, kind: unknown) =>
-    readDraft({ kind, path, name: path.slice(7), doc: '' })?.kind
+  const kindOf = (path: string, kind: unknown) => readDraft({ kind, path, name: path.slice(7), doc: '' })?.kind
 
   test.each([
     ['/Notes/Board.canvas', [undefined, 'note', 'pdf', 'graph', 'nonsense', 7], 'canvas'],
@@ -249,10 +246,7 @@ describe('reading an arrangement of panes', () => {
     const value = {
       focused: 'p2',
       panel: 'tree',
-      frame: split([
-        onePane([draft('/Notes/a.md', '')]),
-        onePane([draft('/Notes/b.md', '')], 'p2', { linked: true }),
-      ]),
+      frame: split([onePane([draft('/Notes/a.md', '')]), onePane([draft('/Notes/b.md', '')], 'p2', { linked: true })]),
     }
 
     expect(readLayout(value)).toMatchObject({
@@ -330,10 +324,7 @@ describe('an arrangement kept under a name', () => {
   test('says which tabs were views of one note', () => {
     const shared = panesRead({
       focused: 'p1',
-      frame: split([
-        onePane([draft('/Notes/a.md', '', 'd1')]),
-        onePane([draft('/Notes/a.md', '', 'd1')], 'p2'),
-      ]),
+      frame: split([onePane([draft('/Notes/a.md', '', 'd1')]), onePane([draft('/Notes/a.md', '', 'd1')], 'p2')]),
     })
 
     expect(shared.map((one) => one.tabs[0]?.share)).toEqual(['d1', 'd1'])
@@ -406,9 +397,7 @@ describe('writing the session down', () => {
     const saved = tightStorage((value) => value.includes('THE VERSION'))
     const typed = { ...draft('/s/a.md', 'UNWRITTEN'), base: 'THE VERSION' }
 
-    expect(writeSession('k', { ...session(), layout: { ...both, frame: onePane([typed]) } })).toBe(
-      true,
-    )
+    expect(writeSession('k', { ...session(), layout: { ...both, frame: onePane([typed]) } })).toBe(true)
     expect(JSON.stringify(saved())).toContain('UNWRITTEN')
   })
 })
@@ -416,9 +405,7 @@ describe('writing the session down', () => {
 describe('a pane that stacks its notes', () => {
   test('says so when it is read back, and one that never said does not', () => {
     const tabs = [draft('/Notes/a.md', '')]
-    expect(panesRead({ ...both, frame: onePane(tabs, 'p1', { stacked: true }) })[0]?.stacked).toBe(
-      true,
-    )
+    expect(panesRead({ ...both, frame: onePane(tabs, 'p1', { stacked: true }) })[0]?.stacked).toBe(true)
     expect(panesRead({ ...both, frame: onePane(tabs) })[0]?.stacked).toBe(false)
   })
 

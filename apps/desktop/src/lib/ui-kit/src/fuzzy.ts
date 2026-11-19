@@ -45,11 +45,7 @@ function foldedAny(folded: string, texts: readonly string[]): number | null {
   return best
 }
 
-export function rank<T>(
-  query: string,
-  items: readonly T[],
-  label: (item: T) => string | readonly string[],
-): T[] {
+export function rank<T>(query: string, items: readonly T[], label: (item: T) => string | readonly string[]): T[] {
   const folded = foldName(query)
   const score = (said: string | readonly string[]) => {
     if (typeof said === 'string') return query ? foldedFuzzy(folded, said) : 0
@@ -63,11 +59,7 @@ export function rank<T>(
     .map((entry) => entry.item)
 }
 
-export function recentFirst<T>(
-  items: readonly T[],
-  recent: readonly string[],
-  keyOf: (item: T) => string,
-): T[] {
+export function recentFirst<T>(items: readonly T[], recent: readonly string[], keyOf: (item: T) => string): T[] {
   const place = new Map(recent.map((key, index) => [key, index]))
   const head: T[] = []
   const rest: T[] = []

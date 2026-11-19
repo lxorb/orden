@@ -1,8 +1,7 @@
 import { midnightOf } from '../../platform/src/api'
 import type { Visit } from '@orden/scan/visits'
 
-export type HistoryRow =
-  { kind: 'day'; key: string; day: number } | { kind: 'visit'; key: string; visit: Visit }
+export type HistoryRow = { kind: 'day'; key: string; day: number } | { kind: 'visit'; key: string; visit: Visit }
 
 const wordsOf = (typed: string) => typed.toLowerCase().split(/\s+/).filter(Boolean)
 
@@ -33,12 +32,7 @@ export function historyRows(list: readonly Visit[], typed: string): HistoryRow[]
   return rows
 }
 
-export function dayName(
-  day: number,
-  now: number,
-  locale: string,
-  words: { today: string; yesterday: string },
-): string {
+export function dayName(day: number, now: number, locale: string, words: { today: string; yesterday: string }): string {
   const today = midnightOf(now)
   if (day === today) return words.today
   if (day === midnightOf(today - 1)) return words.yesterday

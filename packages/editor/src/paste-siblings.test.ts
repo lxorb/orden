@@ -25,9 +25,7 @@ describe('lines copied from their words in Orden and pasted on a new empty line 
   })
 
   test('two tasks stay siblings', () => {
-    expect(pasted('- [ ] bread\n- [ ] ', 'milk\n- [ ] eggs')).toBe(
-      '- [ ] bread\n- [ ] milk\n- [ ] eggs',
-    )
+    expect(pasted('- [ ] bread\n- [ ] ', 'milk\n- [ ] eggs')).toBe('- [ ] bread\n- [ ] milk\n- [ ] eggs')
   })
 
   test('two quoted lines stay in the one quote', () => {

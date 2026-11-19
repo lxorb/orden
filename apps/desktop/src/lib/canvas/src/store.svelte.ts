@@ -1,14 +1,7 @@
 import { flushHeldEdits } from '@orden/contracts'
 import { type Camera, clampScale, CLOSEST, framingBox, turnOf } from '../../camera/src/api'
 import { owesWords } from '../../parting/src/api'
-import {
-  type Canvas,
-  canvasRuns,
-  emptyCanvas,
-  printStrokes,
-  readCanvas,
-  takeParsed,
-} from '@orden/markdown/canvas'
+import { type Canvas, canvasRuns, emptyCanvas, printStrokes, readCanvas, takeParsed } from '@orden/markdown/canvas'
 import { merged, stamped } from '@orden/markdown/canvas-merge'
 import { changesBetween, type Written, written } from './written'
 import { idSet, pickedBox, planeBox } from '../../plane/src/api'
@@ -76,8 +69,7 @@ export class CanvasStore implements PlaneSurface {
     this.note = tab.note
     this.read()
     const left = LEFT.get(tab)
-    this.history =
-      left?.note === this.note && left.revision === this.at ? left.history : new CanvasHistory()
+    this.history = left?.note === this.note && left.revision === this.at ? left.history : new CanvasHistory()
     this.stackChanged()
     this.restored = tab.camera === undefined ? viewOf(tab.path) : null
 
@@ -433,9 +425,7 @@ export class CanvasStore implements PlaneSurface {
 
   private endsOfEdges(ids: readonly string[]): string[] {
     const wanted = idSet(ids)
-    return this.canvas.edges
-      .filter((edge) => wanted.has(edge.id))
-      .flatMap((edge) => [edge.fromNode, edge.toNode])
+    return this.canvas.edges.filter((edge) => wanted.has(edge.id)).flatMap((edge) => [edge.fromNode, edge.toNode])
   }
 
   private framingTurned(

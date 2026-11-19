@@ -11,27 +11,19 @@ describe('ulid', () => {
 
   it('reads its time back, and is a ULID', () => {
     fc.assert(
-      fc.property(
-        fc.integer({ min: 0, max: 2 ** 48 - 1 }),
-        fc.double({ min: 0, max: 0.999 }),
-        (now, r) => {
-          const id = ulid(now, () => r)
-          expect(isUlid(id)).toBe(true)
-          expect(ulidTime(id)).toBe(now)
-        },
-      ),
+      fc.property(fc.integer({ min: 0, max: 2 ** 48 - 1 }), fc.double({ min: 0, max: 0.999 }), (now, r) => {
+        const id = ulid(now, () => r)
+        expect(isUlid(id)).toBe(true)
+        expect(ulidTime(id)).toBe(now)
+      }),
     )
   })
 
   it('sorts as the times it was made at', () => {
     fc.assert(
-      fc.property(
-        fc.integer({ min: 0, max: 2 ** 47 }),
-        fc.integer({ min: 1, max: 2 ** 40 }),
-        (a, gap) => {
-          expect(ulid(a, Math.random) < ulid(a + gap, Math.random)).toBe(true)
-        },
-      ),
+      fc.property(fc.integer({ min: 0, max: 2 ** 47 }), fc.integer({ min: 1, max: 2 ** 40 }), (a, gap) => {
+        expect(ulid(a, Math.random) < ulid(a + gap, Math.random)).toBe(true)
+      }),
     )
   })
 
@@ -46,15 +38,12 @@ describe('ulid', () => {
     expect(isUlid(ulid(5, () => -3))).toBe(true)
   })
 
-  it.each([
-    '',
-    '0000000000000000000000000',
-    '80000000000000000000000000',
-    '0000000000000000000000000I',
-    7,
-  ])('is not a ULID: %s', (value) => {
-    expect(isUlid(value)).toBe(false)
-  })
+  it.each(['', '0000000000000000000000000', '80000000000000000000000000', '0000000000000000000000000I', 7])(
+    'is not a ULID: %s',
+    (value) => {
+      expect(isUlid(value)).toBe(false)
+    },
+  )
 
   it('has no time for what is not a ULID', () => {
     expect(ulidTime('nope')).toBeNull()

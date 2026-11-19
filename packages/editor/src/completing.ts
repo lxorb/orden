@@ -1,9 +1,4 @@
-import {
-  autocompletion,
-  closeBrackets,
-  closeBracketsKeymap,
-  completionKeymap,
-} from '@codemirror/autocomplete'
+import { autocompletion, closeBrackets, closeBracketsKeymap, completionKeymap } from '@codemirror/autocomplete'
 import { EditorState, type Extension, Prec } from '@codemirror/state'
 import { keymap } from '@codemirror/view'
 import { emojiCompletions } from './emoji'
@@ -21,13 +16,7 @@ const popupKeys = completionKeymap.filter((binding) => binding.key !== 'Ctrl-Spa
 
 export const completing = once((pairs: boolean): Extension => [
   autocompletion({
-    override: [
-      slashCompletions,
-      emojiCompletions,
-      snippetCompletions,
-      wikilinkCompletions,
-      tagCompletions,
-    ],
+    override: [slashCompletions, emojiCompletions, snippetCompletions, wikilinkCompletions, tagCompletions],
     icons: false,
     defaultKeymap: false,
   }),

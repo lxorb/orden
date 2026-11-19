@@ -136,19 +136,11 @@ function whatWentIn(file: string | undefined): Plugin {
 }
 
 interface Resolver {
-  resolve(
-    source: string,
-    importer: string | undefined,
-    options: object,
-  ): Promise<{ id: string } | null>
+  resolve(source: string, importer: string | undefined, options: object): Promise<{ id: string } | null>
 }
 
 export default defineConfig({
-  plugins: [
-    svelte(),
-    withoutWhatTheGlassesCannotUse(),
-    whatWentIn(process.env.ORDEN_EVEN_CONTENTS),
-  ],
+  plugins: [svelte(), withoutWhatTheGlassesCannotUse(), whatWentIn(process.env.ORDEN_EVEN_CONTENTS)],
   define: {
     __EVEN_BUILD__: JSON.stringify(`${manifest.version} even`),
     __EVEN_PLUGIN__: 'true',

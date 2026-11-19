@@ -82,12 +82,7 @@ describe('a task cell, when edited', () => {
   })
 
   test('writes the duration typed', () => {
-    const { after } = taskEdited(
-      '- [ ] buy milk [duration:: 30m]',
-      'task.duration',
-      'duration',
-      '1h',
-    )
+    const { after } = taskEdited('- [ ] buy milk [duration:: 30m]', 'task.duration', 'duration', '1h')
     expect(after).toBe('- [ ] buy milk [duration:: 1h]\n')
   })
 
@@ -102,12 +97,7 @@ describe('a task cell, when edited', () => {
   })
 
   test.each(['Done', 'done', 'x'])('ticks the task the way its checkbox does for %s', (words) => {
-    const { after, ticked } = taskEdited(
-      '- [ ] buy milk 📅 2026-11-20',
-      'task.status',
-      'status',
-      words,
-    )
+    const { after, ticked } = taskEdited('- [ ] buy milk 📅 2026-11-20', 'task.status', 'status', words)
     expect(ticked).toMatch(/^- \[x\] buy milk/)
     expect(after).toBe(ticked)
   })
@@ -179,14 +169,9 @@ describe('a select cell, when an option is picked', () => {
   const numbered = `${TABLE}orden:\n  properties:\n    priority:\n      options: [1, 2, 3]\n`
 
   test('writes a number where the property holds numbers', () => {
-    const { target, writes } = shown(
-      rowOf('d.md', '---\npriority: 1\n---\n'),
-      'note.priority',
-      'select',
-      {
-        base: numbered,
-      },
-    )
+    const { target, writes } = shown(rowOf('d.md', '---\npriority: 1\n---\n'), 'note.priority', 'select', {
+      base: numbered,
+    })
     typed(target, '3')
     expect(writes).toEqual([{ note: { priority: 3 } }])
   })
@@ -200,27 +185,17 @@ describe('a select cell, when an option is picked', () => {
   })
 
   test('keeps words that only look like numbers as words', () => {
-    const { target, writes } = shown(
-      rowOf('e.md', "---\nzip: '007'\n---\n"),
-      'note.zip',
-      'select',
-      {
-        base: `${TABLE}orden:\n  properties:\n    zip:\n      options: ['007', '008']\n`,
-      },
-    )
+    const { target, writes } = shown(rowOf('e.md', "---\nzip: '007'\n---\n"), 'note.zip', 'select', {
+      base: `${TABLE}orden:\n  properties:\n    zip:\n      options: ['007', '008']\n`,
+    })
     typed(target, '008')
     expect(writes).toEqual([{ note: { zip: '008' } }])
   })
 
   test('keeps words where the property holds words', () => {
-    const { target, writes } = shown(
-      rowOf('f.md', "---\nrank: '1'\n---\n"),
-      'note.rank',
-      'select',
-      {
-        base: `${TABLE}orden:\n  properties:\n    rank:\n      options: [1, 2]\n`,
-      },
-    )
+    const { target, writes } = shown(rowOf('f.md', "---\nrank: '1'\n---\n"), 'note.rank', 'select', {
+      base: `${TABLE}orden:\n  properties:\n    rank:\n      options: [1, 2]\n`,
+    })
     typed(target, '2')
     expect(writes).toEqual([{ note: { rank: '2' } }])
   })

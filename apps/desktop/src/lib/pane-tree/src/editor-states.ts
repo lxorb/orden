@@ -30,9 +30,7 @@ export class EditorStates {
     const arrivals = note.arrivals
     const kept = this.held.get(tab)
 
-    return (
-      kept !== undefined && kept === this.shown && kept.note === note && kept.arrivals === arrivals
-    )
+    return kept !== undefined && kept === this.shown && kept.note === note && kept.arrivals === arrivals
   }
 
   started(tab: NoteTab, view: StateView, place: StateEffect<unknown> | null) {
@@ -57,21 +55,14 @@ export class EditorStates {
     if (kept) kept.stamp = stamp
   }
 
-  show(
-    view: StateView,
-    tab: NoteTab,
-    build: () => HeldState,
-    effects: readonly StateEffect<unknown>[] = [],
-  ): boolean {
+  show(view: StateView, tab: NoteTab, build: () => HeldState, effects: readonly StateEffect<unknown>[] = []): boolean {
     const on = noteOf(tab)
     const had = this.held.get(tab)
     const moved = had && (had.note !== on.note || had.arrivals !== on.arrivals)
     const stale = moved ? had : undefined
     const known = stale ? undefined : had
 
-    const next =
-      known ??
-      ({ note: on.note, arrivals: on.arrivals, state: build(), stamp: undefined } satisfies Kept)
+    const next = known ?? ({ note: on.note, arrivals: on.arrivals, state: build(), stamp: undefined } satisfies Kept)
     if (!known) this.held.set(tab, next)
 
     if (this.shown === next) {

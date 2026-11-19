@@ -3,14 +3,7 @@ import { EditorView, ViewPlugin } from '@codemirror/view'
 import { backtracksWildly } from '@orden/markdown/pattern-cost'
 import { CodeMirror, getCM, Vim, vim } from '@replit/codemirror-vim'
 import { tickTaskAtCaret } from './commands'
-import {
-  cycleAllFolds,
-  foldAtCaret,
-  foldHeadings,
-  toggleFold,
-  unfoldAtCaret,
-  unfoldEverything,
-} from './fold'
+import { cycleAllFolds, foldAtCaret, foldHeadings, toggleFold, unfoldAtCaret, unfoldEverything } from './fold'
 import { once } from './once'
 import { redoEdit, undoEdit } from './shared'
 import { modeOf, vimCommands, vimReport } from './vim'
@@ -33,16 +26,7 @@ const HOLDING_PLACE = { keys: '<OrdenTaken>', type: 'idle' } as const
 const CTRL_LETTERS = 'abcdefghijklmnoprstuvwxyz'
 const CTRL_OTHERS = ['<C-[>', '<C-Space>', '<C-BS>', '<C-Esc>', '<C-r><register>']
 
-const CARET_KEYS = [
-  '<Left>',
-  '<Right>',
-  '<Up>',
-  '<Down>',
-  '<Home>',
-  '<End>',
-  '<PageUp>',
-  '<PageDown>',
-]
+const CARET_KEYS = ['<Left>', '<Right>', '<Up>', '<Down>', '<Home>', '<End>', '<PageUp>', '<PageDown>']
 
 export function takeBackOrdenKeys(): string[] {
   const taken: string[] = []
@@ -132,9 +116,7 @@ function idleNormal(event: Keyed, mode: Moded | null | undefined): boolean {
   if (!mode || mode.insertMode || mode.visualMode) return false
 
   const input = mode.inputState
-  return (
-    !input.prefixRepeat.length && !input.operator && !input.keyBuffer.length && !input.registerName
-  )
+  return !input.prefixRepeat.length && !input.operator && !input.keyBuffer.length && !input.registerName
 }
 
 export const plainNormalEnter = (event: Keyed, mode: Moded | null | undefined): boolean =>
@@ -199,12 +181,6 @@ const vimTheme = EditorView.theme({
 
 export const modalEditing = once((on: boolean): Extension =>
   on
-    ? Prec.high([
-        vim(),
-        normalKeys,
-        modeReporter,
-        vimTheme,
-        EditorView.editorAttributes.of({ class: 'orden-vim' }),
-      ])
+    ? Prec.high([vim(), normalKeys, modeReporter, vimTheme, EditorView.editorAttributes.of({ class: 'orden-vim' })])
     : [],
 )

@@ -19,12 +19,8 @@
   {#if asking && extensions.asking}
     {@const link = extensions.asking.link}
     <div class="choices">
-      <button class="orden-chip" onclick={() => void extensions.install(link, true)}>
-        Install anyway
-      </button>
-      <button class="orden-chip is-quiet" onclick={() => (extensions.asking = null)}>
-        Cancel
-      </button>
+      <button class="orden-chip" onclick={() => void extensions.install(link, true)}> Install anyway </button>
+      <button class="orden-chip is-quiet" onclick={() => (extensions.asking = null)}> Cancel </button>
     </div>
   {/if}
 </div>

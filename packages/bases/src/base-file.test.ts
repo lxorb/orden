@@ -157,9 +157,7 @@ describe('writing a change', () => {
       const source = `formulas:\n  ${name}: 1 + 1\n  kept: file.name\nviews:\n  - type: table\n    name: A\n`
       const base = readBase(source)
       base.formulas = { kept: 'file.name' }
-      expect(writeBase(base, source)).toBe(
-        'formulas:\n  kept: file.name\nviews:\n  - type: table\n    name: A\n',
-      )
+      expect(writeBase(base, source)).toBe('formulas:\n  kept: file.name\nviews:\n  - type: table\n    name: A\n')
     }
   })
 
@@ -188,8 +186,7 @@ describe('writing a change', () => {
   })
 
   test("a view's filters and limit Orden cannot read stay as written when another key changes", () => {
-    const source =
-      'views:\n  - type: table\n    name: A\n    filters:\n      xor:\n        - a\n    limit: "10"\n'
+    const source = 'views:\n  - type: table\n    name: A\n    filters:\n      xor:\n        - a\n    limit: "10"\n'
     const base = readBase(source)
     const view = base.views[0]
     if (!view) throw new Error('no view')
@@ -266,9 +263,7 @@ describe('writing a change', () => {
     const first = base.views[0]
     if (!first) throw new Error('no view')
     first.name = 'Everything'
-    expect(writeBase(base, source)).toBe(
-      '# my bugs\nviews:\n  - type: table # the main one\n    name: Everything\n',
-    )
+    expect(writeBase(base, source)).toBe('# my bugs\nviews:\n  - type: table # the main one\n    name: Everything\n')
   })
 })
 

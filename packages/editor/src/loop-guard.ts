@@ -16,8 +16,7 @@ export function guarded(code: string): string | null {
       if (node.type.isError) found.broken = true
       if (!LOOPS.has(node.name)) return
 
-      const body =
-        node.name === 'DoStatement' ? node.node.firstChild?.nextSibling : node.node.lastChild
+      const body = node.name === 'DoStatement' ? node.node.firstChild?.nextSibling : node.node.lastChild
       if (!body) {
         found.broken = true
         return
@@ -35,8 +34,7 @@ export function guarded(code: string): string | null {
   if (!edits.length) return code
 
   let out = code
-  for (const edit of edits.sort((a, b) => b.at - a.at))
-    out = out.slice(0, edit.at) + edit.text + out.slice(edit.at)
+  for (const edit of edits.sort((a, b) => b.at - a.at)) out = out.slice(0, edit.at) + edit.text + out.slice(edit.at)
   return out
 }
 
@@ -171,8 +169,7 @@ const PATTERNS = `;(function () {
 
 const UNREAD = 'Orden could not read this script, so it does not run it'
 
-const WILD =
-  'Orden does not run a script with a pattern that could take forever to match: it could not stop it'
+const WILD = 'Orden does not run a script with a pattern that could take forever to match: it could not stop it'
 
 const MADE = new Set(['NewExpression', 'CallExpression'])
 
@@ -252,8 +249,7 @@ export function backtracks(code: string): boolean {
   return wild
 }
 
-const ELSEWHERE =
-  'Orden does not run a script from elsewhere in a block: it could not stop one that never ends'
+const ELSEWHERE = 'Orden does not run a script from elsewhere in a block: it could not stop one that never ends'
 
 const ADDRESSES = new Set(['href', 'src', 'action', 'formaction', 'xlink:href', 'data'])
 

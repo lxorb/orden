@@ -12,11 +12,7 @@ export interface Mailable {
   refusal: MailRefusal | null
 }
 
-export async function mayMail(
-  env: Env,
-  address: string,
-  machine: string | null,
-): Promise<Mailable> {
+export async function mayMail(env: Env, address: string, machine: string | null): Promise<Mailable> {
   const last = await env.DB.prepare('select sent_at from mailed where email = ?')
     .bind(address)
     .first<{ sent_at: number }>()
@@ -143,8 +139,7 @@ export function addressMessage(code: string) {
 
 export function addressMovedMessage(to: string, undo: string) {
   const said = `Your Orden account now signs in with ${to} instead of this address.`
-  const unasked =
-    'If you did not do this, put it back within 7 days. Every device will be signed out.'
+  const unasked = 'If you did not do this, put it back within 7 days. Every device will be signed out.'
 
   return {
     subject: 'Your Orden address was changed',
@@ -177,9 +172,7 @@ export function oneLine(value: string): string {
 }
 
 function letter(lines: readonly string[], action: { label: string; href: string }) {
-  const paragraphs = lines
-    .map((line) => `  <p style="margin:0 0 14px">${escape(line)}</p>`)
-    .join('\n')
+  const paragraphs = lines.map((line) => `  <p style="margin:0 0 14px">${escape(line)}</p>`).join('\n')
 
   return {
     text: [...lines, '', action.href].join('\n\n'),
@@ -216,9 +209,9 @@ export function inviteMessage(invite: {
 export function requestMessage(request: { space: string; who: string; link: string }) {
   return {
     subject: oneLine(`${request.who} would like to join ${request.space}`),
-    ...letter(
-      [`${request.who} followed your link to ${request.space} and is waiting to be let in.`],
-      { label: 'Open Orden', href: request.link },
-    ),
+    ...letter([`${request.who} followed your link to ${request.space} and is waiting to be let in.`], {
+      label: 'Open Orden',
+      href: request.link,
+    }),
   }
 }

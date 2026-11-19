@@ -52,9 +52,7 @@
     const picked = view.rows.filter((one) => view.picked.names.has(one.name))
     if (!picked.length) return all
     const size = readableSize(picked.reduce((sum, one) => sum + one.size, 0))
-    return picked.length === 1
-      ? `${all}, 1 selected (${size})`
-      : `${all}, ${picked.length} selected (${size})`
+    return picked.length === 1 ? `${all}, 1 selected (${size})` : `${all}, ${picked.length} selected (${size})`
   })
 
   function onkey(event: KeyboardEvent & { currentTarget: HTMLElement }) {
@@ -90,16 +88,13 @@
       run = () => {
         view.renamingMany = chosen
       }
-    } else if (pressed('tree.rename') && view.picked.cursor !== null)
-      run = () => (view.renaming = view.picked.cursor)
+    } else if (pressed('tree.rename') && view.picked.cursor !== null) run = () => (view.renaming = view.picked.cursor)
     else if (pressed('fixed.copy') && chosen.length) run = () => fileClipboard.hold(chosen, false)
     else if (pressed('fixed.cut') && chosen.length) run = () => fileClipboard.hold(chosen, true)
     else if (pressed('fixed.paste')) run = () => paste(view)
     else if (pressed('edit.undo')) run = () => workspace.undoFileAction()
-    else if (pressed('edit.redo') || pressed('edit.redo.alt'))
-      run = () => workspace.redoFileAction()
-    else if (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey))
-      run = () => list?.menuHere()
+    else if (pressed('edit.redo') || pressed('edit.redo.alt')) run = () => workspace.redoFileAction()
+    else if (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey)) run = () => list?.menuHere()
     if (!run) return
     event.preventDefault()
     void run()
@@ -152,9 +147,7 @@
         ></div>
       </div>
       <span class="far">{readableSize(job.bytes)} / {readableSize(job.total)}</span>
-      <button type="button" class="orden-button is-quiet" onclick={() => jobs.cancel(job.id)}
-        >Cancel</button
-      >
+      <button type="button" class="orden-button is-quiet" onclick={() => jobs.cancel(job.id)}>Cancel</button>
     </div>
   {/each}
   <div class="foot" role="status">

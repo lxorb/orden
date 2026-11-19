@@ -20,10 +20,9 @@
       <section id="streams">
         <h1>Streams</h1>
         <p>
-          A stream is a value that arrives over time. Rivulet gives every stream the same three
-          operations - <code>map</code>, <code>filter</code> and <code>take</code> - and each of
-          them returns another stream rather than doing any work, so nothing runs until something
-          reads.
+          A stream is a value that arrives over time. Rivulet gives every stream the same three operations -
+          <code>map</code>, <code>filter</code> and <code>take</code> - and each of them returns another stream rather
+          than doing any work, so nothing runs until something reads.
         </p>
 
         <h2>Making one</h2>
@@ -46,14 +45,12 @@ print(list(numbers))</pre>
 
         <h2>Reading one</h2>
         <p>
-          Reading is the only thing that does any work. A stream read twice is computed twice; keep
-          the list if you need it again. The shell shows what happens when the reader is slow:
+          Reading is the only thing that does any work. A stream read twice is computed twice; keep the list if you need
+          it again. The shell shows what happens when the reader is slow:
         </p>
         <pre class="lang-sh"><code>$ rivulet run --slow-reader example.ts
 waiting for the reader...</code></pre>
-        <p>
-          See <a href="sinks.html#backpressure">backpressure</a> for how a sink slows a stream down.
-        </p>
+        <p>See <a href="sinks.html#backpressure">backpressure</a> for how a sink slows a stream down.</p>
       </section>
     </div>
 

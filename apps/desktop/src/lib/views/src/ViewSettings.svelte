@@ -24,8 +24,7 @@
   const offered = $derived(
     LAYOUTS.filter(
       (one) =>
-        (one !== 'timeline' || (!kit.compact && viewport.device !== 'phone')) &&
-        (one !== 'form' || kinds === 'notes'),
+        (one !== 'timeline' || (!kit.compact && viewport.device !== 'phone')) && (one !== 'form' || kinds === 'notes'),
     ),
   )
   const board = $derived(layout === 'kanban')
@@ -37,10 +36,7 @@
         )
       : [],
   )
-  const listed = $derived([
-    ...live.columns,
-    ...properties.filter((one) => !live.columns.includes(one)),
-  ])
+  const listed = $derived([...live.columns, ...properties.filter((one) => !live.columns.includes(one))])
 
   const SIZES: Record<CardSize, string> = {
     small: 'Small',
@@ -126,31 +122,22 @@
   {#if board}
     {@render setting('Colour columns', view?.orden.colourColumns !== false, () =>
       kit.change((one, at) =>
-        setViewOrden(
-          one,
-          at,
-          'colourColumns',
-          view?.orden.colourColumns === false ? undefined : false,
-        ),
+        setViewOrden(one, at, 'colourColumns', view?.orden.colourColumns === false ? undefined : false),
       ),
     )}
     {@render setting('Hide empty groups', view?.orden.hideEmpty === true, () =>
-      kit.change((one, at) =>
-        setViewOrden(one, at, 'hideEmpty', view?.orden.hideEmpty ? undefined : true),
-      ),
+      kit.change((one, at) => setViewOrden(one, at, 'hideEmpty', view?.orden.hideEmpty ? undefined : true)),
     )}
     <p class="orden-section">Card size</p>
     <div class="orden-segmented" role="radiogroup" aria-label="Card size" use:segmented>
       {#each CARD_SIZES as size (size)}
-        {@const on =
-          sizeOf(view?.orden.cardSize, (view?.orden.rows ?? 'notes') === 'notes') === size}
+        {@const on = sizeOf(view?.orden.cardSize, (view?.orden.rows ?? 'notes') === 'notes') === size}
         <button
           type="button"
           role="radio"
           aria-checked={on}
           class:on
-          onclick={() => kit.change((one, at) => setViewOrden(one, at, 'cardSize', size))}
-          >{SIZES[size]}</button
+          onclick={() => kit.change((one, at) => setViewOrden(one, at, 'cardSize', size))}>{SIZES[size]}</button
         >
       {/each}
     </div>
@@ -166,9 +153,8 @@
           aria-checked={kinds === one.kind}
           class:on={kinds === one.kind}
           onclick={() =>
-            kit.change((base, at) =>
-              setViewOrden(base, at, 'rows', one.kind === 'notes' ? undefined : one.kind),
-            )}>{one.label}</button
+            kit.change((base, at) => setViewOrden(base, at, 'rows', one.kind === 'notes' ? undefined : one.kind))}
+          >{one.label}</button
         >
       {/each}
     </div>
@@ -179,21 +165,10 @@
     {#each listed as one (one)}
       {@const on = live.columns.includes(one)}
       <div class="property" data-shown={on ? one : undefined}>
-        <span
-          class="grip"
-          class:off={!on}
-          aria-hidden="true"
-          onpointerdown={(event) => on && carry(event, one)}>⠿</span
+        <span class="grip" class:off={!on} aria-hidden="true" onpointerdown={(event) => on && carry(event, one)}>⠿</span
         >
-        <div
-          class="orden-setting pressable"
-          role="switch"
-          tabindex="0"
-          {...toggle(on, () => shows(one, !on))}
-        >
-          <span class="name"
-            >{propertyName(one, live.base ? displayName(live.base, one) : undefined)}</span
-          >
+        <div class="orden-setting pressable" role="switch" tabindex="0" {...toggle(on, () => shows(one, !on))}>
+          <span class="name">{propertyName(one, live.base ? displayName(live.base, one) : undefined)}</span>
           <span class="orden-switch" class:on aria-hidden="true"></span>
         </div>
       </div>

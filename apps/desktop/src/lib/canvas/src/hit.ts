@@ -186,12 +186,7 @@ function nearCurve(curve: readonly Point[], point: Point, reach: number): boolea
     if (at.y > highest) highest = at.y
   }
 
-  return (
-    point.x >= least - reach &&
-    point.x <= most + reach &&
-    point.y >= lowest - reach &&
-    point.y <= highest + reach
-  )
+  return point.x >= least - reach && point.x <= most + reach && point.y >= lowest - reach && point.y <= highest + reach
 }
 
 function curvePoints(curve: readonly [Point, Point, Point, Point]): Point[] {
@@ -202,16 +197,8 @@ function curvePoints(curve: readonly [Point, Point, Point, Point]): Point[] {
     const t = step / SAMPLES
     const u = 1 - t
     out.push({
-      x:
-        u * u * u * first.x +
-        3 * u * u * t * second.x +
-        3 * u * t * t * third.x +
-        t * t * t * last.x,
-      y:
-        u * u * u * first.y +
-        3 * u * u * t * second.y +
-        3 * u * t * t * third.y +
-        t * t * t * last.y,
+      x: u * u * u * first.x + 3 * u * u * t * second.x + 3 * u * t * t * third.x + t * t * t * last.x,
+      y: u * u * u * first.y + 3 * u * u * t * second.y + 3 * u * t * t * third.y + t * t * t * last.y,
     })
   }
 

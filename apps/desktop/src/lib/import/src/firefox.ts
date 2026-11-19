@@ -121,14 +121,7 @@ export function readBookmarks(root: Said, made: Made, spacing: Spacing = (_, aro
 
 const DEEPEST = 64
 
-function walk(
-  folder: Said,
-  steps: readonly Step[],
-  made: Made,
-  spacing: Spacing,
-  space: string,
-  depth: number,
-) {
+function walk(folder: Said, steps: readonly Step[], made: Made, spacing: Spacing, space: string, depth: number) {
   if (depth > DEEPEST) return
   list(folder.children).forEach((node, at) => {
     const kind = kindOf(node)

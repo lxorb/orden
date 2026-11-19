@@ -45,18 +45,13 @@ interface Indexing {
 }
 
 interface Kit {
-  testDevice(making: {
-    fetch: (request: Request) => Promise<Response>
-    token: string
-    lazy?: boolean
-  }): Promise<Device>
+  testDevice(making: { fetch: (request: Request) => Promise<Response>; token: string; lazy?: boolean }): Promise<Device>
   firstPass(core: unknown, space: unknown, v1: null): Promise<boolean>
   Indexing: new (engine: unknown, reading: unknown, store: unknown) => Indexing
 }
 
 async function kit(): Promise<Kit> {
-  const at = (file: string) =>
-    new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
+  const at = (file: string) => new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
   const [device, migrate, indexing] = await Promise.all([
     import(/* @vite-ignore */ at('test/test-device.ts')),
     import(/* @vite-ignore */ at('src/migrate.ts')),
@@ -105,8 +100,7 @@ const PLANS = '# Plans\n\nThe garden in spring, see [[Ideas]] #work\n\n- [ ] Dig
 const IDEAS = '# Ideas\n\nNothing yet.\n'
 
 async function browser(
-  through: (request: Request, answer: () => Promise<Response>) => Promise<Response> = (_r, a) =>
-    a(),
+  through: (request: Request, answer: () => Promise<Response>) => Promise<Response> = (_r, a) => a(),
 ) {
   const engine = await kit()
   const device = await engine.testDevice({

@@ -1,12 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  AGAIN_AFTER,
-  Picture,
-  type PeerWorld,
-  QUIET_CHECK,
-  QUIET_FOR,
-  SHOWN_WITHIN,
-} from './picture.svelte'
+import { AGAIN_AFTER, Picture, type PeerWorld, QUIET_CHECK, QUIET_FOR, SHOWN_WITHIN } from './picture.svelte'
 
 const tick = () => new Promise((settle) => setTimeout(settle, 0))
 
@@ -317,10 +310,7 @@ describe('an application’s picture', () => {
     here.picture.share(true)
     here.picture.paste('mine')
     channel?.onmessage?.({ data: '{"t":"clipboard","text":"from it"}' })
-    expect(channel?.sent.slice(1)).toEqual([
-      '{"t":"share","clipboard":true}',
-      '{"t":"clipboard","text":"mine"}',
-    ])
+    expect(channel?.sent.slice(1)).toEqual(['{"t":"share","clipboard":true}', '{"t":"clipboard","text":"mine"}'])
     expect(here.copied).toEqual(['from it'])
 
     here.picture.want(false)

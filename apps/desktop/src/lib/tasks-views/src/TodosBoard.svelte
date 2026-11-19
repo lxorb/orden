@@ -1,12 +1,5 @@
 <script lang="ts">
-  import {
-    placedBetween,
-    SORTS,
-    startTodos,
-    todos,
-    type Todo,
-    type TodoPatch,
-  } from '../../tasks-model/src/api'
+  import { placedBetween, SORTS, startTodos, todos, type Todo, type TodoPatch } from '../../tasks-model/src/api'
   import { addTodo, patchTodo, removeTodo } from './acts'
   import { dropAt } from './drop-at'
   import Filters from './Filters.svelte'

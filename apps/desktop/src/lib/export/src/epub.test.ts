@@ -136,8 +136,7 @@ const halved = await openBook(await toEpub({ ...BASE, splitAt: 2 }))
 const bookOf = async (changed: Partial<EpubOptions>): Promise<Book> =>
   openBook(await toEpub({ ...BASE, pictures: [], ...changed }))
 
-const bookText = async (one: Book, path: string): Promise<string> =>
-  new TextDecoder().decode(await one.bytesOf(path))
+const bookText = async (one: Book, path: string): Promise<string> => new TextDecoder().decode(await one.bytesOf(path))
 
 describe('the package', () => {
   test('opens with an uncompressed mimetype', () => {
@@ -232,9 +231,7 @@ describe('the two tables of contents', () => {
 
 describe('what a reader that checks the book insists on', () => {
   test('a column’s alignment is a style, since XHTML5 dropped the attribute', () => {
-    const aligned = toXhtml(
-      '<table><tr><th align="center">A</th><td align="right">1</td></tr></table>',
-    )
+    const aligned = toXhtml('<table><tr><th align="center">A</th><td align="right">1</td></tr></table>')
 
     expect(aligned).toContain('<th style="text-align: center">')
     expect(aligned).toContain('<td style="text-align: right">')
@@ -262,27 +259,23 @@ describe('what a reader that checks the book insists on', () => {
   })
 
   test('a paragraph outside one is still a paragraph', () => {
-    expect(toXhtml('<svg><foreignObject><p>A</p></foreignObject></svg><p>B</p>')).toContain(
-      '</svg><p>B</p>',
-    )
+    expect(toXhtml('<svg><foreignObject><p>A</p></foreignObject></svg><p>B</p>')).toContain('</svg><p>B</p>')
   })
 
   test('a drawing the page wrote with no namespace is still a drawing', () => {
     expect(toXhtml('<svg viewBox="0 0 2 2"><path d="M0 0" /></svg>')).toContain(
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2">',
     )
-    expect(toXhtml('<math><mi>x</mi></math>')).toContain(
-      '<math xmlns="http://www.w3.org/1998/Math/MathML">',
-    )
+    expect(toXhtml('<math><mi>x</mi></math>')).toContain('<math xmlns="http://www.w3.org/1998/Math/MathML">')
     expect(toXhtml('<svg xmlns="http://www.w3.org/2000/svg"></svg>')).toBe(
       '<svg xmlns="http://www.w3.org/2000/svg"></svg>',
     )
   })
 
   test('what a foreignObject holds is XHTML again, not more of the drawing', () => {
-    expect(
-      toXhtml('<svg><foreignObject><div><span>A</span></div></foreignObject></svg>'),
-    ).toContain('<foreignObject><div xmlns="http://www.w3.org/1999/xhtml"><span>A</span></div>')
+    expect(toXhtml('<svg><foreignObject><div><span>A</span></div></foreignObject></svg>')).toContain(
+      '<foreignObject><div xmlns="http://www.w3.org/1999/xhtml"><span>A</span></div>',
+    )
   })
 
   test('a part that draws an SVG says so in the manifest', async () => {
@@ -348,16 +341,12 @@ describe('the parts', () => {
 
   test('each stand alone as an XHTML document', () => {
     for (const section of book.sections) {
-      expect(section.startsWith('<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>')).toBe(
-        true,
-      )
+      expect(section.startsWith('<?xml version="1.0" encoding="utf-8"?>\n<!DOCTYPE html>')).toBe(true)
       expect(section).toContain('<html xmlns="http://www.w3.org/1999/xhtml"')
       expect(section).toContain('xmlns:epub="http://www.idpf.org/2007/ops"')
       expect(section).toContain('xml:lang="de"')
       expect(section).toContain('lang="de"')
-      expect(section).toContain(
-        '<link rel="stylesheet" type="text/css" href="../styles/document.css" />',
-      )
+      expect(section).toContain('<link rel="stylesheet" type="text/css" href="../styles/document.css" />')
       expect(section).toContain('<title>')
     }
   })
@@ -474,9 +463,7 @@ describe('the transformer', () => {
   })
 
   test('gives a bare attribute the value HTML let it leave out', () => {
-    expect(toXhtml('<input checked type="checkbox">')).toBe(
-      '<input checked="checked" type="checkbox" />',
-    )
+    expect(toXhtml('<input checked type="checkbox">')).toBe('<input checked="checked" type="checkbox" />')
     expect(toXhtml('<button disabled>x</button>')).toBe('<button disabled="disabled">x</button>')
   })
 
@@ -532,9 +519,7 @@ describe('characters XML cannot carry', () => {
     const one = await bookOf({
       title: 'T\u0001itle',
       author: 'A\ufffeuthor',
-      body: renderMarkdown(
-        '# He\u000bad\n\nword\u0001 <!-- no\u0001te --> <span da\u0001ta="v\u0001">x</span>\n',
-      ),
+      body: renderMarkdown('# He\u000bad\n\nword\u0001 <!-- no\u0001te --> <span da\u0001ta="v\u0001">x</span>\n'),
     })
     const parts = one.names.filter((name) => /\.(xhtml|opf|ncx|xml)$/.test(name))
     expect(parts.length).toBeGreaterThan(3)

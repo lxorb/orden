@@ -31,9 +31,7 @@ function bytes(text: string): Uint8Array {
 }
 
 async function under(secret: string, userId: string, salt: string): Promise<CryptoKey> {
-  const material = await crypto.subtle.importKey('raw', encoder.encode(secret), 'HKDF', false, [
-    'deriveKey',
-  ])
+  const material = await crypto.subtle.importKey('raw', encoder.encode(secret), 'HKDF', false, ['deriveKey'])
 
   return crypto.subtle.deriveKey(
     {
@@ -49,12 +47,7 @@ async function under(secret: string, userId: string, salt: string): Promise<Cryp
   )
 }
 
-export async function sealed(
-  secret: string,
-  userId: string,
-  key: string,
-  salt: string = SALT,
-): Promise<string> {
+export async function sealed(secret: string, userId: string, key: string, salt: string = SALT): Promise<string> {
   const nonce = crypto.getRandomValues(new Uint8Array(12))
   const sealedBytes = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv: nonce, additionalData: encoder.encode(userId) },
@@ -127,9 +120,7 @@ export async function setKey(env: Env, userId: string, given: string): Promise<K
 }
 
 export async function forgetKey(env: Env, userId: string): Promise<KeyState> {
-  await env.DB.prepare('update users set openai_key = null, openai_key_tail = null where id = ?')
-    .bind(userId)
-    .run()
+  await env.DB.prepare('update users set openai_key = null, openai_key_tail = null where id = ?').bind(userId).run()
 
   return { set: false, tail: '' }
 }

@@ -49,11 +49,7 @@ function key({ key, target = note, altGraph = false, ...held }: Key): KeyboardEv
   return event as unknown as KeyboardEvent
 }
 
-function pointer(
-  type: string,
-  fields: Partial<PointerEvent> = {},
-  over: FakeElement = under,
-): PointerEvent {
+function pointer(type: string, fields: Partial<PointerEvent> = {}, over: FakeElement = under): PointerEvent {
   return {
     type,
     pointerType: 'mouse',

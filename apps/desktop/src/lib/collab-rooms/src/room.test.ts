@@ -379,9 +379,7 @@ describe('who the others see in the room', () => {
     room.rename('Ada', { id: 'u1', face })
     for (const message of socket.take()) server.answer(message)
 
-    expect(server.whoIsHere()).toEqual([
-      { name: 'Mac', accent: 'blue', person: 'Ada', id: 'u1', face },
-    ])
+    expect(server.whoIsHere()).toEqual([{ name: 'Mac', accent: 'blue', person: 'Ada', id: 'u1', face }])
 
     room.leave()
   })

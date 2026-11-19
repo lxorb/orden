@@ -5,10 +5,7 @@ const note = (path: string, text: string) => ({ path, text })
 
 describe('what Convert syntax would rewrite', () => {
   test('a note per note that needs one, and none for the rest', () => {
-    const said = syntaxChanges(
-      [note('One.md', '#two words# here'), note('Two.md', 'nothing to do here')],
-      [],
-    )
+    const said = syntaxChanges([note('One.md', '#two words# here'), note('Two.md', 'nothing to do here')], [])
 
     expect(said.changes.map((one) => one.path)).toEqual(['One.md'])
     expect(said.changes[0]?.after).toBe('#two-words here')
@@ -23,30 +20,21 @@ describe('what Convert syntax would rewrite', () => {
   })
 
   test('counts every rewrite rather than every note, which is what the sheet says', () => {
-    const said = syntaxChanges(
-      [note('One.md', '#two words# and #three more words#'), note('Two.md', '#one more#')],
-      [],
-    )
+    const said = syntaxChanges([note('One.md', '#two words# and #three more words#'), note('Two.md', '#one more#')], [])
 
     expect(said.changes).toHaveLength(2)
     expect(said.rewrites).toBe(3)
   })
 
   test('an id link needs the space’s names, and finds the note they hold', () => {
-    const said = syntaxChanges(
-      [note('One.md', 'see [[202201011200]]')],
-      ['202201011200 The plan.md'],
-    )
+    const said = syntaxChanges([note('One.md', 'see [[202201011200]]')], ['202201011200 The plan.md'])
 
     expect(said.changes[0]?.after).toBe('see [[202201011200 The plan]]')
     expect(said.rewrites).toBe(1)
   })
 
   test('and Roam’s own markup is rewritten in a note that arrived some other way', () => {
-    const said = syntaxChanges(
-      [note('One.md', '{{[[TODO]]}} Buy ^^milk^^\n\nAs ((abc123)) said.\n')],
-      [],
-    )
+    const said = syntaxChanges([note('One.md', '{{[[TODO]]}} Buy ^^milk^^\n\nAs ((abc123)) said.\n')], [])
 
     expect(said.changes[0]?.after).toBe('- [ ] Buy ==milk==\n\nAs ((abc123)) said.\n')
     expect(said.rewrites).toBe(2)
@@ -80,10 +68,7 @@ test('Convert syntax beside a protected note neither rewrites nor counts what is
   const { protection, unlocks } = await import('../../protect/src/api')
   protection.set('/space', '/space/Diary.md', 'password')
   try {
-    const said = syntaxChanges(
-      [note('/space/Diary.md', '#two words#'), note('/space/Plans.md', '#one more#')],
-      [],
-    )
+    const said = syntaxChanges([note('/space/Diary.md', '#two words#'), note('/space/Plans.md', '#one more#')], [])
     expect(said.changes.map((one) => one.path)).toEqual(['/space/Plans.md'])
     expect(said.rewrites).toBe(1)
   } finally {

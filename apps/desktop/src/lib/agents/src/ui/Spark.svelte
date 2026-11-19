@@ -1,11 +1,7 @@
 <script lang="ts">
   import { ASK_MARK } from '../../../ui-kit/src/api'
 
-  const {
-    colour,
-    turning = false,
-    paused = false,
-  }: { colour: string; turning?: boolean; paused?: boolean } = $props()
+  const { colour, turning = false, paused = false }: { colour: string; turning?: boolean; paused?: boolean } = $props()
 </script>
 
 <svg

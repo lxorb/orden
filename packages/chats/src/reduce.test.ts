@@ -28,11 +28,7 @@ function message(state: ChatState, id: string): Message {
   return found
 }
 
-const post = (
-  id: string,
-  body: string,
-  extra: Partial<Extract<Event, { kind: 'post' }>> = {},
-): Event => ({
+const post = (id: string, body: string, extra: Partial<Extract<Event, { kind: 'post' }>> = {}): Event => ({
   kind: 'post',
   id: `p-${id}`,
   message: id,
@@ -129,10 +125,7 @@ describe('replies', () => {
   })
 
   it('wait for a parent that has not arrived', () => {
-    const [parent, reply] = log(
-      [EMIL, post('m1', 'Draft')],
-      [LUCILE, post('m2', 'Reading', { parent: 'm1' })],
-    )
+    const [parent, reply] = log([EMIL, post('m1', 'Draft')], [LUCILE, post('m2', 'Reading', { parent: 'm1' })])
     if (!parent || !reply) throw new Error('no events')
     const state = chatState()
     expect(apply(state, reply).map((one) => one.id)).toEqual(['m2'])
@@ -161,10 +154,7 @@ describe('an edit', () => {
 
   it('by anybody else is no edit', () => {
     const state = stateOf(
-      log(
-        [EMIL, post('m1', 'one')],
-        [LUCILE, { kind: 'edit', id: 'e1', target: 'm1', body: 'mine now' }],
-      ),
+      log([EMIL, post('m1', 'one')], [LUCILE, { kind: 'edit', id: 'e1', target: 'm1', body: 'mine now' }]),
     )
     expect(message(state, 'm1')).toMatchObject({ body: 'one', history: [] })
     expect(message(state, 'm1').editedAt).toBeUndefined()
@@ -339,12 +329,9 @@ const aPost: fc.Arbitrary<[Who, Event]> = fc
     id,
     fc.string({ maxLength: 6 }),
     fc.option(id, { nil: undefined }),
-    fc.option(
-      fc.tuple(fc.boolean(), fc.option(fc.integer({ min: 0, max: 40_000 }), { nil: undefined })),
-      {
-        nil: undefined,
-      },
-    ),
+    fc.option(fc.tuple(fc.boolean(), fc.option(fc.integer({ min: 0, max: 40_000 }), { nil: undefined })), {
+      nil: undefined,
+    }),
   )
   .map(([who, message, body, parent, poll]) => {
     const event: Post = { kind: 'post', id: `p-${message}`, message, body }
@@ -383,10 +370,7 @@ const anEvent: fc.Arbitrary<[Who, Event]> = fc.oneof(
       body: fc.string({ maxLength: 6 }),
     }),
   ),
-  fc.tuple(
-    person,
-    fc.record({ kind: fc.constant('delete' as const), id: fc.constant('d'), target: id }),
-  ),
+  fc.tuple(person, fc.record({ kind: fc.constant('delete' as const), id: fc.constant('d'), target: id })),
   fc.tuple(
     person,
     fc.record({
@@ -449,10 +433,7 @@ describe('order', () => {
 describe('an emoji named after what every object holds', () => {
   it.each(['constructor', '__proto__', 'toString'])('%s is one more reaction', (emoji) => {
     const state = stateOf(
-      log(
-        [EMIL, post('m1', 'hi')],
-        [LUCILE, { kind: 'react', id: 'r1', target: 'm1', emoji, on: true }],
-      ),
+      log([EMIL, post('m1', 'hi')], [LUCILE, { kind: 'react', id: 'r1', target: 'm1', emoji, on: true }]),
     )
     const { reactions } = message(state, 'm1')
     expect(Object.keys(reactions)).toEqual([emoji])

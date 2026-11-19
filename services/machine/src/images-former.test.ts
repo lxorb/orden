@@ -22,12 +22,7 @@ test('a picture kept under the old folder stays where its path was said, until i
   utimesSync(stale, aDayAgo(), aDayAgo())
   writeFileSync(fresh, 'y')
 
-  const path = await new Images(home, null).part(
-    '0123456789abcdef0123',
-    'png',
-    new Uint8Array([1]),
-    true,
-  )
+  const path = await new Images(home, null).part('0123456789abcdef0123', 'png', new Uint8Array([1]), true)
 
   expect(path).toBe(join(home, '.cache', 'orden', 'images', '0123456789abcdef0123.png'))
   expect(existsSync(fresh)).toBe(true)

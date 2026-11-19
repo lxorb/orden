@@ -119,11 +119,7 @@ export async function publishStatus(args: Said): Promise<unknown> {
 
 export async function windowRect(): Promise<unknown> {
   const window = await currentWindow()
-  const [position, size, scale] = await Promise.all([
-    window.outerPosition(),
-    window.outerSize(),
-    window.scaleFactor(),
-  ])
+  const [position, size, scale] = await Promise.all([window.outerPosition(), window.outerSize(), window.scaleFactor()])
 
   return { x: position.x, y: position.y, width: size.width, height: size.height, scale }
 }

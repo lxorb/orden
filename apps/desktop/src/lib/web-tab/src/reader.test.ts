@@ -35,10 +35,7 @@ function pageOf(name: string, url: string): JSDOM {
 }
 
 function read(page: JSDOM, selection: boolean, longest = 4_000_000): Clipped {
-  const script = READER.replace('__SELECTION__', selection ? 'yes' : 'no').replace(
-    '__LONGEST__',
-    String(longest),
-  )
+  const script = READER.replace('__SELECTION__', selection ? 'yes' : 'no').replace('__LONGEST__', String(longest))
   return page.window.eval(script) as Clipped
 }
 
@@ -50,9 +47,7 @@ describe('a page written down and read back', () => {
 
       expect(answered.url).toBe(url)
       expect(answered.html.startsWith('<!DOCTYPE html>')).toBe(true)
-      expect(readSnapshot(answered.html, url)).toEqual(
-        extract(pageOf(name, url).window.document, 'page', url),
-      )
+      expect(readSnapshot(answered.html, url)).toEqual(extract(pageOf(name, url).window.document, 'page', url))
     })
   }
 

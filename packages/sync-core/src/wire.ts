@@ -3,16 +3,7 @@ import { isPosition } from './order'
 
 export type EntryKind = 'note' | 'canvas' | 'pages' | 'url' | 'term' | 'chat' | 'file' | 'folder'
 
-export const ENTRY_KINDS: readonly EntryKind[] = [
-  'note',
-  'canvas',
-  'pages',
-  'url',
-  'term',
-  'chat',
-  'file',
-  'folder',
-]
+export const ENTRY_KINDS: readonly EntryKind[] = ['note', 'canvas', 'pages', 'url', 'term', 'chat', 'file', 'folder']
 
 export interface FeedItem {
   id: string
@@ -188,8 +179,7 @@ export const ROOM_V2 = 'orden.v2'
 
 export const ROOM_V2_NAMES: readonly string[] = ['orden.v2', 'nib.v2']
 
-export type RoomNews =
-  { t: 'ack'; seq: number; sv: Uint8Array } | { t: 'epoch'; epoch: number; epochBase: string }
+export type RoomNews = { t: 'ack'; seq: number; sv: Uint8Array } | { t: 'epoch'; epoch: number; epochBase: string }
 
 export const NEW_EPOCH = 4001
 
@@ -378,23 +368,7 @@ export function opsResponseOf(value: unknown): OpsResponse | null {
 
 function feedItemOf(value: unknown): FeedItem | null {
   if (!isRecord(value)) return null
-  const {
-    id,
-    kind,
-    parent,
-    name,
-    deleted,
-    seq,
-    docSeq,
-    epoch,
-    epochBase,
-    hash,
-    size,
-    by,
-    at,
-    pos,
-    meta,
-  } = value
+  const { id, kind, parent, name, deleted, seq, docSeq, epoch, epochBase, hash, size, by, at, pos, meta } = value
   if (!isId(id) || !isKind(kind) || !isParent(parent) || !isName(name)) return null
   if (typeof deleted !== 'boolean' || !isCount(seq) || typeof hash !== 'string') return null
   if (!isCount(size) || typeof by !== 'string' || !isTime(at)) return null
@@ -439,9 +413,7 @@ export function heldName(name: string): string {
 }
 
 function withHeldName(value: unknown): unknown {
-  return isRecord(value) && typeof value.name === 'string'
-    ? { ...value, name: heldName(value.name) }
-    : value
+  return isRecord(value) && typeof value.name === 'string' ? { ...value, name: heldName(value.name) } : value
 }
 
 export function feedPageOf(value: unknown): FeedPage | null {
@@ -478,8 +450,7 @@ function docRefusalOf(value: unknown): DocRefusal | null {
 function pullAnswerOf(value: unknown): PullAnswer | null {
   if (!isRecord(value) || !isId(value.id)) return null
   const { id } = value
-  if (isBytes(value.update) && isCount(value.seq))
-    return { id, update: value.update, seq: value.seq }
+  if (isBytes(value.update) && isCount(value.seq)) return { id, update: value.update, seq: value.seq }
   if (isCount(value.epoch) && typeof value.epochBase === 'string') {
     return { id, epoch: value.epoch, epochBase: value.epochBase }
   }

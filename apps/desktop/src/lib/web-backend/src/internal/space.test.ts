@@ -11,18 +11,14 @@ const crate = vi.hoisted(() => ({ calls: [] as { command: string; args: unknown 
 
 vi.mock('./work', () => ({
   workingFolder: (path: string) =>
-    Promise.resolve(
-      path.includes('Plans') ? 'C:\\Users\\me\\Orden\\.orden\\.work\\Plans\\Work' : null,
-    ),
+    Promise.resolve(path.includes('Plans') ? 'C:\\Users\\me\\Orden\\.orden\\.work\\Plans\\Work' : null),
 }))
 
 vi.mock('../../../crate/src/native', () => ({
   invoke: (command: string, args: unknown) => {
     crate.calls.push({ command, args })
     if (command === 'list_trash')
-      return Promise.resolve([
-        { id: 'disk-1', kind: 'note', name: 'Old.md', from: '/d/Old.md', trashedAt: 1 },
-      ])
+      return Promise.resolve([{ id: 'disk-1', kind: 'note', name: 'Old.md', from: '/d/Old.md', trashedAt: 1 }])
     if (command === 'purge_trash_older_than') return Promise.resolve(2)
     return Promise.resolve(null)
   },
@@ -59,8 +55,7 @@ interface Entry {
   children: Entry[]
 }
 
-const names = (entry: Entry): unknown =>
-  entry.is_dir ? { [entry.name]: entry.children.map(names) } : entry.name
+const names = (entry: Entry): unknown => (entry.is_dir ? { [entry.name]: entry.children.map(names) } : entry.name)
 
 describe('a space Orden keeps, through the file commands', () => {
   test('lists what is written, folders and empty ones too, from its index', async () => {
@@ -125,9 +120,7 @@ describe('a space Orden keeps, through the file commands', () => {
     expect(item.from).toBe(`${WEB}/Work`)
     expect(await webInvoke('path_exists', { path: `${WEB}/Work` })).toBe(false)
     expect(bytes.texts.has(plan ?? '')).toBe(true)
-    expect((await webInvoke<{ id: string }[]>('list_trash')).map((one) => one.id)).toEqual([
-      item.id,
-    ])
+    expect((await webInvoke<{ id: string }[]>('list_trash')).map((one) => one.id)).toEqual([item.id])
 
     await webInvoke('create_folder', { path: `${WEB}/Work` })
     expect(await webInvoke('restore_trash', { id: item.id })).toBe(`${WEB}/Work 2`)
@@ -160,11 +153,7 @@ describe('a space Orden keeps, through the file commands', () => {
     expect((await folder.at('Copy/Empty'))?.key).toBeNull()
 
     await webInvoke('delete_folder', { path: `${WEB}/Work` })
-    expect((await folder.list()).map((one) => one.path)).toEqual([
-      'Copy',
-      'Copy/Empty',
-      'Copy/Plan.md',
-    ])
+    expect((await folder.list()).map((one) => one.path)).toEqual(['Copy', 'Copy/Empty', 'Copy/Plan.md'])
     expect([...bytes.texts.values()]).toEqual(['ship it'])
   })
 
@@ -186,11 +175,7 @@ describe('the call to the crate, on a desktop', () => {
     const { folder, root } = await mounted()
     const all = () => [{ root, web: WEB, folder }]
 
-    await internalInvoke(
-      'write_note',
-      { path: `${root}\\Work\\Plan.md`, content: 'ship it' },
-      all(),
-    )
+    await internalInvoke('write_note', { path: `${root}\\Work\\Plan.md`, content: 'ship it' }, all())
     const tree = await internalInvoke<Entry>('read_tree', { root }, all())
 
     expect(tree.name).toBe('Plans')
@@ -207,9 +192,7 @@ describe('the call to the crate, on a desktop', () => {
     expect(await internalInvoke('file_there', { path: `${root}\\Work\\Plan.md` }, all())).toBe(true)
     expect(await internalInvoke('file_there', { path: `${root}\\Work` }, all())).toBe(true)
     expect(await internalInvoke('file_there', { path: `${root}\\Gone.md` }, all())).toBe(false)
-    await expect(internalInvoke('read_tree', { root: `${root}\\Nope` }, all())).rejects.toThrow(
-      'not a folder',
-    )
+    await expect(internalInvoke('read_tree', { root: `${root}\\Nope` }, all())).rejects.toThrow('not a folder')
     expect(crate.calls).toEqual([])
   })
 
@@ -253,9 +236,7 @@ describe('the call to the crate, on a desktop', () => {
       },
     ])
 
-    expect(
-      await internalInvoke('same_pdf', { from: '/tmp/Paper.pdf', space: root }, all()),
-    ).toBeNull()
+    expect(await internalInvoke('same_pdf', { from: '/tmp/Paper.pdf', space: root }, all())).toBeNull()
     expect(crate.calls).toHaveLength(1)
   })
 })

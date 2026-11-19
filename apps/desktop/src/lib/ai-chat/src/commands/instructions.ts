@@ -11,10 +11,8 @@ export type Held = Thread & Kept
 
 export const STYLES: Readonly<Record<string, string>> = {
   default: '',
-  concise:
-    'Answer as briefly as the question allows: no preamble, no recap, no lists where a sentence will do.',
-  explanatory:
-    'Explain your reasoning as you go: why each step, what you considered and left out, in plain words.',
+  concise: 'Answer as briefly as the question allows: no preamble, no recap, no lists where a sentence will do.',
+  explanatory: 'Explain your reasoning as you go: why each step, what you considered and left out, in plain words.',
   teaching:
     'Teach rather than do: explain the idea, show one small step, and leave the next one for the reader to try.',
 }

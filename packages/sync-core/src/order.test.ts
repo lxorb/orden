@@ -57,10 +57,7 @@ describe('positions for an order', () => {
     const out = spread('V', 'W', 100)
     expect(out).toHaveLength(100)
     expect(
-      out.every(
-        (pos, at) =>
-          isPosition(pos) && pos > 'V' && pos < 'W' && (at === 0 || pos > (out[at - 1] ?? '')),
-      ),
+      out.every((pos, at) => isPosition(pos) && pos > 'V' && pos < 'W' && (at === 0 || pos > (out[at - 1] ?? ''))),
     ).toBe(true)
     expect(Math.max(...out.map((pos) => pos.length))).toBeLessThanOrEqual(4)
   })

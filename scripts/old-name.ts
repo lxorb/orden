@@ -49,19 +49,11 @@ function texts(): { path: string; text: string }[] {
 export function inText(path: string, text: string): Found[] {
   const out: Found[] = []
   for (const found of text.matchAll(WORD)) {
-    const owner = /ch[./]emilvinu[./]$/i.exec(
-      text.slice(Math.max(0, found.index - 12), found.index),
-    )
-    const from = owner
-      ? found.index - owner[0].length
-      : text[found.index - 1] === '@'
-        ? found.index - 1
-        : found.index
+    const owner = /ch[./]emilvinu[./]$/i.exec(text.slice(Math.max(0, found.index - 12), found.index))
+    const from = owner ? found.index - owner[0].length : text[found.index - 1] === '@' ? found.index - 1 : found.index
     const ahead = text.slice(from, from + 60)
     const inAddress = text[from] === '@' && /[/.]/.test(text[from - 1] ?? '')
-    const [kind] = inAddress
-      ? (['word'] as const)
-      : (KINDS.find(([, shape]) => shape.test(ahead)) ?? ['word'])
+    const [kind] = inAddress ? (['word'] as const) : (KINDS.find(([, shape]) => shape.test(ahead)) ?? ['word'])
     const line = text.slice(0, found.index).split('\n').length
     const name = /^[@\w./:-]+/.exec(ahead)?.[0] ?? 'nib'
     out.push({ path, line, kind, name })

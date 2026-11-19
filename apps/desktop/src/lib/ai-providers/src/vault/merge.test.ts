@@ -48,11 +48,7 @@ describe('two devices’ changes met', () => {
       seen: {},
     })
     const met = merged(null, here, side(start)).contents
-    expect(met.accounts.accounts.map((one) => one.id)).toEqual([
-      'anthropic',
-      'anthropic-2',
-      'openai',
-    ])
+    expect(met.accounts.accounts.map((one) => one.id)).toEqual(['anthropic', 'anthropic-2', 'openai'])
     expect(met.keys).toEqual({ anthropic: 'sk-1', openai: 'sk-here' })
   })
 
@@ -86,11 +82,7 @@ describe('two devices’ changes met', () => {
     const there = side({ ...start, keys: { ...start.keys, 'anthropic-2': 'sk-there' } })
     const one = added(NONE, 'anthropic').state
     const met = merged(baseOf({ ...start, accounts: one }, { ...start.keys }), here, there).contents
-    expect(met.accounts.accounts.map((each) => each.id)).toEqual([
-      'anthropic',
-      'anthropic-2',
-      'anthropic-3',
-    ])
+    expect(met.accounts.accounts.map((each) => each.id)).toEqual(['anthropic', 'anthropic-2', 'anthropic-3'])
     expect(met.keys).toEqual({
       anthropic: 'sk-1',
       'anthropic-2': 'sk-there',

@@ -2,13 +2,7 @@ import type { OpenHow } from '@orden/contracts'
 import { nameOf, samePath } from '../../platform/src/api'
 import { basesOn } from '../../gates/src/api'
 import { workspace } from '../../workspace/src/api'
-import {
-  builtinName,
-  readViewSpec,
-  sameView,
-  type ViewSpec,
-  writeViewSpec,
-} from '../../tab-kinds/src/api'
+import { builtinName, readViewSpec, sameView, type ViewSpec, writeViewSpec } from '../../tab-kinds/src/api'
 
 function openAlready(spec: ViewSpec, path: string | null) {
   const paneId = workspace.panes.focusedId
@@ -29,8 +23,7 @@ function openSpec(spec: ViewSpec, name: string, path: string | null = null, how:
   return workspace.openView(writeViewSpec(spec), name, path, how)
 }
 
-export const openTodos = (how: OpenHow = {}) =>
-  openSpec({ builtin: 'todos' }, builtinName('todos'), null, how)
+export const openTodos = (how: OpenHow = {}) => openSpec({ builtin: 'todos' }, builtinName('todos'), null, how)
 
 export function openBaseFile(path: string, how: OpenHow = {}, view?: string) {
   if (!basesOn()) return null

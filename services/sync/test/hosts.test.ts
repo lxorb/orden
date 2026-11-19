@@ -61,9 +61,7 @@ describe('the web app under the new name', () => {
     for (const host of ['nibeditor.com', 'orden.so']) {
       for (const origin of [OLD, NEW]) {
         const response = await call(env, '/v1/me', { host, headers: { origin } })
-        expect(response.headers.get('access-control-allow-origin'), `${origin} at ${host}`).toBe(
-          origin,
-        )
+        expect(response.headers.get('access-control-allow-origin'), `${origin} at ${host}`).toBe(origin)
       }
     }
   })

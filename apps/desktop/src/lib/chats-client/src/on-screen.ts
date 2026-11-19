@@ -13,7 +13,5 @@ export function onScreen(chat: string): () => void {
 }
 
 export function inFront(chat: string): boolean {
-  return (
-    (looking.get(chat) ?? 0) > 0 && document.visibilityState === 'visible' && document.hasFocus()
-  )
+  return (looking.get(chat) ?? 0) > 0 && document.visibilityState === 'visible' && document.hasFocus()
 }

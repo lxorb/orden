@@ -169,12 +169,7 @@ test('more spaces open further out, a bigger window nearer to what it holds', ()
   const few = overlooking(here, { x: 0, y: 0, w: 2600, h: 700 }, room, 1000)
   const many = overlooking(here, { x: -2400, y: -1400, w: 6000, h: 3500 }, room, 1000)
   expect(many.zoom).toBeLessThan(few.zoom)
-  const wide = overlooking(
-    here,
-    { x: 0, y: 0, w: 2600, h: 700 },
-    { ...room, w: 2400, h: 1400 },
-    1000,
-  )
+  const wide = overlooking(here, { x: 0, y: 0, w: 2600, h: 700 }, { ...room, w: 2400, h: 1400 }, 1000)
   expect(wide.zoom).toBeGreaterThan(few.zoom)
 })
 

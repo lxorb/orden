@@ -17,11 +17,9 @@ function sources(folder: string): string[] {
 
 const reachedApis = () =>
   sources(SRC).flatMap((file) =>
-    [
-      ...readFileSync(file, 'utf8').matchAll(
-        /(?:from |import\()'\.\.\/\.\.\/([a-z-]+)\/src\/api'/g,
-      ),
-    ].map((found) => found[1]),
+    [...readFileSync(file, 'utf8').matchAll(/(?:from |import\()'\.\.\/\.\.\/([a-z-]+)\/src\/api'/g)].map(
+      (found) => found[1],
+    ),
   )
 
 test('the module stands on its own reads the workspace, the search, the reading view, the bases and the canvas through no file of theirs', () => {
@@ -41,13 +39,7 @@ test('the module stands on its own reads the workspace, the search, the reading 
 
 describe('the link index', () => {
   test('reads words out of notes, canvases, pages and web shortcuts only', () => {
-    expect(['a.md', 'b.canvas', 'c.pages', 'd.url', 'e.png'].map(readsWords)).toEqual([
-      true,
-      true,
-      true,
-      true,
-      false,
-    ])
+    expect(['a.md', 'b.canvas', 'c.pages', 'd.url', 'e.png'].map(readsWords)).toEqual([true, true, true, true, false])
   })
 
   test('draws what a note shows through the services the app lends it', async () => {

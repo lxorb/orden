@@ -10,11 +10,7 @@ export interface When {
 
 const weekendOf = (today: string) => addDays(today, (6 - weekday(today) + 7) % 7)
 
-const askNative = (
-  type: 'date' | 'time',
-  value: string | undefined,
-  anchor: DOMRect,
-): Promise<string | null> =>
+const askNative = (type: 'date' | 'time', value: string | undefined, anchor: DOMRect): Promise<string | null> =>
   new Promise((resolve) => {
     const field = document.createElement('input')
     field.type = type
@@ -84,9 +80,7 @@ export function dayRows(
           },
         ]
       : []),
-    ...(current.due
-      ? [DIVIDER, { label: 'No date', run: () => set({ due: null, time: null }) }]
-      : []),
+    ...(current.due ? [DIVIDER, { label: 'No date', run: () => set({ due: null, time: null }) }] : []),
   ]
 }
 
@@ -108,11 +102,7 @@ export function remindRows(
     label: remindLabel(one, today),
     checked: has(one),
     run: () =>
-      set(
-        has(one)
-          ? current.filter((held) => JSON.stringify(held) !== JSON.stringify(one))
-          : [...current, one],
-      ),
+      set(has(one) ? current.filter((held) => JSON.stringify(held) !== JSON.stringify(one)) : [...current, one]),
   })
   const timed: Remind[] = when.time
     ? [{ before: 0 }, { before: 15 }, { before: 30 }, { before: 60 }]
@@ -125,10 +115,7 @@ export function remindRows(
   ]
 }
 
-export const durationRows = (
-  current: number | undefined,
-  set: (minutes: number | null) => void,
-): MenuEntry[] => [
+export const durationRows = (current: number | undefined, set: (minutes: number | null) => void): MenuEntry[] => [
   ...[15, 30, 45, 60, 90, 120].map((minutes) => ({
     label: durationLabel(minutes),
     checked: current === minutes,
@@ -146,7 +133,6 @@ export function tagRows(
   return all.map((tag) => ({
     label: `#${tag}`,
     checked: current.includes(tag),
-    run: () =>
-      set(current.includes(tag) ? current.filter((one) => one !== tag) : [...current, tag]),
+    run: () => set(current.includes(tag) ? current.filter((one) => one !== tag) : [...current, tag]),
   }))
 }

@@ -82,9 +82,7 @@ const REACHERS_FOR = 60_000
 
 function filesOfHeld(post: Post): string[] {
   return [
-    ...(post.files ?? []).flatMap((file) =>
-      file.preview ? [file.hash, file.preview] : [file.hash],
-    ),
+    ...(post.files ?? []).flatMap((file) => (file.preview ? [file.hash, file.preview] : [file.hash])),
     ...(post.preview?.picture ? [post.preview.picture] : []),
   ]
 }
@@ -279,11 +277,7 @@ export class ChatLog implements DurableObject {
       let after = since
       while (after < head) {
         const rows = this.sql
-          .exec<EventRow>(
-            'select * from events where seq > ? order by seq limit ?',
-            after,
-            MOST_PAGE,
-          )
+          .exec<EventRow>('select * from events where seq > ? order by seq limit ?', after, MOST_PAGE)
           .toArray()
         if (!rows.length) break
         say(socket, { t: 'events', events: rows.map(loggedOf) })
@@ -395,10 +389,7 @@ export class ChatLog implements DurableObject {
     called.delete(logged.author)
     for (const who of called) {
       sql.exec('insert or ignore into mentioned (who, seq) values (?, ?)', who, logged.seq)
-      sql.exec(
-        'insert into members (who, dirty) values (?, 1) on conflict(who) do update set dirty = 1',
-        who,
-      )
+      sql.exec('insert into members (who, dirty) values (?, 1) on conflict(who) do update set dirty = 1', who)
     }
     sql.exec(
       `insert into members (who, read_seq, dirty) values (?, ?, 1)
@@ -454,9 +445,7 @@ export class ChatLog implements DurableObject {
   }
 
   private heldAnswer(id: string): Answer | null {
-    const row = this.sql
-      .exec<{ send_at: number }>('select send_at from scheduled where id = ?', id)
-      .toArray()[0]
+    const row = this.sql.exec<{ send_at: number }>('select send_at from scheduled where id = ?', id).toArray()[0]
     return row ? { t: 'placed', id, seq: 0, at: row.send_at } : null
   }
 
@@ -478,11 +467,7 @@ export class ChatLog implements DurableObject {
         event.post.message,
         person.who,
       )
-      sql.exec(
-        'delete from scheduled where message = ? and author = ?',
-        event.post.message,
-        person.who,
-      )
+      sql.exec('delete from scheduled where message = ? and author = ?', event.post.message, person.who)
       sql.exec(
         `insert into scheduled (id, message, author, device, send_at, post)
          values (?, ?, ?, ?, ?, ?)`,
@@ -553,9 +538,8 @@ export class ChatLog implements DurableObject {
       } catch (error) {
         note(`chat ${chat} scheduled`, error, null)
         const tries =
-          (this.sql
-            .exec<{ tries: number }>('select tries from scheduled_tries where id = ?', one.id)
-            .toArray()[0]?.tries ?? 0) + 1
+          (this.sql.exec<{ tries: number }>('select tries from scheduled_tries where id = ?', one.id).toArray()[0]
+            ?.tries ?? 0) + 1
         this.sql.exec(
           `insert into scheduled_tries (id, tries, next_at) values (?, ?, ?)
            on conflict (id) do update set tries = excluded.tries, next_at = excluded.next_at`,
@@ -602,16 +586,12 @@ export class ChatLog implements DurableObject {
   }
 
   private head(): number {
-    return (
-      this.sql.exec<{ seq: number | null }>('select max(seq) as seq from events').one().seq ?? 0
-    )
+    return this.sql.exec<{ seq: number | null }>('select max(seq) as seq from events').one().seq ?? 0
   }
 
   private readPlace(who: Who): number {
     return (
-      this.sql
-        .exec<{ read_seq: number }>('select read_seq from members where who = ?', who)
-        .toArray()[0]?.read_seq ?? 0
+      this.sql.exec<{ read_seq: number }>('select read_seq from members where who = ?', who).toArray()[0]?.read_seq ?? 0
     )
   }
 
@@ -657,10 +637,7 @@ export class ChatLog implements DurableObject {
 
   private readPlaces(but: Who): { who: Who; seq: number }[] {
     return this.sql
-      .exec<{ who: string; read_seq: number }>(
-        'select who, read_seq from members where read_seq > 0 and who <> ?',
-        but,
-      )
+      .exec<{ who: string; read_seq: number }>('select who, read_seq from members where read_seq > 0 and who <> ?', but)
       .toArray()
       .map((one) => ({ who: one.who as Who, seq: one.read_seq }))
   }
@@ -675,9 +652,7 @@ export class ChatLog implements DurableObject {
         .toArray()
         .reverse()
     const newer = (from: number, many: number) =>
-      this.sql
-        .exec<EventRow>('select * from events where seq > ? order by seq limit ?', from, many)
-        .toArray()
+      this.sql.exec<EventRow>('select * from events where seq > ? order by seq limit ?', from, many).toArray()
 
     let rows: EventRow[]
     let more: boolean
@@ -699,9 +674,7 @@ export class ChatLog implements DurableObject {
 
   private messageById(id: string | null): Message | null {
     if (!id) return null
-    const row = this.sql
-      .exec<{ json: string }>('select json from messages where id = ?', id)
-      .toArray()[0]
+    const row = this.sql.exec<{ json: string }>('select json from messages where id = ?', id).toArray()[0]
     return row ? (JSON.parse(row.json) as Message) : null
   }
 
@@ -740,9 +713,7 @@ export class ChatLog implements DurableObject {
 
   candidates(asked: unknown): Message[] {
     const words = (
-      Array.isArray((asked as { words?: unknown } | null)?.words)
-        ? (asked as { words: unknown[] }).words
-        : []
+      Array.isArray((asked as { words?: unknown } | null)?.words) ? (asked as { words: unknown[] }).words : []
     )
       .filter((one): one is string => typeof one === 'string')
       .flatMap((one) => one.split(/[^\p{L}\p{N}]+/u))
@@ -783,30 +754,18 @@ export class ChatLog implements DurableObject {
     const sql = this.sql
     if (!chat) return
     const head = sql
-      .exec<{ seq: number; at: number; author: string }>(
-        'select seq, at, author from events order by seq desc limit 1',
-      )
+      .exec<{ seq: number; at: number; author: string }>('select seq, at, author from events order by seq desc limit 1')
       .toArray()[0]
     const meta = metaOf(sql)
     const dirty = sql
-      .exec<{ who: string; read_seq: number }>(
-        'select who, read_seq from members where dirty = 1 limit 200',
-      )
+      .exec<{ who: string; read_seq: number }>('select who, read_seq from members where dirty = 1 limit 200')
       .toArray()
 
     await this.env.DB.batch([
       this.env.DB.prepare(
         `update chats set last_seq = ?, last_at = ?, last_by = ?, topic = ?, posting = ?,
            slowmode = ? where id = ?`,
-      ).bind(
-        head?.seq ?? 0,
-        head?.at ?? null,
-        head?.author ?? null,
-        meta.topic,
-        meta.posting,
-        meta.slowmode,
-        chat,
-      ),
+      ).bind(head?.seq ?? 0, head?.at ?? null, head?.author ?? null, meta.topic, meta.posting, meta.slowmode, chat),
       ...dirty
         .filter((one) => !one.who.startsWith('program:'))
         .map((one) =>
@@ -831,9 +790,7 @@ export class ChatLog implements DurableObject {
     if (!chat || !effects.files.length) return
     const rows = effects.files.flatMap((file) => [
       { hash: file.hash, size: file.size, type: file.type, name: file.name },
-      ...(file.preview
-        ? [{ hash: file.preview, size: 0, type: 'image/webp', name: file.name }]
-        : []),
+      ...(file.preview ? [{ hash: file.preview, size: 0, type: 'image/webp', name: file.name }] : []),
     ])
     await this.env.DB.batch(
       rows.map((one) =>
@@ -848,19 +805,16 @@ export class ChatLog implements DurableObject {
   private async freeFiles(effects: Effects): Promise<void> {
     const chat = this.chatId()
     if (!chat || !effects.freed.length) return
-    const hashes = effects.freed.flatMap((file) =>
-      file.preview ? [file.hash, file.preview] : [file.hash],
-    )
+    const hashes = effects.freed.flatMap((file) => (file.preview ? [file.hash, file.preview] : [file.hash]))
     const loose = hashes.filter((hash) => !this.sql.exec(NAMES_FILE, hash).toArray().length)
     if (!loose.length) return
     const poster = effects.freedBy
     await this.env.DB.batch([
-      ...(poster && !poster.startsWith('guest:')
-        ? [noteUnusedBy(this.env, hubIdOf(poster), loose, Date.now())]
-        : []),
-      this.env.DB.prepare(
-        `delete from chat_files where chat_id = ? and hash in (${places(loose.length)})`,
-      ).bind(chat, ...loose),
+      ...(poster && !poster.startsWith('guest:') ? [noteUnusedBy(this.env, hubIdOf(poster), loose, Date.now())] : []),
+      this.env.DB.prepare(`delete from chat_files where chat_id = ? and hash in (${places(loose.length)})`).bind(
+        chat,
+        ...loose,
+      ),
     ])
   }
 
@@ -890,10 +844,7 @@ export class ChatLog implements DurableObject {
     for (const one of reachers) {
       if (open.has(one.id)) continue
       const row = sql
-        .exec<{ sent_at: number; mention: number }>(
-          'select sent_at, mention from pokes where id = ?',
-          one.id,
-        )
+        .exec<{ sent_at: number; mention: number }>('select sent_at, mention from pokes where id = ?', one.id)
         .toArray()[0]
       const mention = named.has(one.id) || row?.mention === 1 ? 1 : 0
       sql.exec(
@@ -925,11 +876,7 @@ export class ChatLog implements DurableObject {
           )
           .toArray()[0]
         if (row?.seq === null || row?.seq === undefined) return
-        sql.exec(
-          'update pokes set sent_at = ?, seq = null, at = null, by = null, mention = 0 where id = ?',
-          now,
-          id,
-        )
+        sql.exec('update pokes set sent_at = ?, seq = null, at = null, by = null, mention = 0 where id = ?', now, id)
         await askHub(this.env, id, 'chat', {
           'x-orden-chat': chat,
           'x-orden-seq': String(row.seq),
@@ -952,10 +899,7 @@ export class ChatLog implements DurableObject {
     }
     try {
       const owed = this.sql
-        .exec<{ id: string }>(
-          'select id from pokes where seq is not null and sent_at <= ?',
-          now - POKE_EVERY,
-        )
+        .exec<{ id: string }>('select id from pokes where seq is not null and sent_at <= ?', now - POKE_EVERY)
         .toArray()
       await this.sendPokes(
         owed.map((one) => one.id),
@@ -975,9 +919,7 @@ export class ChatLog implements DurableObject {
   private async plan(): Promise<void> {
     const sql = this.sql
     const flushAt = readMeta(sql, 'flush_at')
-    const poke = sql
-      .exec<{ at: number | null }>('select min(sent_at) as at from pokes where seq is not null')
-      .one().at
+    const poke = sql.exec<{ at: number | null }>('select min(sent_at) as at from pokes where seq is not null').one().at
     const scheduled = sql
       .exec<{ at: number | null }>(
         `select min(max(s.send_at, coalesce(t.next_at, 0))) as at from scheduled s
@@ -1037,9 +979,7 @@ export class ChatLog implements DurableObject {
   private async askAccess(sockets: WebSocket[], closed: Set<WebSocket>): Promise<void> {
     const chat = this.chatId()
     if (!chat) return
-    const logins = [
-      ...new Set(sockets.flatMap((one) => (closed.has(one) ? [] : (attachedTo(one)?.login ?? [])))),
-    ]
+    const logins = [...new Set(sockets.flatMap((one) => (closed.has(one) ? [] : (attachedTo(one)?.login ?? []))))]
     if (!logins.length) return
 
     const at = Date.now()
@@ -1158,9 +1098,7 @@ export class ChatLog implements DurableObject {
   private async forgetSocketRow(who: string): Promise<void> {
     const chat = this.chatId()
     if (!chat) return
-    await this.env.DB.prepare('delete from chat_sockets where chat_id = ? and who = ?')
-      .bind(chat, who)
-      .run()
+    await this.env.DB.prepare('delete from chat_sockets where chat_id = ? and who = ?').bind(chat, who).run()
   }
 }
 
@@ -1185,10 +1123,7 @@ function resultOf(answer: Answer) {
     : { id: answer.id ?? '', refused: answer.error }
 }
 
-function standing(
-  answer: Awaited<ReturnType<typeof reachByToken>> | null | undefined,
-  toRead: boolean,
-): string {
+function standing(answer: Awaited<ReturnType<typeof reachByToken>> | null | undefined, toRead: boolean): string {
   if (!answer) return toRead ? 'read' : 'none'
   if (!answer.live) return 'ended'
   return answer.reached?.role ?? 'none'

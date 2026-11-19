@@ -8,9 +8,7 @@ import { basesAre, heardChange, readHeld, repeatTemplates } from './running'
 
 $effect.root(() => {
   $effect(() => {
-    const paths = basesOn()
-      ? workspace.files.filter((one) => /\.base$/i.test(one.name)).map((one) => one.path)
-      : []
+    const paths = basesOn() ? workspace.files.filter((one) => /\.base$/i.test(one.name)).map((one) => one.path) : []
     untrack(() => basesAre(paths))
   })
   $effect(() => {

@@ -55,9 +55,7 @@ export class Tunnels {
       throw new TunnelError(
         answer.status,
         typeof error.code === 'number' ? error.code : 0,
-        typeof error.message === 'string'
-          ? error.message
-          : `Cloudflare answered ${String(answer.status)}`,
+        typeof error.message === 'string' ? error.message : `Cloudflare answered ${String(answer.status)}`,
       )
     }
     return (said as { result?: unknown }).result
@@ -98,9 +96,7 @@ export class Tunnels {
           {
             hostname,
             service: ORDEND,
-            originRequest: access
-              ? { access: { required: true, teamName: access.team, audTag: [access.aud] } }
-              : {},
+            originRequest: access ? { access: { required: true, teamName: access.team, audTag: [access.aud] } } : {},
           },
           { service: 'http_status:404' },
         ],

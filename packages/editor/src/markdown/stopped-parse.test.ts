@@ -22,11 +22,7 @@ function countBigParses(): { count: () => number } {
   let late = 0
   const start = Date.now()
   vi.spyOn(Date, 'now').mockImplementation(() => start + late)
-  vi.spyOn(MarkdownParser.prototype, 'parseInline').mockImplementation(function (
-    this: MarkdownParser,
-    text,
-    offset,
-  ) {
+  vi.spyOn(MarkdownParser.prototype, 'parseInline').mockImplementation(function (this: MarkdownParser, text, offset) {
     const result = original.call(this, text, offset)
     if (text.length > BIG) {
       calls++

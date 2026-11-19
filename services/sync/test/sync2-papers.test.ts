@@ -38,8 +38,7 @@ interface Kit {
 }
 
 async function kit(): Promise<Kit> {
-  const at = (file: string) =>
-    new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
+  const at = (file: string) => new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
   const [device, migrate] = await Promise.all([
     import(/* @vite-ignore */ at('test/test-device.ts')),
     import(/* @vite-ignore */ at('src/migrate.ts')),

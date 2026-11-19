@@ -95,10 +95,7 @@ export class Archive {
 
   holdsIn(root: string, path: string): boolean {
     const at = relativeTo(root, path)
-    return (
-      this.coverIn(root, path) !== null ||
-      [...this.keysOf(root)].some((one) => under(one, at, root))
-    )
+    return this.coverIn(root, path) !== null || [...this.keysOf(root)].some((one) => under(one, at, root))
   }
 
   moved(from: string, to: string, root = this.root(), into: string | null = root) {
@@ -161,10 +158,7 @@ export class Archive {
 
   soon(root: string) {
     clearTimeout(this.pushing[root])
-    this.pushing[root] = setTimeout(
-      () => void import('./archive-map').then(({ send }) => send(this, root)),
-      700,
-    )
+    this.pushing[root] = setTimeout(() => void import('./archive-map').then(({ send }) => send(this, root)), 700)
   }
 
   private write() {

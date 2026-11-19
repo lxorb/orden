@@ -54,13 +54,9 @@ describe('a 5,000 line note holding 200 %% comment blocks', () => {
 })
 
 describe('a 10,000 line note holding 400 %% comment blocks', () => {
-  test(
-    'typing %% on a line near the top reparses the note below quickly',
-    { timeout: 60_000 },
-    () => {
-      fullParseMs(noteWith('xx', 10_000))
-      const plain = fullParseMs(noteWith('xx', 10_000))
-      expect(typedOnThirdLineMs(noteWith('%%', 10_000), '%%')).toBeLessThan(plain * 4 + 60)
-    },
-  )
+  test('typing %% on a line near the top reparses the note below quickly', { timeout: 60_000 }, () => {
+    fullParseMs(noteWith('xx', 10_000))
+    const plain = fullParseMs(noteWith('xx', 10_000))
+    expect(typedOnThirdLineMs(noteWith('%%', 10_000), '%%')).toBeLessThan(plain * 4 + 60)
+  })
 })

@@ -21,9 +21,7 @@ function ran(command: StateCommand, doc: string, at: string): string {
 function valuesOf(doc: string): Record<string, string[] | string> | null {
   const rows = readProperties(doc)
   if (!rows) return null
-  return Object.fromEntries(
-    rows.map((row) => [row.key, row.kind === 'list' ? [...row.items].sort() : row.value]),
-  )
+  return Object.fromEntries(rows.map((row) => [row.key, row.kind === 'list' ? [...row.items].sort() : row.value]))
 }
 
 describe('edit75 sorting front matter that holds block lists', () => {
@@ -53,7 +51,5 @@ test('sort lines on a key moves each key with the lines under it', () => {
 
 test('sort lines on a list item sorts only the items of that key', () => {
   const doc = '---\ntags:\n  - work\n  - home\naliases:\n  - Plan\n---\n\npara'
-  expect(ran(sortLines, doc, 'home')).toBe(
-    '---\ntags:\n  - home\n  - work\naliases:\n  - Plan\n---\n\npara',
-  )
+  expect(ran(sortLines, doc, 'home')).toBe('---\ntags:\n  - home\n  - work\naliases:\n  - Plan\n---\n\npara')
 })

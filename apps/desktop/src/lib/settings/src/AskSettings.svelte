@@ -12,8 +12,7 @@
     ongo: (section: SettingsSectionId, label: string) => void
   } = $props()
 
-  const SPARK =
-    'M6.5 1.6c.4 2.6 1.9 4.1 4.5 4.5-2.6.4-4.1 1.9-4.5 4.5-.4-2.6-1.9-4.1-4.5-4.5 2.6-.4 4.1-1.9 4.5-4.5z'
+  const SPARK = 'M6.5 1.6c.4 2.6 1.9 4.1 4.5 4.5-2.6.4-4.1 1.9-4.5 4.5-.4-2.6-1.9-4.1-4.5-4.5 2.6-.4 4.1-1.9 4.5-4.5z'
 
   let asked = $state('')
   let busy = $state(false)
@@ -129,14 +128,11 @@
       {#each answer.changes as change (change.offer.id)}
         {@const done = settled[change.offer.id]}
         <div class="row change">
-          <span class="name">{change.offer.label}<small>{change.from} → {change.shown}</small></span
-          >
+          <span class="name">{change.offer.label}<small>{change.from} → {change.shown}</small></span>
           {#if done}
             <span class="done">{done === 'changed' ? 'Changed' : 'Skipped'}</span>
           {:else}
-            <button class="orden-button is-quiet" onclick={() => settle(change, 'skipped')}
-              >Skip</button
-            >
+            <button class="orden-button is-quiet" onclick={() => settle(change, 'skipped')}>Skip</button>
             <button class="orden-button" onclick={() => settle(change, 'changed')}>Change</button>
           {/if}
         </div>

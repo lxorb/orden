@@ -10,9 +10,7 @@
   const setup = $derived(choices.find((one) => one.id === SETUP) ?? null)
   let chosenId = $derived(picker.open ? picker.last.id || null : null)
   const chosen = $derived(
-    tiles.find((one) => one.id === chosenId && !one.disabled) ??
-      tiles.find((one) => !one.disabled) ??
-      null,
+    tiles.find((one) => one.id === chosenId && !one.disabled) ?? tiles.find((one) => !one.disabled) ?? null,
   )
   let optioned = $derived(chosen ? (picker.last.optioned[chosen.id] ?? false) : false)
 
@@ -65,11 +63,7 @@
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div class="orden-setting option" onclick={() => (optioned = !optioned)}>
       <span class="name">{chosen.option.label}</span>
-      <Switch
-        on={optioned}
-        label={chosen.option.label}
-        onchange={(on: boolean) => (optioned = on)}
-      />
+      <Switch on={optioned} label={chosen.option.label} onchange={(on: boolean) => (optioned = on)} />
     </div>
   {/if}
 

@@ -1,13 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { ApiError } from '../../accounts/src/api'
-import {
-  type Carrying,
-  carryPapers,
-  forgetLacking,
-  namesAPaper,
-  paperFor,
-  paperRetryDelay,
-} from './papers-carried'
+import { type Carrying, carryPapers, forgetLacking, namesAPaper, paperFor, paperRetryDelay } from './papers-carried'
 
 const WITH_PAPER = JSON.stringify({
   nodes: [
@@ -34,10 +27,7 @@ const BLANK = JSON.stringify({
 
 const PDF = new TextEncoder().encode('%PDF-1.4\n%%EOF\n')
 
-function world(
-  files: Record<string, string | Uint8Array>,
-  account: Record<string, Uint8Array> = {},
-) {
+function world(files: Record<string, string | Uint8Array>, account: Record<string, Uint8Array> = {}) {
   const disk = new Map(Object.entries(files))
   const sent: { id: string; hash: string }[] = []
   const asked: string[] = []
@@ -198,20 +188,17 @@ describe('a paper the account will not take', () => {
   beforeEach(() => void vi.useFakeTimers({ toFake: ['Date'] }))
   afterEach(() => void vi.useRealTimers())
 
-  test.each([413, 415, 400])(
-    'is not read or sent again after a %i, and is said once',
-    async (status) => {
-      const { how, count, said } = refusing(() => Promise.reject(new ApiError(status, 'no')))
+  test.each([413, 415, 400])('is not read or sent again after a %i, and is said once', async (status) => {
+    const { how, count, said } = refusing(() => Promise.reject(new ApiError(status, 'no')))
 
-      await passes(5, how)
-      vi.setSystemTime(Date.now() + 24 * 60 * 60_000)
-      await passes(5, how)
+    await passes(5, how)
+    vi.setSystemTime(Date.now() + 24 * 60 * 60_000)
+    await passes(5, how)
 
-      expect(count).toEqual({ reads: 1, ups: 1 })
-      expect(said).toEqual(['Work: the account would not take Lecture.pages.pdf'])
-      expect(how.carried.has('n1')).toBe(false)
-    },
-  )
+    expect(count).toEqual({ reads: 1, ups: 1 })
+    expect(said).toEqual(['Work: the account would not take Lecture.pages.pdf'])
+    expect(how.carried.has('n1')).toBe(false)
+  })
 
   test('goes again once the file changes, and is said again if refused again', async () => {
     let answer: () => Promise<void> = () => Promise.reject(new ApiError(413, 'too big'))
@@ -282,8 +269,7 @@ describe('a paper the account will not take', () => {
       '/s/B.pages': WITH_PAPER,
       '/s/B.pages.pdf': PDF,
     })
-    how.up = (hash) =>
-      hash === 'hash-99' ? Promise.reject(new ApiError(413, 'too big')) : Promise.resolve()
+    how.up = (hash) => (hash === 'hash-99' ? Promise.reject(new ApiError(413, 'too big')) : Promise.resolve())
 
     await carryPapers(
       [

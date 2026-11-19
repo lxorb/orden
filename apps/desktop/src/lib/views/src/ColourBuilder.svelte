@@ -4,14 +4,7 @@
   import { Select } from '../../ui-controls/src/api'
   import { displayName, holdsOf, knownProperties } from './columns'
   import { setViewOrden } from './edit'
-  import {
-    expressionOf,
-    type Operator,
-    OPERATORS,
-    rowOf,
-    takesValue,
-    withProperty,
-  } from './filter-rows'
+  import { expressionOf, type Operator, OPERATORS, rowOf, takesValue, withProperty } from './filter-rows'
   import type { Kit } from './kit'
   import ToneDot from './ToneDot.svelte'
   import { propertyName } from './words'
@@ -23,9 +16,7 @@
   const written = $derived(view?.orden.colour)
   const rules = $derived(colourRules(written))
   const holds = $derived(live.base ? holdsOf(live.base, live.rows) : undefined)
-  const shownRules = $derived(
-    (rules ?? []).map((rule) => ({ rule, shown: rowOf(rule.when, holds) })),
-  )
+  const shownRules = $derived((rules ?? []).map((rule) => ({ rule, shown: rowOf(rule.when, holds) })))
   const kinds = $derived(view?.orden.rows ?? 'notes')
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
 
@@ -52,9 +43,7 @@
 
   function add() {
     const property =
-      kinds === 'notes'
-        ? (properties.find((one) => one.startsWith('note.')) ?? 'file.name')
-        : 'task.priority'
+      kinds === 'notes' ? (properties.find((one) => one.startsWith('note.')) ?? 'file.name') : 'task.priority'
     write([...(rules ?? []), { when: expressionOf({ property, op: '==', value: '' }), tone: '1' }])
   }
 </script>
@@ -62,31 +51,21 @@
 {#if rules === null}
   <div class="row">
     <code class="kept">{written}</code>
-    <button
-      type="button"
-      class="orden-glyph"
-      title="Remove"
-      aria-label="Remove"
-      onclick={() => write([])}><Cross small /></button
+    <button type="button" class="orden-glyph" title="Remove" aria-label="Remove" onclick={() => write([])}
+      ><Cross small /></button
     >
   </div>
 {:else}
   {#each shownRules as { rule, shown }, at (at)}
     <div class="row">
-      <ToneDot
-        tone={rule.tone}
-        ontone={(tone: string | null) => change(at, { ...rule, tone: tone ?? '1' })}
-      />
+      <ToneDot tone={rule.tone} ontone={(tone: string | null) => change(at, { ...rule, tone: tone ?? '1' })} />
       {#if 'kept' in shown}
         <code class="kept">{rule.when}</code>
       {:else if 'property' in shown}
         <Select
           label="Property"
           value={shown.property}
-          options={(properties.includes(shown.property)
-            ? properties
-            : [shown.property, ...properties]
-          ).map((one) => ({
+          options={(properties.includes(shown.property) ? properties : [shown.property, ...properties]).map((one) => ({
             value: one,
             label: propertyName(one, live.base ? displayName(live.base, one) : undefined),
           }))}

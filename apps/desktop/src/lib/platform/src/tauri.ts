@@ -8,8 +8,7 @@ export const isNative = typeof window !== 'undefined' && '__TAURI_INTERNALS__' i
 export function platform(): string {
   if (typeof window === 'undefined') return ''
 
-  const os = (window as { __TAURI_OS_PLUGIN_INTERNALS__?: { platform?: string } })
-    .__TAURI_OS_PLUGIN_INTERNALS__
+  const os = (window as { __TAURI_OS_PLUGIN_INTERNALS__?: { platform?: string } }).__TAURI_OS_PLUGIN_INTERNALS__
   const found = os?.platform ?? ''
 
   if (!found && isNative) {
@@ -127,9 +126,8 @@ export async function closeWindow(): Promise<void> {
 export function assetUrl(path: string): string {
   if (!isNative) return assetRoute(path)
 
-  const internals = (
-    window as unknown as { __TAURI_INTERNALS__?: { convertFileSrc?: (p: string) => string } }
-  ).__TAURI_INTERNALS__
+  const internals = (window as unknown as { __TAURI_INTERNALS__?: { convertFileSrc?: (p: string) => string } })
+    .__TAURI_INTERNALS__
 
   const file = internal.file?.(path) ?? path
   return internals?.convertFileSrc?.(file) ?? file

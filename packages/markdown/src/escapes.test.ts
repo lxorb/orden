@@ -23,9 +23,7 @@ describe('plain text, as a note may hold it', () => {
   })
 
   test('two equals signs are the characters, not a highlight; a list item stays a list item, and a heading-like line is words', () => {
-    expect(plainWords('if a==b or c==d then\nx === y')).toBe(
-      'if a=\\=b or c=\\=d then\nx =\\=\\= y',
-    )
+    expect(plainWords('if a==b or c==d then\nx === y')).toBe('if a=\\=b or c=\\=d then\nx =\\=\\= y')
     expect(renderMarkdown(plainWords('if a==b or c==d then'))).toBe('<p>if a==b or c==d then</p>\n')
     expect(plainWords('- milk at ~2\n  * eggs $3\n1. one\n# not a heading')).toBe(
       '- milk at \\~2\n  * eggs \\$3\n1. one\n\\# not a heading',
@@ -39,9 +37,7 @@ describe('plain text, as a note may hold it', () => {
       '<p>   # x</p>\n<p>  &gt; x</p>\n<p>foo\n   ---</p>\n',
     )
     const indented = plainWords('Sum:\n\n    total $5 or ~10\n\n\tand a tab')
-    expect(indented).toBe(
-      `Sum:\n\n${NBSP.repeat(4)}total \\$5 or \\~10\n\n${NBSP.repeat(4)}and a tab`,
-    )
+    expect(indented).toBe(`Sum:\n\n${NBSP.repeat(4)}total \\$5 or \\~10\n\n${NBSP.repeat(4)}and a tab`)
     expect(renderMarkdown(indented)).toBe(
       `<p>Sum:</p>\n<p>${NBSP.repeat(4)}total $5 or ~10</p>\n<p>${NBSP.repeat(4)}and a tab</p>\n`,
     )
@@ -51,9 +47,7 @@ describe('plain text, as a note may hold it', () => {
     const NBSP = '\u00a0'
     const alone = plainWords('Steps\n\n\t* one [x]\n    - two')
     expect(alone).toBe(`Steps\n\n${NBSP.repeat(4)}\\* one \\[x\\]\n${NBSP.repeat(4)}\\- two`)
-    expect(renderMarkdown(alone)).toBe(
-      `<p>Steps</p>\n<p>${NBSP.repeat(4)}* one [x]\n${NBSP.repeat(4)}- two</p>\n`,
-    )
+    expect(renderMarkdown(alone)).toBe(`<p>Steps</p>\n<p>${NBSP.repeat(4)}* one [x]\n${NBSP.repeat(4)}- two</p>\n`)
     const nested = plainWords('- a\n    - b [x]\n\n    - c')
     expect(nested).toBe('- a\n    - b \\[x\\]\n\n    - c')
     expect(renderMarkdown(nested)).toContain('<li>a<ul>\n<li><p>b [x]</p>')
@@ -71,9 +65,7 @@ const PROSE = { addresses: true }
 
 describe('a page’s text, as a note may hold it', () => {
   test('prose is prose; a marker that would be read as markup is escaped', () => {
-    expect(escapeText('Schauen Sie sich das Cheatsheet an.')).toBe(
-      'Schauen Sie sich das Cheatsheet an.',
-    )
+    expect(escapeText('Schauen Sie sich das Cheatsheet an.')).toBe('Schauen Sie sich das Cheatsheet an.')
     expect(escapeText('see [1] and [2]')).toBe('see \\[1\\] and \\[2\\]')
     expect(escapeText('a ` and nothing to close it')).toBe('a \\` and nothing to close it')
     expect(escapeText('*emphasis*')).toBe('\\*emphasis\\*')
@@ -104,9 +96,7 @@ describe('a page’s text, as a note may hold it', () => {
 
   describe('a run that is unmistakably markdown', () => {
     test('is kept as it was written; and a code span keeps what a fence would keep; unless a marker has a blank against it, where markdown stops reading one', () => {
-      expect(escapeText('überfliegen Sie **kurz** das Dokument')).toBe(
-        'überfliegen Sie **kurz** das Dokument',
-      )
+      expect(escapeText('überfliegen Sie **kurz** das Dokument')).toBe('überfliegen Sie **kurz** das Dokument')
       expect(escapeText('ganz __fett__ gesagt')).toBe('ganz __fett__ gesagt')
       expect(escapeText('run `npm run dev` first')).toBe('run `npm run dev` first')
       expect(escapeText('the `<img>` tag')).toBe('the `<img>` tag')
@@ -117,9 +107,7 @@ describe('a page’s text, as a note may hold it', () => {
     test('unless there is more of the same marker against it; unless the words inside it are not words', () => {
       expect(escapeText('***drei***')).toBe('\\*\\*\\*drei\\*\\*\\*')
       expect(escapeText('**<img src=q>**')).toBe('\\*\\*\\<img src=q>\\*\\*')
-      expect(escapeText('**[a](javascript:alert(1))**')).toBe(
-        '\\*\\*\\[a\\](javascript:alert(1))\\*\\*',
-      )
+      expect(escapeText('**[a](javascript:alert(1))**')).toBe('\\*\\*\\[a\\](javascript:alert(1))\\*\\*')
       expect(escapeText('**a\\**')).toBe('\\*\\*a\\\\\\*\\*')
       expect(escapeText('**a`b**')).toBe('\\*\\*a\\`b\\*\\*')
     })
@@ -152,12 +140,8 @@ describe('a page’s text, as a note may hold it', () => {
   })
 
   test('a bracket that would open a tag is escaped wherever it is', () => {
-    expect(escapeText('a <img src=x onerror=alert(1)> b')).toBe(
-      'a \\<img src=x onerror=alert(1)> b',
-    )
-    expect(escapeText('**kurz** <script>alert(1)</script>')).toBe(
-      '**kurz** \\<script>alert(1)\\</script>',
-    )
+    expect(escapeText('a <img src=x onerror=alert(1)> b')).toBe('a \\<img src=x onerror=alert(1)> b')
+    expect(escapeText('**kurz** <script>alert(1)</script>')).toBe('**kurz** \\<script>alert(1)\\</script>')
     expect(escapeText('a < b')).toBe('a < b')
   })
 
@@ -171,12 +155,8 @@ describe('a page’s text, as a note may hold it', () => {
   })
 
   test('a bare web address is kept as it was written', () => {
-    expect(escapeText('see https://www.cs.cmu.edu/~bob/ now', PROSE)).toBe(
-      'see https://www.cs.cmu.edu/~bob/ now',
-    )
-    expect(escapeText('https://ex.com/page#:~:text=hello', PROSE)).toBe(
-      'https://ex.com/page#:~:text=hello',
-    )
+    expect(escapeText('see https://www.cs.cmu.edu/~bob/ now', PROSE)).toBe('see https://www.cs.cmu.edu/~bob/ now')
+    expect(escapeText('https://ex.com/page#:~:text=hello', PROSE)).toBe('https://ex.com/page#:~:text=hello')
     expect(escapeText('at www.example.com/_next/x and https://ex.com/a?b=[1]&c=`d`.', PROSE)).toBe(
       'at www.example.com/_next/x and https://ex.com/a?b=\\[1\\]&c=\\`d\\`.',
     )
@@ -208,17 +188,13 @@ describe('a page’s text, as a note may hold it', () => {
 
 describe('words shown and written back', () => {
   test('the escapes come off, except in code', () => {
-    expect(shownWords('Prices \\$5-\\$10 \\~5 a=\\=b x\\\\y `a\\$b`')).toBe(
-      'Prices $5-$10 ~5 a==b x\\y `a\\$b`',
-    )
+    expect(shownWords('Prices \\$5-\\$10 \\~5 a=\\=b x\\\\y `a\\$b`')).toBe('Prices $5-$10 ~5 a==b x\\y `a\\$b`')
   })
 
   test('and go back on, leaving what the writer meant as markup alone', () => {
     const shown = 'Prices $5-$10 ~5 min a==b **due** [the page](https://x.test/a) `a$b`'
     const written = typedWords(shown)
-    expect(written).toBe(
-      'Prices \\$5-\\$10 \\~5 min a=\\=b **due** [the page](https://x.test/a) `a$b`',
-    )
+    expect(written).toBe('Prices \\$5-\\$10 \\~5 min a=\\=b **due** [the page](https://x.test/a) `a$b`')
     expect(shownWords(written)).toBe(shown)
     expect(renderMarkdown(written)).toBe(
       '<p>Prices $5-$10 ~5 min a==b <strong>due</strong> <a href="https://x.test/a">the page</a> <code>a$b</code></p>\n',
@@ -280,8 +256,7 @@ test('an edit anywhere in a line with backticks reads back as the edit', () => {
   const ALPHABET = ['a', ' ', '\\', '`', '$', '~', '^', '=', '%', '<', '#']
   let seed = 11
   const next = () => (seed = (seed * 1103515245 + 12345) % 2147483648)
-  const pick = (length: number) =>
-    Array.from({ length }, () => ALPHABET[next() % ALPHABET.length]).join('')
+  const pick = (length: number) => Array.from({ length }, () => ALPHABET[next() % ALPHABET.length]).join('')
   for (let run = 0; run < 3000; run++) {
     const line = pick(3 + (next() % 10))
     const shown = shownWords(line)

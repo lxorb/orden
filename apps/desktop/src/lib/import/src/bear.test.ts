@@ -34,9 +34,7 @@ describe("Bear's closed tags", () => {
 
 describe("Bear's other spellings", () => {
   test('an underline is one, rather than the lowered text Orden reads a tilde as', () => {
-    expect(bearWords('~under~ and ~~struck~~ and `~/path~`')).toBe(
-      '<u>under</u> and ~~struck~~ and `~/path~`',
-    )
+    expect(bearWords('~under~ and ~~struck~~ and `~/path~`')).toBe('<u>under</u> and ~~struck~~ and `~/path~`')
     expect(bearWords('https://example.com/~me/~notes')).toBe('https://example.com/~me/~notes')
   })
 
@@ -74,9 +72,7 @@ describe('a Bear backup', () => {
       }),
     )
 
-    expect(textOf(plan, 'Trip.md')).toBe(
-      '---\ndate: 2023-10-11\nupdated: 2024-01-02\n---\n\n# Trip\n',
-    )
+    expect(textOf(plan, 'Trip.md')).toBe('---\ndate: 2023-10-11\nupdated: 2024-01-02\n---\n\n# Trip\n')
   })
 
   test('a note with properties of its own keeps them in the one block', async () => {
@@ -86,9 +82,7 @@ describe('a Bear backup', () => {
       }),
     )
 
-    expect(textOf(plan, 'Trip.md')).toBe(
-      '---\ntitle: Trip\nstatus: draft\ndate: 2024-01-02\n---\n\n# Trip\nwords\n',
-    )
+    expect(textOf(plan, 'Trip.md')).toBe('---\ntitle: Trip\nstatus: draft\ndate: 2024-01-02\n---\n\n# Trip\nwords\n')
   })
 
   test('leaves the bin and the locked notes behind and says so, and archives the archived', async () => {
@@ -125,18 +119,13 @@ describe('a Bear backup', () => {
 
   test("a link to a heading, which Bear writes with a slash, is Orden's link to that heading", async () => {
     const plan = await readBear([
-      file(
-        'Welcome.md',
-        '# Welcome\n[[Guide/Step one|Start here]] [[Guide/Step two]] [[Trips/Iceland]]\n',
-      ),
+      file('Welcome.md', '# Welcome\n[[Guide/Step one|Start here]] [[Guide/Step two]] [[Trips/Iceland]]\n'),
       file('Guide.md', '# Guide\n## Step one\n## Step two\n'),
       file('Trips/Iceland.md', '# Iceland\n'),
       file('Trips.md', '# Trips\n'),
     ])
 
-    expect(textOf(plan, 'Welcome.md')).toContain(
-      '[[Guide#Step one|Start here]] [[Guide#Step two]] [[Iceland]]',
-    )
+    expect(textOf(plan, 'Welcome.md')).toContain('[[Guide#Step one|Start here]] [[Guide#Step two]] [[Iceland]]')
   })
 
   test('an info.json that does not read is a note like any other', async () => {
@@ -159,10 +148,7 @@ function textOf(plan: Awaited<ReturnType<typeof readBear>>, path: string): strin
 
 describe('a Bear export', () => {
   test('is a folder of notes with its tags rewritten', async () => {
-    const plan = await readBear([
-      file('Trip.md', '# Trip\n\n#travel notes# and [[Kit]]\n'),
-      file('Kit.md', '# Kit\n'),
-    ])
+    const plan = await readBear([file('Trip.md', '# Trip\n\n#travel notes# and [[Kit]]\n'), file('Kit.md', '# Kit\n')])
 
     expect(plan.format).toBe('bear')
     const note = plan.files.find((one) => one.path === 'Trip.md')
@@ -198,8 +184,6 @@ describe('a Bear note written in the evening, west of Greenwich', () => {
       }),
     )
 
-    expect(textOf(plan, 'Late.md')).toBe(
-      '---\ndate: 2026-01-01\nupdated: 2026-03-04\n---\n\n# Late\n',
-    )
+    expect(textOf(plan, 'Late.md')).toBe('---\ndate: 2026-01-01\nupdated: 2026-03-04\n---\n\n# Late\n')
   })
 })

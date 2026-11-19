@@ -21,9 +21,7 @@ function stringValue(written: string): Value {
   const link = WIKILINK.exec(text)
   if (link) {
     const target = (link[1] ?? '').trim()
-    return link[2] === undefined
-      ? { kind: 'link', target }
-      : { kind: 'link', target, display: link[2] }
+    return link[2] === undefined ? { kind: 'link', target } : { kind: 'link', target, display: link[2] }
   }
 
   const date = DATE.exec(text)
@@ -36,8 +34,7 @@ function stringValue(written: string): Value {
   return text
 }
 
-const readValue = (text: string, quoted: boolean | undefined): Value =>
-  quoted ? stringValue(text) : scalarValue(text)
+const readValue = (text: string, quoted: boolean | undefined): Value => (quoted ? stringValue(text) : scalarValue(text))
 
 function propertyValue(property: Property): Value {
   const quoted = property.quotedItems ?? []
@@ -71,9 +68,7 @@ function fromYaml(read: unknown): Value {
 }
 
 export function noteValues(text: string): Record<string, Value> {
-  const source = text.startsWith('---')
-    ? text
-    : `---\n${text}${text.endsWith('\n') ? '' : '\n'}---\n`
+  const source = text.startsWith('---') ? text : `---\n${text}${text.endsWith('\n') ? '' : '\n'}---\n`
   const rows = readProperties(source)
   if (rows) {
     const firsts = new Map<string, Value>()
@@ -119,10 +114,7 @@ export function listAsWritten(
   }
   if (whole !== null && (typeof whole !== 'object' || Array.isArray(whole))) return null
   const read = whole === null ? {} : (whole as Record<string, unknown>)
-  const spelled =
-    key in read
-      ? key
-      : (Object.keys(read).find((one) => one.toLowerCase() === key.toLowerCase()) ?? key)
+  const spelled = key in read ? key : (Object.keys(read).find((one) => one.toLowerCase() === key.toLowerCase()) ?? key)
   const held = read[spelled]
 
   const lines = body.split('\n')
@@ -168,8 +160,7 @@ export function listAsWritten(
   const quoted: boolean[] = []
   for (const node of nodes) {
     if (!isScalar(node) || !node.range) return null
-    if (node.type !== 'PLAIN' && node.type !== 'QUOTE_DOUBLE' && node.type !== 'QUOTE_SINGLE')
-      return null
+    if (node.type !== 'PLAIN' && node.type !== 'QUOTE_DOUBLE' && node.type !== 'QUOTE_SINGLE') return null
     const said = span.slice(node.range[0], node.range[1])
     const inQuotes = node.type !== 'PLAIN'
     items.push(inQuotes ? String(node.value) : said)

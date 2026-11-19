@@ -3,15 +3,7 @@ import { EditorView } from '@codemirror/view'
 import { later } from '../../shared'
 import { OrdenWidget } from '../widget'
 import { openLightbox } from './lightbox'
-import {
-  imageAt,
-  type ImageSpan,
-  type ImageSpec,
-  imageMarkup,
-  retag,
-  sourceCaret,
-  withZoom,
-} from './markup'
+import { imageAt, type ImageSpan, type ImageSpec, imageMarkup, retag, sourceCaret, withZoom } from './markup'
 import { resizeTo } from './size'
 import { selectedImage, selectionOver } from './selection'
 
@@ -19,8 +11,7 @@ const NATURAL = new Map<string, { width: number; height: number }>()
 const DRAG_START = 3
 
 function displayWidth(spec: ImageSpec, natural: number | undefined): string {
-  if (spec.zoom !== 100)
-    return natural ? `${Math.round((natural * spec.zoom) / 100)}px` : `${spec.zoom}%`
+  if (spec.zoom !== 100) return natural ? `${Math.round((natural * spec.zoom) / 100)}px` : `${spec.zoom}%`
   return spec.width ? `${spec.width}px` : ''
 }
 
@@ -84,25 +75,16 @@ function select(view: EditorView, image: ImageSpan, extend = false) {
   view.focus()
 }
 
-function rewritten(
-  state: EditorState,
-  image: ImageSpan,
-  next: ImageSpec,
-  userEvent: string,
-): TransactionSpec {
+function rewritten(state: EditorState, image: ImageSpan, next: ImageSpec, userEvent: string): TransactionSpec {
   const written = image.tag ?? image
   const original = state.doc.sliceString(written.from, written.to)
-  const insert = /^<img\b/i.test(original)
-    ? retag(original, next)
-    : imageMarkup(next, image.tag !== undefined)
+  const insert = /^<img\b/i.test(original) ? retag(original, next) : imageMarkup(next, image.tag !== undefined)
   const wasSelected = selectedImage(state)?.from === image.from
   const changes = state.changes({ from: written.from, to: written.to, insert })
 
   return {
     changes,
-    selection: wasSelected
-      ? EditorSelection.range(image.from, changes.mapPos(image.to, 1))
-      : undefined,
+    selection: wasSelected ? EditorSelection.range(image.from, changes.mapPos(image.to, 1)) : undefined,
     userEvent,
   }
 }
@@ -167,9 +149,7 @@ export class ImageWidget extends OrdenWidget {
       handle.className = 'orden-image-handle'
       handle.dataset.corner = corner
       handle.title = 'Drag to resize'
-      handle.addEventListener('pointerdown', (event) =>
-        this.startResize(event, view, frame, handle),
-      )
+      handle.addEventListener('pointerdown', (event) => this.startResize(event, view, frame, handle))
       box.append(handle)
     }
 
@@ -297,8 +277,7 @@ export class ImageWidget extends OrdenWidget {
       }
 
       landing((state) => {
-        const current =
-          (state === view.state ? imageOfFrame(view, frame) : null) ?? stillThere(state)
+        const current = (state === view.state ? imageOfFrame(view, frame) : null) ?? stillThere(state)
         if (!current || next === current.alt) return null
         return rewritten(state, current, { ...current, alt: next }, 'input.image.alt')
       })
@@ -317,9 +296,7 @@ export class ImageWidget extends OrdenWidget {
     })
     alt.addEventListener('focus', () => {
       const image = imageOfFrame(view, frame)
-      held = image
-        ? { image, text: view.state.sliceDoc(image.from, image.to), land: later(view) }
-        : null
+      held = image ? { image, text: view.state.sliceDoc(image.from, image.to), land: later(view) } : null
     })
     alt.addEventListener('blur', () => queueMicrotask(commitAlt))
     this.onDestroy(frame, () => queueMicrotask(commitAlt))
@@ -330,12 +307,7 @@ export class ImageWidget extends OrdenWidget {
     separator.className = 'orden-image-tools-gap'
     tools.append(separator)
 
-    const button = (
-      className: string,
-      title: string,
-      content: Node | string,
-      action: (image: ImageSpan) => void,
-    ) => {
+    const button = (className: string, title: string, content: Node | string, action: (image: ImageSpan) => void) => {
       const control = document.createElement('button')
       control.type = 'button'
       control.className = `orden-image-tool ${className}`
@@ -357,15 +329,13 @@ export class ImageWidget extends OrdenWidget {
     }
 
     const size = button('orden-image-size', '', '', (image) => {
-      if (image.zoom !== 100 || image.width)
-        rewrite(view, image, withZoom(image, 100), 'input.image.resize')
+      if (image.zoom !== 100 || image.width) rewrite(view, image, withZoom(image, 100), 'input.image.resize')
       view.focus()
     })
 
     button('orden-image-open', 'Open image', icon(ICONS.open), (image) => {
       const picture = partsOf(frame)?.image
-      if (picture && !frame.classList.contains('is-broken'))
-        openLightbox(view, picture.src, image.alt)
+      if (picture && !frame.classList.contains('is-broken')) openLightbox(view, picture.src, image.alt)
     })
 
     const copy = button('orden-image-copy', 'Copy link', icon(ICONS.link), (image) => {
@@ -398,12 +368,7 @@ export class ImageWidget extends OrdenWidget {
     return { tools, alt, size }
   }
 
-  private startResize(
-    event: PointerEvent,
-    view: EditorView,
-    frame: HTMLElement,
-    handle: HTMLElement,
-  ) {
+  private startResize(event: PointerEvent, view: EditorView, frame: HTMLElement, handle: HTMLElement) {
     if (event.button !== 0) return
     event.preventDefault()
     event.stopPropagation()
@@ -433,13 +398,7 @@ export class ImageWidget extends OrdenWidget {
     const move = (moved: PointerEvent) => {
       if (!dragged && Math.abs(moved.clientX - startX) < DRAG_START) return
       dragged = true
-      zoom = resizeTo(
-        startWidth,
-        sign * (moved.clientX - startX),
-        natural,
-        lineWidth,
-        !moved.altKey,
-      )
+      zoom = resizeTo(startWidth, sign * (moved.clientX - startX), natural, lineWidth, !moved.altKey)
       parts.image.style.width = displayWidth(withZoom(image, zoom), natural)
       showSize(parts.badge, zoom, natural)
       showSize(parts.size, zoom, natural)

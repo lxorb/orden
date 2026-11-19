@@ -6,10 +6,7 @@
   import { type McpClient, mcpLine } from '../mcp'
   import type { AgentsPane } from '../settings/pane.svelte'
 
-  const {
-    pane,
-    client,
-  }: { pane: AgentsPane; client: 'claude-code' | 'codex' | 'antigravity' | 'other' } = $props()
+  const { pane, client }: { pane: AgentsPane; client: 'claude-code' | 'codex' | 'antigravity' | 'other' } = $props()
 
   const lineOf = (way: typeof client): McpClient =>
     way === 'claude-code' ? 'claude' : way === 'codex' ? 'codex' : 'json'
@@ -30,8 +27,8 @@
 {#if line !== null}
   {#if client === 'antigravity'}
     <p class="hint">
-      In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP
-      Servers → View raw config, and add this entry to it.
+      In Antigravity, open the … menu at the top of the agent panel, then MCP Servers → Manage MCP Servers → View raw
+      config, and add this entry to it.
     </p>
     <pre>{line}</pre>
     <CopyButton value={line} wide />
@@ -45,9 +42,7 @@
 
 {#if client === 'other'}
   <button class="disclose" aria-expanded={making} onclick={fold}>
-    <svg class="chevron" class:open={making} viewBox="0 0 16 16" aria-hidden="true"
-      ><path d="M6 3l5 5-5 5" /></svg
-    >
+    <svg class="chevron" class:open={making} viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" /></svg>
     A client on another machine?
   </button>
 

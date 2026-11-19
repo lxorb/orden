@@ -79,9 +79,7 @@ describe('SimpleLogin', () => {
       'GET /api/v2/mailboxes': SL_MAILBOXES,
     })
     const options = await aliasClient('simplelogin', 'k', fetcher).options('shop.example.com')
-    expect(asked[0]?.url).toBe(
-      'https://app.simplelogin.io/api/v5/alias/options?hostname=shop.example.com',
-    )
+    expect(asked[0]?.url).toBe('https://app.simplelogin.io/api/v5/alias/options?hostname=shop.example.com')
     expect(options).toMatchObject({
       prefix: 'shop',
       canCreate: true,
@@ -184,9 +182,7 @@ describe('SimpleLogin', () => {
 
   test('throws on an answer it cannot read', async () => {
     const { fetcher } = fake({ 'POST /api/alias/random/new': [201, { email: 3 }] })
-    await expect(aliasClient('simplelogin', 'k', fetcher).random('')).rejects.toThrow(
-      'unreadable alias answer',
-    )
+    await expect(aliasClient('simplelogin', 'k', fetcher).random('')).rejects.toThrow('unreadable alias answer')
   })
 })
 

@@ -1,13 +1,5 @@
 {
   "name": "foreign",
   "layer": "foundation",
-  "dependsOn": [
-    "contracts",
-    "accounts",
-    "platform",
-    "sync-client",
-    "sync-core",
-    "sync-mirror",
-    "ui-kit"
-  ]
+  "dependsOn": ["contracts", "accounts", "platform", "sync-client", "sync-core", "sync-mirror", "ui-kit"]
 }

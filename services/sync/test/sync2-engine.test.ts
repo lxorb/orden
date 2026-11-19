@@ -1,21 +1,11 @@
 import { afterEach, describe, expect, test } from 'vitest'
-import {
-  CALM,
-  type DeviceAdapter,
-  failedSeeds,
-  type Options,
-  roads,
-  simulate,
-} from '@orden/sync-core/sim'
+import { CALM, type DeviceAdapter, failedSeeds, type Options, roads, simulate } from '@orden/sync-core/sim'
 import { WorkerAccount } from './sync2-account'
 
 type Devices = NonNullable<Options['device']>
 
 async function engineDevices(): Promise<Devices> {
-  const path = new URL(
-    '../../../apps/desktop/src/lib/sync-client/test/sim-device.ts',
-    import.meta.url,
-  ).href
+  const path = new URL('../../../apps/desktop/src/lib/sync-client/test/sim-device.ts', import.meta.url).href
   const engine = (await import(/* @vite-ignore */ path)) as {
     EngineDevice: new (...made: Parameters<Devices>) => DeviceAdapter
   }

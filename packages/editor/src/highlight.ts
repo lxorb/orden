@@ -1,10 +1,5 @@
 import { syntaxTree } from '@codemirror/language'
-import {
-  type ChangeSpec,
-  EditorSelection,
-  type EditorState,
-  type StateCommand,
-} from '@codemirror/state'
+import { type ChangeSpec, EditorSelection, type EditorState, type StateCommand } from '@codemirror/state'
 import {
   HIGHLIGHT_COLOURS,
   type HighlightColour,
@@ -53,10 +48,7 @@ function highlighted(
   return null
 }
 
-function runAt(
-  state: EditorState,
-  pos: number,
-): { from: number; to: number; inner: string } | null {
+function runAt(state: EditorState, pos: number): { from: number; to: number; inner: string } | null {
   const run = enclosingNamed(syntaxTree(state).resolveInner(pos, 0), 'Highlight')
   if (!run || pos < run.from + MARK.length || pos > run.to - MARK.length) return null
   return {
@@ -67,9 +59,7 @@ function runAt(
 }
 
 function colourOf(inner: string): { colour: HighlightColour; from: number } {
-  const bare = HIGHLIGHT_COLOURS.find(
-    (colour) => colour.emoji !== null && inner.trimEnd() === colour.emoji,
-  )
+  const bare = HIGHLIGHT_COLOURS.find((colour) => colour.emoji !== null && inner.trimEnd() === colour.emoji)
   return bare ? { colour: bare, from: inner.length } : readHighlight(inner)
 }
 
@@ -141,10 +131,7 @@ export function toggleHighlight(colour: HighlightColour): StateCommand {
             insert: inner,
           },
           range: words
-            ? EditorSelection.range(
-                already.from + MARK.length,
-                already.from + MARK.length + inner.length,
-              )
+            ? EditorSelection.range(already.from + MARK.length, already.from + MARK.length + inner.length)
             : EditorSelection.cursor(already.from + MARK.length + inner.length),
         }
       }
@@ -153,10 +140,7 @@ export function toggleHighlight(colour: HighlightColour): StateCommand {
       const end = from + MARK.length + inner.length
       return {
         changes: { from, to, insert: `${MARK}${inner}${MARK}` },
-        range:
-          from === to
-            ? EditorSelection.cursor(end)
-            : EditorSelection.range(from + MARK.length, end),
+        range: from === to ? EditorSelection.cursor(end) : EditorSelection.range(from + MARK.length, end),
       }
     })
 

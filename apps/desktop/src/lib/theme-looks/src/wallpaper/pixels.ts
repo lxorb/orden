@@ -52,9 +52,7 @@ export function boxesFor(sigma: number): [number, number, number] {
   let lower = Math.floor(ideal)
   if (lower % 2 === 0) lower--
   const upper = lower + 2
-  const many = Math.round(
-    (12 * sigma * sigma - 3 * lower * lower - 12 * lower - 9) / (-4 * lower - 4),
-  )
+  const many = Math.round((12 * sigma * sigma - 3 * lower * lower - 12 * lower - 9) / (-4 * lower - 4))
 
   return [0, 1, 2].map((at) => (at < many ? lower : upper)) as [number, number, number]
 }
@@ -82,8 +80,7 @@ function box(
 
       for (let index = 0; index < length; index++) {
         to[start + index * stride + channel] = sum / span
-        sum +=
-          (from[at(index + radius + 1) + channel] ?? 0) - (from[at(index - radius) + channel] ?? 0)
+        sum += (from[at(index + radius + 1) + channel] ?? 0) - (from[at(index - radius) + channel] ?? 0)
       }
     }
 

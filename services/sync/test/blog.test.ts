@@ -32,9 +32,7 @@ async function addNote(path: string, content: string) {
 
 async function publishDomain(domain: string) {
   const answer = await publish({ domain })
-  env.db
-    .prepare('update spaces set blog_domain_verified_at = ? where id = ?')
-    .run(Date.now(), space)
+  env.db.prepare('update spaces set blog_domain_verified_at = ? where id = ?').run(Date.now(), space)
   return answer
 }
 
@@ -376,8 +374,7 @@ describe('a published note cannot script the reader', () => {
       token,
       body: {
         path: 'counts.md',
-        content:
-          '# Counts\n\n```chart\ntitle: Two months\nlabels: [Jan, Feb]\nseries:\n  - data: [3, 5]\n```\n',
+        content: '# Counts\n\n```chart\ntitle: Two months\nlabels: [Jan, Feb]\nseries:\n  - data: [3, 5]\n```\n',
       },
     })
     await publish({ subdomain: 'field' })
@@ -400,9 +397,7 @@ describe('a published note cannot script the reader', () => {
     const response = await call(env, '/listen', { host: 'field.nibeditor.com' })
 
     expect(response.text).toContain('<audio class="embed-media" controls preload="metadata"')
-    expect(response.headers.get('content-security-policy') ?? '').toContain(
-      'media-src https: data:',
-    )
+    expect(response.headers.get('content-security-policy') ?? '').toContain('media-src https: data:')
   })
 
   test('markdown still renders fully', async () => {
@@ -481,10 +476,7 @@ describe('links between notes on a published page', () => {
     }
     const ids = graph.nodes.map((one) => one.id)
     expect(ids).toContain('road')
-    expect(graph.edges.map((one) => [ids[one.a], ids[one.b]].sort())).toContainEqual([
-      'b/x',
-      'road',
-    ])
+    expect(graph.edges.map((one) => [ids[one.a], ids[one.b]].sort())).toContainEqual(['b/x', 'road'])
   })
 
   test('and so does a plain markdown link that names one', async () => {
@@ -713,8 +705,7 @@ describe('choosing a subdomain', () => {
 
   test('a name another space takes while publishing is refused, not a 500', async () => {
     const other = await signIn(env, 'other@b.dev')
-    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json
-      .space.id
+    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space.id
     env.justBefore(/update spaces set blog_enabled = 1/, () => {
       env.db.prepare('update spaces set blog_subdomain = ? where id = ?').run('field', theirs)
     })
@@ -736,9 +727,7 @@ describe('choosing a subdomain', () => {
     expect((await call(env, '/v1/spaces/available/free-name', { token })).json.available).toBe(true)
 
     await publish({ subdomain: 'taken-name' })
-    expect((await call(env, '/v1/spaces/available/taken-name', { token })).json.available).toBe(
-      false,
-    )
+    expect((await call(env, '/v1/spaces/available/taken-name', { token })).json.available).toBe(false)
     expect((await call(env, '/v1/spaces/available/www', { token })).json.available).toBe(false)
   })
 })
@@ -844,9 +833,7 @@ describe('nothing public carries the email address', () => {
     const seen: string[] = []
     for (const path of PUBLIC) {
       const response = await call(env, path, { host })
-      seen.push(
-        `${path}: ${[...response.headers.entries()].map(([k, v]) => `${k}=${v}`).join(' ')}`,
-      )
+      seen.push(`${path}: ${[...response.headers.entries()].map(([k, v]) => `${k}=${v}`).join(' ')}`)
       seen.push(`${path}: ${response.text}`)
     }
 
@@ -1033,9 +1020,9 @@ describe('publishing one note instead of the space', () => {
     await addNote('Site/home.md', '# Home\n\nMine.\n')
     await publish({ subdomain: 'me', note: 'Site/home.md' })
     await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
-    const folder = env.db
-      .prepare("select id from folders where space_id = ? and name = 'Site'")
-      .get(space) as { id: string }
+    const folder = env.db.prepare("select id from folders where space_id = ? and name = 'Site'").get(space) as {
+      id: string
+    }
 
     const deleted = await call(env, `/v2/spaces/${space}/ops`, {
       token,
@@ -1379,11 +1366,7 @@ describe('what a writer commented out', () => {
     env.db
       .prepare("update notes set front = ?, front_rev = 0 where path = 'Post.md'")
       .run(JSON.stringify({ summary: 'Intro %%hidden-inline%% more.', tags: ['secret-tag'] }))
-    env.db
-      .prepare(
-        "update note_search set body = 'Intro hiddenblock quokka End.' where path = 'Post.md'",
-      )
-      .run()
+    env.db.prepare("update note_search set body = 'Intro hiddenblock quokka End.' where path = 'Post.md'").run()
 
     const page = await call(env, '/post', { host: 'field.nibeditor.com' })
     expect(page.text).not.toContain('hidden-inline')

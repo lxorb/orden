@@ -30,8 +30,7 @@ globalThis.ordenAgentOf = (describe, base) => {
   const hidden = (el) => {
     if (el.hidden || el.getAttribute('aria-hidden') === 'true') return true
     const tag = el.localName
-    if (['script', 'style', 'noscript', 'template', 'head', 'meta', 'link', 'title'].includes(tag))
-      return true
+    if (['script', 'style', 'noscript', 'template', 'head', 'meta', 'link', 'title'].includes(tag)) return true
     if (tag === 'input' && String(el.type).toLowerCase() === 'hidden') return true
     try {
       const style = el.ownerDocument.defaultView.getComputedStyle(el)
@@ -134,9 +133,7 @@ globalThis.ordenAgentOf = (describe, base) => {
       case 'meter':
         return 'meter'
       case 'section':
-        return el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby')
-          ? 'region'
-          : 'generic'
+        return el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby') ? 'region' : 'generic'
       case 'select':
         return el.multiple || el.size > 1 ? 'listBox' : 'combobox'
       case 'table':
@@ -152,9 +149,7 @@ globalThis.ordenAgentOf = (describe, base) => {
       case 'td':
         return 'cell'
       case 'th':
-        return el.closest('thead') || el.getAttribute('scope') === 'col'
-          ? 'columnheader'
-          : 'rowheader'
+        return el.closest('thead') || el.getAttribute('scope') === 'col' ? 'columnheader' : 'rowheader'
       case 'textarea':
         return 'textbox'
       case 'iframe':
@@ -213,19 +208,13 @@ globalThis.ordenAgentOf = (describe, base) => {
         const tag = child.localName
         const type = String(child.type || '').toLowerCase()
         if (tag === 'img' || tag === 'area') words += ' ' + (child.getAttribute('alt') || '') + ' '
-        else if (child.getAttribute('aria-label'))
-          words += ' ' + child.getAttribute('aria-label') + ' '
-        else if (tag === 'select')
-          words += ' ' + [...child.selectedOptions].map((one) => one.label).join(' ') + ' '
+        else if (child.getAttribute('aria-label')) words += ' ' + child.getAttribute('aria-label') + ' '
+        else if (tag === 'select') words += ' ' + [...child.selectedOptions].map((one) => one.label).join(' ') + ' '
         else if (tag === 'textarea') words += ' ' + child.value + ' '
         else if (tag === 'input')
-          words += ['checkbox', 'radio', 'file', 'hidden', 'password'].includes(type)
-            ? ' '
-            : ' ' + child.value + ' '
+          words += ['checkbox', 'radio', 'file', 'hidden', 'password'].includes(type) ? ' ' : ' ' + child.value + ' '
         else {
-          const block = ['div', 'p', 'br', 'li', 'tr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(
-            tag,
-          )
+          const block = ['div', 'p', 'br', 'li', 'tr', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(tag)
           words += (block ? ' ' : '') + contents(child, skip, depth + 1) + (block ? ' ' : '')
         }
       }
@@ -252,24 +241,16 @@ globalThis.ordenAgentOf = (describe, base) => {
     const label = flat(el.getAttribute('aria-label'))
     if (label) return label
     const tag = el.localName
-    if (
-      tag === 'input' ||
-      tag === 'select' ||
-      tag === 'textarea' ||
-      tag === 'meter' ||
-      tag === 'progress'
-    ) {
+    if (tag === 'input' || tag === 'select' || tag === 'textarea' || tag === 'meter' || tag === 'progress') {
       const type = String(el.type || '').toLowerCase()
       if (tag === 'input' && ['button', 'submit', 'reset'].includes(type))
         return flat(el.value) || (type === 'submit' ? 'Submit' : type === 'reset' ? 'Reset' : '')
-      if (tag === 'input' && type === 'image')
-        return flat(el.getAttribute('alt') || el.value || 'Submit')
+      if (tag === 'input' && type === 'image') return flat(el.getAttribute('alt') || el.value || 'Submit')
       const labels = el.labels ? [...el.labels].map((one) => contents(one, el)).join(' ') : ''
       if (flat(labels)) return flat(labels)
       return flat(el.getAttribute('title') || el.getAttribute('placeholder'))
     }
-    if (tag === 'img' || tag === 'area')
-      return flat(el.getAttribute('alt') || el.getAttribute('title'))
+    if (tag === 'img' || tag === 'area') return flat(el.getAttribute('alt') || el.getAttribute('title'))
     if (tag === 'svg') return flat(el.querySelector('title')?.textContent || '')
     if (tag === 'fieldset') {
       const legend = el.querySelector(':scope > legend')
@@ -316,8 +297,7 @@ globalThis.ordenAgentOf = (describe, base) => {
     if (tag === 'textarea') return el.value
     if (tag === 'input') {
       const type = String(el.type || 'text').toLowerCase()
-      if (['checkbox', 'radio', 'button', 'submit', 'reset', 'image', 'file'].includes(type))
-        return null
+      if (['checkbox', 'radio', 'button', 'submit', 'reset', 'image', 'file'].includes(type)) return null
       if (secretField(el, type)) return el.value === '' ? '' : '•'
       return el.value
     }
@@ -332,34 +312,26 @@ globalThis.ordenAgentOf = (describe, base) => {
   const propertiesOf = (el, role, doc) => {
     const out = []
     if (doc.activeElement === el) out.push(property('focused', true))
-    const disabled =
-      el.disabled ||
-      el.getAttribute('aria-disabled') === 'true' ||
-      !!el.closest('fieldset[disabled]')
+    const disabled = el.disabled || el.getAttribute('aria-disabled') === 'true' || !!el.closest('fieldset[disabled]')
     if (disabled) out.push(property('disabled', true))
     const tag = el.localName
     const type = String(el.type || '').toLowerCase()
     if (tag === 'input' && (type === 'checkbox' || type === 'radio'))
       out.push(property('checked', el.indeterminate ? 'mixed' : String(el.checked)))
-    else if (el.hasAttribute('aria-checked'))
-      out.push(property('checked', el.getAttribute('aria-checked')))
-    if (el.hasAttribute('aria-pressed'))
-      out.push(property('pressed', el.getAttribute('aria-pressed')))
-    if (el.hasAttribute('aria-expanded'))
-      out.push(property('expanded', el.getAttribute('aria-expanded') === 'true'))
+    else if (el.hasAttribute('aria-checked')) out.push(property('checked', el.getAttribute('aria-checked')))
+    if (el.hasAttribute('aria-pressed')) out.push(property('pressed', el.getAttribute('aria-pressed')))
+    if (el.hasAttribute('aria-expanded')) out.push(property('expanded', el.getAttribute('aria-expanded') === 'true'))
     else if (tag === 'summary' && el.parentElement?.localName === 'details')
       out.push(property('expanded', el.parentElement.open))
     else if (role === 'combobox' && tag === 'select') out.push(property('expanded', false))
     if ((tag === 'option' && el.selected) || el.getAttribute('aria-selected') === 'true')
       out.push(property('selected', true))
-    if (el.required || el.getAttribute('aria-required') === 'true')
-      out.push(property('required', true))
+    if (el.required || el.getAttribute('aria-required') === 'true') out.push(property('required', true))
     if (el.readOnly && (tag === 'input' || tag === 'textarea')) out.push(property('readonly', true))
     if (el.hasAttribute('aria-invalid') && el.getAttribute('aria-invalid') !== 'false')
       out.push(property('invalid', el.getAttribute('aria-invalid')))
     if (role === 'heading') {
-      const level =
-        Number(el.getAttribute('aria-level')) || Number(/^h([1-6])$/.exec(tag)?.[1]) || 2
+      const level = Number(el.getAttribute('aria-level')) || Number(/^h([1-6])$/.exec(tag)?.[1]) || 2
       out.push(property('level', level))
     }
     if (role === 'link' && el.href) out.push(property('url', String(el.href)))
@@ -396,9 +368,7 @@ globalThis.ordenAgentOf = (describe, base) => {
       if (gone === true) return
       const tag = el.localName
       if (tag === 'input' || tag === 'textarea') {
-        fields.push(
-          Object.assign(describe(el), { id: idOf(el), filled: String(el.value || '') !== '' }),
-        )
+        fields.push(Object.assign(describe(el), { id: idOf(el), filled: String(el.value || '') !== '' }))
       }
       let here = parent
       if (gone !== 'self') {
@@ -433,8 +403,7 @@ globalThis.ordenAgentOf = (describe, base) => {
         for (const option of el.options) walk(option, here, doc)
         return
       }
-      for (const child of el.shadowRoot ? el.shadowRoot.childNodes : el.childNodes)
-        walk(child, here, doc)
+      for (const child of el.shadowRoot ? el.shadowRoot.childNodes : el.childNodes) walk(child, here, doc)
     }
     const root = add(document, null)
     root.role = { value: 'RootWebArea' }
@@ -497,8 +466,7 @@ globalThis.ordenAgentOf = (describe, base) => {
   const active = () => {
     let el = document.activeElement
     try {
-      while (el && el.contentDocument && el.contentDocument.activeElement)
-        el = el.contentDocument.activeElement
+      while (el && el.contentDocument && el.contentDocument.activeElement) el = el.contentDocument.activeElement
     } catch {
       // Another site's, or nothing to read.
     }

@@ -10,25 +10,18 @@
   import { terminalMark } from './naming'
   import { hostIdOf, readSpec } from './spec'
 
-  const { tab }: { tab: Pick<Tab, 'doc' | 'running'> & { id?: string; path?: string | null } } =
-    $props()
+  const { tab }: { tab: Pick<Tab, 'doc' | 'running'> & { id?: string; path?: string | null } } = $props()
 
   const online = $derived(isTermTarget(tab.path ?? null))
   const spec = $derived(online ? null : readSpec(tab.doc))
   const shell = $derived(spec?.shell ?? '')
   const mark = $derived(terminalMark(shell, tab.running?.program ?? null))
   const host = $derived(hostIdOf(shell))
-  const colour = $derived(
-    tab.running?.colour ?? (host === null ? null : (remote.byId(host)?.colour ?? null)),
-  )
+  const colour = $derived(tab.running?.colour ?? (host === null ? null : (remote.byId(host)?.colour ?? null)))
   const machine = $derived(online && tab.id !== undefined ? (marks.get(tab.id) ?? 'asleep') : null)
 
-  const chosen = $derived(
-    readIcon(online ? (tab.path ? chosenIcon(tab.path) : null) : (spec?.icon ?? null)),
-  )
-  const tint = $derived(
-    online ? (tab.path ? chosenTint(tab.path) : null) : (spec?.iconColor ?? null),
-  )
+  const chosen = $derived(readIcon(online ? (tab.path ? chosenIcon(tab.path) : null) : (spec?.icon ?? null)))
+  const tint = $derived(online ? (tab.path ? chosenTint(tab.path) : null) : (spec?.iconColor ?? null))
 
   $effect(() => {
     if (host !== null) void remote.ready()
@@ -47,9 +40,7 @@
 >
   <span class="drawn"><Icon icon={chosen} {tint} fallback={TERMINAL_MARKS[mark]} /></span>
   {#if online}
-    <svg class="cloud" viewBox="0 0 24 24"
-      ><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" /></svg
-    >
+    <svg class="cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" /></svg>
     {#if machine !== null && machine !== 'awake'}<span class="state"></span>{/if}
   {/if}
 </span>

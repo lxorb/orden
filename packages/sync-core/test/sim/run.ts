@@ -115,21 +115,16 @@ class Run {
         : new ReferenceDevice(id, this.clock, stream, seeded, this.random.between(-500, 500))
     })
     this.book = ledger(seeded.map((note) => note.id))
-    for (const note of seeded)
-      for (const marker of markersIn(note.text)) this.book.typed.add(marker)
+    for (const note of seeded) for (const marker of markersIn(note.text)) this.book.typed.add(marker)
   }
 
   private link(device: DeviceAdapter): Link {
-    return (route, body) =>
-      this.network.request(device.id, () => this.account.handle(device.id, route, body))
+    return (route, body) => this.network.request(device.id, () => this.account.handle(device.id, route, body))
   }
 
   private words(): string {
     this.counter += 1
-    const filler = Array.from(
-      { length: this.random.between(0, 4) },
-      () => this.random.pick(FILLER) ?? 'the',
-    )
+    const filler = Array.from({ length: this.random.between(0, 4) }, () => this.random.pick(FILLER) ?? 'the')
     const at = this.random.int(filler.length + 1)
     filler.splice(at, 0, `mk${String(this.counter)}z`)
     return filler.join(' ')
@@ -234,8 +229,7 @@ class Run {
     const r = this.random
     const device = r.int(this.devices.length)
     const one = this.devices[device]
-    if (one && !one.running)
-      return r.chance(0.5) ? { t: 'launch', device } : { t: 'wait', ticks: r.between(1, 10) }
+    if (one && !one.running) return r.chance(0.5) ? { t: 'launch', device } : { t: 'wait', ticks: r.between(1, 10) }
     if (one?.held().length)
       return { t: 'answer', device, choice: r.pick(['mine', 'theirs', 'both'] as const) ?? 'mine' }
 
@@ -243,10 +237,7 @@ class Run {
       [{ t: 'act', device, action: this.action(device) }, 60],
       [{ t: 'pass', device }, 20],
       [{ t: 'wait', ticks: r.between(1, 30) }, 10],
-      [
-        this.network.isOffline(one?.id ?? '') ? { t: 'online', device } : { t: 'offline', device },
-        4,
-      ],
+      [this.network.isOffline(one?.id ?? '') ? { t: 'online', device } : { t: 'offline', device }, 4],
       [{ t: 'crash', device }, 2],
       [{ t: 'quit', device }, 2],
     ])
@@ -334,12 +325,7 @@ class Run {
     await this.tick()
   }
 
-  private noteTree(
-    device: number,
-    action: Action,
-    before: readonly EntryView[],
-    after: ReadonlySet<string>,
-  ) {
+  private noteTree(device: number, action: Action, before: readonly EntryView[], after: ReadonlySet<string>) {
     const at = this.trace.length
     if (action.t === 'delete') {
       const gone = before.map((entry) => entry.id).filter((id) => !after.has(id))
@@ -410,11 +396,7 @@ class Run {
       for (const one of this.devices) this.classifications.push(...one.classified())
 
       const views = await Promise.all(this.devices.map((device) => device.view()))
-      const now = JSON.stringify([
-        await this.account.view(),
-        views,
-        this.devices.map((device) => device.held().length),
-      ])
+      const now = JSON.stringify([await this.account.view(), views, this.devices.map((device) => device.held().length)])
       still = now === last ? still + 1 : 0
       last = now
       if (still >= 2) return true

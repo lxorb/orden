@@ -11,11 +11,7 @@ export const placesFor = (
   spaces: readonly Space[],
   here: string | null,
   writable: (path: string) => boolean = () => true,
-): MoveTarget[] =>
-  moveTargets({ moving: null, tree, spaces, here }).filter((one) => writable(one.id))
+): MoveTarget[] => moveTargets({ moving: null, tree, spaces, here }).filter((one) => writable(one.id))
 
-export const startingPlace = (
-  places: readonly MoveTarget[],
-  home: string | null,
-): MoveTarget | null =>
+export const startingPlace = (places: readonly MoveTarget[], home: string | null): MoveTarget | null =>
   places.find((one) => home !== null && samePath(one.id, home)) ?? places[0] ?? null

@@ -5,10 +5,8 @@ export const QUOTA = 1024 * 1024 * 1024
 const NOTES_USED = (user: string) => `(select coalesce(sum(n.size), 0)
           from notes n join spaces s on s.id = n.space_id
          where s.user_id = ${user} and n.kind != 'file')`
-const BLOBS_USED = (user: string) =>
-  `(select coalesce(sum(size), 0) from blobs where user_id = ${user})`
-const PASS_USED = (user: string) =>
-  `(select coalesce(sum(size), 0) from pass_file_parts where user_id = ${user})`
+const BLOBS_USED = (user: string) => `(select coalesce(sum(size), 0) from blobs where user_id = ${user})`
+const PASS_USED = (user: string) => `(select coalesce(sum(size), 0) from pass_file_parts where user_id = ${user})`
 const PASS_ROWS_USED = (rows: string, user: string) =>
   `(select coalesce(sum(length(r.body) + length(r.key)), 0) from ${rows} r
      join pass_vaults v on v.id = r.vault_id where v.owner_id = ${user})`
@@ -30,12 +28,7 @@ export async function usedBytes(env: Env, userId: string): Promise<number> {
   return (row?.notes ?? 0) + (row?.blobs ?? 0) + (row?.pass ?? 0)
 }
 
-export async function fits(
-  env: Env,
-  userId: string,
-  incoming: number,
-  replacing = 0,
-): Promise<boolean> {
+export async function fits(env: Env, userId: string, incoming: number, replacing = 0): Promise<boolean> {
   const used = await usedBytes(env, userId)
   return used - replacing + incoming <= QUOTA
 }

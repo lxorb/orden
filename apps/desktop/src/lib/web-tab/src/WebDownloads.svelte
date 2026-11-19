@@ -20,12 +20,7 @@
   }
 
   let bubble = $state<HTMLElement>()
-  $effect(() =>
-    overlays.show(onclose, () => [
-      bubble,
-      ...document.querySelectorAll('[data-opens="downloads"]'),
-    ]),
-  )
+  $effect(() => overlays.show(onclose, () => [bubble, ...document.querySelectorAll('[data-opens="downloads"]')]))
 </script>
 
 <div
@@ -62,12 +57,7 @@
         </button>
 
         {#if one.state === 'going'}
-          <button
-            class="orden-glyph"
-            title="Cancel"
-            aria-label="Cancel"
-            onclick={() => void downloads.cancel(one.id)}
-          >
+          <button class="orden-glyph" title="Cancel" aria-label="Cancel" onclick={() => void downloads.cancel(one.id)}>
             <Glyph icon={X} />
           </button>
         {:else if one.state === 'done'}

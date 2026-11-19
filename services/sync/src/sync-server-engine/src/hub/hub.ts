@@ -118,11 +118,7 @@ export class AccountHub implements DurableObject {
     // Nothing to do; see above.
   }
 
-  private async hello(
-    socket: WebSocket,
-    me: Attached,
-    frame: Extract<FromDevice, { t: 'hello' }>,
-  ): Promise<void> {
+  private async hello(socket: WebSocket, me: Attached, frame: Extract<FromDevice, { t: 'hello' }>): Promise<void> {
     if (frame.device !== me.device) return
 
     if (me.guest) {

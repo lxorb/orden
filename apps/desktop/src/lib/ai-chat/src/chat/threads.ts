@@ -148,9 +148,7 @@ function outputIn(value: unknown): ToolOutput | undefined {
   if (!isRecord(value)) return undefined
   const images = Array.isArray(value.images)
     ? value.images.flatMap((one) =>
-        isRecord(one) && isString(one.mime) && isString(one.data)
-          ? [{ mime: one.mime, data: one.data }]
-          : [],
+        isRecord(one) && isString(one.mime) && isString(one.data) ? [{ mime: one.mime, data: one.data }] : [],
       )
     : []
   return {
@@ -168,14 +166,11 @@ function partIn(value: unknown): Part | null {
   if (!isRecord(value)) return null
   const { kind, text } = value
   if (kind === 'text') return isString(text) ? { kind, text } : null
-  if (kind === 'thinking')
-    return isString(text) ? { kind, text, ms: isNumber(value.ms) ? value.ms : 0 } : null
+  if (kind === 'thinking') return isString(text) ? { kind, text, ms: isNumber(value.ms) ? value.ms : 0 } : null
   if (kind === 'notice') {
     const code = NOTICES.find((one) => one === value.code)
     const threads = Array.isArray(value.threads) ? value.threads.filter(isString) : []
-    return code
-      ? { kind, code, text: isString(text) ? text : '', ...(threads.length ? { threads } : {}) }
-      : null
+    return code ? { kind, code, text: isString(text) ? text : '', ...(threads.length ? { threads } : {}) } : null
   }
   if (kind !== 'tool' || !isString(value.id) || !isString(value.verb)) return null
   const state = STATES.find((one) => one === value.state && one !== 'running') ?? 'error'
@@ -205,9 +200,7 @@ function turnIn(value: unknown): Turn | null {
   if (!isRecord(value) || !isString(value.id) || (value.role !== 'you' && value.role !== 'model')) {
     return null
   }
-  const parts = Array.isArray(value.parts)
-    ? value.parts.map(partIn).filter((one) => one !== null)
-    : []
+  const parts = Array.isArray(value.parts) ? value.parts.map(partIn).filter((one) => one !== null) : []
   const turn = { ...(value as unknown as Turn), parts, at: isNumber(value.at) ? value.at : 0 }
   if (!isString(turn.context)) delete turn.context
   return turn
@@ -246,13 +239,7 @@ function cutOff(turns: Turn[], answering: string): void {
   turn.parts.push({ kind: 'notice', code: 'stopped', text: '' })
 }
 
-const ENDED: ReadonlySet<NoticeCode> = new Set<NoticeCode>([
-  'stopped',
-  'error',
-  'steps',
-  'max_tokens',
-  'refusal',
-])
+const ENDED: ReadonlySet<NoticeCode> = new Set<NoticeCode>(['stopped', 'error', 'steps', 'max_tokens', 'refusal'])
 
 const SAYS_WITHIN = 1_500
 
@@ -371,8 +358,7 @@ export function otherWindowDeleted(listener: (id: string) => void): () => void {
     if (!isString(id) || !isString(space)) return
     removed.add(id)
     const held = writing.get(id)
-    if (held)
-      void held.done.catch(() => undefined).then(() => deleted(space, id).catch(() => undefined))
+    if (held) void held.done.catch(() => undefined).then(() => deleted(space, id).catch(() => undefined))
     listener(id)
   })
 }
@@ -396,9 +382,7 @@ function changedHere(thread: Thread): Record<string, unknown> {
   const read = readHere.get(thread.id) ?? {}
   readHere.set(thread.id, fields)
   return Object.fromEntries(
-    Object.entries(fields).filter(
-      ([name, value]) => JSON.stringify(value) !== JSON.stringify(read[name]),
-    ),
+    Object.entries(fields).filter(([name, value]) => JSON.stringify(value) !== JSON.stringify(read[name])),
   )
 }
 
@@ -406,9 +390,7 @@ export function threadIn(value: unknown, gone = false): Thread | null {
   if (!isRecord(value)) return null
   const { id, space, title, provider, model, effort, mode } = value
   if (!isString(id) || !isString(space) || !isString(provider) || !isString(model)) return null
-  const turns = Array.isArray(value.turns)
-    ? value.turns.map(turnIn).filter((one): one is Turn => one !== null)
-    : []
+  const turns = Array.isArray(value.turns) ? value.turns.map(turnIn).filter((one): one is Turn => one !== null) : []
   const elsewhere = !gone && isString(value.answering) && answeredElsewhere(value)
   if (isString(value.answering) && !elsewhere) cutOff(turns, value.answering)
   const compaction =
@@ -515,9 +497,7 @@ async function web() {
 }
 
 export async function listThreads(space: string): Promise<ThreadHead[]> {
-  const read = isNative
-    ? await invoke<unknown>('ai_threads_list', { space })
-    : await (await web()).heads(space)
+  const read = isNative ? await invoke<unknown>('ai_threads_list', { space }) : await (await web()).heads(space)
   const heads = Array.isArray(read) ? read.map(headIn).filter((one) => one !== null) : []
   return heads.sort((a, b) => b.updated - a.updated)
 }

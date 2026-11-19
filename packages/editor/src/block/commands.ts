@@ -170,9 +170,7 @@ function ownEnd(state: EditorState, span: BlockSpan): number {
   if (span.kind !== 'list') return span.to
 
   const first = state.doc.lineAt(span.from)
-  const inner = blocksIn(state, Math.min(first.to + 1, span.to), span.to).find(
-    (one) => one.from > first.to,
-  )
+  const inner = blocksIn(state, Math.min(first.to + 1, span.to), span.to).find((one) => one.from > first.to)
   if (!inner) return span.to
 
   const before = writtenLine(state, state.doc.lineAt(inner.from).number - 1, -1)
@@ -202,12 +200,7 @@ function startsAnItem(state: EditorState, line: Line): boolean {
   return found
 }
 
-function numberedLine(
-  text: string,
-  counting: Counting[],
-  listed: boolean,
-  quoted: boolean,
-): string {
+function numberedLine(text: string, counting: Counting[], listed: boolean, quoted: boolean): string {
   const { lead, indent, words } = wordsOf(text, listed, quoted)
   const written = indent.length
 
@@ -276,8 +269,7 @@ export function turnBlocksInto(view: EditorView, pos: number, shape: BlockShape)
       if (seen.has(number)) continue
       seen.add(number)
       const line = doc.line(number)
-      if (!line.text.trim() || (number > first && ownLine(line.text.replace(QUOTE_MARKS, ''))))
-        continue
+      if (!line.text.trim() || (number > first && ownLine(line.text.replace(QUOTE_MARKS, '')))) continue
 
       const items = itemwise && number > first ? itemsHolding(view.state, line) : [number]
       if (items[0] !== number || (itemwise && number > first && !LISTED.has(shape))) {
@@ -383,11 +375,9 @@ function overBlocks(view: EditorView, pos: number, command: StateCommand): boole
   return ran
 }
 
-export const indentBlocks = (view: EditorView, pos: number): boolean =>
-  overBlocks(view, pos, indentItems)
+export const indentBlocks = (view: EditorView, pos: number): boolean => overBlocks(view, pos, indentItems)
 
-export const outdentBlocks = (view: EditorView, pos: number): boolean =>
-  overBlocks(view, pos, outdentItems)
+export const outdentBlocks = (view: EditorView, pos: number): boolean => overBlocks(view, pos, outdentItems)
 
 function nextWritten(state: EditorState, from: number, delta: -1 | 1): number | null {
   const doc = state.doc

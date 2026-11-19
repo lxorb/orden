@@ -10,22 +10,17 @@ function at(written: string, ...extensions: Extension[]) {
   const first = written.indexOf('|')
   const second = written.indexOf('|', first + 1)
   const doc = written.replaceAll('|', '')
-  const selection =
-    second === -1 ? EditorSelection.cursor(first) : EditorSelection.range(first, second - 1)
+  const selection = second === -1 ? EditorSelection.cursor(first) : EditorSelection.range(first, second - 1)
   return parsed(
     EditorState.create({
       doc,
       selection,
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        ...extensions,
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), ...extensions],
     }),
   )
 }
 
-const tex = (written: string, ...extensions: Extension[]) =>
-  mathsAtCaret(at(written, ...extensions))?.tex ?? null
+const tex = (written: string, ...extensions: Extension[]) => mathsAtCaret(at(written, ...extensions))?.tex ?? null
 
 describe('the formula the caret is in', () => {
   test('inline, anywhere inside it and against either dollar', () => {

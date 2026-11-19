@@ -1,12 +1,5 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
-import {
-  forgetKeptScrolls,
-  holdScroll,
-  keepsScroll,
-  keptScroll,
-  SCROLL_KEPT,
-  scrollKeyOf,
-} from './kept-scroll'
+import { forgetKeptScrolls, holdScroll, keepsScroll, keptScroll, SCROLL_KEPT, scrollKeyOf } from './kept-scroll'
 import type { TabKind } from '@orden/contracts'
 import { settle } from '../../../../test/effects/settle'
 
@@ -46,27 +39,24 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-test.each([...SCROLL_KEPT])(
-  'a %s tab switched away from and back keeps its scroll',
-  async (kind) => {
-    const key = scrollKeyOf({ kind, path: `/space/${kind}`, reading: false }, 0)
-    expect(key).not.toBeNull()
+test.each([...SCROLL_KEPT])('a %s tab switched away from and back keeps its scroll', async (kind) => {
+  const key = scrollKeyOf({ kind, path: `/space/${kind}`, reading: false }, 0)
+  expect(key).not.toBeNull()
 
-    const first = drawn(kind)
-    const keeping = keepsScroll(first.root, key)
-    scrollTo(first.scroller, 1234)
-    scrollTo(first.inner, 77)
-    keeping.destroy()
-    first.root.remove()
+  const first = drawn(kind)
+  const keeping = keepsScroll(first.root, key)
+  scrollTo(first.scroller, 1234)
+  scrollTo(first.inner, 77)
+  keeping.destroy()
+  first.root.remove()
 
-    const back = drawn(kind)
-    const again = keepsScroll(back.root, key)
-    await settle()
-    expect(back.scroller.scrollTop).toBe(1234)
-    expect(back.inner.scrollTop).toBe(77)
-    again.destroy()
-  },
-)
+  const back = drawn(kind)
+  const again = keepsScroll(back.root, key)
+  await settle()
+  expect(back.scroller.scrollTop).toBe(1234)
+  expect(back.inner.scrollTop).toBe(77)
+  again.destroy()
+})
 
 test('switching tabs in one pane hands each tab its own scroll', async () => {
   const { root, scroller } = drawn('pass')

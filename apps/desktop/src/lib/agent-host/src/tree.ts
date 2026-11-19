@@ -105,9 +105,7 @@ export async function listNotes(call: Call): Promise<AgentAnswer> {
   const tree = await treeOf(place)
   if (tree) walk(tree)
 
-  rows.sort((one, other) =>
-    one.path.localeCompare(other.path, undefined, { sensitivity: 'base', numeric: true }),
-  )
+  rows.sort((one, other) => one.path.localeCompare(other.path, undefined, { sensitivity: 'base', numeric: true }))
   return done(rows.slice(0, count(call, 'limit', ROWS, MOST_ROWS)), sharedSource(place))
 }
 
@@ -149,9 +147,7 @@ async function movedAway(place: Place, from: string, to: string, folder: boolean
   await moving(to, () =>
     workspace.holdingUnder(from, async () => {
       await workspace.renameOnDisk(from, to, folder ? 'folder' : 'file')
-      await index
-        .retarget(from, to, place.space.root, undefined, { moved: true })
-        .catch(() => undefined)
+      await index.retarget(from, to, place.space.root, undefined, { moved: true }).catch(() => undefined)
       await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
       await workspace.undone.moved(from, to)
     }),
@@ -190,13 +186,7 @@ export async function trashFile(call: Call): Promise<AgentAnswer> {
   )
   if (shown) needScope(call, 'workspace.focus', 'a file open in front of the reader')
 
-  const question = await asked(
-    call,
-    null,
-    `Move ${relative} to Recently deleted`,
-    undefined,
-    'trashing',
-  )
+  const question = await asked(call, null, `Move ${relative} to Recently deleted`, undefined, 'trashing')
   if (question) return question
 
   await workspace.remove(path, entry.is_dir, sourceOf(call))

@@ -37,9 +37,9 @@ async function pastedPlainly(marked: string, text: string): Promise<string> {
 
 describe('paste as plain text into code held in a list item or quote', () => {
   test('keeps every pasted line inside the item, as a normal paste does', async () => {
-    await expect(
-      pastedPlainly('- step\n  ```js\n  |\n  ```\n- next', 'let a = 1\nlet b = 2'),
-    ).resolves.toBe('- step\n  ```js\n  let a = 1\n  let b = 2\n  ```\n- next')
+    await expect(pastedPlainly('- step\n  ```js\n  |\n  ```\n- next', 'let a = 1\nlet b = 2')).resolves.toBe(
+      '- step\n  ```js\n  let a = 1\n  let b = 2\n  ```\n- next',
+    )
   })
 
   test('keeps every pasted line inside the quote', async () => {

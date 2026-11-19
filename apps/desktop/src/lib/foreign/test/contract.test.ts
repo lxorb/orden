@@ -17,17 +17,9 @@ function sources(folder: string): string[] {
 describe('the module stands on its own', () => {
   test('reaches only the modules it names', () => {
     const reached = sources(SRC).flatMap((file) =>
-      [...readFileSync(file, 'utf8').matchAll(/from '\.\.\/\.\.\/([a-z-]+)\/src\/api'/g)].map(
-        (found) => found[1],
-      ),
+      [...readFileSync(file, 'utf8').matchAll(/from '\.\.\/\.\.\/([a-z-]+)\/src\/api'/g)].map((found) => found[1]),
     )
-    expect([...new Set(reached)].sort()).toEqual([
-      'accounts',
-      'platform',
-      'sync-client',
-      'sync-mirror',
-      'ui-kit',
-    ])
+    expect([...new Set(reached)].sort()).toEqual(['accounts', 'platform', 'sync-client', 'sync-mirror', 'ui-kit'])
   })
 })
 

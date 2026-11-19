@@ -194,12 +194,7 @@ describe('reading what the glasses send', () => {
       { sysEvent: { eventSource: 99 } },
     ])
 
-    expect(got.map((one) => (one.kind === 'gesture' ? one.from : ''))).toEqual([
-      'right',
-      'ring',
-      'left',
-      'unknown',
-    ])
+    expect(got.map((one) => (one.kind === 'gesture' ? one.from : ''))).toEqual(['right', 'ring', 'left', 'unknown'])
   })
 
   test('reads a swipe that came through the system event instead', async () => {
@@ -228,9 +223,7 @@ describe('reading what the glasses send', () => {
   test('reads both ways out of the app as gone, and only says so once', async () => {
     expect(await heard([{ sysEvent: { eventType: 6 } }])).toEqual([{ kind: 'life', life: 'gone' }])
     expect(await heard([{ sysEvent: { eventType: 7 } }])).toEqual([{ kind: 'life', life: 'gone' }])
-    expect(
-      await heard([{ sysEvent: { eventType: 6 } }, { sysEvent: { eventType: 7 } }]),
-    ).toHaveLength(1)
+    expect(await heard([{ sysEvent: { eventType: 6 } }, { sysEvent: { eventType: 7 } }])).toHaveLength(1)
   })
 
   test('ignores what is not an event at all', async () => {

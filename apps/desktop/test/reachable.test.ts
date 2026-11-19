@@ -85,9 +85,7 @@ describe('the note, where the list is the floor', () => {
   const note = tag(read('App.svelte'), 'document')
 
   test('is inert while it is slid off to uncover the list', () => {
-    expect(note).toContain(
-      'inert={viewport.narrow && viewport.drawer && !!workspace.panel && !bare}',
-    )
+    expect(note).toContain('inert={viewport.narrow && viewport.drawer && !!workspace.panel && !bare}')
   })
 
   test('on the condition that slides it', () => {

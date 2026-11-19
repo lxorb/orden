@@ -116,8 +116,7 @@ describe('three devices in one chat', () => {
         } else {
           event = { kind: 'react', id: id(), target: target.id, emoji: '👍', on: next() < 0.7 }
         }
-        if ((event.kind === 'edit' || event.kind === 'delete') && target?.author !== one.who)
-          continue
+        if ((event.kind === 'edit' || event.kind === 'delete') && target?.author !== one.who) continue
         await one.engine.queue(CHAT, event)
       }
 

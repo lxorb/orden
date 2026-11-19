@@ -7,9 +7,7 @@ export class FakeTimeServer implements TimeServer {
   private next = 1
 
   pull(since: number) {
-    const page = [...this.entries.values()]
-      .filter((one) => one.seq > since)
-      .sort((one, other) => one.seq - other.seq)
+    const page = [...this.entries.values()].filter((one) => one.seq > since).sort((one, other) => one.seq - other.seq)
     const shown = page.slice(0, TIME_PAGE)
     return Promise.resolve({
       entries: shown.map((one) => ({ ...one })),

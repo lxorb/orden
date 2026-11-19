@@ -1,14 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { NoteDoc, type TabKind, UNTITLED } from './documents.svelte'
-import {
-  draftFile,
-  fileNamed,
-  hasWords,
-  isDraft,
-  isUnsaved,
-  namedByWords,
-  offeredName,
-} from './drafts'
+import { draftFile, fileNamed, hasWords, isDraft, isUnsaved, namedByWords, offeredName } from './drafts'
 
 interface Made {
   path?: string | null

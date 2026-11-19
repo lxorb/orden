@@ -1,16 +1,8 @@
 import type { Context } from 'hono'
-import {
-  type Env,
-  sha256,
-  tokenIn,
-  type Variables,
-  type Whoever,
-} from '../../../sync-server/src/api'
+import { type Env, sha256, tokenIn, type Variables, type Whoever } from '../../../sync-server/src/api'
 import { deviceOfSession } from '../hub/devices'
 
-export async function deviceOf(
-  context: Context<{ Bindings: Env; Variables: Variables }>,
-): Promise<string> {
+export async function deviceOf(context: Context<{ Bindings: Env; Variables: Variables }>): Promise<string> {
   const who = context.get('who')
   if (who.kind === 'guest') return `guest:${who.guest.id}`
   const header = context.req.header('authorization')

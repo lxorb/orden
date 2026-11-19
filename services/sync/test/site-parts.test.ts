@@ -1,13 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { asked, hasWords } from '../src/sync-server-blog/src/find'
 import { answersFrom, asCsv, formOf, formHtml } from '../src/sync-server/src/site/form'
-import {
-  around,
-  backlinks,
-  inOrder,
-  type Listed,
-  navigation,
-} from '../src/sync-server-blog/src/nav'
+import { around, backlinks, inOrder, type Listed, navigation } from '../src/sync-server-blog/src/nav'
 import { plainWords } from '../src/sync-server/src/site/words'
 import worker from '../src'
 import { call, signIn, testEnv, type TestEnv } from './harness'
@@ -79,12 +73,7 @@ describe('the navigation down the left', () => {
   ]
 
   test('reads a level at a time: its pages in order, then its folders', () => {
-    expect(inOrder(pages).map((one) => one.path)).toEqual([
-      'Two.md',
-      'One.md',
-      'Work/Early.md',
-      'Work/Deep.md',
-    ])
+    expect(inOrder(pages).map((one) => one.path)).toEqual(['Two.md', 'One.md', 'Work/Early.md', 'Work/Deep.md'])
   })
 
   test('draws a folder as a disclosure, open where the reader is inside it', () => {
@@ -119,21 +108,14 @@ describe('what links to a page', () => {
   })
 
   test('a path from the top of the space names only the note there', () => {
-    const pages = [
-      page('Plan.md'),
-      page('Notes/Plan.md'),
-      page('Notes/One.md', { links: ['/plan'] }),
-    ]
+    const pages = [page('Plan.md'), page('Notes/Plan.md'), page('Notes/One.md', { links: ['/plan'] })]
 
     expect(backlinks(pages, pages[0]!)).toContain('href="/notes/one"')
     expect(backlinks(pages, pages[1]!)).toBe('')
   })
 
   test('and an alias counts as a name for it', () => {
-    const pages = [
-      page('Plan.md', { aliases: ['the-plan'] }),
-      page('One.md', { links: ['the-plan'] }),
-    ]
+    const pages = [page('Plan.md', { aliases: ['the-plan'] }), page('One.md', { links: ['the-plan'] })]
 
     expect(backlinks(pages, pages[0]!)).toContain('One')
   })
@@ -488,9 +470,7 @@ describe('a site with forms on it', () => {
     held(1, 1024 * 1024 - 20)
 
     expect((await answer('A')).headers.get('location')).toBe(`/hello?sent=${note}`)
-    expect((await answer('A name longer than the room left')).headers.get('location')).toContain(
-      'wrong=',
-    )
+    expect((await answer('A name longer than the room left')).headers.get('location')).toContain('wrong=')
   })
 
   test('and measures an answer in the bytes it is stored as', async () => {
@@ -545,21 +525,14 @@ describe('a site with forms on it', () => {
       token,
       body: { path: 'Renamed.md', content: `# Hello\n\n${FENCE}\n`, baseVersion: version },
     })
-    expect(
-      env.db.prepare('select count(*) as n from blog_paths where note_id = ?').get(note),
-    ).toEqual({ n: 1 })
+    expect(env.db.prepare('select count(*) as n from blog_paths where note_id = ?').get(note)).toEqual({ n: 1 })
 
     await call(env, `/v1/notes/${note}`, { method: 'DELETE', token })
-    expect((await call(env, `/v1/trash/notes/${note}`, { method: 'DELETE', token })).status).toBe(
-      200,
-    )
+    expect((await call(env, `/v1/trash/notes/${note}`, { method: 'DELETE', token })).status).toBe(200)
 
     expect((await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers).toEqual([])
     for (const table of ['form_answers', 'blog_paths']) {
-      expect(
-        env.db.prepare(`select count(*) as n from ${table} where note_id = ?`).get(note),
-        table,
-      ).toEqual({ n: 0 })
+      expect(env.db.prepare(`select count(*) as n from ${table} where note_id = ?`).get(note), table).toEqual({ n: 0 })
     }
   })
 })
@@ -591,8 +564,7 @@ describe('a form on a site behind a password', () => {
     })
   }
 
-  const answers = async () =>
-    (await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers
+  const answers = async () => (await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers
 
   beforeEach(async () => {
     env = testEnv()

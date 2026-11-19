@@ -85,11 +85,8 @@ export function taskRowsOf(
   return rows
 }
 
-export const scannedTaskRows = (
-  space: string,
-  path: string,
-  tasks: readonly ScannedTask[],
-): Row[] => taskRowsOf(space, path, tasks, fileInfo({ path, stamp: null, tags: [], links: [] }), {})
+export const scannedTaskRows = (space: string, path: string, tasks: readonly ScannedTask[]): Row[] =>
+  taskRowsOf(space, path, tasks, fileInfo({ path, stamp: null, tags: [], links: [] }), {})
 
 export const taskRowsOfText = (space: string, path: string, text: string): Row[] =>
   scannedTaskRows(space, path, scanRows(text).tasks)

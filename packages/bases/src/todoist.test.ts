@@ -14,10 +14,7 @@ const TREES: [string, Filter[]][] = [
   ['overdue', ['task.deadline < today()']],
   ['no date', ['!task.date']],
   ['!no date', [{ not: ['!task.date'] }]],
-  [
-    '!no date & !no time',
-    [{ and: [{ not: ['!task.date'] }, { not: ['task.date && !task.time'] }] }],
-  ],
+  ['!no date & !no time', [{ and: [{ not: ['!task.date'] }, { not: ['task.date && !task.time'] }] }]],
   ['5 days', ['task.date >= today() && task.date < today() + "5d"']],
   ['next 5 days', ['task.date >= today() && task.date < today() + "5d"']],
   ['date: Jan 3', ['task.date == date("2026-01-03")']],
@@ -44,10 +41,7 @@ const TREES: [string, Filter[]][] = [
     '##School & !#Science',
     [
       {
-        and: [
-          'file.inFolder("School") || file.basename.lower() == "school"',
-          { not: ['task.hasTag("Science")'] },
-        ],
+        and: ['file.inFolder("School") || file.basename.lower() == "school"', { not: ['task.hasTag("Science")'] }],
       },
     ],
   ],
@@ -56,10 +50,7 @@ const TREES: [string, Filter[]][] = [
     '#Work & /Meetings',
     [
       {
-        and: [
-          'file.basename.lower() == "work"',
-          'task.section && task.section.lower() == "meetings"',
-        ],
+        and: ['file.basename.lower() == "work"', 'task.section && task.section.lower() == "meetings"'],
       },
     ],
   ],
@@ -74,14 +65,8 @@ const TREES: [string, Filter[]][] = [
   ['assigned to: me', ['task.mine']],
   ['assigned', ['task.assignee']],
   ['created: today', ['if(task.created, task.created, file.ctime.date()) == today()']],
-  [
-    'created before: -365 days',
-    ['if(task.created, task.created, file.ctime.date()) < today() - "365d"'],
-  ],
-  [
-    'created: Jan 3 2023',
-    ['if(task.created, task.created, file.ctime.date()) == date("2023-01-03")'],
-  ],
+  ['created before: -365 days', ['if(task.created, task.created, file.ctime.date()) < today() - "365d"']],
+  ['created: Jan 3 2023', ['if(task.created, task.created, file.ctime.date()) == date("2023-01-03")']],
   ['%urgent*', ['task.tags.filter(/^urgent.*$/i.matches(value)).length > 0']],
   ['#*Work', ['/^.*Work$/i.matches(file.basename)']],
   ['/*Work*', ['task.section && /^.*Work.*$/i.matches(task.section)']],
@@ -116,9 +101,7 @@ describe("Todoist's documented filters", () => {
   })
 
   test('a US reader writes the month first', () => {
-    expect(fromTodoist('6/10', { ...options, lang: 'en-US' })).toEqual([
-      'task.date == date("2026-06-10")',
-    ])
+    expect(fromTodoist('6/10', { ...options, lang: 'en-US' })).toEqual(['task.date == date("2026-06-10")'])
   })
 
   test("a date with no year and no today given takes this machine's year, not UTC's", () => {
@@ -127,9 +110,7 @@ describe("Todoist's documented filters", () => {
     vi.useFakeTimers()
     try {
       vi.setSystemTime(new Date(2027, 0, 1, 0, 30))
-      expect(fromTodoist('date: Jan 3', { isNote: options.isNote })).toEqual([
-        'task.date == date("2027-01-03")',
-      ])
+      expect(fromTodoist('date: Jan 3', { isNote: options.isNote })).toEqual(['task.date == date("2027-01-03")'])
     } finally {
       vi.useRealTimers()
       if (zone === undefined) delete process.env.TZ
@@ -150,9 +131,7 @@ describe('what a filter it compiles to keeps', () => {
   const context = contextAt()
   const kept = (source: string) =>
     rows
-      .filter((row) =>
-        fromTodoist(source, options).some((filter) => compileFilter(filter)(row, context)),
-      )
+      .filter((row) => fromTodoist(source, options).some((filter) => compileFilter(filter)(row, context)))
       .map((row) => row.task?.text)
 
   test.each<[string, (string | undefined)[]]>([

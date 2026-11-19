@@ -38,8 +38,7 @@ export async function cameBack(draft: Draft & { path: string }, asks: Asks): Pro
 
   const read = await asks.read(draft.path)
   if (read === null) {
-    const stays =
-      (await asks.exists(draft.path)) || base === null || !(await asks.reachable(draft.path))
+    const stays = (await asks.exists(draft.path)) || base === null || !(await asks.reachable(draft.path))
     return stays ? onFile(true, base) : asDraft()
   }
 
@@ -74,12 +73,7 @@ export async function mergedOver(base: string, words: string, disk: string): Pro
   return mergedOn(base, words, disk)
 }
 
-export async function wordsOnto(
-  draft: Draft,
-  kind: Draft['kind'],
-  holds: string,
-): Promise<string | null> {
-  if (draft.base === undefined || draft.kind !== 'note' || kind !== 'note' || __EVEN_PLUGIN__)
-    return null
+export async function wordsOnto(draft: Draft, kind: Draft['kind'], holds: string): Promise<string | null> {
+  if (draft.base === undefined || draft.kind !== 'note' || kind !== 'note' || __EVEN_PLUGIN__) return null
   return mergedOver(unixLines(draft.base), unixLines(draft.doc), holds)
 }

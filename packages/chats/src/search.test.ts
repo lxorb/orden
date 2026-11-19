@@ -38,18 +38,8 @@ describe('parseSearch', () => {
   })
 
   it('reads every has:, once each', () => {
-    const text =
-      'has:link has:file has:image has:video has:voice has:poll has:pin has:reaction has:pin'
-    expect(parseSearch(text, TODAY).has).toEqual([
-      'link',
-      'file',
-      'image',
-      'video',
-      'voice',
-      'poll',
-      'pin',
-      'reaction',
-    ])
+    const text = 'has:link has:file has:image has:video has:voice has:poll has:pin has:reaction has:pin'
+    expect(parseSearch(text, TODAY).has).toEqual(['link', 'file', 'image', 'video', 'voice', 'poll', 'pin', 'reaction'])
   })
 
   it.each([
@@ -64,18 +54,13 @@ describe('parseSearch', () => {
     ['during:sep', { since: '2026-09-01', until: '2026-10-01' }],
     ['during:November', { since: '2025-11-01', until: '2025-12-01' }],
     ['during:2026-10-03', { since: '2026-10-03', until: '2026-10-04' }],
-    [
-      'after:2026-09-01 before:2026-09-10 during:2026-09',
-      { since: '2026-09-02', until: '2026-09-10' },
-    ],
+    ['after:2026-09-01 before:2026-09-10 during:2026-09', { since: '2026-09-02', until: '2026-09-10' }],
   ] as [string, Partial<SearchQuery>][])('reads the days of %s', (text, fields) => {
     expect(parseSearch(text, TODAY)).toEqual(query(fields))
   })
 
   it('crosses a year going back from the first of January', () => {
-    expect(parseSearch('on:yesterday', '2027-01-01')).toEqual(
-      query({ since: '2026-12-31', until: '2027-01-01' }),
-    )
+    expect(parseSearch('on:yesterday', '2027-01-01')).toEqual(query({ since: '2026-12-31', until: '2027-01-01' }))
   })
 
   it.each([
@@ -139,8 +124,7 @@ const hit = (message: Message): Hit => ({
   dayOf: (at) => new Date(at).toISOString().slice(0, 10),
 })
 
-const found = (text: string, message: Message): boolean =>
-  matches(parseSearch(text, TODAY), hit(message))
+const found = (text: string, message: Message): boolean => matches(parseSearch(text, TODAY), hit(message))
 
 describe('hasOf', () => {
   const file = (type: string) => ({ hash: 'a'.repeat(64), name: 'x', size: 1, type })
@@ -148,19 +132,12 @@ describe('hasOf', () => {
   it('reads what a message has', () => {
     expect(hasOf(messageOf({ body: 'see https://example.com' }))).toEqual(['link'])
     expect(hasOf(messageOf({ preview: { url: 'https://a.ch', title: 'A' } }))).toEqual(['link'])
-    expect(hasOf(messageOf({ files: [file('image/webp'), file('audio/ogg')] }))).toEqual([
-      'file',
-      'image',
-      'voice',
-    ])
+    expect(hasOf(messageOf({ files: [file('image/webp'), file('audio/ogg')] }))).toEqual(['file', 'image', 'voice'])
     expect(hasOf(messageOf({ files: [file('video/mp4')] }))).toEqual(['file', 'video'])
-    expect(
-      hasOf(messageOf({ poll: { question: 'q', answers: ['a', 'b'], several: false, votes: {} } })),
-    ).toEqual(['poll'])
-    expect(hasOf(messageOf({ pinned: true, reactions: { '👍': [EMIL] } }))).toEqual([
-      'pin',
-      'reaction',
+    expect(hasOf(messageOf({ poll: { question: 'q', answers: ['a', 'b'], several: false, votes: {} } }))).toEqual([
+      'poll',
     ])
+    expect(hasOf(messageOf({ pinned: true, reactions: { '👍': [EMIL] } }))).toEqual(['pin', 'reaction'])
   })
 
   it('reads nothing on a deleted message', () => {

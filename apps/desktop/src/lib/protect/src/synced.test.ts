@@ -12,9 +12,7 @@ vi.mock('../../accounts/src/client', async (importOriginal) => ({
       server.sent.push({ path, body: options.body })
       return Promise.resolve({})
     }
-    return server.answer === undefined
-      ? Promise.reject(new Error('404 Not Found'))
-      : Promise.resolve(server.answer)
+    return server.answer === undefined ? Promise.reject(new Error('404 Not Found')) : Promise.resolve(server.answer)
   },
 }))
 

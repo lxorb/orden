@@ -101,14 +101,7 @@ import {
 import { blobs, publicBlobs, siteIcons } from './sync-server-blobs/src/api'
 import { serveBlog } from './sync-server-blog/src/api'
 import { crashes, feedback, openWaitingIssues, sweepCrashes } from './sync-server-feedback/src/api'
-import {
-  chatDoor,
-  chats,
-  sweepChats,
-  oauth,
-  oauthMetadata,
-  expireClients,
-} from './sync-server-chats/src/api'
+import { chatDoor, chats, sweepChats, oauth, oauthMetadata, expireClients } from './sync-server-chats/src/api'
 import { openLink, pass, sweepPassLinks, servePassLink } from './sync-server-pass/src/api'
 const app = new Hono<{ Bindings: Env; Variables: Variables }>()
 
@@ -130,9 +123,8 @@ app.use('*', async (context, next) => {
 
 const appOrigins = cors({
   origin: (origin, context: Context<{ Bindings: Env }>) =>
-    /^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?|tauri:\/\/localhost|https?:\/\/tauri\.localhost)$/.test(
-      origin,
-    ) || isOwnOrigin(context.env, origin)
+    /^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?|tauri:\/\/localhost|https?:\/\/tauri\.localhost)$/.test(origin) ||
+    isOwnOrigin(context.env, origin)
       ? origin
       : '',
   allowHeaders: ['authorization', 'content-type', ...SAID(['device', 'diagram'])],
@@ -184,8 +176,7 @@ app.route('/oauth', oauth)
 
 const guard: MiddlewareHandler<{ Bindings: Env; Variables: Variables }> = async (context, next) => {
   const header = context.req.header('authorization')
-  const who: Asking | null =
-    (await requireWhoever(context.env, header)) ?? (await asProgram(context.env, header))
+  const who: Asking | null = (await requireWhoever(context.env, header)) ?? (await asProgram(context.env, header))
   if (!who) return context.json({ error: SIGN_IN }, 401)
 
   context.set('who', who)

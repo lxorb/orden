@@ -13,11 +13,7 @@ const read = (path: string) =>
 const LIB = fileURLToPath(new URL('../../', import.meta.url))
 const sources = (dir: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((one) =>
-    one.isDirectory()
-      ? sources(join(dir, one.name))
-      : one.name.endsWith('.svelte')
-        ? [join(dir, one.name)]
-        : [],
+    one.isDirectory() ? sources(join(dir, one.name)) : one.name.endsWith('.svelte') ? [join(dir, one.name)] : [],
   )
 const components = sources(LIB).map((path) => ({
   path: path.slice(LIB.length),

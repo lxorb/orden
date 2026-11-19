@@ -224,9 +224,7 @@ describe('the three answers', () => {
 
   test('draw the rows, the block as typed, or neither', () => {
     expect(renderMarkdown(NOTE, { properties: 'properties' })).toContain('class="property ')
-    expect(renderMarkdown(NOTE, { properties: 'source' })).toContain(
-      '<pre class="properties-source">',
-    )
+    expect(renderMarkdown(NOTE, { properties: 'source' })).toContain('<pre class="properties-source">')
     const nothing = renderMarkdown(NOTE, { properties: 'hidden' })
     expect(nothing).not.toContain('property')
     expect(nothing).not.toContain('properties-source')
@@ -236,9 +234,7 @@ describe('the three answers', () => {
     expect(renderMarkdown(NOTE)).not.toContain('property')
     const query = '---\ntitle: A note\n# a comment\n---\n\n# Head\n'
     expect(readProperties(query)).toBeNull()
-    expect(renderMarkdown(query, { properties: 'properties' })).toContain(
-      '<pre class="properties-source">',
-    )
+    expect(renderMarkdown(query, { properties: 'properties' })).toContain('<pre class="properties-source">')
   })
 
   test('escape the block, because a note may hold anything; leave the block out of the note either way', () => {

@@ -20,10 +20,7 @@ export const PASS_ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['pass_links', `delete from pass_links where user_id = ?1 or vault_id in (${OWNED})`],
   ['pass_versions', `delete from pass_versions where vault_id in (${OWNED})`],
   ['pass_items', `delete from pass_items where vault_id in (${OWNED})`],
-  [
-    'pass_members',
-    `delete from pass_members where vault_id in (${OWNED}) and state in ('pending', 'confirm')`,
-  ],
+  ['pass_members', `delete from pass_members where vault_id in (${OWNED}) and state in ('pending', 'confirm')`],
   ['pass_members', `update pass_members set key = null where vault_id in (${OWNED})`],
   [
     'pass_vaults',

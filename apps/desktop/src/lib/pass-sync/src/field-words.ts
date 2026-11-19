@@ -1,12 +1,5 @@
 import type { Separator } from '@orden/pass/generate'
-import type {
-  CardBrand,
-  FieldKind,
-  IdentityGroup,
-  IdentityKey,
-  MatchRule,
-  WifiSecurity,
-} from '@orden/pass/types'
+import type { CardBrand, FieldKind, IdentityGroup, IdentityKey, MatchRule, WifiSecurity } from '@orden/pass/types'
 
 export const IDENTITY_FIRST: Record<IdentityGroup, readonly IdentityKey[]> = {
   personal: ['fullName', 'email', 'phone'],

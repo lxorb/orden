@@ -13,14 +13,7 @@ export function places(): Place[] {
     {
       section: 'account',
       label: 'Signing in',
-      text: [
-        'Two-factor authentication',
-        '2FA',
-        'two-factor',
-        'TOTP',
-        'authenticator',
-        'Recovery codes left',
-      ],
+      text: ['Two-factor authentication', '2FA', 'two-factor', 'TOTP', 'authenticator', 'Recovery codes left'],
     },
     { section: 'account', label: 'Signed in on', text: ['End every other session'] },
     ...(account.user ? [{ section: 'account' as const, label: 'Delete account', text: [] }] : []),
@@ -36,9 +29,7 @@ export function places(): Place[] {
     },
     { section: 'sync', label: 'What synced', text: [] },
     { section: 'sync', label: 'Go back', text: ['This space, as it was'] },
-    ...(__EVEN_PLUGIN__
-      ? []
-      : [{ section: 'space' as const, label: 'Agent instructions', text: ['AGENTS.md'] }]),
+    ...(__EVEN_PLUGIN__ ? [] : [{ section: 'space' as const, label: 'Agent instructions', text: ['AGENTS.md'] }]),
     { section: 'appearance', label: 'Themes', text: ['Browse', 'Install'] },
     { section: 'editor', label: 'Reset to defaults', text: [] },
     { section: 'shortcuts', label: 'Vim keys', text: ['vim'] },

@@ -116,7 +116,5 @@ class Rewriting {
 export const rewriting = new Rewriting()
 
 export function rewriteRows(view?: object): CommandExtension[] {
-  return view
-    ? [{ id: 'rewrite', label: 'Rewrite…', run: () => rewriting.show(view as EditorView) }]
-    : []
+  return view ? [{ id: 'rewrite', label: 'Rewrite…', run: () => rewriting.show(view as EditorView) }] : []
 }

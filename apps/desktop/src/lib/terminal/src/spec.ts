@@ -38,9 +38,7 @@ export function readSpec(text: string): Spec | null {
     ...(isString(value.icon) && value.icon && isString(value.iconColor) && value.iconColor
       ? { iconColor: value.iconColor }
       : {}),
-    ...(isString(value.via) && value.via && hostIdOf(value.shell) !== null
-      ? { via: value.via }
-      : {}),
+    ...(isString(value.via) && value.via && hostIdOf(value.shell) !== null ? { via: value.via } : {}),
   }
 }
 
@@ -57,11 +55,7 @@ export function writeSpec(spec: Spec): string {
   })
 }
 
-export function startingFolder(
-  showing: string | null,
-  space: string | null,
-  roots: readonly string[],
-): string | null {
+export function startingFolder(showing: string | null, space: string | null, roots: readonly string[]): string | null {
   if (showing !== null && !roots.some((root) => withinSpace(root, showing) !== null)) {
     const folder = folderOf(showing)
     if (folder) return folder
@@ -70,12 +64,7 @@ export function startingFolder(
   return space
 }
 
-export function reportedFolder(
-  code: 7 | 9,
-  data: string,
-  windows: boolean,
-  wsl: boolean,
-): string | null {
+export function reportedFolder(code: 7 | 9, data: string, windows: boolean, wsl: boolean): string | null {
   if (code === 9) {
     if (!data.startsWith('9;')) return null
     const path = data.slice(2).replace(/^"(.*)"$/, '$1')

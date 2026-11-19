@@ -61,8 +61,7 @@ vi.mock('../../workspace/src/api', () => ({
 
 const { showWebData } = await import('./own-data')
 
-const SEPARATE =
-  '[InternetShortcut]\r\nURL=https://mail.example/\r\nTitle=Mail\r\nOrden-Data=0123456789abcdef\r\n'
+const SEPARATE = '[InternetShortcut]\r\nURL=https://mail.example/\r\nTitle=Mail\r\nOrden-Data=0123456789abcdef\r\n'
 
 async function setGlobal(path: string) {
   await showWebData(path)

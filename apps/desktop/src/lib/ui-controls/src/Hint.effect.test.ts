@@ -41,16 +41,13 @@ function tap(pointerType: string) {
   flushSync()
 }
 
-test.each(['touch', 'pen'])(
-  'a %s tap shows the sentence, and a second tap puts it away',
-  async (kind) => {
-    tap(kind)
-    await settle()
-    expect(said()).toBe(SENTENCE)
-    tap(kind)
-    await vi.waitFor(() => expect(said()).toBeNull())
-  },
-)
+test.each(['touch', 'pen'])('a %s tap shows the sentence, and a second tap puts it away', async (kind) => {
+  tap(kind)
+  await settle()
+  expect(said()).toBe(SENTENCE)
+  tap(kind)
+  await vi.waitFor(() => expect(said()).toBeNull())
+})
 
 test('a mouse shows the sentence while it rests on the ?', async () => {
   pointer('pointerenter', 'mouse')

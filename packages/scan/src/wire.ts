@@ -19,8 +19,7 @@ const DEEPEST = 32
 
 export type IndexedNote = ScannedNote & Partial<ScannedRows> & { stamp?: Stamp | null }
 
-export type IndexItem =
-  { id: string; docSeq: number; scan: IndexedNote | null } | { id: string; refused: 'gone' }
+export type IndexItem = { id: string; docSeq: number; scan: IndexedNote | null } | { id: string; refused: 'gone' }
 
 export interface IndexRequest {
   ids: string[]
@@ -47,16 +46,14 @@ export interface SearchAnswer {
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
-const isText = (value: unknown): value is string =>
-  typeof value === 'string' && value.length <= LONGEST
+const isText = (value: unknown): value is string => typeof value === 'string' && value.length <= LONGEST
 
 const isId = (value: unknown): value is string => isText(value) && value.length > 0
 
 const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value >= 0
 
-const isTextOrNull = (value: unknown): value is string | null =>
-  value === null || typeof value === 'string'
+const isTextOrNull = (value: unknown): value is string | null => value === null || typeof value === 'string'
 
 const isTexts = (value: unknown, most = Infinity): value is string[] =>
   Array.isArray(value) && value.length <= most && value.every(isText)
@@ -91,9 +88,7 @@ export function queryOf(value: unknown, depth = 0): Query | null {
     case 'content':
     case 'path':
     case 'file':
-      return isText(value.text) && typeof value.fold === 'boolean'
-        ? { kind: value.kind, text: value.text, fold }
-        : null
+      return isText(value.text) && typeof value.fold === 'boolean' ? { kind: value.kind, text: value.text, fold } : null
     case 'regex':
       return isText(value.source) && typeof value.fold === 'boolean'
         ? { kind: 'regex', source: value.source, fold }
@@ -102,8 +97,7 @@ export function queryOf(value: unknown, depth = 0): Query | null {
       return isText(value.tag) ? { kind: 'tag', tag: value.tag } : null
     case 'property': {
       const compare = COMPARES.find((one) => one === value.compare)
-      if (!isText(value.name) || !(value.value === null || isText(value.value)) || !compare)
-        return null
+      if (!isText(value.name) || !(value.value === null || isText(value.value)) || !compare) return null
       const query: Query = {
         kind: 'property',
         name: value.name,
@@ -135,8 +129,7 @@ export function searchRequestOf(value: unknown): SearchRequest | null {
   if (!isRecord(value)) return null
   const query = queryOf(value.query)
   const { limit } = value
-  if (!query || !isTexts(value.terms, 64) || !isCount(limit) || limit < 1 || limit > MOST_HITS)
-    return null
+  if (!query || !isTexts(value.terms, 64) || !isCount(limit) || limit < 1 || limit > MOST_HITS) return null
   const request: SearchRequest = { query, terms: value.terms, limit }
   if (value.after !== undefined) {
     if (!isText(value.after)) return null
@@ -204,8 +197,7 @@ export function indexedOf(value: unknown): IndexedNote | null {
   if (!fields) return null
   if (value.bases !== undefined && typeof value.bases !== 'boolean') return null
   if (value.front !== undefined && !isTextOrNull(value.front)) return null
-  if (value.tasks !== undefined && !(Array.isArray(value.tasks) && value.tasks.every(isTask)))
-    return null
+  if (value.tasks !== undefined && !(Array.isArray(value.tasks) && value.tasks.every(isTask))) return null
   if (value.stamp !== undefined && value.stamp !== null && !isStamp(value.stamp)) return null
   return value as unknown as IndexedNote
 }
@@ -228,8 +220,7 @@ export function indexAnswerOf(value: unknown): IndexItem[] | null {
 }
 
 const isRanges = (value: unknown): value is Range[] =>
-  Array.isArray(value) &&
-  value.every((one) => isRecord(one) && isCount(one.from) && isCount(one.to))
+  Array.isArray(value) && value.every((one) => isRecord(one) && isCount(one.from) && isCount(one.to))
 
 const isHit = (value: unknown): value is FoundHit =>
   isRecord(value) &&

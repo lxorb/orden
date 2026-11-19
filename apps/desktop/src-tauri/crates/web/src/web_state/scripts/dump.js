@@ -135,9 +135,7 @@ globalThis.ordenDump = async function ordenDump(op, argsJson) {
           return later64(['b', value.type, ''], () => value.arrayBuffer())
         case 'File':
           counted.size += Math.ceil((value.size * 4) / 3)
-          return later64(['f', value.name, value.type, value.lastModified, ''], () =>
-            value.arrayBuffer(),
-          )
+          return later64(['f', value.name, value.type, value.lastModified, ''], () => value.arrayBuffer())
         case 'Error':
           return ['e', String(value.name), String(value.message), String(value.stack ?? '')]
         case 'CryptoKey': {

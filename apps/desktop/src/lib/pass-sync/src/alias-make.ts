@@ -45,12 +45,7 @@ export function defaultAsk(account: AliasAccount, options: AliasOptions, prefix:
 
 function stoppable(item: Item): item is Item & { content: Alias } {
   const content = item.content
-  return (
-    content.kind === 'alias' &&
-    content.provider !== 'manual' &&
-    content.enabled &&
-    content.remoteId !== ''
-  )
+  return content.kind === 'alias' && content.provider !== 'manual' && content.enabled && content.remoteId !== ''
 }
 
 export async function stoppedAliases(keeper: AliasKeeper, items: readonly Item[]): Promise<void> {
@@ -65,10 +60,7 @@ export async function stoppedAliases(keeper: AliasKeeper, items: readonly Item[]
       const enabled = await client.setEnabled(item.content.remoteId, false)
       await keeper.update(item.id, { ...item.content, enabled })
     } catch (error) {
-      log(
-        'warn',
-        `pass: an alias in the trash stayed on: ${error instanceof Error ? error.name : ''}`,
-      )
+      log('warn', `pass: an alias in the trash stayed on: ${error instanceof Error ? error.name : ''}`)
     }
   }
 }

@@ -33,8 +33,6 @@ export async function setService(env: Env, key: 'online' | 'ceiling', value: str
 }
 
 export async function allowed(env: Env, userId: string): Promise<boolean> {
-  const row = await env.DB.prepare('select online from users where id = ?')
-    .bind(userId)
-    .first<{ online: number }>()
+  const row = await env.DB.prepare('select online from users where id = ?').bind(userId).first<{ online: number }>()
   return row?.online === 1
 }

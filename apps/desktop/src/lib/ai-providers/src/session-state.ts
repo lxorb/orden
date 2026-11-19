@@ -1,7 +1,6 @@
 import type { Stop, ThreadHead } from './chat/types'
 
-export type SessionState =
-  'running' | 'waiting' | 'error' | 'needs-input' | 'done' | 'interrupted' | 'archived'
+export type SessionState = 'running' | 'waiting' | 'error' | 'needs-input' | 'done' | 'interrupted' | 'archived'
 
 export type SessionEvent =
   | { type: 'start' }
@@ -37,9 +36,7 @@ export function next(state: SessionState, event: SessionEvent): SessionState {
     case 'idle':
       return state === 'waiting' ? 'done' : state
     case 'relaunch':
-      return state === 'running' || state === 'waiting' || state === 'needs-input'
-        ? 'interrupted'
-        : state
+      return state === 'running' || state === 'waiting' || state === 'needs-input' ? 'interrupted' : state
     case 'archive':
       return 'archived'
     case 'unarchive':
@@ -116,11 +113,7 @@ export function ordered<T extends ThreadHead>(
     )
 }
 
-export function beside<T extends { id: string }>(
-  list: readonly T[],
-  id: string,
-  step: 1 | -1,
-): T | null {
+export function beside<T extends { id: string }>(list: readonly T[], id: string, step: 1 | -1): T | null {
   if (list.length < 2) return null
   const at = list.findIndex((one) => one.id === id)
   if (at < 0) return list[step === 1 ? 0 : list.length - 1] ?? null

@@ -33,11 +33,7 @@ function remember(target: string) {
   if (folder) keep(FOLDER_KEY, folder)
 }
 
-export async function chooseTarget(
-  name: string,
-  extension: string,
-  label: string,
-): Promise<string | null> {
+export async function chooseTarget(name: string, extension: string, label: string): Promise<string | null> {
   const given = dialogAnswer()
   if (given) {
     const chosen = await given(true)
@@ -104,10 +100,7 @@ async function freeBeside(folder: string, path: string, claimed: Set<string>): P
   }
 }
 
-async function writeBeside(
-  target: string,
-  payload: Extract<Payload, { files: unknown }>,
-): Promise<void> {
+async function writeBeside(target: string, payload: Extract<Payload, { files: unknown }>): Promise<void> {
   const [first, ...rest] = payload.files
   if (!first) return
 

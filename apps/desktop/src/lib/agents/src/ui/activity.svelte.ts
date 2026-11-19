@@ -156,11 +156,7 @@ export class Activity {
     if (!held || this.shown.has(agentTab)) return
     this.shown.add(agentTab)
     try {
-      const id = workspace.openPage(
-        held.url,
-        front ? 'front' : 'behind',
-        workspace.activeTabId ?? undefined,
-      )
+      const id = workspace.openPage(held.url, front ? 'front' : 'behind', workspace.activeTabId ?? undefined)
       if (id === null) return
 
       const touch = this.seen.acting[agentTab]

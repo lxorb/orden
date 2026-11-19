@@ -4,13 +4,7 @@ import { RECOVERY_KEY } from '../../history/src/api'
 import { MIRRORS_KEY } from '../../sync-mirror/src/api'
 import { STORAGE_KEY as FOLDER_ICONS_KEY } from '../../space-kept/src/folder-icons.svelte'
 import { STORAGE_KEY as ARCHIVED_KEY } from '../../space-kept/src/archive.svelte'
-import {
-  EXPANDED_KEY,
-  ICON_TINTS_KEY,
-  ICONS_KEY,
-  RECENT_KEY,
-  TAGS_KEY,
-} from '../../workspace/src/device.svelte'
+import { EXPANDED_KEY, ICON_TINTS_KEY, ICONS_KEY, RECENT_KEY, TAGS_KEY } from '../../workspace/src/device.svelte'
 
 const phone = vi.hoisted(() => ({ held: new Map<string, string>(), reachable: false }))
 

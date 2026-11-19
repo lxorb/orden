@@ -91,14 +91,10 @@
     <div class="rows">
       <button class="orden-button is-quiet" onclick={() => opened(bubble.tab)}> Open Pass </button>
       {#if bubble.alias}
-        <button class="orden-button is-quiet" onclick={() => void autofill.alias(bubble.tab)}>
-          Use an alias
-        </button>
+        <button class="orden-button is-quiet" onclick={() => void autofill.alias(bubble.tab)}> Use an alias </button>
       {/if}
       {#if bubble.generate}
-        <button class="orden-button" onclick={() => void autofill.generate(bubble.tab)}>
-          Generate password
-        </button>
+        <button class="orden-button" onclick={() => void autofill.generate(bubble.tab)}> Generate password </button>
       {/if}
     </div>
   {:else if bubble?.kind === 'unlock'}
@@ -116,13 +112,9 @@
     </p>
     <div class="rows">
       {#if !bubble.update}
-        <button class="orden-button is-quiet" onclick={() => autofill.never(bubble.tab)}>
-          Never for this site
-        </button>
+        <button class="orden-button is-quiet" onclick={() => autofill.never(bubble.tab)}> Never for this site </button>
       {/if}
-      <button class="orden-button is-quiet" onclick={() => autofill.dismiss(bubble.tab)}>
-        Not now
-      </button>
+      <button class="orden-button is-quiet" onclick={() => autofill.dismiss(bubble.tab)}> Not now </button>
       <button class="orden-button" onclick={() => void autofill.save(bubble.tab)}>
         {bubble.update ? 'Update' : 'Save'}
       </button>

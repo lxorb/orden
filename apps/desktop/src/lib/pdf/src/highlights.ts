@@ -26,8 +26,7 @@ export interface Sheet {
 export const emptySheet = (): Sheet => ({ version: VERSION, highlights: [] })
 export const leftAlone = (held: Held): Sheet => ({ version: VERSION, highlights: [], held })
 
-export const frozen = (sheet: Sheet): Held | null =>
-  sheet.held ?? (sheet.version > VERSION ? 'newer' : null)
+export const frozen = (sheet: Sheet): Held | null => sheet.held ?? (sheet.version > VERSION ? 'newer' : null)
 
 function readQuad(value: unknown): Quad | null {
   if (!Array.isArray(value) || value.length !== 8) return null
@@ -84,8 +83,7 @@ export function readSheet(text: string): Sheet {
 
 const sorted = (highlights: readonly Highlight[]): Highlight[] =>
   [...highlights].sort(
-    (one, other) =>
-      one.page - other.page || one.created - other.created || (one.id < other.id ? -1 : 1),
+    (one, other) => one.page - other.page || one.created - other.created || (one.id < other.id ? -1 : 1),
   )
 
 export function writeSheet(sheet: Sheet): string {

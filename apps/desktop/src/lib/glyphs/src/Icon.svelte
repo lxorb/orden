@@ -26,9 +26,7 @@
 
   const painted = $derived(readTint(tint))
   const colour = $derived(
-    painted && drawing && drawing.kind !== 'emoji' && takesTint(icon)
-      ? accentColour(painted, theme.current)
-      : null,
+    painted && drawing && drawing.kind !== 'emoji' && takesTint(icon) ? accentColour(painted, theme.current) : null,
   )
 </script>
 

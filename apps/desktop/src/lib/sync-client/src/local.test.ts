@@ -44,8 +44,7 @@ async function signedOut(
     list: (at) => {
       const listed: { path: string; dir: boolean }[] = []
       for (const folder of disk.folders) {
-        if (folder.startsWith(`${at}/`))
-          listed.push({ path: folder.slice(at.length + 1), dir: true })
+        if (folder.startsWith(`${at}/`)) listed.push({ path: folder.slice(at.length + 1), dir: true })
       }
       for (const file of disk.files.keys()) {
         if (file.startsWith(`${at}/`)) listed.push({ path: file.slice(at.length + 1), dir: false })
@@ -121,10 +120,7 @@ describe('a space used signed out', () => {
     expect(space.at('Work/Ship.md')?.id).toBe(id)
     expect(space.entries.get(id ?? '')?.name).toBe('Ship.md')
     expect(space.outbox).toEqual([])
-    expect([...here.disk.files.keys()].sort()).toEqual([
-      `${ROOT}/Work/Notes.md`,
-      `${ROOT}/Work/Ship.md`,
-    ])
+    expect([...here.disk.files.keys()].sort()).toEqual([`${ROOT}/Work/Notes.md`, `${ROOT}/Work/Ship.md`])
   })
 
   test('confirms what was typed, and keeps it and the ids through a relaunch', async () => {
@@ -211,9 +207,7 @@ describe('a space used signed out', () => {
         ['work', work],
       ]),
     )
-    await here.engine.core.commit(
-      carriedRows(new Map([[ROOT, JSON.stringify({ 'Plan.md': plan, Work: work })]]), 'u1'),
-    )
+    await here.engine.core.commit(carriedRows(new Map([[ROOT, JSON.stringify({ 'Plan.md': plan, Work: work })]]), 'u1'))
     await here.engine.pass(here.space)
     const space = spaceOf(here)
     expect(space.at('Plan.md')?.id).toBe(plan)
@@ -221,13 +215,9 @@ describe('a space used signed out', () => {
     const notes = space.at('Work/Notes.md')?.id ?? ''
     expect(space.at('Work/Notes.md')?.parent).toBe(work)
 
-    const same = JSON.parse(
-      (await carriedIds(here.engine.core.store, isLocal, 'u1')).get(ROOT) ?? '{}',
-    )
+    const same = JSON.parse((await carriedIds(here.engine.core.store, isLocal, 'u1')).get(ROOT) ?? '{}')
     expect(same).toEqual({ 'Plan.md': plan, Work: work, 'Work/Notes.md': notes })
-    const other = JSON.parse(
-      (await carriedIds(here.engine.core.store, isLocal, 'u2')).get(ROOT) ?? '{}',
-    )
+    const other = JSON.parse((await carriedIds(here.engine.core.store, isLocal, 'u2')).get(ROOT) ?? '{}')
     expect(other).toEqual({ 'Work/Notes.md': notes })
   })
 })

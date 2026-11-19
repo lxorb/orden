@@ -29,9 +29,7 @@ describe('an input method in a table cell', () => {
       selection: { anchor: TABLE.length },
     })
     open.push(view)
-    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
-      (one) => one.textContent === '1',
-    )
+    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '1')
     if (!cell) throw new Error('the table drew no cell holding 1')
     cell.focus()
 
@@ -53,18 +51,14 @@ describe('an input method in a table cell', () => {
     cell.dispatchEvent(new CompositionEvent('compositionend', { data: '中文', bubbles: true }))
     vi.advanceTimersByTime(1200)
 
-    expect(view.state.doc.toString()).toBe(
-      '| a     | b   |\n| ----- | --- |\n| 1中文 | 2   |\n\nend',
-    )
+    expect(view.state.doc.toString()).toBe('| a     | b   |\n| ----- | --- |\n| 1中文 | 2   |\n\nend')
   })
 
   test('keeps the words being composed when another cell is written meanwhile', () => {
     const doc = '| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n\nend'
     const view = createEditor({ parent: document.body, doc, selection: { anchor: doc.length } })
     open.push(view)
-    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
-      (one) => one.textContent === '1',
-    )
+    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '1')
     if (!cell) throw new Error('the table drew no cell holding 1')
     cell.tabIndex = 0
     cell.focus()
@@ -87,9 +81,7 @@ describe('an input method in a table cell', () => {
     const doc = '| a | b |\n| --- | --- |\n| 1 | 2 |\n| 3 | 4 |\n\nend'
     const view = createEditor({ parent: document.body, doc, selection: { anchor: doc.length } })
     open.push(view)
-    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
-      (one) => one.textContent === '1',
-    )
+    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '1')
     if (!cell) throw new Error('the table drew no cell holding 1')
     cell.tabIndex = 0
     cell.focus()

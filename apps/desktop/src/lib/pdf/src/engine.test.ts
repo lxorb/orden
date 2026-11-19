@@ -12,17 +12,13 @@ describe('which pdf.js this engine can run', () => {
     expect(current(modern)).toBe(true)
   })
 
-  test.each(['Promise', 'Uint8Array', 'Math'] as const)(
-    'the legacy one, where %s is missing what it needs',
-    (name) => {
-      expect(current({ ...modern, [name]: {} })).toBe(false)
-    },
-  )
+  test.each(['Promise', 'Uint8Array', 'Math'] as const)('the legacy one, where %s is missing what it needs', (name) => {
+    expect(current({ ...modern, [name]: {} })).toBe(false)
+  })
 })
 
 describe("whose image decoder a PDF's pictures go through", () => {
-  const MAC =
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)'
+  const MAC = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko)'
   const LINUX = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/605.1.15 (KHTML, like Gecko)'
   const EDGE =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36 Edg/130.0.0.0'

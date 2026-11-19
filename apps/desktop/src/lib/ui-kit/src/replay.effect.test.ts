@@ -12,8 +12,7 @@ function hear(phase: string, capture: boolean, into: string[]) {
 }
 
 afterEach(() => {
-  for (const [type, one, capture] of listening.splice(0))
-    window.removeEventListener(type, one, capture)
+  for (const [type, one, capture] of listening.splice(0)) window.removeEventListener(type, one, capture)
 })
 
 test('a key out of a page reaches the window’s capture listeners before its bubble ones, whichever came first', () => {

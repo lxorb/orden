@@ -85,13 +85,7 @@ function dayHere(words: readonly Word[], at: number, g: Grammar, free: boolean):
   return free || g.context.has(bare(words[at - 1]))
 }
 
-export function dayAt(
-  words: readonly Word[],
-  at: number,
-  g: Grammar,
-  clock: Clock,
-  free = false,
-): When | null {
+export function dayAt(words: readonly Word[], at: number, g: Grammar, clock: Clock, free = false): When | null {
   const { today } = clock
   const key = bare(words[at])
   if (key === '') return null
@@ -104,8 +98,7 @@ export function dayAt(
   if (dayAfter) return { end: at + dayAfter, day: addDays(today, 2) }
 
   const monthEnd = longestAt(words, at, g.endOfMonth)
-  if (monthEnd)
-    return { end: at + monthEnd, day: addDays(addMonths(today.slice(0, 8) + '01', 1), -1) }
+  if (monthEnd) return { end: at + monthEnd, day: addDays(addMonths(today.slice(0, 8) + '01', 1), -1) }
 
   const weekend = longestAt(words, at, g.weekend)
   if (weekend) {
@@ -117,8 +110,7 @@ export function dayAt(
     const next = bare(words[at + 1])
     const day = g.weekdays[next]
     if (day !== undefined) return { end: at + 2, day: weekdayFrom(today, day, g.coming.has(key)) }
-    if (g.next.has(key) && g.week.has(next))
-      return { end: at + 2, day: weekdayFrom(today, 1, false) }
+    if (g.next.has(key) && g.week.has(next)) return { end: at + 2, day: weekdayFrom(today, 1, false) }
     if (g.next.has(key) && g.weekends.has(next)) {
       const coming = weekdayFrom(today, 6, true)
       return { end: at + 2, day: weekday(today) === 0 ? coming : addDays(coming, 7) }
@@ -188,12 +180,7 @@ function writtenDate(words: readonly Word[], at: number, g: Grammar, today: stri
   return date ? { end: year ? yearAt + 1 : yearAt, day: date } : null
 }
 
-export function timeAt(
-  words: readonly Word[],
-  at: number,
-  g: Grammar,
-  asked: boolean,
-): When | null {
+export function timeAt(words: readonly Word[], at: number, g: Grammar, asked: boolean): When | null {
   const word = words[at]
   const key = word?.key ?? ''
   if (key === '') return null
@@ -227,13 +214,7 @@ export function timeAt(
   if (key.includes('.') && !oclock && !asked) return null
   if (!colon && !oclock && !asked) return null
 
-  const afternoon =
-    !colon &&
-    !oclock &&
-    !key.includes('.') &&
-    hours >= 1 &&
-    hours <= 7 &&
-    !hoursText.startsWith('0')
+  const afternoon = !colon && !oclock && !key.includes('.') && hours >= 1 && hours <= 7 && !hoursText.startsWith('0')
   const time = timeOf(afternoon ? hours + 12 : hours, minutes)
   return afternoon ? { end, time, guessed: true } : { end: oclock ? end + 1 : end, time }
 }
@@ -267,12 +248,7 @@ function dayTimeAt(words: readonly Word[], at: number, g: Grammar, clock: Clock)
   return best
 }
 
-export function timeInPart(
-  words: readonly Word[],
-  at: number,
-  g: Grammar,
-  part: string,
-): When | null {
+export function timeInPart(words: readonly Word[], at: number, g: Grammar, part: string): When | null {
   const said = askedTime(words, at, g)
   if (!said?.time) return null
   return { end: said.end, time: inPart(said, part) }
@@ -288,12 +264,7 @@ function inPart(said: When, part: string): string {
   return time
 }
 
-function partAt(
-  words: readonly Word[],
-  at: number,
-  g: Grammar,
-  afterDay: boolean,
-): string | undefined {
+function partAt(words: readonly Word[], at: number, g: Grammar, afterDay: boolean): string | undefined {
   const key = bare(words[at])
   const named = g.times[key]
   if (named && Object.values(g.partsOfDay).includes(named)) return named
@@ -314,13 +285,7 @@ export function askedTime(words: readonly Word[], at: number, g: Grammar): When 
   return timeAt(words, at, g, false)
 }
 
-function askedDay(
-  words: readonly Word[],
-  at: number,
-  g: Grammar,
-  clock: Clock,
-  free: boolean,
-): When | null {
+function askedDay(words: readonly Word[], at: number, g: Grammar, clock: Clock, free: boolean): When | null {
   if (g.dayWords.has(bare(words[at]))) {
     if (g.partsOfDay[bare(words[at + 1])]) return null
     const day = dayAt(words, at + 1, g, clock, true) ?? monthDayAt(words, at + 1, g, clock.today)
@@ -342,13 +307,7 @@ function monthDayAt(words: readonly Word[], at: number, g: Grammar, today: strin
   return null
 }
 
-export function whenAt(
-  words: readonly Word[],
-  at: number,
-  g: Grammar,
-  clock: Clock,
-  free = false,
-): When | null {
+export function whenAt(words: readonly Word[], at: number, g: Grammar, clock: Clock, free = false): When | null {
   const soon = fromNow(words, at, g, clock)
   if (soon) return soon
 

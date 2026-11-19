@@ -259,9 +259,7 @@ export const definitionLists: MarkedExtension = {
         const body = items
           .map((item) => {
             const term = `<dt>${this.parser.parseInline(item.term)}</dt>`
-            const details = item.details
-              .map((detail) => `<dd>${this.parser.parseInline(detail)}</dd>`)
-              .join('\n')
+            const details = item.details.map((detail) => `<dd>${this.parser.parseInline(detail)}</dd>`).join('\n')
 
             return `${term}\n${details}`
           })

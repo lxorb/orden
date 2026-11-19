@@ -69,10 +69,8 @@
     } else if (event.key === 'ContextMenu' || (event.shiftKey && event.key === 'F10')) {
       event.preventDefault()
       event.stopPropagation()
-      const box =
-        event.currentTarget instanceof HTMLElement && event.currentTarget.getBoundingClientRect()
-      if (box)
-        onmenu(new MouseEvent('contextmenu', { clientX: box.left + 12, clientY: box.bottom }), row)
+      const box = event.currentTarget instanceof HTMLElement && event.currentTarget.getBoundingClientRect()
+      if (box) onmenu(new MouseEvent('contextmenu', { clientX: box.left + 12, clientY: box.bottom }), row)
     }
   }
 </script>
@@ -81,18 +79,14 @@
   <div class="line">
     {#if one?.kind === 'pills'}
       {#each one.pills as pill, at (at)}
-        <span class="tag" class:toned={pill.tone !== null} style:--pill={pill.tone}
-          >{pill.text}</span
-        >
+        <span class="tag" class:toned={pill.tone !== null} style:--pill={pill.tone}>{pill.text}</span>
       {/each}
       {#if one.more}<span class="more-count">+{one.more}</span>{/if}
     {:else if one}
       <span class="words" class:late={one.late}>{one.text}</span>
     {/if}
     {#if last && ticked}
-      <span class="checklist" class:all={ticked.done === ticked.total}
-        >{ticked.done}/{ticked.total}</span
-      >
+      <span class="checklist" class:all={ticked.done === ticked.total}>{ticked.done}/{ticked.total}</span>
     {/if}
   </div>
 {/snippet}
@@ -141,11 +135,7 @@
     onclick={(event) => onmenu(event, row)}
   >
     <svg viewBox="0 0 13 13" aria-hidden="true"
-      ><circle cx="3" cy="6.5" r="0.9" /><circle cx="6.5" cy="6.5" r="0.9" /><circle
-        cx="10"
-        cy="6.5"
-        r="0.9"
-      /></svg
+      ><circle cx="3" cy="6.5" r="0.9" /><circle cx="6.5" cy="6.5" r="0.9" /><circle cx="10" cy="6.5" r="0.9" /></svg
     >
   </button>
 </div>
@@ -289,11 +279,7 @@
   .card:focus-within .title,
   :global([data-touch]) .card .title {
     --under-menu: calc(var(--row-height-sm) + 3px);
-    mask-image: linear-gradient(
-      to left,
-      transparent var(--under-menu),
-      #000 calc(var(--under-menu) + var(--space-3))
-    );
+    mask-image: linear-gradient(to left, transparent var(--under-menu), #000 calc(var(--under-menu) + var(--space-3)));
   }
 
   .menu svg {

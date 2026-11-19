@@ -5,8 +5,7 @@
   import { type Preview, previewOf } from './preview'
   import Tally from './Tally.svelte'
 
-  const { part, thread }: { part: Extract<Part, { kind: 'tool' }>; thread: Thread | null } =
-    $props()
+  const { part, thread }: { part: Extract<Part, { kind: 'tool' }>; thread: Thread | null } = $props()
 
   let shown = $state.raw<Preview | null>(null)
 

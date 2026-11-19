@@ -23,9 +23,7 @@ describe('a browser that says which one it is', () => {
   })
 
   test('Samsung Internet', () => {
-    expect(browserName(brands('Chromium', 'Not.A/Brand', 'Samsung Internet'))).toBe(
-      'Samsung Internet',
-    )
+    expect(browserName(brands('Chromium', 'Not.A/Brand', 'Samsung Internet'))).toBe('Samsung Internet')
   })
 
   test('a Chromium that names nothing else is Chromium', () => {

@@ -64,9 +64,7 @@ vi.mock('./store', () => ({
   stats: {
     holds: (path: string) =>
       Promise.resolve(
-        [...disk.files.keys(), ...disk.assets.keys()].some(
-          (one) => one === path || one.startsWith(`${path}/`),
-        ),
+        [...disk.files.keys(), ...disk.assets.keys()].some((one) => one === path || one.startsWith(`${path}/`)),
       ),
     all: () =>
       Promise.resolve([
@@ -110,19 +108,15 @@ vi.mock('./store', () => ({
       return Promise.resolve()
     },
     get: (id: number) => Promise.resolve(disk.snapshots.find((one) => one.id === id)),
-    newest: (notePath: string) =>
-      Promise.resolve(disk.snapshots.filter((one) => one.notePath === notePath).at(-1)),
+    newest: (notePath: string) => Promise.resolve(disk.snapshots.filter((one) => one.notePath === notePath).at(-1)),
     idsOf: (notePath: string) =>
-      Promise.resolve(
-        disk.snapshots.filter((one) => one.notePath === notePath).map((one) => one.id ?? 0),
-      ),
+      Promise.resolve(disk.snapshots.filter((one) => one.notePath === notePath).map((one) => one.id ?? 0)),
     remove: (id: number) => {
       const at = disk.snapshots.findIndex((one) => one.id === id)
       if (at >= 0) disk.snapshots.splice(at, 1)
       return Promise.resolve()
     },
-    forNote: (notePath: string) =>
-      Promise.resolve(disk.snapshots.filter((one) => one.notePath === notePath)),
+    forNote: (notePath: string) => Promise.resolve(disk.snapshots.filter((one) => one.notePath === notePath)),
   },
 }))
 
@@ -154,14 +148,12 @@ const { indexed } = await import('@orden/scan/indexed')
 const write = (path: string, content = '') => webInvoke('write_note', { path, content })
 const read = (path: string) => webInvoke<string>('read_note', { path })
 const paths = () => [...disk.files.keys()].sort()
-const rename = (from: string, to: string, more = {}) =>
-  webInvoke('rename_note', { from, to, ...more })
+const rename = (from: string, to: string, more = {}) => webInvoke('rename_note', { from, to, ...more })
 const copy = (from: string, to: string) => webInvoke('copy_path', { from, to })
 const trash = (path: string, kind = 'note', more = {}) =>
   webInvoke<{ id: string }>('trash_item', { path, kind, ...more })
 const restore = (id: string) => webInvoke<string>('restore_trash', { id })
-const highlight = (path: string, content: string) =>
-  webInvoke('write_highlights', { path, content })
+const highlight = (path: string, content: string) => webInvoke('write_highlights', { path, content })
 interface Listed {
   name: string
   path: string
@@ -221,9 +213,7 @@ describe('a name Windows keeps for a device', () => {
       fileURLToPath(new URL('../../../../../src-tauri/crates/base/src/paths.rs', import.meta.url)),
       'utf8',
     )
-    expect(crate).toContain(
-      'is a name Windows keeps for a device, so a note or folder cannot be called it',
-    )
+    expect(crate).toContain('is a name Windows keeps for a device, so a note or folder cannot be called it')
     await write('/Notes/Plan.md', '# Plan')
 
     await expect(rename('/Notes/Plan.md', '/Notes/nul.md')).rejects.toThrow(refusal)
@@ -335,9 +325,7 @@ describe('renaming', () => {
     await highlight('/Notes/B/slides.pdf', '{"b":1}')
     await highlight('/Notes/A/slides.pdf', '{"a":1}')
 
-    await expect(rename('/Notes/A/slides.pdf', '/Notes/B/slides.pdf')).rejects.toThrow(
-      /already lives there/,
-    )
+    await expect(rename('/Notes/A/slides.pdf', '/Notes/B/slides.pdf')).rejects.toThrow(/already lives there/)
 
     expect(disk.assets.get('/Notes/B/slides.pdf')?.data).toBe('BBBB')
     expect(disk.assets.get('/Notes/A/slides.pdf')?.data).toBe('AAAA')
@@ -495,10 +483,7 @@ describe('the trash', () => {
     const [one, two] = await Promise.all([trash('/Notes/One.md'), trash('/Notes/Two.md')])
 
     expect(one.id).not.toBe(two.id)
-    expect((await webInvoke<{ name: string }[]>('list_trash')).map((e) => e.name).sort()).toEqual([
-      'One.md',
-      'Two.md',
-    ])
+    expect((await webInvoke<{ name: string }[]>('list_trash')).map((e) => e.name).sort()).toEqual(['One.md', 'Two.md'])
     await Promise.all([restore(one.id), restore(two.id)])
     expect(await webInvoke('list_trash')).toEqual([])
     expect(disk.files.get('/Notes/One.md')?.content).toBe('one')
@@ -724,8 +709,7 @@ describe("a page note's paper", () => {
   })
 
   test('is not listed beside the note, and is once the note has gone', async () => {
-    const names = async (options?: { papers?: boolean }) =>
-      (await treeOf({ options })).children.map((one) => one.name)
+    const names = async (options?: { papers?: boolean }) => (await treeOf({ options })).children.map((one) => one.name)
 
     expect(await names()).toEqual(['Lecture.pages'])
     expect(await names({ papers: true })).toEqual(['Lecture.pages', 'Lecture.pages.pdf'])
@@ -1024,9 +1008,7 @@ describe('installed themes', () => {
       css: '/*! orden-theme */',
     })
 
-    expect(await webInvoke('list_themes')).toEqual([
-      { id: 'file:warm-paper', name: 'Warm paper', path },
-    ])
+    expect(await webInvoke('list_themes')).toEqual([{ id: 'file:warm-paper', name: 'Warm paper', path }])
     expect(await webInvoke('read_theme', { path })).toBe('/*! orden-theme */')
 
     await webInvoke('remove_theme', { id: 'warm-paper' })
@@ -1411,9 +1393,7 @@ describe('a note kept away', () => {
     await rename('/Notes/Plan.md', '/Notes/Later.md')
     expect(asked).toEqual([])
     await write('/Notes/Other.md', 'other')
-    await expect(rename('/Notes/Other.md', '/Notes/Plan.md')).rejects.toThrow(
-      'something already lives there',
-    )
+    await expect(rename('/Notes/Other.md', '/Notes/Plan.md')).rejects.toThrow('something already lives there')
   })
 
   test('moved to another space only once its words are here, and offline is left where it was', async () => {
@@ -1497,11 +1477,7 @@ describe('a note kept away', () => {
       links: [],
       bare: false,
     })
-    expect(found.notes.map((one) => one.path).sort()).toEqual([
-      'Idea.md',
-      'Later.md',
-      'Work/Plan.md',
-    ])
+    expect(found.notes.map((one) => one.path).sort()).toEqual(['Idea.md', 'Later.md', 'Work/Plan.md'])
     expect(await webInvoke('space_tags', { root: '/Notes' })).toEqual([{ tag: '#work', count: 1 }])
   })
 

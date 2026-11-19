@@ -45,15 +45,7 @@ export {
   type Result,
   unwrapOr,
 } from './result'
-export {
-  ENTRY_KINDS,
-  type Entry,
-  type EntryKind,
-  isEntryKind,
-  type Item,
-  type ItemMeta,
-  type MetaPatch,
-} from './item'
+export { ENTRY_KINDS, type Entry, type EntryKind, isEntryKind, type Item, type ItemMeta, type MetaPatch } from './item'
 export { type Heading, type NoteContent, type NoteStart, UNTITLED, unixLines } from './note'
 export {
   type Account,
@@ -249,14 +241,7 @@ export {
 } from './agents'
 export type { BackendPort, BackendPorts } from './backend'
 export type { ChatListed, ChatPart, ChatPartWanted, ChatPorts, ChatsPort } from './chats'
-export type {
-  ArchivePort,
-  ExplorerCarryPort,
-  ExplorerShowPort,
-  FilePorts,
-  PandocPicture,
-  PickedFile,
-} from './files'
+export type { ArchivePort, ExplorerCarryPort, ExplorerShowPort, FilePorts, PandocPicture, PickedFile } from './files'
 export type {
   Arrived,
   BrowserId,

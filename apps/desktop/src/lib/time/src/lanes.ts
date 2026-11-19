@@ -18,13 +18,7 @@ export interface Band {
 
 const JOINED = 2 * MINUTE
 
-export function bandsOf(
-  spans: readonly Span[],
-  lane: Lane,
-  from: number,
-  to: number,
-  now: number,
-): Band[] {
+export function bandsOf(spans: readonly Span[], lane: Lane, from: number, to: number, now: number): Band[] {
   const out: Band[] = []
   const lastOf = new Map<string, Band>()
   const mine = (span: Span) => span.source === lane && span.place !== null
@@ -61,10 +55,7 @@ export function within(
   const said = piecesIn(spans, from, to, now, isOwn)
   const seen = piecesIn(spans, from, to, now, (span) => !isOwn(span))
   const inside = minutes.filter((one) => one.at >= from && one.at < to)
-  const places = Object.fromEntries(LANES.map((lane) => [lane, placesOf(seen, lane)])) as Record<
-    Lane,
-    Place[]
-  >
+  const places = Object.fromEntries(LANES.map((lane) => [lane, placesOf(seen, lane)])) as Record<Lane, Place[]>
   return {
     said: totalsOf(said),
     saidMs: wholeOf(said),
@@ -137,12 +128,7 @@ export interface Bucket {
 const mean = (values: number[]): number | null =>
   values.length ? values.reduce((sum, one) => sum + one, 0) / values.length : null
 
-export function bucketsOf(
-  minutes: readonly Minute[],
-  from: number,
-  to: number,
-  size: number,
-): Bucket[] {
+export function bucketsOf(minutes: readonly Minute[], from: number, to: number, size: number): Bucket[] {
   const count = Math.max(1, Math.ceil((to - from) / size))
   const held: Minute[][] = Array.from({ length: count }, () => [])
   for (const minute of minutes) {

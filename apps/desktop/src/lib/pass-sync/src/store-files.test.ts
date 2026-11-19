@@ -47,9 +47,7 @@ describe('a file attached to an item', () => {
     const parts = await readFileParts(item.id, attachment.id)
     expect(parts).toHaveLength(1)
     expect(parts[0]?.bytes).not.toEqual(bytes)
-    expect(await waitingFiles(deviceRows)).toEqual([
-      { item: item.id, file: attachment.id, parts: 1, gone: null },
-    ])
+    expect(await waitingFiles(deviceRows)).toEqual([{ item: item.id, file: attachment.id, parts: 1, gone: null }])
   })
 
   test('over 4 MiB is kept in parts', async () => {

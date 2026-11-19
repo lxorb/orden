@@ -130,9 +130,4 @@ export function readGraph(raw: string): GraphSettings {
   return held ? settingsOf(held) : {}
 }
 
-export const spaceGraph = columnRoute(
-  'graph',
-  wrong,
-  settingsOf,
-  'that is more than a space keeps about its graph',
-)
+export const spaceGraph = columnRoute('graph', wrong, settingsOf, 'that is more than a space keeps about its graph')

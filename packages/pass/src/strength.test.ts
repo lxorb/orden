@@ -59,9 +59,7 @@ describe('strengthOf', () => {
       .repeat(10)
       .slice(0, 500)
     for (const password of [long, same, words]) {
-      expect(growth((count) => strengthOf(password.slice(0, count)), 125)).toBeLessThan(
-        GROWS_AT_MOST * 4,
-      )
+      expect(growth((count) => strengthOf(password.slice(0, count)), 125)).toBeLessThan(GROWS_AT_MOST * 4)
     }
   })
 })

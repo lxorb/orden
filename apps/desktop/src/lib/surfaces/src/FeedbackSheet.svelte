@@ -1,13 +1,7 @@
 <script lang="ts">
   import { dropOver, closeOnBack, Cross, overlays } from '../../ui-kit/src/api'
   import { cubicOut } from 'svelte/easing'
-  import {
-    MOST_PICTURES,
-    type Picture,
-    picturesAmong,
-    pictureOf,
-    feedback,
-  } from '../../feedback/src/api'
+  import { MOST_PICTURES, type Picture, picturesAmong, pictureOf, feedback } from '../../feedback/src/api'
   import { fade, LAYER, scale } from '../../platform/src/api'
   import { followHref } from '../../workspace/src/api'
   import { trap } from '../../ui-controls/src/api'
@@ -89,11 +83,7 @@
 
 {#if feedback.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div
-    class="orden-scrim scrim"
-    transition:fade={{ duration: LAYER.fade }}
-    onclick={() => feedback.close()}
-  ></div>
+  <div class="orden-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={() => feedback.close()}></div>
 
   <div
     class="orden-screen sheet"
@@ -152,9 +142,7 @@
           {/each}
         </ul>
         <div class="row">
-          <button type="button" class="orden-button is-quiet" onclick={() => (looking = false)}
-            >Back</button
-          >
+          <button type="button" class="orden-button is-quiet" onclick={() => (looking = false)}>Back</button>
         </div>
       </div>
     {:else}
@@ -207,8 +195,7 @@
             type="button"
             class="orden-chip is-quiet"
             disabled={sending || pictures.length >= MOST_PICTURES}
-            onclick={() => void chooseFiles({ accept: 'image/*', multiple: true }).then(add)}
-            >Add images</button
+            onclick={() => void chooseFiles({ accept: 'image/*', multiple: true }).then(add)}>Add images</button
           >
         </div>
 
@@ -217,8 +204,8 @@
         {/if}
 
         <p class="detail">
-          This report includes your description, Orden’s version, your platform and the recent app
-          log, with file paths removed.
+          This report includes your description, Orden’s version, your platform and the recent app log, with file paths
+          removed.
         </p>
 
         {#if error}
@@ -230,16 +217,10 @@
 
         <div class="row">
           {#if feedback.past.length}
-            <button type="button" class="see" onclick={() => (looking = true)}
-              >See past requests</button
-            >
+            <button type="button" class="see" onclick={() => (looking = true)}>See past requests</button>
           {/if}
-          <button type="button" class="orden-button is-quiet" onclick={() => feedback.close()}
-            >Cancel</button
-          >
-          <button type="submit" class="orden-button" disabled={!text.trim() || sending}>
-            Send
-          </button>
+          <button type="button" class="orden-button is-quiet" onclick={() => feedback.close()}>Cancel</button>
+          <button type="submit" class="orden-button" disabled={!text.trim() || sending}> Send </button>
         </div>
       </form>
     {/if}

@@ -1,10 +1,4 @@
-import {
-  type ChangeSet,
-  type ChangeSpec,
-  EditorSelection,
-  EditorState,
-  type SelectionRange,
-} from '@codemirror/state'
+import { type ChangeSet, type ChangeSpec, EditorSelection, EditorState, type SelectionRange } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { growth, GROWS_AT_MOST } from '../../../scripts/growth'
 
@@ -88,9 +82,7 @@ function stateWith(seed: number, count: number): EditorState {
   ).join('\n')
   const ranges = Array.from({ length: count }, () => {
     const at = pick(doc.length + 1)
-    return pick(3) === 0
-      ? EditorSelection.range(at, Math.min(doc.length, at + pick(5)))
-      : EditorSelection.cursor(at)
+    return pick(3) === 0 ? EditorSelection.range(at, Math.min(doc.length, at + pick(5))) : EditorSelection.cursor(at)
   })
   return EditorState.create({
     doc,
@@ -108,9 +100,7 @@ describe('a change at many carets at once', () => {
         const made = state.changeByRange((range) => edit(state, range))
         const changes = state.changes(made.changes)
 
-        expect(changes.apply(state.doc).toString()).toBe(
-          expected.changes.apply(state.doc).toString(),
-        )
+        expect(changes.apply(state.doc).toString()).toBe(expected.changes.apply(state.doc).toString())
         expect(made.selection.eq(expected.selection, true)).toBe(true)
         for (let pos = 0; pos <= state.doc.length; pos++) {
           expect(changes.mapPos(pos, -1)).toBe(expected.changes.mapPos(pos, -1))
@@ -130,9 +120,7 @@ describe('a change at many carets at once', () => {
           doc,
           extensions: EditorState.allowMultipleSelections.of(true),
         })
-        const ends = Array.from({ length: count }, (_, at) =>
-          EditorSelection.cursor(base.doc.line(at + 1).to),
-        )
+        const ends = Array.from({ length: count }, (_, at) => EditorSelection.cursor(base.doc.line(at + 1).to))
         state = base.update({ selection: EditorSelection.create(ends) }).state
         states.set(count, state)
       }

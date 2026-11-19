@@ -101,9 +101,7 @@ describe('a website kept into a space that is not on screen', () => {
     await workspace.writesSettled()
 
     expect(landed).toBe('/home/Example 2.url')
-    expect(files().get('/home/Example.url')).toBe(
-      '[InternetShortcut]\r\nURL=https://other.org/mine\r\n',
-    )
+    expect(files().get('/home/Example.url')).toBe('[InternetShortcut]\r\nURL=https://other.org/mine\r\n')
   })
 })
 

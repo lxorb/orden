@@ -4,8 +4,7 @@
   import { overlays } from '../../ui-kit/src/api'
   import { extensions, type Popped } from './extensions.svelte'
 
-  const { popped, right, from }: { popped: Popped; right: number; from?: HTMLElement | null } =
-    $props()
+  const { popped, right, from }: { popped: Popped; right: number; from?: HTMLElement | null } = $props()
 
   let size = $state<{ width: number; height: number } | null>(null)
   let inside = $state<HTMLElement>()
@@ -35,14 +34,10 @@
 
     void import('@tauri-apps/api/event')
       .then(({ listen }) =>
-        listen<{ kind: string; width?: number; height?: number }>(
-          'orden://extension-popup',
-          ({ payload }) => {
-            if (payload.kind === 'closed') extensions.close(popped)
-            else if (payload.width && payload.height)
-              size = { width: payload.width, height: payload.height }
-          },
-        ),
+        listen<{ kind: string; width?: number; height?: number }>('orden://extension-popup', ({ payload }) => {
+          if (payload.kind === 'closed') extensions.close(popped)
+          else if (payload.width && payload.height) size = { width: payload.width, height: payload.height }
+        }),
       )
       .then((stop) => {
         if (gone) stop()

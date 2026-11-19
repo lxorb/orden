@@ -1,7 +1,6 @@
 import type { IBuffer, IBufferCell, ILink, ILinkProvider, Terminal } from '@xterm/xterm'
 
-const URL =
-  /https?:\/\/[^\s"'!*(){}|\\^<>`\u2500-\u257f]*[^\s"':,.!?{}|\\^~[\]`()<>\u2500-\u257f]/gi
+const URL = /https?:\/\/[^\s"'!*(){}|\\^<>`\u2500-\u257f]*[^\s"':,.!?{}|\\^~[\]`()<>\u2500-\u257f]/gi
 const PART = /[^\s"'!*(){}|\\^<>`\u2500-\u257f]/
 const LEADING = /^[^\s"'!*(){}|\\^<>`\u2500-\u257f]+/
 const SCHEME = /^[a-z][a-z0-9+.-]*:\/\//i
@@ -161,8 +160,7 @@ function lineAround(buffer: IBuffer, cols: number, y: number) {
     let end = line.text.length
     if (soft) while (end > 0 && line.text[end - 1] === ' ') end--
     else end -= framed(last).right
-    const hard =
-      !soft && inAddress(line.text, end) && looksContinued(last, below, addressColumn(line, end))
+    const hard = !soft && inAddress(line.text, end) && looksContinued(last, below, addressColumn(line, end))
     if (!soft && !hard) {
       if (next > y) break
       line = cut(below, 0)
@@ -212,9 +210,7 @@ export function unbroken(buffer: IBuffer, cols: number, start: Cell, end: Cell):
   const before = (a: Cell, b: Cell) => a.y < b.y || (a.y === b.y && a.x < b.x)
   const lastRow = line.at.at(-1)?.y ?? -1
   if (end.y > lastRow + 1 || (end.y === lastRow + 1 && end.x > 0)) return null
-  const chosen = line.at
-    .map((cell, i) => (!before(cell, start) && before(cell, end) ? line.text[i] : ''))
-    .join('')
+  const chosen = line.at.map((cell, i) => (!before(cell, start) && before(cell, end) ? line.text[i] : '')).join('')
   const text = chosen.trim()
   if (!text || /\s/.test(text)) return null
   for (const match of line.text.matchAll(URL)) {

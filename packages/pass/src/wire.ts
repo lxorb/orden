@@ -144,9 +144,7 @@ const ID = /^[A-Za-z0-9_-]{8,64}$/
 type Fields = Record<string, unknown>
 
 function fieldsOf(value: unknown): Fields | null {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as Fields)
-    : null
+  return typeof value === 'object' && value !== null && !Array.isArray(value) ? (value as Fields) : null
 }
 
 export function isPassId(value: unknown): value is string {
@@ -294,9 +292,7 @@ export function itemRowIn(value: unknown): ItemRow | null {
     !isCount(at)
   )
     return null
-  const sealed = deleted
-    ? key === '' && body === ''
-    : isSealed(key, MOST_KEY_BYTES) && isSealed(body, MOST_ITEM_BYTES)
+  const sealed = deleted ? key === '' && body === '' : isSealed(key, MOST_KEY_BYTES) && isSealed(body, MOST_ITEM_BYTES)
   if (!sealed) return null
   return { vault, id, rev, key: key as string, body: body as string, keyVersion, at, deleted }
 }
@@ -401,7 +397,6 @@ export function linkOpenedIn(value: unknown): LinkOpened | null {
   const raw = fieldsOf(value)
   if (raw === null) return null
   const { body, expires, left } = raw
-  if (!isSealed(body, MOST_ITEM_BYTES) || !isCount(expires) || !(left === null || isCount(left)))
-    return null
+  if (!isSealed(body, MOST_ITEM_BYTES) || !isCount(expires) || !(left === null || isCount(left))) return null
   return { body, expires, left }
 }

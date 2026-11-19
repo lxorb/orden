@@ -3,14 +3,7 @@ import { isPassId } from '@orden/pass/wire'
 import { Hono } from 'hono'
 import { now, OUT_OF_SPACE, fits, type Env, type Variables } from '../../sync-server/src/api'
 import { activeIn, holdsSql, mayAct } from './access'
-import {
-  NO_SUCH_FILE,
-  NO_SUCH_ITEM,
-  NO_SUCH_VAULT,
-  NOT_A_FILE,
-  NOT_YOUR_ROLE,
-  TAKEN,
-} from './refusals'
+import { NO_SUCH_FILE, NO_SUCH_ITEM, NO_SUCH_VAULT, NOT_A_FILE, NOT_YOUR_ROLE, TAKEN } from './refusals'
 
 export const files = new Hono<{ Bindings: Env; Variables: Variables }>()
 
@@ -23,11 +16,7 @@ function fileObject(item: string, file: string, part: number): string {
   return `pass/files/${item}/${file}/${String(part)}`
 }
 
-export function filesGone(
-  db: D1Database,
-  where: string,
-  values: readonly unknown[],
-): D1PreparedStatement[] {
+export function filesGone(db: D1Database, where: string, values: readonly unknown[]): D1PreparedStatement[] {
   const at = `?${String(values.length + 1)}`
   return [
     db
@@ -210,9 +199,7 @@ files.delete('/files/:vault/:item/:file', async (context) => {
   if (!mayAct(held, 'editor')) return context.json({ error: NOT_YOUR_ROLE }, 403)
   const known = (await partsOf(context.env, item, file)).filter((one) => one.vault_id === vault)
   if (!known.length) return context.json({ error: NO_SUCH_FILE }, 404)
-  await context.env.DB.prepare(
-    'delete from pass_file_parts where item_id = ? and file_id = ? and vault_id = ?',
-  )
+  await context.env.DB.prepare('delete from pass_file_parts where item_id = ? and file_id = ? and vault_id = ?')
     .bind(item, file, vault)
     .run()
   await context.env.NOTES.delete(known.map((one) => fileObject(item, file, one.part)))

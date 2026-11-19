@@ -16,8 +16,7 @@
     anchor,
     onclose,
     onsaved,
-  }: { tab: Tab; anchor: DOMRect | null; onclose: () => void; onsaved?: (() => void) | undefined } =
-    $props()
+  }: { tab: Tab; anchor: DOMRect | null; onclose: () => void; onsaved?: (() => void) | undefined } = $props()
 
   const MOST_SHOWN = 8
   const WIDTH = 288
@@ -29,21 +28,14 @@
   // svelte-ignore state_referenced_locally
   let name = $state(offeredName(tab.note, title))
 
-  const places = placesFor(
-    workspace.tree,
-    workspace.shownSpaces,
-    workspace.activeSpace?.root ?? null,
-    canWriteAt,
-  )
+  const places = placesFor(workspace.tree, workspace.shownSpaces, workspace.activeSpace?.root ?? null, canWriteAt)
   const home = workspace.spaces.find((one) => one.id === workspace.spaceOf(tab.note))?.root
   let place = $state(startingPlace(places, home ?? null))
   let named = $state<HTMLInputElement>()
   let choosing = $state(false)
   let query = $state('')
   let cursor = $state(0)
-  const matches = $derived(
-    choosing ? rank(query.trim(), places, (one) => one.label).slice(0, MOST_SHOWN) : [],
-  )
+  const matches = $derived(choosing ? rank(query.trim(), places, (one) => one.label).slice(0, MOST_SHOWN) : [])
 
   const at = $derived.by(() => {
     const left = anchor ? anchor.left : (innerWidth - WIDTH) / 2
@@ -108,14 +100,7 @@
   transition:scale={{ duration: LAYER.rise, start: LAYER.start, easing: cubicOut }}
 >
   <form onsubmit={save}>
-    <input
-      class="orden-field"
-      bind:this={named}
-      bind:value={name}
-      aria-label="Name"
-      spellcheck="false"
-      use:selectAll
-    />
+    <input class="orden-field" bind:this={named} bind:value={name} aria-label="Name" spellcheck="false" use:selectAll />
 
     {#if choosing}
       <!-- svelte-ignore a11y_autofocus -->
@@ -149,21 +134,14 @@
         {/each}
       </ul>
     {:else if place}
-      <button
-        type="button"
-        class="orden-field where"
-        aria-label="Save to"
-        onclick={() => (choosing = true)}
-      >
+      <button type="button" class="orden-field where" aria-label="Save to" onclick={() => (choosing = true)}>
         {#if place.space}
           <span class="space"><SpaceMark {...place.space} /></span>
         {:else if place.mark}
           <FileMark mark={place.mark} path={place.id} />
         {/if}
         <span class="orden-row-label">{place.label}</span>
-        <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true"
-          ><path d="M3 4.5 6 7.5 9 4.5" /></svg
-        >
+        <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 6 7.5 9 4.5" /></svg>
       </button>
     {/if}
 

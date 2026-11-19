@@ -35,9 +35,7 @@ function viewOf(doc: string, at: number): EditorView {
 }
 
 function press(view: EditorView, key: string) {
-  view.contentDOM.dispatchEvent(
-    new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }),
-  )
+  view.contentDOM.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }))
 }
 
 describe("Vim's own keys that stand for others", () => {
@@ -172,9 +170,7 @@ describe('a command over many lines', () => {
   }, 60_000)
 
   test('a global delete takes every matching line, however many', () => {
-    const doc = Array.from({ length: 2000 }, (_, at) =>
-      at % 2 ? `keep ${at}` : `drop ${at}`,
-    ).join('\n')
+    const doc = Array.from({ length: 2000 }, (_, at) => (at % 2 ? `keep ${at}` : `drop ${at}`)).join('\n')
     const view = viewOf(doc, 0)
 
     Vim.handleEx(cmOf(view), 'g/drop/d')

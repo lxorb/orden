@@ -71,9 +71,7 @@
 
   function rowOf(index: number): number {
     const emoji = cells[index]
-    return rows.findIndex(
-      (row) => 'cells' in row && emoji !== undefined && row.cells.includes(emoji),
-    )
+    return rows.findIndex((row) => 'cells' in row && emoji !== undefined && row.cells.includes(emoji))
   }
 
   function onKey(event: KeyboardEvent) {
@@ -144,12 +142,7 @@
       {/each}
     </div>
   {/if}
-  <div
-    class="grid"
-    bind:this={scroller}
-    bind:clientHeight={room}
-    onscroll={() => (top = scroller?.scrollTop ?? 0)}
-  >
+  <div class="grid" bind:this={scroller} bind:clientHeight={room} onscroll={() => (top = scroller?.scrollTop ?? 0)}>
     {#if failed}
       <p class="empty">That set is not here</p>
     {:else if !data}

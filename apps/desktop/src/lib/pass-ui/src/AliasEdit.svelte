@@ -82,9 +82,7 @@
       label: one.premium ? `${one.label} ★` : one.label,
     })),
   )
-  const mailboxes = $derived(
-    (options?.mailboxes ?? []).map((one) => ({ value: one.id, label: one.email })),
-  )
+  const mailboxes = $derived((options?.mailboxes ?? []).map((one) => ({ value: one.id, label: one.email })))
   const suffixLabel = $derived(options?.suffixes.find((one) => one.value === suffix)?.label ?? '')
 </script>
 

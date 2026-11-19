@@ -17,11 +17,7 @@ describe('archiving a selection', () => {
 
 describe('what the archive lists', () => {
   test('is every archived row that is not inside another archived folder', () => {
-    expect(standing(new Set(['Old', 'Old/2019/Taxes.md', 'Plan.md', 'Older']))).toEqual([
-      'Old',
-      'Plan.md',
-      'Older',
-    ])
+    expect(standing(new Set(['Old', 'Old/2019/Taxes.md', 'Plan.md', 'Older']))).toEqual(['Old', 'Plan.md', 'Older'])
   })
 })
 

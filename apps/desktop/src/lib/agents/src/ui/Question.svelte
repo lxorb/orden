@@ -16,8 +16,7 @@
 
   const icon = $derived.by(() => {
     const tab = approval.tab
-    const web =
-      tab !== undefined && workspace.tabs.some((one) => one.id === tab && one.kind === 'web')
+    const web = tab !== undefined && workspace.tabs.some((one) => one.id === tab && one.kind === 'web')
     const pages = webPages()
     return (web ? pages.of(tab).icon : null) ?? pages.faviconOf(approval.site) ?? null
   })
@@ -61,16 +60,12 @@
       {#if approval.tab !== undefined}
         <button class="orden-button is-quiet" onclick={goThere}>Open</button>
       {/if}
-      <button class="orden-button" disabled={answering} onclick={() => void answer(true)}>
-        Done
-      </button>
+      <button class="orden-button" disabled={answering} onclick={() => void answer(true)}> Done </button>
     {:else}
       <button class="orden-button is-quiet" disabled={answering} onclick={() => void answer(false)}>
         Don’t allow
       </button>
-      <button class="orden-button" disabled={answering} onclick={() => void answer(true)}>
-        Allow
-      </button>
+      <button class="orden-button" disabled={answering} onclick={() => void answer(true)}> Allow </button>
     {/if}
   </div>
   {#if (site !== null || chat) && approval.category !== 'takeover' && approval.category !== 'showing'}

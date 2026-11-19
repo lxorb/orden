@@ -35,13 +35,7 @@ import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isPaper, type Paper } from '@orden/markdown/papers'
 import { isLinkFormat, type LinkFormat, setLinkWriting } from '../../link-format/src/api'
 import { type ConflictRule, conflictRule, DEFAULT_RULE } from '../../sync-mirror/src/api'
-import {
-  type Compaction,
-  DEFAULT_COMPACTION,
-  isCompaction,
-  MARKS,
-  type Marks,
-} from '@orden/glasses/choices'
+import { type Compaction, DEFAULT_COMPACTION, isCompaction, MARKS, type Marks } from '@orden/glasses/choices'
 import {
   isNumber,
   isRecord,
@@ -218,8 +212,7 @@ function wordsOf(value: unknown): Record<string, string> {
 
   const out: Record<string, string> = {}
   for (const [id, phrase] of Object.entries(value)) {
-    if (isString(phrase) && phrase.trim() && phrase.length <= LONGEST_PHRASE)
-      out[id] = phrase.trim()
+    if (isString(phrase) && phrase.trim() && phrase.length <= LONGEST_PHRASE) out[id] = phrase.trim()
   }
 
   return out
@@ -378,9 +371,7 @@ class Modes {
       this.lineHeight = measure(saved.lineHeight, DEFAULTS.lineHeight)
       this.spellLanguages =
         stringList(saved.spellLanguages) ??
-        (isString(saved.spellLanguage) && saved.spellLanguage !== 'system'
-          ? [saved.spellLanguage]
-          : [])
+        (isString(saved.spellLanguage) && saved.spellLanguage !== 'system' ? [saved.spellLanguage] : [])
       this.ligatures = ligatureScope(saved.ligatures) ?? DEFAULTS.ligatures
       this.conflicts = conflictRule(saved.conflicts) ?? DEFAULTS.conflicts
       this.keepVersions = keepingOf(saved.keepVersions) ?? DEFAULTS.keepVersions
@@ -655,9 +646,7 @@ class Modes {
   }
 
   setHighlightTone(tone: number | null) {
-    this.take('highlightTone', highlightTone(tone).tone, true, () =>
-      setHighlightColour(this.highlight),
-    )
+    this.take('highlightTone', highlightTone(tone).tone, true, () => setHighlightColour(this.highlight))
   }
 
   get highlight(): HighlightColour {
@@ -701,9 +690,7 @@ class Modes {
 
   setGlassesWord(id: string, phrase: string) {
     const wanted = phrase.trim().toLowerCase().slice(0, LONGEST_PHRASE).trim()
-    const words = Object.fromEntries(
-      Object.entries(this.glassesWords).filter(([one]) => one !== id),
-    )
+    const words = Object.fromEntries(Object.entries(this.glassesWords).filter(([one]) => one !== id))
     if (wanted) words[id] = wanted
 
     this.glassesWords = words
@@ -801,34 +788,21 @@ class Modes {
       this.take('ligatures', ligatureScope(remote.ligatures) ?? undefined, false, (scope) =>
         this.each(undefined, (one) => setLigatures(one, scope)),
       )
-      this.take('vim', flag(remote.vim), false, (on) =>
-        this.each(undefined, (one) => setVim(one, on)),
-      )
-      this.take(
-        'attachments',
-        isAttachmentFolder(remote.attachments) ? remote.attachments : undefined,
-        false,
-      )
+      this.take('vim', flag(remote.vim), false, (on) => this.each(undefined, (one) => setVim(one, on)))
+      this.take('attachments', isAttachmentFolder(remote.attachments) ? remote.attachments : undefined, false)
       this.take('conflicts', conflictRule(remote.conflicts) ?? undefined, false)
       this.take('keepVersions', keepingOf(remote.keepVersions), false)
       this.take('remindBefore', remindingOf(remote.remindBefore), false)
       this.take('canvasTurns', flag(remote.canvasTurns), false)
       this.take('canvasTurnSnaps', flag(remote.canvasTurnSnaps), false)
-      this.take('highlightTone', toneOf(remote.highlightTone), false, () =>
-        setHighlightColour(this.highlight),
-      )
+      this.take('highlightTone', toneOf(remote.highlightTone), false, () => setHighlightColour(this.highlight))
       this.take('quietMarks', flag(remote.quietMarks), false, (on) =>
         this.each(undefined, (one) => setQuietMarks(one, on)),
       )
       this.take('silent', flag(remote.silent), false)
       this.take('developer', flag(remote.developer), false)
       this.take('hardBreaks', flag(remote.hardBreaks), false, setHardBreaks)
-      this.take(
-        'linkFormat',
-        isLinkFormat(remote.linkFormat) ? remote.linkFormat : undefined,
-        false,
-        setLinkWriting,
-      )
+      this.take('linkFormat', isLinkFormat(remote.linkFormat) ? remote.linkFormat : undefined, false, setLinkWriting)
       this.adoptGlasses(remote)
     }
 

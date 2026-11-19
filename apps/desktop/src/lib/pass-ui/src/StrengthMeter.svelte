@@ -6,9 +6,7 @@
 
   const judged = $derived(password === '' ? null : strengthOf(password))
   const filled = $derived(
-    judged === null
-      ? 0
-      : Math.min(100, Math.round((judged.bits / (STRENGTH_BITS.strong + 30)) * 100)),
+    judged === null ? 0 : Math.min(100, Math.round((judged.bits / (STRENGTH_BITS.strong + 30)) * 100)),
   )
 </script>
 

@@ -39,10 +39,7 @@ function themeToggle() {
   const order = ['system', 'light', 'dark'] as const
   const say = (held: string) => {
     button.dataset.theme = held
-    button.setAttribute(
-      'aria-label',
-      held === 'system' ? 'Theme: follow the system' : `Theme: ${held}`,
-    )
+    button.setAttribute('aria-label', held === 'system' ? 'Theme: follow the system' : `Theme: ${held}`)
   }
 
   let held = (() => {
@@ -289,16 +286,7 @@ function graphs() {
 
     const nodeUnder = (event: MouseEvent) => {
       const box = canvas.getBoundingClientRect()
-      return nodeAt(
-        layout.x,
-        layout.y,
-        radii,
-        camera,
-        width,
-        height,
-        event.clientX - box.left,
-        event.clientY - box.top,
-      )
+      return nodeAt(layout.x, layout.y, radii, camera, width, height, event.clientX - box.left, event.clientY - box.top)
     }
 
     canvas.addEventListener('pointermove', (event) => {

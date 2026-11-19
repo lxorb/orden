@@ -133,8 +133,7 @@ function compare(sort: Sort): (a: Item, b: Item) => number {
       return (a, b) => recency(b) - recency(a)
     case 'title':
       return (a, b) =>
-        a.content.title.localeCompare(b.content.title, undefined, { sensitivity: 'base' }) ||
-        b.created - a.created
+        a.content.title.localeCompare(b.content.title, undefined, { sensitivity: 'base' }) || b.created - a.created
     case 'newest':
       return (a, b) => b.created - a.created
     case 'oldest':
@@ -161,9 +160,9 @@ export function listed(
     other: 0,
   }
   for (const item of within) counts[filterOf(item.content.kind)]++
-  const rows = (
-    filter === 'all' ? within : within.filter((item) => filterOf(item.content.kind) === filter)
-  ).sort(compare(sort))
+  const rows = (filter === 'all' ? within : within.filter((item) => filterOf(item.content.kind) === filter)).sort(
+    compare(sort),
+  )
   const pinned = scope.kind === 'trash' ? [] : rows.filter((item) => item.pinned)
   return { pinned, rows, counts }
 }

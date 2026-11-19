@@ -45,10 +45,7 @@ export function groupProperties(group?: { property: string; key: Value }): Recor
     typeof key === 'string' ||
     typeof key === 'number' ||
     typeof key === 'boolean' ||
-    (key !== null &&
-      typeof key === 'object' &&
-      'kind' in key &&
-      (key.kind === 'date' || key.kind === 'link'))
+    (key !== null && typeof key === 'object' && 'kind' in key && (key.kind === 'date' || key.kind === 'link'))
   return kept ? { [bare(group.property)]: frontValue(key) } : {}
 }
 
@@ -59,9 +56,7 @@ function listed(value: unknown): unknown[] {
   return value === undefined || value === null ? [] : [value]
 }
 
-export function joinedProperties(
-  ...layers: readonly Record<string, unknown>[]
-): Record<string, unknown> {
+export function joinedProperties(...layers: readonly Record<string, unknown>[]): Record<string, unknown> {
   const out: Record<string, unknown> = {}
   for (const layer of layers) {
     for (const [name, value] of Object.entries(layer)) {
@@ -77,10 +72,7 @@ export function joinedProperties(
   return out
 }
 
-export function withTemplate(
-  words: string,
-  props: Record<string, unknown>,
-): Record<string, unknown> {
+export function withTemplate(words: string, props: Record<string, unknown>): Record<string, unknown> {
   if (!words.startsWith('---')) return props
   const own = noteValues(words)
   const lists = Object.fromEntries(
@@ -99,22 +91,18 @@ export async function addNote(
   group?: { property: string; key: Value },
   made: NewNote = {},
 ): Promise<string | null> {
-  const space =
-    (file === null ? null : spaceHolding(workspace.spaces, file)) ?? workspace.activeSpace
+  const space = (file === null ? null : spaceHolding(workspace.spaces, file)) ?? workspace.activeSpace
   if (!space) return null
   const view = base.views[at]
   const place = rowPlace(base, view?.name)
-  const folder =
-    place.folder !== undefined && place.folder !== '' ? insideOnly(place.folder) : undefined
+  const folder = place.folder !== undefined && place.folder !== '' ? insideOnly(place.folder) : undefined
   if (folder === null) return null
-  const dir =
-    folder !== undefined ? insideSpace(space.root, folder) : file ? folderOf(file) : space.root
+  const dir = folder !== undefined ? insideSpace(space.root, folder) : file ? folderOf(file) : space.root
   if (!canWriteAt(dir)) return null
 
   const title = noteName(made.title ?? 'Untitled')
   const name = await workspace.freeNameOnDisk(dir, `${title}.md`)
-  const link =
-    made.template === undefined ? (view?.orden.template ?? base.orden.template) : made.template
+  const link = made.template === undefined ? (view?.orden.template ?? base.orden.template) : made.template
   const template = link ? templatePath(link, space) : null
   const words = template === null ? '' : await templateWords(template, name.replace(/.md$/i, ''))
   const props = withTemplate(

@@ -10,9 +10,7 @@
   const { ui }: { ui: PassUi } = $props()
 
   const asked = $derived(ui.sheet?.kind === 'vault' ? ui.sheet : null)
-  const editing = $derived(
-    asked?.vault ? (pass.vaults.find((one) => one.id === asked.vault) ?? null) : null,
-  )
+  const editing = $derived(asked?.vault ? (pass.vaults.find((one) => one.id === asked.vault) ?? null) : null)
 
   let name = $state('')
   let description = $state('')
@@ -71,19 +69,8 @@
 <Sheet open={asked !== null} title={editing ? 'Edit vault' : 'New vault'} onclose={close}>
   {#snippet mark()}<VaultMark {color} {icon} mark={picked} />{/snippet}
   <form class="vault-form" onsubmit={kept}>
-    <input
-      class="orden-field is-value"
-      placeholder="Name"
-      aria-label="Name"
-      bind:value={name}
-      data-lands
-    />
-    <input
-      class="orden-field is-value"
-      placeholder="Description"
-      aria-label="Description"
-      bind:value={description}
-    />
+    <input class="orden-field is-value" placeholder="Name" aria-label="Name" bind:value={name} data-lands />
+    <input class="orden-field is-value" placeholder="Description" aria-label="Description" bind:value={description} />
     <div class="orden-section">Colour</div>
     <div class="dots" role="radiogroup" aria-label="Colour">
       {#each VAULT_COLORS as one (one)}

@@ -9,9 +9,7 @@ export function dropRows(event: DragEvent): void {
     .map((one): Mention => ({ kind: 'tab', id: one.id, label: one.shown, word: 'tab' }))
   if (!rows.length && !web.length) return
   event.preventDefault()
-  const fresh = [...rows.map(mentionOf), ...web].filter(
-    (one) => !chat.chips.some((had) => sameMention(had, one)),
-  )
+  const fresh = [...rows.map(mentionOf), ...web].filter((one) => !chat.chips.some((had) => sameMention(had, one)))
   chat.chips = [...chat.chips, ...fresh]
   chat.focus()
 }

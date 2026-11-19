@@ -141,10 +141,7 @@ describe('the space folder itself moving', () => {
 
 describe('reading what storage answers with', () => {
   test('keeps the paths and leaves the rest', () => {
-    expect(excludedPaths(['Archive', { glob: '*.tmp' }, 7, '', 'Work'])).toEqual([
-      'Archive',
-      'Work',
-    ])
+    expect(excludedPaths(['Archive', { glob: '*.tmp' }, 7, '', 'Work'])).toEqual(['Archive', 'Work'])
   })
 
   test('and each path once', () => {

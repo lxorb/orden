@@ -15,9 +15,7 @@ vi.mock('../../src/lib/reading/src/render', () => ({
       .split('\n')
       .filter(Boolean)
       .map((line) =>
-        line.startsWith('# ')
-          ? `<h1 id="${line.slice(2).toLowerCase()}">${line.slice(2)}</h1>`
-          : `<p>${line}</p>`,
+        line.startsWith('# ') ? `<h1 id="${line.slice(2).toLowerCase()}">${line.slice(2)}</h1>` : `<p>${line}</p>`,
       )
       .join('')
   },
@@ -84,8 +82,7 @@ afterEach(() => {
 
 let top = 0
 
-const rowOf = (element: Element) =>
-  element.parentElement ? [...element.parentElement.children].indexOf(element) : 0
+const rowOf = (element: Element) => (element.parentElement ? [...element.parentElement.children].indexOf(element) : 0)
 
 Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
   configurable: true,
@@ -152,9 +149,7 @@ async function anotherNoteSaved() {
 }
 
 const lines = (count: number) =>
-  Array.from({ length: count }, (_, at) => `Day ${String(at)} of the trip, see [[Plan]].`).join(
-    '\n\n',
-  )
+  Array.from({ length: count }, (_, at) => `Day ${String(at)} of the trip, see [[Plan]].`).join('\n\n')
 
 test('a reader who stops where the top edge falls between two paragraphs stays there when another note is saved', async () => {
   const layout = await opened(`# Trip\n\n${lines(300)}\n\n# Home\n\nEnd.`)

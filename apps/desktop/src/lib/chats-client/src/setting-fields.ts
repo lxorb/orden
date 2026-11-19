@@ -5,8 +5,7 @@ import { priorities } from './priorities.svelte'
 
 export function chatsFields(): SettingField[] {
   const days = hush.hours?.days.join() ?? ''
-  const hoursOf = (value: string) =>
-    value === 'weekdays' ? WEEKDAYS : value === 'every' ? EVERY_DAY : null
+  const hoursOf = (value: string) => (value === 'weekdays' ? WEEKDAYS : value === 'every' ? EVERY_DAY : null)
   const hourOptions = Array.from({ length: 24 }, (_, hour) => ({
     value: String(hour * 60),
     label: localDate(new Date(2000, 0, 1, hour).getTime(), { timeStyle: 'short' }),
@@ -35,8 +34,7 @@ export function chatsFields(): SettingField[] {
         { value: 'weekdays', label: 'Weekdays' },
       ],
       initial: 'always',
-      get: () =>
-        days === WEEKDAYS.join() ? 'weekdays' : days === EVERY_DAY.join() ? 'every' : 'always',
+      get: () => (days === WEEKDAYS.join() ? 'weekdays' : days === EVERY_DAY.join() ? 'every' : 'always'),
       set: (value) => {
         const chosen = hoursOf(value)
         hush.setHours(chosen ? { ...(hush.hours ?? WORKING_HOURS), days: chosen } : null)

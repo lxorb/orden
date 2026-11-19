@@ -13,11 +13,7 @@ beforeAll(async () => {
   await loadLineCommands()
 })
 
-function type(
-  doc: string,
-  selection: { anchor: number; head: number },
-  character: string,
-): EditorState {
+function type(doc: string, selection: { anchor: number; head: number }, character: string): EditorState {
   let state = parsed(
     EditorState.create({
       doc,

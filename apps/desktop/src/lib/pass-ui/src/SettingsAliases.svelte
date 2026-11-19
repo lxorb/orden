@@ -19,9 +19,7 @@
   let wrong = $state<string | null>(null)
   let options = $state.raw<AliasOptions | null>(null)
 
-  const providers = $derived(
-    (Object.keys(NAMES) as AliasService[]).map((one) => ({ value: one, label: NAMES[one] })),
-  )
+  const providers = $derived((Object.keys(NAMES) as AliasService[]).map((one) => ({ value: one, label: NAMES[one] })))
 
   $effect(() => {
     let current = true
@@ -147,18 +145,13 @@
         aria-label="API key"
         bind:value={key}
       />
-      <button
-        class="orden-chip"
-        type="button"
-        disabled={!key.trim() || testing}
-        onclick={() => void test()}>Test connection</button
+      <button class="orden-chip" type="button" disabled={!key.trim() || testing} onclick={() => void test()}
+        >Test connection</button
       >
       <button class="orden-button" type="submit" disabled={!key.trim() || testing}>Connect</button>
     </div>
   </form>
-  <p class="line">
-    Aliases hide your email address: mail sent to an alias is forwarded to your mailbox.
-  </p>
+  <p class="line">Aliases hide your email address: mail sent to an alias is forwarded to your mailbox.</p>
 {/if}
 {#if said}<p class="line" role="status">{said}</p>{/if}
 {#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}

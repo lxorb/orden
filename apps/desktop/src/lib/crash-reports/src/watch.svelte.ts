@@ -24,9 +24,7 @@ function kindsOf(tabs: readonly { kind: string }[]): Record<string, number> {
 
 export function watchForCrashes(sending: boolean): () => void {
   const alive = () => {
-    void invoke('crash_alive', { visible: document.visibilityState === 'visible' }).catch(
-      () => undefined,
-    )
+    void invoke('crash_alive', { visible: document.visibilityState === 'visible' }).catch(() => undefined)
   }
   alive()
   const beating = setInterval(alive, ALIVE)

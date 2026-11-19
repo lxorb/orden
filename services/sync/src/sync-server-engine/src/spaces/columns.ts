@@ -1,7 +1,6 @@
 import { byteLength, type Env, now } from '../../../sync-server/src/api'
 
-export type Column =
-  'archived' | 'arranged' | 'bookmarks' | 'excluded' | 'files' | 'graph' | 'site' | 'sort'
+export type Column = 'archived' | 'arranged' | 'bookmarks' | 'excluded' | 'files' | 'graph' | 'site' | 'sort'
 
 export const MOST_BYTES: Record<Column | 'icons', number> = {
   sort: 32,
@@ -19,12 +18,7 @@ export function fits(written: string, column: Column | 'icons'): boolean {
   return byteLength(written) <= MOST_BYTES[column]
 }
 
-export async function writeColumn(
-  env: Env,
-  column: Column,
-  spaceId: string,
-  written: string,
-): Promise<void> {
+export async function writeColumn(env: Env, column: Column, spaceId: string, written: string): Promise<void> {
   await env.DB.prepare(`update spaces set ${column} = ?, updated_at = ? where id = ?`)
     .bind(written, now(), spaceId)
     .run()

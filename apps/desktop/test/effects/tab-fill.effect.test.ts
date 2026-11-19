@@ -120,9 +120,7 @@ async function window2() {
   if (!left) throw new Error('no pane')
   workspace.focusPane(left.id)
   await vi.waitFor(() =>
-    expect(workspace.tabs.every((tab) => tab.note.kind !== 'note' || tab.note.path !== null)).toBe(
-      true,
-    ),
+    expect(workspace.tabs.every((tab) => tab.note.kind !== 'note' || tab.note.path !== null)).toBe(true),
   )
   shown = mount(App, { target })
   await settle()
@@ -134,9 +132,9 @@ function chrome() {
     sidebar: target.querySelector('aside')?.outerHTML ?? null,
     strips: [...target.querySelectorAll('[role="tab"], .tab')].map((one) => one.textContent),
     panes: [...target.querySelectorAll('[data-pane]')].map((one) => one.getAttribute('data-pane')),
-    heads: [
-      ...target.querySelectorAll('[data-pane] > [data-chrome="top"], header [data-top-strip]'),
-    ].filter((one) => !one.closest('.bar')).length,
+    heads: [...target.querySelectorAll('[data-pane] > [data-chrome="top"], header [data-top-strip]')].filter(
+      (one) => !one.closest('.bar'),
+    ).length,
     status: target.querySelector('[data-region="status"]') !== null,
   }
 }

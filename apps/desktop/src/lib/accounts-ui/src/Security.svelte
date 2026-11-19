@@ -193,12 +193,8 @@
           spellcheck="false"
         />
       </div>
-      <button class="orden-action" disabled={busy} onclick={() => void freshCodes()}>
-        New recovery codes
-      </button>
-      <button class="orden-action is-danger" disabled={busy} onclick={() => void turnOff()}>
-        Turn off
-      </button>
+      <button class="orden-action" disabled={busy} onclick={() => void freshCodes()}> New recovery codes </button>
+      <button class="orden-action is-danger" disabled={busy} onclick={() => void turnOff()}> Turn off </button>
     </div>
   {/if}
 {/if}
@@ -225,9 +221,7 @@
 </div>
 
 {#if sessions.length > 1}
-  <button class="orden-action is-danger" onclick={() => void endOthers()}>
-    End every other session
-  </button>
+  <button class="orden-action is-danger" onclick={() => void endOthers()}> End every other session </button>
 {/if}
 
 <style>

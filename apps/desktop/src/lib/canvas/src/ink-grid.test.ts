@@ -42,15 +42,7 @@ describe('which strokes are near a part of the plane', () => {
     const strokes: InkStroke[] = []
     for (let one = 0; one < 600; one++) {
       const long = one % 37 === 0
-      strokes.push(
-        stroke(
-          `s${one}`,
-          next() * 6000 - 3000,
-          next() * 6000 - 3000,
-          long ? 1500 : 30,
-          long ? 900 : 10,
-        ),
-      )
+      strokes.push(stroke(`s${one}`, next() * 6000 - 3000, next() * 6000 - 3000, long ? 1500 : 30, long ? 900 : 10))
     }
 
     const grid = new InkGrid()

@@ -1,27 +1,14 @@
 import { describe, expect, test } from 'vitest'
 import { linearly } from '../../../scripts/growth'
-import {
-  readDuration,
-  readRemind,
-  readTask,
-  readTime,
-  taskWords,
-  type TaskFields,
-} from './task-line'
+import { readDuration, readRemind, readTask, readTime, taskWords, type TaskFields } from './task-line'
 
 const PLUGIN_LINES: [string, Partial<TaskFields>][] = [
-  [
-    '- [ ] #task Has a created date ➕ 2023-04-13',
-    { created: '2023-04-13', text: '#task Has a created date' },
-  ],
+  ['- [ ] #task Has a created date ➕ 2023-04-13', { created: '2023-04-13', text: '#task Has a created date' }],
   ['- [ ] #task Has a scheduled date ⏳ 2023-04-14', { scheduled: '2023-04-14' }],
   ['- [ ] #task Has a start date 🛫 2023-04-15', { start: '2023-04-15' }],
   ['- [ ] #task Has a due date 📅 2023-04-16', { due: '2023-04-16' }],
   ['- [x] #task Has a done date ✅ 2023-04-17', { completed: '2023-04-17', done: true }],
-  [
-    '- [-] #task Has a cancelled date ❌ 2023-04-18',
-    { cancelledOn: '2023-04-18', cancelled: true },
-  ],
+  ['- [-] #task Has a cancelled date ❌ 2023-04-18', { cancelledOn: '2023-04-18', cancelled: true }],
   ['- [ ] #task Lowest priority ⏬', { priority: 6 }],
   ['- [ ] #task Low priority 🔽', { priority: 5 }],
   ['- [ ] #task Normal priority', { priority: 4 }],
@@ -35,18 +22,12 @@ const PLUGIN_LINES: [string, Partial<TaskFields>][] = [
     { recurrence: 'every day', onCompletion: 'delete' },
   ],
   ['- [ ] #task do this first 🆔 dcf64c', { id: 'dcf64c' }],
-  [
-    '- [ ] #task do this after first and some other task ⛔ dcf64c,0h17ye',
-    { dependsOn: ['dcf64c', '0h17ye'] },
-  ],
+  ['- [ ] #task do this after first and some other task ⛔ dcf64c,0h17ye', { dependsOn: ['dcf64c', '0h17ye'] }],
   ['- [ ] #task Has a created date  [created:: 2023-04-13]', { created: '2023-04-13' }],
   ['- [x] #task Has a done date  [completion:: 2023-04-17]', { completed: '2023-04-17' }],
   ['- [-] #task Has a cancelled date  [cancelled:: 2023-04-18]', { cancelledOn: '2023-04-18' }],
   ['- [ ] #task High priority  [priority:: high]', { priority: 2 }],
-  [
-    '- [ ] #task Is a recurring task [repeat:: every day when done]',
-    { recurrence: 'every day when done' },
-  ],
+  ['- [ ] #task Is a recurring task [repeat:: every day when done]', { recurrence: 'every day when done' }],
   [
     '- [ ] #task Remove completed instance of this recurring task when done  [repeat:: every day]  [onCompletion:: delete]',
     { recurrence: 'every day', onCompletion: 'delete' },
@@ -85,9 +66,7 @@ describe('a task line read the way the Tasks plugin reads it', () => {
   })
 
   test("takes Orden's fields before the tags and the emoji", () => {
-    const task = readTask(
-      '- [ ] Call the bank about the card [time:: 16:00] [remind:: 15m] #admin ⏫ 📅 2026-10-06',
-    )
+    const task = readTask('- [ ] Call the bank about the card [time:: 16:00] [remind:: 15m] #admin ⏫ 📅 2026-10-06')
     expect(task).toMatchObject({
       text: 'Call the bank about the card',
       time: '16:00',
@@ -99,16 +78,12 @@ describe('a task line read the way the Tasks plugin reads it', () => {
   })
 
   test('reads every example line of the design', () => {
-    expect(
-      readTask('- [x] Water the plants 🔁 every 3 days when done 📅 2026-10-01 ✅ 2026-10-01'),
-    ).toMatchObject({
+    expect(readTask('- [x] Water the plants 🔁 every 3 days when done 📅 2026-10-01 ✅ 2026-10-01')).toMatchObject({
       done: true,
       recurrence: 'every 3 days when done',
       completed: '2026-10-01',
     })
-    expect(
-      readTask('- [/] Draft the talk [duration:: 2h] [deadline:: 2026-10-20] ⏳ 2026-10-08'),
-    ).toMatchObject({
+    expect(readTask('- [/] Draft the talk [duration:: 2h] [deadline:: 2026-10-20] ⏳ 2026-10-08')).toMatchObject({
       status: '/',
       done: false,
       duration: 120,
@@ -149,9 +124,7 @@ describe('a task line read the way the Tasks plugin reads it', () => {
   })
 
   test('reads bracket fields wherever they stand, and keeps the ones Orden has no name for', () => {
-    const task = readTask(
-      '- [ ] Review [assignee:: Lucile] the PR [effort:: big] (due:: 2026-10-06)',
-    )
+    const task = readTask('- [ ] Review [assignee:: Lucile] the PR [effort:: big] (due:: 2026-10-06)')
     expect(task).toMatchObject({
       text: 'Review the PR',
       assignee: 'Lucile',
@@ -248,8 +221,7 @@ describe('words an object would answer from its prototype', () => {
 })
 
 describe('a line built to make the reader backtrack', () => {
-  const quick = (line: (size: number) => string, size: number) =>
-    linearly((one) => readTask(line(one)), size)
+  const quick = (line: (size: number) => string, size: number) => linearly((one) => readTask(line(one)), size)
 
   test('is read in linear time, a dependency list that ends badly among them', () => {
     expect(readTask(`- [ ] x ⛔ a${' , a'.repeat(40)} !`)?.dependsOn).toEqual([])

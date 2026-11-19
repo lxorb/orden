@@ -7,10 +7,7 @@ export interface TerminalShell {
 export interface TerminalLinesPort {
   readonly typeIn: (
     line: string,
-    pick: (
-      shells: readonly TerminalShell[],
-      chosen: TerminalShell | undefined,
-    ) => TerminalShell | undefined,
+    pick: (shells: readonly TerminalShell[], chosen: TerminalShell | undefined) => TerminalShell | undefined,
   ) => Promise<boolean>
 }
 

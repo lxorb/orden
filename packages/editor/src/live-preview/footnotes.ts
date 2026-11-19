@@ -1,11 +1,5 @@
 import { foldedRanges, syntaxTree, unfoldEffect } from '@codemirror/language'
-import {
-  EditorSelection,
-  type EditorState,
-  type Extension,
-  RangeSetBuilder,
-  type StateEffect,
-} from '@codemirror/state'
+import { EditorSelection, type EditorState, type Extension, RangeSetBuilder, type StateEffect } from '@codemirror/state'
 import {
   Decoration,
   type DecorationSet,
@@ -45,16 +39,8 @@ function partOf(state: EditorState, node: SyntaxNode): FootnotePart | null {
   }
 }
 
-export function footnoteAt(
-  state: EditorState,
-  pos: number,
-  side: -1 | 0 | 1 = 0,
-): FootnotePart | null {
-  for (
-    let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, side);
-    node;
-    node = node.parent
-  ) {
+export function footnoteAt(state: EditorState, pos: number, side: -1 | 0 | 1 = 0): FootnotePart | null {
+  for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(pos, side); node; node = node.parent) {
     const part = partOf(state, node)
     if (part) return part
   }
@@ -78,9 +64,7 @@ function sameLabel(one: string, other: string): boolean {
 }
 
 export function definitionOf(state: EditorState, label: string): FootnotePart | null {
-  return (
-    footnoteParts(state).find((one) => one.kind === 'def' && sameLabel(one.label, label)) ?? null
-  )
+  return footnoteParts(state).find((one) => one.kind === 'def' && sameLabel(one.label, label)) ?? null
 }
 
 export const definitionWords = (state: EditorState, definition: FootnotePart): string =>
@@ -100,9 +84,7 @@ function jumpTarget(view: EditorView, part: FootnotePart): number | null {
     return definition.labelTo + (/^\]:?[ \t]*/.exec(words)?.[0].length ?? 0)
   }
 
-  const marks = footnoteParts(state).filter(
-    (one) => one.kind === 'ref' && sameLabel(one.label, part.label),
-  )
+  const marks = footnoteParts(state).filter((one) => one.kind === 'ref' && sameLabel(one.label, part.label))
   if (!marks.length) return null
   const back = cameFrom.get(view)
   const mark =
@@ -158,11 +140,7 @@ const footnoteNumbers = ViewPlugin.fromClass(
       this.decorations = numbers(view)
     }
     update(update: ViewUpdate) {
-      if (
-        update.docChanged ||
-        update.viewportChanged ||
-        syntaxTree(update.startState) !== syntaxTree(update.state)
-      ) {
+      if (update.docChanged || update.viewportChanged || syntaxTree(update.startState) !== syntaxTree(update.state)) {
         this.decorations = numbers(update.view)
       }
     }

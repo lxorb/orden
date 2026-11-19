@@ -111,8 +111,7 @@ async function device(foldsCase = true): Promise<Device> {
         name: 'd0',
         now: () => 1000,
         random: Math.random,
-        digest: (text) =>
-          Promise.resolve(`${String(hash32('a', text))}.${String(hash32('b', text))}`),
+        digest: (text) => Promise.resolve(`${String(hash32('a', text))}.${String(hash32('b', text))}`),
         join: (root, path) => `${root}/${path}`,
         foldsCase,
         platform: 'other',

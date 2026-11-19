@@ -5,20 +5,13 @@ import { door } from '@orden/markdown/door'
 let here: readonly LanguageDescription[] | null = null
 
 export const fenceLanguages: () => Promise<readonly LanguageDescription[]> = door(() =>
-  Promise.all([
-    import('./language-spellings'),
-    import('./language-modes'),
-    import('./mermaid'),
-  ]).then(([spellings, modes, mermaid]) => {
-    here = [
-      modes.plainTextDescription,
-      ...spellings.spelled,
-      ...modes.ADDED,
-      mermaid.mermaidDescription,
-    ]
+  Promise.all([import('./language-spellings'), import('./language-modes'), import('./mermaid')]).then(
+    ([spellings, modes, mermaid]) => {
+      here = [modes.plainTextDescription, ...spellings.spelled, ...modes.ADDED, mermaid.mermaidDescription]
 
-    return here
-  }),
+      return here
+    },
+  ),
 )
 
 export function fenceLanguage(written: string): LanguageDescription | null {

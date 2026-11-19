@@ -27,8 +27,7 @@ vi.mock('../../explorer/src/api', () => ({
   },
 }))
 
-const { EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, kindsHere, KINDS_KEY } =
-  await import('./gates.svelte')
+const { EXPERIMENTAL_WORD, EXPLORER_WORD, hiddenKinds, kindsHere, KINDS_KEY } = await import('./gates.svelte')
 const { receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds } = await import('../../new-here/src/api')
 const { kindOfLetter } = await import('../../new-here/src/api')
@@ -119,10 +118,7 @@ describe('the file explorer, under Experimental', () => {
 
   test('stays on for the next run, and goes when turned off', () => {
     field().set(true)
-    expect(JSON.parse(localStorage.getItem(KINDS_KEY) ?? '[]')).toEqual([
-      EXPERIMENTAL_WORD,
-      EXPLORER_WORD,
-    ])
+    expect(JSON.parse(localStorage.getItem(KINDS_KEY) ?? '[]')).toEqual([EXPERIMENTAL_WORD, EXPLORER_WORD])
 
     hiddenKinds.hidden = []
     hiddenKinds.restore()

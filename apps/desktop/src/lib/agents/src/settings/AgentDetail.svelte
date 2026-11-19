@@ -30,14 +30,7 @@
   import type { AgentsPane } from './pane.svelte'
   import { registrable, typedSite } from './sites'
   import Words from './Words.svelte'
-  import {
-    CATEGORY_WORDS,
-    GROUP_WORDS,
-    LIMIT_WORDS,
-    limitValue,
-    RULE_WORDS,
-    SCOPE_WORDS,
-  } from './words'
+  import { CATEGORY_WORDS, GROUP_WORDS, LIMIT_WORDS, limitValue, RULE_WORDS, SCOPE_WORDS } from './words'
 
   const { pane, grant, onback }: { pane: AgentsPane; grant: Grant; onback: () => void } = $props()
 
@@ -45,9 +38,7 @@
 
   const spaceNames = $derived(workspace.spaces.map((one) => one.name))
   const listedSpaces = $derived(
-    grant.spaces === 'all'
-      ? spaceNames
-      : [...spaceNames, ...grant.spaces.filter((one) => !spaceNames.includes(one))],
+    grant.spaces === 'all' ? spaceNames : [...spaceNames, ...grant.spaces.filter((one) => !spaceNames.includes(one))],
   )
 
   const sites = $derived(sitesOf(grant))
@@ -58,9 +49,7 @@
     const port = portOf('chats')
     if (!port.ok) return
     void port.value.list().then((list) => {
-      chatNames = Object.fromEntries(
-        list.map((one) => [`chat:${one.id}`, `#${one.name ?? one.id}`]),
-      )
+      chatNames = Object.fromEntries(list.map((one) => [`chat:${one.id}`, `#${one.name ?? one.id}`]))
     })
   })
   const ruleChoices = $derived(
@@ -159,8 +148,8 @@
 
 {#if !sidebars(grant)}
   <p class="connected">
-    It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces,
-    blocked sites and limits below still hold.
+    It connects over MCP and manages its own permissions there: Orden asks it nothing. Your spaces, blocked sites and
+    limits below still hold.
   </p>
 {/if}
 
@@ -255,13 +244,7 @@
       {/if}
     </div>
   {/each}
-  <Words
-    words={[]}
-    placeholder="Add a site"
-    parse={siteTyped}
-    onadd={addSite}
-    onremove={() => undefined}
-  />
+  <Words words={[]} placeholder="Add a site" parse={siteTyped} onadd={addSite} onremove={() => undefined} />
 </div>
 
 <h3>Limits</h3>

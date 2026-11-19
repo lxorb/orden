@@ -13,9 +13,7 @@ vi.mock('../../src/lib/pdf/src/api', async (actual) => {
     paperOf: (_at: unknown, number: number) => {
       world.asked.push(number)
       return Promise.resolve(
-        world.readable
-          ? { width: 600, height: 800, image: { width: 60, height: 80, close: () => undefined } }
-          : null,
+        world.readable ? { width: 600, height: 800, image: { width: 60, height: 80, close: () => undefined } } : null,
       )
     },
   }

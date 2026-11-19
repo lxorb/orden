@@ -100,15 +100,11 @@ describe('the outline reads code the way the page does', () => {
   })
 
   test('a fence in a list item closes on its own mark too', () => {
-    expect(scanHeadings('- a\n\n  ````\n  ```\n  ````\n# B\n').map((one) => one.text)).toEqual([
-      'B',
-    ])
+    expect(scanHeadings('- a\n\n  ````\n  ```\n  ````\n# B\n').map((one) => one.text)).toEqual(['B'])
   })
 
   test('a comment in the front matter is no heading', () => {
-    expect(scanHeadings('---\n# c\ntitle: x\n---\n# A\n')).toEqual([
-      { level: 1, text: 'A', line: 4 },
-    ])
+    expect(scanHeadings('---\n# c\ntitle: x\n---\n# A\n')).toEqual([{ level: 1, text: 'A', line: 4 }])
   })
 })
 

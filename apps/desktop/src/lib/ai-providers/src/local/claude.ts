@@ -101,8 +101,7 @@ function toolUse(content: unknown): ToolHeard | null {
   if (!Array.isArray(content)) return null
   for (const block of content) {
     const one = record(block)
-    if (one?.type !== 'tool_use' || typeof one.id !== 'string' || typeof one.name !== 'string')
-      continue
+    if (one?.type !== 'tool_use' || typeof one.id !== 'string' || typeof one.name !== 'string') continue
     return { id: one.id, name: one.name.replace(OWN, ''), args: one.input ?? {} }
   }
   return null
@@ -113,12 +112,7 @@ function toolResult(content: unknown): ToolHeard | null {
   for (const block of content) {
     const one = record(block)
     if (one?.type !== 'tool_result' || typeof one.tool_use_id !== 'string') continue
-    const text =
-      typeof one.content === 'string'
-        ? one.content
-        : Array.isArray(one.content)
-          ? textOf(one.content)
-          : ''
+    const text = typeof one.content === 'string' ? one.content : Array.isArray(one.content) ? textOf(one.content) : ''
     return { id: one.tool_use_id, name: '', done: { text, error: one.is_error === true } }
   }
   return null
@@ -143,8 +137,7 @@ function windowIn(usage: Record<string, unknown> | null): number | null {
 
 function limitIn(info: Record<string, unknown> | null): Limit | null {
   if (!info) return null
-  const state =
-    info.status === 'rejected' ? 'reached' : info.status === 'allowed_warning' ? 'near' : 'fine'
+  const state = info.status === 'rejected' ? 'reached' : info.status === 'allowed_warning' ? 'near' : 'fine'
   const until = typeof info.resetsAt === 'number' ? info.resetsAt * 1000 : null
   return { state, until, untilWords: null }
 }

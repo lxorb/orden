@@ -49,14 +49,9 @@ function foldsAt(path: string): boolean {
 }
 
 const holds = (head: readonly string[], file: readonly string[], folds: () => boolean): boolean =>
-  head.length <= file.length &&
-  head.every((one, at) => sameName(one, file[at] ?? '', folds, at === file.length - 1))
+  head.length <= file.length && head.every((one, at) => sameName(one, file[at] ?? '', folds, at === file.length - 1))
 
-export function samePath(
-  one: string | null | undefined,
-  other: string | null | undefined,
-  root?: string,
-): boolean {
+export function samePath(one: string | null | undefined, other: string | null | undefined, root?: string): boolean {
   if (one === other) return true
   if (one == null || other == null) return false
 
@@ -83,8 +78,7 @@ export function pathKeyAs(path: string, folds: boolean): string {
 
 export const pathKey = (path: string, root?: string) => pathKeyAs(path, foldsAt(root ?? path))
 
-export const pathKeys = (paths: Iterable<string>, root?: string) =>
-  new Set([...paths].map((one) => pathKey(one, root)))
+export const pathKeys = (paths: Iterable<string>, root?: string) => new Set([...paths].map((one) => pathKey(one, root)))
 
 export function sameSpelling(one: string, other: string): boolean {
   const a = steps(one)
@@ -127,17 +121,14 @@ export async function askCase(root: string, files: readonly string[]): Promise<v
 }
 
 const turned = (name: string) =>
-  name.replace(/\p{L}/gu, (one) =>
-    one === one.toLowerCase() ? one.toUpperCase() : one.toLowerCase(),
-  )
+  name.replace(/\p{L}/gu, (one) => (one === one.toLowerCase() ? one.toUpperCase() : one.toLowerCase()))
 
 export function answeredCase(root: string, folds: boolean | null): void {
   if (folds === null) folding.delete(root)
   else folding.set(root, folds)
 }
 
-export const relativeTo = (root: string, path: string) =>
-  (root ? within(root, path) : null) ?? path.replace(/\\/g, '/')
+export const relativeTo = (root: string, path: string) => (root ? within(root, path) : null) ?? path.replace(/\\/g, '/')
 
 export const spaceHolding = <Space extends { readonly root: string }>(
   spaces: readonly Space[],
@@ -209,8 +200,7 @@ export const noteName = (relative: string) => nameOf(relative).replace(MARKDOWN,
 
 export const withoutExtension = (relative: string) => relative.replace(MARKDOWN, '')
 
-export const isHiddenPath = (relative: string) =>
-  relative.split('/').some((part) => part.startsWith('.'))
+export const isHiddenPath = (relative: string) => relative.split('/').some((part) => part.startsWith('.'))
 
 export const isMarkdownPath = (path: string) => MARKDOWN.test(path)
 

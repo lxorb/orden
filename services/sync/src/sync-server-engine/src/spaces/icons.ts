@@ -46,8 +46,7 @@ function wrong(value: unknown, called: string): string | null {
 
 function mapOf(value: object, said: (value: string) => boolean): Record<string, string> {
   const kept = Object.entries(value).filter(
-    (entry): entry is [string, string] =>
-      inside(entry[0]) && typeof entry[1] === 'string' && said(entry[1]),
+    (entry): entry is [string, string] => inside(entry[0]) && typeof entry[1] === 'string' && said(entry[1]),
   )
 
   return Object.fromEntries(kept.slice(0, MOST))

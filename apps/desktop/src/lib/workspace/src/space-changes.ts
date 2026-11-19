@@ -5,19 +5,12 @@ import type { Space } from './workspace.svelte'
 import { type HoldsSpaces, selectSpace, tabSets } from './spaces'
 import { services } from './services'
 
-export async function adoptSpace(
-  ws: HoldsSpaces,
-  name: string,
-  fresh = false,
-  home?: string,
-): Promise<string | null> {
+export async function adoptSpace(ws: HoldsSpaces, name: string, fresh = false, home?: string): Promise<string | null> {
   const existing = fresh ? undefined : ws.spaces.find((space) => space.name === name)
   if (existing) return existing.root
 
   const created =
-    (fresh && home === undefined
-      ? null
-      : await keptFolder(name.trim(), fresh ? home : undefined)) ??
+    (fresh && home === undefined ? null : await keptFolder(name.trim(), fresh ? home : undefined)) ??
     (await invoke<{ name: string; path: string }>('create_space', {
       name: name.trim(),
     }).catch(() => null))
@@ -36,18 +29,13 @@ export async function adoptSpace(
   return created.path
 }
 
-async function keptFolder(
-  name: string,
-  home?: string,
-): Promise<{ name: string; path: string } | null> {
+async function keptFolder(name: string, home?: string): Promise<{ name: string; path: string } | null> {
   const listed = await invoke<{ name: string; path: string }[]>('list_spaces').catch(() => null)
   const who = account.user?.id ?? null
   return (
     listed?.find(
       (one) =>
-        one.name === name &&
-        !leftByAnother(one.path, who) &&
-        (home === undefined || homeOf(one.path, who) === home),
+        one.name === name && !leftByAnother(one.path, who) && (home === undefined || homeOf(one.path, who) === home),
     ) ?? null
   )
 }
@@ -135,9 +123,7 @@ async function spaceGone(ws: HoldsSpaces, space: Space, back?: string) {
   await ws.fileGone(space.root, 'space', back)
   ws.spaces = ws.spaces.filter((entry) => entry.id !== id)
   const fetched =
-    tabSets.fetched || ws.setsRead !== undefined || ws.tabs.length
-      ? (await import('./sets.svelte')).sets
-      : null
+    tabSets.fetched || ws.setsRead !== undefined || ws.tabs.length ? (await import('./sets.svelte')).sets : null
 
   if (ws.activeSpaceId === id) {
     ws.activeSpaceId = ws.spaces[0]?.id ?? null

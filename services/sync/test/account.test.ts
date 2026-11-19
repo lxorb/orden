@@ -36,9 +36,7 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-async function askToLeave(
-  as = token,
-): Promise<{ answer: Answer<LeavingView>; code: string; mailed: string }> {
+async function askToLeave(as = token): Promise<{ answer: Answer<LeavingView>; code: string; mailed: string }> {
   const answers: Answer<LeavingView>[] = []
   const mailed = await mail(async () => {
     answers.push(await call<LeavingView>(env, '/v1/account/delete/code', { token: as, body: {} }))
@@ -174,9 +172,9 @@ describe('the door', () => {
     const asked = await call<LeavingView>(env, '/v1/account/left', { body: { ticket } })
     expect(asked.status).toBe(200)
     expect(asked.json).toEqual({ gone: true })
-    expect(
-      (await call<LeavingView>(env, '/v1/account/left', { body: { ticket: 'f'.repeat(64) } })).json,
-    ).toEqual({ gone: false })
+    expect((await call<LeavingView>(env, '/v1/account/left', { body: { ticket: 'f'.repeat(64) } })).json).toEqual({
+      gone: false,
+    })
   })
 
   test('a session ended elsewhere deletes nothing, and the ticket says so', async () => {
@@ -185,9 +183,9 @@ describe('the door', () => {
     await call(env, '/v1/auth/signout', { token, body: {} })
 
     expect((await confirm(json.ticket)).status).toBe(401)
-    expect(
-      (await call<LeavingView>(env, '/v1/account/left', { body: { ticket: json.ticket } })).json,
-    ).toEqual({ gone: false })
+    expect((await call<LeavingView>(env, '/v1/account/left', { body: { ticket: json.ticket } })).json).toEqual({
+      gone: false,
+    })
     expect(env.db.prepare('select count(*) as many from users where email = ?').get(ME)).toEqual({
       many: 1,
     })
@@ -253,16 +251,14 @@ describe('the door', () => {
     })
     const program = minted.json.token ?? ''
 
-    const space = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Open' } }))
-      .json.space?.id
+    const space = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Open' } })).json.space?.id
     const linked = await call<{ link: { url: string } }>(env, `/v1/spaces/${space}/share/link`, {
       method: 'PUT',
       token,
       body: { role: 'write', mode: 'open' },
     })
     const link = /\/join\/([a-f0-9]+)/.exec(linked.json.link.url)?.[1]
-    const guest = (await call<LeavingView>(env, `/v1/join/${link}`, { method: 'POST', body: {} }))
-      .json.token
+    const guest = (await call<LeavingView>(env, `/v1/join/${link}`, { method: 'POST', body: {} })).json.token
 
     for (const as of [program, guest ?? '']) {
       expect((await call(env, '/v1/account/delete/code', { token: as, body: {} })).status).toBe(403)
@@ -285,8 +281,7 @@ describe('the door', () => {
 describe('what is left', () => {
   test('nothing of the account, and the address signs up as somebody new', async () => {
     const before = (await me()).json.user?.id
-    const space = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Work' } }))
-      .json.space?.id
+    const space = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Work' } })).json.space?.id
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
       body: { path: 'plan.md', content: '# Plan\n' },
@@ -312,9 +307,8 @@ describe('what is left', () => {
 
   test('a space somebody shared with it stays theirs, with its notes, without it', async () => {
     const other = await signIn(env, OTHER)
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
 
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
@@ -340,9 +334,8 @@ describe('what is left', () => {
 
   test('a guest that only said it was at its address keeps its way in, not the address', async () => {
     const other = await signIn(env, OTHER)
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
     const made = await call<{ link?: { url: string } }>(env, `/v1/spaces/${theirs}/share/link`, {
       method: 'PUT',
       token: other,
@@ -365,8 +358,7 @@ describe('what is left', () => {
 
   test('its own space goes for everybody it was shared with', async () => {
     const other = await signIn(env, OTHER)
-    const mine = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } }))
-      .json.space?.id
+    const mine = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json.space?.id
     const note = (
       await call<LeavingView>(env, `/v1/spaces/${mine}/notes`, {
         token,
@@ -414,9 +406,8 @@ describe('what is left', () => {
 
   test('a picture it put into a space that stays is handed to that space’s owner', async () => {
     const other = await signIn(env, OTHER)
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
 
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
@@ -447,9 +438,8 @@ describe('what is left', () => {
 
   test('a paper it hung on a page note in a space that stays is handed to that space’s owner', async () => {
     const other = await signIn(env, OTHER)
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
 
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
@@ -479,9 +469,8 @@ describe('what is left', () => {
 
   test('a picture it put into a space it may now only read is handed over too', async () => {
     const other = await signIn(env, OTHER)
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
 
     const sent = await mail(() =>
       call(env, `/v1/spaces/${theirs}/share/invite`, {
@@ -508,11 +497,11 @@ describe('what is left', () => {
         content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
       },
     })
-    const demoted = await call(
-      env,
-      `/v1/spaces/${theirs}/share/members/${encodeURIComponent(ME)}`,
-      { method: 'PATCH', token: other, body: { role: 'read' } },
-    )
+    const demoted = await call(env, `/v1/spaces/${theirs}/share/members/${encodeURIComponent(ME)}`, {
+      method: 'PATCH',
+      token: other,
+      body: { role: 'read' },
+    })
     expect(demoted.status).toBe(200)
 
     expect((await leave()).status).toBe(200)
@@ -528,9 +517,8 @@ describe('what is left', () => {
     ['left', 'me'],
   ])('a picture it put into a space it has since %s is handed over too', async (_, how) => {
     const other = await signIn(env, OTHER)
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
 
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
@@ -568,9 +556,8 @@ describe('what is left', () => {
   test('a picture a stranger held too is handed over when the stranger goes', async () => {
     const other = await signIn(env, OTHER)
     const stranger = await signIn(env, 'stranger@example.com')
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
 
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
@@ -602,9 +589,8 @@ describe('what is left', () => {
 
   test('a picture taken out of the owner’s note again is not handed over', async () => {
     const other = await signIn(env, OTHER)
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
 
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
@@ -640,9 +626,8 @@ describe('what is left', () => {
 
   test('a paper it hung in a space it has since left is handed over too', async () => {
     const other = await signIn(env, OTHER)
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
 
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
@@ -673,9 +658,8 @@ describe('what is left', () => {
 
   test('a picture in a note not yet read by the sweep is found in its body', async () => {
     const other = await signIn(env, OTHER)
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
 
     const sent = await mail(() =>
       call(env, `/v1/spaces/${theirs}/share/invite`, {
@@ -720,8 +704,7 @@ describe('what is left', () => {
     ['as a picture', (hash: string) => `![](https://nibeditor.com/i/${hash}.png)`],
   ])('a paper whose hash a stranger writes %s is not handed to them', async (_, body) => {
     const stranger = await signIn(env, OTHER)
-    const mine = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } }))
-      .json.space?.id
+    const mine = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json.space?.id
     const pages = (
       await call<LeavingView>(env, `/v1/spaces/${mine}/notes`, {
         token,
@@ -738,9 +721,8 @@ describe('what is left', () => {
     })
     await call(env, `/v1/notes/${pages}/paper`, { method: 'PUT', token, body: { hash } })
 
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: stranger, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: stranger, body: { name: 'Theirs' } })).json
+      .space?.id
     await call(env, `/v1/spaces/${theirs}/notes`, {
       token: stranger,
       body: { path: 'n.md', content: body(hash) },
@@ -751,64 +733,59 @@ describe('what is left', () => {
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([])
   })
 
-  test.each(['a page note', 'a space'])(
-    'a paper in %s emptied for good is not handed over',
-    async (what) => {
-      const other = await signIn(env, OTHER)
-      const theirs = (
-        await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-      ).json.space?.id
-      await joined(env, other, theirs ?? '', ME, 'write', { as: token })
+  test.each(['a page note', 'a space'])('a paper in %s emptied for good is not handed over', async (what) => {
+    const other = await signIn(env, OTHER)
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
+    await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
-      const bytes = new TextEncoder().encode('%PDF-1.4\nemptied\n%%EOF\n')
-      const hash = createHash('sha256').update(bytes).digest('hex')
-      await call(env, `/v1/blobs/${hash}`, {
+    const bytes = new TextEncoder().encode('%PDF-1.4\nemptied\n%%EOF\n')
+    const hash = createHash('sha256').update(bytes).digest('hex')
+    await call(env, `/v1/blobs/${hash}`, {
+      method: 'PUT',
+      token,
+      raw: bytes,
+      headers: { 'content-type': 'application/pdf' },
+    })
+    if (what === 'a page note') {
+      const pages = (
+        await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
+          token,
+          body: { path: 'L.pages', content: '{}' },
+        })
+      ).json.note?.id
+      await call(env, `/v1/notes/${pages}/paper`, { method: 'PUT', token, body: { hash } })
+      await call(env, `/v1/notes/${pages}`, { method: 'DELETE', token: other })
+      const purged = await call(env, `/v1/trash/notes/${pages}`, {
+        method: 'DELETE',
+        token: other,
+      })
+      expect(purged.status).toBe(200)
+    } else {
+      const listed = await call(env, `/v1/spaces/${theirs}/files`, {
         method: 'PUT',
         token,
-        raw: bytes,
-        headers: { 'content-type': 'application/pdf' },
+        body: { files: [{ path: 'a.pdf', hash }] },
       })
-      if (what === 'a page note') {
-        const pages = (
-          await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
-            token,
-            body: { path: 'L.pages', content: '{}' },
-          })
-        ).json.note?.id
-        await call(env, `/v1/notes/${pages}/paper`, { method: 'PUT', token, body: { hash } })
-        await call(env, `/v1/notes/${pages}`, { method: 'DELETE', token: other })
-        const purged = await call(env, `/v1/trash/notes/${pages}`, {
-          method: 'DELETE',
-          token: other,
-        })
-        expect(purged.status).toBe(200)
-      } else {
-        const listed = await call(env, `/v1/spaces/${theirs}/files`, {
-          method: 'PUT',
-          token,
-          body: { files: [{ path: 'a.pdf', hash }] },
-        })
-        expect(listed.status).toBe(200)
-        await call(env, `/v1/spaces/${theirs}`, { method: 'DELETE', token: other })
-        const purged = await call(env, `/v1/trash/spaces/${theirs}`, {
-          method: 'DELETE',
-          token: other,
-        })
-        expect(purged.status).toBe(200)
-      }
+      expect(listed.status).toBe(200)
+      await call(env, `/v1/spaces/${theirs}`, { method: 'DELETE', token: other })
+      const purged = await call(env, `/v1/trash/spaces/${theirs}`, {
+        method: 'DELETE',
+        token: other,
+      })
+      expect(purged.status).toBe(200)
+    }
 
-      expect((await leave()).status).toBe(200)
+    expect((await leave()).status).toBe(200)
 
-      expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([])
-    },
-  )
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([])
+  })
 
   test('a picture a stranger holds as a PDF is handed over all the same', async () => {
     const other = await signIn(env, OTHER)
     const stranger = await signIn(env, 'stranger@example.com')
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
     const sent = await mail(() =>
       call(env, `/v1/spaces/${theirs}/share/invite`, {
         token: other,
@@ -855,9 +832,8 @@ describe('what is left', () => {
     ['a cover', 'Covered.md', (url: string) => `---\ncover: ${url}\n---\nWords.\n`],
   ])('a picture it put into somebody else’s space as %s is handed over', async (_, path, body) => {
     const other = await signIn(env, OTHER)
-    const theirs = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
-    ).json.space?.id
+    const theirs = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space
+      ?.id
     await joined(env, other, theirs ?? '', ME, 'write', { as: token })
 
     const picture = file(3, 15)
@@ -881,28 +857,25 @@ describe('what is left', () => {
 
   test('a picture of its own is not handed to a big space it only reads', async () => {
     const other = await signIn(env, OTHER)
-    const big = (
-      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Big' } })
-    ).json.space?.id
+    const big = (await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Big' } })).json.space?.id
     if (!big) throw new Error('no space was made')
     await call(env, `/v1/spaces/${big}/notes`, {
       token: other,
       body: { path: 'n0.md', content: 'hello' },
     })
-    const row = env.db
-      .prepare('select seq, updated_at, hash from notes where space_id = ?')
-      .get(big) as { seq: number; updated_at: number; hash: string }
+    const row = env.db.prepare('select seq, updated_at, hash from notes where space_id = ?').get(big) as {
+      seq: number
+      updated_at: number
+      hash: string
+    }
     for (let at = 1; at < 260; at++) {
       env.db
-        .prepare(
-          'insert into notes (id, space_id, path, seq, updated_at, size, hash) values (?, ?, ?, ?, ?, ?, ?)',
-        )
+        .prepare('insert into notes (id, space_id, path, seq, updated_at, size, hash) values (?, ?, ?, ?, ?, ?, ?)')
         .run(`n${String(at)}`, big, `n${String(at)}.md`, row.seq + at, row.updated_at, 5, row.hash)
     }
     await joined(env, other, big, ME, 'read', { as: token })
 
-    const own = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json
-      .space?.id
+    const own = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json.space?.id
     const picture = file(3, 9)
     await call(env, `/v1/blobs/${picture.hash}`, {
       method: 'PUT',
@@ -922,8 +895,7 @@ describe('what is left', () => {
   })
 
   test('a published site stops answering', async () => {
-    const space = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Site' } }))
-      .json.space?.id
+    const space = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Site' } })).json.space?.id
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
       body: { path: 'index.md', content: '# Hello' },

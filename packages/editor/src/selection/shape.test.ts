@@ -18,11 +18,7 @@ function overLines(from: number, to: number, lines = 3): SelectionRect[] {
   const middle = TOP + LINE
   const last = TOP + LINE * (lines - 1)
 
-  return [
-    rect(from, TOP, RIGHT - from),
-    rect(LEFT, middle, RIGHT - LEFT, last - middle),
-    rect(LEFT, last, to - LEFT),
-  ]
+  return [rect(from, TOP, RIGHT - from), rect(LEFT, middle, RIGHT - LEFT, last - middle), rect(LEFT, last, to - LEFT)]
 }
 
 interface Command {
@@ -104,9 +100,7 @@ describe('one row', () => {
   })
 
   test('a single letter is as round as it can be', () => {
-    expect(arcs(only([rect(120, TOP, 9, 28)]).path).map((arc) => arc.radius)).toEqual([
-      4.5, 4.5, 4.5, 4.5,
-    ])
+    expect(arcs(only([rect(120, TOP, 9, 28)]).path).map((arc) => arc.radius)).toEqual([4.5, 4.5, 4.5, 4.5])
   })
 })
 

@@ -42,9 +42,7 @@ function report(error: unknown) {
   const message = error instanceof Error ? `${error.name}: ${error.message}` : describe(error)
   if (message.startsWith(RESIZE_LOOP) || NOT_BROKEN.test(message)) return
   const stack = error instanceof Error ? (error.stack ?? '') : ''
-  void invoke('crash_report_js', { message: tokensOut(message), stack: tokensOut(stack) }).catch(
-    () => undefined,
-  )
+  void invoke('crash_report_js', { message: tokensOut(message), stack: tokensOut(stack) }).catch(() => undefined)
 }
 
 export function collectErrors() {

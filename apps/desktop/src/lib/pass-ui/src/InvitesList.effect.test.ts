@@ -53,9 +53,7 @@ beforeEach(() => {
     fake.passSync.refresh,
   ])
     one.mockReset()
-  fake.pass.inviteMeta.mockImplementation((one: Invite) =>
-    Promise.resolve(one.key === null ? null : META),
-  )
+  fake.pass.inviteMeta.mockImplementation((one: Invite) => Promise.resolve(one.key === null ? null : META))
   fake.pass.inviterCode.mockResolvedValue('1a2b 3c4d')
   fake.passSync.refresh.mockResolvedValue(undefined)
   landed()
@@ -124,8 +122,6 @@ describe('invitations to a vault', () => {
     fake.pass.acceptInvite.mockRejectedValue(new Error('pass: no such invitation'))
     shown([invite('v1')])
     button('Accept', row('v1')).click()
-    await vi.waitFor(() =>
-      expect(target.querySelector('[role="alert"]')?.textContent).toContain('no such invitation'),
-    )
+    await vi.waitFor(() => expect(target.querySelector('[role="alert"]')?.textContent).toContain('no such invitation'))
   })
 })

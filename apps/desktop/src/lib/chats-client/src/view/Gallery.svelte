@@ -47,12 +47,7 @@
 {:else if files.length > 1}
   <div class="grid" style:--across={grid.across} style:width="{Math.min(column, 480)}px">
     {#each grid.shown as file, index (`${file.hash}:${index}`)}
-      <button
-        type="button"
-        class="cell picture"
-        aria-label={file.name}
-        onclick={() => onopen(index)}
-      >
+      <button type="button" class="cell picture" aria-label={file.name} onclick={() => onopen(index)}>
         <img src={url(file)} alt="" draggable="false" loading="lazy" decoding="async" />
         {#if isVideo(file)}<span class="play" aria-hidden="true">▶</span>{/if}
         {#if index === grid.shown.length - 1 && grid.more > 0}

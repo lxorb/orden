@@ -1,10 +1,5 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import {
-  EditorSelection,
-  EditorState,
-  type StateCommand,
-  type Transaction,
-} from '@codemirror/state'
+import { EditorSelection, EditorState, type StateCommand, type Transaction } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import {
   editSelectedImage,
@@ -54,10 +49,7 @@ const TAG = '<img src="cat.png" alt="A cat" style="zoom:50%;" />'
 
 describe('parsing an img tag', () => {
   test.each([
-    [
-      '<img src="a.png" alt="x" title="t" style="zoom: 60%" />',
-      { src: 'a.png', alt: 'x', title: 't', zoom: 60 },
-    ],
+    ['<img src="a.png" alt="x" title="t" style="zoom: 60%" />', { src: 'a.png', alt: 'x', title: 't', zoom: 60 }],
     ['<img src="a.png">', { src: 'a.png', alt: '', title: '', zoom: 100 }],
   ])('%j', (input, wanted) => expect(parseHtmlImage(input)).toEqual(wanted))
 
@@ -71,18 +63,15 @@ describe('parsing an img tag', () => {
   })
 
   test('unescapes attribute values', () => {
-    expect(parseHtmlImage('<img src="a.png" alt="say &quot;hi&quot; &amp; bye">')?.alt).toBe(
-      'say "hi" & bye',
-    )
+    expect(parseHtmlImage('<img src="a.png" alt="say &quot;hi&quot; &amp; bye">')?.alt).toBe('say "hi" & bye')
   })
 
   test('accepts single quotes', () => {
     expect(parseHtmlImage("<img src='a.png' alt='x'>")).toMatchObject({ src: 'a.png', alt: 'x' })
   })
 
-  test.each([['<div style="page-break-after: always;"></div>'], ['<video src="a.mp4"></video>']])(
-    '%j',
-    (input) => expect(parseHtmlImage(input)).toBeNull(),
+  test.each([['<div style="page-break-after: always;"></div>'], ['<video src="a.mp4"></video>']])('%j', (input) =>
+    expect(parseHtmlImage(input)).toBeNull(),
   )
 })
 
@@ -90,22 +79,13 @@ describe('writing an image back', () => {
   test.each([
     [{ src: 'a.png', alt: 'x', title: '', zoom: 100 }, '![x](a.png)'],
     [{ src: 'a.png', alt: 'x', title: 'Cat', zoom: 100 }, '![x](a.png "Cat")'],
-    [
-      { src: 'a.png', alt: 'x', title: '', zoom: 50 },
-      '<img src="a.png" alt="x" style="zoom:50%;" />',
-    ],
+    [{ src: 'a.png', alt: 'x', title: '', zoom: 50 }, '<img src="a.png" alt="x" style="zoom:50%;" />'],
     [
       { src: 'a.png', alt: 'say "hi" & bye', title: '', zoom: 50 },
       '<img src="a.png" alt="say &quot;hi&quot; &amp; bye" style="zoom:50%;" />',
     ],
-    [
-      { src: 'a.png', alt: '', title: '', zoom: 100, width: 320 },
-      '<img src="a.png" alt="" width="320" />',
-    ],
-    [
-      { src: 'a.png', alt: '', title: '', zoom: 40, width: 320 },
-      '<img src="a.png" alt="" style="zoom:40%;" />',
-    ],
+    [{ src: 'a.png', alt: '', title: '', zoom: 100, width: 320 }, '<img src="a.png" alt="" width="320" />'],
+    [{ src: 'a.png', alt: '', title: '', zoom: 40, width: 320 }, '<img src="a.png" alt="" style="zoom:40%;" />'],
     [{ src: 'a picture.png', alt: 'x', title: '', zoom: 100 }, '![x](<a picture.png>)'],
   ])('%j', (input, wanted) => expect(imageMarkup(input)).toEqual(wanted))
 
@@ -213,9 +193,7 @@ describe('what reveals the markup', () => {
     [state(doc, { anchor: from, head: to }), false, from, to],
     [state(doc, { anchor: 0, head: doc.length }), false, from, to],
     [state(doc, { anchor: 0, head: from + 4 }), true, from, to],
-  ])('%j', (input, wanted, extra, last) =>
-    expect(imageRevealed(input, extra, last)).toEqual(wanted),
-  )
+  ])('%j', (input, wanted, extra, last) => expect(imageRevealed(input, extra, last)).toEqual(wanted))
 })
 
 describe('the selected image', () => {
@@ -223,9 +201,8 @@ describe('the selected image', () => {
     expect(selectedImage(state(MD, { anchor: 0, head: MD.length }))?.src).toBe('cat.png')
   })
 
-  test.each([[state(MD, { anchor: 0 })], [state(`a ${MD}`, { anchor: 0, head: MD.length + 2 })]])(
-    '%j',
-    (input) => expect(selectedImage(input)).toBeNull(),
+  test.each([[state(MD, { anchor: 0 })], [state(`a ${MD}`, { anchor: 0, head: MD.length + 2 })]])('%j', (input) =>
+    expect(selectedImage(input)).toBeNull(),
   )
 })
 
@@ -249,10 +226,7 @@ describe('keys beside an image', () => {
     const revealed = parsed(
       EditorState.create({
         doc,
-        selection: EditorSelection.create([
-          EditorSelection.cursor(to),
-          EditorSelection.cursor(from + 3),
-        ]),
+        selection: EditorSelection.create([EditorSelection.cursor(to), EditorSelection.cursor(from + 3)]),
         extensions: [
           EditorState.allowMultipleSelections.of(true),
           markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
@@ -270,11 +244,7 @@ describe('keys on a selected image', () => {
   const selected = state(doc, { anchor: from, head: to })
 
   test.each([
-    [
-      editSelectedImage,
-      { anchor: from + 2 + 'A cat'.length, head: from + 2 + 'A cat'.length },
-      selected,
-    ],
+    [editSelectedImage, { anchor: from + 2 + 'A cat'.length, head: from + 2 + 'A cat'.length }, selected],
     [leaveSelectedImage, { anchor: to, head: to }, selected],
   ])('%j', (input, wanted, extra) => expect(run(input, extra)).toEqual(wanted))
 
@@ -330,9 +300,7 @@ describe('a picture written again after an edit', () => {
   test('keeps the attributes of its tag that the edit does not touch', () => {
     const tag = '<img src="a.png" class="hero" height="200">'
     const image = imageAt(state(tag), 0)!
-    expect(retag(tag, { ...image, alt: 'b' })).toBe(
-      '<img src="a.png" class="hero" height="200" alt="b">',
-    )
+    expect(retag(tag, { ...image, alt: 'b' })).toBe('<img src="a.png" class="hero" height="200" alt="b">')
     expect(retag('<img src="a.png" width="300" style="float:left">', { ...image, zoom: 50 })).toBe(
       '<img src="a.png" style="zoom:50%; float:left">',
     )
@@ -344,15 +312,9 @@ describe('a picture written again after an edit', () => {
       if (!image) throw new Error(`no picture in ${tag}`)
       return retag(tag, { ...image, ...change })
     }
-    expect(edit('<img src="a.png" width="50%" alt="x">', { alt: 'y' })).toBe(
-      '<img src="a.png" width="50%" alt="y">',
-    )
-    expect(edit('<img src="a.png" alt="x" title=Sunset>', { alt: 'y' })).toBe(
-      '<img src="a.png" alt="y" title=Sunset>',
-    )
-    expect(edit('<img src="a.png" alt=cat>', { width: 300 })).toBe(
-      '<img src="a.png" alt=cat width="300">',
-    )
+    expect(edit('<img src="a.png" width="50%" alt="x">', { alt: 'y' })).toBe('<img src="a.png" width="50%" alt="y">')
+    expect(edit('<img src="a.png" alt="x" title=Sunset>', { alt: 'y' })).toBe('<img src="a.png" alt="y" title=Sunset>')
+    expect(edit('<img src="a.png" alt=cat>', { width: 300 })).toBe('<img src="a.png" alt=cat width="300">')
     expect(edit('<img src="a.png" title="the width = 300 one" alt="x">', { alt: 'y' })).toBe(
       '<img src="a.png" title="the width = 300 one" alt="y">',
     )
@@ -361,13 +323,9 @@ describe('a picture written again after an edit', () => {
   test('drops the height when the width changes, so the picture keeps its shape', () => {
     const tag = '<img src="a.png" width="300" height="200">'
     const image = parseHtmlImage(tag)!
-    expect(retag(tag, { src: image.src, alt: image.alt, title: image.title, zoom: 100 })).toBe(
-      '<img src="a.png">',
-    )
+    expect(retag(tag, { src: image.src, alt: image.alt, title: image.title, zoom: 100 })).toBe('<img src="a.png">')
     expect(retag(tag, { ...image, width: 400 })).toBe('<img src="a.png" width="400">')
-    expect(retag(tag, { ...image, alt: 'b' })).toBe(
-      '<img src="a.png" width="300" height="200" alt="b">',
-    )
+    expect(retag(tag, { ...image, alt: 'b' })).toBe('<img src="a.png" width="300" height="200" alt="b">')
   })
 
   test('reads attributes written with no space before them, and an unquoted width before />', () => {
@@ -376,9 +334,7 @@ describe('a picture written again after an edit', () => {
     expect(parseHtmlImage('<img src="a.png"style="zoom:50%;">')).toMatchObject({ zoom: 50 })
     expect(parseHtmlImage('<img src="a.png" width=300/>')).toMatchObject({ width: 300 })
     const tag = '<img src="a.png"style="zoom:50%;">'
-    expect(retag(tag, { ...parseHtmlImage(tag)!, zoom: 60 })).toBe(
-      '<img src="a.png" style="zoom:60%;">',
-    )
+    expect(retag(tag, { ...parseHtmlImage(tag)!, zoom: 60 })).toBe('<img src="a.png" style="zoom:60%;">')
   })
 
   test('resets a zoomed picture that also had a width', () => {
@@ -405,15 +361,14 @@ describe('a picture written again after an edit', () => {
 
   test('keeps an escape written in its words as it was', () => {
     const image = imageAt(state('![my\\_shot|300](a.png)'), 0)!
-    expect(imageMarkup({ src: image.src, alt: image.alt, title: image.title, zoom: 100 })).toBe(
-      '![my\\_shot](a.png)',
-    )
+    expect(imageMarkup({ src: image.src, alt: image.alt, title: image.title, zoom: 100 })).toBe('![my\\_shot](a.png)')
   })
 
   test('reads src and alt, not the data- attributes that end in those names', () => {
-    expect(
-      parseHtmlImage('<img data-src="lazy.png" src="a.png" data-alt="no" alt="yes">'),
-    ).toMatchObject({ src: 'a.png', alt: 'yes' })
+    expect(parseHtmlImage('<img data-src="lazy.png" src="a.png" data-alt="no" alt="yes">')).toMatchObject({
+      src: 'a.png',
+      alt: 'yes',
+    })
   })
 
   test('keeps a title with quotes in it, and words ending in a backslash, a picture', () => {

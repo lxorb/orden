@@ -1,14 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import {
-  call,
-  invitation,
-  mail,
-  signIn,
-  testEnv,
-  type JoinView,
-  type ShareView,
-  type TestEnv,
-} from './harness'
+import { call, invitation, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 
 const NO_FACE = { id: null, avatar: null }
 const A_FACE = { id: expect.any(String), avatar: null }
@@ -51,8 +42,7 @@ async function shareLink(role: 'write' | 'read', mode: 'open' | 'approval'): Pro
   return found[1]
 }
 
-const inviteLink = (email: string, role: 'write' | 'read') =>
-  invitation(env, owner, space, email, role)
+const inviteLink = (email: string, role: 'write' | 'read') => invitation(env, owner, space, email, role)
 
 function follow(token: string, options: { as?: string; body?: unknown } = {}) {
   return call(env, `/v1/join/${token}`, {
@@ -128,8 +118,7 @@ describe('the link in an invitation', () => {
 
   test('opens the account that address already had', async () => {
     const already = await signIn(env, GUEST)
-    const mine = (await call(env, '/v1/spaces', { token: already, body: { name: 'Mine' } })).json
-      .space.id
+    const mine = (await call(env, '/v1/spaces', { token: already, body: { name: 'Mine' } })).json.space.id
 
     const { token } = await walkedIn(await inviteLink(GUEST, 'read'), GUEST)
 
@@ -237,9 +226,7 @@ describe('a link anybody may follow', () => {
     const { json } = await follow(await shareLink('read', 'open'))
 
     const { json: rails } = await rail(json.token)
-    expect(rails.spaces.map((one) => [one.name, one.role, one.shared])).toEqual([
-      [SHARED, 'read', true],
-    ])
+    expect(rails.spaces.map((one) => [one.name, one.role, one.shared])).toEqual([[SHARED, 'read', true]])
   })
 
   test('keeps the guest across requests, and says who they are', async () => {
@@ -310,9 +297,7 @@ describe('a link anybody may follow', () => {
     env.db.prepare('delete from guest_members where guest_id = ?').run(guest)
     env.justBefore(/insert into guest_members/, () => {
       env.db
-        .prepare(
-          'insert into guest_members (space_id, guest_id, role, joined_at, created_at) values (?, ?, ?, ?, ?)',
-        )
+        .prepare('insert into guest_members (space_id, guest_id, role, joined_at, created_at) values (?, ?, ?, ?, ?)')
         .run(space, guest, 'read', Date.now(), Date.now())
     })
 
@@ -453,9 +438,7 @@ describe('a wait the reader ends', () => {
       token: owner,
     })
     expect(accepted.status).toBe(404)
-    expect(
-      (await follow(link, { as: json.token, body: { again: true } })).json.space,
-    ).toBeUndefined()
+    expect((await follow(link, { as: json.token, body: { again: true } })).json.space).toBeUndefined()
   })
 
   test("takes an account off the owner's list, and Accept finds nobody", async () => {
@@ -471,9 +454,7 @@ describe('a wait the reader ends', () => {
       token: owner,
     })
     expect(accepted.status).toBe(404)
-    expect((await rail(stranger)).json.spaces.map((one: { id: string }) => one.id)).not.toContain(
-      space,
-    )
+    expect((await rail(stranger)).json.spaces.map((one: { id: string }) => one.id)).not.toContain(space)
   })
 
   test('ends with the link: turning it off leaves nobody waiting to be let in', async () => {
@@ -544,8 +525,7 @@ describe('a guest session', () => {
     { what: 'the settings', go: (token) => call(env, '/v1/settings', { token }) },
     {
       what: 'writing a setting',
-      go: (token) =>
-        call(env, '/v1/settings', { method: 'PATCH', token, body: { attachments: 'beside' } }),
+      go: (token) => call(env, '/v1/settings', { method: 'PATCH', token, body: { attachments: 'beside' } }),
     },
     { what: 'Recently deleted', go: (token) => call(env, '/v1/trash', { token }) },
     { what: 'emptying it', go: (token) => call(env, '/v1/trash', { method: 'DELETE', token }) },
@@ -627,8 +607,7 @@ describe('a guest session', () => {
   })
 
   test('reaches no space no link gave it', async () => {
-    const other = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Private' } })).json
-      .space.id
+    const other = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Private' } })).json.space.id
 
     const { status } = await call(env, `/v1/spaces/${other}/changes?since=0`, { token: guest })
     expect(status).toBe(404)
@@ -657,8 +636,7 @@ describe('a guest session', () => {
   })
 
   test('keeps the other space when one of two is taken away', async () => {
-    const second = (await call(env, '/v1/spaces', { token: owner, body: { name: 'More' } })).json
-      .space.id
+    const second = (await call(env, '/v1/spaces', { token: owner, body: { name: 'More' } })).json.space.id
     const { json } = await call<ShareView>(env, `/v1/spaces/${second}/share/link`, {
       method: 'PUT',
       token: owner,
@@ -724,9 +702,7 @@ describe('a guest becoming an account', () => {
     ])
 
     const { json: who } = await shareView()
-    expect(who.members).toEqual([
-      { ...A_FACE, email: GUEST, guest: null, name: null, role: 'write', pending: false },
-    ])
+    expect(who.members).toEqual([{ ...A_FACE, email: GUEST, guest: null, name: null, role: 'write', pending: false }])
   })
 
   test('leaves the guest session with nothing to reach afterwards', async () => {
@@ -768,8 +744,7 @@ describe('a guest becoming an account', () => {
   })
 
   async function inviteToMore(email: string): Promise<string> {
-    const second = (await call(env, '/v1/spaces', { token: owner, body: { name: 'More' } })).json
-      .space.id
+    const second = (await call(env, '/v1/spaces', { token: owner, body: { name: 'More' } })).json.space.id
     const sent = await mail(() =>
       call(env, `/v1/spaces/${second}/share/invite`, {
         token: owner,
@@ -788,9 +763,7 @@ describe('a guest becoming an account', () => {
     expect(json.error).toBe('that invitation was sent to another address')
     expect(json.token).toBeUndefined()
 
-    expect((await call(env, '/v1/me', { token: open.json.token })).json.guest.id).toBe(
-      open.json.guest.id,
-    )
+    expect((await call(env, '/v1/me', { token: open.json.token })).json.guest.id).toBe(open.json.guest.id)
     expect((await rail(open.json.token)).json.spaces.map((one) => one.name)).toEqual([SHARED])
 
     const token = await signIn(env, GUEST)
@@ -804,8 +777,7 @@ describe('a guest becoming an account', () => {
     const open = await follow(await shareLink('write', 'open'))
 
     const other = await signIn(env, 'other@example.com')
-    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'B' } })).json.space
-      .id
+    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'B' } })).json.space.id
     const sent = await mail(() =>
       call(env, `/v1/spaces/${theirs}/share/invite`, {
         token: other,
@@ -837,11 +809,7 @@ describe('a guest becoming an account', () => {
     const guest = (await shareView()).json.requests[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'POST', token: owner })
 
-    const {
-      asked: told,
-      joined,
-      token,
-    } = await walkedIn(await inviteToMore(GUEST), GUEST, asked.json.token)
+    const { asked: told, joined, token } = await walkedIn(await inviteToMore(GUEST), GUEST, asked.json.token)
     expect(told?.json.token).toBeUndefined()
     expect(joined.status).toBe(200)
 

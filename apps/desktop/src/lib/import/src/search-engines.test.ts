@@ -41,19 +41,19 @@ describe("a browser's search engine", () => {
     const prefs = (url: string, short_name: string) => ({
       default_search_provider_data: { template_url_data: { short_name, keyword: 'x', url } },
     })
-    expect(
-      chromiumEngine(prefs('https://www.ecosia.org/search?q={searchTerms}', 'Ecosia')),
-    ).toEqual({ id: 'ecosia', name: 'Ecosia' })
-    expect(
-      chromiumEngine(prefs('{google:baseURL}search?q={searchTerms}&{google:RLZ}', 'Google search')),
-    ).toEqual({ id: 'google', name: 'Google' })
+    expect(chromiumEngine(prefs('https://www.ecosia.org/search?q={searchTerms}', 'Ecosia'))).toEqual({
+      id: 'ecosia',
+      name: 'Ecosia',
+    })
+    expect(chromiumEngine(prefs('{google:baseURL}search?q={searchTerms}&{google:RLZ}', 'Google search'))).toEqual({
+      id: 'google',
+      name: 'Google',
+    })
     expect(chromiumEngine(prefs('https://search.example.com/?s={searchTerms}', 'Mine'))).toEqual({
       custom: 'https://search.example.com/?s=%s',
       name: 'Mine',
     })
-    expect(
-      chromiumEngine(prefs('https://x.example.com/?q={searchTerms}&e={inputEncoding}', 'X')),
-    ).toBeNull()
+    expect(chromiumEngine(prefs('https://x.example.com/?q={searchTerms}&e={inputEncoding}', 'X'))).toBeNull()
   })
 
   test("is Safari's, by the name it shows", () => {

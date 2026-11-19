@@ -194,18 +194,8 @@
               {name(person)}
               <small>{person.email ?? 'Guest'}</small>
             </span>
-            <button
-              class="orden-chip"
-              disabled={share.busy}
-              onclick={() => void share.accept(person)}
-            >
-              Accept
-            </button>
-            <button
-              class="orden-chip is-quiet"
-              disabled={share.busy}
-              onclick={() => void share.decline(person)}
-            >
+            <button class="orden-chip" disabled={share.busy} onclick={() => void share.accept(person)}> Accept </button>
+            <button class="orden-chip is-quiet" disabled={share.busy} onclick={() => void share.decline(person)}>
               Decline
             </button>
           </div>
@@ -227,11 +217,7 @@
       </div>
 
       {#each who.members as person (whoIs(person))}
-        <div
-          class="row person"
-          class:waiting={share.waiting(whoIs(person))}
-          transition:fade={{ duration: dur(130) }}
-        >
+        <div class="row person" class:waiting={share.waiting(whoIs(person))} transition:fade={{ duration: dur(130) }}>
           <span class="worn" class:pending={person.pending}>
             {@render face(faceOf(person, name(person)), pressFor(person))}
           </span>
@@ -289,8 +275,7 @@
             <Select
               value={link?.role ?? 'read'}
               options={ROLES}
-              onchange={(role: string) =>
-                void share.setLink(role as GivenRole, link?.mode ?? 'approval')}
+              onchange={(role: string) => void share.setLink(role as GivenRole, link?.mode ?? 'approval')}
               label="Role"
               plain
               disabled={!link || share.busy}
@@ -319,12 +304,7 @@
         <div class="row">
           <Copyable value={link?.url ?? ''} word="Copy link" disabled={!link} />
           {#if sharable}
-            <button
-              class="share"
-              type="button"
-              disabled={!link}
-              onclick={() => link && shareLink(link.url)}
-            >
+            <button class="share" type="button" disabled={!link} onclick={() => link && shareLink(link.url)}>
               Share
             </button>
           {/if}

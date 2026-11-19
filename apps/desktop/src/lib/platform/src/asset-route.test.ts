@@ -17,18 +17,11 @@ describe('the address a picture has in a browser', () => {
   })
 
   test('a segment is encoded, and the slashes between them are not', () => {
-    expect(assetRoute('/Read me/100% done/a#b.png')).toBe(
-      '/asset/Read%20me/100%25%20done/a%23b.png',
-    )
+    expect(assetRoute('/Read me/100% done/a#b.png')).toBe('/asset/Read%20me/100%25%20done/a%23b.png')
   })
 
   test('the journey back gives the path the store knows', () => {
-    for (const path of [
-      '/Work/assets/pic.png',
-      '/Read me/100% done/a#b.png',
-      '/Work/a?b/c.png',
-      '/Work/пример.png',
-    ]) {
+    for (const path of ['/Work/assets/pic.png', '/Read me/100% done/a#b.png', '/Work/a?b/c.png', '/Work/пример.png']) {
       expect(assetStorePath(assetRoute(path))).toBe(path)
     }
   })

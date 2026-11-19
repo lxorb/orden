@@ -14,9 +14,7 @@
   const live = $derived(kit.live)
   const base = $derived(live.base)
   const view = $derived(live.view)
-  const fields = $derived(
-    live.columns.filter((one) => isNoteProperty(one) && bare(one) !== base?.orden.id?.property),
-  )
+  const fields = $derived(live.columns.filter((one) => isNoteProperty(one) && bare(one) !== base?.orden.id?.property))
   const required = $derived(new Set(view?.orden.required ?? []))
   let title = $state('')
   let values = $state<Record<string, string | boolean>>({})
@@ -90,10 +88,10 @@
     {@const choices = base ? optionsOf(base, field) : []}
     <div class="field" class:missing={missing.includes(field)}>
       <span class="name" role="presentation" oncontextmenu={(event) => fieldMenu(event, field)}>
-        {propertyName(
-          field,
-          base ? displayName(base, field) : undefined,
-        )}{#if required.has(key)}<span class="needed" aria-hidden="true">*</span>{/if}
+        {propertyName(field, base ? displayName(base, field) : undefined)}{#if required.has(key)}<span
+            class="needed"
+            aria-hidden="true">*</span
+          >{/if}
       </span>
       {#if kind === 'checkbox'}
         <input
@@ -107,10 +105,7 @@
         <Select
           label={propertyName(field)}
           value={typeof values[field] === 'string' ? values[field] : ''}
-          options={[
-            { value: '', label: 'None' },
-            ...choices.map((one) => ({ value: one, label: one })),
-          ]}
+          options={[{ value: '', label: 'None' }, ...choices.map((one) => ({ value: one, label: one }))]}
           onchange={(next: string) => (values = { ...values, [field]: next })}
         />
       {:else}
@@ -128,10 +123,8 @@
   <div class="foot">
     {#if sent}
       {@const made = sent}
-      <button
-        type="button"
-        class="orden-chip made"
-        onclick={() => void workspace.openAside(made.path)}>✓ {made.name}</button
+      <button type="button" class="orden-chip made" onclick={() => void workspace.openAside(made.path)}
+        >✓ {made.name}</button
       >
     {/if}
     <span class="spring"></span>

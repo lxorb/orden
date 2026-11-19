@@ -117,9 +117,7 @@
     </button>
   {/if}
   {#if way !== 'recovery'}
-    <button class="orden-action" type="button" onclick={() => use('recovery')}
-      >Use recovery key</button
-    >
+    <button class="orden-action" type="button" onclick={() => use('recovery')}>Use recovery key</button>
   {/if}
 </Gate>
 

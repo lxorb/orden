@@ -14,8 +14,7 @@ const { written, template, moved, plan, before, writing, trusted, ran, shut } = 
 
 vi.mock('@orden/bases', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@orden/bases')>()),
-  repeatDue: (note: { made?: unknown }) =>
-    note.made === '2026-10-24' ? null : { day: '2026-10-24', missed: [] },
+  repeatDue: (note: { made?: unknown }) => (note.made === '2026-10-24' ? null : { day: '2026-10-24', missed: [] }),
   readBase: () => ({ orden: { id: 'tasks' } }),
   readAutomations: () => [],
 }))
@@ -25,9 +24,7 @@ vi.mock('./automate', () => ({
     ran.push(bases)
     return {
       writes: writing.pairs,
-      moves: plan.folder
-        ? [{ row: { space: 'Shared', path: 'Inbox/a.md' }, folder: plan.folder }]
-        : [],
+      moves: plan.folder ? [{ row: { space: 'Shared', path: 'Inbox/a.md' }, folder: plan.folder }] : [],
       notices: [],
     }
   },

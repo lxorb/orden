@@ -7,15 +7,7 @@ import { isExternal } from '../external'
 import { HeldState } from '../held'
 import { documentOf, SharedDoc } from '../shared'
 import { ANSWER_CLOSE, ANSWER_OPEN } from './block'
-import {
-  aiExtension,
-  aiFenceAt,
-  type AiAsk,
-  askAiFence,
-  askingAt,
-  setAiRunner,
-  stopAskAt,
-} from './run'
+import { aiExtension, aiFenceAt, type AiAsk, askAiFence, askingAt, setAiRunner, stopAskAt } from './run'
 
 class Fake {
   state: EditorState
@@ -24,10 +16,7 @@ class Fake {
     this.state = parsed(
       EditorState.create({
         doc,
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          aiExtension,
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), aiExtension],
       }),
     )
   }
@@ -100,8 +89,7 @@ function held() {
 afterEach(() => setAiRunner(null))
 
 async function settled(view: Fake): Promise<void> {
-  for (let turn = 0; turn < 200 && view.asking; turn++)
-    await new Promise((resolve) => setTimeout(resolve, 5))
+  for (let turn = 0; turn < 200 && view.asking; turn++) await new Promise((resolve) => setTimeout(resolve, 5))
 }
 
 describe('finding the ai fence', () => {

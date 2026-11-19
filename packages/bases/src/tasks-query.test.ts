@@ -15,9 +15,7 @@ const rows: Row[] = [
 ]
 const kept = (query: string) => {
   const { base } = readTasksQuery(query)
-  return answer(base, 0, rows, context).groups.flatMap((group) =>
-    group.rows.map((row) => row.task?.text),
-  )
+  return answer(base, 0, rows, context).groups.flatMap((group) => group.rows.map((row) => row.task?.text))
 }
 
 describe('a tasks fence', () => {

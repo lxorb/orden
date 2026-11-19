@@ -19,8 +19,7 @@ function emptyMappings(text: string): string[] {
     const next = lines
       .slice(index + 1)
       .find((candidate) => candidate.trim() !== '' && !candidate.trim().startsWith('#'))
-    if (next === undefined || indentOf(next) <= indentOf(line))
-      found.push(`${index + 1}: ${line.trim()}`)
+    if (next === undefined || indentOf(next) <= indentOf(line)) found.push(`${index + 1}: ${line.trim()}`)
   })
   return found
 }

@@ -1,14 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  displayPoint,
-  drivesPointer,
-  HeldKeys,
-  isPaste,
-  keyEvent,
-  pointerStyle,
-  textEvent,
-  wheelClicks,
-} from './input'
+import { displayPoint, drivesPointer, HeldKeys, isPaste, keyEvent, pointerStyle, textEvent, wheelClicks } from './input'
 
 const box = (left: number, top: number, width: number, height: number) =>
   ({ left, top, width, height }) as DOMRectReadOnly
@@ -109,12 +100,8 @@ describe('the application’s pointer', () => {
   const png = 'data:image/png;base64,iVBORw0KGgo='
 
   test('is drawn at the tab’s ratio, its hot spot in CSS pixels', () => {
-    expect(pointerStyle({ t: 'pointer', png, x: 8, y: 16 }, 2)).toBe(
-      `-webkit-image-set(url("${png}") 2x) 4 8, default`,
-    )
-    expect(pointerStyle({ t: 'pointer', png, x: 3, y: 5 }, 1)).toBe(
-      `-webkit-image-set(url("${png}") 1x) 3 5, default`,
-    )
+    expect(pointerStyle({ t: 'pointer', png, x: 8, y: 16 }, 2)).toBe(`-webkit-image-set(url("${png}") 2x) 4 8, default`)
+    expect(pointerStyle({ t: 'pointer', png, x: 3, y: 5 }, 1)).toBe(`-webkit-image-set(url("${png}") 1x) 3 5, default`)
   })
 
   test('hidden is none, and unsaid is the engine’s own', () => {

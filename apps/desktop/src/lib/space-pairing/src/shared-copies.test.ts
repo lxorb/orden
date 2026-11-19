@@ -142,11 +142,7 @@ describe('a copy of a shared space this device made of its own', () => {
 
     await mendSharedCopies('token', 'u1', pairing, PAIRS)
 
-    expect(world.done).toEqual([
-      'unpair /Orden 2',
-      'space c to recently deleted',
-      'delete mine for u1',
-    ])
+    expect(world.done).toEqual(['unpair /Orden 2', 'space c to recently deleted', 'delete mine for u1'])
   })
 
   test('keeps every note that differs from the shared one or is only in the copy', async () => {
@@ -157,10 +153,7 @@ describe('a copy of a shared space this device made of its own', () => {
 
     await mendSharedCopies('token', 'u1', pairing, PAIRS)
 
-    expect(world.done).toEqual([
-      'bin /Orden 2/Plan.md',
-      'gone file /Orden 2/Plan.md back-/Orden 2/Plan.md',
-    ])
+    expect(world.done).toEqual(['bin /Orden 2/Plan.md', 'gone file /Orden 2/Plan.md back-/Orden 2/Plan.md'])
     expect(world.disk.get('/Orden 2/Ideas.md')).toBe('ideas, and one more written in the copy')
     expect(world.disk.get('/Orden 2/New.md')).toBe('only here')
     expect(world.disk.get('/Orden/Plan.md')).toBe('the plan')
@@ -192,10 +185,7 @@ describe('a copy of a shared space this device made of its own', () => {
 
     await mendSharedCopies('token', 'u1', pairing, PAIRS)
 
-    expect(world.done).toEqual([
-      'bin /Orden 2/Plan.md',
-      'gone file /Orden 2/Plan.md back-/Orden 2/Plan.md',
-    ])
+    expect(world.done).toEqual(['bin /Orden 2/Plan.md', 'gone file /Orden 2/Plan.md back-/Orden 2/Plan.md'])
   })
 
   test('kept away on one side only is kept', async () => {
@@ -205,10 +195,7 @@ describe('a copy of a shared space this device made of its own', () => {
 
     await mendSharedCopies('token', 'u1', pairing, PAIRS)
 
-    expect(world.done).toEqual([
-      'bin /Orden 2/Ideas.md',
-      'gone file /Orden 2/Ideas.md back-/Orden 2/Ideas.md',
-    ])
+    expect(world.done).toEqual(['bin /Orden 2/Ideas.md', 'gone file /Orden 2/Ideas.md back-/Orden 2/Ideas.md'])
   })
 
   test('is looked at once, so a second round changes nothing', async () => {
@@ -233,11 +220,7 @@ describe('a copy of a shared space this device made of its own', () => {
 
     await mendSharedCopies('token', 'u1', pairing, pairs)
 
-    expect(world.done).toEqual([
-      'unpair /Orden 3',
-      'space e to recently deleted',
-      'delete empty for u1',
-    ])
+    expect(world.done).toEqual(['unpair /Orden 3', 'space e to recently deleted', 'delete empty for u1'])
   })
 
   test('waits while the account holds notes of it this device has not got yet', async () => {
@@ -252,11 +235,7 @@ describe('a copy of a shared space this device made of its own', () => {
     world.disk.set('/Orden 2/Ideas.md', 'ideas')
     await mendSharedCopies('token', 'u1', pairing, PAIRS)
 
-    expect(world.done).toEqual([
-      'unpair /Orden 2',
-      'space c to recently deleted',
-      'delete mine for u1',
-    ])
+    expect(world.done).toEqual(['unpair /Orden 2', 'space c to recently deleted', 'delete mine for u1'])
   })
 })
 

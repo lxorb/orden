@@ -1,12 +1,5 @@
 import type { Entry } from '@orden/contracts'
-import {
-  folderOf,
-  isMarkdownPath,
-  nameOf,
-  withinSpace,
-  withoutExtension,
-  joinPath,
-} from '../../platform/src/api'
+import { folderOf, isMarkdownPath, nameOf, withinSpace, withoutExtension, joinPath } from '../../platform/src/api'
 import { entryAt } from './tree-edits'
 
 const INDEX = /^_?index$/i

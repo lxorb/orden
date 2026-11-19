@@ -7,14 +7,7 @@
   import { Fingers } from './fingers'
   import { graphFilter, type Keeps } from './filter'
   import { type GraphColours, Layout, paint, radiusOf } from '../../graph-drawing/src/api'
-  import {
-    type Camera,
-    framing,
-    graphPoint,
-    nodeAt,
-    wheelPixels,
-    zoomed,
-  } from '../../camera/src/api'
+  import { type Camera, framing, graphPoint, nodeAt, wheelPixels, zoomed } from '../../camera/src/api'
   import { relativeTo, stillness } from '../../platform/src/api'
   import { parseQuery } from '@orden/scan/search/query'
   import { pixelRatio } from '../../ui-controls/src/api'
@@ -89,9 +82,7 @@
     if (root === null) return new Map()
 
     return new Map(
-      workspace.files
-        .filter((file) => file.created > 0)
-        .map((file) => [relativeTo(root, file.path), file.created]),
+      workspace.files.filter((file) => file.created > 0).map((file) => [relativeTo(root, file.path), file.created]),
     )
   })
 
@@ -111,13 +102,9 @@
 
   const shape = $derived(signature(graph))
 
-  const currentAt = $derived(
-    current === null ? -1 : graph.nodes.findIndex((node) => node.id === current),
-  )
+  const currentAt = $derived(current === null ? -1 : graph.nodes.findIndex((node) => node.id === current))
 
-  const pushedBy = $derived(
-    [settings.spread, settings.gather, settings.distance, settings.push].join('\n'),
-  )
+  const pushedBy = $derived([settings.spread, settings.gather, settings.distance, settings.push].join('\n'))
 
   const arrangedBy = $derived(`${pushedBy}\n${shape}`)
   const follows = (_value: unknown) => undefined
@@ -184,9 +171,7 @@
     const held = layout
     if (!was || !held || was.by !== pushedBy) return undefined
 
-    return new Map(
-      was.graph.nodes.map((node, one) => [node.id, { x: held.x[one] ?? 0, y: held.y[one] ?? 0 }]),
-    )
+    return new Map(was.graph.nodes.map((node, one) => [node.id, { x: held.x[one] ?? 0, y: held.y[one] ?? 0 }]))
   }
 
   function rebuild() {
@@ -476,14 +461,7 @@
         x: camera.x - pinched.dx / camera.scale,
         y: camera.y - pinched.dy / camera.scale,
       }
-      camera = zoomed(
-        moved,
-        width,
-        height,
-        pinched.at.x - box.left,
-        pinched.at.y - box.top,
-        pinched.by,
-      )
+      camera = zoomed(moved, width, height, pinched.at.x - box.left, pinched.at.y - box.top, pinched.by)
       schedule()
       return
     }
@@ -504,13 +482,7 @@
       if (travelled > A_CLICK) {
         touched = true
         const box = surface.getBoundingClientRect()
-        const point = graphPoint(
-          camera,
-          width,
-          height,
-          event.clientX - box.left,
-          event.clientY - box.top,
-        )
+        const point = graphPoint(camera, width, height, event.clientX - box.left, event.clientY - box.top)
         layout.hold(holding, point.x, point.y)
         schedule()
       }

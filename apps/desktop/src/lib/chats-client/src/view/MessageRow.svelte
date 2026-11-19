@@ -63,9 +63,7 @@
 
   const name = $derived(nameOf(message.author, page.members, space))
   const files = $derived(sortFiles(message.files))
-  const quoted = $derived(
-    message.quote === undefined ? null : page.messages.find((one) => one.id === message.quote),
-  )
+  const quoted = $derived(message.quote === undefined ? null : page.messages.find((one) => one.id === message.quote))
   const mine = $derived(page.me !== null && message.author === page.me)
   const arrived = $derived(message.seq > arrivedAfter)
   const callable = $derived(
@@ -122,9 +120,7 @@
     if (id && event.currentTarget instanceof Element) showProfile(id, event.currentTarget, space)
   }
 
-  const history = $derived(
-    message.history.map((one) => `${timeOf(one.at)}  ${one.body}`).join('\n'),
-  )
+  const history = $derived(message.history.map((one) => `${timeOf(one.at)}  ${one.body}`).join('\n'))
 </script>
 
 {#snippet agent()}
@@ -168,27 +164,18 @@
           <span class="via" use:tip={() => message.via?.agent ?? ''}>✦</span>
         {/if}
         <time use:tip={() => fullTime(message.at)}>{timeOf(message.at)}</time>
-        {#if message.pinned}<span class="pinned" aria-label="Pinned"><Glyph name="pin" /></span
-          >{/if}
+        {#if message.pinned}<span class="pinned" aria-label="Pinned"><Glyph name="pin" /></span>{/if}
       </div>
     {:else if message.pinned}
       <span class="pinned corner" aria-label="Pinned"><Glyph name="pin" /></span>
     {/if}
 
     {#if message.quote !== undefined}
-      <button
-        type="button"
-        class="quoted"
-        onclick={() => message.quote && void page.jump(message.quote)}
-      >
+      <button type="button" class="quoted" onclick={() => message.quote && void page.jump(message.quote)}>
         <Glyph name="quote" />
         {#if quoted}
           <strong>{nameOf(quoted.author, page.members, space)}</strong>
-          <span
-            >{quoted.deleted
-              ? 'Deleted'
-              : firstLine(quoted.body) || (quoted.files[0]?.name ?? '')}</span
-          >
+          <span>{quoted.deleted ? 'Deleted' : firstLine(quoted.body) || (quoted.files[0]?.name ?? '')}</span>
         {:else}
           <span>…</span>
         {/if}
@@ -220,12 +207,7 @@
       {/if}
 
       {#if files.seen.length}
-        <Gallery
-          chat={page.id}
-          files={files.seen}
-          {column}
-          onopen={(index: number) => onfiles(message, index)}
-        />
+        <Gallery chat={page.id} files={files.seen} {column} onopen={(index: number) => onfiles(message, index)} />
       {/if}
       {#each files.heard as file (file.hash)}
         <Voice chat={page.id} {file} />
@@ -259,12 +241,7 @@
             {#if message.preview.text}<span class="text">{message.preview.text}</span>{/if}
           </span>
           {#if message.preview.picture}
-            <img
-              src={fileUrl(page.id, message.preview.picture)}
-              alt=""
-              draggable="false"
-              loading="lazy"
-            />
+            <img src={fileUrl(page.id, message.preview.picture)} alt="" draggable="false" loading="lazy" />
           {/if}
         </a>
       {/if}
@@ -295,12 +272,8 @@
     {/if}
     {#if message.refused}
       <span class="refused">
-        <button type="button" class="orden-chip" onclick={() => page.retry(message.id)}
-          >Try again</button
-        >
-        <button type="button" class="orden-chip is-quiet" onclick={() => page.discard(message.id)}
-          >Delete</button
-        >
+        <button type="button" class="orden-chip" onclick={() => page.retry(message.id)}>Try again</button>
+        <button type="button" class="orden-chip is-quiet" onclick={() => page.discard(message.id)}>Delete</button>
       </span>
     {/if}
 

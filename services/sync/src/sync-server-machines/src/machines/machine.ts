@@ -1,13 +1,5 @@
 import { BEAT, BEAT_ANSWER } from '@orden/sync-core'
-import {
-  randomToken,
-  note,
-  askHub,
-  SocketLock,
-  stillSignedIn,
-  steadyEnv,
-  type Env,
-} from '../../../sync-server/src/api'
+import { randomToken, note, askHub, SocketLock, stillSignedIn, steadyEnv, type Env } from '../../../sync-server/src/api'
 import { audit, type Detail, failureOf, type Named, type Step } from './audit'
 import { budgetLeft } from './budget'
 import { whyNotWake } from './gate'
@@ -238,9 +230,7 @@ export class Machine implements DurableObject {
     if (this.made) return this.made.kind
     const me = await this.me()
     const row = me
-      ? await this.env.DB.prepare('select host from machines where id = ?')
-          .bind(me.id)
-          .first<{ host: HostKind }>()
+      ? await this.env.DB.prepare('select host from machines where id = ?').bind(me.id).first<{ host: HostKind }>()
       : null
     if (row) {
       await this.ctx.storage.put(HOST, row.host)
@@ -306,10 +296,7 @@ export class Machine implements DurableObject {
 
   private join(headers: Headers): Response {
     const pair = new WebSocketPair()
-    aside(
-      'machine enter',
-      this.enter(pair[1], viewerFrom(headers), headers.get('x-orden-wake') ?? 'no'),
-    )
+    aside('machine enter', this.enter(pair[1], viewerFrom(headers), headers.get('x-orden-wake') ?? 'no'))
     return new Response(null, { status: 101, webSocket: pair[0] })
   }
 
@@ -323,11 +310,7 @@ export class Machine implements DurableObject {
       return
     }
 
-    this.ctx.acceptWebSocket(server, [
-      viewer.session,
-      viewer.who,
-      ...(viewer.login ? [loginTag(viewer.login)] : []),
-    ])
+    this.ctx.acceptWebSocket(server, [viewer.session, viewer.who, ...(viewer.login ? [loginTag(viewer.login)] : [])])
     server.serializeAttachment(viewer)
     this.next.set(server, -1)
 
@@ -398,8 +381,7 @@ export class Machine implements DurableObject {
         break
       case 'start':
         if (!maySocketType(viewer)) this.say(socket, { t: 'refused', error: 'role' })
-        else
-          this.tell(viewer.session, { t: 'open', session: viewer.session, ...this.sizeFor(viewer) })
+        else this.tell(viewer.session, { t: 'open', session: viewer.session, ...this.sizeFor(viewer) })
         break
       case 'resume':
         await this.resume(socket, viewer)
@@ -485,11 +467,7 @@ export class Machine implements DurableObject {
     if (!this.link) aside('machine recover', this.recover())
 
     if (now - viewer.seen > SEEN_EVERY) socket.serializeAttachment({ ...viewer, seen: now })
-    this.toSession(
-      viewer.session,
-      { t: 'typed', who: viewer.who, seq: this.ends.get(viewer.session) ?? 0 },
-      socket,
-    )
+    this.toSession(viewer.session, { t: 'typed', who: viewer.who, seq: this.ends.get(viewer.session) ?? 0 }, socket)
     if (!wasTyping) this.people(viewer.session)
   }
 
@@ -538,11 +516,7 @@ export class Machine implements DurableObject {
     if (me) await audit(this.env, me.id, 'resume', { who: viewer.who, device: viewer.device })
   }
 
-  private image(
-    socket: WebSocket,
-    viewer: Viewer,
-    frame: Extract<ClientFrame, { t: 'image' }>,
-  ): void {
+  private image(socket: WebSocket, viewer: Viewer, frame: Extract<ClientFrame, { t: 'image' }>): void {
     if (!this.admitted(socket, viewer, frame.part.length)) return
     this.ensureOpen(viewer)
     this.tell(viewer.session, {
@@ -567,14 +541,11 @@ export class Machine implements DurableObject {
     if (!within(this.opens, OPENS_A_MINUTE)) return
     const owners = this.ctx.getWebSockets(session).flatMap((socket) => {
       const viewer = viewerOf(socket)
-      return viewer?.owns && !viewer.parked && socket.readyState === OPEN
-        ? [{ socket, viewer }]
-        : []
+      return viewer?.owns && !viewer.parked && socket.readyState === OPEN ? [{ socket, viewer }] : []
     })
     const device = this.lastDevice.get(session)
     const chosen =
-      owners.find((one) => one.viewer.device === device) ??
-      owners.sort((a, b) => b.viewer.seen - a.viewer.seen)[0]
+      owners.find((one) => one.viewer.device === device) ?? owners.sort((a, b) => b.viewer.seen - a.viewer.seen)[0]
     if (chosen) this.say(chosen.socket, { t: 'browse', url })
   }
 
@@ -660,12 +631,7 @@ export class Machine implements DurableObject {
     link.addEventListener('message', (event: MessageEvent) => {
       if (this.link === link) this.heard = Date.now()
       const data: unknown = event.data
-      const bytes =
-        data instanceof ArrayBuffer
-          ? new Uint8Array(data)
-          : data instanceof Uint8Array
-            ? data
-            : null
+      const bytes = data instanceof ArrayBuffer ? new Uint8Array(data) : data instanceof Uint8Array ? data : null
       const frame = bytes ? ordendFrameOf(bytes) : null
       if (frame) aside('machine ordend', this.fromOrdend(frame))
     })
@@ -702,8 +668,7 @@ export class Machine implements DurableObject {
     for (const socket of this.ctx.getWebSockets()) {
       const viewer = viewerOf(socket)
       const held = viewer && sessions.get(viewer.session)
-      if (viewer && (!held || (!maySocketType(held) && maySocketType(viewer))))
-        sessions.set(viewer.session, viewer)
+      if (viewer && (!held || (!maySocketType(held) && maySocketType(viewer)))) sessions.set(viewer.session, viewer)
     }
     for (const viewer of sessions.values()) {
       this.ensureOpen(viewer)
@@ -726,8 +691,7 @@ export class Machine implements DurableObject {
           ...(frame.restored ? { restored: frame.restored } : {}),
         }
         if (screen.restored) {
-          const restored =
-            (await this.ctx.storage.get<Record<string, string | null>>(RESTORED)) ?? {}
+          const restored = (await this.ctx.storage.get<Record<string, string | null>>(RESTORED)) ?? {}
           await this.ctx.storage.put(RESTORED, { ...restored, [session]: screen.restored.program })
         }
         for (const socket of this.ctx.getWebSockets(session)) {
@@ -1043,11 +1007,9 @@ export class Machine implements DurableObject {
 
   private async failed(me: Me, step: Step, error: unknown): Promise<void> {
     note(`machine ${me.id} ${step}`, error, null)
-    await audit(this.env, me.id, 'failed', { detail: failureOf(step, error) }).catch(
-      (failed: unknown) => {
-        note(`machine ${me.id} audit`, failed, null)
-      },
-    )
+    await audit(this.env, me.id, 'failed', { detail: failureOf(step, error) }).catch((failed: unknown) => {
+      note(`machine ${me.id} audit`, failed, null)
+    })
   }
 
   async wake(): Promise<void> {
@@ -1141,10 +1103,7 @@ export class Machine implements DurableObject {
     let from: Detail = 'fresh'
     const snapshot = row?.snapshot
     const good =
-      snapshot &&
-      row.snapshot_image === IMAGE &&
-      row.snapshot_at !== null &&
-      now - row.snapshot_at < SNAPSHOT_KEPT
+      snapshot && row.snapshot_image === IMAGE && row.snapshot_at !== null && now - row.snapshot_at < SNAPSHOT_KEPT
     if (good) {
       try {
         await capped(host.restore(me.id, { snapshot }), RESTORE_LIMIT, 'snapshot restore')
@@ -1266,9 +1225,7 @@ export class Machine implements DurableObject {
       const viewer = viewerOf(socket)
       if (!viewer || socket.readyState !== OPEN) return []
       const seen = Math.max(viewer.seen, this.lastKey.get(viewer.who) ?? 0)
-      return [
-        { who: viewer.who, device: viewer.device, active: now - seen < ACTIVE_FOR, onScreen: true },
-      ]
+      return [{ who: viewer.who, device: viewer.device, active: now - seen < ACTIVE_FOR, onScreen: true }]
     })
   }
 
@@ -1291,9 +1248,7 @@ export class Machine implements DurableObject {
   ): Promise<void> {
     await this.setState('stopping', reason)
     await this.keep(me, state, { screens: true, backup: true, limit: SAVE_LIMIT })
-    await this.env.DB.prepare('update machines set slept_at = ?2 where id = ?1')
-      .bind(me.id, Date.now())
-      .run()
+    await this.env.DB.prepare('update machines set slept_at = ?2 where id = ?1').bind(me.id, Date.now()).run()
     await audit(this.env, me.id, 'sleep', { detail: reason })
     await this.ctx.storage.delete(RECENT)
     await this.ctx.storage.deleteAlarm()
@@ -1340,9 +1295,7 @@ export class Machine implements DurableObject {
       try {
         const record = await capped(host.backup(me.id, HOME), how.limit, 'backup')
         const key = keyOf(record)
-        await this.env.DB.prepare(
-          'update machines set backup = ?2, backup_key = ?3, backup_at = ?4 where id = ?1',
-        )
+        await this.env.DB.prepare('update machines set backup = ?2, backup_key = ?3, backup_at = ?4 where id = ?1')
           .bind(me.id, record, key, now)
           .run()
         if (row?.backup_key && row.backup_key !== key) await this.env.HOMES?.delete(row.backup_key)
@@ -1389,9 +1342,7 @@ export class Machine implements DurableObject {
         .run()
     }
     if (home >= 0) {
-      await this.env.DB.prepare('update machines set home_bytes = ?2 where id = ?1')
-        .bind(me.id, home)
-        .run()
+      await this.env.DB.prepare('update machines set home_bytes = ?2 where id = ?1').bind(me.id, home).run()
     }
   }
 
@@ -1404,9 +1355,7 @@ export class Machine implements DurableObject {
     })
     if (!sockets.length) return
 
-    const logins = [
-      ...new Set(sockets.flatMap(({ viewer }) => (viewer.login ? [viewer.login] : []))),
-    ]
+    const logins = [...new Set(sockets.flatMap(({ viewer }) => (viewer.login ? [viewer.login] : [])))]
     const live = await stillSignedIn(this.env, logins)
     this.signedOut(logins.filter((one) => !live.has(one)))
 
@@ -1469,9 +1418,7 @@ export class Machine implements DurableObject {
         { who: viewer.who, term: viewer.term, guest: viewer.guest },
       ]),
     )
-    const reached = me
-      ? await reachAgain(this.env, me.id, [...pairs.values()]).catch(() => null)
-      : null
+    const reached = me ? await reachAgain(this.env, me.id, [...pairs.values()]).catch(() => null) : null
     const now = reached && new Map(reached.map((one) => [`${one.term}\n${String(one.guest)}`, one]))
 
     for (const { socket, viewer } of theirs) {
@@ -1564,9 +1511,7 @@ export class Machine implements DurableObject {
 
     const me = await this.me()
     if (!me) return
-    await this.env.DB.prepare('update machines set state = ?2 where id = ?1')
-      .bind(me.id, state)
-      .run()
+    await this.env.DB.prepare('update machines set state = ?2 where id = ?1').bind(me.id, state).run()
     this.everybody({ t: 'machine', state, ...(reason ? { reason } : {}) })
     await askHub(this.env, me.user, 'machine', { 'x-orden-state': state })
   }
@@ -1668,9 +1613,7 @@ function isRefusal(value: string): value is Refusal {
 }
 
 function downOf(value: string | null): DownReason {
-  return value === 'flag' || value === 'off' || value === 'budget' || value === 'allowance'
-    ? value
-    : 'stopped'
+  return value === 'flag' || value === 'off' || value === 'budget' || value === 'allowance' ? value : 'stopped'
 }
 
 export function resumeOf(program: string | null): string | null {

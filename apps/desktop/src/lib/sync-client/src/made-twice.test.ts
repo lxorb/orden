@@ -55,9 +55,7 @@ describe('a file made once and heard twice', () => {
     await Promise.all([engine.created(path, false), engine.created(path, false)])
 
     const files = [...state.entries.values()].filter((one) => one.kind === 'file')
-    expect(files.map((one) => [one.name, one.local_path])).toEqual([
-      ['GIMP.application', 'GIMP.application'],
-    ])
+    expect(files.map((one) => [one.name, one.local_path])).toEqual([['GIMP.application', 'GIMP.application']])
     expect(new TextDecoder().decode((await disk.readBytes(path)) ?? new Uint8Array())).toBe(text)
   })
 

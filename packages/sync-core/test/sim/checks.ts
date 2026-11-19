@@ -44,8 +44,7 @@ function sortedTexts(texts: Record<string, string>): string {
 
 export function sameView(one: View, other: View): boolean {
   return (
-    sortedEntries(one.entries) === sortedEntries(other.entries) &&
-    sortedTexts(one.texts) === sortedTexts(other.texts)
+    sortedEntries(one.entries) === sortedEntries(other.entries) && sortedTexts(one.texts) === sortedTexts(other.texts)
   )
 }
 
@@ -126,9 +125,7 @@ export function judge(
   for (const one of classifications) {
     const verdict = diverge(one.base, one.local, one.remote, one.times, one.merged).verdict
     if ((verdict === 'diverged') !== one.held) {
-      failures.push(
-        `${one.id}: diverge says ${verdict} and the device ${one.held ? 'held' : 'did not hold'} it`,
-      )
+      failures.push(`${one.id}: diverge says ${verdict} and the device ${one.held ? 'held' : 'did not hold'} it`)
     }
   }
 

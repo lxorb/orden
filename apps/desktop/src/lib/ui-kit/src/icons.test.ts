@@ -247,12 +247,9 @@ describe('searching a set whose names are already words', () => {
     ['bag', ['💰']],
     ['', ['🚀', '💰', '📅']],
     ['aardvark', []],
-  ])(
-    '%j finds by the words it is called or inside them, empty in the set s order',
-    (query, found) => {
-      expect(rankIcons(emoji, query)).toEqual(found)
-    },
-  )
+  ])('%j finds by the words it is called or inside them, empty in the set s order', (query, found) => {
+    expect(rankIcons(emoji, query)).toEqual(found)
+  })
 })
 
 describe('searching by what an icon is for rather than what it is called', () => {

@@ -144,11 +144,7 @@ describe('results', () => {
   })
 
   it('catches an async rejection the same way', async () => {
-    const failed = await attemptAsync(
-      'contracts',
-      () => Promise.reject(new Error('late')),
-      'timeout',
-    )
+    const failed = await attemptAsync('contracts', () => Promise.reject(new Error('late')), 'timeout')
     expect(failed).toMatchObject({ ok: false, error: { kind: 'timeout', message: 'late' } })
     expect(await attemptAsync('contracts', () => Promise.resolve('fine'))).toEqual(ok('fine'))
   })
@@ -156,16 +152,7 @@ describe('results', () => {
 
 describe('shared objects', () => {
   it('lists the entry kinds the sync wire carries', () => {
-    expect(ENTRY_KINDS).toEqual([
-      'note',
-      'canvas',
-      'pages',
-      'url',
-      'term',
-      'chat',
-      'file',
-      'folder',
-    ])
+    expect(ENTRY_KINDS).toEqual(['note', 'canvas', 'pages', 'url', 'term', 'chat', 'file', 'folder'])
     expect(isEntryKind('url')).toBe(true)
     expect(isEntryKind('settings')).toBe(false)
   })
@@ -606,9 +593,7 @@ describe('loads', () => {
   it('runs a registered command once it loads, and answers false for one nobody registered or whose load fails', async () => {
     const ran: string[] = []
     expect(await runCommand('time.start')).toBe(false)
-    const unregister = registerCommand('time.start', () =>
-      Promise.resolve(() => void ran.push('started')),
-    )
+    const unregister = registerCommand('time.start', () => Promise.resolve(() => void ran.push('started')))
     const broken = registerCommand('time.stop', () => Promise.reject(new Error('offline')))
     expect(await runCommand('time.start')).toBe(true)
     expect(await runCommand('time.stop')).toBe(false)
@@ -620,9 +605,7 @@ describe('loads', () => {
 
   it('runs a command of a registered namespace from the runs it loads, an exact one first', async () => {
     const ran: string[] = []
-    const space = registerCommands('pass.', () =>
-      Promise.resolve({ 'pass.open': () => void ran.push('open') }),
-    )
+    const space = registerCommands('pass.', () => Promise.resolve({ 'pass.open': () => void ran.push('open') }))
     const exact = registerCommand('pass.lock', () => Promise.resolve(() => void ran.push('lock')))
     expect(await runCommand('pass.open')).toBe(true)
     expect(await runCommand('pass.lock')).toBe(true)
@@ -654,9 +637,7 @@ describe('loads', () => {
   it('starts every other hearing when one fails to load or to start', async () => {
     const heard: string[] = []
     const unloaded = registerHearing(() => Promise.reject(new Error('the chunk is gone')))
-    const refusing = registerHearing(() =>
-      Promise.resolve(() => Promise.reject(new Error('no listener'))),
-    )
+    const refusing = registerHearing(() => Promise.resolve(() => Promise.reject(new Error('no listener'))))
     const pdfs = registerHearing(() =>
       Promise.resolve(() => {
         heard.push('start pdfs')
@@ -674,9 +655,7 @@ describe('loads', () => {
   it('reads command rows of a place once loaded, with the view handed in, and none for a failed load', async () => {
     const view = { line: 3 }
     const rows = registerCommandRows('web', () =>
-      Promise.resolve((seen) => [
-        { id: seen === view ? 'web-seen' : 'web-blind', label: 'Web', run: () => undefined },
-      ]),
+      Promise.resolve((seen) => [{ id: seen === view ? 'web-seen' : 'web-blind', label: 'Web', run: () => undefined }]),
     )
     const broken = registerCommandRows('send', () => Promise.reject(new Error('offline')))
     expect(commandRows('web', view)).toEqual([])

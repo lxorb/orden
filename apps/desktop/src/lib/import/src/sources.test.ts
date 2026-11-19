@@ -37,11 +37,7 @@ describe('the files behind what was picked', () => {
       ]),
     )
 
-    expect(sources.map((one) => one.path).sort()).toEqual([
-      'Notes.md',
-      'README.md',
-      'attachments/code.zip',
-    ])
+    expect(sources.map((one) => one.path).sort()).toEqual(['Notes.md', 'README.md', 'attachments/code.zip'])
   })
 
   test('keep a zip whole beside the note that links it in a zip of markdown', async () => {

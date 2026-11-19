@@ -27,15 +27,11 @@ const sites = {
 test("a link's own words name it", () => {
   expect(linkWords('<a href="https://svelte.dev/docs">Svelte  docs</a>')).toBe('Svelte docs')
   expect(linkWords('')).toBe('')
-  expect(linkWords('<meta charset="utf-8"><a href="x"><b>Tom</b> &amp; Jerry&#39;s</a>')).toBe(
-    "Tom & Jerry's",
-  )
+  expect(linkWords('<meta charset="utf-8"><a href="x"><b>Tom</b> &amp; Jerry&#39;s</a>')).toBe("Tom & Jerry's")
 })
 
 test('a character reference no character has is left as written', () => {
-  expect(linkWords('<a href="x">a &#x110000; b &#99999999; c</a>')).toBe(
-    'a &#x110000; b &#99999999; c',
-  )
+  expect(linkWords('<a href="x">a &#x110000; b &#99999999; c</a>')).toBe('a &#x110000; b &#99999999; c')
 })
 
 test('a link dropped on the list is a web note there, named by its words or its site', async () => {

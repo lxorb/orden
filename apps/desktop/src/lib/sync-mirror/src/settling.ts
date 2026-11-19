@@ -28,10 +28,7 @@ export async function settleLocalNotes(): Promise<void> {
     })
     if (answer === 'merge') return
 
-    const taken = new Set([
-      ...workspaceView().spaces.map((one) => one.name),
-      ...account.spaces.map((one) => one.name),
-    ])
+    const taken = new Set([...workspaceView().spaces.map((one) => one.name), ...account.spaces.map((one) => one.name)])
     for (const space of met) {
       const id = rootedAt(workspaceView().spaces, space.root)?.id
       if (id === undefined) continue

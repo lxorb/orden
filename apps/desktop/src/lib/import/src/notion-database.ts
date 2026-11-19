@@ -57,9 +57,7 @@ export function kindOf(values: readonly string[]): Kind {
   if (said.every((one) => pagesIn(one) !== null)) return 'pages'
 
   const labels = said.map((one) => one.split(',').map((label) => label.trim()))
-  const listed =
-    said.some((one) => one.includes(',')) &&
-    labels.every((one) => one.every((label) => LABEL.test(label)))
+  const listed = said.some((one) => one.includes(',')) && labels.every((one) => one.every((label) => LABEL.test(label)))
   if (listed) {
     const seen = new Set<string>()
     for (const label of labels.flatMap((one) => [...new Set(one)])) {
@@ -117,9 +115,7 @@ export function notionDate(value: string): string | null {
 function isRange(value: string): boolean {
   const [start = '', end = '', ...more] = value.split(' → ')
   return (
-    !more.length &&
-    notionDate(start) !== null &&
-    (notionDate(end) !== null || /^\d{1,2}:\d{2}(?: ?[AP]M)?$/i.test(end))
+    !more.length && notionDate(start) !== null && (notionDate(end) !== null || /^\d{1,2}:\d{2}(?: ?[AP]M)?$/i.test(end))
   )
 }
 

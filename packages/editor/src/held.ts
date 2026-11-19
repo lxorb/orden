@@ -1,9 +1,4 @@
-import {
-  type EditorState,
-  type StateEffect,
-  Transaction,
-  type TransactionSpec,
-} from '@codemirror/state'
+import { type EditorState, type StateEffect, Transaction, type TransactionSpec } from '@codemirror/state'
 import { isExternal } from './external'
 import type { DocView, SharedDoc } from './shared'
 import { flushTableEdits } from './table/view'
@@ -51,21 +46,13 @@ export class HeldState implements DocView {
     this.place = place
   }
 
-  static waiting(
-    note: SharedDoc,
-    state: EditorState,
-    place: StateEffect<unknown> | null = null,
-  ): HeldState {
+  static waiting(note: SharedDoc, state: EditorState, place: StateEffect<unknown> | null = null): HeldState {
     const held = new HeldState(note, state, place)
     note.join(held)
     return held
   }
 
-  static shownIn(
-    note: SharedDoc,
-    view: StateView,
-    place: StateEffect<unknown> | null = null,
-  ): HeldState {
+  static shownIn(note: SharedDoc, view: StateView, place: StateEffect<unknown> | null = null): HeldState {
     return new HeldState(note, view.state, place)
   }
 

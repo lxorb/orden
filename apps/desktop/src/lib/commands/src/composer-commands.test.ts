@@ -21,9 +21,9 @@ const workspace = vi.hoisted(() => ({
 }))
 
 vi.mock('../../workspace/src/api', async () => {
-  const { carvable, mergeable } = await vi.importActual<
-    typeof import('../../workspace/src/composing')
-  >('../../workspace/src/composing')
+  const { carvable, mergeable } = await vi.importActual<typeof import('../../workspace/src/composing')>(
+    '../../workspace/src/composing',
+  )
   return { workspace, carvable, mergeable }
 })
 

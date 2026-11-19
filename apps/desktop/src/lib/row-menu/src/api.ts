@@ -1,11 +1,5 @@
 import { type Bookmark, portOf } from '@orden/contracts'
-import {
-  isCanvasTarget,
-  isChatTarget,
-  isPagesTarget,
-  isTermTarget,
-  isWebTarget,
-} from '@orden/markdown/links'
+import { isCanvasTarget, isChatTarget, isPagesTarget, isTermTarget, isWebTarget } from '@orden/markdown/links'
 import { COVER_KEY } from '@orden/markdown/cover'
 import { DIVIDER, type MenuEntry } from '../../ui-kit/src/api'
 import { iconChoice } from '../../icon-picker/src/api'
@@ -20,9 +14,7 @@ const essentials = (all: boolean, run: () => void): MenuEntry[] => [
 ]
 
 export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
-  return mark
-    ? essentials(workspace.bookmarks.has(mark), () => workspace.bookmarks.toggle(mark))
-    : []
+  return mark ? essentials(workspace.bookmarks.has(mark), () => workspace.bookmarks.toggle(mark)) : []
 }
 
 export function searchAgainEntry(path: string | null | undefined): MenuEntry[] {
@@ -41,8 +33,7 @@ export function archiveEntry(path: string | null | undefined): MenuEntry[] {
   return [
     {
       label: archived ? 'Unarchive' : 'Archive',
-      run: () =>
-        void (archived ? archiving.value.unarchive(path) : archiving.value.archive([path])),
+      run: () => void (archived ? archiving.value.unarchive(path) : archiving.value.archive([path])),
     },
   ]
 }
@@ -52,8 +43,7 @@ export function iconEntries(path: string | null | undefined, folder = false): Me
   const chat = !__EVEN_PLUGIN__ && isChatTarget(path)
   const web = isWebTarget(path) && !/\.webloc$/i.test(path.trim())
   const term = !__EVEN_PLUGIN__ && isTermTarget(path)
-  const kept =
-    chat || web || term || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
+  const kept = chat || web || term || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
   const mapped = folder || !kept
   return [
     {
@@ -96,8 +86,7 @@ export function shareEntry(path: string | null | undefined): MenuEntry[] {
 export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {
   const { path } = entry
   const sites = portOf('web.sites')
-  if (!isDesktop || entry.is_dir || !/\.url$/i.test(path) || !canWriteAt(path) || !sites.ok)
-    return []
+  if (!isDesktop || entry.is_dir || !/\.url$/i.test(path) || !canWriteAt(path) || !sites.ok) return []
   return [{ label: 'Web data', keep: true, run: () => void sites.value.showData(path) }]
 }
 

@@ -14,8 +14,7 @@ vi.mock('../../accounts/src/client', async (actual) => ({
   },
 }))
 
-const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, kindsHere, PASS_WORD, shownOf } =
-  await import('./gates.svelte')
+const { CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, kindsHere, PASS_WORD, shownOf } = await import('./gates.svelte')
 const { hiddenOf, locked, mayHide, receive, setKind, setWord } = await import('./kind-choice')
 const { offeredKinds, newKinds } = await import('../../new-here/src/api')
 const { newFileRows } = await (await import('../../row-menu/src/api')).rowMenus()
@@ -119,11 +118,7 @@ describe('turning a kind off', () => {
     setKind('canvas', false)
 
     expect(offeredKinds().map((one) => one.kind)).toEqual(['note', 'pages', 'ai', 'online', 'web'])
-    expect(newFileRows().map((one) => one?.label)).toEqual([
-      'New note',
-      'New page note',
-      'New web note',
-    ])
+    expect(newFileRows().map((one) => one?.label)).toEqual(['New note', 'New page note', 'New web note'])
     expect(newKinds().map((one) => one.kind)).toContain('canvas')
   })
 
@@ -161,10 +156,7 @@ describe('the account', () => {
     setKind('web', false)
     setKind('web', true)
 
-    expect(saved.map(([, patch]) => patch)).toEqual([
-      { hiddenKinds: ['web'] },
-      { hiddenKinds: null },
-    ])
+    expect(saved.map(([, patch]) => patch)).toEqual([{ hiddenKinds: ['web'] }, { hiddenKinds: null }])
   })
 
   test('is followed, the last machine to change it winning', () => {

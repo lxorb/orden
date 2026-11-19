@@ -14,9 +14,7 @@ function fromWord(...items: string[]): string {
 describe('a Word list whose plain text puts a tab after each marker', () => {
   test('a numbered list pastes as a numbered list, not a table', async () => {
     const html = fromWord(item('1.', 'Open the lid'), item('2.', 'Pour', true))
-    expect(await pastedMarkdown(html, '1.\tOpen the lid\r\n2.\tPour\r\n')).toBe(
-      '1. Open the lid\n2. Pour',
-    )
+    expect(await pastedMarkdown(html, '1.\tOpen the lid\r\n2.\tPour\r\n')).toBe('1. Open the lid\n2. Pour')
   })
 
   test('a bulleted list pastes as a list, not a table', async () => {

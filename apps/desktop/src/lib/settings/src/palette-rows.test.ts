@@ -93,11 +93,7 @@ describe('every setting as a row', () => {
   })
 
   test('knows a pane from a row of one', () => {
-    expect(rows.filter((one) => !one.row).map((one) => one.label)).toEqual([
-      'Editor',
-      'Appearance',
-      'Account',
-    ])
+    expect(rows.filter((one) => !one.row).map((one) => one.label)).toEqual(['Editor', 'Appearance', 'Account'])
   })
 })
 

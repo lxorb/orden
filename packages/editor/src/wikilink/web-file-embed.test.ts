@@ -27,10 +27,7 @@ function drawnAsNotes(doc: string): string[] {
     EditorState.create({
       doc: full,
       selection: EditorSelection.cursor(full.length),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        noteIndex.of(index),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), noteIndex.of(index)],
     }),
   )
   const out: string[] = []

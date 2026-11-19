@@ -20,9 +20,7 @@
     gemini: 'gemini',
   }
 
-  const offered = PLANS.filter(
-    (one) => signInKind(one.id) !== null || offersApiKey(setup.answers.code),
-  )
+  const offered = PLANS.filter((one) => signInKind(one.id) !== null || offersApiKey(setup.answers.code))
 
   let states = $state<Record<string, State>>({})
   let waitingOn = $state<Record<string, string>>({})
@@ -124,13 +122,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
     </span>
   {:else}
-    <button
-      class="orden-chip o-end"
-      type="button"
-      disabled={now !== 'idle'}
-      aria-busy={now !== 'idle'}
-      onclick={press}
-    >
+    <button class="orden-chip o-end" type="button" disabled={now !== 'idle'} aria-busy={now !== 'idle'} onclick={press}>
       {#if now === 'idle'}{label}{:else}<span class="spin" aria-hidden="true"></span>{/if}
     </button>
   {/if}
@@ -144,26 +136,16 @@
   <div class="o-list rise">
     {#each offered as one (one.id)}
       <div class="row">
-        <span class="ico"
-          ><Logo name={one.name} icon={one.icon} colour={one.colour} size={17} /></span
-        >
+        <span class="ico"><Logo name={one.name} icon={one.icon} colour={one.colour} size={17} /></span>
         <span>{one.name}</span>
-        {@render button(
-          one.id,
-          signInKind(one.id) ? 'Sign in' : 'Connect',
-          () => void signIn(one.id),
-        )}
+        {@render button(one.id, signInKind(one.id) ? 'Sign in' : 'Connect', () => void signIn(one.id))}
       </div>
     {/each}
     {#if !others}
       <button class="row open" type="button" onclick={() => (others = true)}>
         <span class="ico"
           ><svg class="dots" viewBox="0 0 24 24" aria-hidden="true"
-            ><circle cx="6" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle
-              cx="18"
-              cy="12"
-              r="1.8"
-            /></svg
+            ><circle cx="6" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="18" cy="12" r="1.8" /></svg
           ></span
         >
         <span>Other</span>
@@ -174,28 +156,17 @@
 
   {#if others}
     <div class="o-pane pane-in">
-      <SearchField
-        value={query}
-        onvalue={(typed: string) => (query = typed)}
-        label="Connect your AI"
-      />
+      <SearchField value={query} onvalue={(typed: string) => (query = typed)} label="Connect your AI" />
       <div class="o-list more">
         {#each more as one (one.id)}
           {#if one.baseUrl}
             <div class="row">
-              <span class="ico"
-                ><Logo name={one.name} icon={one.icon} colour={one.colour} size={17} /></span
-              >
+              <span class="ico"><Logo name={one.name} icon={one.icon} colour={one.colour} size={17} /></span>
               <span>{one.name}</span>
               {@render button(one.id, 'Connect', () => void connect(one))}
             </div>
           {:else}
-            <RequestRow
-              name={one.name}
-              icon={one.icon}
-              colour={one.colour}
-              asked={requestKey('ai', one.name)}
-            />
+            <RequestRow name={one.name} icon={one.icon} colour={one.colour} asked={requestKey('ai', one.name)} />
           {/if}
         {/each}
         {#if nothing}
@@ -226,9 +197,7 @@
       />
     </form>
   {:else if keyOffered}
-    <button class="orden-button is-quiet skip" type="button" onclick={() => openKey(null)}
-      >Use an API key</button
-    >
+    <button class="orden-button is-quiet skip" type="button" onclick={() => openKey(null)}>Use an API key</button>
   {/if}
 
   {#if trouble}<p class="o-error" role="alert">{trouble}</p>{/if}

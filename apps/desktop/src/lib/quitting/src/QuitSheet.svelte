@@ -11,18 +11,10 @@
   const NAME = 'Orden'
 
   const title = $derived(
-    quitAsk.why === 'quit'
-      ? `Quit ${NAME}?`
-      : quitAsk.why === 'restart'
-        ? `Restart ${NAME}?`
-        : 'Close window?',
+    quitAsk.why === 'quit' ? `Quit ${NAME}?` : quitAsk.why === 'restart' ? `Restart ${NAME}?` : 'Close window?',
   )
   const going = $derived(
-    quitAsk.why === 'quit'
-      ? 'Quit anyway'
-      : quitAsk.why === 'restart'
-        ? 'Restart anyway'
-        : 'Close anyway',
+    quitAsk.why === 'quit' ? 'Quit anyway' : quitAsk.why === 'restart' ? 'Restart anyway' : 'Close anyway',
   )
 
   const stay = () => quitAsk.answer('stay')
@@ -71,15 +63,9 @@
     </ul>
 
     <div class="row">
-      <TickBox
-        label="Don't ask again"
-        checked={quitAsk.never}
-        onchange={(on: boolean) => (quitAsk.never = on)}
-      />
+      <TickBox label="Don't ask again" checked={quitAsk.never} onchange={(on: boolean) => (quitAsk.never = on)} />
       <button type="button" class="orden-button is-quiet" data-lands onclick={stay}>Cancel</button>
-      <button type="button" class="orden-button is-danger" onclick={() => quitAsk.answer('go')}
-        >{going}</button
-      >
+      <button type="button" class="orden-button is-danger" onclick={() => quitAsk.answer('go')}>{going}</button>
     </div>
   </div>
 {/if}

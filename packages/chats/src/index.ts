@@ -23,12 +23,4 @@ export { mentionsIn } from './mentions'
 export { CHAT_EXTENSION, chatOf, chatText, isChatId, withIcon } from './pointer'
 export { apply, type ChatState, chatState } from './reduce'
 export { type Action, actionsOf, may, mayEvent } from './roles'
-export {
-  type Has,
-  hasModifiers,
-  hasOf,
-  type Hit,
-  matches,
-  parseSearch,
-  type SearchQuery,
-} from './search'
+export { type Has, hasModifiers, hasOf, type Hit, matches, parseSearch, type SearchQuery } from './search'

@@ -47,9 +47,7 @@ export async function convertSyntax() {
   if (!where) return
 
   const notes =
-    where === 'note' && open?.path
-      ? [{ path: open.path, text: (workspace.flush(), open.doc) }]
-      : await everyNote()
+    where === 'note' && open?.path ? [{ path: open.path, text: (workspace.flush(), open.doc) }] : await everyNote()
 
   const { changes, rewrites } = syntaxChanges(notes, names)
 

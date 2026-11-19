@@ -74,8 +74,6 @@ describe('the line a pen would write', () => {
   })
 
   test('a highlighter comes out translucent without anybody asking', () => {
-    expect(sampleStroke(nibFor('highlighter'), 200, 60).opacity).toBe(
-      INK_STYLES.highlighter.opacity,
-    )
+    expect(sampleStroke(nibFor('highlighter'), 200, 60).opacity).toBe(INK_STYLES.highlighter.opacity)
   })
 })

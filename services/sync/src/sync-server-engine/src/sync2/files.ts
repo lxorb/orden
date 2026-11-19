@@ -31,14 +31,7 @@ export const WRONG_BYTES = 'those bytes are not that hash'
 const NOT_A_HASH = 'that is not a hash'
 const TOO_BIG = 'that file is too big'
 
-const DECLARED = new Set([
-  'image/png',
-  'image/jpeg',
-  'image/gif',
-  'image/webp',
-  'image/avif',
-  'application/pdf',
-])
+const DECLARED = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/avif', 'application/pdf'])
 export const BYTES = 'application/octet-stream'
 
 function typeOf(header: string | undefined): string {
@@ -77,13 +70,7 @@ async function hashOf(object: R2ObjectBody): Promise<string> {
   return hex(await crypto.subtle.digest('SHA-256', await object.arrayBuffer()))
 }
 
-async function keepBlob(
-  env: Env,
-  user: string,
-  hash: string,
-  size: number,
-  type: string,
-): Promise<boolean> {
+async function keepBlob(env: Env, user: string, hash: string, size: number, type: string): Promise<boolean> {
   const written = await env.DB.prepare(
     `insert into blobs (hash, user_id, size, type, created_at)
      select ?1, ?2, ?3, ?4, ?5 where ${fitsSql('?2', '?3')}
@@ -99,14 +86,8 @@ async function keepBlob(
   return false
 }
 
-export async function held(
-  env: Env,
-  user: string,
-  hash: string,
-): Promise<{ mine: boolean; there: boolean }> {
-  const row = await env.DB.prepare(
-    'select max(user_id = ?) as mine, count(*) as rows from blobs where hash = ?',
-  )
+export async function held(env: Env, user: string, hash: string): Promise<{ mine: boolean; there: boolean }> {
+  const row = await env.DB.prepare('select max(user_id = ?) as mine, count(*) as rows from blobs where hash = ?')
     .bind(user, hash)
     .first<{ mine: number | null; rows: number }>()
   return { mine: row?.mine === 1, there: (row?.rows ?? 0) > 0 }
@@ -177,8 +158,7 @@ v2Blobs.put('/:hash', async (context) => {
   }
 
   const type = typeOf(context.req.header('content-type'))
-  const put = () =>
-    context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
+  const put = () => context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
   const placed = !there || !(await holdsItsName(context.env, hash, body.byteLength))
   if (placed) await put()
   if (!(await keepBlob(context.env, user.id, hash, body.byteLength, type))) {
@@ -205,8 +185,7 @@ v2Blobs.post('/have', async (context) => {
     return context.json({ error: NOT_A_HASH }, 400)
   }
   if (!hashes.length) return context.json({ kept: [] })
-  const space =
-    typeof asked === 'string' ? await reachedSpace(context.env, context.get('who'), asked) : null
+  const space = typeof asked === 'string' ? await reachedSpace(context.env, context.get('who'), asked) : null
   if (space) {
     return context.json({
       kept: [...(await blobSizes(context.env, space, user.id, hashes)).keys()],
@@ -251,10 +230,7 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
   const space = spaceOf(context)
   const id = context.req.param('id')
   const body: unknown = await context.req.json().catch(() => null)
-  const { hash, base } = (typeof body === 'object' && body !== null ? body : {}) as Record<
-    string,
-    unknown
-  >
+  const { hash, base } = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>
   if (typeof hash !== 'string' || !HASH.test(hash) || typeof base !== 'string') {
     return context.json({ error: NOT_A_HASH }, 400)
   }
@@ -268,9 +244,7 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
   }
 
   const who = context.get('who')
-  const size = (
-    await blobSizes(context.env, space, who.kind === 'user' ? who.user.id : null, [hash])
-  ).get(hash)
+  const size = (await blobSizes(context.env, space, who.kind === 'user' ? who.user.id : null, [hash])).get(hash)
   if (size === undefined) return context.json({ error: NO_SUCH_FILE, blob: hash }, 404)
 
   const device = await deviceOf(context)

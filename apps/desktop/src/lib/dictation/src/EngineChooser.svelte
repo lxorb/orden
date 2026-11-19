@@ -7,8 +7,7 @@
   import { local } from './local.svelte'
   import { type Dictates, voice } from './voice.svelte'
 
-  const { owner, button, below }: { owner: Dictates; button: HTMLButtonElement; below: boolean } =
-    $props()
+  const { owner, button, below }: { owner: Dictates; button: HTMLButtonElement; below: boolean } = $props()
 
   let layer = $state<HTMLElement>()
 

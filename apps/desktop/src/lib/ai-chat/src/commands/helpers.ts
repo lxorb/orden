@@ -18,13 +18,7 @@ function helperOf(parent: Thread, title: string, copy: boolean, mode?: Mode, own
     copy && last
       ? branchThread(parent, last.id, title)
       : {
-          ...newThread(
-            parent.space,
-            parent.provider,
-            parent.model,
-            parent.effort,
-            mode ?? parent.mode,
-          ),
+          ...newThread(parent.space, parent.provider, parent.model, parent.effort, mode ?? parent.mode),
           title,
         }
   if (mode) made.mode = mode
@@ -104,10 +98,7 @@ function inFolder(relative: string, folder: string): boolean {
   return relative.replace(/\\/g, '/').toLowerCase().startsWith(wanted)
 }
 
-async function batchNotes(
-  root: string,
-  targets: { folders: string[]; tags: string[] },
-): Promise<string[]> {
+async function batchNotes(root: string, targets: { folders: string[]; tags: string[] }): Promise<string[]> {
   const { searchSpace } = await import('../../../search/src/api')
   const paths = new Set<string>()
   const ask = async (of: Query[], most: number, keep: (path: string) => boolean): Promise<void> => {
@@ -119,8 +110,7 @@ async function batchNotes(
       most,
       (batch) => {
         for (const hit of batch.hits)
-          if (hit.page === undefined && !hit.tab && keep(hit.path) && paths.size < MOST_NOTES)
-            paths.add(hit.path)
+          if (hit.page === undefined && !hit.tab && keep(hit.path) && paths.size < MOST_NOTES) paths.add(hit.path)
       },
       workspace.leftOutOf(root),
     )
@@ -148,8 +138,7 @@ function linkOf(path: string, root: string): string {
 }
 
 export async function batch(host: Host, parent: Thread, instruction: string): Promise<void> {
-  const root =
-    workspace.spaces.find((one) => one.id === parent.space)?.root ?? workspace.activeSpace?.root
+  const root = workspace.spaces.find((one) => one.id === parent.space)?.root ?? workspace.activeSpace?.root
   const targets = batchTargets(instruction)
   if (!root || (!targets.folders.length && !targets.tags.length)) {
     host.line(parent, 'Name a folder or a tag')
@@ -169,12 +158,7 @@ export async function batch(host: Host, parent: Thread, instruction: string): Pr
   const one = async (): Promise<void> => {
     while (next < notes.length && !stopper.signal.aborted) {
       const path = notes[next++] ?? ''
-      const helper = helperOf(
-        parent,
-        `${instruction.slice(0, 60)}, ${linkOf(path, root)}`,
-        false,
-        parent.mode,
-      )
+      const helper = helperOf(parent, `${instruction.slice(0, 60)}, ${linkOf(path, root)}`, false, parent.mode)
       started.push(helper.id)
       helpers.startedUnder(parent, helper)
       host.adopt(helper)

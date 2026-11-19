@@ -24,10 +24,7 @@ export function ownPicture(html: string): string | null {
   const src = written.get('src')
   if (!src || !safeSrc(src)) return null
 
-  const attributes = [
-    ` src="${attributeUrl(src)}"`,
-    ` alt="${escapeAll(written.get('alt') ?? '')}"`,
-  ]
+  const attributes = [` src="${attributeUrl(src)}"`, ` alt="${escapeAll(written.get('alt') ?? '')}"`]
   const title = written.get('title')
   if (title) attributes.push(` title="${escapeAll(title)}"`)
   for (const name of ['width', 'height']) {

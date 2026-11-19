@@ -28,10 +28,7 @@ describe('the families offered', () => {
   })
 
   test('narrow to the ones whose name has what was typed, whatever its case', () => {
-    expect(offered(FAMILIES, 'dejavu', true).map((one) => one.name)).toEqual([
-      'DejaVu Sans Mono',
-      'DejaVu Sans',
-    ])
+    expect(offered(FAMILIES, 'dejavu', true).map((one) => one.name)).toEqual(['DejaVu Sans Mono', 'DejaVu Sans'])
     expect(offered(FAMILIES, '  ', false)).toHaveLength(4)
   })
 })

@@ -33,9 +33,7 @@ async function newTerminal(call: Call): Promise<string | null> {
   const list = await shells.ask()
   const named = maybe(call, 'shell')?.toLowerCase() ?? null
   const shell =
-    named === null
-      ? shells.chosen
-      : list.find((one) => [one.id, one.name].some((word) => word.toLowerCase() === named))
+    named === null ? shells.chosen : list.find((one) => [one.id, one.name].some((word) => word.toLowerCase() === named))
   if (!shell) {
     const names = list.map((one) => one.name).join(', ')
     throw new Refused('bad_arguments', `there is no shell ${named ?? ''}: ${names}`)

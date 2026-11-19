@@ -26,9 +26,7 @@ describe('merging one note into another', () => {
   test('joins the aliases and tags of both, and keeps the values the note joined already had', () => {
     const into = '---\naliases:\n  - I\nstatus: done\n---\n# Into\n'
     const from = '---\naliases: [F, I]\ntags: [work]\nstatus: draft\n---\n# From\n'
-    expect(merged(into, from)).toBe(
-      '---\nstatus: done\naliases: [I, F]\ntags: [work]\n---\n# Into\n\n---\n\n# From\n',
-    )
+    expect(merged(into, from)).toBe('---\nstatus: done\naliases: [I, F]\ntags: [work]\n---\n# Into\n\n---\n\n# From\n')
   })
 })
 
@@ -40,9 +38,9 @@ describe('a merge into a note that has front matter', () => {
   })
 
   test('carries over a key written in quotes', () => {
-    expect(
-      merged('---\nstatus: done\n---\n# Into\n', '---\n"my key": 1\nb: 2\n---\n# From\n'),
-    ).toBe('---\nstatus: done\n"my key": 1\nb: 2\n---\n# Into\n\n---\n\n# From\n')
+    expect(merged('---\nstatus: done\n---\n# Into\n', '---\n"my key": 1\nb: 2\n---\n# From\n')).toBe(
+      '---\nstatus: done\n"my key": 1\nb: 2\n---\n# Into\n\n---\n\n# From\n',
+    )
   })
 
   test('closes front matter the moved note left without an ending line', () => {
@@ -94,8 +92,7 @@ describe('splitting a note at the caret', () => {
   test.each(['Using `git` well', 'it`s odd'])(
     'a link to a note named %s still reaches it past the backticks',
     (name) => {
-      const reached = (text: string | undefined) =>
-        findLinks(text ?? '').map((link) => decodeTarget(link.target))
+      const reached = (text: string | undefined) => findLinks(text ?? '').map((link) => decodeTarget(link.target))
       const split = splitAt(`# Title\n\n## ${name}\n\nmore \`x\`\n`, 9, 'Untitled')
       expect(reached(split?.kept)).toEqual([`${name}.md`])
       const cut = extracted(`See ${name} and \`y\`.`, 4, 4 + name.length, 'Untitled')
@@ -146,9 +143,7 @@ describe('extracting a selection', () => {
 
     const carved = extracted(doc, from, to, 'Untitled')
     expect(carved?.name).toBe('Why it works the whole of it')
-    expect(carved?.kept).toBe(
-      'see [[Why it works the whole of it|Why it works: the whole of it]] here',
-    )
+    expect(carved?.kept).toBe('see [[Why it works the whole of it|Why it works: the whole of it]] here')
   })
 
   test('a long selection leaves a link showing the note name alone', () => {

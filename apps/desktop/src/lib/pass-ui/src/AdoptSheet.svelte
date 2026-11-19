@@ -38,8 +38,8 @@
 <Sheet {open} title="This account already has a Pass" onclose={close}>
   <form class="adopt" onsubmit={adopted}>
     <p class="pass-quiet">
-      Another device made a Pass for this account first. Enter that Pass’s password to use it here;
-      what is on this device moves into a vault of its own.
+      Another device made a Pass for this account first. Enter that Pass’s password to use it here; what is on this
+      device moves into a vault of its own.
     </p>
     <input
       class="orden-field is-value"
@@ -53,9 +53,7 @@
     {#if wrong}<p class="wrong" role="alert">{wrong}</p>{/if}
     <div class="pass-buttons">
       <button class="orden-button is-quiet" type="button" onclick={close}>Later</button>
-      <button class="orden-button" type="submit" disabled={busy || password === ''}
-        >Use that Pass</button
-      >
+      <button class="orden-button" type="submit" disabled={busy || password === ''}>Use that Pass</button>
     </div>
   </form>
 </Sheet>

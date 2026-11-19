@@ -60,18 +60,12 @@ export const EMBEDDABLE: readonly Listed[] = [
     shape: 'video',
     hosts: ['m.twitch.tv', 'player.twitch.tv', 'twitch.tv'],
     frames: [
-      [
-        '^/videos/(\\d+)',
-        'https://player.twitch.tv/?video=$1&parent=localhost&parent=tauri.localhost&autoplay=false',
-      ],
+      ['^/videos/(\\d+)', 'https://player.twitch.tv/?video=$1&parent=localhost&parent=tauri.localhost&autoplay=false'],
       [
         '^/(\\w+)/clip/([\\w-]+)',
         'https://clips.twitch.tv/embed?clip=$2&parent=localhost&parent=tauri.localhost&autoplay=false',
       ],
-      [
-        '^/(\\w+)$',
-        'https://player.twitch.tv/?channel=$1&parent=localhost&parent=tauri.localhost&autoplay=false',
-      ],
+      ['^/(\\w+)$', 'https://player.twitch.tv/?channel=$1&parent=localhost&parent=tauri.localhost&autoplay=false'],
     ],
   },
   {
@@ -81,10 +75,7 @@ export const EMBEDDABLE: readonly Listed[] = [
     shape: 'video',
     hosts: ['clips.twitch.tv'],
     frames: [
-      [
-        '^/([\\w-]+)$',
-        'https://clips.twitch.tv/embed?clip=$1&parent=localhost&parent=tauri.localhost&autoplay=false',
-      ],
+      ['^/([\\w-]+)$', 'https://clips.twitch.tv/embed?clip=$1&parent=localhost&parent=tauri.localhost&autoplay=false'],
     ],
   },
   {
@@ -148,9 +139,7 @@ export const EMBEDDABLE: readonly Listed[] = [
     mark: 'open',
     shape: 500,
     hosts: ['reddit.com'],
-    frames: [
-      ['^/r/(\\w+)/comments/(\\w+)', 'https://www.redditmedia.com/r/$1/comments/$2/?embed=true'],
-    ],
+    frames: [['^/r/(\\w+)/comments/(\\w+)', 'https://www.redditmedia.com/r/$1/comments/$2/?embed=true']],
   },
   {
     id: 'giphy',
@@ -237,12 +226,7 @@ export const EMBEDDABLE: readonly Listed[] = [
     mark: 'play',
     shape: 175,
     hosts: ['music.apple.com'],
-    frames: [
-      [
-        '^/[\\w-]+/(?:album|song|playlist|artist|music-video)/',
-        'https://embed.music.apple.com$path',
-      ],
-    ],
+    frames: [['^/[\\w-]+/(?:album|song|playlist|artist|music-video)/', 'https://embed.music.apple.com$path']],
   },
   {
     id: 'apple-podcasts',
@@ -259,10 +243,7 @@ export const EMBEDDABLE: readonly Listed[] = [
     shape: 300,
     hosts: ['deezer.com'],
     frames: [
-      [
-        '^/(?:[\\w-]+/)?(album|playlist|track|show|episode)/(\\d+)',
-        'https://widget.deezer.com/widget/dark/$1/$2',
-      ],
+      ['^/(?:[\\w-]+/)?(album|playlist|track|show|episode)/(\\d+)', 'https://widget.deezer.com/widget/dark/$1/$2'],
     ],
   },
   {
@@ -301,9 +282,7 @@ export const EMBEDDABLE: readonly Listed[] = [
     mark: 'open',
     shape: 'video',
     hosts: ['canva.com'],
-    frames: [
-      ['^/design/([\\w-]+)/([\\w-]+)/view', 'https://www.canva.com/design/$1/$2/view?embed'],
-    ],
+    frames: [['^/design/([\\w-]+)/([\\w-]+)/view', 'https://www.canva.com/design/$1/$2/view?embed']],
   },
   {
     id: 'whimsical',
@@ -358,12 +337,7 @@ export const EMBEDDABLE: readonly Listed[] = [
     mark: 'open',
     shape: 400,
     hosts: ['bsky.app'],
-    frames: [
-      [
-        '^/profile/([\\w.:-]+)/post/(\\w+)',
-        'https://embed.bsky.app/embed/$1/app.bsky.feed.post/$2',
-      ],
-    ],
+    frames: [['^/profile/([\\w.:-]+)/post/(\\w+)', 'https://embed.bsky.app/embed/$1/app.bsky.feed.post/$2']],
   },
   {
     id: 'acast',

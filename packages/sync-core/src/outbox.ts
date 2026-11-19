@@ -24,11 +24,7 @@ function placedInside(queue: readonly (Op | null)[], until: number, folder: stri
   const places = placesBefore(queue, until)
   const inside = (id: string): boolean => {
     const seen = new Set<string>()
-    for (
-      let at = places.get(id) ?? null;
-      at !== null && !seen.has(at);
-      at = places.get(at) ?? null
-    ) {
+    for (let at = places.get(id) ?? null; at !== null && !seen.has(at); at = places.get(at) ?? null) {
       if (at === folder) return true
       seen.add(at)
     }
@@ -67,14 +63,7 @@ export function coalesce(ops: readonly Op[]): Op[] {
       continue
     }
 
-    if (
-      op.t === 'move' &&
-      foldable &&
-      create &&
-      isMaking(create) &&
-      made !== undefined &&
-      restoring < made
-    ) {
+    if (op.t === 'move' && foldable && create && isMaking(create) && made !== undefined && restoring < made) {
       const folder = op.parent === null ? undefined : making.get(op.parent)
       if (folder === undefined || folder < made) {
         if (op.parent !== create.parent) unmergeable(create)
@@ -113,8 +102,7 @@ export function coalesce(ops: readonly Op[]): Op[] {
     const existed = inside.filter((id) => making.get(id) === undefined)
 
     const named = queue.some(
-      (one) =>
-        one && 'parent' in one && one.parent !== null && gone.has(one.parent) && !gone.has(one.id),
+      (one) => one && 'parent' in one && one.parent !== null && gone.has(one.parent) && !gone.has(one.id),
     )
     if (named) continue
 

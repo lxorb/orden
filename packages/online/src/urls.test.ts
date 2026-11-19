@@ -1,27 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import {
-  callbacksIn,
-  hostOf,
-  isCallbackOf,
-  isLoopbackUrl,
-  isWebUrl,
-  LONGEST_URL,
-  loopbackOrigin,
-} from './urls'
+import { callbacksIn, hostOf, isCallbackOf, isLoopbackUrl, isWebUrl, LONGEST_URL, loopbackOrigin } from './urls'
 
 const CLAUDE =
   'https://claude.ai/oauth/authorize?code=true&client_id=9d1c&response_type=code' +
   '&redirect_uri=http%3A%2F%2Flocalhost%3A54545%2Fcallback&scope=user%3Ainference&state=abc'
 
 describe('what a machine may open', () => {
-  it.each([
-    'https://github.com/login/device',
-    'http://example.com',
-    CLAUDE,
-    'http://localhost:3000/',
-  ])('the web: %s', (url) => {
-    expect(isWebUrl(url)).toBe(true)
-  })
+  it.each(['https://github.com/login/device', 'http://example.com', CLAUDE, 'http://localhost:3000/'])(
+    'the web: %s',
+    (url) => {
+      expect(isWebUrl(url)).toBe(true)
+    },
+  )
 
   it.each([
     'file:///etc/passwd',
@@ -71,9 +61,7 @@ describe('the loopback callback', () => {
 
   it('finds the callback an opened address names, by any parameter', () => {
     expect(callbacksIn(CLAUDE)).toEqual(['http://localhost:54545'])
-    expect(callbacksIn('https://a.b/?cb=http://127.0.0.1:1/x&r=http://127.0.0.1:1/y')).toEqual([
-      'http://127.0.0.1:1',
-    ])
+    expect(callbacksIn('https://a.b/?cb=http://127.0.0.1:1/x&r=http://127.0.0.1:1/y')).toEqual(['http://127.0.0.1:1'])
     expect(callbacksIn('https://github.com/login/device')).toEqual([])
     expect(callbacksIn('nonsense')).toEqual([])
   })

@@ -4,11 +4,7 @@ import { type Tab } from '../../documents/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import { aimWebloc, readWebFile, rewriteShortcut, writeShortcut } from '@orden/scan/shortcut'
 
-export async function aimed(
-  ws: { keep(id: string): void; persist(): void },
-  tab: Tab,
-  url: string,
-): Promise<void> {
+export async function aimed(ws: { keep(id: string): void; persist(): void }, tab: Tab, url: string): Promise<void> {
   ws.keep(tab.id)
   if (tab.kind !== 'web' || tab.path === null) return
   if (!canWriteAt(tab.path)) return

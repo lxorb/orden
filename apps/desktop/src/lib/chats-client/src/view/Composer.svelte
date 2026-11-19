@@ -6,14 +6,7 @@
   import { chatReplies } from '../../../ai-chat/src/api'
   import { chooseFiles } from '../../../ui-controls/src/api'
   import { pickedLink } from '../../../link-format/src/api'
-  import {
-    localDate,
-    localNumber,
-    dur,
-    fade,
-    insideSpace,
-    afterQuiet,
-  } from '../../../platform/src/api'
+  import { localDate, localNumber, dur, fade, insideSpace, afterQuiet } from '../../../platform/src/api'
   import { links } from '../../../link-index/src/api'
   import { DIVIDER, menu } from '../../../ui-kit/src/api'
   import { modes } from '../../../modes/src/api'
@@ -24,15 +17,7 @@
   import type { Scheduled } from '../shapes'
   import { firstLine } from './body'
   import type { ChatPage } from './chat.svelte'
-  import {
-    asFile,
-    enterDoes,
-    mentionAt,
-    mentionChoices,
-    mentionText,
-    ordenAsked,
-    type Special,
-  } from './compose'
+  import { asFile, enterDoes, mentionAt, mentionChoices, mentionText, ordenAsked, type Special } from './compose'
   import { Glyph } from '../../../chat-kit/src/api'
   import MentionMenu from './MentionMenu.svelte'
   import NoteReach from './NoteReach.svelte'
@@ -93,9 +78,7 @@
 
   const aside = $derived(parent ? null : page.aside)
   const editingAside = () => aside?.kind === 'edit'
-  const choices = $derived(
-    mention ? mentionChoices(mention.query, page.members, page.me, mention.from === 0) : [],
-  )
+  const choices = $derived(mention ? mentionChoices(mention.query, page.members, page.me, mention.from === 0) : [])
 
   onMount(() => {
     if (!host) return
@@ -109,10 +92,7 @@
       },
       onSelection: (one) => {
         const caret = one.state.selection.main.head
-        const found = mentionAt(
-          one.state.sliceDoc(Math.max(0, caret - 64), caret),
-          Math.min(64, caret),
-        )
+        const found = mentionAt(one.state.sliceDoc(Math.max(0, caret - 64), caret), Math.min(64, caret))
         mention = found ? { from: caret - found.query.length - 1, query: found.query } : null
         mentionLit = 0
       },
@@ -335,9 +315,7 @@
 
   function onPaste(event: ClipboardEvent) {
     const files = [...(event.clipboardData?.files ?? [])]
-    const long = files.length
-      ? null
-      : asFile(event.clipboardData?.getData('text/plain') ?? '', 'Text')
+    const long = files.length ? null : asFile(event.clipboardData?.getData('text/plain') ?? '', 'Text')
     if (!files.length && !long) return
     event.preventDefault()
     event.stopPropagation()
@@ -350,9 +328,7 @@
         label: 'File',
         run: () => void chooseFiles({ multiple: true }).then((files) => attachments.add(files)),
       },
-      ...(onpoll && !parent
-        ? [DIVIDER, { label: 'Poll', run: () => onpoll((poll) => page.post('', { poll })) }]
-        : []),
+      ...(onpoll && !parent ? [DIVIDER, { label: 'Poll', run: () => onpoll((poll) => page.post('', { poll })) }] : []),
     ])
   }
 
@@ -408,9 +384,7 @@
     )
   }
 
-  const typing = $derived(
-    page.view.presence.typing.filter((one) => one.who !== page.me && one.parent === parent),
-  )
+  const typing = $derived(page.view.presence.typing.filter((one) => one.who !== page.me && one.parent === parent))
 </script>
 
 <div class="composer" onkeydowncapture={onKey} onpastecapture={onPaste}>
@@ -429,11 +403,8 @@
           {aside.message.body.split('\n')[0]}
         {/if}
       </span>
-      <button
-        type="button"
-        class="orden-glyph"
-        aria-label="Cancel"
-        onclick={() => (page.aside = null)}><Glyph name="close" /></button
+      <button type="button" class="orden-glyph" aria-label="Cancel" onclick={() => (page.aside = null)}
+        ><Glyph name="close" /></button
       >
     </div>
   {/if}
@@ -452,11 +423,8 @@
             <Glyph name={one.type.startsWith('audio/') ? 'mic' : 'file'} />
           {/if}
           <span class="chip-name">{one.name}</span>
-          <button
-            type="button"
-            class="chip-off"
-            aria-label="Remove"
-            onclick={() => attachments.remove(one.id)}><Glyph name="close" /></button
+          <button type="button" class="chip-off" aria-label="Remove" onclick={() => attachments.remove(one.id)}
+            ><Glyph name="close" /></button
           >
         </span>
       {/each}
@@ -497,16 +465,11 @@
         >
       {:else}
         <span class="send-group">
-          <button
-            type="button"
-            class="send"
-            aria-label="Send"
-            disabled={!attachments.ready}
-            onclick={() => void send()}><Glyph name="send" /></button
+          <button type="button" class="send" aria-label="Send" disabled={!attachments.ready} onclick={() => void send()}
+            ><Glyph name="send" /></button
           >
           {#if !parent && !aside && !attachments.list.length}
-            <button type="button" class="later" aria-label="Send later" onclick={later}
-              ><Glyph name="chevron" /></button
+            <button type="button" class="later" aria-label="Send later" onclick={later}><Glyph name="chevron" /></button
             >
           {/if}
         </span>
@@ -534,10 +497,7 @@
       </button>
     {/if}
     {#if typing.length}
-      <span
-        class="typing"
-        aria-label={typing.map((one) => nameOf(one.who, page.members, space)).join(', ')}
-      >
+      <span class="typing" aria-label={typing.map((one) => nameOf(one.who, page.members, space)).join(', ')}>
         {#each typing.slice(0, 3) as one (one.who)}
           <Avatar face={faceOf(one.who, page.members, space)} size={16} />
         {/each}

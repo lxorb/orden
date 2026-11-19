@@ -25,9 +25,7 @@ test('a link is drawn as a square a camera reads, named for those who cannot see
     flushSync()
     expect(target.querySelector('svg')).not.toBeNull()
   })
-  expect(target.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe(
-    'QR code for the link',
-  )
+  expect(target.querySelector('[role="img"]')?.getAttribute('aria-label')).toBe('QR code for the link')
 })
 
 test('nothing is drawn for no text', async () => {

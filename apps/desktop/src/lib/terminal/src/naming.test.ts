@@ -1,13 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  folderName,
-  Front,
-  programMark,
-  programTitle,
-  shellMark,
-  terminalMark,
-  terminalName,
-} from './naming'
+import { folderName, Front, programMark, programTitle, shellMark, terminalMark, terminalName } from './naming'
 
 describe('a terminal is called', () => {
   const parts = {
@@ -19,9 +11,7 @@ describe('a terminal is called', () => {
   }
 
   test('what the reader named it, over everything', () => {
-    expect(terminalName({ ...parts, given: 'server', title: 'Fix login', program: 'node' })).toBe(
-      'server',
-    )
+    expect(terminalName({ ...parts, given: 'server', title: 'Fix login', program: 'node' })).toBe('server')
   })
 
   test('else the title its program set', () => {

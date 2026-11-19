@@ -25,8 +25,7 @@ class Surface implements StateView {
     this.state = this.state.update(spec).state
     this.done.push('dispatch')
 
-    for (const effect of [spec.effects ?? []].flat())
-      if (effect.is(scrolledTo)) this.at = effect.value
+    for (const effect of [spec.effects ?? []].flat()) if (effect.is(scrolledTo)) this.at = effect.value
   }
 
   scrollSnapshot() {

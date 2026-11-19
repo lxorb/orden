@@ -49,11 +49,7 @@ export function newVaultKey(): Uint8Array<ArrayBuffer> {
   return globalThis.crypto.getRandomValues(new Uint8Array(32))
 }
 
-async function wrapping(
-  secret: CryptoKey,
-  them: CryptoKey,
-  salt: Uint8Array<ArrayBuffer>,
-): Promise<CryptoKey> {
+async function wrapping(secret: CryptoKey, them: CryptoKey, salt: Uint8Array<ArrayBuffer>): Promise<CryptoKey> {
   const shared = await subtle().deriveBits({ name: 'ECDH', public: them }, secret, 256)
   const material = await subtle().importKey('raw', shared, 'HKDF', false, ['deriveKey'])
   return await subtle().deriveKey(
@@ -82,9 +78,7 @@ export async function wrap(key: Uint8Array<ArrayBuffer>, to: string): Promise<st
   const ephemeral = new Uint8Array(await subtle().exportKey('raw', once.publicKey))
   const sealing = await wrapping(once.privateKey, them, joined(ephemeral, target))
   const nonce = globalThis.crypto.getRandomValues(new Uint8Array(NONCE))
-  const sealed = new Uint8Array(
-    await subtle().encrypt({ name: 'AES-GCM', iv: nonce }, sealing, key),
-  )
+  const sealed = new Uint8Array(await subtle().encrypt({ name: 'AES-GCM', iv: nonce }, sealing, key))
   return base64(joined(ephemeral, nonce, sealed))
 }
 

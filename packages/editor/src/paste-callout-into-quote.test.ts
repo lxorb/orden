@@ -46,8 +46,7 @@ async function pasted(view: EditorView, copied: { text: string; html: string }) 
     value: {
       files: [],
       types: ['text/plain', 'text/html'],
-      getData: (type: string) =>
-        type === 'text/plain' ? copied.text : type === 'text/html' ? copied.html : '',
+      getData: (type: string) => (type === 'text/plain' ? copied.text : type === 'text/html' ? copied.html : ''),
     },
   })
   view.contentDOM.dispatchEvent(event)
@@ -55,8 +54,7 @@ async function pasted(view: EditorView, copied: { text: string; html: string }) 
 }
 
 describe('a whole callout copied in Orden and pasted at the start of words in a quote', () => {
-  const doc =
-    '> [!tip] Packing\n> Bring a coat.\n\n> Call the bank first.\n> Then pay the rent.\n\nafter'
+  const doc = '> [!tip] Packing\n> Bring a coat.\n\n> Call the bank first.\n> Then pay the rent.\n\nafter'
 
   test('the plain quote does not turn into the pasted callout', async () => {
     const view = viewOf(doc)

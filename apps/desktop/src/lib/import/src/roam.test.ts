@@ -90,9 +90,7 @@ describe('a day out of a page name', () => {
 
 describe('a Roam export, block by block', () => {
   const page = (children: unknown[]) =>
-    readRoam([file('graph.json', JSON.stringify([{ title: 'P', children }]))]).then((plan) =>
-      noteAt(plan, 'P.md'),
-    )
+    readRoam([file('graph.json', JSON.stringify([{ title: 'P', children }]))]).then((plan) => noteAt(plan, 'P.md'))
 
   test('a code block stays inside its list item, its closing fence on a line of its own', async () => {
     const text = await page([{ string: '```js\nconst one = 1\n\nconst two = 2```', uid: 'a' }])
@@ -101,9 +99,7 @@ describe('a Roam export, block by block', () => {
   })
 
   test('the lines of a block after its first stay in it', async () => {
-    const text = await page([
-      { string: 'line one\nline two', uid: 'a', children: [{ string: 'under', uid: 'b' }] },
-    ])
+    const text = await page([{ string: 'line one\nline two', uid: 'a', children: [{ string: 'under', uid: 'b' }] }])
 
     expect(text).toContain('- line one\n  line two\n  - under')
   })
@@ -121,9 +117,7 @@ describe('a Roam export, block by block', () => {
   })
 
   test('a block that embeds itself is shown once', async () => {
-    const text = await page([
-      { string: 'Top', uid: 'top', children: [{ string: '{{embed: ((top))}}', uid: 'in' }] },
-    ])
+    const text = await page([{ string: 'Top', uid: 'top', children: [{ string: '{{embed: ((top))}}', uid: 'in' }] }])
 
     expect(text).toContain('- Top\n  - Top\n')
   })
@@ -142,9 +136,7 @@ describe('a Roam export, block by block', () => {
   })
 
   test('code is left exactly as it was written', () => {
-    expect(roamText('Type `{{[[TODO]]}} __x__` to make one')).toBe(
-      'Type `{{[[TODO]]}} __x__` to make one',
-    )
+    expect(roamText('Type `{{[[TODO]]}} __x__` to make one')).toBe('Type `{{[[TODO]]}} __x__` to make one')
   })
 
   test('an escaped backtick opens no code, so a tag after it stays words', () => {
@@ -155,12 +147,7 @@ describe('a Roam export, block by block', () => {
 
   test('a tag in a block stays words, since Roam shows it as text, and its own markup still converts', () => {
     const known = new Map([['abc', 'Embedded <iframe src=https://t.example/>']])
-    expect(
-      roamText(
-        '{{[[TODO]]}} ^^Look^^ <img src=https://t.example/p.gif> [[Page]] ((abc)) `<b>`',
-        known,
-      ),
-    ).toBe(
+    expect(roamText('{{[[TODO]]}} ^^Look^^ <img src=https://t.example/p.gif> [[Page]] ((abc)) `<b>`', known)).toBe(
       '[ ] ==Look== \\<img src=https://t.example/p.gif> [[Page]] Embedded \\<iframe src=https://t.example/> `<b>`',
     )
   })
@@ -184,9 +171,7 @@ describe('a Roam export, block by block', () => {
   })
 
   test('a link to a daily page says the date it is now', () => {
-    expect(roamText('On [[September 11th, 2026]] #[[September 11th, 2026]]')).toBe(
-      'On [[2026-09-11]] #[[2026-09-11]]',
-    )
+    expect(roamText('On [[September 11th, 2026]] #[[September 11th, 2026]]')).toBe('On [[2026-09-11]] #[[2026-09-11]]')
   })
 
   test('a title with a slash is a page in a folder', async () => {
@@ -223,9 +208,7 @@ describe('a very long page', { timeout: 30_000 }, () => {
       string: `Block ${at}`,
       uid: `u${at}`,
     }))
-    const graph = JSON.stringify([
-      { title: 'Long', children: [{ string: 'Top', uid: 'top', children }] },
-    ])
+    const graph = JSON.stringify([{ title: 'Long', children: [{ string: 'Top', uid: 'top', children }] }])
     const plan = await readRoam([file('graph.json', graph)])
 
     expect(noteAt(plan, 'Long.md')).toContain('- Block 199999')

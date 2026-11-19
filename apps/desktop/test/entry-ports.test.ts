@@ -13,8 +13,7 @@ const LAZY = /\bimport\(\s*['"]([^'"]+)['"]\s*\)/g
 const PROVIDED = /\bprovidePort\(\s*['"]([^'"]+)['"]/g
 const NEEDED = /\bneedPort\(\s*['"]([^'"]+)['"]/g
 
-const text = (file: string) =>
-  readFileSync(file, 'utf8').replace(COMMENTS, (_whole, head?: string) => head ?? '')
+const text = (file: string) => readFileSync(file, 'utf8').replace(COMMENTS, (_whole, head?: string) => head ?? '')
 
 function packageFile(specifier: string): string | null {
   const found = /^@orden\/([^/]+)(\/.*)?$/.exec(specifier)
@@ -72,9 +71,9 @@ const PAGES = readdirSync(APP)
   .filter((name) => name.endsWith('.html'))
   .map((page): [string, string[]] => [
     page,
-    [
-      ...readFileSync(join(APP, page), 'utf8').matchAll(/<script type="module" src="\/([^"]+)"/g),
-    ].map((one) => join(APP, one[1] ?? '')),
+    [...readFileSync(join(APP, page), 'utf8').matchAll(/<script type="module" src="\/([^"]+)"/g)].map((one) =>
+      join(APP, one[1] ?? ''),
+    ),
   ])
 
 const ENTRIES: [string, string[]][] = [...PAGES, ['site', [join(APP, 'src', 'site', 'site.ts')]]]
@@ -82,13 +81,7 @@ const ENTRIES: [string, string[]][] = [...PAGES, ['site', [join(APP, 'src', 'sit
 describe('the ports an entry needs', () => {
   test('every page the app builds is read', () => {
     expect(PAGES.map(([page]) => page)).toEqual(
-      expect.arrayContaining([
-        'index.html',
-        'even.html',
-        'pass.html',
-        'quick-add.html',
-        'handoff.html',
-      ]),
+      expect.arrayContaining(['index.html', 'even.html', 'pass.html', 'quick-add.html', 'handoff.html']),
     )
     for (const [, starts] of ENTRIES) expect(starts.length).toBeGreaterThan(0)
   })
@@ -112,9 +105,7 @@ describe('the ports an entry needs', () => {
 
   test('every needPort names its port where it asks', () => {
     const vague = [join(APP, 'src'), join(ROOT, 'packages')]
-      .flatMap((dir) =>
-        walk(dir, (path) => /\.(?:ts|svelte)$/.test(path), ['node_modules', 'dist']),
-      )
+      .flatMap((dir) => walk(dir, (path) => /\.(?:ts|svelte)$/.test(path), ['node_modules', 'dist']))
       .filter((file) => /\bneedPort\(\s*[^'"\s]/.test(text(file)))
       .map((file) => relative(ROOT, file))
     expect(vague).toEqual([])

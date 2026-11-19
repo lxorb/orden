@@ -1,12 +1,4 @@
-import {
-  insideSpace,
-  invoke,
-  isRecord,
-  keepJson,
-  stored,
-  within,
-  without,
-} from '../../platform/src/api'
+import { insideSpace, invoke, isRecord, keepJson, stored, within, without } from '../../platform/src/api'
 import { syncStore } from '@orden/contracts'
 import { fitted, lockable, type Way } from './protection.svelte'
 
@@ -53,9 +45,7 @@ function keepBuried(back: string, ways: Record<string, Way>): void {
 function readHistories(): Record<string, string> {
   const saved = stored(HISTORY_KEY)
   if (!isRecord(saved)) return {}
-  return Object.fromEntries(
-    Object.entries(saved).filter((one): one is [string, string] => typeof one[1] === 'string'),
-  )
+  return Object.fromEntries(Object.entries(saved).filter((one): one is [string, string] => typeof one[1] === 'string'))
 }
 
 function keepHistory(name: string, away: string): void {
@@ -65,8 +55,7 @@ function keepHistory(name: string, away: string): void {
 
 const pathOf = (root: string, at: string) => (at ? insideSpace(root, at) : root)
 
-const rehome = (from: string, to: string) =>
-  invoke<number>('rehome_snapshots', { from, to }).catch(() => 0)
+const rehome = (from: string, to: string) => invoke<number>('rehome_snapshots', { from, to }).catch(() => 0)
 
 const aliases = new Map<string, string>()
 
@@ -89,8 +78,7 @@ export async function bury(
   const id = crypto.randomUUID()
   const away = `${HISTORY_AWAY}/${id}`
   const sync = syncStore()
-  const account =
-    (back && aliases.get(back)) ?? (at ? sync?.idOf(pathOf(root, at)) : sync?.remoteIdFor(root))
+  const account = (back && aliases.get(back)) ?? (at ? sync?.idOf(pathOf(root, at)) : sync?.remoteIdFor(root))
   if (back) aliases.delete(back)
   for (const name of [`${placeOf(root, at)}\n${id}`, back ?? null, account ?? null]) {
     if (name === null) continue
@@ -113,12 +101,8 @@ async function exactly(
 ): Promise<Record<string, Way> | null> {
   const histories = readHistories()
   const away = histories[named]
-  const twins = (name: string) =>
-    !kept && (name === named || (away !== undefined && histories[name] === away))
-  keepJson(
-    HISTORY_KEY,
-    Object.fromEntries(Object.entries(histories).filter(([name]) => !twins(name))),
-  )
+  const twins = (name: string) => !kept && (name === named || (away !== undefined && histories[name] === away))
+  keepJson(HISTORY_KEY, Object.fromEntries(Object.entries(histories).filter(([name]) => !twins(name))))
   if (away !== undefined) await rehome(away, pathOf(root, at))
   const buried = readBuried()
   const ways = buried[named]
@@ -131,12 +115,7 @@ async function exactly(
   return came
 }
 
-async function under(
-  root: string,
-  was: string,
-  at: string,
-  held: Record<string, Way>,
-): Promise<Record<string, Way>> {
+async function under(root: string, was: string, at: string, held: Record<string, Way>): Promise<Record<string, Way>> {
   const came: Record<string, Way> = {}
   const histories = readHistories()
   const there = pathOf(root, was)

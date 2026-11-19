@@ -30,9 +30,7 @@ describe('reading a link', () => {
   })
 
   test('takes the callbacks out of the arguments', () => {
-    const link = readUri(
-      'orden://new?name=Idea&x-success=https://example.com/done&x-error=orden://open',
-    )
+    const link = readUri('orden://new?name=Idea&x-success=https://example.com/done&x-error=orden://open')
 
     expect(link?.args).toEqual({ name: 'Idea' })
     expect(link?.callbacks).toEqual({

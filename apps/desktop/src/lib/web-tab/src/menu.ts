@@ -5,9 +5,7 @@ import { openExternal } from '../../platform/src/api'
 import { isWebAddress } from '@orden/scan/web-address'
 import type { Page } from './pages.svelte'
 
-export const ZOOMS = [
-  0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5,
-]
+export const ZOOMS = [0.25, 0.33, 0.5, 0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25, 1.5, 1.75, 2, 2.5, 3, 4, 5]
 
 const SMALLEST = ZOOMS[0] ?? 0.25
 const LARGEST = ZOOMS[ZOOMS.length - 1] ?? 5
@@ -19,11 +17,7 @@ export function zoomed(from: number, up: boolean): number {
 
 const MOST_STEPS = 12
 
-export function trailSteps(
-  urls: readonly string[],
-  at: number,
-  forward: boolean,
-): { url: string; by: number }[] {
+export function trailSteps(urls: readonly string[], at: number, forward: boolean): { url: string; by: number }[] {
   const steps: { url: string; by: number }[] = []
   for (let by = 1; by <= MOST_STEPS; by++) {
     const url = urls[forward ? at + by : at - by]
@@ -93,9 +87,7 @@ export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntr
     { label: 'Full screen', run: actions.fullScreen },
     DIVIDER,
     { label: 'Print…', disabled: !has, run: actions.print },
-    ...(actions.find
-      ? [{ label: 'Find', hint: shortcuts.hint('edit.find'), disabled: !has, run: actions.find }]
-      : []),
+    ...(actions.find ? [{ label: 'Find', hint: shortcuts.hint('edit.find'), disabled: !has, run: actions.find }] : []),
     DIVIDER,
     { label: 'Save as a note', disabled: !has, run: actions.save },
     { label: 'Share…', disabled: !has || !actions.share, run: () => actions.share?.() },

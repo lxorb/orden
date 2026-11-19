@@ -4,11 +4,7 @@ import { expect, test } from 'vitest'
 
 const APP = join(import.meta.dirname, '..')
 
-function filesUnder(
-  dir: string,
-  wanted: (name: string) => boolean,
-  found: string[] = [],
-): string[] {
+function filesUnder(dir: string, wanted: (name: string) => boolean, found: string[] = []): string[] {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     if (['node_modules', 'target', 'dist'].includes(entry.name)) continue
     const path = join(dir, entry.name)

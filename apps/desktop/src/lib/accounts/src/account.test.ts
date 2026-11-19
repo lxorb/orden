@@ -55,11 +55,7 @@ vi.mock('./client', async (importOriginal) => {
           return Promise.reject(
             server.meStatus === null
               ? new Error('the network is not there yet')
-              : new original.ApiError(
-                  server.meStatus,
-                  'no',
-                  server.meBody ?? { error: 'sign in first' },
-                ),
+              : new original.ApiError(server.meStatus, 'no', server.meBody ?? { error: 'sign in first' }),
           )
         }
 
@@ -76,16 +72,14 @@ vi.mock('./client', async (importOriginal) => {
         return { spaces: [{ id: 's1', name: 'Theirs' }], deleted: [] }
       },
       signOut: () => Promise.resolve({ ok: true as const }),
-      rename: (_token: string, name: string) =>
-        Promise.resolve({ user: { id: 'u1', email: 'me@example.com', name } }),
+      rename: (_token: string, name: string) => Promise.resolve({ user: { id: 'u1', email: 'me@example.com', name } }),
       usage: () => Promise.resolve({ used: 0, limit: 0 }),
     },
   }
 })
 
 vi.mock('../../ui-kit/src/message', () => ({
-  message: (error: unknown, fallback: string) =>
-    error instanceof Error ? error.message : fallback,
+  message: (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback),
 }))
 
 vi.mock('../../sharing/src/api', () => ({
@@ -255,9 +249,7 @@ describe('a code that is accepted', () => {
     account.settled()
 
     connectors.freshToken = 'mcp-secret'
-    connectors.clients = [
-      { id: 'c1', name: 'Claude', readOnly: true, createdAt: 0, lastUsedAt: null },
-    ]
+    connectors.clients = [{ id: 'c1', name: 'Claude', readOnly: true, createdAt: 0, lastUsedAt: null }]
     connectors.token = { exists: true, readOnly: true, lastUsedAt: null }
     usage.used = 900
     usage.limit = 1000

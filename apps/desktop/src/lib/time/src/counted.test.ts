@@ -50,9 +50,7 @@ describe('what counts towards an activity', () => {
 describe('the spaces and sites time was spent in', () => {
   test('are added up per space and per site, with their names', () => {
     const pieces = piecesIn(SPANS, 0, 24 * HOUR, 24 * HOUR)
-    expect(placesOf(pieces, 'space')).toEqual([
-      { lane: 'space', key: 'uni-space', name: 'Uni', ms: 2 * HOUR },
-    ])
+    expect(placesOf(pieces, 'space')).toEqual([{ lane: 'space', key: 'uni-space', name: 'Uni', ms: 2 * HOUR }])
     expect(placesOf(pieces, 'site').map((one) => [one.key, one.ms])).toEqual([
       ['moodle.ethz.ch', 2 * HOUR],
       ['news.org', HOUR],
@@ -71,8 +69,6 @@ describe('the spaces and sites time was spent in', () => {
     ]
     const pieces = piecesIn(brief, 0, 24 * HOUR, 24 * HOUR)
     expect(placesOf(pieces, 'space').map((one) => one.key)).toEqual(['uni-space'])
-    expect(totalsOf(pieces.filter((one) => one.span.source === 'timer'))).toEqual([
-      { activity: 'uni', ms: HOUR },
-    ])
+    expect(totalsOf(pieces.filter((one) => one.span.source === 'timer'))).toEqual([{ activity: 'uni', ms: HOUR }])
   })
 })

@@ -14,8 +14,7 @@ export type Said =
 const isString = (value: unknown): value is string => typeof value === 'string'
 const strings = (value: unknown): value is string[] => Array.isArray(value) && value.every(isString)
 
-const optional = (value: unknown, check: (one: unknown) => boolean) =>
-  value === undefined || check(value)
+const optional = (value: unknown, check: (one: unknown) => boolean) => value === undefined || check(value)
 
 function isRemind(value: unknown): value is Remind {
   if (!isRecord(value)) return false
@@ -31,9 +30,7 @@ function isEntry(value: unknown): value is Entry {
     strings(fields.tags) &&
     Array.isArray(fields.remind) &&
     fields.remind.every(isRemind) &&
-    ['due', 'time', 'recurrence', 'assignee', 'deadline'].every((key) =>
-      optional(fields[key], isString),
-    ) &&
+    ['due', 'time', 'recurrence', 'assignee', 'deadline'].every((key) => optional(fields[key], isString)) &&
     optional(fields.priority, (one) => one === 1 || one === 2 || one === 3 || one === 4) &&
     optional(fields.duration, (one) => typeof one === 'number' && one > 0) &&
     optional(value.description, isString)
@@ -46,12 +43,7 @@ export function heard(value: unknown): Said | null {
   if (value.kind === 'world' && isString(value.lang) && typeof value.smart === 'boolean') {
     return { kind: 'world', lang: value.lang, smart: value.smart }
   }
-  if (
-    value.kind === 'task' &&
-    isString(value.id) &&
-    isEntry(value.entry) &&
-    typeof value.open === 'boolean'
-  ) {
+  if (value.kind === 'task' && isString(value.id) && isEntry(value.entry) && typeof value.open === 'boolean') {
     return { kind: 'task', id: value.id, entry: value.entry, open: value.open }
   }
   if (value.kind === 'added' && isString(value.id) && typeof value.ok === 'boolean') {

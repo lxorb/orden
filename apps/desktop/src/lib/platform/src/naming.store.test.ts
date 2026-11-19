@@ -50,9 +50,7 @@ function listing(root: string, papers = false): Entry {
 
   const order = (one: Entry): Entry => ({
     ...one,
-    children: [...one.children]
-      .sort((a, b) => (a.is_dir === b.is_dir ? 0 : a.is_dir ? -1 : 1))
-      .map(order),
+    children: [...one.children].sort((a, b) => (a.is_dir === b.is_dir ? 0 : a.is_dir ? -1 : 1)).map(order),
   })
 
   return order(tree)
@@ -68,8 +66,7 @@ vi.mock('./tauri', async (importOriginal) => ({
 
     switch (command) {
       case 'read_note': {
-        if (locked.has(path))
-          throw new Error(`could not read ${path}: stream did not contain valid UTF-8`)
+        if (locked.has(path)) throw new Error(`could not read ${path}: stream did not contain valid UTF-8`)
         const held = files.get(path)
         if (held === undefined) throw new Error(`no such note: ${path}`)
         return held
@@ -84,8 +81,7 @@ vi.mock('./tauri', async (importOriginal) => ({
         const from = text(args?.from)
         const to = text(args?.to)
         const held = [...files.keys(), ...folders].some(
-          (one) =>
-            one.toLowerCase() === to.toLowerCase() && one.toLowerCase() !== from.toLowerCase(),
+          (one) => one.toLowerCase() === to.toLowerCase() && one.toLowerCase() !== from.toLowerCase(),
         )
         if (held) throw new Error('something already lives there')
         const holder = to.replace(/\.pdf$/i, '')
@@ -108,9 +104,7 @@ vi.mock('./tauri', async (importOriginal) => ({
       case 'write_bytes':
         files.set(
           path,
-          args?.bytes instanceof Uint8Array
-            ? String.fromCharCode(...args.bytes)
-            : atob(text(args?.base64)),
+          args?.bytes instanceof Uint8Array ? String.fromCharCode(...args.bytes) : atob(text(args?.base64)),
         )
         return undefined
       case 'copy_path': {
@@ -125,8 +119,7 @@ vi.mock('./tauri', async (importOriginal) => ({
         }
         const paper = files.get(`${from}.pdf`)
         if (from.endsWith('.pages') && paper !== undefined) files.set(`${to}.pdf`, paper)
-        for (const one of [...folders])
-          if (under(one, from)) folders.add(to + one.slice(from.length))
+        for (const one of [...folders]) if (under(one, from)) folders.add(to + one.slice(from.length))
         return undefined
       }
       case 'delete_note':
@@ -272,12 +265,7 @@ describe('making a note', () => {
       appending: false,
       making: 'note',
     })
-    expect(rows()).toEqual([
-      '/space/Work',
-      '/space/Work/Plan.md',
-      '/space/Beta.md',
-      '/space/Untitled.md',
-    ])
+    expect(rows()).toEqual(['/space/Work', '/space/Work/Plan.md', '/space/Beta.md', '/space/Untitled.md'])
     expect(sent).toEqual([])
     expect([...files.keys()]).not.toContain('/space/Untitled.md')
   })
@@ -501,8 +489,7 @@ describe('renaming a row that exists', () => {
   })
 
   test('a page note renamed to a canvas is shown as the canvas it now is', async () => {
-    const plane =
-      '{"nodes":[{"id":"a","type":"text","text":"A card","x":0,"y":0,"width":200,"height":80}],"edges":[]}'
+    const plane = '{"nodes":[{"id":"a","type":"text","text":"A card","x":0,"y":0,"width":200,"height":80}],"edges":[]}'
     files.set('/space/Deck.pages', plane)
     await workspace.loadTree()
     await workspace.openEntry('/space/Deck.pages')
@@ -785,10 +772,7 @@ describe('a PDF opened with Orden', () => {
     expect(await workspace.save(tab, '/space')).toBe('/space/Paper.pages')
 
     expect(files.get('/space/Paper.pages.pdf')).toBe('%PDF paper')
-    expect(pagesIn('/space/Paper.pages').map((page) => page.file)).toEqual([
-      'Paper.pages.pdf',
-      'Paper.pages.pdf',
-    ])
+    expect(pagesIn('/space/Paper.pages').map((page) => page.file)).toEqual(['Paper.pages.pdf', 'Paper.pages.pdf'])
     expect(files.get('/space/Paper.pages')).toContain('marked')
     expect(rows()).toContain('/space/Paper.pages')
     expect(rows()).not.toContain('/space/Paper.pages.pdf')
@@ -904,12 +888,7 @@ describe('a PDF becomes the page note that holds it', () => {
 
     await workspace.openPdf('/space/Paper.pages.pdf')
     expect(workspace.active?.path).toBe('/space/Paper.pages')
-    expect(rows()).toEqual([
-      '/space/Work',
-      '/space/Work/Plan.md',
-      '/space/Beta.md',
-      '/space/Paper.pages',
-    ])
+    expect(rows()).toEqual(['/space/Work', '/space/Work/Plan.md', '/space/Beta.md', '/space/Paper.pages'])
   })
 
   test('a page note an older build made beside its PDF takes the PDF in, ink and all', async () => {

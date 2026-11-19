@@ -95,10 +95,7 @@ async function canvasAt(target: Target): Promise<Canvas> {
     return parse(open.text)
   }
 
-  const words =
-    target.path === null
-      ? null
-      : await invoke<string>('read_note', { path: target.path }).catch(() => null)
+  const words = target.path === null ? null : await invoke<string>('read_note', { path: target.path }).catch(() => null)
   if (words === null) throw new Refused('no_such_file', 'there is no canvas there')
 
   return parse(words)

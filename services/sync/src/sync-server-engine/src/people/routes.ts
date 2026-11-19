@@ -38,9 +38,7 @@ function idsIn(raw: string | undefined): string[] {
 }
 
 export async function ownProfile(env: Env, userId: string): Promise<ProfileRow | null> {
-  return env.DB.prepare(`select ${PROFILE_COLUMNS} from users u where u.id = ?`)
-    .bind(userId)
-    .first<ProfileRow>()
+  return env.DB.prepare(`select ${PROFILE_COLUMNS} from users u where u.id = ?`).bind(userId).first<ProfileRow>()
 }
 
 people.get('/people', async (context) => {
@@ -139,9 +137,7 @@ people.delete('/me/avatar', async (context) => {
 
 people.get('/spaces/:id/nicks', atLeast('read'), async (context) => {
   const space = spaceOf(context)
-  const { results } = await context.env.DB.prepare(
-    'select user_id, nick from space_nicks where space_id = ? limit ?',
-  )
+  const { results } = await context.env.DB.prepare('select user_id, nick from space_nicks where space_id = ? limit ?')
     .bind(space.id, MOST_PEOPLE)
     .all<{ user_id: string; nick: string }>()
   return context.json({ nicks: Object.fromEntries(results.map((row) => [row.user_id, row.nick])) })

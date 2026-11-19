@@ -7,11 +7,7 @@ const PLUGIN: Build = { evenBuild: true, isPlugin: true }
 
 const noNotes = (_path: string) => false
 
-function opener(
-  path: string,
-  build = APP,
-  isUrlNote: (path: string) => boolean = noNotes,
-): Opener | null {
+function opener(path: string, build = APP, isUrlNote: (path: string) => boolean = noNotes): Opener | null {
   return openerFor(path, isUrlNote, build)
 }
 

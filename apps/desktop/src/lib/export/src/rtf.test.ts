@@ -143,11 +143,7 @@ function png(width: number, height: number): Uint8Array {
     rows.push(0, ...new Array<number>(width).fill(0x80))
   }
 
-  return new Uint8Array([
-    ...pngHeader(width, height),
-    ...chunk('IDAT', stored(rows)),
-    ...chunk('IEND', []),
-  ])
+  return new Uint8Array([...pngHeader(width, height), ...chunk('IDAT', stored(rows)), ...chunk('IEND', [])])
 }
 
 function jpeg(width: number, height: number): Uint8Array {
@@ -339,11 +335,7 @@ describe('runs', () => {
 
 describe('escaping', () => {
   const ODD = toRtf(documentOf('Braces {like} this and a back\\\\slash.\n', 'O.md'), [], PAPER)
-  const WIDE = toRtf(
-    documentOf('ü → 日本語 \u{1f600}\n\nTabbed:\there.\n\nNo\u00a0gap.\n', 'W.md'),
-    [],
-    PAPER,
-  )
+  const WIDE = toRtf(documentOf('ü → 日本語 \u{1f600}\n\nTabbed:\there.\n\nNo\u00a0gap.\n', 'W.md'), [], PAPER)
 
   test('escapes the braces and the backslash', () => {
     expect(ODD).toContain('Braces \\{like\\} this and a back')

@@ -10,15 +10,12 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
     command === 'read_note' ? Promise.resolve('{"nodes":[],"edges":[]}') : Promise.resolve(null),
 }))
 
-vi.stubGlobal(
-  'IntersectionObserver',
-  function seen(told: (entries: { isIntersecting: boolean }[]) => void) {
-    return {
-      observe: () => queueMicrotask(() => told([{ isIntersecting: true }])),
-      disconnect: () => undefined,
-    }
-  },
-)
+vi.stubGlobal('IntersectionObserver', function seen(told: (entries: { isIntersecting: boolean }[]) => void) {
+  return {
+    observe: () => queueMicrotask(() => told([{ isIntersecting: true }])),
+    disconnect: () => undefined,
+  }
+})
 
 providePort('canvas.pictures', {
   svg: (plane) => {

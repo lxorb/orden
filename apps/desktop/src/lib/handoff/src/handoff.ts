@@ -20,11 +20,7 @@ export interface Handoff {
 export function isHandoff(value: unknown): value is Handoff {
   if (typeof value !== 'object' || value === null) return false
   const said = value as Partial<Handoff>
-  return (
-    (said.kind === KIND || said.kind === FORMER_KIND) &&
-    Array.isArray(said.databases) &&
-    Array.isArray(said.local)
-  )
+  return (said.kind === KIND || said.kind === FORMER_KIND) && Array.isArray(said.databases) && Array.isArray(said.local)
 }
 
 export function isEmpty(handoff: Handoff): boolean {
@@ -39,9 +35,7 @@ async function listed(): Promise<{ name: string; version: number }[]> {
   const listing = await indexedDB.databases().catch(() => null)
   if (!listing) return []
   return listing.flatMap((one) =>
-    typeof one.name === 'string' && typeof one.version === 'number'
-      ? [{ name: one.name, version: one.version }]
-      : [],
+    typeof one.name === 'string' && typeof one.version === 'number' ? [{ name: one.name, version: one.version }] : [],
   )
 }
 
@@ -87,9 +81,7 @@ function restore(database: DatabaseDump, version: number): Promise<void> {
 
     request.onsuccess = () => {
       const db = request.result
-      const names = database.stores
-        .map((store) => store.name)
-        .filter((name) => db.objectStoreNames.contains(name))
+      const names = database.stores.map((store) => store.name).filter((name) => db.objectStoreNames.contains(name))
       if (names.length === 0) {
         db.close()
         resolve()
@@ -97,9 +89,7 @@ function restore(database: DatabaseDump, version: number): Promise<void> {
       }
 
       const listing =
-        NOTES.includes(database.name) &&
-        db.objectStoreNames.contains(LISTING) &&
-        !names.includes(LISTING)
+        NOTES.includes(database.name) && db.objectStoreNames.contains(LISTING) && !names.includes(LISTING)
           ? LISTING
           : null
       const writing = db.transaction(listing ? [...names, listing] : names, 'readwrite')

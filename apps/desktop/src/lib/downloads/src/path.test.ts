@@ -1,14 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  arcOf,
-  cornerOf,
-  flightMs,
-  framesOf,
-  landing,
-  PRESS_LASTS,
-  startOf,
-  type Glyph,
-} from './path'
+import { arcOf, cornerOf, flightMs, framesOf, landing, PRESS_LASTS, startOf, type Glyph } from './path'
 
 const AREA = { x: 0, y: 40, width: 1000, height: 600 }
 const BUTTON = { x: 100, y: 100, width: 20, height: 20 }

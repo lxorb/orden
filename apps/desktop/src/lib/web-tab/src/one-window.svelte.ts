@@ -78,9 +78,7 @@ function start(): void {
 
   $effect.root(() => {
     $effect(() => {
-      const paths = workspace.tabs.flatMap((one) =>
-        one.kind === 'web' && one.path !== null ? [one.path] : [],
-      )
+      const paths = workspace.tabs.flatMap((one) => (one.kind === 'web' && one.path !== null ? [one.path] : []))
       untrack(() => {
         const now = Date.now()
         mine = new Map(paths.map((path) => [path, mine.get(path) ?? now]))

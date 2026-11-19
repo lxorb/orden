@@ -50,11 +50,7 @@ export function transcribedBy(): string {
   return modelsFor(provider)[0] ?? WHISPER
 }
 
-async function heardByProvider(
-  provider: Provider,
-  wav: Uint8Array<ArrayBuffer>,
-  prompt: string,
-): Promise<Words> {
+async function heardByProvider(provider: Provider, wav: Uint8Array<ArrayBuffer>, prompt: string): Promise<Words> {
   const apiKey = await readKey(provider)
   if (!reachable(provider, !!apiKey)) throw new Error('That provider is not set up yet.')
 
@@ -125,10 +121,7 @@ export interface Hearing {
   tries?: number
 }
 
-export async function heardPiece(
-  wav: Uint8Array<ArrayBuffer>,
-  hearing: Hearing = {},
-): Promise<Words> {
+export async function heardPiece(wav: Uint8Array<ArrayBuffer>, hearing: Hearing = {}): Promise<Words> {
   const provider = hearing.road === 'account' ? null : transcriberNow()
   const token = account.accountToken
   if (!provider && (!token || hearing.road === 'provider')) {

@@ -53,9 +53,7 @@
       title="Stop timer"
       onclick={() => time.stop()}
     >
-      <svg viewBox="0 0 12 12" aria-hidden="true"
-        ><rect x="2.5" y="2.5" width="7" height="7" rx="1" /></svg
-      >
+      <svg viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="2.5" width="7" height="7" rx="1" /></svg>
     </button>
   {:else}
     <div class="asking">

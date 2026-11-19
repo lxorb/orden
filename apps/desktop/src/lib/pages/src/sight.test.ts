@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { inSight } from './sight'
 
-const column = (count: number) =>
-  Array.from({ length: count }, (_unused, at) => ({ y: at * 1140, height: 1100 }))
+const column = (count: number) => Array.from({ length: count }, (_unused, at) => ({ y: at * 1140, height: 1100 }))
 
 describe('the pages in sight', () => {
   it('are the few around the camera, not all of a thousand', () => {

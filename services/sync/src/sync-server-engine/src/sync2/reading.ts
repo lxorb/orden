@@ -53,11 +53,7 @@ function hidden(path: string): boolean {
   return path.split('/').some((part) => part.startsWith('.'))
 }
 
-export async function indexItems(
-  env: Env,
-  spaceId: string,
-  ids: readonly string[],
-): Promise<IndexItem[]> {
+export async function indexItems(env: Env, spaceId: string, ids: readonly string[]): Promise<IndexItem[]> {
   const { results } = await env.DB.prepare(
     `select id, path, kind, hash, seq, doc_seq, updated_at from notes
       where id in (select value from json_each(?)) and +space_id = ? and deleted = 0`,
@@ -80,11 +76,7 @@ export async function indexItems(
   return items
 }
 
-export async function searchPage(
-  env: Env,
-  spaceId: string,
-  request: SearchRequest,
-): Promise<SearchAnswer> {
+export async function searchPage(env: Env, spaceId: string, request: SearchRequest): Promise<SearchAnswer> {
   const { results } = await env.DB.prepare(
     `select id, path, kind, hash, seq, doc_seq, updated_at from notes
       where space_id = ? and deleted = 0 and kind = 'note' and id > ? order by id limit ?`,
@@ -94,8 +86,7 @@ export async function searchPage(
 
   const skipped = new Set(request.skip ?? [])
   const asked = results.filter(
-    (row) =>
-      !skipped.has(row.id) && !hidden(row.path) && /\.(md|markdown|mdown|mkd)$/i.test(row.path),
+    (row) => !skipped.has(row.id) && !hidden(row.path) && /\.(md|markdown|mdown|mkd)$/i.test(row.path),
   )
   const { words: read, through } = await wordsOf(env, spaceId, asked, MOST_READ)
   const after =

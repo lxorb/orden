@@ -44,11 +44,7 @@ export async function openIndex(account: string): Promise<IndexStore> {
   return {
     of: (space) =>
       new Promise((resolve, reject) => {
-        const request = db
-          .transaction(NOTES, 'readonly')
-          .objectStore(NOTES)
-          .index(BY_SPACE)
-          .getAll(space)
+        const request = db.transaction(NOTES, 'readonly').objectStore(NOTES).index(BY_SPACE).getAll(space)
         request.onsuccess = () => resolve(request.result as IndexRow[])
         request.onerror = () => reject(request.error ?? new Error('the index would not read'))
       }),

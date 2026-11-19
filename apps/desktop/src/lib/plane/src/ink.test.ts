@@ -291,19 +291,16 @@ describe('the box a stroke covers', () => {
 
   test('round several is the box round the lot', () => {
     const both = bounds(
-      [
-        stroke([point(0, 0), point(10, 10)], { size: 0 }),
-        stroke([point(50, -20), point(60, 0)], { size: 0 }),
-      ].map(strokeBox),
+      [stroke([point(0, 0), point(10, 10)], { size: 0 }), stroke([point(50, -20), point(60, 0)], { size: 0 })].map(
+        strokeBox,
+      ),
     )
 
     expect(both).toEqual({ x: 0, y: -20, width: 60, height: 30 })
   })
 
   test('holds the curve drawn between samples far apart', () => {
-    const turning = [0, 1, 2, 3, 4, 5].map((at) =>
-      point(Math.cos(at * 0.7) * 100, Math.sin(at * 0.7) * 100, 1),
-    )
+    const turning = [0, 1, 2, 3, 4, 5].map((at) => point(Math.cos(at * 0.7) * 100, Math.sin(at * 0.7) * 100, 1))
     const fast = stroke(turning, { tool: 'brush', size: 7 })
     const box = strokeBox(fast)
 
@@ -417,11 +414,7 @@ describe('the eraser', () => {
   })
 
   test('a line of few points still has what lies either side of the eraser', () => {
-    const pieces = erased(
-      stroke([point(0, 0), point(10, 0), point(20, 0)], { size: 0 }),
-      { x: 10, y: 0 },
-      2,
-    )
+    const pieces = erased(stroke([point(0, 0), point(10, 0), point(20, 0)], { size: 0 }), { x: 10, y: 0 }, 2)
 
     expect(pieces.map((piece) => piece.points.map((at) => at.x))).toEqual([
       [0, 8],
@@ -549,9 +542,7 @@ describe('what a held pen meant to draw', () => {
       const from = corners[side - 1]!
       const to = corners[side]!
       for (let step = 0; step < 10; step++) {
-        box.push(
-          point(from.x + ((to.x - from.x) * step) / 10, from.y + ((to.y - from.y) * step) / 10),
-        )
+        box.push(point(from.x + ((to.x - from.x) * step) / 10, from.y + ((to.y - from.y) * step) / 10))
       }
     }
 
@@ -722,9 +713,10 @@ describe('which way the pen is leaning, as the ink reads it', () => {
       tiltY: 0,
     })
 
-    expect(
-      tiltOf({ pressure: 0.5, tiltX: 0, tiltY: 0, altitudeAngle: Math.PI / 4, azimuthAngle: 0 }),
-    ).toEqual({ tiltX: 45, tiltY: 0 })
+    expect(tiltOf({ pressure: 0.5, tiltX: 0, tiltY: 0, altitudeAngle: Math.PI / 4, azimuthAngle: 0 })).toEqual({
+      tiltX: 45,
+      tiltY: 0,
+    })
 
     expect(
       tiltOf({
@@ -738,8 +730,7 @@ describe('which way the pen is leaning, as the ink reads it', () => {
   })
 
   test('is a right angle for a pen lying flat on the glass, whichever way it points', () => {
-    const flat = (azimuthAngle: number) =>
-      tiltOf({ pressure: 0.5, tiltX: 0, tiltY: 0, altitudeAngle: 0, azimuthAngle })
+    const flat = (azimuthAngle: number) => tiltOf({ pressure: 0.5, tiltX: 0, tiltY: 0, altitudeAngle: 0, azimuthAngle })
 
     expect(flat(0)).toEqual({ tiltX: 90, tiltY: 0 })
     expect(flat(Math.PI / 2)).toEqual({ tiltX: 0, tiltY: 90 })
@@ -921,15 +912,14 @@ describe('the cards a loop goes round', () => {
   const card = (id: string, x: number, y: number) => ({ id, x, y, width: 100, height: 50 })
 
   test('are the ones whole inside it', () => {
-    expect(
-      cardsInLasso([card('in', 10, 10), card('half', 220, 10), card('out', 400, 10)], loop),
-    ).toEqual(['in'])
+    expect(cardsInLasso([card('in', 10, 10), card('half', 220, 10), card('out', 400, 10)], loop)).toEqual(['in'])
   })
 
   test('and with partly, those whose middle is inside it', () => {
-    expect(
-      cardsInLasso([card('in', 10, 10), card('half', 220, 10), card('out', 400, 10)], loop, true),
-    ).toEqual(['in', 'half'])
+    expect(cardsInLasso([card('in', 10, 10), card('half', 220, 10), card('out', 400, 10)], loop, true)).toEqual([
+      'in',
+      'half',
+    ])
   })
 
   test('and none for a loop of fewer than three points', () => {
@@ -938,8 +928,7 @@ describe('the cards a loop goes round', () => {
 })
 
 describe('rubbing across a long straight segment', () => {
-  const long = (): InkStroke =>
-    stroke([point(0, 0, 0.2, 0), point(100, 0, 0.8, 100)], { id: 's', size: 2 })
+  const long = (): InkStroke => stroke([point(0, 0, 0.2, 0), point(100, 0, 0.8, 100)], { id: 's', size: 2 })
 
   test('cuts the segment where it meets the eraser, with no recorded point near', () => {
     const pieces = erased(long(), { x: 50, y: 0 }, 9)
@@ -1001,10 +990,7 @@ describe('the way an eraser went between two of its events', () => {
     for (const at of swipe) {
       left = left.flatMap((one) => erased(one, at, reach))
     }
-    const longest = Math.max(
-      0,
-      ...left.map((one) => (one.points.at(-1)?.x ?? 0) - (one.points[0]?.x ?? 0)),
-    )
+    const longest = Math.max(0, ...left.map((one) => (one.points.at(-1)?.x ?? 0) - (one.points[0]?.x ?? 0)))
 
     expect(longest).toBeLessThan(0.1)
   })

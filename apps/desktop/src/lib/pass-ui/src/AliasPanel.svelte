@@ -56,9 +56,7 @@
   {/each}
   {#if stats}
     <div class="stats" data-alias-stats>
-      <span class="when"
-        >{stats.days === null ? 'All time' : `Last ${String(stats.days)} days`}</span
-      >
+      <span class="when">{stats.days === null ? 'All time' : `Last ${String(stats.days)} days`}</span>
       <span><strong>{stats.forwarded}</strong> forwarded</span>
       <span><strong>{stats.replied}</strong> replied</span>
       <span><strong>{stats.blocked}</strong> blocked</span>

@@ -11,5 +11,4 @@ export function leaveIdsBy(given: Rule) {
 
 export const numbersAt = (path: string): boolean => rule?.numbers(path) ?? false
 
-export const withoutIds = (path: string, text: string): string | null =>
-  rule ? rule.without(path, text) : null
+export const withoutIds = (path: string, text: string): string | null => (rule ? rule.without(path, text) : null)

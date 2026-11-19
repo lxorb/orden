@@ -16,8 +16,7 @@ type Change = () => unknown
 
 function oneOf<T extends string>(value: unknown, choices: readonly T[], name: string): T {
   const found = choices.find((one) => one === value)
-  if (found === undefined)
-    throw new Refused('bad_arguments', `${name} is one of ${choices.join(', ')}`)
+  if (found === undefined) throw new Refused('bad_arguments', `${name} is one of ${choices.join(', ')}`)
 
   return found
 }
@@ -30,8 +29,7 @@ function isOn(value: unknown, name: string): boolean {
 function numberIn(value: unknown, choices: readonly number[], name: string): number {
   const said = Number(value)
   const found = choices.find((one) => Math.abs(one - said) < 1e-9)
-  if (found === undefined)
-    throw new Refused('bad_arguments', `${name} is one of ${choices.join(', ')}`)
+  if (found === undefined) throw new Refused('bad_arguments', `${name} is one of ${choices.join(', ')}`)
 
   return found
 }
@@ -165,9 +163,7 @@ async function declaredSetting(key: string, all: Field[]): Promise<Setting | nul
       }
       const why =
         refusal(schema, value) ??
-        named
-          .map((one) => (typeof value === 'string' ? (one.check?.(value) ?? null) : null))
-          .find(Boolean) ??
+        named.map((one) => (typeof value === 'string' ? (one.check?.(value) ?? null) : null)).find(Boolean) ??
         null
       if (why !== null) throw new Refused('bad_arguments', `${key} ${why}`)
 
@@ -175,8 +171,7 @@ async function declaredSetting(key: string, all: Field[]): Promise<Setting | nul
         if (schema.type === 'list') {
           const listed = value as string[]
           const members = [...named].sort(
-            (a, b) =>
-              Number(listed.includes(b.member ?? '')) - Number(listed.includes(a.member ?? '')),
+            (a, b) => Number(listed.includes(b.member ?? '')) - Number(listed.includes(a.member ?? '')),
           )
           for (const one of members) put(one, listed.includes(one.member ?? ''))
         } else put(first, value)
@@ -193,8 +188,7 @@ function put(field: Field, value: unknown): void {
 async function settingOf(call: Call): Promise<{ key: string; setting: Setting }> {
   const key = need(call, 'key')
   const setting =
-    (Object.hasOwn(SETTINGS, key) ? SETTINGS[key] : undefined) ??
-    (await declaredSetting(key, await rows()))
+    (Object.hasOwn(SETTINGS, key) ? SETTINGS[key] : undefined) ?? (await declaredSetting(key, await rows()))
   if (!setting) {
     throw new Refused(
       'no_such_setting',
@@ -207,9 +201,7 @@ async function settingOf(call: Call): Promise<{ key: string; setting: Setting }>
 
 async function paneOf(prefix: string, call: Call): Promise<AgentAnswer | null> {
   const all = await rows()
-  const keys = [
-    ...new Set(all.map((one) => one.key ?? '').filter((one) => one.startsWith(`${prefix}.`))),
-  ]
+  const keys = [...new Set(all.map((one) => one.key ?? '').filter((one) => one.startsWith(`${prefix}.`)))]
   if (!keys.length) return null
   const listed = []
   for (const key of keys.sort()) {

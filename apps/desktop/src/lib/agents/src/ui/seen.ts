@@ -1,11 +1,5 @@
 import { without } from '../../../platform/src/api'
-import type {
-  AgentEvent,
-  AgentTab,
-  Approval,
-  Grant,
-  Overview,
-} from '../../../agent-protocol/src/api'
+import type { AgentEvent, AgentTab, Approval, Grant, Overview } from '../../../agent-protocol/src/api'
 
 interface Held extends AgentTab {
   agent: string
@@ -43,14 +37,10 @@ export function nothing(): Seen {
 
 export function overviewed(seen: Seen, overview: Overview, now: number): void {
   seen.agents = overview.agents
-  seen.tabs = Object.fromEntries(
-    overview.tabs.map(([agent, tab]) => [tab.id, { ...tab, agent }] as const),
-  )
+  seen.tabs = Object.fromEntries(overview.tabs.map(([agent, tab]) => [tab.id, { ...tab, agent }] as const))
   seen.approvals = overview.approvals.filter((one) => one.answer === 'pending')
   seen.stopped = overview.stopped ? (seen.stopped ?? now) : null
-  seen.halted = Object.fromEntries(
-    overview.halted.map((agent) => [agent, seen.halted[agent] ?? now]),
-  )
+  seen.halted = Object.fromEntries(overview.halted.map((agent) => [agent, seen.halted[agent] ?? now]))
   seen.connected = overview.connected
 }
 
@@ -70,10 +60,7 @@ export function heard(seen: Seen, event: AgentEvent, now: number): void {
       resumed(seen, event.agent)
       return
     case 'asked':
-      seen.approvals = [
-        ...seen.approvals.filter((one) => one.id !== event.approval.id),
-        event.approval,
-      ]
+      seen.approvals = [...seen.approvals.filter((one) => one.id !== event.approval.id), event.approval]
       return
     case 'answered':
       seen.approvals = seen.approvals.filter((one) => one.id !== event.approval.id)

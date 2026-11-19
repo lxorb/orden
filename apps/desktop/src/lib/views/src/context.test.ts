@@ -49,9 +49,7 @@ test('the notes that link to a note are gathered in time that grows with the not
     if (known) return known
     const made = [
       ...index,
-      ...Array.from({ length: count }, (_, at) =>
-        noteRowsOf('Mine', `Day ${at}.md`, 'See [[Index]]\n'),
-      ).flat(),
+      ...Array.from({ length: count }, (_, at) => noteRowsOf('Mine', `Day ${at}.md`, 'See [[Index]]\n')).flat(),
     ]
     days.set(count, made)
     return made
@@ -108,8 +106,7 @@ describe('the links a base follows', () => {
     }
     return { note, context: contextFor({ rows, today: '2026-11-06', now: '2026-11-06T10:00' }) }
   }
-  const formula = (source: string) =>
-    readBase(`formulas:\n  it: ${source}\nviews:\n  - type: table\n    name: T\n`)
+  const formula = (source: string) => readBase(`formulas:\n  it: ${source}\nviews:\n  - type: table\n    name: T\n`)
 
   test('reach a backlink’s own note, not a namesake beside the row', () => {
     const { note, context } = build({
@@ -118,14 +115,9 @@ describe('the links a base follows', () => {
       'Kickoff.md': '---\nproject: "[[Alpha]]"\n---\n',
     })
     const alpha = note('Projects/Alpha.md')
-    expect(
-      cellValue(
-        formula('file.backlinks.map(value.asFile().file.path)'),
-        'formula.it',
-        alpha,
-        context,
-      ),
-    ).toEqual(['Kickoff.md'])
+    expect(cellValue(formula('file.backlinks.map(value.asFile().file.path)'), 'formula.it', alpha, context)).toEqual([
+      'Kickoff.md',
+    ])
     expect(
       cellValue(
         formula('file.backlinks.filter(list(value.asFile().properties.project).contains(file))'),
@@ -141,9 +133,7 @@ describe('the links a base follows', () => {
       'Plan.md': '---\naliases: [Roadmap]\n---\n',
       'A.md': 'See [[Roadmap]]\n',
     })
-    expect(
-      cellValue(formula('file.hasLink(link("Plan"))'), 'formula.it', note('A.md'), context),
-    ).toBe(true)
+    expect(cellValue(formula('file.hasLink(link("Plan"))'), 'formula.it', note('A.md'), context)).toBe(true)
     expect(context.backlinks?.(note('Plan.md'))).toEqual(['A.md'])
   })
 

@@ -1,13 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  fill,
-  length,
-  pageCss,
-  pageSetupFor,
-  paperInches,
-  runningDate,
-  withRunningText,
-} from './page-setup'
+import { fill, length, pageCss, pageSetupFor, paperInches, runningDate, withRunningText } from './page-setup'
 import { DEFAULT_PAGE_SETUP } from '@orden/contracts'
 
 const withMatter = (body: string) => `---\n${body}\n---\n\n# Note\n`
@@ -29,9 +21,7 @@ describe('reading page setup from a note', () => {
   })
 
   test('reads paper, orientation and margin', () => {
-    const setup = pageSetupFor(
-      withMatter('export:\n  paper: Letter\n  orientation: landscape\n  margin: 15mm'),
-    )
+    const setup = pageSetupFor(withMatter('export:\n  paper: Letter\n  orientation: landscape\n  margin: 15mm'))
 
     expect(setup.paper).toBe('Letter')
     expect(setup.orientation).toBe('landscape')
@@ -58,9 +48,7 @@ describe('reading page setup from a note', () => {
   })
 
   test('stops at the end of the export block', () => {
-    const setup = pageSetupFor(
-      withMatter('export:\n  paper: Legal\ntitle: Elsewhere\nmargin: 99mm'),
-    )
+    const setup = pageSetupFor(withMatter('export:\n  paper: Legal\ntitle: Elsewhere\nmargin: 99mm'))
 
     expect(setup.paper).toBe('Legal')
     expect(setup.margin).toBe('20mm')
@@ -123,12 +111,7 @@ describe('wrapping the body in running text', () => {
   })
 
   test('puts the header in a repeating table head', () => {
-    const html = withRunningText(
-      '<p>x</p>',
-      { ...DEFAULT_PAGE_SETUP, header: '${title}' },
-      'Notes',
-      '2026',
-    )
+    const html = withRunningText('<p>x</p>', { ...DEFAULT_PAGE_SETUP, header: '${title}' }, 'Notes', '2026')
 
     expect(html).toContain('<table class="sheet">')
     expect(html).toContain('<thead><tr><td><div class="running-header">Notes</div>')
@@ -137,12 +120,7 @@ describe('wrapping the body in running text', () => {
   })
 
   test('puts the footer after the table with a spacer in the foot', () => {
-    const html = withRunningText(
-      '<p>x</p>',
-      { ...DEFAULT_PAGE_SETUP, footer: '${date}' },
-      'Notes',
-      '2026-09-03',
-    )
+    const html = withRunningText('<p>x</p>', { ...DEFAULT_PAGE_SETUP, footer: '${date}' }, 'Notes', '2026-09-03')
 
     expect(html).toContain('<tfoot><tr><td></td></tr></tfoot>')
     expect(html).toContain('<div class="running-footer">2026-09-03</div>')
@@ -150,12 +128,7 @@ describe('wrapping the body in running text', () => {
   })
 
   test('escapes the title so it cannot become markup', () => {
-    const html = withRunningText(
-      '',
-      { ...DEFAULT_PAGE_SETUP, header: '${title}' },
-      'a <b> & "c"',
-      '2026',
-    )
+    const html = withRunningText('', { ...DEFAULT_PAGE_SETUP, header: '${title}' }, 'a <b> & "c"', '2026')
 
     expect(html).toContain('a &lt;b&gt; &amp; &quot;c&quot;')
   })

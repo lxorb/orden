@@ -14,8 +14,7 @@ const CATALOGUE_FOLDER = /^(locales?|i18n|l10n|translations?|lang)$/i
 
 const CATALOGUE_FILE = /(^|[.-])(i18n|l10n|locales?|translations?)([.-]|$)/i
 
-const CATALOGUE_IMPORT =
-  /from\s+['"][^'"]*(^|\/)(i18n|l10n|locales?|translations?)(\.svelte)?(\.[jt]s)?(\/[^'"]*)?['"]/
+const CATALOGUE_IMPORT = /from\s+['"][^'"]*(^|\/)(i18n|l10n|locales?|translations?)(\.svelte)?(\.[jt]s)?(\/[^'"]*)?['"]/
 
 const TRANSLATED = /(?<![\w.$])(t|plural)\(\s*['"`]/
 
@@ -63,16 +62,12 @@ describe('Orden speaks English only', () => {
   })
 
   test('nor a catalogue or translation module by any name', () => {
-    const found = code
-      .filter((path) => CATALOGUE_FILE.test(path.split(/[\\/]/).at(-1) ?? ''))
-      .map(shown)
+    const found = code.filter((path) => CATALOGUE_FILE.test(path.split(/[\\/]/).at(-1) ?? '')).map(shown)
     expect(found).toEqual([])
   })
 
   test('and nothing that imports one', () => {
-    const found = code
-      .filter((path) => CATALOGUE_IMPORT.test(readFileSync(path, 'utf8')))
-      .map(shown)
+    const found = code.filter((path) => CATALOGUE_IMPORT.test(readFileSync(path, 'utf8'))).map(shown)
     expect(found).toEqual([])
   })
 
@@ -94,17 +89,12 @@ describe('Orden speaks English only', () => {
   })
 
   test('nor a language to choose in the settings', () => {
-    const general = readFileSync(
-      join(ROOT, 'apps/desktop/src/lib/settings/src/general-pane.ts'),
-      'utf8',
-    )
+    const general = readFileSync(join(ROOT, 'apps/desktop/src/lib/settings/src/general-pane.ts'), 'utf8')
     expect(general).not.toContain("'general.language'")
   })
 
   test('nor a page turned right to left for the language it is in', () => {
-    const found = code
-      .filter((path) => /documentElement\.(dir|lang)\s*=/.test(readFileSync(path, 'utf8')))
-      .map(shown)
+    const found = code.filter((path) => /documentElement\.(dir|lang)\s*=/.test(readFileSync(path, 'utf8'))).map(shown)
     expect(found).toEqual([])
   })
 })

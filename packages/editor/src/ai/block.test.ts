@@ -1,13 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  ANSWER_CLOSE,
-  ANSWER_OPEN,
-  answerParts,
-  answerSpan,
-  answerText,
-  isAiLanguage,
-  mentionsNote,
-} from './block'
+import { ANSWER_CLOSE, ANSWER_OPEN, answerParts, answerSpan, answerText, isAiLanguage, mentionsNote } from './block'
 
 const lines = (note: string) => note.split('\n')
 

@@ -1,12 +1,4 @@
-import {
-  embedKind,
-  embedSize,
-  findLinks,
-  type FoundLink,
-  lines,
-  shownText,
-  encodeTarget,
-} from '@orden/markdown/links'
+import { embedKind, embedSize, findLinks, type FoundLink, lines, shownText, encodeTarget } from '@orden/markdown/links'
 import { frontMatterBlock, stripFrontMatter } from '@orden/markdown/front-matter'
 import { codeSpans, inCode } from '@orden/markdown/tags'
 
@@ -25,9 +17,7 @@ const BARE = String.raw`(?:[^\s()\\]|\\.|\((?:[^\s()\\]|\\.|\([^\s()]*\))*\))*`
 const TITLE = String.raw`(?:\s+(?:"[^"]*"|'[^']*'|\([^)]*\)))?`
 const PICTURE = new RegExp(String.raw`!\[([^\]]*)\]\(\s*(<[^>]*>|${BARE})(${TITLE})\s*\)`, 'g')
 
-const DEFINITION = new RegExp(
-  String.raw`^([ >]*\[(?!\^)[^\]]+\]:[ \t]*)(<[^>]*>|[^\s<]\S*)(${TITLE})[ \t]*$`,
-)
+const DEFINITION = new RegExp(String.raw`^([ >]*\[(?!\^)[^\]]+\]:[ \t]*)(<[^>]*>|[^\s<]\S*)(${TITLE})[ \t]*$`)
 
 const IMG_SOURCE = /<img\b[^>]*?\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)')/gi
 
@@ -35,11 +25,7 @@ const STANDS_ALONE = /^(?:#{1,6}(?:\s|$)|(?:-[ \t]*){3,}$|(?:\*[ \t]*){3,}$|(?:_
 
 function asLink(link: FoundLink, target: string): string {
   const fragment =
-    link.block !== null
-      ? `#^${encodeTarget(link.block)}`
-      : link.heading
-        ? `#${encodeTarget(link.heading)}`
-        : ''
+    link.block !== null ? `#^${encodeTarget(link.block)}` : link.heading ? `#${encodeTarget(link.heading)}` : ''
 
   return `[${shownText(link)}](${encodeTarget(target).replace(/'/g, '%27')}${fragment})`
 }
@@ -84,11 +70,7 @@ function unescaped(written: string): string {
   return written.replace(/\\([!-/:-@[-`{-~])/g, '$1')
 }
 
-function sourceEdit(
-  written: string,
-  from: number,
-  rename: (src: string) => string | null,
-): Edit | null {
+function sourceEdit(written: string, from: number, rename: (src: string) => string | null): Edit | null {
   const bare = unescaped(written.startsWith('<') ? written.slice(1, -1) : written)
   const wanted = rename(bare)
   if (wanted === null || wanted === bare) return null

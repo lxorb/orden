@@ -37,8 +37,7 @@ export function safeHref(target: string): boolean {
   return scheme === '' || SAFE_SCHEMES.has(scheme)
 }
 
-export const safeSrc = (target: string): boolean =>
-  safeHref(target) || SAFE_DATA_IMAGE.test(withoutBlanks(target))
+export const safeSrc = (target: string): boolean => safeHref(target) || SAFE_DATA_IMAGE.test(withoutBlanks(target))
 
 const CODE_SCHEMES = new Set(['javascript', 'vbscript', 'data', 'blob', 'filesystem'])
 

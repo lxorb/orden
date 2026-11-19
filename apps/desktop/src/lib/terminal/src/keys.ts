@@ -1,17 +1,7 @@
 import type { Platform } from '../../ui-kit/src/api'
 
 export type Route =
-  | 'shell'
-  | 'app'
-  | 'ask'
-  | 'copy'
-  | 'paste'
-  | 'find'
-  | 'select-all'
-  | 'clear'
-  | 'zoom-in'
-  | 'zoom-out'
-  | 'zoom-reset'
+  'shell' | 'app' | 'ask' | 'copy' | 'paste' | 'find' | 'select-all' | 'clear' | 'zoom-in' | 'zoom-out' | 'zoom-reset'
 
 export interface Keystroke {
   key: string
@@ -31,12 +21,7 @@ const APP_KEYS = new Set(
 const NEITHER = new Set(['app.close-window'])
 const SHELL_FIRST = new Set(['app.reload'])
 
-const SHELL_KEYS = new Set([
-  'pane.focus-left',
-  'pane.focus-down',
-  'pane.focus-up',
-  'pane.focus-right',
-])
+const SHELL_KEYS = new Set(['pane.focus-left', 'pane.focus-down', 'pane.focus-up', 'pane.focus-right'])
 
 const ZOOM: Record<string, Route> = {
   'app.zoom-in': 'zoom-in',
@@ -44,12 +29,7 @@ const ZOOM: Record<string, Route> = {
   'app.zoom-reset': 'zoom-reset',
 }
 
-export function routeKey(
-  event: Keystroke,
-  platform: Platform,
-  command: string | null,
-  finds: boolean,
-): Route {
+export function routeKey(event: Keystroke, platform: Platform, command: string | null, finds: boolean): Route {
   const mac = platform === 'mac'
   const only = (ctrl: boolean, shift: boolean, meta = false) =>
     event.ctrlKey === ctrl && event.shiftKey === shift && event.metaKey === meta && !event.altKey

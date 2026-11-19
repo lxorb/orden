@@ -27,9 +27,6 @@ test('a task line says what the renderer says, backticks and backslashes and all
   const tried = lines(4000)
   expect(tried.length).toBeGreaterThan(200)
   for (const line of tried) {
-    expect([line, plain(line).replace(/\s+/g, ' ').trim()]).toEqual([
-      line,
-      said(renderMarkdown(line)),
-    ])
+    expect([line, plain(line).replace(/\s+/g, ' ').trim()]).toEqual([line, said(renderMarkdown(line))])
   }
 })

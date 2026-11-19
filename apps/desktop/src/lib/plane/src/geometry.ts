@@ -109,8 +109,7 @@ function reach(a: number, b: number, c: number, d: number): [number, number] {
       ? Math.abs(q) < 1e-9
         ? []
         : [-r / q]
-      : ((wide) =>
-          wide < 0 ? [] : [(-q + Math.sqrt(wide)) / (2 * p), (-q - Math.sqrt(wide)) / (2 * p)])(
+      : ((wide) => (wide < 0 ? [] : [(-q + Math.sqrt(wide)) / (2 * p), (-q - Math.sqrt(wide)) / (2 * p)]))(
           q * q - 4 * p * r,
         )
   for (const t of turns) {
@@ -155,12 +154,7 @@ export function edgeMiddle(ends: EdgeEnds): Point {
 }
 
 export function within(box: Box, point: Point): boolean {
-  return (
-    point.x >= box.x &&
-    point.x <= box.x + box.width &&
-    point.y >= box.y &&
-    point.y <= box.y + box.height
-  )
+  return point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height
 }
 
 export function nodeAt(nodes: readonly CanvasNode[], point: Point, edge = 12): CanvasNode | null {
@@ -291,10 +285,7 @@ export function awayFromSegment(point: Point, from: Point, to: Point): number {
   const length = dx * dx + dy * dy
   if (length === 0) return Math.hypot(point.x - from.x, point.y - from.y)
 
-  const along = Math.max(
-    0,
-    Math.min(1, ((point.x - from.x) * dx + (point.y - from.y) * dy) / length),
-  )
+  const along = Math.max(0, Math.min(1, ((point.x - from.x) * dx + (point.y - from.y) * dy) / length))
   return Math.hypot(point.x - (from.x + along * dx), point.y - (from.y + along * dy))
 }
 
@@ -470,8 +461,7 @@ export function keptAspect(was: Box, now: Box, handle: HandleId, least: number):
       ? true
       : handle === 'n' || handle === 's'
         ? false
-        : Math.abs(now.width - was.width) / was.width >=
-          Math.abs(now.height - was.height) / was.height
+        : Math.abs(now.width - was.width) / was.width >= Math.abs(now.height - was.height) / was.height
 
   const width = acrossLed ? now.width : Math.max(least, Math.round(now.height * ratio))
   const height = acrossLed ? Math.max(least, Math.round(now.width / ratio)) : now.height

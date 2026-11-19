@@ -20,8 +20,7 @@ export interface AgentsCrate {
   hear(on: (event: Heard) => void): Promise<() => void>
 }
 
-const known = <T extends string>(list: readonly T[], value: unknown): T | undefined =>
-  list.find((one) => one === value)
+const known = <T extends string>(list: readonly T[], value: unknown): T | undefined => list.find((one) => one === value)
 
 const strings = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []

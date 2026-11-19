@@ -1,21 +1,11 @@
-import {
-  type Base,
-  type CardSize,
-  type Group,
-  groupName,
-  type Row,
-  rowId,
-  type Value,
-  isWhen,
-} from '@orden/bases'
+import { type Base, type CardSize, type Group, groupName, type Row, rowId, type Value, isWhen } from '@orden/bases'
 import { bare, isNoteProperty } from './columns'
 import { dayIn, isDateValue } from './values'
 
 const DEFAULT_SIZE: CardSize = 'medium'
 export const CARD_SIZES: readonly CardSize[] = ['small', 'medium', 'large']
 
-export const sizeOf = (size: CardSize | undefined, notes: boolean): CardSize =>
-  size ?? (notes ? DEFAULT_SIZE : 'small')
+export const sizeOf = (size: CardSize | undefined, notes: boolean): CardSize => size ?? (notes ? DEFAULT_SIZE : 'small')
 
 const LINES: Record<CardSize, { title: number; props: number }> = {
   small: { title: 1, props: 1 },
@@ -28,11 +18,7 @@ const PROP_LINE = 20
 const PAD = 16
 const GAP = 6
 
-export function cardLines(
-  size: CardSize,
-  shown: number,
-  extra: boolean,
-): { title: number; props: number } {
+export function cardLines(size: CardSize, shown: number, extra: boolean): { title: number; props: number } {
   const room = LINES[size]
   return { title: room.title, props: Math.min(room.props, shown + (extra && !shown ? 1 : 0)) }
 }
@@ -46,10 +32,7 @@ export const cardProperties = (
   columns: readonly string[],
   groupBy: string | undefined,
   sub: string | undefined,
-): string[] =>
-  columns.filter(
-    (one) => one !== 'task.text' && one !== 'file.name' && one !== groupBy && one !== sub,
-  )
+): string[] => columns.filter((one) => one !== 'task.text' && one !== 'file.name' && one !== groupBy && one !== sub)
 
 export function checklists(rows: readonly Row[]): Map<string, { done: number; total: number }> {
   const out = new Map<string, { done: number; total: number }>()
@@ -73,16 +56,9 @@ export function isDoneGroup(base: Base | null, property: string | undefined, key
   return option?.group === 'done'
 }
 
-export function droppableBy(
-  property: string | undefined,
-  rows: 'notes' | 'tasks' | 'both',
-): boolean {
+export function droppableBy(property: string | undefined, rows: 'notes' | 'tasks' | 'both'): boolean {
   if (property === undefined) return false
-  if (
-    /^task\.(status|done|priority|due|date|scheduled|start|deadline|assignee|section|tags)$/.test(
-      property,
-    )
-  )
+  if (/^task\.(status|done|priority|due|date|scheduled|start|deadline|assignee|section|tags)$/.test(property))
     return true
   if (property === 'formula.overdue' || property === 'formula.day' || isWhen(property)) return true
   if (property === 'file.path' || property === 'file.basename') return rows !== 'notes'
@@ -120,9 +96,7 @@ export function withPending(groups: readonly Group[], pending: readonly Pending[
         if (one.to !== name) return one.from !== name
         return (
           one.lane === undefined ||
-          (one.fromLane !== undefined &&
-            laneName !== one.fromLane &&
-            laneName !== groupName(one.lane))
+          (one.fromLane !== undefined && laneName !== one.fromLane && laneName !== groupName(one.lane))
         )
       })
       return kept.length === lane.rows.length ? lane : { ...lane, rows: kept }
@@ -168,9 +142,7 @@ export function withOrder(
       : {
           ...group,
           rows: sorted(group.rows),
-          ...(group.sub
-            ? { sub: group.sub.map((lane) => ({ ...lane, rows: sorted(lane.rows) })) }
-            : {}),
+          ...(group.sub ? { sub: group.sub.map((lane) => ({ ...lane, rows: sorted(lane.rows) })) } : {}),
         },
   )
 }
@@ -184,12 +156,7 @@ export function mergedOrder(column: readonly string[], lane: readonly string[]):
       .reverse()
       .find((one) => out.includes(one))
     const after = lane.slice(at + 1).find((one) => out.includes(one))
-    const place =
-      before !== undefined
-        ? out.indexOf(before) + 1
-        : after !== undefined
-          ? out.indexOf(after)
-          : out.length
+    const place = before !== undefined ? out.indexOf(before) + 1 : after !== undefined ? out.indexOf(after) : out.length
     out.splice(place, 0, id)
   })
   const inLane = new Set(lane)
@@ -238,8 +205,7 @@ export function orderAfter(ids: readonly string[], id: string, index: number): s
   return order
 }
 
-export const indexWithout = (index: number, was: number): number =>
-  was !== -1 && was < index ? index - 1 : index
+export const indexWithout = (index: number, was: number): number => (was !== -1 && was < index ? index - 1 : index)
 
 const someOf = <T>(values: readonly T[], most: number): { shown: T[]; more: number } => ({
   shown: values.slice(0, most),

@@ -72,10 +72,7 @@ export function tagCompletions(context: CompletionContext): CompletionResult | n
   const typed = context.matchBefore(front ? VALUE : TYPED)
   if (!typed) return null
 
-  if (
-    !front &&
-    enclosingNamed(syntaxTree(context.state).resolveInner(context.pos, -1), NOT_PROSE)
-  ) {
+  if (!front && enclosingNamed(syntaxTree(context.state).resolveInner(context.pos, -1), NOT_PROSE)) {
     return null
   }
 

@@ -47,12 +47,7 @@ export class TocWidget extends OrdenWidget {
     if (other.entries.length !== this.entries.length) return false
     return this.entries.every((mine, index) => {
       const theirs = other.entries[index]
-      return (
-        !!theirs &&
-        theirs.text === mine.text &&
-        theirs.level === mine.level &&
-        theirs.from === mine.from
-      )
+      return !!theirs && theirs.text === mine.text && theirs.level === mine.level && theirs.from === mine.from
     })
   }
 

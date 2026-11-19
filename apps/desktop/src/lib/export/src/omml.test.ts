@@ -195,9 +195,7 @@ describe('a formula Word can lay out', () => {
 
     expect(ommlFor('a\\quadb'), 'an undefined control word').toBeNull()
 
-    expect(await ommlOf('a\\!b')).toBe(
-      '<m:oMath><m:r><m:t>a</m:t></m:r><m:r><m:t>b</m:t></m:r></m:oMath>',
-    )
+    expect(await ommlOf('a\\!b')).toBe('<m:oMath><m:r><m:t>a</m:t></m:r><m:r><m:t>b</m:t></m:r></m:oMath>')
   })
 
   test('drops the marks that line rows up, because one line has no rows', async () => {

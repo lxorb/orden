@@ -82,8 +82,7 @@ const roads: Roads = {
 
 const adopted = vi.fn((_thread: Thread) => undefined)
 const host = {
-  turn: (thread: Thread, _text: string, once?: { signal?: AbortSignal }) =>
-    held(thread, once?.signal),
+  turn: (thread: Thread, _text: string, once?: { signal?: AbortSignal }) => held(thread, once?.signal),
   adopt: adopted,
   touched: vi.fn(),
   line: vi.fn(),

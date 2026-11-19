@@ -25,9 +25,7 @@ test('the list of 5,000 tasks drawn again after a tick names each row about twic
   })
 
   expect(items).toHaveLength(TASKS)
-  expect(items.filter((one) => one.kind === 'row' && one.depth === 1)).toHaveLength(
-    Math.floor((TASKS - 1) / 2),
-  )
+  expect(items.filter((one) => one.kind === 'row' && one.depth === 1)).toHaveLength(Math.floor((TASKS - 1) / 2))
   expect(vi.mocked(bases.rowId).mock.calls.length).toBeLessThanOrEqual(TASKS * 2 + 1)
 })
 

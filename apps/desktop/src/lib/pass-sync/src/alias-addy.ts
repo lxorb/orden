@@ -16,9 +16,7 @@ const BASE = 'https://app.addy.io/api/v1'
 function madeOf(value: unknown): AliasMade {
   const alias = fieldsOf(fieldsOf(value).data)
   if (typeof alias.email !== 'string' || typeof alias.active !== 'boolean') throw unreadable()
-  const mailboxes = Array.isArray(alias.recipients)
-    ? alias.recipients.map((one) => textOf(fieldsOf(one).email))
-    : []
+  const mailboxes = Array.isArray(alias.recipients) ? alias.recipients.map((one) => textOf(fieldsOf(one).email)) : []
   return {
     remoteId: idOf(alias.id),
     address: alias.email,
@@ -69,8 +67,7 @@ export function addy(key: string, fetcher: AliasFetcher): AliasClient {
     return { all, fallback: textOf(answer.defaultAliasDomain) || (all[0] ?? '') }
   }
 
-  const made = async (body: Fields): Promise<AliasMade> =>
-    madeOf(await asked('/aliases', 'POST', body))
+  const made = async (body: Fields): Promise<AliasMade> => madeOf(await asked('/aliases', 'POST', body))
 
   return {
     mailboxes,

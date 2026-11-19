@@ -73,9 +73,7 @@ function shortEnough(name: string, most: number): Check {
 
 function wordOf(name: string, allowed: readonly string[]): Check {
   return (value) =>
-    typeof value === 'string' && allowed.includes(value)
-      ? null
-      : `${name} must be one of ${allowed.join(', ')}`
+    typeof value === 'string' && allowed.includes(value) ? null : `${name} must be one of ${allowed.join(', ')}`
 }
 
 function switched(name: string): Check {
@@ -93,9 +91,7 @@ const PROPERTIES_MODES = ['properties', 'source', 'hidden']
 
 function oneOf(name: string, allowed: readonly number[]): Check {
   return (value) =>
-    typeof value === 'number' && allowed.includes(value)
-      ? null
-      : `${name} must be one of ${allowed.join(', ')}`
+    typeof value === 'number' && allowed.includes(value) ? null : `${name} must be one of ${allowed.join(', ')}`
 }
 
 const KNOWN: Record<string, Check> = {
@@ -121,9 +117,7 @@ const KNOWN: Record<string, Check> = {
       ? null
       : `attachments must be one of ${ATTACHMENT_FOLDERS.join(', ')}`,
   preset: (value) =>
-    typeof value === 'string' && PRESETS.includes(value)
-      ? null
-      : `preset must be one of ${PRESETS.join(', ')}`,
+    typeof value === 'string' && PRESETS.includes(value) ? null : `preset must be one of ${PRESETS.join(', ')}`,
   shortcuts: shortcutMap,
   toolbar: buttonList,
   hiddenKinds: kindList,
@@ -147,9 +141,7 @@ const KNOWN: Record<string, Check> = {
       ? null
       : `chatKeywords holds at most ${MOST_KEYWORDS} words of at most ${LONGEST_KEYWORD} characters`,
   chatHours: (value) =>
-    value === null || isHours(value)
-      ? null
-      : 'chatHours must be days of the week and two minutes of the day, or null',
+    value === null || isHours(value) ? null : 'chatHours must be days of the week and two minutes of the day, or null',
   chatPreviews: switched('chatPreviews'),
   chatSound: switched('chatSound'),
   quietMarks: switched('quietMarks'),
@@ -165,20 +157,7 @@ const LONGEST_ID = 64
 const LONGEST_KEY = 40
 const MOST_BYTES = 8 * 1024
 
-const MODIFIERS = new Set([
-  'mod',
-  'cmd',
-  'meta',
-  'm',
-  'ctrl',
-  'control',
-  'c',
-  'alt',
-  'a',
-  'option',
-  'shift',
-  's',
-])
+const MODIFIERS = new Set(['mod', 'cmd', 'meta', 'm', 'ctrl', 'control', 'c', 'alt', 'a', 'option', 'shift', 's'])
 
 function isCombination(value: string): boolean {
   if (!value || value.length > LONGEST_KEY) return false
@@ -248,8 +227,7 @@ function spaceList(value: unknown): string | null {
 }
 
 function shortcutMap(value: unknown): string | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value))
-    return 'shortcuts must be an object'
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return 'shortcuts must be an object'
 
   const entries = Object.entries(value as Record<string, unknown>)
   if (entries.length > MOST_SHORTCUTS) return `shortcuts holds at most ${MOST_SHORTCUTS} keys`
@@ -257,8 +235,7 @@ function shortcutMap(value: unknown): string | null {
   for (const [id, key] of entries) {
     if (id.length > LONGEST_ID || !ID.test(id)) return `${id} is not a shortcut id`
     if (key === null) continue
-    if (typeof key !== 'string' || !isCombination(key))
-      return `${id} is not set to a key combination`
+    if (typeof key !== 'string' || !isCombination(key)) return `${id} is not set to a key combination`
   }
 
   return null
@@ -267,9 +244,7 @@ function shortcutMap(value: unknown): string | null {
 type AccountSettings = Record<string, unknown>
 
 async function settingsOf(env: Env, userId: string): Promise<AccountSettings> {
-  const row = await env.DB.prepare('select settings from users where id = ?')
-    .bind(userId)
-    .first<{ settings: string }>()
+  const row = await env.DB.prepare('select settings from users where id = ?').bind(userId).first<{ settings: string }>()
   return parse(row?.settings)
 }
 

@@ -99,16 +99,10 @@ export async function sendDue(
         line: String(one.line),
       },
     }
-    const delivered = await Promise.all(
-      theirs.map((target) => push(env, target, message, now, send)),
-    )
+    const delivered = await Promise.all(theirs.map((target) => push(env, target, message, now, send)))
     if (delivered.includes('sent')) {
       sent++
-    } else if (
-      delivered.includes('busy') &&
-      !delivered.includes('failed') &&
-      one.tries + 1 < MOST_TRIES
-    ) {
+    } else if (delivered.includes('busy') && !delivered.includes('failed') && one.tries + 1 < MOST_TRIES) {
       await env.DB.prepare(
         `update push_reminders set sent_at = null, tries = ?, retry_at = ?
           where note_id = ? and id = ? and sent_at = ?`,

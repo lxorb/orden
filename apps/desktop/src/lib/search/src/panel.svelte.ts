@@ -8,14 +8,7 @@ import { isEmpty, parseQuery } from '@orden/scan/search/query'
 import type { SearchOrdering, SearchSort } from '@orden/contracts'
 import { asWritten, selectedWords } from './seed'
 import { searchSpace } from './space'
-import {
-  isMarkdownPath,
-  isBoolean,
-  isRecord,
-  keepJson,
-  stored,
-  afterQuiet,
-} from '../../platform/src/api'
+import { isMarkdownPath, isBoolean, isRecord, keepJson, stored, afterQuiet } from '../../platform/src/api'
 
 const WAIT = 140
 const MOST = 200
@@ -54,13 +47,9 @@ class Search {
   readonly query = $derived(parseQuery(this.text))
   readonly asks = $derived(this.text.trim().length >= SHORTEST && !isEmpty(this.query))
 
-  private readonly open = $derived(
-    protection.any ? (hit: Hit) => !protection.locked(hit.path) : () => true,
-  )
+  private readonly open = $derived(protection.any ? (hit: Hit) => !protection.locked(hit.path) : () => true)
 
-  readonly hits = $derived(
-    [...this.inOrder(this.found), ...this.inOrder(this.loose)].filter(this.open),
-  )
+  readonly hits = $derived([...this.inOrder(this.found), ...this.inOrder(this.loose)].filter(this.open))
 
   ordering = $state<SearchOrdering>(readOrdering())
 
@@ -93,9 +82,7 @@ class Search {
     const way = descending ? -1 : 1
     return [...hits].sort((one, other) => {
       const first =
-        sort === 'name'
-          ? one.name.localeCompare(other.name, undefined, { sensitivity: 'base' })
-          : at(one) - at(other)
+        sort === 'name' ? one.name.localeCompare(other.name, undefined, { sensitivity: 'base' }) : at(one) - at(other)
 
       return first * way || one.path.localeCompare(other.path) || one.line - other.line
     })
@@ -217,9 +204,7 @@ class Search {
     if (!root || !chosen.length) return
 
     const { changesFor } = await import('./apply')
-    const changes = await changesFor(query, chosen, replacement, root, (path) =>
-      workspace.noteText(path),
-    )
+    const changes = await changesFor(query, chosen, replacement, root, (path) => workspace.noteText(path))
 
     await workspace.replaceInNotes(changes)
 

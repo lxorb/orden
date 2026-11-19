@@ -16,9 +16,7 @@ const ask: AgentVerb = (name, args, caller) => {
 }
 registerAgentVerbs(() =>
   Promise.resolve(
-    Object.fromEntries(
-      ['add_task', 'list_tasks', 'update_task', 'query_base'].map((verb) => [verb, ask]),
-    ),
+    Object.fromEntries(['add_task', 'list_tasks', 'update_task', 'query_base'].map((verb) => [verb, ask])),
   ),
 )
 
@@ -80,14 +78,7 @@ describe('the to-dos from a terminal and a link', () => {
     asked.length = 0
     expect(verbForAction('add-task')).toBe('tasks.add')
     expect(verbForAction('tasks.add')).toBeNull()
-    await dispatch(
-      'tasks.add',
-      { text: 'Call mum', note: 'Diary', under: 'Secrets', space: 'Home' },
-      [],
-      'link',
-    )
-    expect(asked).toEqual([
-      { name: 'add_task', args: { text: 'Call mum', space: 'Home' }, agent: null },
-    ])
+    await dispatch('tasks.add', { text: 'Call mum', note: 'Diary', under: 'Secrets', space: 'Home' }, [], 'link')
+    expect(asked).toEqual([{ name: 'add_task', args: { text: 'Call mum', space: 'Home' }, agent: null }])
   })
 })

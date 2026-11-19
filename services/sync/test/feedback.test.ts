@@ -27,9 +27,7 @@ beforeEach(() => {
 afterEach(() => env.close())
 
 async function rows(): Promise<Row[]> {
-  const read = await env.DB.prepare(
-    'select user_id, text, version, platform, log from feedback',
-  ).all<Row>()
+  const read = await env.DB.prepare('select user_id, text, version, platform, log from feedback').all<Row>()
   return read.results
 }
 

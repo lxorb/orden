@@ -3,9 +3,7 @@ import { expect, test, vi } from 'vitest'
 const WORK = { id: 'work', name: 'Work', root: '/notes/Work' }
 const DIARY = '/notes/Work/Private/Diary.md'
 
-const disk = vi.hoisted(
-  () => new Map<string, string>([['/notes/Work/Private/Diary.md', 'secret words']]),
-)
+const disk = vi.hoisted(() => new Map<string, string>([['/notes/Work/Private/Diary.md', 'secret words']]))
 
 vi.mock('../../../protect/src/api', async (original) => ({
   ...(await original<typeof import('../../../protect/src/api')>()),

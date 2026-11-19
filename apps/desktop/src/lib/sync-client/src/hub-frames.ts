@@ -6,9 +6,7 @@ export const BEAT_ANSWER = 'ok'
 export const DEVICE = /^[A-Za-z0-9_-]{8,64}$/
 
 export type FromDevice =
-  | { t: 'hello'; device: string; name: string; platform: string; app: string }
-  | { t: 'active' }
-  | { t: 'idle' }
+  { t: 'hello'; device: string; name: string; platform: string; app: string } | { t: 'active' } | { t: 'idle' }
 
 export type FromHub =
   | { t: 'poke'; space: string; seq: number }
@@ -38,9 +36,7 @@ export function readHubFrame(said: string): FromHub | null {
   const one = parsed
   switch (one.t) {
     case 'poke':
-      return text(one.space) && whole(one.seq)
-        ? { t: 'poke', space: one.space, seq: one.seq }
-        : null
+      return text(one.space) && whole(one.seq) ? { t: 'poke', space: one.space, seq: one.seq } : null
 
     case 'terms':
       return { t: 'terms' }

@@ -57,9 +57,7 @@ describe('the stack of closed tabs', () => {
 
   test('takes the tail of what a session held, however long it was', () => {
     const stack = new ClosedTabs()
-    stack.restore(
-      Array.from({ length: MOST_CLOSED + 3 }, (_unused, index) => closed(`${index}.md`)),
-    )
+    stack.restore(Array.from({ length: MOST_CLOSED + 3 }, (_unused, index) => closed(`${index}.md`)))
 
     expect(stack.stack).toHaveLength(MOST_CLOSED)
     expect(stack.take()[0]?.draft.name).toBe(`${MOST_CLOSED + 2}.md`)

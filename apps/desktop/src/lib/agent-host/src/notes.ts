@@ -9,13 +9,7 @@ import { isDraft } from '../../documents/src/api'
 import { writeIfAbsent } from '../../file-writes/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
-import {
-  DocError,
-  type NoteRead,
-  SCRATCHPAD_TAB,
-  startsBefore,
-  taskIn,
-} from '../../agent-docs/src/api'
+import { DocError, type NoteRead, SCRATCHPAD_TAB, startsBefore, taskIn } from '../../agent-docs/src/api'
 import { SCRATCHPAD } from '../../scratchpad/src/api'
 import {
   asked,
@@ -45,10 +39,7 @@ import { createFile, fileKindOf } from './new-files'
 import { readable, seen } from './guarded'
 import { notes } from './docs'
 
-export function noteOf(
-  call: Call,
-  writing: boolean,
-): { place: Place; relative: string; tab?: string } {
+export function noteOf(call: Call, writing: boolean): { place: Place; relative: string; tab?: string } {
   if (maybe(call, 'tab') === SCRATCHPAD_TAB) {
     namedOnce(call, SCRATCHPAD)
     return {
@@ -146,9 +137,7 @@ export async function editNote(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Edit ${relative} in ${place.space.name}`)
   if (question) return question
 
-  return done(
-    await notes.editNote(writerOf(call), at(named), call.args.edits, ifRev(call), call.deadline),
-  )
+  return done(await notes.editNote(writerOf(call), at(named), call.args.edits, ifRev(call), call.deadline))
 }
 
 export async function writeNote(call: Call): Promise<AgentAnswer> {
@@ -160,18 +149,9 @@ export async function writeNote(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Write ${relative} in ${place.space.name}`)
   if (question) return question
 
-  const written = () =>
-    notes.writeNote(writerOf(call), at(named), words, ifRev(call), call.deadline)
+  const written = () => notes.writeNote(writerOf(call), at(named), words, ifRev(call), call.deadline)
   if (named.tab) return done(await written())
-  return done(
-    await madeOrChanged(
-      place,
-      relative,
-      () => made(place, relative, words, null),
-      written,
-      call.deadline,
-    ),
-  )
+  return done(await madeOrChanged(place, relative, () => made(place, relative, words, null), written, call.deadline))
 }
 
 export async function appendNote(call: Call): Promise<AgentAnswer> {
@@ -187,15 +167,7 @@ export async function appendNote(call: Call): Promise<AgentAnswer> {
   const edit = { at: under === null ? { end: true } : { heading: under }, insert_after: words }
   const added = () => notes.editNote(writerOf(call), at(named), [edit], undefined, call.deadline)
   if (named.tab) return done(await added())
-  return done(
-    await madeOrChanged(
-      place,
-      relative,
-      () => made(place, relative, words, null),
-      added,
-      call.deadline,
-    ),
-  )
+  return done(await madeOrChanged(place, relative, () => made(place, relative, words, null), added, call.deadline))
 }
 
 function yamlOf(value: unknown): string | null {
@@ -227,9 +199,7 @@ export async function setProperty(call: Call): Promise<AgentAnswer> {
   if (own) {
     const said = call.args.value
     const kept =
-      typeof said === 'string' || typeof said === 'number' || typeof said === 'boolean'
-        ? String(said) || null
-        : null
+      typeof said === 'string' || typeof said === 'number' || typeof said === 'boolean' ? String(said) || null : null
     if (kept !== null && kept.length > LONGEST_META_VALUE) {
       throw new Refused('bad_arguments', `${key} is too long`)
     }
@@ -277,8 +247,7 @@ export async function setTask(call: Call): Promise<AgentAnswer> {
 }
 
 export async function createNote(call: Call): Promise<AgentAnswer> {
-  if (maybe(call, 'tab') !== null)
-    throw new Refused('bad_arguments', 'a new note is made at a path')
+  if (maybe(call, 'tab') !== null) throw new Refused('bad_arguments', 'a new note is made at a path')
 
   const kind = fileKindOf(call)
   if (kind !== 'note') return createFile(call, placeOf(call), kind, made)
@@ -291,12 +260,7 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
   const question = await asked(call, null, `Make ${relative} in ${place.space.name}`)
   if (question) return question
 
-  const answer = await made(
-    place,
-    relative,
-    wordsSent(call) ?? '',
-    flag(call, 'open') ? call : null,
-  )
+  const answer = await made(place, relative, wordsSent(call) ?? '', flag(call, 'open') ? call : null)
   return done({ ...answer, space: place.space.id })
 }
 
@@ -347,10 +311,7 @@ export async function made(place: Place, relative: string, words: string, open: 
   const path = onDisk(place, relative)
   writableAt(place, path)
   if (!(await writeIfAbsent(path, words))) {
-    throw new Refused(
-      'exists',
-      `${relative} is there and would not read, and nothing is written over it`,
-    )
+    throw new Refused('exists', `${relative} is there and would not read, and nothing is written over it`)
   }
 
   if (place.open) {

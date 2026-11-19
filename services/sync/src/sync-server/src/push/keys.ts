@@ -32,10 +32,7 @@ export async function signedToken(
 ): Promise<string> {
   const head = base64url(encoder.encode(JSON.stringify(header)))
   const body = base64url(encoder.encode(JSON.stringify(claims)))
-  const algorithm =
-    key.algorithm.name === 'ECDSA'
-      ? { name: 'ECDSA', hash: 'SHA-256' }
-      : { name: key.algorithm.name }
+  const algorithm = key.algorithm.name === 'ECDSA' ? { name: 'ECDSA', hash: 'SHA-256' } : { name: key.algorithm.name }
   const signature = await crypto.subtle.sign(algorithm, key, encoder.encode(`${head}.${body}`))
   return `${head}.${body}.${base64url(new Uint8Array(signature))}`
 }
@@ -61,8 +58,6 @@ function pemBytes(pem: string): Uint8Array {
 
 export function pemKey(pem: string, kind: 'rsa' | 'ec'): Promise<CryptoKey> {
   const algorithm =
-    kind === 'rsa'
-      ? { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }
-      : { name: 'ECDSA', namedCurve: 'P-256' }
+    kind === 'rsa' ? { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' } : { name: 'ECDSA', namedCurve: 'P-256' }
   return crypto.subtle.importKey('pkcs8', pemBytes(pem), algorithm, false, ['sign'])
 }

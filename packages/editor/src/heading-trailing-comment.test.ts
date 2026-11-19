@@ -19,12 +19,8 @@ describe('a heading with a comment at its end', () => {
   })
 
   test('a link to the shown name can be embedded and hovered', () => {
-    expect(sectionOf(NOTE, { heading: 'Plans', block: null })).toBe(
-      '# Plans %%draft%%\n\nCall the bank',
-    )
-    expect(sectionOf(NOTE, { heading: 'Later', block: null })).toBe(
-      '# Later <!-- todo -->\n\nPay the fee',
-    )
+    expect(sectionOf(NOTE, { heading: 'Plans', block: null })).toBe('# Plans %%draft%%\n\nCall the bank')
+    expect(sectionOf(NOTE, { heading: 'Later', block: null })).toBe('# Later <!-- todo -->\n\nPay the fee')
   })
 
   test('the drawn table of contents leaves the comments out', () => {

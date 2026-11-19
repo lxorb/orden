@@ -32,11 +32,7 @@ export function walkedOf(root: string, tree: Entry): Walked {
   return { notes, folders }
 }
 
-export async function readPapers(
-  root: string,
-  files: readonly Entry[],
-  tree: Entry | null,
-): Promise<void> {
+export async function readPapers(root: string, files: readonly Entry[], tree: Entry | null): Promise<void> {
   reading = root
   const papers = files.filter((one) => isPdfTarget(one.name))
   const stamps = new Map(papers.map((one) => [one.path, one.modified]))
@@ -73,12 +69,8 @@ export async function readPapers(
 }
 
 export async function heldPapers(root: string, files: readonly Entry[]): Promise<Entry[]> {
-  const notes = new Set(
-    files.filter((one) => isPagesTarget(one.name)).map((one) => pathKey(one.path)),
-  )
-  const tree = await invoke<Entry>('read_tree', { root, options: { papers: true } }).catch(
-    () => null,
-  )
+  const notes = new Set(files.filter((one) => isPagesTarget(one.name)).map((one) => pathKey(one.path)))
+  const tree = await invoke<Entry>('read_tree', { root, options: { papers: true } }).catch(() => null)
   const out: Entry[] = []
   const walk = (entry: Entry) => {
     for (const child of entry.children) {

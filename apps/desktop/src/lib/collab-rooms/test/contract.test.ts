@@ -20,9 +20,9 @@ function pair(words: string) {
 
 describe('edits between a shared text and a note', () => {
   test('a yjs delta becomes replacements, neighbours folded into one', () => {
-    expect(replacements([{ retain: 2 }, { insert: 'ab' }, { delete: 1 }, { insert: 'c' }])).toEqual(
-      [{ from: 2, to: 3, insert: 'abc' }],
-    )
+    expect(replacements([{ retain: 2 }, { insert: 'ab' }, { delete: 1 }, { insert: 'c' }])).toEqual([
+      { from: 2, to: 3, insert: 'abc' },
+    ])
     expect(replacements([{ delete: 1 }, { retain: 3 }, { insert: 'x' }])).toEqual([
       { from: 0, to: 1, insert: '' },
       { from: 4, to: 4, insert: 'x' },
@@ -55,10 +55,7 @@ describe('who else is in a note', () => {
     const { one } = pair('abc')
     const at = relative(one.text, 2)
     one.text.insert(0, 'zz')
-    const absolute = Y.createAbsolutePositionFromRelativePosition(
-      Y.createRelativePositionFromJSON(at),
-      one.doc,
-    )
+    const absolute = Y.createAbsolutePositionFromRelativePosition(Y.createRelativePositionFromJSON(at), one.doc)
     expect(absolute?.index).toBe(4)
   })
 })

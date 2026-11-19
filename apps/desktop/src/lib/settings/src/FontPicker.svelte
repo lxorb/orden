@@ -32,9 +32,7 @@
   const shown = $derived(offered(families, typed ?? '', mono).slice(0, MOST))
   const missing = $derived(value !== '' && !isInstalled(value))
 
-  $effect(() =>
-    open ? overlays.show(close, () => [host, list].filter((one) => one !== undefined)) : undefined,
-  )
+  $effect(() => (open ? overlays.show(close, () => [host, list].filter((one) => one !== undefined)) : undefined))
 
   function show() {
     open = true

@@ -204,14 +204,8 @@ describe('an address pasted over a selection', () => {
     const state = parsed(
       EditorState.create({
         doc: 'one two',
-        selection: EditorSelection.create([
-          EditorSelection.range(0, 3),
-          EditorSelection.range(4, 7),
-        ]),
-        extensions: [
-          markdown({ base: markdownLanguage }),
-          EditorState.allowMultipleSelections.of(true),
-        ],
+        selection: EditorSelection.create([EditorSelection.range(0, 3), EditorSelection.range(4, 7)]),
+        extensions: [markdown({ base: markdownLanguage }), EditorState.allowMultipleSelections.of(true)],
       }),
     )
     const spec = linkedPaste(state, URL)
@@ -304,8 +298,7 @@ describe('commas that are not a table', () => {
   })
 
   test('two sentences with a year between commas in each stay prose', () => {
-    const text =
-      'We met on May 5, 2024, at noon, and left.\nThen on June 1, 2024, it rained, again.'
+    const text = 'We met on May 5, 2024, at noon, and left.\nThen on June 1, 2024, it rained, again.'
     expect(delimitedToTable(text)).toBeNull()
   })
 

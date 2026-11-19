@@ -9,11 +9,9 @@ function fenceInfo(state: EditorState, node: SyntaxNode): string {
   return info ? state.doc.sliceString(info.from, info.to).trim() : ''
 }
 
-export const fenceLanguage = (state: EditorState, node: SyntaxNode): string =>
-  languageIn(fenceInfo(state, node))
+export const fenceLanguage = (state: EditorState, node: SyntaxNode): string => languageIn(fenceInfo(state, node))
 
-export const fenceCaption = (state: EditorState, node: SyntaxNode): string =>
-  captionIn(fenceInfo(state, node))
+export const fenceCaption = (state: EditorState, node: SyntaxNode): string => captionIn(fenceInfo(state, node))
 
 export const fenceCode = (state: EditorState, node: SyntaxNode): string =>
   node

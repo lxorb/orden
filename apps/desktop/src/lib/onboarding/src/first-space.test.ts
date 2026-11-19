@@ -57,8 +57,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('../../workspace/src/api')
 const { firstSpace } = await import('./first-space.svelte')
 const { insideFolder, pickedFolder } = await import('../../import/src/sources')
-const { WELCOME, WELCOME_NAME, WELCOME_SPACE, isUntouchedWelcome } =
-  await import('@orden/contracts')
+const { WELCOME, WELCOME_NAME, WELCOME_SPACE, isUntouchedWelcome } = await import('@orden/contracts')
 const { AGENTS_NAME } = await import('../../platform/src/api')
 const { AGENTS_SEED, isUntouchedAgents } = await import('../../agents-seed/src/api')
 
@@ -199,9 +198,7 @@ describe('the welcome note, untouched', () => {
   })
 
   test('names bases and boards now, rather than to-dos or markdown and nothing else', () => {
-    expect(WELCOME).toContain(
-      '- Every note is a Markdown file you own, with bases and boards right inside\n',
-    )
+    expect(WELCOME).toContain('- Every note is a Markdown file you own, with bases and boards right inside\n')
     expect(WELCOME).not.toContain('to-dos')
     expect(WELCOME).not.toContain('nothing else')
   })
@@ -253,9 +250,7 @@ describe('a folder brought in as a space', () => {
 
   test('holds what was inside it rather than a folder of the same name', () => {
     expect(
-      insideFolder([picked('Vault/Plan.md'), picked('Vault/a/b.md')]).map(
-        (one) => one.webkitRelativePath,
-      ),
+      insideFolder([picked('Vault/Plan.md'), picked('Vault/a/b.md')]).map((one) => one.webkitRelativePath),
     ).toEqual(['Plan.md', 'a/b.md'])
   })
 })

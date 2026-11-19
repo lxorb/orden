@@ -1,13 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  alphaFor,
-  BODY,
-  layered,
-  linkOf,
-  type PaperInks,
-  paperFloor,
-  TERMINAL_CONTRAST,
-} from './content-ground'
+import { alphaFor, BODY, layered, linkOf, type PaperInks, paperFloor, TERMINAL_CONTRAST } from './content-ground'
 import { AA, luminance, over, ratio, type Rgb, type Span } from './legibility'
 
 const INKS: Record<'dark' | 'light', PaperInks> = {
@@ -98,9 +90,7 @@ describe('the terminal', () => {
         const floor = paperFloor(inks, span, true)
         const paper = luminance(inks.bg)
         const nearest =
-          paper < 0.5
-            ? (paper + 0.05) * TERMINAL_CONTRAST - 0.05
-            : (paper + 0.05) / TERMINAL_CONTRAST - 0.05
+          paper < 0.5 ? (paper + 0.05) * TERMINAL_CONTRAST - 0.05 : (paper + 0.05) / TERMINAL_CONTRAST - 0.05
         for (const ground of grounds(inks, floor, span)) {
           const under = luminance(ground)
           const [light, dark] = [nearest, under].sort((a, b) => b - a) as [number, number]

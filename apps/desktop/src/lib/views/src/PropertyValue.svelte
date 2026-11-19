@@ -128,9 +128,7 @@
     <input
       class="field"
       type={fieldType(property)}
-      value={fieldType(property) === 'datetime-local'
-        ? property.value.replace(' ', 'T')
-        : property.value}
+      value={fieldType(property) === 'datetime-local' ? property.value.replace(' ', 'T') : property.value}
       readonly={!writable}
       aria-label={property.key}
       use:focusOnMount

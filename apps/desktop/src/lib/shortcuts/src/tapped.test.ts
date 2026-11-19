@@ -133,9 +133,7 @@ describe('what a double tap runs', () => {
 
   test('clashes like any other key when somebody takes it for something else', () => {
     expect(shortcuts.refuse('Shift Shift')).toBeNull()
-    expect(shortcuts.conflicts('app.commands', 'Shift Shift').map((one) => one.id)).toEqual([
-      'app.palette',
-    ])
+    expect(shortcuts.conflicts('app.commands', 'Shift Shift').map((one) => one.id)).toEqual(['app.palette'])
   })
 })
 
@@ -143,10 +141,7 @@ describe('the app listening', () => {
   test('opens the palette on Shift twice, and stops listening when asked', () => {
     const opened: string[] = []
     const { window, fire, listeners } = fakeWindow()
-    const stop = hear(
-      () => ({ palette: () => opened.push('palette'), fullscreen: () => undefined }),
-      window,
-    )
+    const stop = hear(() => ({ palette: () => opened.push('palette'), fullscreen: () => undefined }), window)
 
     for (let one = 0; one < 2; one++) {
       fire('keydown', { key: 'Shift', shiftKey: true })

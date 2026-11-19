@@ -27,9 +27,7 @@ export const documentOf = (view: DocView): SharedDoc | null => onDocument.get(vi
 
 export function later(
   view: DocView,
-): (
-  write: (state: EditorState, placed: (at: number) => number) => TransactionSpec | null,
-) => boolean {
+): (write: (state: EditorState, placed: (at: number) => number) => TransactionSpec | null) => boolean {
   const asked = view.state
   const note = documentOf(view)
   const turn = note?.turn
@@ -49,13 +47,7 @@ export function later(
     if (!spec) return false
 
     const made = asked.update(spec)
-    note.local(
-      made.changes,
-      made.newSelection,
-      view,
-      made.annotation(Transaction.userEvent),
-      asked.selection,
-    )
+    note.local(made.changes, made.newSelection, view, made.annotation(Transaction.userEvent), asked.selection)
     return true
   }
 }
@@ -80,8 +72,7 @@ const sharedField = StateField.define<SharedDoc | null>({
   },
 })
 
-export const sharedOf = (state: EditorState): SharedDoc | null =>
-  state.field(sharedField, false) ?? null
+export const sharedOf = (state: EditorState): SharedDoc | null => state.field(sharedField, false) ?? null
 
 interface Landing {
   view: DocView
@@ -153,12 +144,7 @@ const wholeCharacters = EditorState.transactionFilter.of((made) => {
 const documentState = (doc: string | Text): EditorState =>
   EditorState.create({
     doc,
-    extensions: [
-      history(),
-      marksKept,
-      wholeCharacters,
-      EditorState.allowMultipleSelections.of(true),
-    ],
+    extensions: [history(), marksKept, wholeCharacters, EditorState.allowMultipleSelections.of(true)],
   })
 
 export interface Heard {
@@ -312,13 +298,7 @@ export class SharedDoc {
     if (onDocument.get(view) === this) onDocument.delete(view)
   }
 
-  local(
-    changes: ChangeSet,
-    selection: EditorSelection,
-    from: DocView,
-    userEvent?: string,
-    before?: EditorSelection,
-  ) {
+  local(changes: ChangeSet, selection: EditorSelection, from: DocView, userEvent?: string, before?: EditorSelection) {
     if (before && !before.eq(this.state.selection)) this.selected(before)
     const made = this.state.update({
       changes,
@@ -372,10 +352,7 @@ export class SharedDoc {
   edit(changes: readonly Replacement[] | ChangeSet, stepped?: Stepped): ChangeSet {
     const made = this.state.update({
       changes,
-      annotations: [
-        isolateHistory.of('full'),
-        ...(stepped ? [Transaction.userEvent.of(stepped.userEvent)] : []),
-      ],
+      annotations: [isolateHistory.of('full'), ...(stepped ? [Transaction.userEvent.of(stepped.userEvent)] : [])],
       effects: (stepped?.marks ?? []).map((mark) => marked.of(mark)),
     })
 

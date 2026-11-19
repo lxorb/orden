@@ -16,13 +16,7 @@
   import { theme } from '../../theme/src/api'
   import type { Tab } from '../../documents/src/api'
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@orden/editor'
-  import {
-    blockIds,
-    decodeFragment,
-    decodeTarget,
-    isTabFile,
-    pageFragment,
-  } from '@orden/markdown/links'
+  import { blockIds, decodeFragment, decodeTarget, isTabFile, pageFragment } from '@orden/markdown/links'
   import { links, pressQueryRow } from '../../link-index/src/api'
 
   const { tab, focused }: { tab: Tab; focused: boolean } = $props()
@@ -71,12 +65,10 @@
   async function draw() {
     const mine = ++latest
     const source = note()
-    const next = await readingHtml(source, theme.current, trustsHtmlIn(tab.note), tagAnchor).catch(
-      (error: unknown) => {
-        console.error('the note could not be rendered', error)
-        return unreadableHtml(source.text)
-      },
-    )
+    const next = await readingHtml(source, theme.current, trustsHtmlIn(tab.note), tagAnchor).catch((error: unknown) => {
+      console.error('the note could not be rendered', error)
+      return unreadableHtml(source.text)
+    })
     if (mine !== latest) return
 
     const again = html !== ''
@@ -142,13 +134,10 @@
     if (!page) return { elements: [], offsets: [] }
 
     const elements = [...page.children].filter(
-      (child): child is HTMLElement =>
-        child instanceof HTMLElement && /^H[1-6]$/.test(child.tagName) && !!child.id,
+      (child): child is HTMLElement => child instanceof HTMLElement && /^H[1-6]$/.test(child.tagName) && !!child.id,
     )
 
-    return elements.length === offsets.length
-      ? { elements, offsets }
-      : { elements: [], offsets: [] }
+    return elements.length === offsets.length ? { elements, offsets } : { elements: [], offsets: [] }
   }
 
   function spanOf(
@@ -184,10 +173,7 @@
     }
 
     const { from, to } = spanOf(box, page, elements, index)
-    box.scrollTop = Math.max(
-      0,
-      Math.min(from + (to - from) * fraction, box.scrollHeight - box.clientHeight),
-    )
+    box.scrollTop = Math.max(0, Math.min(from + (to - from) * fraction, box.scrollHeight - box.clientHeight))
   }
 
   function placeNow(): { section: Section; offsets: number[] } {
@@ -304,9 +290,7 @@
       return
     }
 
-    const note = wiki
-      ? { path: target }
-      : (resolveRelative(index, target) ?? resolveNote(index, target))
+    const note = wiki ? { path: target } : (resolveRelative(index, target) ?? resolveNote(index, target))
     const file = note ? null : resolveFile(index, target, 'markdown')
     const path = note?.path ?? file
     if (path === null) return
@@ -340,8 +324,7 @@
     else show(offsetOf(line))
   }
 
-  const offsetOf = (line: number) =>
-    tab.doc.split('\n').slice(0, line).join('\n').length + (line ? 1 : 0)
+  const offsetOf = (line: number) => tab.doc.split('\n').slice(0, line).join('\n').length + (line ? 1 : 0)
 
   const written = (target: string): string => decodeTarget(target)
 
@@ -483,14 +466,7 @@
 
 <div class="read" {style} bind:this={root}>
   {#if finding}
-    <FindBar
-      {query}
-      count={found.length}
-      {current}
-      onstep={step}
-      onclose={closeFind}
-      onquery={typed}
-    />
+    <FindBar {query} count={found.length} {current} onstep={step} onclose={closeFind} onquery={typed} />
   {/if}
 
   <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->

@@ -82,11 +82,7 @@ describe('lining things up', () => {
 
 describe('spreading things out', () => {
   test('leaves the same gap between each', () => {
-    const canvas = plane([
-      card('a', 0, 0, 50, 50),
-      card('b', 60, 0, 50, 50),
-      card('c', 300, 0, 50, 50),
-    ])
+    const canvas = plane([card('a', 0, 0, 50, 50), card('b', 60, 0, 50, 50), card('c', 300, 0, 50, 50)])
     const spread = distributed(canvas, ['a', 'b', 'c'], 'x')
 
     const xs = spread.nodes.map((node) => node.x)
@@ -94,11 +90,7 @@ describe('spreading things out', () => {
   })
 
   test('leaves the two on the outside where they were', () => {
-    const canvas = plane([
-      card('a', 0, 0, 50, 50),
-      card('b', 60, 0, 50, 50),
-      card('c', 300, 0, 50, 50),
-    ])
+    const canvas = plane([card('a', 0, 0, 50, 50), card('b', 60, 0, 50, 50), card('c', 300, 0, 50, 50)])
     const spread = distributed(canvas, ['a', 'b', 'c'], 'x')
 
     expect(spread.nodes[0]?.x).toBe(0)
@@ -106,11 +98,7 @@ describe('spreading things out', () => {
   })
 
   test('works down the page as well as across it', () => {
-    const canvas = plane([
-      card('a', 0, 0, 50, 50),
-      card('b', 0, 30, 50, 50),
-      card('c', 0, 300, 50, 50),
-    ])
+    const canvas = plane([card('a', 0, 0, 50, 50), card('b', 0, 30, 50, 50), card('c', 0, 300, 50, 50)])
     const spread = distributed(canvas, ['a', 'b', 'c'], 'y')
 
     expect(spread.nodes[1]?.y).toBe(150)

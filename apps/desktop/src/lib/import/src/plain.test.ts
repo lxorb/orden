@@ -13,11 +13,7 @@ describe('a folder of markdown', () => {
     ])
 
     expect(counts(plan)).toEqual({ notes: 2, files: 1, folders: 3, bytes: expect.any(Number) })
-    expect(plan.files.map((one) => one.path)).toEqual([
-      'Plans/Trip.md',
-      'Lists/Kit.md',
-      'Pictures/tent.png',
-    ])
+    expect(plan.files.map((one) => one.path)).toEqual(['Plans/Trip.md', 'Lists/Kit.md', 'Pictures/tent.png'])
   })
 
   test('a link to another note becomes a wikilink, however it was written', async () => {
@@ -107,9 +103,7 @@ describe('a folder of markdown', () => {
   })
 
   test("and a text file's words read back as themselves, not as markdown", async () => {
-    const plan = await readPlain([
-      file('Note.txt', 'Costs $5-$10\nFine <img src=x onerror=alert(1)>\nTitle\n---\n'),
-    ])
+    const plan = await readPlain([file('Note.txt', 'Costs $5-$10\nFine <img src=x onerror=alert(1)>\nTitle\n---\n')])
 
     const text = noteAt(plan, 'Note.md')
     expect(text).toContain('\\$5-\\$10')
@@ -118,8 +112,7 @@ describe('a folder of markdown', () => {
   })
 
   test('but a text file written in markdown keeps its markdown', async () => {
-    const draft =
-      '# Chapter one\n\nIt was *quiet*. See [notes](Notes.txt) and [[Notes]].\n\n> A quote\n'
+    const draft = '# Chapter one\n\nIt was *quiet*. See [notes](Notes.txt) and [[Notes]].\n\n> A quote\n'
     const plan = await readPlain([file('Draft.txt', draft)])
 
     expect(noteAt(plan, 'Draft.md')).toBe(draft)
@@ -195,10 +188,7 @@ describe('a folder of HTML', () => {
   })
 
   test('a link between two pages of an HTML export still finds its note', async () => {
-    const plan = await readPlain([
-      file('A.html', '<a href="B.html">to B</a>'),
-      file('B.html', '<h1>B</h1>'),
-    ])
+    const plan = await readPlain([file('A.html', '<a href="B.html">to B</a>'), file('B.html', '<h1>B</h1>')])
 
     expect(noteAt(plan, 'A.md')).toContain('[[B|to B]]')
   })

@@ -17,12 +17,7 @@ export interface NoteHeld {
   meta?: Readonly<Record<string, string>> | null | undefined
 }
 
-export function noteRowsOf(
-  space: string,
-  path: string,
-  content: string,
-  held: NoteHeld = {},
-): Row[] {
+export function noteRowsOf(space: string, path: string, content: string, held: NoteHeld = {}): Row[] {
   const stamp = held.stamp ?? { size: content.length, mtime: 0, ctime: 0 }
   const read = readOf({ ...scanNote(path, content), ...scanRows(content), stamp })
   return rowsOf(space, { ...read, meta: held.meta ?? null })

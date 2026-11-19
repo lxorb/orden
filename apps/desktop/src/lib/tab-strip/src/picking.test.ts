@@ -128,9 +128,7 @@ describe("a picked tab's menu", () => {
     if (!tab) throw new Error('no B')
 
     expect(tabMenuTitle(tab, workspace.panes.focusedId)).toBe('3 tabs')
-    expect(labels('B')).toEqual(
-      expect.arrayContaining(['Duplicate', 'Close', 'Close others', 'Close all']),
-    )
+    expect(labels('B')).toEqual(expect.arrayContaining(['Duplicate', 'Close', 'Close others', 'Close all']))
     expect(labels('B')).not.toContain('Show in the file list')
   })
 

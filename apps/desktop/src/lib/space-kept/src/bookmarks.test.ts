@@ -27,15 +27,8 @@ const pushing = {
   },
 }
 serveSyncStore(pushing)
-const {
-  Bookmarks,
-  bookmarkList,
-  isBookmark,
-  located,
-  mergeBookmarks,
-  MOST_BOOKMARKS,
-  sameBookmark,
-} = await import('./bookmarks.svelte')
+const { Bookmarks, bookmarkList, isBookmark, located, mergeBookmarks, MOST_BOOKMARKS, sameBookmark } =
+  await import('./bookmarks.svelte')
 
 type Bookmark = import('@orden/contracts').Bookmark
 
@@ -215,9 +208,7 @@ describe('what a row stands for', () => {
   test('is a note or a folder, named the way the space names it', () => {
     const marks = store()
 
-    expect(marks.forEntry({ path: '/Notes/Work/Plan.md', is_dir: false })).toEqual(
-      note('Work/Plan.md'),
-    )
+    expect(marks.forEntry({ path: '/Notes/Work/Plan.md', is_dir: false })).toEqual(note('Work/Plan.md'))
     expect(marks.forEntry({ path: '/Notes/Work', is_dir: true })).toEqual(folder('Work'))
   })
 
@@ -278,8 +269,7 @@ describe('changing the list around a graph view', () => {
     text: 'Work only',
     view: '{"filter":"tag:work"}',
   }
-  const viewOf = (marks: InstanceType<typeof Bookmarks>) =>
-    marks.list.find((one) => one.kind === 'graph')?.view
+  const viewOf = (marks: InstanceType<typeof Bookmarks>) => marks.list.find((one) => one.kind === 'graph')?.view
 
   test('keeps the view when another bookmark is removed', () => {
     const marks = store()
@@ -427,10 +417,7 @@ describe("the account's list meeting one it has not heard yet", () => {
     kept.toggle(note('News.url'))
     kept.said('/Notes', true, sent)
 
-    expect(kept.adopt('/Notes', [note('Mail.url')], 'acct')).toEqual([
-      note('Mail.url'),
-      note('News.url'),
-    ])
+    expect(kept.adopt('/Notes', [note('Mail.url')], 'acct')).toEqual([note('Mail.url'), note('News.url')])
   })
 
   test('remembers across runs that the account has not heard it', () => {

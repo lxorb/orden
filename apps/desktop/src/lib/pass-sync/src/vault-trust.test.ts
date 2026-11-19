@@ -62,9 +62,7 @@ describe('a vault key the account hands over', () => {
     const proof = await keyProofOf(server, VAULT, 2, next, null)
 
     expect(await vaultDistrust(me.pub, wire({ proof }), next, local, first)).toBe('unproven')
-    expect(await vaultDistrust(me.pub, wire({ proof, accepted: null }), next, local, first)).toBe(
-      'unproven',
-    )
+    expect(await vaultDistrust(me.pub, wire({ proof, accepted: null }), next, local, first)).toBe('unproven')
   })
 
   test('at the same version and with no key held here needs the owner’s proof', async () => {
@@ -85,9 +83,7 @@ describe('a vault key the account hands over', () => {
   test('at the same version is the key held here or swapped', async () => {
     const { me, first, local, wire } = await world()
     expect(await vaultDistrust(me.pub, wire({ keyVersion: 1 }), first, local, first)).toBeNull()
-    expect(await vaultDistrust(me.pub, wire({ keyVersion: 1 }), newKey(), local, first)).toBe(
-      'swapped',
-    )
+    expect(await vaultDistrust(me.pub, wire({ keyVersion: 1 }), newKey(), local, first)).toBe('swapped')
   })
 })
 

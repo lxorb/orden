@@ -19,11 +19,7 @@ interface Closing {
   save(tab: Tab): Promise<string | null>
 }
 
-export async function mayLose(
-  ws: Closing,
-  closing: readonly Tab[],
-  again: () => void,
-): Promise<boolean> {
+export async function mayLose(ws: Closing, closing: readonly Tab[], again: () => void): Promise<boolean> {
   const unsaved = unsavedAmong(closing, ws.tabs)
   const answer = await askUnsaved(unsaved)
   if (answer !== 'save') return answer === 'discard'

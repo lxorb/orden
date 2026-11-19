@@ -2,27 +2,10 @@ import { wallpaperCss } from '@orden/themes/wallpaper'
 import { describe, expect, test } from 'vitest'
 import { accentColour } from '../../../theme/src/accents'
 import { alphaFor, BODY, layered, linkOf } from '../../../ui-controls/src/content-ground'
-import {
-  AA,
-  over,
-  ratio,
-  type Rgb,
-  rgbOf,
-  SHARP,
-  type Span,
-} from '../../../ui-controls/src/legibility'
+import { AA, over, ratio, type Rgb, rgbOf, SHARP, type Span } from '../../../ui-controls/src/legibility'
 import { type Palette, paletteOf } from './floors'
 import type { Held } from './held'
-import {
-  aimFor,
-  type Colours,
-  type Dials,
-  floorsOf,
-  grained,
-  grainOf,
-  placement,
-  wallpaperRule,
-} from './look'
+import { aimFor, type Colours, type Dials, floorsOf, grained, grainOf, placement, wallpaperRule } from './look'
 
 const SIDES = ['dark', 'light'] as const
 type Side = (typeof SIDES)[number]
@@ -72,12 +55,7 @@ function held(span: Span): Held {
 function stacks(one: Palette, ground: Rgb): Rgb[] {
   const hover = { colour: over(one.text, 8 / 48, one.scrim), alpha: 0.48 }
   const layered = over(one.layer.colour, one.layer.alpha, ground)
-  return [
-    ground,
-    over(hover.colour, hover.alpha, ground),
-    layered,
-    over(hover.colour, hover.alpha, layered),
-  ]
+  return [ground, over(hover.colour, hover.alpha, ground), layered, over(hover.colour, hover.alpha, layered)]
 }
 
 describe('every end of every dial', () => {
@@ -93,10 +71,7 @@ describe('every end of every dial', () => {
             for (const dim of [0, 0.9]) {
               const scrim = floors.chrome + (1 - floors.chrome) * dim
               for (const corner of [under.least, under.most]) {
-                for (const ground of stacks(
-                  sides.palette,
-                  over(sides.palette.scrim, scrim, corner),
-                )) {
+                for (const ground of stacks(sides.palette, over(sides.palette.scrim, scrim, corner))) {
                   expect(ratio(sides.palette.ink, ground)).toBeGreaterThanOrEqual(aim - 0.01)
                 }
               }

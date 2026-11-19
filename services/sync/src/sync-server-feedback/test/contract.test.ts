@@ -7,9 +7,7 @@ import { standing } from '../src/feedback-page'
 
 describe('a feedback report', () => {
   test('its subject is the first line, cut short, and its mail escapes what was typed', () => {
-    expect(feedbackSubject('Sync  stalls\nafter sleep')).toBe(
-      'Orden feedback: Sync stalls after sleep',
-    )
+    expect(feedbackSubject('Sync  stalls\nafter sleep')).toBe('Orden feedback: Sync stalls after sleep')
     expect(feedbackSubject('x'.repeat(80))).toBe(`Orden feedback: ${'x'.repeat(59)}…`)
     const mail = feedbackMail({
       from: 'a@b.dev',

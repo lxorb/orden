@@ -48,10 +48,7 @@ function* bare(node: unknown, inRow: boolean): Generator<string> {
 
 test('every field typed into a Pass item editor sits in a row that frames it on focus', () => {
   const editors = readdirSync(PASS).filter(
-    (name) =>
-      name.endsWith('Edit.svelte') ||
-      name === 'EditField.svelte' ||
-      name === 'PasswordField.svelte',
+    (name) => name.endsWith('Edit.svelte') || name === 'EditField.svelte' || name === 'PasswordField.svelte',
   )
   expect(editors.length).toBeGreaterThan(8)
   const found = editors.flatMap((name) => {

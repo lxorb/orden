@@ -17,9 +17,7 @@ const MOST_PAGES = 20
 function madeOf(value: unknown): AliasMade {
   const alias = fieldsOf(value)
   if (typeof alias.email !== 'string' || typeof alias.enabled !== 'boolean') throw unreadable()
-  const mailboxes = Array.isArray(alias.mailboxes)
-    ? alias.mailboxes.map((one) => textOf(fieldsOf(one).email))
-    : []
+  const mailboxes = Array.isArray(alias.mailboxes) ? alias.mailboxes.map((one) => textOf(fieldsOf(one).email)) : []
   return {
     remoteId: idOf(alias.id),
     address: alias.email,
@@ -58,9 +56,7 @@ export function simpleLogin(key: string, fetcher: AliasFetcher): AliasClient {
     listOf(fieldsOf(await asked('/api/v2/mailboxes')).mailboxes).map(mailboxOf)
 
   const toggled = async (remoteId: string): Promise<boolean> => {
-    const answer = fieldsOf(
-      await asked(`/api/aliases/${encodeURIComponent(remoteId)}/toggle`, 'POST'),
-    )
+    const answer = fieldsOf(await asked(`/api/aliases/${encodeURIComponent(remoteId)}/toggle`, 'POST'))
     if (typeof answer.enabled !== 'boolean') throw unreadable()
     return answer.enabled
   }
@@ -69,10 +65,7 @@ export function simpleLogin(key: string, fetcher: AliasFetcher): AliasClient {
     mailboxes,
 
     async options(hostname?: string): Promise<AliasOptions> {
-      const [answer, boxes] = await Promise.all([
-        asked(withQuery('/api/v5/alias/options', { hostname })),
-        mailboxes(),
-      ])
+      const [answer, boxes] = await Promise.all([asked(withQuery('/api/v5/alias/options', { hostname })), mailboxes()])
       const options = fieldsOf(answer)
       return {
         prefix: textOf(options.prefix_suggestion),

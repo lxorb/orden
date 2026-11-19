@@ -200,17 +200,10 @@ describe('Pass on two devices of one account', () => {
     const kept = a.rows.versionRows.filter((one) => one.id === id)
     expect(kept).toHaveLength(1)
     const vault = a.vaultNamed('Personal')
-    const box = (
-      a as unknown as { held: { vaults: Map<string, { key: Uint8Array<ArrayBuffer> }> } }
-    ).held.vaults.get(vault.id)!
-    const opened = (await k.openVersion(
-      box.key,
+    const box = (a as unknown as { held: { vaults: Map<string, { key: Uint8Array<ArrayBuffer> }> } }).held.vaults.get(
       vault.id,
-      id,
-      kept[0]!.rev,
-      kept[0]!.key,
-      kept[0]!.body,
-    )) as {
+    )!
+    const opened = (await k.openVersion(box.key, vault.id, id, kept[0]!.rev, kept[0]!.key, kept[0]!.body)) as {
       envelope: { content: Login }
     }
     expect(opened.envelope.content.password).toBe('one')

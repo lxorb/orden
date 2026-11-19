@@ -46,9 +46,7 @@ export function keeperFolderOf(path: string): string {
 function customsOf(fields: unknown): Custom[] {
   return Object.entries(recordOf(fields)).map(([key, value]) => {
     const match = /^\$([A-Za-z]+)(?::(.*?))?(?::\d+)?$/.exec(key)
-    return match
-      ? { type: match[1] ?? '', label: match[2] ?? '', value }
-      : { type: 'text', label: key, value }
+    return match ? { type: match[1] ?? '', label: match[2] ?? '', value } : { type: 'text', label: key, value }
   })
 }
 
@@ -204,9 +202,7 @@ function recordInto(into: Collector, raw: unknown, sharedFolders: Map<string, st
   }
   if (type === 'wifiCredentials') {
     const ssid = takeLabel('ssid')
-    add(
-      wifiOf({ title, note, ssid, password, security: '', fields: fieldsOf(customs.map(extraOf)) }),
-    )
+    add(wifiOf({ title, note, ssid, password, security: '', fields: fieldsOf(customs.map(extraOf)) }))
     return
   }
   if (type === 'encryptedNotes') {
@@ -226,8 +222,7 @@ function recordInto(into: Collector, raw: unknown, sharedFolders: Map<string, st
       else extra.push(extraOf(custom))
     }
     add(loginOf({ title, note, username: login, password, totp, urls, fields: fieldsOf(extra) }))
-    if (type !== 'login')
-      into.skip(`Kept as a login: Orden has no kind for Keeper's "${type}".`, title)
+    if (type !== 'login') into.skip(`Kept as a login: Orden has no kind for Keeper's "${type}".`, title)
     return
   }
   unknownKind(into, type, title, note, customs.map(extraOf), parts, vault)
@@ -252,8 +247,7 @@ function parseKeeperCsv(text: string): Imported {
   const into = new Collector('Keeper')
   for (const row of csvRows(text)) {
     if (row.length < 6) continue
-    const [folder = '', title = '', login = '', password = '', url = '', note = '', shared = ''] =
-      row
+    const [folder = '', title = '', login = '', password = '', url = '', note = '', shared = ''] = row
     let totp = ''
     const extra: Extra[] = []
     for (let at = 7; at + 1 < row.length; at += 2) {

@@ -41,11 +41,7 @@ export function dictionaryFor(tag: string, preferred: readonly string[] = []): s
   return DICTIONARIES.find((one) => language(one.id) === language(tag))?.id ?? 'en-US'
 }
 
-export function inForce(
-  chosen: readonly string[],
-  language: string,
-  preferred: readonly string[] = [],
-): string[] {
+export function inForce(chosen: readonly string[], language: string, preferred: readonly string[] = []): string[] {
   const kept = chosen.filter((one) => KNOWN.has(one))
   return kept.length ? kept : [dictionaryFor(language, preferred)]
 }
@@ -66,8 +62,7 @@ export function toggled(chosen: readonly string[], id: string, on: boolean): str
   return DICTIONARIES.map((one) => one.id).filter((one) => next.includes(one))
 }
 
-export const machineLanguages = (): readonly string[] =>
-  typeof navigator === 'undefined' ? [] : navigator.languages
+export const machineLanguages = (): readonly string[] => (typeof navigator === 'undefined' ? [] : navigator.languages)
 
 export function tellEngine(languages: readonly string[]): void {
   if (!choosable) return

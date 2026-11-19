@@ -36,11 +36,11 @@ function note(path: string, content = '{}') {
 }
 
 async function guestOf(item: string): Promise<string> {
-  const { json } = await call<{ link?: { url: string } }>(
-    env,
-    `/v1/spaces/${space}/share/link?item=${item}`,
-    { method: 'PUT', token: owner, body: { role: 'write', mode: 'open' } },
-  )
+  const { json } = await call<{ link?: { url: string } }>(env, `/v1/spaces/${space}/share/link?item=${item}`, {
+    method: 'PUT',
+    token: owner,
+    body: { role: 'write', mode: 'open' },
+  })
   const found = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')
   if (!found?.[1]) throw new Error('no link was made')
   const joined = await call(env, `/v1/join/${found[1]}`, { method: 'POST' })
@@ -56,8 +56,7 @@ async function editor(): Promise<string> {
 beforeEach(async () => {
   env = testEnv()
   owner = await signIn(env, OWNER)
-  space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Lectures' } })).json.space
-    .id
+  space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Lectures' } })).json.space.id
   pages = (await note('Lecture.pages')).json.note.id
 })
 
@@ -193,9 +192,7 @@ describe('a page note emptied from Recently deleted for good', () => {
     await upload(one)
     await hold(pages, one.hash)
     await call(env, `/v1/notes/${pages}`, { method: 'DELETE', token: owner })
-    expect(
-      (await call(env, `/v1/trash/notes/${pages}`, { method: 'DELETE', token: owner })).status,
-    ).toBe(200)
+    expect((await call(env, `/v1/trash/notes/${pages}`, { method: 'DELETE', token: owner })).status).toBe(200)
 
     expect((await call(env, `/v1/notes/${pages}/paper`, { token: owner })).status).toBe(404)
     expect(env.db.prepare('select paper from notes where id = ?').get(pages)).toEqual({

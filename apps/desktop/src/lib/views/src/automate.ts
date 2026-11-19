@@ -48,18 +48,13 @@ export function planned(
   const before = removed.find((row) => row.kind === 'note')
 
   const sets = new Map<Row, Record<string, Value | null>>()
-  const set = (row: Row, values: Record<string, Value | null>) =>
-    sets.set(row, { ...sets.get(row), ...values })
+  const set = (row: Row, values: Record<string, Value | null>) => sets.set(row, { ...sets.get(row), ...values })
   const out: Planned = { writes: [], moves: [], notices: [] }
 
   for (const held of bases) {
     if (held.space !== after.space || !inBase(held.base, after, context)) continue
-    const moved =
-      before !== undefined && (before.path !== after.path || before.space !== after.space)
-    const was =
-      moved && !(before.space === held.space && inBase(held.base, before, context))
-        ? undefined
-        : before
+    const moved = before !== undefined && (before.path !== after.path || before.space !== after.space)
+    const was = moved && !(before.space === held.space && inBase(held.base, before, context)) ? undefined : before
 
     const effect = fired(readAutomations(held.base), was, after, filling)
     if (effect) {

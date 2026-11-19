@@ -36,9 +36,7 @@ vi.mock('../../ai-providers/src/api', () => ({
   writeKey: (id: string, key: string) => Promise.resolve(void secrets.set(id, key)),
   forgetKey: (id: string) => Promise.resolve(void secrets.delete(id)),
   listModels: (account: Held) =>
-    secrets.get(account.id) === GOOD
-      ? Promise.resolve([{ id: 'm' }])
-      : Promise.reject(new Error('401 bad key')),
+    secrets.get(account.id) === GOOD ? Promise.resolve([{ id: 'm' }]) : Promise.reject(new Error('401 bad key')),
   firstModel: () => 'm',
 }))
 
@@ -55,9 +53,7 @@ test('a wrong key typed for a keyed provider leaves no account behind, and the r
   expect(await connectCompatible(openRouter as never, 'sk-wrong')).not.toBeNull()
   expect(await connectCompatible(openRouter as never, 'sk-wrong-again')).not.toBeNull()
   expect(await connectCompatible(openRouter as never, GOOD)).toBeNull()
-  expect(accounts.map((one) => [one.kind, one.name, one.model])).toEqual([
-    ['compatible', 'OpenRouter', 'm'],
-  ])
+  expect(accounts.map((one) => [one.kind, one.name, one.model])).toEqual([['compatible', 'OpenRouter', 'm']])
   expect([...secrets.values()]).toEqual([GOOD])
 })
 

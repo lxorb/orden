@@ -171,8 +171,7 @@ describe('what the one reading answers', () => {
           read += 1
           return Promise.resolve({ a: 1 })
         }) as never,
-        header: (name: string) =>
-          name === 'content-length' ? String(MOST_BODY_BYTES + 1) : undefined,
+        header: (name: string) => (name === 'content-length' ? String(MOST_BODY_BYTES + 1) : undefined),
       },
     }
 

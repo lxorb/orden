@@ -2,16 +2,7 @@ import type { DeviceId, ItemId, UserId } from './ids'
 
 export type EntryKind = 'note' | 'canvas' | 'pages' | 'url' | 'term' | 'chat' | 'file' | 'folder'
 
-export const ENTRY_KINDS: readonly EntryKind[] = [
-  'note',
-  'canvas',
-  'pages',
-  'url',
-  'term',
-  'chat',
-  'file',
-  'folder',
-]
+export const ENTRY_KINDS: readonly EntryKind[] = ['note', 'canvas', 'pages', 'url', 'term', 'chat', 'file', 'folder']
 
 export const isEntryKind = (value: unknown): value is EntryKind =>
   typeof value === 'string' && (ENTRY_KINDS as readonly string[]).includes(value)

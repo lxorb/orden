@@ -6,13 +6,7 @@ import { describe, expect, test } from 'vitest'
 const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const ENTRY = join(import.meta.dirname, '../src/main.ts')
 
-const WORKSPACE = [
-  '@orden/editor',
-  '@orden/glasses',
-  '@orden/markdown',
-  '@orden/rooms',
-  '@orden/themes',
-]
+const WORKSPACE = ['@orden/editor', '@orden/glasses', '@orden/markdown', '@orden/rooms', '@orden/themes']
 
 function workspaceFile(specifier: string): string | null {
   const name = WORKSPACE.find((one) => specifier === one || specifier.startsWith(`${one}/`))
@@ -101,9 +95,7 @@ function eagerGraph(entry: string): {
 
       if (specifier.endsWith('.css')) continue
 
-      const found = specifier.startsWith('.')
-        ? relativeFile(file, specifier)
-        : workspaceFile(specifier)
+      const found = specifier.startsWith('.') ? relativeFile(file, specifier) : workspaceFile(specifier)
       if (found) queue.push(found)
       else if (!specifier.startsWith('.')) packages.add(specifier)
     }
@@ -152,9 +144,9 @@ describe('what the app evaluates before it draws anything', () => {
   })
 
   test('which for the one sheet it does quote is the contrast palette', () => {
-    expect(
-      graph.assets.map((one) => one.replace(/\\/g, '/').replace(/.*\/packages\//, '')),
-    ).toEqual(['themes/src/contrast.css'])
+    expect(graph.assets.map((one) => one.replace(/\\/g, '/').replace(/.*\/packages\//, ''))).toEqual([
+      'themes/src/contrast.css',
+    ])
   })
 
   test.each([
@@ -290,10 +282,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/theme-looks/src/picker/picking.svelte.ts', 'the theme picker'],
     ['/lib/theme-looks/src/picker/ThemePicker.svelte', 'its sheet'],
     ['/lib/theme-looks/src/picker/looks.ts', "its cards' colours"],
-    [
-      '/lib/theme-looks/src/picker/schemes.ts',
-      'the names of the three schemes, which only the pickers say',
-    ],
+    ['/lib/theme-looks/src/picker/schemes.ts', 'the names of the three schemes, which only the pickers say'],
     ['/lib/context-menu/src/ContextMenu.svelte', 'the right-click menu'],
     ['/lib/surfaces/src/FormatBar.svelte', 'the bar over a selection'],
     ['/lib/accounts-ui/src/SignIn.svelte', 'the sign-in sheet'],
@@ -354,12 +343,7 @@ describe('what the app evaluates before it draws anything', () => {
   })
 
   test('and CodeMirror with the markdown mode, which is what shows a note', () => {
-    for (const wanted of [
-      '@codemirror/state',
-      '@codemirror/view',
-      '@codemirror/lang-markdown',
-      'svelte',
-    ]) {
+    for (const wanted of ['@codemirror/state', '@codemirror/view', '@codemirror/lang-markdown', 'svelte']) {
       expect([...graph.packages], wanted).toContain(wanted)
     }
   })
@@ -432,9 +416,7 @@ describe('what reading a note fetches', () => {
   for (const one of eagerGraph(RENDERER).files) already.add(one)
 
   function newBytes(files: readonly string[]): number {
-    return files
-      .filter((one) => !already.has(one))
-      .reduce((sum, one) => sum + statSync(one).size, 0)
+    return files.filter((one) => !already.has(one)).reduce((sum, one) => sum + statSync(one).size, 0)
   }
 
   const exporter = newBytes(eagerGraph(EXPORTER).files)
@@ -475,11 +457,7 @@ describe('the quick add window', () => {
   const reached = window.files.map((one) => one.replace(/\\/g, '/'))
 
   test('draws before it fetches dictation, the AI providers or the workspace', () => {
-    for (const heavy of [
-      '/dictation/src/api.ts',
-      '/ai-providers/src/api.ts',
-      '/workspace/src/api.ts',
-    ]) {
+    for (const heavy of ['/dictation/src/api.ts', '/ai-providers/src/api.ts', '/workspace/src/api.ts']) {
       expect(
         reached.filter((one) => one.endsWith(heavy)),
         heavy,
@@ -490,9 +468,7 @@ describe('the quick add window', () => {
 
 describe('the windows that start sync without the workspace', () => {
   test.each(['quick-add.ts', 'pass-web.ts'])('%s loads no workspace at startup', (entry) => {
-    const reached = eagerGraph(join(import.meta.dirname, '../src', entry)).files.map((one) =>
-      one.replace(/\\/g, '/'),
-    )
+    const reached = eagerGraph(join(import.meta.dirname, '../src', entry)).files.map((one) => one.replace(/\\/g, '/'))
     expect(reached.filter((one) => one.includes('/lib/workspace/'))).toEqual([])
   })
 })

@@ -62,8 +62,6 @@ describe('the note popup while a folder is typed in the editor', () => {
   })
 
   test('[[Pl lists both Plan notes', async () => {
-    expect(await shownAfterTyping('Pl')).toEqual(
-      expect.arrayContaining(['Plan Projects', 'Plan Archive']),
-    )
+    expect(await shownAfterTyping('Pl')).toEqual(expect.arrayContaining(['Plan Projects', 'Plan Archive']))
   })
 })

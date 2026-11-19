@@ -25,10 +25,7 @@ export async function lockPass(): Promise<void> {
 }
 
 export async function quietPass(): Promise<void> {
-  const [{ pass }, { autofill }] = await Promise.all([
-    import('./store.svelte'),
-    import('./autofill'),
-  ])
+  const [{ pass }, { autofill }] = await Promise.all([import('./store.svelte'), import('./autofill')])
   autofill.quiet()
   pass.lock()
 }

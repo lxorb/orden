@@ -22,8 +22,7 @@ function tokens(makefile: string): [string, string | null][] {
   return out
 }
 
-const typeOf = (makefile: string, text: string) =>
-  tokens(makefile).find(([token]) => token === text)?.[1]
+const typeOf = (makefile: string, text: string) => tokens(makefile).find(([token]) => token === text)?.[1]
 
 describe('highlighting a makefile fence', () => {
   test.each([

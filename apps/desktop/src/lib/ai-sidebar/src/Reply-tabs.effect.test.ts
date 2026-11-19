@@ -23,9 +23,7 @@ const { workspace } = await import('../../workspace/src/api')
 const Reply = (await import('./Reply.svelte')).default
 
 test('an answer is not drawn again when another tab comes to the front', () => {
-  const front = new SvelteMap<'tab', { id: string; path: string }>([
-    ['tab', { id: 'a', path: '/n/Work/Herons.md' }],
-  ])
+  const front = new SvelteMap<'tab', { id: string; path: string }>([['tab', { id: 'a', path: '/n/Work/Herons.md' }]])
   Object.defineProperty(workspace, 'panelTab', {
     configurable: true,
     get: () => front.get('tab'),

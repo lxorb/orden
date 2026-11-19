@@ -57,10 +57,7 @@ function isPosition(value: unknown): boolean {
 function absolute(doc: Y.Doc, held: unknown): number | null {
   if (!isPosition(held)) return null
 
-  const found = Y.createAbsolutePositionFromRelativePosition(
-    Y.createRelativePositionFromJSON(held),
-    doc,
-  )
+  const found = Y.createAbsolutePositionFromRelativePosition(Y.createRelativePositionFromJSON(held), doc)
 
   return found ? found.index : null
 }
@@ -119,9 +116,7 @@ export function whoElse(
 
   const mine = namedIn(awareness.getLocalState())
   const people = new Set(
-    [mine, ...here.map((one) => one.who)]
-      .map((one) => one?.person)
-      .filter((one): one is string => !!one),
+    [mine, ...here.map((one) => one.who)].map((one) => one?.person).filter((one): one is string => !!one),
   )
   const byPerson = people.size > 1
 

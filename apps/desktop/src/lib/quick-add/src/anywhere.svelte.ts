@@ -41,9 +41,7 @@ export function listen(): () => void {
     }
     stopKey = $effect.root(() => {
       $effect(() => {
-        const key = quickAdd.anywhere
-          ? accelerator(shortcuts.keyFor('app.quick-add'), shortcuts.platform)
-          : null
+        const key = quickAdd.anywhere ? accelerator(shortcuts.keyFor('app.quick-add'), shortcuts.platform) : null
         untrack(() => {
           void invoke<string | null>('quick_add_key', { key })
             .then((now) => (quickAdd.held = now !== null))
@@ -51,9 +49,7 @@ export function listen(): () => void {
         })
       })
     })
-    return new Promise<void>((resolve) =>
-      stopping.signal.addEventListener('abort', () => resolve()),
-    )
+    return new Promise<void>((resolve) => stopping.signal.addEventListener('abort', () => resolve()))
   }
 
   heldForLife(ANSWERING, answering, stopping.signal)

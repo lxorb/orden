@@ -31,10 +31,7 @@ describe('where Save offers to put a tab', () => {
     created: 0,
     children,
   })
-  const tree = row('/space', [
-    row('/space/Plan.md'),
-    row('/space/Trips', [row('/space/Trips/a.md')]),
-  ])
+  const tree = row('/space', [row('/space/Plan.md'), row('/space/Trips', [row('/space/Trips/a.md')])])
   const spaces = [
     { id: 's', name: 'Notes', root: '/space' },
     { id: 'w', name: 'Work', root: '/work' },

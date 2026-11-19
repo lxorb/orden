@@ -197,9 +197,7 @@ class Mender {
   }
 
   async pair(keep: Item, drop: Item, at: number): Promise<void> {
-    const merged = keep.folder
-      ? await this.folders(keep, drop, at)
-      : await this.notes(keep, drop, at)
+    const merged = keep.folder ? await this.folders(keep, drop, at) : await this.notes(keep, drop, at)
     if (!merged) return
     this.described(keep, drop)
     this.guarded.push({ from: this.places.pathOf(drop.id), to: this.places.pathOf(keep.id) })
@@ -234,8 +232,7 @@ class Mender {
     if (!dropped) return true
     const kept = await bodyOf(this.env, this.spaceId, keep.id)
     if (dropped === kept) return true
-    const edited =
-      !kept || (drop.updated_at > at + EDITED_AFTER && drop.updated_at > keep.updated_at)
+    const edited = !kept || (drop.updated_at > at + EDITED_AFTER && drop.updated_at > keep.updated_at)
     if (!edited) {
       await this.kept(keep.id, dropped)
       return true
@@ -247,9 +244,7 @@ class Mender {
   }
 
   private async kept(id: string, text: string): Promise<void> {
-    const held = await this.env.DB.prepare(
-      'select 1 as one from note_versions where note_id = ? and hash = ? limit 1',
-    )
+    const held = await this.env.DB.prepare('select 1 as one from note_versions where note_id = ? and hash = ? limit 1')
       .bind(id, await sha256(text))
       .first<{ one: number }>()
     if (held) return
@@ -310,9 +305,7 @@ async function mendSpace(env: Env, space: Reached, later: Later): Promise<Mendin
 
 export async function mendedSpace(env: Env, space: Reached, later: Later): Promise<void> {
   if (space.mended_at) return
-  const claimed = await env.DB.prepare(
-    'update spaces set mended_at = ? where id = ? and mended_at is null',
-  )
+  const claimed = await env.DB.prepare('update spaces set mended_at = ? where id = ? and mended_at is null')
     .bind(now(), space.id)
     .run()
   if (!claimed.meta.changes) return

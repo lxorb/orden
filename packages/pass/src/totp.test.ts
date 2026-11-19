@@ -6,8 +6,7 @@ function base32(text: string): string {
   let bits = ''
   for (const one of new TextEncoder().encode(text)) bits += one.toString(2).padStart(8, '0')
   let out = ''
-  for (let at = 0; at < bits.length; at += 5)
-    out += alphabet[parseInt(bits.slice(at, at + 5).padEnd(5, '0'), 2)] ?? ''
+  for (let at = 0; at < bits.length; at += 5) out += alphabet[parseInt(bits.slice(at, at + 5).padEnd(5, '0'), 2)] ?? ''
   return out
 }
 

@@ -1,14 +1,6 @@
 import { type Who } from '@orden/chats'
 import { RECEIPTS_UP_TO, TYPING_EVERY, TYPING_SHOWN } from '@orden/chats/limits'
-import type {
-  ChatEntry,
-  ChatMember,
-  ChatView,
-  MessageList,
-  Presence,
-  RepliesView,
-  Shown,
-} from './shapes'
+import type { ChatEntry, ChatMember, ChatView, MessageList, Presence, RepliesView, Shown } from './shapes'
 import { type ChatCache, isMain, type OutboxRow } from './cache'
 import type { Change, ChatEngine } from './engine'
 import type { Kept } from './fold'
@@ -96,9 +88,7 @@ class Listing implements MessageList {
     }
     if (gone.size) moved = true
     if (!moved) return
-    this.window = next
-      .filter((one) => !gone.has(one.message.id))
-      .sort((a, b) => a.message.seq - b.message.seq)
+    this.window = next.filter((one) => !gone.has(one.message.id)).sort((a, b) => a.message.seq - b.message.seq)
     this.keepNewest()
     void this.draw()
   }
@@ -222,8 +212,7 @@ class Replies extends Listing implements RepliesView {
 
   override heard(change: Change): void {
     super.heard(change)
-    if (change.t === 'messages' && change.kept.some((one) => one.message.id === this.parentId))
-      void this.drawParent()
+    if (change.t === 'messages' && change.kept.some((one) => one.message.id === this.parentId)) void this.drawParent()
   }
 
   private async drawParent(): Promise<void> {
@@ -370,39 +359,33 @@ export class View extends Listing implements ChatView {
     const device = await this.host.device()
     if (!this.alive()) return
     const engine = this.host.engine
-    this.socket = new ChatSocket(
-      this.chat,
-      token,
-      device,
-      () => engine.chats.get(this.chat)?.seq ?? 0,
-      {
-        events: (events) => void engine.heard(this.chat, events),
-        behind: (seq) => engine.behind(this.chat, seq),
-        typing: (who, parent) => this.typing(who, parent),
-        read: (who, seq) => {
-          if (who === this.host.me()) {
-            engine.readTo(this.chat, seq)
-            return
-          }
-          this.reads.set(who, seq)
-          this.drawPresence()
-        },
-        here: (who) => {
-          this.presence = { ...this.presence, here: who }
-        },
-        profile: (who) => this.host.profile(who),
-        state: (open) => {
-          if (!open) {
-            this.presence = { ...this.presence, here: [] }
-            return
-          }
-          void engine.sync(this.chat)
-          const readSeq = this.entry?.readSeq
-          if (readSeq) this.socket?.read(readSeq)
-        },
-        ended: () => void engine.refresh(),
+    this.socket = new ChatSocket(this.chat, token, device, () => engine.chats.get(this.chat)?.seq ?? 0, {
+      events: (events) => void engine.heard(this.chat, events),
+      behind: (seq) => engine.behind(this.chat, seq),
+      typing: (who, parent) => this.typing(who, parent),
+      read: (who, seq) => {
+        if (who === this.host.me()) {
+          engine.readTo(this.chat, seq)
+          return
+        }
+        this.reads.set(who, seq)
+        this.drawPresence()
       },
-    )
+      here: (who) => {
+        this.presence = { ...this.presence, here: who }
+      },
+      profile: (who) => this.host.profile(who),
+      state: (open) => {
+        if (!open) {
+          this.presence = { ...this.presence, here: [] }
+          return
+        }
+        void engine.sync(this.chat)
+        const readSeq = this.entry?.readSeq
+        if (readSeq) this.socket?.read(readSeq)
+      },
+      ended: () => void engine.refresh(),
+    })
   }
 
   private alive(): boolean {
@@ -422,9 +405,7 @@ export class View extends Listing implements ChatView {
   private drawPresence(): void {
     const now = Date.now()
     for (const [key, one] of this.typists) if (one.until <= now) this.typists.delete(key)
-    const typing = [...this.typists.values()].map(({ who, parent }) =>
-      parent ? { who, parent } : { who },
-    )
+    const typing = [...this.typists.values()].map(({ who, parent }) => (parent ? { who, parent } : { who }))
     const shown = this.host.receipts() && this.members.length <= RECEIPTS_UP_TO
     this.presence = {
       here: this.presence.here,

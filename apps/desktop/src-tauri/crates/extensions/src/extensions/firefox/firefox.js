@@ -11,8 +11,7 @@
   }
 
   const LAYER = globalThis.__ordenLayer ?? {}
-  const worker =
-    typeof ServiceWorkerGlobalScope === 'function' && globalThis instanceof ServiceWorkerGlobalScope
+  const worker = typeof ServiceWorkerGlobalScope === 'function' && globalThis instanceof ServiceWorkerGlobalScope
   const background = globalThis.__ordenBackground === true
   const page = !worker && !background && globalThis.location?.protocol === 'chrome-extension:'
   const content = !worker && !background && !page
@@ -20,9 +19,7 @@
 
   const DEFAULT_STORE = 'firefox-default'
   const OURS = ['orden/firefox.js', 'orden/browser-polyfill.js']
-  const withOurs = (files) => [
-    ...new Set([...OURS, ...files.map((one) => String(one).replace(/^\//, ''))]),
-  ]
+  const withOurs = (files) => [...new Set([...OURS, ...files.map((one) => String(one).replace(/^\//, ''))])]
   const fileOf = (file) =>
     page
       ? decodeURIComponent(new URL(String(file), globalThis.location.href).pathname).slice(1)
@@ -44,8 +41,7 @@
       if (!schemes.includes(address.protocol)) return false
       const own = host.includes(':') ? address.host : address.hostname
       const name = host.startsWith('*.') ? host.slice(2) : host
-      if (host !== '*' && own !== name && !(host.startsWith('*.') && own.endsWith(`.${name}`)))
-        return false
+      if (host !== '*' && own !== name && !(host.startsWith('*.') && own.endsWith(`.${name}`))) return false
       const glob = path.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*')
       return new RegExp(`^${glob}$`).test(address.pathname + address.search)
     })
@@ -56,8 +52,7 @@
       const own = Object.getOwnPropertyDescriptor(chrome.runtime, 'lastError')
       Object.defineProperty(chrome.runtime, 'lastError', {
         configurable: true,
-        get: () =>
-          globalThis.__ordenLastError ?? (own?.get ? own.get.call(chrome.runtime) : own?.value),
+        get: () => globalThis.__ordenLastError ?? (own?.get ? own.get.call(chrome.runtime) : own?.value),
       })
     } catch {
       // An engine that will not have it changed says only its own refusals.
@@ -152,10 +147,7 @@
 
   const worded = (value) => {
     if (typeof value === 'string')
-      return value.replace(
-        /__MSG_([A-Za-z0-9_@]+)__/g,
-        (said, name) => chrome.i18n?.getMessage?.(name) || said,
-      )
+      return value.replace(/__MSG_([A-Za-z0-9_@]+)__/g, (said, name) => chrome.i18n?.getMessage?.(name) || said)
     if (Array.isArray(value)) return value.map(worded)
     if (value && typeof value === 'object')
       return Object.fromEntries(Object.entries(value).map(([key, one]) => [key, worded(one)]))
@@ -178,8 +170,7 @@
   else chrome.extension = { getURL: (path) => chrome.runtime.getURL(path) }
 
   if (page) {
-    const backgroundPage = () =>
-      chrome.extension.getViews?.().find((view) => view.__ordenBackground === true) ?? null
+    const backgroundPage = () => chrome.extension.getViews?.().find((view) => view.__ordenBackground === true) ?? null
     chrome.extension.getBackgroundPage = backgroundPage
     chrome.runtime.getBackgroundPage = promised(backgroundPage)
   }
@@ -194,9 +185,7 @@
   let registered = 0
   put(chrome, 'contentScripts', {
     register: promised(async (options) => {
-      const files = (options.js ?? [])
-        .filter((one) => one.file)
-        .map((one) => one.file.replace(/^\//, ''))
+      const files = (options.js ?? []).filter((one) => one.file).map((one) => one.file.replace(/^\//, ''))
       if ((options.js ?? []).some((one) => one.code))
         throw new Error('A content script of code is not supported in Orden.')
       const id = `orden-${Date.now()}-${++registered}`
@@ -206,9 +195,7 @@
           matches: options.matches,
           excludeMatches: options.excludeMatches,
           js: files.length ? withOurs(files) : undefined,
-          css: (options.css ?? [])
-            .filter((one) => one.file)
-            .map((one) => one.file.replace(/^\//, '')),
+          css: (options.css ?? []).filter((one) => one.file).map((one) => one.file.replace(/^\//, '')),
           allFrames: options.allFrames,
           matchOriginAsFallback: options.matchAboutBlank,
           runAt: options.runAt,
@@ -245,9 +232,7 @@
       const only = all.filter((one) => FIREFOX_ONLY.has(one))
       const rest = {
         ...asked,
-        permissions: all
-          .filter((one) => !FIREFOX_ONLY.has(one))
-          .map((one) => (one === 'menus' ? 'contextMenus' : one)),
+        permissions: all.filter((one) => !FIREFOX_ONLY.has(one)).map((one) => (one === 'menus' ? 'contextMenus' : one)),
       }
       return { only, rest }
     }
@@ -260,16 +245,13 @@
         }),
       )
     }
-    wrapped(chrome.permissions, 'remove', (own) =>
-      promised(async (asked) => own(split(asked).rest)),
-    )
+    wrapped(chrome.permissions, 'remove', (own) => promised(async (asked) => own(split(asked).rest)))
   }
 
   if (chrome.action) {
     const action = chrome.action
     wrapped(action, 'setIcon', (own) => (details, ...rest) => {
-      const paths =
-        typeof details?.path === 'string' ? [details.path] : Object.values(details?.path ?? {})
+      const paths = typeof details?.path === 'string' ? [details.path] : Object.values(details?.path ?? {})
       if (paths.some((one) => /\.svg(#|$)/i.test(one))) return promised(() => undefined)(...rest)
       return own(details, ...rest)
     })
@@ -316,9 +298,7 @@
       delete out.viewTypes
       if (Array.isArray(out.contexts)) {
         out.contexts = [
-          ...new Set(
-            out.contexts.filter((one) => !ONLY_FIREFOX.has(one)).map((one) => PLACES[one] ?? one),
-          ),
+          ...new Set(out.contexts.filter((one) => !ONLY_FIREFOX.has(one)).map((one) => PLACES[one] ?? one)),
         ]
         if (!out.contexts.length) out.visible = false
         if (!out.contexts.length) out.contexts = ['page']
@@ -329,11 +309,7 @@
       if (creating && out.type !== 'separator' && !out.title) out.title = String(out.id ?? '…')
       return out
     }
-    wrapped(
-      menus,
-      'create',
-      (own) => (properties, callback) => own(fitted(properties, true), callback),
-    )
+    wrapped(menus, 'create', (own) => (properties, callback) => own(fitted(properties, true), callback))
     wrapped(
       menus,
       'update',
@@ -388,11 +364,7 @@
     query: promised(async (details = {}) =>
       (await identities())
         .filter((one) => details.name === undefined || one.name === details.name)
-        .filter(
-          (one) =>
-            details.cookieStoreIds === undefined ||
-            details.cookieStoreIds.includes(one.cookieStoreId),
-        )
+        .filter((one) => details.cookieStoreIds === undefined || details.cookieStoreIds.includes(one.cookieStoreId))
         .map(identity),
     ),
     get: promised(async (id) => {
@@ -449,8 +421,7 @@
         containers.onUpdated.fire({ contextualIdentity: identity(one) })
     }
     for (const one of before) {
-      if (!of(after, one.cookieStoreId))
-        containers.onRemoved.fire({ contextualIdentity: identity(one) })
+      if (!of(after, one.cookieStoreId)) containers.onRemoved.fire({ contextualIdentity: identity(one) })
     }
   })
   put(chrome, 'contextualIdentities', containers)
@@ -460,9 +431,7 @@
     const tabs = chrome.tabs
     const hidden = async () => new Set(await session.get(HIDDEN, []))
     const dressed = (tab, gone) =>
-      tab && typeof tab === 'object'
-        ? { cookieStoreId: DEFAULT_STORE, hidden: gone.has(tab.id), ...tab }
-        : tab
+      tab && typeof tab === 'object' ? { cookieStoreId: DEFAULT_STORE, hidden: gone.has(tab.id), ...tab } : tab
     const ONLY_FIREFOX = {
       create: ['cookieStoreId', 'openInReaderMode', 'discarded', 'title', 'muted'],
       update: ['loadReplace', 'successorTabId'],
@@ -479,16 +448,14 @@
       ],
     }
     const plain = (name) => (properties) => {
-      if (!properties || typeof properties !== 'object' || Array.isArray(properties))
-        return properties
+      if (!properties || typeof properties !== 'object' || Array.isArray(properties)) return properties
       const dropped = new Set(ONLY_FIREFOX[name] ?? [])
       return Object.fromEntries(Object.entries(properties).filter(([field]) => !dropped.has(field)))
     }
     wrapped(tabs, 'query', (own) =>
       promised(async (asked = {}) => {
         const { cookieStoreId, hidden: wantHidden, openerTabId } = asked
-        if (cookieStoreId !== undefined && ![].concat(cookieStoreId).includes(DEFAULT_STORE))
-          return []
+        if (cookieStoreId !== undefined && ![].concat(cookieStoreId).includes(DEFAULT_STORE)) return []
         const gone = await hidden()
         return (await own(plain('query')(asked)))
           .map((tab) => dressed(tab, gone))
@@ -501,9 +468,7 @@
         promised(async (...args) => {
           const answer = await own(...args.map(plain(name)))
           const gone = await hidden()
-          return Array.isArray(answer)
-            ? answer.map((tab) => dressed(tab, gone))
-            : dressed(answer, gone)
+          return Array.isArray(answer) ? answer.map((tab) => dressed(tab, gone)) : dressed(answer, gone)
         }),
       )
     }
@@ -555,8 +520,7 @@
     }))
     for (const name of ['onCreated', 'onActivated', 'onRemoved'])
       filtered(tabs[name], (listener) => ({
-        listener: (first, ...rest) =>
-          listener(name === 'onCreated' ? dressed(first, new Set()) : first, ...rest),
+        listener: (first, ...rest) => listener(name === 'onCreated' ? dressed(first, new Set()) : first, ...rest),
         extra: [],
       }))
 
@@ -616,9 +580,7 @@
         (own) =>
           (scripts, ...rest) =>
             own(
-              scripts.map((one) =>
-                one.js && one.world !== 'MAIN' ? { ...one, js: withOurs(one.js) } : one,
-              ),
+              scripts.map((one) => (one.js && one.world !== 'MAIN' ? { ...one, js: withOurs(one.js) } : one)),
               ...rest,
             ),
       )
@@ -633,10 +595,7 @@
           args: [String(query), !!options.caseSensitive, !!options.entireWord, FOUND],
           func: (asked, cased, whole, name) => {
             const ranges = []
-            const walker = document.createTreeWalker(
-              document.body ?? document.documentElement,
-              NodeFilter.SHOW_TEXT,
-            )
+            const walker = document.createTreeWalker(document.body ?? document.documentElement, NodeFilter.SHOW_TEXT)
             const flags = cased ? 'g' : 'gi'
             const escaped = asked.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
             const pattern = new RegExp(whole ? `\\b${escaped}\\b` : escaped, flags)
@@ -774,8 +733,7 @@
       wrapped(chrome.cookies, name, (own) => (details, ...rest) => {
         if (details && typeof details === 'object') {
           details = { ...details }
-          if (typeof details.storeId === 'string' && details.storeId.startsWith('firefox-'))
-            delete details.storeId
+          if (typeof details.storeId === 'string' && details.storeId.startsWith('firefox-')) delete details.storeId
           delete details.firstPartyDomain
         }
         return own(details, ...rest)
@@ -789,23 +747,18 @@
   }
   put(chrome, 'sidebarAction', {
     setPanel: promised(
-      ({ panel }) =>
-        void (SIDEBAR.panel = panel ? new URL(panel, chrome.runtime.getURL('/')).href : ''),
+      ({ panel }) => void (SIDEBAR.panel = panel ? new URL(panel, chrome.runtime.getURL('/')).href : ''),
     ),
     getPanel: promised(() => SIDEBAR.panel),
     setTitle: promised(({ title }) => void (SIDEBAR.title = title ?? '')),
     getTitle: promised(() => SIDEBAR.title),
     setIcon: promised(() => undefined),
     open: promised(() =>
-      SIDEBAR.panel && chrome.tabs
-        ? chrome.tabs.create({ url: SIDEBAR.panel }).then(() => undefined)
-        : undefined,
+      SIDEBAR.panel && chrome.tabs ? chrome.tabs.create({ url: SIDEBAR.panel }).then(() => undefined) : undefined,
     ),
     close: promised(() => undefined),
     toggle: promised(() =>
-      SIDEBAR.panel && chrome.tabs
-        ? chrome.tabs.create({ url: SIDEBAR.panel }).then(() => undefined)
-        : undefined,
+      SIDEBAR.panel && chrome.tabs ? chrome.tabs.create({ url: SIDEBAR.panel }).then(() => undefined) : undefined,
     ),
     isOpen: promised(() => false),
   })

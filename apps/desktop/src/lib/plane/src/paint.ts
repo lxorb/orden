@@ -188,12 +188,7 @@ function sketch(path: Path2D, stroke: InkStroke, step: number) {
   else if (last !== end) path.lineTo(end.x, end.y)
 }
 
-export function paintSketch(
-  ctx: Paintable,
-  strokes: readonly InkStroke[],
-  view: View,
-  palette: Palette,
-) {
+export function paintSketch(ctx: Paintable, strokes: readonly InkStroke[], view: View, palette: Palette) {
   wipe(ctx, view.width * view.ratio, view.height * view.ratio)
   place(ctx, view)
 

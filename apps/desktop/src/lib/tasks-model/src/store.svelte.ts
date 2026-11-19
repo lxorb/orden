@@ -1,16 +1,7 @@
 import { err, failure, ok, type Result } from '@orden/contracts'
 import { type Kept, TodoRecords, type TodoDisk, type TodoServer } from './records'
 import { nextOrder } from './query'
-import {
-  checkedPatch,
-  fieldsOf,
-  fitsOneChange,
-  KIND,
-  newId,
-  type Todo,
-  todoOf,
-  type TodoPatch,
-} from './todo'
+import { checkedPatch, fieldsOf, fitsOneChange, KIND, newId, type Todo, todoOf, type TodoPatch } from './todo'
 
 const SEND_AFTER = 1500
 

@@ -2,8 +2,7 @@ import { flushSync } from 'svelte'
 import { describe, expect, test, vi } from 'vitest'
 
 const { bridge } = await import('./bridge.svelte')
-const { EXPERIMENTAL_WORD, GLASSES_WORD, glassesOn, hiddenKinds } =
-  await import('../../gates/src/api')
+const { EXPERIMENTAL_WORD, GLASSES_WORD, glassesOn, hiddenKinds } = await import('../../gates/src/api')
 
 describe('the plugin and the glasses (#2027)', () => {
   test('connects only while Glasses is on, and lets go when it goes off', () => {

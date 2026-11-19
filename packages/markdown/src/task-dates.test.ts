@@ -1,13 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  dayOf,
-  deadlineField,
-  deadlineOf,
-  hasStarted,
-  isLate,
-  startField,
-  startOf,
-} from './task-dates'
+import { dayOf, deadlineField, deadlineOf, hasStarted, isLate, startField, startOf } from './task-dates'
 import { readTask } from './task-line'
 
 const TODAY = '2026-10-18'

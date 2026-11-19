@@ -1,14 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { growth, GROWS_AT_MOST } from '../../../scripts/growth'
 import './eager'
-import {
-  codeBlocks,
-  documentTitle,
-  frontMatter,
-  frontMatterValue,
-  renderMarkdown,
-  stripFrontMatter,
-} from './index'
+import { codeBlocks, documentTitle, frontMatter, frontMatterValue, renderMarkdown, stripFrontMatter } from './index'
 
 test('front matter: is not rendered; can be read on its own; leaves a document without it alone; a block nobody closed is the note’s own words; answers a single field', () => {
   expect(renderMarkdown('---\ntitle: Hi\n---\n\nBody.\n')).not.toContain('title: Hi')
@@ -101,8 +94,7 @@ describe('GitHub-flavoured basics', () => {
 })
 
 describe('a markdown link that names a note', () => {
-  const resolveNoteHref = (target: string) =>
-    target.toLowerCase().endsWith('two.md') ? '/public/two' : null
+  const resolveNoteHref = (target: string) => (target.toLowerCase().endsWith('two.md') ? '/public/two' : null)
 
   test('is left exactly as written where nobody can resolve it', () => {
     const html = renderMarkdown('see [the other](../Public/Two.md)')
@@ -126,10 +118,9 @@ describe('a markdown link that names a note', () => {
   })
 
   test('leaves everything that is not a note alone', () => {
-    const html = renderMarkdown(
-      'see [out](https://example.org/a.md) and [up](/already/there) and [it](#here)',
-      { resolveNoteHref },
-    )
+    const html = renderMarkdown('see [out](https://example.org/a.md) and [up](/already/there) and [it](#here)', {
+      resolveNoteHref,
+    })
     expect(html).toContain('href="https://example.org/a.md"')
     expect(html).toContain('href="/already/there"')
     expect(html).toContain('href="#here"')
@@ -137,8 +128,7 @@ describe('a markdown link that names a note', () => {
 })
 
 describe('headings and the table of contents', () => {
-  const SOURCE =
-    '# Title\n\n[toc]\n\n## Two words\n\n### Deeper, *with* `code`\n\n## Two words\n\nText'
+  const SOURCE = '# Title\n\n[toc]\n\n## Two words\n\n### Deeper, *with* `code`\n\n## Two words\n\nText'
 
   test('are plain by default', () => {
     const html = renderMarkdown(SOURCE)
@@ -164,9 +154,7 @@ describe('headings and the table of contents', () => {
     expect(html).toContain('<nav class="toc">')
     expect(html).toContain('<a href="#title">Title</a>')
     expect(html).toContain('<a href="#deeper-with-code">Deeper, with code</a>')
-    expect(html).toMatch(
-      /<li><a href="#two-words">Two words<\/a>\n?<ul>\n?<li><a href="#deeper-with-code">/,
-    )
+    expect(html).toMatch(/<li><a href="#two-words">Two words<\/a>\n?<ul>\n?<li><a href="#deeper-with-code">/)
   })
 
   test('accept [TOC] in capitals, as Typora does; leave a [toc] in running text alone; render nothing for a [toc] in a document without headings', () => {
@@ -217,9 +205,7 @@ describe('headings and the table of contents', () => {
 
 describe('code fences', () => {
   test('are listed with their language', () => {
-    const blocks = codeBlocks(
-      '```js\nlet a\n```\n\n- item\n\n  ```mermaid\n  graph TD\n  ```\n\n```\nplain\n```',
-    )
+    const blocks = codeBlocks('```js\nlet a\n```\n\n- item\n\n  ```mermaid\n  graph TD\n  ```\n\n```\nplain\n```')
     expect(blocks).toEqual([
       { language: 'js', code: 'let a' },
       { language: 'mermaid', code: 'graph TD' },
@@ -482,23 +468,17 @@ describe('an <iframe> a note wrote', () => {
       const html = renderMarkdown(`${TAG}\n`, options)
       expect(html, JSON.stringify(options)).toContain('class="embed-web embed-page"')
       expect(html, JSON.stringify(options)).toContain('field.example.test')
-      expect(html, JSON.stringify(options)).toContain(
-        'data-frame="https://field.example.test/plan"',
-      )
+      expect(html, JSON.stringify(options)).toContain('data-frame="https://field.example.test/plan"')
       expect(html, JSON.stringify(options)).not.toContain('<iframe')
     }
   })
 
   test('and on a page, which runs nothing, the card is a link to the page itself; inside a sentence as well as on a line of its own', () => {
-    expect(renderMarkdown(`${TAG}\n`, { escapeHtml: true })).toContain(
-      'href="https://field.example.test/plan"',
-    )
+    expect(renderMarkdown(`${TAG}\n`, { escapeHtml: true })).toContain('href="https://field.example.test/plan"')
     const html = renderMarkdown(`See ${TAG} for the plan.\n`)
     expect(html).toContain('class="embed-web embed-page"')
     expect(html).not.toContain('iframe>')
-    expect(renderMarkdown(`See ${TAG} for the plan.\n`, { escapeHtml: true })).not.toContain(
-      'iframe',
-    )
+    expect(renderMarkdown(`See ${TAG} for the plan.\n`, { escapeHtml: true })).not.toContain('iframe')
   })
 
   test('and a tag pointing where a browser will not frame is nothing at all', () => {
@@ -546,9 +526,7 @@ describe('an <iframe> a note wrote', () => {
   }, 60_000)
 
   test('each of several in a row is its own card, closed or not', () => {
-    const html = renderMarkdown(
-      `${TAG}${TAG.replace('plan', 'one')}<iframe src="https://field.example.test/two">\n`,
-    )
+    const html = renderMarkdown(`${TAG}${TAG.replace('plan', 'one')}<iframe src="https://field.example.test/two">\n`)
     expect(html.match(/class="embed-web[^"]*embed-page"/g)).toHaveLength(3)
     expect(html).not.toContain('<iframe')
   })
@@ -579,9 +557,7 @@ describe('the markup of a document that is the reader’s own', () => {
       '<div><base href="https://x.dev/"></div>\n',
       '<div><link rel="stylesheet" href="https://x.dev/a.css"></div>\n',
     ]) {
-      expect(renderMarkdown(source), source).not.toMatch(
-        /<(?:meta|frame|frameset|object|embed|base|link)\b/i,
-      )
+      expect(renderMarkdown(source), source).not.toMatch(/<(?:meta|frame|frameset|object|embed|base|link)\b/i)
     }
   })
 
@@ -639,18 +615,14 @@ describe('a block of HTML that does something', () => {
     expect(html).not.toContain('embed-html')
     expect(html).not.toContain('data-srcdoc=')
     expect(renderMarkdown('<div class="two-up">text</div>\n')).toContain('<div class="two-up">')
-    expect(renderMarkdown('<div class="two-up">text</div>\n', { escapeHtml: true })).toContain(
-      '&lt;div',
-    )
+    expect(renderMarkdown('<div class="two-up">text</div>\n', { escapeHtml: true })).toContain('&lt;div')
   })
 })
 
 describe('definition lists', () => {
   test('renders a term and its meaning; takes several meanings for one term', () => {
     expect(renderMarkdown('Markdown\n: A way of writing.\n')).toContain('<dt>Markdown</dt>')
-    expect(renderMarkdown('Markdown\n: A way of writing.\n')).toContain(
-      '<dd>A way of writing.</dd>',
-    )
+    expect(renderMarkdown('Markdown\n: A way of writing.\n')).toContain('<dd>A way of writing.</dd>')
     const html = renderMarkdown('Nib\n: A pen tip.\n: This editor.\n')
     expect(html.match(/<dd>/g)).toHaveLength(2)
   })
@@ -702,9 +674,7 @@ describe('abbreviations', () => {
   })
 
   test('is defined after a fence that ended with the list item it was in', () => {
-    const html = renderMarkdown(
-      '- a\n  ```\n  code\n\n*[HTML]: HyperText Markup Language\n\nI write HTML.\n',
-    )
+    const html = renderMarkdown('- a\n  ```\n  code\n\n*[HTML]: HyperText Markup Language\n\nI write HTML.\n')
     expect(html).toContain('<abbr title="HyperText Markup Language">HTML</abbr>')
   })
 
@@ -760,9 +730,7 @@ describe('what a note cannot do to the page around it', () => {
   })
 
   test('so do the sub and sup tags an AI answer writes, and nothing else they hold', () => {
-    const html = published(
-      'MAD ≈ P<sub>diast</sub> + ⅓ × (P<SUB>syst</SUB> − P<sub>diast</sub>), x<sup>2</sup>',
-    )
+    const html = published('MAD ≈ P<sub>diast</sub> + ⅓ × (P<SUB>syst</SUB> − P<sub>diast</sub>), x<sup>2</sup>')
     expect(html).toContain('P<sub>diast</sub>')
     expect(html).toContain('P<sub>syst</sub>')
     expect(html).toContain('x<sup>2</sup>')
@@ -919,12 +887,8 @@ describe('nesting thousands deep', () => {
 })
 
 test('a markdown picture with a size after a bar: is drawn at that size, as Obsidian does; and words after a bar are words', () => {
-  expect(renderMarkdown('![\\|100x200](a.png)')).toContain(
-    '<img src="a.png" alt="" width="100" height="200">',
-  )
-  expect(renderMarkdown('![a cat|300](a.png)')).toContain(
-    '<img src="a.png" alt="a cat" width="300">',
-  )
+  expect(renderMarkdown('![\\|100x200](a.png)')).toContain('<img src="a.png" alt="" width="100" height="200">')
+  expect(renderMarkdown('![a cat|300](a.png)')).toContain('<img src="a.png" alt="a cat" width="300">')
   expect(renderMarkdown('![a|b](a.png)')).toContain('alt="a|b"')
 })
 
@@ -1004,9 +968,7 @@ describe('a named block, as a page holds it', () => {
   const tight = (html: string) => html.replace(/>\s+</g, '><').trim()
 
   test('on its own line under words is a break between them, as everywhere else; under a definition it cannot name goes, and what is under it stays one', () => {
-    expect(anchored('word\n^own\nmore\n')).toBe(
-      '<p>word <span id="^own"></span></p>\n<p>more</p>\n',
-    )
+    expect(anchored('word\n^own\nmore\n')).toBe('<p>word <span id="^own"></span></p>\n<p>more</p>\n')
     expect(without(anchored('- a\n^own\n- b\n'))).toBe(renderMarkdown('- a\n\n- b\n'))
     expect(anchored('- a\n^own\n- b\n')).toContain('<span id="^own">')
     expect(anchored('Words\n\n^abc\nmore\n')).toContain('<p>more</p>')
@@ -1030,18 +992,14 @@ describe('a named block, as a page holds it', () => {
       lines.flatMap((two) => lines.map((three) => [one, two, three].join('\n') + '\n')),
     )
     const plain = (text: string) => text.replace(/[ \t]*\^\w+$/gm, '')
-    const differ = named.filter(
-      (text) => tight(without(anchored(text))) !== tight(renderMarkdown(plain(text))),
-    )
+    const differ = named.filter((text) => tight(without(anchored(text))) !== tight(renderMarkdown(plain(text))))
     expect(differ).toEqual([])
   })
 
   test('is found in a note of CRLF lines as in any other', () => {
     const html = renderMarkdown('one ^a\r\n\r\ntwo ^b\r\n\r\nthree ^c', { blockAnchors: true })
     for (const id of ['a', 'b', 'c']) expect(html).toContain(`id="^${id}"`)
-    expect(
-      renderMarkdown('one\r\n\r\n<div>\r\nz ^z\r\n</div>\r\n', { blockAnchors: true }),
-    ).not.toContain('id="^z"')
+    expect(renderMarkdown('one\r\n\r\n<div>\r\nz ^z\r\n</div>\r\n', { blockAnchors: true })).not.toContain('id="^z"')
   })
 
   test('hides no script target from what holds them back', () => {
@@ -1053,9 +1011,9 @@ describe('a named block, as a page holds it', () => {
       const html = renderMarkdown(source, { blockAnchors: true })
       expect(html, source).not.toMatch(/<a [^>]*href="java/)
     }
-    expect(
-      renderMarkdown('word <a href="https://x.dev/ ^a\nb">x</a>\n', { blockAnchors: true }),
-    ).toContain('<a href="https://x.dev/')
+    expect(renderMarkdown('word <a href="https://x.dev/ ^a\nb">x</a>\n', { blockAnchors: true })).toContain(
+      '<a href="https://x.dev/',
+    )
   })
 
   test('takes a tag no further than the next one that opens', async () => {

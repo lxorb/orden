@@ -93,9 +93,7 @@ describe('a vault', () => {
     expect((await passCall(env, ada, 'DELETE', `/vaults/${vault}`)).status).toBe(200)
 
     const after = await api.changes(ada, before)
-    expect(after.vaults).toEqual([
-      expect.objectContaining({ id: vault, deleted: true, meta: '', key: null }),
-    ])
+    expect(after.vaults).toEqual([expect.objectContaining({ id: vault, deleted: true, meta: '', key: null })])
     expect(after.items).toEqual([])
     expect(env.db.prepare('select count(*) as n from pass_items').get()).toEqual({ n: 0 })
     expect((await api.item(ada, vault, anId())).status).toBe(404)
@@ -111,10 +109,9 @@ describe('a vault', () => {
     ]) {
       expect((await passCall(env, ada, 'PUT', `/vaults/${anId()}`, body)).status).toBe(400)
     }
-    expect(
-      (await passCall(env, ada, 'PUT', '/vaults/short', { rev: 0, meta: sealed(), key: sealed() }))
-        .status,
-    ).toBe(400)
+    expect((await passCall(env, ada, 'PUT', '/vaults/short', { rev: 0, meta: sealed(), key: sealed() })).status).toBe(
+      400,
+    )
   })
 })
 
@@ -126,9 +123,7 @@ describe('an item', () => {
     expect((await api.item(ada, vault, item, 1)).json.rev).toBe(2)
 
     const changes = await api.changes(ada)
-    expect(changes.items).toEqual([
-      expect.objectContaining({ vault, id: item, rev: 2, keyVersion: 1, deleted: false }),
-    ])
+    expect(changes.items).toEqual([expect.objectContaining({ vault, id: item, rev: 2, keyVersion: 1, deleted: false })])
   })
 
   test('refuses an older revision and hands back what is there', async () => {
@@ -158,12 +153,7 @@ describe('an item', () => {
     await api.item(ada, vault, item)
     for (let rev = 1; rev <= MOST_VERSIONS + 5; rev++) await api.item(ada, vault, item, rev)
 
-    const { json } = await passCall<{ versions: Version[] }>(
-      env,
-      ada,
-      'GET',
-      `/items/${vault}/${item}/versions`,
-    )
+    const { json } = await passCall<{ versions: Version[] }>(env, ada, 'GET', `/items/${vault}/${item}/versions`)
     expect(json.versions).toHaveLength(MOST_VERSIONS)
     expect(json.versions[0]?.rev).toBe(MOST_VERSIONS + 5)
     expect(json.versions.at(-1)?.rev).toBe(6)
@@ -327,9 +317,7 @@ describe('an item', () => {
         .run(shared, bob.email)
 
     const rows = () =>
-      env.db
-        .prepare('select vault_id, id, rev, deleted_at from pass_items order by vault_id, id')
-        .all()
+      env.db.prepare('select vault_id, id, rev, deleted_at from pass_items order by vault_id, id').all()
 
     beforeEach(async () => {
       bob = await person(env, 'bob@example.com')

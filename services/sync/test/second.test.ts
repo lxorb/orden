@@ -305,9 +305,9 @@ describe('signing in with it on', () => {
     const user = env.db.prepare("select id from users where email = 'a@b.dev'").get() as {
       id: string
     }
-    const held = (
-      env.db.prepare('select code_hash from recovery_codes').all() as { code_hash: string }[]
-    ).map((one) => one.code_hash)
+    const held = (env.db.prepare('select code_hash from recovery_codes').all() as { code_hash: string }[]).map(
+      (one) => one.code_hash,
+    )
 
     expect(held).toContain(await recoveryHash(user.id, code, recoveryCost()))
     expect(held).not.toContain(await recoveryHash(user.id, code, recoveryCost() + 1))

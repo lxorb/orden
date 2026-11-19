@@ -20,9 +20,7 @@ describe("glass's pairs", () => {
     for (const pair of PAIRS) {
       for (const shade of [...pair.light, ...pair.dark]) expect(shade).toMatch(/^#[0-9a-f]{6}$/)
       expect(pair.name.length, pair.id).toBeGreaterThan(0)
-      expect(swatchOf(pair, 'dark')).toBe(
-        `linear-gradient(135deg, ${pair.dark[0]}, ${pair.dark[1]})`,
-      )
+      expect(swatchOf(pair, 'dark')).toBe(`linear-gradient(135deg, ${pair.dark[0]}, ${pair.dark[1]})`)
     }
   })
 

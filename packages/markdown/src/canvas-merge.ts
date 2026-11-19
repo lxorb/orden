@@ -133,17 +133,11 @@ function sorted<T extends Thing>(
 
   const was = wasMiddle.filter((thing) => kept.has(thing) || freshIds.has(thing.id))
   const both = isMiddle.filter((thing) => held.has(thing) || leftIds.has(thing.id))
-  if (
-    was.length === both.length &&
-    was.every((thing, at) => thing === both[at] || thing.id === both[at]?.id)
-  )
+  if (was.length === both.length && was.every((thing, at) => thing === both[at] || thing.id === both[at]?.id))
     return true
 
   const places = new Map(was.map((thing, index) => [thing.id, index]))
-  const stayed = standing(
-    both,
-    (one, other) => (places.get(one.id) ?? 0) < (places.get(other.id) ?? 0),
-  )
+  const stayed = standing(both, (one, other) => (places.get(one.id) ?? 0) < (places.get(other.id) ?? 0))
   for (const [index, thing] of both.entries()) {
     if (!stayed.has(index)) touched.shifted.push(thing.id)
   }
@@ -159,12 +153,7 @@ export interface Hunk<T> {
 const REACH = 48
 const HUNKS = 64
 
-function resync<T>(
-  before: readonly T[],
-  from: number,
-  after: readonly T[],
-  to: number,
-): [number, number] | null {
+function resync<T>(before: readonly T[], from: number, after: readonly T[], to: number): [number, number] | null {
   const left = before.length - from
   const right = after.length - to
 
@@ -220,10 +209,7 @@ function spanOf<T>(before: readonly T[], after: readonly T[]): Hunk<T>[] {
   while (head < shortest && before[head] === after[head]) head++
 
   let tail = 0
-  while (
-    tail < shortest - head &&
-    before[before.length - 1 - tail] === after[after.length - 1 - tail]
-  ) {
+  while (tail < shortest - head && before[before.length - 1 - tail] === after[after.length - 1 - tail]) {
     tail++
   }
 
@@ -236,10 +222,7 @@ function spanOf<T>(before: readonly T[], after: readonly T[]): Hunk<T>[] {
   ]
 }
 
-export function standing<T extends object>(
-  items: readonly T[],
-  before: (one: T, other: T) => boolean,
-): Set<number> {
+export function standing<T extends object>(items: readonly T[], before: (one: T, other: T) => boolean): Set<number> {
   const starts: number[] = []
   const next: number[] = []
 
@@ -373,11 +356,7 @@ function settled(
   })
 }
 
-function gapsIn(
-  list: readonly Thing[],
-  shared: (id: string) => boolean,
-  stands: (id: string) => boolean,
-): string[][] {
+function gapsIn(list: readonly Thing[], shared: (id: string) => boolean, stands: (id: string) => boolean): string[][] {
   const gaps: string[][] = [[]]
   for (const { id } of list) {
     if (shared(id)) gaps.push([])
@@ -414,10 +393,7 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
   }
 
   const moved = noTimes()
-  for (const id of new Set([
-    ...Object.keys(ours.moved ?? {}),
-    ...Object.keys(theirs.moved ?? {}),
-  ])) {
+  for (const id of new Set([...Object.keys(ours.moved ?? {}), ...Object.keys(theirs.moved ?? {})])) {
     if (!held.has(id)) continue
     moved[id] = Math.max(timeIn(ours.moved ?? {}, id) ?? 0, timeIn(theirs.moved ?? {}, id) ?? 0)
   }

@@ -27,9 +27,8 @@ describe('the doors', () => {
   test('hand a room the sign-in a socket arrived with', async () => {
     const token = await signIn(env, 'a@b.dev')
     const space = (await call(env, '/v1/spaces', { token, body: { name: 'S' } })).json.space.id
-    const note = (
-      await call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'a.md', content: 'a' } })
-    ).json.note.id
+    const note = (await call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'a.md', content: 'a' } })).json
+      .note.id
     const door = doorway()
     env.ROOMS = door.ROOMS
 
@@ -44,8 +43,7 @@ describe('a room', () => {
   test('closes a socket whose session ran out, the next time anybody types', async () => {
     const owner = await signIn(env, 'owner@example.com')
     const laptop = await signIn(env, 'owner@example.com')
-    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'S' } })).json.space
-      .id
+    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'S' } })).json.space.id
     const note = (
       await call(env, `/v1/spaces/${space}/notes`, {
         token: owner,
@@ -74,15 +72,12 @@ describe('a room', () => {
 
     expect(lost.closedWith?.code).toBe(4401)
     expect(kept.closed).toBe(false)
-    expect(
-      env.db.prepare('select count(*) as held from room_sockets where note_id = ?').get(note),
-    ).toEqual({ held: 1 })
+    expect(env.db.prepare('select count(*) as held from room_sockets where note_id = ?').get(note)).toEqual({ held: 1 })
   })
 
   test('and asks at most once a minute', async () => {
     const owner = await signIn(env, 'owner@example.com')
-    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'S' } })).json.space
-      .id
+    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'S' } })).json.space.id
     const note = (
       await call(env, `/v1/spaces/${space}/notes`, {
         token: owner,

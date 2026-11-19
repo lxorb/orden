@@ -115,12 +115,8 @@ export class Indexing {
         return false
       }
       if (page === null) return false
-      const hits = page.hits.flatMap(({ id, ...hit }) =>
-        here.has(id) ? [] : [{ ...hit, path: at(id, hit.path) }],
-      )
-      const loose = page.loose.flatMap(({ id, ...hit }) =>
-        here.has(id) ? [] : [{ ...hit, path: at(id, hit.path) }],
-      )
+      const hits = page.hits.flatMap(({ id, ...hit }) => (here.has(id) ? [] : [{ ...hit, path: at(id, hit.path) }]))
+      const loose = page.loose.flatMap(({ id, ...hit }) => (here.has(id) ? [] : [{ ...hit, path: at(id, hit.path) }]))
       left -= hits.length
       if (hits.length || loose.length) onFound({ hits, loose })
       if (page.after === null) return true

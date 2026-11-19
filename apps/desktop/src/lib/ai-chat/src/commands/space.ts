@@ -84,9 +84,7 @@ export async function agents(host: Host, thread: Thread | null, args: string): P
   const held = open as Held
   const name = commandName(args)
   if (!name) {
-    const profiles = (await inThreadSpace(open))
-      .filter((one) => one.kind === 'agent')
-      .map((one) => one.name)
+    const profiles = (await inThreadSpace(open)).filter((one) => one.kind === 'agent').map((one) => one.name)
     host.line(open, listed(profiles, held.agent))
     return
   }
@@ -113,9 +111,7 @@ export async function outputStyle(host: Host, thread: Thread | null, args: strin
   if (!open) return
   const held = open as Held
   const name = commandName(args)
-  const notes = (await inThreadSpace(open))
-    .filter((one) => one.kind === 'output-style')
-    .map((one) => one.name)
+  const notes = (await inThreadSpace(open)).filter((one) => one.kind === 'output-style').map((one) => one.name)
   const all = [...Object.keys(STYLES), ...notes]
   if (!name) {
     host.line(open, listed(all, held.style ?? 'default'))

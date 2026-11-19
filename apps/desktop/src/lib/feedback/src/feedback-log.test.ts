@@ -8,33 +8,18 @@ test.each([
     `${TIME} error save: /home/anna/Notes/Divorce lawyer.md - Error: disk full`,
     `${TIME} error save: <path 1>.md - Error: disk full`,
   ],
-  [
-    String.raw`12:00 WARN  C:\Users\anna\Notes\Tax 2026.pdf not read`,
-    '12:00 WARN  <path 1>.pdf not read',
-  ],
-  [
-    '12:00 WARN  /Users/anna/Notes/Bank.canvas was given up on',
-    '12:00 WARN  <path 1>.canvas was given up on',
-  ],
+  [String.raw`12:00 WARN  C:\Users\anna\Notes\Tax 2026.pdf not read`, '12:00 WARN  <path 1>.pdf not read'],
+  ['12:00 WARN  /Users/anna/Notes/Bank.canvas was given up on', '12:00 WARN  <path 1>.canvas was given up on'],
   [String.raw`12:00 INFO  \\nas\anna\Notes\x.md gone`, '12:00 INFO  <path 1>.md gone'],
-  [
-    '12:00 WARN  /home/anna/Notes/Old stuff could not be read',
-    '12:00 WARN  <path 1> could not be read',
-  ],
+  ['12:00 WARN  /home/anna/Notes/Old stuff could not be read', '12:00 WARN  <path 1> could not be read'],
   ['12:00 WARN  file:///home/anna/x failed', '12:00 WARN  <path 1> failed'],
   [
     '12:00 WARN  sync: Private/Divorce lawyer.md not written - offline',
     '12:00 WARN  sync: <path 1>.md not written - offline',
   ],
-  [
-    '12:00 WARN  sync: Private/Kids not moved - offline',
-    '12:00 WARN  sync: <path 1> not moved - offline',
-  ],
+  ['12:00 WARN  sync: Private/Kids not moved - offline', '12:00 WARN  sync: <path 1> not moved - offline'],
   ['12:00 INFO  Divorce lawyer.md could not be read', '12:00 INFO  <path 1>.md could not be read'],
-  [
-    '12:00 ERROR save: Letter to my lawyer - Error: full',
-    '12:00 ERROR save: <a draft> - Error: full',
-  ],
+  ['12:00 ERROR save: Letter to my lawyer - Error: full', '12:00 ERROR save: <a draft> - Error: full'],
   ['12:00 WARN  sync: Anna Schmidt.MD not sent', '12:00 WARN  sync: <path 1>.MD not sent'],
   ['12:00 WARN  sync: Clients/Anna Schmidt not sent', '12:00 WARN  sync: <path 1> not sent'],
   [
@@ -45,14 +30,8 @@ test.each([
     '12:00 WARN  https://api.orden.example/v1/push?token=SECRET failed',
     '12:00 WARN  https://api.orden.example/v1/push failed',
   ],
-  [
-    '12:00 WARN  http://asset.localhost/home/anna/Notes/Divorce.png not drawn',
-    '12:00 WARN  <path 1> not drawn',
-  ],
-  [
-    '12:00 WARN  asset://localhost/%2Fhome%2Fanna%2FDivorce.png not drawn',
-    '12:00 WARN  <path 1> not drawn',
-  ],
+  ['12:00 WARN  http://asset.localhost/home/anna/Notes/Divorce.png not drawn', '12:00 WARN  <path 1> not drawn'],
+  ['12:00 WARN  asset://localhost/%2Fhome%2Fanna%2FDivorce.png not drawn', '12:00 WARN  <path 1> not drawn'],
   ['12:00 WARN  invited anna.schmidt+x@mail.de - no', '12:00 WARN  invited <email> - no'],
   [
     `12:00 ERROR SyntaxError: Unexpected token 'D', "Dear lawyer, I"... is not valid JSON`,
@@ -62,21 +41,15 @@ test.each([
     '12:00 WARN  POST /v1/push failed - conflict with /home/anna/a.md and status 409',
     '12:00 WARN  POST /v1/push failed - conflict with <path 1>.md and status 409',
   ],
-  [
-    '12:00 WARN  could not parse settings.json: expected',
-    '12:00 WARN  could not parse <path 1>.json: expected',
-  ],
+  ['12:00 WARN  could not parse settings.json: expected', '12:00 WARN  could not parse <path 1>.json: expected'],
   [
     '12:00 WARN  sync: the rename of Foo bar.md to Baz.md is given up on',
     '12:00 WARN  sync: the rename of <path 1>.md to <path 2>.md is given up on',
   ],
   ['    at go (https://bank.example.com/app/x.html:5:6)', '    at go (https://bank.example.com/…'],
-])(
-  'the reader’s paths, drafts, addresses and words go; what went wrong stays: %s',
-  (line, want) => {
-    expect(scrubbedLog(line)).toBe(want)
-  },
-)
+])('the reader’s paths, drafts, addresses and words go; what went wrong stays: %s', (line, want) => {
+  expect(scrubbedLog(line)).toBe(want)
+})
 
 test.each([
   `${TIME} info page loaded`,

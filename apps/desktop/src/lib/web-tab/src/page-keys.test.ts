@@ -2,10 +2,7 @@ import { readFileSync } from 'node:fs'
 import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 
-const source = readFileSync(
-  new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url),
-  'utf8',
-)
+const source = readFileSync(new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url), 'utf8')
 const script = /pub const SCRIPT: &str = r"([\s\S]*?)";/.exec(source)?.[1] ?? ''
 
 type Listening = 'bare' | 'stops' | 'takes'
@@ -29,9 +26,7 @@ function page(listening: Listening) {
   }
 
   const press = (type: 'keydown' | 'keyup', init: KeyboardEventInit & { keyCode?: number }) =>
-    field.dispatchEvent(
-      new inside.KeyboardEvent(type, { bubbles: true, cancelable: true, ...init }),
-    )
+    field.dispatchEvent(new inside.KeyboardEvent(type, { bubbles: true, cancelable: true, ...init }))
   const settled = () => new Promise((done) => inside.setTimeout(done, 5))
   return { asked, press, settled }
 }
@@ -149,19 +144,15 @@ describe('a tab a page asks to open in front', () => {
     const dom = new JSDOM('<button id="press">', { runScripts: 'outside-only' })
     const asked: string[] = []
     const inside = dom.window as unknown as Window & typeof globalThis
-    if (active !== null)
-      Object.defineProperty(inside.navigator, 'userActivation', { value: { isActive: active } })
+    if (active !== null) Object.defineProperty(inside.navigator, 'userActivation', { value: { isActive: active } })
     inside.open = (_url?: string | URL, name?: string) => {
       asked.push(name ?? '')
       return null
     }
     inside.eval(script.replaceAll('!event.isTrusted', 'false'))
-    const asks = (url: string) =>
-      inside.dispatchEvent(new inside.CustomEvent('orden-open-tab', { detail: url }))
+    const asks = (url: string) => inside.dispatchEvent(new inside.CustomEvent('orden-open-tab', { detail: url }))
     const happens = (type: string) =>
-      inside.document
-        .getElementById('press')
-        ?.dispatchEvent(new inside.MouseEvent(type, { bubbles: true }))
+      inside.document.getElementById('press')?.dispatchEvent(new inside.MouseEvent(type, { bubbles: true }))
     const press = () => happens('pointerdown')
     return { asked, asks, press, happens }
   }

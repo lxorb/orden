@@ -8,10 +8,7 @@ export function landOnLine(view: EditorView, line: number) {
   const target = view.state.doc.line(Math.min(line + 1, view.state.doc.lines))
   view.dispatch({
     selection: { anchor: target.from },
-    effects: [
-      EditorView.scrollIntoView(target.from, { y: 'start', yMargin: 72 }),
-      landed.of(target.from),
-    ],
+    effects: [EditorView.scrollIntoView(target.from, { y: 'start', yMargin: 72 }), landed.of(target.from)],
     userEvent: 'select',
   })
 }
@@ -50,11 +47,7 @@ const marked = StateField.define<{ from: number; to: number } | null>({
 
       const doc = state.doc
       const marks = []
-      for (
-        let number = doc.lineAt(held.from).number;
-        number <= doc.lineAt(held.to).number;
-        number++
-      ) {
+      for (let number = doc.lineAt(held.from).number; number <= doc.lineAt(held.to).number; number++) {
         marks.push(Decoration.line({ class: 'orden-landed' }).range(doc.line(number).from))
       }
 

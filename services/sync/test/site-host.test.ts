@@ -9,8 +9,7 @@ const SITE = 'field.nibeditor.com'
 beforeEach(async () => {
   env = testEnv()
   token = await signIn(env, 'a@b.dev')
-  const space = (await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })).json.space
-    .id
+  const space = (await call(env, '/v1/spaces', { token, body: { name: 'Field notes' } })).json.space.id
   await call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'Hello.md', content: 'Hi' } })
   await call(env, `/v1/spaces/${space}/blog`, {
     method: 'PUT',

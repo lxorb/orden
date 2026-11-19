@@ -5,9 +5,7 @@ let answer: string | null = null
 
 vi.mock('../../src/lib/platform/src/tauri', async (original) => ({
   ...(await original<typeof import('../../src/lib/platform/src/tauri')>()),
-  invoke: vi.fn((command: string) =>
-    Promise.resolve(command === 'quick_add_key' ? answer : undefined),
-  ),
+  invoke: vi.fn((command: string) => Promise.resolve(command === 'quick_add_key' ? answer : undefined)),
 }))
 
 Object.defineProperty(navigator, 'locks', {

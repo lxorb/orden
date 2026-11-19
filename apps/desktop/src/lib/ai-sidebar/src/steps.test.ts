@@ -22,19 +22,14 @@ const words = (text: string): Part => ({ kind: 'text', text })
 
 describe('an answer laid out as Codex lays one out', () => {
   test('words that arrived in pieces are one block', () => {
-    expect(blocksOf([words('A heron '), words('waits.')])).toEqual([
-      { kind: 'words', text: 'A heron waits.', at: 0 },
-    ])
+    expect(blocksOf([words('A heron '), words('waits.')])).toEqual([{ kind: 'words', text: 'A heron waits.', at: 0 }])
   })
 
   test('reads that follow one another are one Explored step, and one read stays a row', () => {
     const blocks = blocksOf([thought, read('a', 'Herons.md'), read('b', 'Kestrels.md'), edit])
     expect(blocks.map((one) => one.kind)).toEqual(['row', 'explored', 'row'])
     expect(blocks[1]).toMatchObject({ kind: 'explored', at: 1 })
-    expect(blocks[1]?.kind === 'explored' && blocks[1].rows.map((one) => one.id)).toEqual([
-      'a',
-      'b',
-    ])
+    expect(blocks[1]?.kind === 'explored' && blocks[1].rows.map((one) => one.id)).toEqual(['a', 'b'])
     expect(blocksOf([read('a', 'Herons.md'), edit]).map((one) => one.kind)).toEqual(['row', 'row'])
   })
 

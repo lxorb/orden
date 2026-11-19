@@ -1,15 +1,6 @@
 export { accountAddress, movedAddress } from './addresses'
 export { type Effort, EFFORTS, forgetKey, keyFor, mayStore, opened, sealed, setKey } from './ai-key'
-export {
-  type Body,
-  bytesAtMost,
-  listIn,
-  MOST_BODY_BYTES,
-  objectBody,
-  objectIn,
-  readBody,
-  textAtMost,
-} from './body'
+export { type Body, bytesAtMost, listIn, MOST_BODY_BYTES, objectBody, objectIn, readBody, textAtMost } from './body'
 export { askInChunks, AT_A_TIME, chunks, places } from './bound'
 export { serveApp, servePage, servePass, switchChannel } from './channel'
 export {
@@ -55,16 +46,7 @@ export {
 } from './guests'
 export { type Ended, hooks, type Session, wire } from './hooks'
 export { claimDomain, DOMAIN, domainStatus, releaseDomain, releaseLeftDomains } from './hostnames'
-export {
-  blogRootOf,
-  blogRoots,
-  isAppHost,
-  isOwnOrigin,
-  originAt,
-  origins,
-  passHost,
-  sameOriginPath,
-} from './hosts'
+export { blogRootOf, blogRoots, isAppHost, isOwnOrigin, originAt, origins, passHost, sameOriginPath } from './hosts'
 export { laterOf, pokeNow, pokeSpace } from './hub/poke'
 export { askHub, eraseHubs, HUB_AWAY, tellHubs } from './hub/reach'
 export {
@@ -94,14 +76,7 @@ export { type Holder, SocketLock } from './locks/sockets'
 export { OPEN_HEADER, openAnswer, openIn, sweepOpened, WRITTEN_HEADER } from './opened'
 export { bytesOf, digest, hexOf, opens } from './pairing'
 export { LONGEST_PATH, staysInside } from './paths'
-export {
-  forgetPictures,
-  htmlIsLive,
-  keepPictures,
-  picturesOf,
-  picturesOfMeta,
-  RESTAMP,
-} from './pictures'
+export { forgetPictures, htmlIsLive, keepPictures, picturesOf, picturesOfMeta, RESTAMP } from './pictures'
 export { programMayReach } from './programs'
 export {
   PROTECTED,
@@ -116,13 +91,7 @@ export {
 export { forgetEndedTargets } from './push/live'
 export { forgetReminders, sendDue } from './push/reminders'
 export { push } from './push/targets'
-export {
-  describeDestination,
-  fallbackName,
-  privateHost,
-  redirectAllowed,
-  sameRedirect,
-} from './redirects'
+export { describeDestination, fallbackName, privateHost, redirectAllowed, sameRedirect } from './redirects'
 export {
   NO_ADDRESS,
   NO_SUCH_NOTE,
@@ -149,15 +118,7 @@ export { settings, shownWords } from './settings'
 export { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from './signins'
 export { answersFrom, asCsv, formHtml, formOf } from './site/form'
 export { FRONT_REV, type NoteFront, readFront, titleFrom, writeFront } from './site/front'
-export {
-  gateBody,
-  hashPassword,
-  letIn,
-  matches,
-  newSiteKey,
-  newTicket,
-  ticketCookie,
-} from './site/gate'
+export { gateBody, hashPassword, letIn, matches, newSiteKey, newTicket, ticketCookie } from './site/gate'
 export { escape, type Head, headOf } from './site/head'
 export { hostnameOf, spaceForHost } from './site/host'
 export { notesOfSite } from './site/notes'

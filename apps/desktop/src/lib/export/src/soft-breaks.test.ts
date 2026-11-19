@@ -17,13 +17,9 @@ describe('a soft line break between marked words in Word, RTF and text exports',
   })
 
   test('two resized pictures on following lines stay side by side', () => {
-    const doc = documentOf(
-      '<img src="a.png" style="zoom:50%;" />\n<img src="b.png" style="zoom:50%;" />\n',
-      'Note',
-      {
-        hardBreaks: false,
-      },
-    )
+    const doc = documentOf('<img src="a.png" style="zoom:50%;" />\n<img src="b.png" style="zoom:50%;" />\n', 'Note', {
+      hardBreaks: false,
+    })
     const spans = doc.blocks[0] && 'spans' in doc.blocks[0] ? doc.blocks[0].spans : []
     expect(spans.some((span) => span.text === '\n')).toBe(false)
   })

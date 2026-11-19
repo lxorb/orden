@@ -25,12 +25,7 @@ export function linkWords(html: string): string {
     .trim()
 }
 
-export async function siteDropped(
-  ws: Sites,
-  folder: string,
-  list: string,
-  html: string,
-): Promise<string | null> {
+export async function siteDropped(ws: Sites, folder: string, list: string, html: string): Promise<string | null> {
   if (!canWriteAt(folder)) return null
   const url = droppedAddress((type) => (type === 'text/uri-list' ? list : ''))
   if (url === null) return null

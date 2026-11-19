@@ -59,11 +59,7 @@ describe('a .chat file', () => {
     ['an icon that is not a string', '"icon":7', pointer],
     ['an empty icon', '"icon":" "', pointer],
     ['an icon too long to be one', `"icon":"${'a'.repeat(101)}"`, pointer],
-    [
-      'a colour that is not a string',
-      '"icon":"rocket","iconColor":[1]',
-      { ...pointer, icon: 'rocket' },
-    ],
+    ['a colour that is not a string', '"icon":"rocket","iconColor":[1]', { ...pointer, icon: 'rocket' }],
   ])('drops %s', (_said, fields, read) => {
     expect(chatOf(`{"v":1,"chat":"${ID}",${fields}}`)).toEqual(read)
   })

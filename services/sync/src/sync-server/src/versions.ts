@@ -79,9 +79,7 @@ export async function keepVersion(
   let stored = false
 
   for (let tries = 0; tries < 3; tries++) {
-    const last = await env.DB.prepare(
-      'select at, hash from note_versions where note_id = ? order by at desc limit 1',
-    )
+    const last = await env.DB.prepare('select at, hash from note_versions where note_id = ? order by at desc limit 1')
       .bind(note.id)
       .first<{ at: number; hash: string }>()
 
@@ -157,12 +155,7 @@ export async function versionsFit(env: Env, noteId: string, incoming: number): P
   return (row?.bytes ?? 0) + incoming <= MOST_VERSION_BYTES
 }
 
-export async function keepVersionNow(
-  env: Env,
-  noteId: string,
-  content: string,
-  by: string,
-): Promise<void> {
+export async function keepVersionNow(env: Env, noteId: string, content: string, by: string): Promise<void> {
   const hash = await sha256(content)
   const held = await env.DB.prepare('select 1 as one from note_versions where hash = ? limit 1')
     .bind(hash)
@@ -196,9 +189,7 @@ export async function holdVersion(
   content: string,
   by: string,
 ): Promise<void> {
-  const newest = await env.DB.prepare(
-    'select at, hash from note_versions where note_id = ? order by at desc limit 1',
-  )
+  const newest = await env.DB.prepare('select at, hash from note_versions where note_id = ? order by at desc limit 1')
     .bind(note.id)
     .first<{ at: number; hash: string }>()
 
@@ -272,9 +263,7 @@ export async function forgetBodies(env: Env, hashes: Iterable<string>): Promise<
 }
 
 export async function versionsOf(env: Env, noteId: string): Promise<Version[]> {
-  const { results } = await env.DB.prepare(
-    'select * from note_versions where note_id = ? order by at desc limit ?',
-  )
+  const { results } = await env.DB.prepare('select * from note_versions where note_id = ? order by at desc limit ?')
     .bind(noteId, MOST_SHOWN)
     .all<Version>()
 
@@ -282,9 +271,7 @@ export async function versionsOf(env: Env, noteId: string): Promise<Version[]> {
 }
 
 export async function versionAt(env: Env, noteId: string, at: number): Promise<string | null> {
-  const version = await env.DB.prepare(
-    'select hash from note_versions where note_id = ? and at = ?',
-  )
+  const version = await env.DB.prepare('select hash from note_versions where note_id = ? and at = ?')
     .bind(noteId, at)
     .first<{ hash: string }>()
 
@@ -294,16 +281,10 @@ export async function versionAt(env: Env, noteId: string, at: number): Promise<s
   return object ? await object.text() : null
 }
 
-export async function saidOnce(
-  env: Env,
-  note: Pick<Note, 'id' | 'hash'>,
-  hash: string,
-): Promise<boolean> {
+export async function saidOnce(env: Env, note: Pick<Note, 'id' | 'hash'>, hash: string): Promise<boolean> {
   if (note.hash === hash) return true
 
-  const row = await env.DB.prepare(
-    'select 1 as one from note_versions where note_id = ? and hash = ? limit 1',
-  )
+  const row = await env.DB.prepare('select 1 as one from note_versions where note_id = ? and hash = ? limit 1')
     .bind(note.id, hash)
     .first<{ one: number }>()
 
@@ -386,9 +367,7 @@ export async function sweepVersions(env: Env, at: number): Promise<number> {
 
   for (const row of old.results) freed.add(row.hash)
 
-  const { results: busy } = await env.DB.prepare(
-    'select distinct note_id from note_versions where at < ? limit ?',
-  )
+  const { results: busy } = await env.DB.prepare('select distinct note_id from note_versions where at < ? limit ?')
     .bind(at - DAY, AT_ONCE)
     .all<{ note_id: string }>()
 
@@ -468,12 +447,7 @@ async function capVersions(env: Env): Promise<number> {
 
 export const ROLLBACK_AT_ONCE = AT_ONCE
 
-export async function countVersionsAt(
-  env: Env,
-  spaceId: string,
-  under: string,
-  at: number,
-): Promise<number> {
+export async function countVersionsAt(env: Env, spaceId: string, under: string, at: number): Promise<number> {
   const prefix = folderPrefix(under)
 
   const found = await env.DB.prepare(

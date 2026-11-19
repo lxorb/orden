@@ -13,9 +13,7 @@ describe('the module stands on its own', () => {
       .flatMap((name) =>
         [...readFileSync(join(SRC, name), 'utf8').matchAll(/(?:from |import\()'([^']*)'/g)]
           .map((found) => found[1] ?? '')
-          .filter(
-            (specifier) => !specifier.startsWith('./') && !specifier.startsWith('@tauri-apps/'),
-          )
+          .filter((specifier) => !specifier.startsWith('./') && !specifier.startsWith('@tauri-apps/'))
           .map((specifier) => `${name}: ${specifier}`),
       )
     expect(reaching).toEqual([])

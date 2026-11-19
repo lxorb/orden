@@ -36,10 +36,7 @@ function flag(value: unknown, fallback: boolean): boolean {
 }
 
 function count(value: unknown, range: { min: number; max: number }, fallback: number): number {
-  return typeof value === 'number' &&
-    Number.isInteger(value) &&
-    value >= range.min &&
-    value <= range.max
+  return typeof value === 'number' && Number.isInteger(value) && value >= range.min && value <= range.max
     ? value
     : fallback
 }
@@ -72,8 +69,7 @@ function usernameIn(value: unknown): UsernameRule {
   const raw = isRecord(value) ? value : {}
   return {
     words: count(raw.words, MEMORABLE_WORDS, DEFAULT_USERNAME.words),
-    separator:
-      raw.separator === 'none' ? 'none' : separatorIn(raw.separator, DEFAULT_USERNAME.separator),
+    separator: raw.separator === 'none' ? 'none' : separatorIn(raw.separator, DEFAULT_USERNAME.separator),
     capitalize: flag(raw.capitalize, DEFAULT_USERNAME.capitalize),
     numbers: flag(raw.numbers, DEFAULT_USERNAME.numbers),
     leet: flag(raw.leet, DEFAULT_USERNAME.leet),

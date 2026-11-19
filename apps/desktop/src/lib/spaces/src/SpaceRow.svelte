@@ -19,9 +19,7 @@
     on = false,
   }: { space: Space; place: number; typed?: string; held?: boolean; on?: boolean } = $props()
 
-  const name = $derived(
-    isNumber(typed) ? [{ text: space.name, hit: false }] : pieces(space.name, typed),
-  )
+  const name = $derived(isNumber(typed) ? [{ text: space.name, hit: false }] : pieces(space.name, typed))
   const reads = $derived(roleOf(space.root) === 'read')
   const others = $derived.by(() => {
     const id = sync.remoteIdFor(space.root)
@@ -31,8 +29,7 @@
 
 <SpacePlace {place} {typed} {held}><SpaceBadge {space} {on} /></SpacePlace>
 <span class="orden-row-label" dir="auto"
-  >{#each name as piece, at (at)}{#if piece.hit}<b>{piece.text}</b
-      >{:else}{piece.text}{/if}{/each}</span
+  >{#each name as piece, at (at)}{#if piece.hit}<b>{piece.text}</b>{:else}{piece.text}{/if}{/each}</span
 >
 {#if !__EVEN_PLUGIN__ && others.length}
   {#await import('../../accounts-ui/src/api') then ui}<ui.Faces ids={others} />{/await}

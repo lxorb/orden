@@ -1,10 +1,5 @@
 import { history } from '@codemirror/commands'
-import {
-  EditorSelection,
-  EditorState,
-  type TransactionSpec,
-  type ChangeSpec,
-} from '@codemirror/state'
+import { EditorSelection, EditorState, type TransactionSpec, type ChangeSpec } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { CodeMirror, Vim } from '@replit/codemirror-vim'
@@ -35,9 +30,7 @@ function surface() {
 }
 
 const modal = (state: EditorState): boolean =>
-  state
-    .facet(EditorView.editorAttributes)
-    .some((attrs) => typeof attrs === 'object' && attrs.class === 'orden-vim')
+  state.facet(EditorView.editorAttributes).some((attrs) => typeof attrs === 'object' && attrs.class === 'orden-vim')
 
 describe('modal editing', () => {
   test('is off until it is asked for', () => {

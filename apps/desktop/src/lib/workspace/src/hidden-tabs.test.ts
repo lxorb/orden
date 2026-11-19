@@ -40,9 +40,7 @@ const sending = () => new Promise<void>((go) => setTimeout(go, 0))
 
 async function paused() {
   await sending()
-  return sent
-    .filter((one) => one.command === 'web_pause')
-    .map((one) => [one.args.tab, one.args.paused])
+  return sent.filter((one) => one.command === 'web_pause').map((one) => [one.args.tab, one.args.paused])
 }
 
 beforeEach(async () => {

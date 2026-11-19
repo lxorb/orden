@@ -68,23 +68,18 @@ const source = () =>
 
 function hearing(frame: ServerFrame): Said[] {
   const said: Said[] = []
-  ;(source() as unknown as { heard(frame: ServerFrame, said: (what: Said) => void): void }).heard(
-    frame,
-    (what) => said.push(what),
+  ;(source() as unknown as { heard(frame: ServerFrame, said: (what: Said) => void): void }).heard(frame, (what) =>
+    said.push(what),
   )
   return said
 }
 describe('an online source told it is refused', () => {
   test('a session that is gone is said as gone, which only a new terminal answers', () => {
-    expect(hearing({ t: 'refused', error: 'gone' })).toEqual([
-      { refused: 'This terminal is gone', gone: true },
-    ])
+    expect(hearing({ t: 'refused', error: 'gone' })).toEqual([{ refused: 'This terminal is gone', gone: true }])
   })
 
   test('any other refusal is its words alone', () => {
-    expect(hearing({ t: 'refused', error: 'allowance' })).toEqual([
-      { refused: 'This month’s online hours are used' },
-    ])
+    expect(hearing({ t: 'refused', error: 'allowance' })).toEqual([{ refused: 'This month’s online hours are used' }])
     expect(hearing({ t: 'refused', error: 'role' })).toEqual([{ typing: false }])
   })
 })

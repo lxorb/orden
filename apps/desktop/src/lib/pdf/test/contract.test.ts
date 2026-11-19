@@ -5,11 +5,7 @@ import { matrixOf } from '../src/highlights'
 
 describe('the words on a paper', () => {
   test('a run that ends its line gets its line break, and the runs join into the text', () => {
-    const runs = runsOfItems([
-      { str: 'Entropy is', hasEOL: true },
-      { str: 'a measure' },
-      { width: 4 },
-    ])
+    const runs = runsOfItems([{ str: 'Entropy is', hasEOL: true }, { str: 'a measure' }, { width: 4 }])
     expect(runs).toEqual(['Entropy is\n', 'a measure'])
     expect(textOfRuns(runs)).toBe('Entropy is\na measure')
   })

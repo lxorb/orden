@@ -420,9 +420,7 @@ describe('a device meeting the room it joined', () => {
 
 describe('a delta read as the edits it is', () => {
   test('reads an insertion', () => {
-    expect(replacements([{ retain: 4 }, { insert: 'new' }])).toEqual([
-      { from: 4, to: 4, insert: 'new' },
-    ])
+    expect(replacements([{ retain: 4 }, { insert: 'new' }])).toEqual([{ from: 4, to: 4, insert: 'new' }])
   })
 
   test('reads a deletion', () => {
@@ -430,21 +428,15 @@ describe('a delta read as the edits it is', () => {
   })
 
   test('reads a delete and the insert after it as one replacement', () => {
-    expect(replacements([{ retain: 1 }, { delete: 2 }, { insert: 'xy' }])).toEqual([
-      { from: 1, to: 3, insert: 'xy' },
-    ])
+    expect(replacements([{ retain: 1 }, { delete: 2 }, { insert: 'xy' }])).toEqual([{ from: 1, to: 3, insert: 'xy' }])
   })
 
   test('reads an insert and the delete after it as one replacement', () => {
-    expect(replacements([{ retain: 1 }, { insert: 'xy' }, { delete: 2 }])).toEqual([
-      { from: 1, to: 3, insert: 'xy' },
-    ])
+    expect(replacements([{ retain: 1 }, { insert: 'xy' }, { delete: 2 }])).toEqual([{ from: 1, to: 3, insert: 'xy' }])
   })
 
   test('reads several edits, each in the positions the note held before any', () => {
-    expect(
-      replacements([{ retain: 2 }, { insert: 'a' }, { retain: 3 }, { delete: 1 }, { insert: 'b' }]),
-    ).toEqual([
+    expect(replacements([{ retain: 2 }, { insert: 'a' }, { retain: 3 }, { delete: 1 }, { insert: 'b' }])).toEqual([
       { from: 2, to: 2, insert: 'a' },
       { from: 5, to: 6, insert: 'b' },
     ])

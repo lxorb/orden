@@ -41,11 +41,7 @@ describe('a key that is both, in Settings', () => {
     shells.setWay('space.switcher', 'app')
     shells.setWay('app.close', 'shell')
     try {
-      for (const label of [
-        'Ctrl+N in a terminal',
-        'Ctrl+Space in a terminal',
-        'Ctrl+W in a terminal',
-      ]) {
+      for (const label of ['Ctrl+N in a terminal', 'Ctrl+Space in a terminal', 'Ctrl+W in a terminal']) {
         expect(row(label).options.map((option) => option.value)).toEqual(['ask', 'app', 'shell'])
       }
       expect(row('Ctrl+N in a terminal').options.map((option) => option.label)).toEqual([
@@ -56,8 +52,7 @@ describe('a key that is both, in Settings', () => {
       expect(row('Ctrl+N in a terminal').get()).toBe('shell')
       expect(row('Ctrl+Space in a terminal').get()).toBe('app')
     } finally {
-      for (const command of ['app.scratchpad', 'space.switcher', 'app.close'])
-        shells.setWay(command, null)
+      for (const command of ['app.scratchpad', 'space.switcher', 'app.close']) shells.setWay(command, null)
     }
   })
 

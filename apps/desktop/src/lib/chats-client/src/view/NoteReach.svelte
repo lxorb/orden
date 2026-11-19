@@ -33,9 +33,7 @@
     }
   })
 
-  const names = $derived(
-    (reach?.missing ?? []).map((one) => one.name ?? nameOf(one.who, members, space)).join(', '),
-  )
+  const names = $derived((reach?.missing ?? []).map((one) => one.name ?? nameOf(one.who, members, space)).join(', '))
 
   async function share() {
     sharing = true
@@ -52,9 +50,7 @@
       {/each}
     </span>
     {#if reach.share}
-      <button type="button" class="orden-button is-quiet" disabled={sharing} onclick={share}
-        >Share</button
-      >
+      <button type="button" class="orden-button is-quiet" disabled={sharing} onclick={share}>Share</button>
     {/if}
   </div>
 {/if}

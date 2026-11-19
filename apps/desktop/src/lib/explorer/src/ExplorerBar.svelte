@@ -213,8 +213,7 @@
     title={shortcuts.tooltip('Hidden files', 'explorer.hidden')}
     aria-label="Hidden files"
     aria-pressed={explorerPrefs.hidden}
-    onclick={() => explorerPrefs.toggleHidden()}
-    >{@render glyph(explorerPrefs.hidden ? Eye : EyeOff)}</button
+    onclick={() => explorerPrefs.toggleHidden()}>{@render glyph(explorerPrefs.hidden ? Eye : EyeOff)}</button
   >
   <button
     class="orden-glyph"

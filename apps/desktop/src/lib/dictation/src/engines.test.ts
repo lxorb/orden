@@ -46,8 +46,7 @@ vi.mock('../../platform/src/stored', () => ({
   forget: (key: string) => world.stored.delete(key),
 }))
 
-const { canDictate, deviceHears, engines, showsDictateButton, whereTo } =
-  await import('./engines.svelte')
+const { canDictate, deviceHears, engines, showsDictateButton, whereTo } = await import('./engines.svelte')
 const { local } = await import('./local.svelte')
 
 const PARAKEET = { id: 'parakeet', name: 'Parakeet TDT 0.6B v3', bytes: 670_000_000 }
@@ -196,15 +195,12 @@ describe('Auto', () => {
   test.each([
     [0.08, 'local'],
     [0.6, 'account'],
-  ])(
-    'takes this computer once the model is here, at pace %s, only if it keeps up',
-    (pace, road) => {
-      world.token = 'a token'
-      computer('fits', true, pace)
-      engines.choose('auto')
-      expect(engines.now()).toBe(road)
-    },
-  )
+  ])('takes this computer once the model is here, at pace %s, only if it keeps up', (pace, road) => {
+    world.token = 'a token'
+    computer('fits', true, pace)
+    engines.choose('auto')
+    expect(engines.now()).toBe(road)
+  })
 
   test('waits for the download where there is no network road', () => {
     computer('fits', false)

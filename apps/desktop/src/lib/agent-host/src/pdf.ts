@@ -85,18 +85,14 @@ export async function readPdf(call: Call): Promise<AgentAnswer> {
       pages.push({ page, text })
     }
 
-    return done(
-      { path: relative, count, pages, ...(truncated ? { truncated: true } : {}) },
-      relative,
-    )
+    return done({ path: relative, count, pages, ...(truncated ? { truncated: true } : {}) }, relative)
   } finally {
     await held.close()
   }
 }
 
 const HELD: Record<Held, string> = {
-  newer:
-    'the highlights beside that PDF were written by a newer Orden, so they were left as they are',
+  newer: 'the highlights beside that PDF were written by a newer Orden, so they were left as they are',
   unreadable: 'the highlights beside that PDF could not be read, so they were left as they are',
   damaged: 'the highlights file beside that PDF is damaged, so it was left as it is',
 }
@@ -126,11 +122,7 @@ export async function pdfHighlights(call: Call): Promise<AgentAnswer> {
       if (!canWriteAt(path)) throw new Refused('read_only', 'that PDF is shared with you to read')
 
       const mark = await markOf(call, path)
-      const question = await asked(
-        call,
-        null,
-        `Highlight "${mark.text.slice(0, 80)}" in ${relative}`,
-      )
+      const question = await asked(call, null, `Highlight "${mark.text.slice(0, 80)}" in ${relative}`)
       if (question) return question
 
       const written = await editHighlights(path, (now) => ({
@@ -163,13 +155,11 @@ async function markOf(call: Call, path: string): Promise<Highlight> {
   const held = await opened(path)
 
   try {
-    const pages =
-      Number.isInteger(asked) && asked >= 1 ? [asked] : pagesAsked(null, held.doc.numPages)
+    const pages = Number.isInteger(asked) && asked >= 1 ? [asked] : pagesAsked(null, held.doc.numPages)
     const found: { page: number; runs: Run[]; from: number; to: number }[] = []
 
     for (const page of pages) {
-      if (page > held.doc.numPages)
-        throw new Refused('not_found', `the PDF has ${held.doc.numPages} pages`)
+      if (page > held.doc.numPages) throw new Refused('not_found', `the PDF has ${held.doc.numPages} pages`)
 
       const read = await held.doc.getPage(page)
       const runs = runsOf((await read.getTextContent()).items)
@@ -179,16 +169,10 @@ async function markOf(call: Call, path: string): Promise<Highlight> {
 
     const [only] = found
     if (!only)
-      throw new Refused(
-        'not_found',
-        `"${quote}" is not in the PDF${pages.length === 1 ? ` on page ${pages[0]}` : ''}`,
-      )
+      throw new Refused('not_found', `"${quote}" is not in the PDF${pages.length === 1 ? ` on page ${pages[0]}` : ''}`)
     if (found.length > 1) {
       const where = [...new Set(found.map((one) => one.page))].join(', ')
-      throw new Refused(
-        'bad_arguments',
-        `"${quote}" is there ${found.length} times (pages ${where}): quote more of it`,
-      )
+      throw new Refused('bad_arguments', `"${quote}" is there ${found.length} times (pages ${where}): quote more of it`)
     }
 
     return {

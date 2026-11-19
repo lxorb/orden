@@ -1,15 +1,5 @@
 {
   "name": "save-place",
   "layer": "shell",
-  "dependsOn": [
-    "contracts",
-    "platform",
-    "sharing",
-    "ui-controls",
-    "ui-kit",
-    "documents",
-    "workspace",
-    "tree",
-    "marks"
-  ]
+  "dependsOn": ["contracts", "platform", "sharing", "ui-controls", "ui-kit", "documents", "workspace", "tree", "marks"]
 }

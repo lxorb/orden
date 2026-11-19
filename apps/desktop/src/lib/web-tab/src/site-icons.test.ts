@@ -27,9 +27,7 @@ vi.mock('../../accounts/src/client', () => ({
     siteIcons: async () => {
       server.calls++
       await server.held
-      return server.refuse
-        ? Promise.reject(server.refuse)
-        : Promise.resolve({ sites: server.sites })
+      return server.refuse ? Promise.reject(server.refuse) : Promise.resolve({ sites: server.sites })
     },
     sawSite: async (_token: string, site: Record<string, unknown>) => {
       server.calls++
@@ -50,8 +48,7 @@ vi.mock('../../accounts/src/client', () => ({
 
 const { bounded, labelOf, siteIcons, siteOf } = await import('./site-icons.svelte')
 const { readIcon, SITE_ICONS, takesTint, writtenIcon } = await import('../../ui-kit/src/icons')
-const account = (await import('../../accounts/src/account.svelte'))
-  .account as unknown as AccountDouble
+const account = (await import('../../accounts/src/account.svelte')).account as unknown as AccountDouble
 
 beforeEach(async () => {
   account.signInAs('a')

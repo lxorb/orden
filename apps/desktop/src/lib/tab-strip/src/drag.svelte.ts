@@ -20,9 +20,7 @@ export interface Frame {
 }
 
 export type Ending =
-  | { kind: 'click' }
-  | { kind: 'moved'; tabId: string; from: number; to: number }
-  | { kind: 'out'; tabId: string }
+  { kind: 'click' } | { kind: 'moved'; tabId: string; from: number; to: number } | { kind: 'out'; tabId: string }
 
 export class TabDrag {
   tabId = $state<string | null>(null)
@@ -122,11 +120,7 @@ export function register(paneId: string, strip: Strip): () => void {
 }
 
 export const keyOf = (where: Landing | null): string =>
-  !where
-    ? ''
-    : where.kind === 'strip'
-      ? `strip:${where.paneId}:${where.at}`
-      : `pane:${where.paneId}:${where.zone}`
+  !where ? '' : where.kind === 'strip' ? `strip:${where.paneId}:${where.at}` : `pane:${where.paneId}:${where.zone}`
 
 export function stripOf(paneId: string): Strip | undefined {
   return strips[paneId]

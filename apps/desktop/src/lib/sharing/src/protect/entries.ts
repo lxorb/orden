@@ -68,7 +68,5 @@ export function protectEntries(path: string | null | undefined): ProtectRow[] {
 }
 
 export function lockAllEntry(): ProtectRow[] {
-  return unlocks.any
-    ? [{ id: 'lock-all', label: 'Lock protected items', run: () => unlocks.lockAll() }]
-    : []
+  return unlocks.any ? [{ id: 'lock-all', label: 'Lock protected items', run: () => unlocks.lockAll() }] : []
 }

@@ -38,8 +38,9 @@ describe('the snapshots kept of a note', () => {
     const older = now - 2 * DAY + HOUR / 2
     const olderSameHour = older - 60 * 1000
     const gone = now - (DEFAULT_DAYS + 1) * DAY
-    expect(staleSnapshots([recent, older, olderSameHour, gone], now).sort((a, b) => a - b)).toEqual(
-      [gone, olderSameHour],
-    )
+    expect(staleSnapshots([recent, older, olderSameHour, gone], now).sort((a, b) => a - b)).toEqual([
+      gone,
+      olderSameHour,
+    ])
   })
 })

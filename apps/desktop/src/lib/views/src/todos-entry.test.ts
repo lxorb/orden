@@ -68,18 +68,13 @@ describe('where it is asked for', () => {
 
   test('not the left side’s head, whose checkbox is gone (#1110)', () => {
     const sidebar = read('../../sidebar/src/Sidebar.svelte')
-    const head = sidebar.slice(
-      sidebar.indexOf('<div class="head"'),
-      sidebar.indexOf('<div class="switch"'),
-    )
+    const head = sidebar.slice(sidebar.indexOf('<div class="head"'), sidebar.indexOf('<div class="switch"'))
     expect(head).not.toContain('views.todos')
     expect(head).not.toContain('TASKS_MARK')
   })
 
   test('a double press on a side’s Todos icon, which opens a panel as its tab', () => {
-    expect(read('../../sidebar/src/Sidebar.svelte')).toMatch(
-      /ondblclick=[\s\S]*?sidebarPart\(id\)\?\.toTab\?\.\(\)/,
-    )
+    expect(read('../../sidebar/src/Sidebar.svelte')).toMatch(/ondblclick=[\s\S]*?sidebarPart\(id\)\?\.toTab\?\.\(\)/)
     expect(read('../../features.ts')).toMatch(
       /registerSidebarPart\(\{ id: 'tasks', toTab: \(\) => runCommand\('views\.todos'\)/,
     )

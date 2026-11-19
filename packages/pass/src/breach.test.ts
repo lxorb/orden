@@ -116,10 +116,7 @@ describe('compromisedOf', () => {
     const sharing = '5BAA6730767DDDF4BAE7F5992FF4F38FAE136F34'
     expect(await sha1Hex('orden-341009')).toBe(sharing)
     const items = [login('a', 'password'), login('b', 'orden-341009'), login('c', 'password')]
-    const found = await compromisedOf(
-      items,
-      fakeRanges({ [PASSWORD_HASH]: 2, [sharing]: 1 }, calls),
-    )
+    const found = await compromisedOf(items, fakeRanges({ [PASSWORD_HASH]: 2, [sharing]: 1 }, calls))
     expect([...found].sort()).toEqual(['a', 'b', 'c'])
     expect(calls).toHaveLength(1)
   })
@@ -134,9 +131,7 @@ describe('compromisedOf', () => {
       running--
       return { ok: true, status: 200, text: async () => '' }
     }
-    const items = Array.from({ length: 12 }, (_, i) =>
-      login(String(i), `password number ${String(i)}`),
-    )
+    const items = Array.from({ length: 12 }, (_, i) => login(String(i), `password number ${String(i)}`))
     await compromisedOf(items, fetcher, { concurrency: 3 })
     expect(most).toBeLessThanOrEqual(3)
     expect(most).toBeGreaterThan(1)
@@ -150,12 +145,8 @@ describe('compromisedOf', () => {
       controller.abort()
       return { ok: true, status: 200, text: async () => '' }
     }
-    const items = Array.from({ length: 8 }, (_, i) =>
-      login(String(i), `another password ${String(i)}`),
-    )
-    await expect(
-      compromisedOf(items, fetcher, { concurrency: 1, signal: controller.signal }),
-    ).rejects.toThrow()
+    const items = Array.from({ length: 8 }, (_, i) => login(String(i), `another password ${String(i)}`))
+    await expect(compromisedOf(items, fetcher, { concurrency: 1, signal: controller.signal })).rejects.toThrow()
     expect(asked).toBe(1)
   })
 
@@ -167,17 +158,13 @@ describe('compromisedOf', () => {
       asked++
       return { ok: true, status: 200, text: async () => '' }
     }
-    await expect(
-      compromisedOf([login('a', 'password')], fetcher, { signal: controller.signal }),
-    ).rejects.toThrow()
+    await expect(compromisedOf([login('a', 'password')], fetcher, { signal: controller.signal })).rejects.toThrow()
     expect(asked).toBe(0)
   })
 
   it('passes a lookup failure on', async () => {
     const fetcher: Fetcher = async () => ({ ok: false, status: 503, text: async () => '' })
-    await expect(compromisedOf([login('a', 'password')], fetcher)).rejects.toBeInstanceOf(
-      BreachLookupError,
-    )
+    await expect(compromisedOf([login('a', 'password')], fetcher)).rejects.toBeInstanceOf(BreachLookupError)
   })
 })
 

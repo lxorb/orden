@@ -29,9 +29,7 @@ describe("a PDF's outline", () => {
   })
 
   test('leaves out a part whose page cannot be found, and keeps the parts inside it', async () => {
-    const doc = docWith([
-      { title: 'Lost', dest: 'gone', items: [{ title: 'Kept', dest: [2], items: [] }] },
-    ])
+    const doc = docWith([{ title: 'Lost', dest: 'gone', items: [{ title: 'Kept', dest: [2], items: [] }] }])
     expect(await readOutline(doc)).toEqual([{ title: 'Kept', page: 3, level: 1 }])
   })
 

@@ -9,12 +9,7 @@ import { parsed } from '../test/parsed'
 
 const PARK = '\n\nx'
 
-function state(
-  doc: string,
-  at = doc.length,
-  more: Extension[] = [],
-  upTo = doc.length,
-): EditorState {
+function state(doc: string, at = doc.length, more: Extension[] = [], upTo = doc.length): EditorState {
   return parsed(
     EditorState.create({
       doc,
@@ -39,23 +34,19 @@ function pills(doc: string, at?: number, more: Extension[] = []) {
   const full = at === undefined ? doc + PARK : doc
   const out: { text: string; className: string; tag: string; title?: string }[] = []
 
-  buildDecorations(state(full, at ?? full.length, more)).decorations.between(
-    0,
-    full.length,
-    (from, to, value) => {
-      const spec = value.spec as {
-        class?: string
-        attributes?: Record<string, string>
-      }
-      if (!spec.class?.split(' ').includes('tag')) return
-      out.push({
-        text: full.slice(from, to),
-        className: spec.class,
-        tag: spec.attributes?.['data-tag'] ?? '',
-        ...(spec.attributes?.title ? { title: spec.attributes.title } : {}),
-      })
-    },
-  )
+  buildDecorations(state(full, at ?? full.length, more)).decorations.between(0, full.length, (from, to, value) => {
+    const spec = value.spec as {
+      class?: string
+      attributes?: Record<string, string>
+    }
+    if (!spec.class?.split(' ').includes('tag')) return
+    out.push({
+      text: full.slice(from, to),
+      className: spec.class,
+      tag: spec.attributes?.['data-tag'] ?? '',
+      ...(spec.attributes?.title ? { title: spec.attributes.title } : {}),
+    })
+  })
 
   return out
 }
@@ -86,10 +77,7 @@ describe('what the parser reads as a tag', () => {
 
 describe('a tag in the preview', () => {
   test.each([
-    [
-      'Filed under #work/orden today',
-      [{ text: '#work/orden', className: 'tag', tag: 'work/orden' }],
-    ],
+    ['Filed under #work/orden today', [{ text: '#work/orden', className: 'tag', tag: 'work/orden' }]],
     ['[see #this](https://orden.dev) and ![#alt](pic.png)', []],
   ])('%j', (input, wanted) => expect(pills(input)).toEqual(wanted))
 
@@ -99,11 +87,7 @@ describe('a tag in the preview', () => {
       [{ text: '#work', className: 'tag is-open', tag: 'work' }],
       'Filed #work today'.indexOf('work') + 2,
     ],
-    [
-      'Filed #work today',
-      [{ text: '#work', className: 'tag', tag: 'work' }],
-      'Filed #work today'.length,
-    ],
+    ['Filed #work today', [{ text: '#work', className: 'tag', tag: 'work' }], 'Filed #work today'.length],
   ])('%j', (input, wanted, extra) => expect(pills(input, extra)).toEqual(wanted))
 
   test('promises a press only in an editor that can answer one', () => {

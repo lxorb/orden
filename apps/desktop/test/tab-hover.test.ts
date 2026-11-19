@@ -27,9 +27,7 @@ test('what a tab says sits in the middle of that box', () => {
 })
 
 test('the hover is a tone past the frame, not a step toward the paper', () => {
-  expect(rule('.tabs')).toMatch(
-    /--tab-hover: var\(--glass-tab-hover, color-mix\(in srgb, var\(--text\)/,
-  )
+  expect(rule('.tabs')).toMatch(/--tab-hover: var\(--glass-tab-hover, color-mix\(in srgb, var\(--text\)/)
   expect(rule('.tabs')).not.toMatch(/--tab-hover:[^;]*--tab-ground/)
 })
 

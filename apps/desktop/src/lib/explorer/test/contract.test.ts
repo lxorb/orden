@@ -27,8 +27,7 @@ describe('a folder', () => {
       entry('Zeta', { kind: 'folder', folder: true }),
       entry('.hidden', { hidden: true }),
     ]
-    const names = (hidden: boolean) =>
-      ordered(entries, { key: 'name', down: false }, hidden).map((one) => one.name)
+    const names = (hidden: boolean) => ordered(entries, { key: 'name', down: false }, hidden).map((one) => one.name)
     expect(names(false)).toEqual(['Zeta', 'b 2.txt', 'b 10.txt'])
     expect(names(true)).toContain('.hidden')
   })

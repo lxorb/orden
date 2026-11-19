@@ -1,15 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  between,
-  byPosition,
-  ENTRY_KINDS,
-  isEntryId,
-  isPosition,
-  metaOf,
-  patched,
-  sameMeta,
-  spread,
-} from '../src/api'
+import { between, byPosition, ENTRY_KINDS, isEntryId, isPosition, metaOf, patched, sameMeta, spread } from '../src/api'
 
 describe('order', () => {
   it('always finds a position between two others', () => {
@@ -59,16 +49,7 @@ describe('item meta', () => {
 
 describe('wire', () => {
   it('names the entry kinds and refuses ids that could be paths', () => {
-    expect(ENTRY_KINDS).toEqual([
-      'note',
-      'canvas',
-      'pages',
-      'url',
-      'term',
-      'chat',
-      'file',
-      'folder',
-    ])
+    expect(ENTRY_KINDS).toEqual(['note', 'canvas', 'pages', 'url', 'term', 'chat', 'file', 'folder'])
     expect(isEntryId('abc')).toBe(true)
     expect(isEntryId('a/b')).toBe(false)
     expect(isEntryId('')).toBe(false)

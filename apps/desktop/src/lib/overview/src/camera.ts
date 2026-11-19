@@ -93,16 +93,9 @@ export const notched = (goal: number, turn: Turn): number =>
 const EASE = 0.08
 const FOLLOW = 0.035
 
-export function eased(
-  camera: Camera,
-  zoom: number,
-  at: Point,
-  seconds: number,
-  ease = EASE,
-): Camera {
+export function eased(camera: Camera, zoom: number, at: Point, seconds: number, ease = EASE): Camera {
   const gap = Math.log(zoom / camera.zoom)
-  const next =
-    Math.abs(gap) < 0.003 ? zoom : camera.zoom * Math.exp(gap * (1 - Math.exp(-seconds / ease)))
+  const next = Math.abs(gap) < 0.003 ? zoom : camera.zoom * Math.exp(gap * (1 - Math.exp(-seconds / ease)))
   return zoomedAt(camera, at, next / camera.zoom)
 }
 
@@ -113,9 +106,7 @@ function fingered(goal: number, turn: Turn): number {
 }
 
 export const aimed = (goal: number, turn: Turn): { zoom: number; ease: number } =>
-  isNotch(turn)
-    ? { zoom: notched(goal, turn), ease: EASE }
-    : { zoom: fingered(goal, turn), ease: FOLLOW }
+  isNotch(turn) ? { zoom: notched(goal, turn), ease: EASE } : { zoom: fingered(goal, turn), ease: FOLLOW }
 
 export function turned(camera: Camera, turn: Turn): Camera {
   return zoomedAt(camera, turn, fingered(camera.zoom, turn) / camera.zoom)
@@ -126,8 +117,7 @@ export function pinched(camera: Camera, before: [Point, Point], after: [Point, P
     x: (two[0].x + two[1].x) / 2,
     y: (two[0].y + two[1].y) / 2,
   })
-  const apart = (two: [Point, Point]) =>
-    Math.max(Math.hypot(two[0].x - two[1].x, two[0].y - two[1].y), 1)
+  const apart = (two: [Point, Point]) => Math.max(Math.hypot(two[0].x - two[1].x, two[0].y - two[1].y), 1)
   const from = middle(before)
   const to = middle(after)
   const zoomed = zoomedAt(camera, from, apart(after) / apart(before))

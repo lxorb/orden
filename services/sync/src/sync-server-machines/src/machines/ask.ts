@@ -25,9 +25,7 @@ export async function askMachine(
   if (!namespace) return null
 
   const place =
-    typeof namespace.jurisdiction === 'function' && !env.MACHINE_DEV_ORDEND
-      ? namespace.jurisdiction('eu')
-      : namespace
+    typeof namespace.jurisdiction === 'function' && !env.MACHINE_DEV_ORDEND ? namespace.jurisdiction('eu') : namespace
 
   for (let asked = 0; asked < 2; asked++) {
     try {

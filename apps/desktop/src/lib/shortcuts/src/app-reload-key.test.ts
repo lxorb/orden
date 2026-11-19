@@ -28,17 +28,14 @@ test.each([
   ['Macintosh; Intel Mac OS X 10_15_7', { meta: true }],
   ['Windows NT 10.0; Win64; x64', { ctrl: true }],
   ['X11; Linux x86_64', { ctrl: true }],
-])(
-  'the app’s own key reloads Orden, as no webview does it on every system (%s)',
-  async (agent, held) => {
-    vi.stubGlobal('navigator', { userAgent: `Mozilla/5.0 (${agent})` })
-    const reload = vi.fn()
-    vi.stubGlobal('location', { reload })
-    const { shortcuts } = await import('./shortcuts.svelte')
+])('the app’s own key reloads Orden, as no webview does it on every system (%s)', async (agent, held) => {
+  vi.stubGlobal('navigator', { userAgent: `Mozilla/5.0 (${agent})` })
+  const reload = vi.fn()
+  vi.stubGlobal('location', { reload })
+  const { shortcuts } = await import('./shortcuts.svelte')
 
-    const event = press('r', held)
-    expect(shortcuts.handle(event, {} as never)).toBe(true)
-    expect(event.defaultPrevented).toBe(true)
-    expect(reload).toHaveBeenCalledOnce()
-  },
-)
+  const event = press('r', held)
+  expect(shortcuts.handle(event, {} as never)).toBe(true)
+  expect(event.defaultPrevented).toBe(true)
+  expect(reload).toHaveBeenCalledOnce()
+})

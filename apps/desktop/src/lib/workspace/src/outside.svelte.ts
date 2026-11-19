@@ -12,13 +12,7 @@ import {
   afterQuiet,
   windows,
 } from '../../platform/src/api'
-import {
-  onUnwatched,
-  landedElsewhere,
-  type SpaceChange,
-  type SpaceNews,
-  watchSpaces,
-} from '../../crate/src/api'
+import { onUnwatched, landedElsewhere, type SpaceChange, type SpaceNews, watchSpaces } from '../../crate/src/api'
 import { sync } from '../../sync-store/src/api'
 import { type Leadership, leadSync } from '../../sync-client/src/api'
 import { type FileOp, landing } from '../../file-ops/src/api'

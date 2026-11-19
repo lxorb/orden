@@ -11,15 +11,7 @@ import { Hono } from 'hono'
 import { objectBody, now, NOT_AN_OBJECT, type Env, type Variables } from '../../sync-server/src/api'
 import { activeIn, holdsSql, mayAct } from './access'
 import { itemOf } from './items'
-import {
-  NO_SUCH_ITEM,
-  NO_SUCH_LINK,
-  NO_SUCH_VAULT,
-  NOT_A_LINK,
-  NOT_YOUR_ROLE,
-  TAKEN,
-  TOO_MANY_LINKS,
-} from './refusals'
+import { NO_SUCH_ITEM, NO_SUCH_LINK, NO_SUCH_VAULT, NOT_A_LINK, NOT_YOUR_ROLE, TAKEN, TOO_MANY_LINKS } from './refusals'
 import { LINK_COLUMNS, type LinkDb, linkRowOf } from './rows'
 
 export const links = new Hono<{ Bindings: Env; Variables: Variables }>()
@@ -70,9 +62,7 @@ links.post('/links', async (context) => {
     .bind(id, user.id, vault, item, body, expires, views, at, MOST_LINKS, user.email)
     .run()
   if (!written.meta.changes) {
-    const taken = await context.env.DB.prepare('select 1 as one from pass_links where id = ?')
-      .bind(id)
-      .first()
+    const taken = await context.env.DB.prepare('select 1 as one from pass_links where id = ?').bind(id).first()
     if (taken) return context.json({ error: TAKEN }, 409)
     if (!(await activeIn(context.env, vault, user.email))) {
       return context.json({ error: NO_SUCH_VAULT }, 404)
@@ -125,9 +115,7 @@ links.delete('/links', async (context) => {
 })
 
 export async function sweepPassLinks(env: Env, at: number): Promise<void> {
-  await env.DB.prepare(
-    `update pass_links set body = '' where body <> '' and (expires_at <= ? or (${USED_UP}))`,
-  )
+  await env.DB.prepare(`update pass_links set body = '' where body <> '' and (expires_at <= ? or (${USED_UP}))`)
     .bind(at)
     .run()
 }

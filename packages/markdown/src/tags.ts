@@ -1,10 +1,4 @@
-import type {
-  MarkedExtension,
-  Token,
-  TokenizerAndRendererExtension,
-  TokenizerExtension,
-  Tokens,
-} from 'marked'
+import type { MarkedExtension, Token, TokenizerAndRendererExtension, TokenizerExtension, Tokens } from 'marked'
 import { attributeUrl, escapeAll } from './html'
 
 export const PUNCTUATION = /[!-/:-@[-`{-~]/

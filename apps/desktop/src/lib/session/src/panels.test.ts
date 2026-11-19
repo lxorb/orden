@@ -53,12 +53,7 @@ describe('showing a panel', () => {
 
   test.each<[string, Sides, Panel, Sides]>([
     ['opens it on its own side', fresh(), 'tree', at('tree')],
-    [
-      'on the right too',
-      at('tree', null, ['outline']),
-      'outline',
-      at('tree', 'outline', ['outline']),
-    ],
+    ['on the right too', at('tree', null, ['outline']), 'outline', at('tree', 'outline', ['outline'])],
     ['shuts it where it is already showing', at('tree'), 'tree', fresh()],
     ['leaves the left alone', both, 'search', at('tree', null, ['search'])],
     ['leaves the right alone', both, 'tree', at(null, 'search', ['search'])],
@@ -142,12 +137,7 @@ describe('the scratchpad over the right side', () => {
 describe('where a panel lives until somebody moves it', () => {
   test('is the space on the left and the note in front on the right, as Obsidian has it', () => {
     expect(rightFrom(undefined)).toEqual(['outline', 'links', 'ask', 'tasks'])
-    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual([
-      'tree',
-      'search',
-      'chats',
-      'time',
-    ])
+    expect(panelsOn(rightFrom(undefined), 'left', PANELS)).toEqual(['tree', 'search', 'chats', 'time'])
   })
 
   test('and a window arranged before the homes keeps its own arrangement', () => {

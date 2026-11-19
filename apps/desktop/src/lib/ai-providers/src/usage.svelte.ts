@@ -35,10 +35,7 @@ function codexWeek(said: Record<string, unknown> | null): Weekly | null {
   )
   const week =
     windows.find((one) => one.windowDurationMins === WEEK_MINUTES) ??
-    windows.find(
-      (one) =>
-        typeof one.windowDurationMins === 'number' && one.windowDurationMins > WEEK_MINUTES / 2,
-    )
+    windows.find((one) => typeof one.windowDurationMins === 'number' && one.windowDurationMins > WEEK_MINUTES / 2)
   if (!week) return null
   return { used: percent(week.usedPercent) ?? 0, resets: moment(week.resetsAt, true) }
 }

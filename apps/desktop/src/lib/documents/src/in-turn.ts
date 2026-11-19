@@ -9,11 +9,7 @@ interface Written {
 export interface Across {
   wroteHere(path: string): void
   owe(note: NoteDoc): void
-  writing(
-    note: NoteDoc,
-    path: string,
-    write: (words: string) => Promise<unknown>,
-  ): Promise<Written | null>
+  writing(note: NoteDoc, path: string, write: (words: string) => Promise<unknown>): Promise<Written | null>
 }
 
 let across: Across | null = null

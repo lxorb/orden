@@ -8,16 +8,13 @@ export const loadViewTab = () =>
 export const startRunner = (): Promise<void> =>
   __EVEN_PLUGIN__ ? Promise.resolve() : import('./runner.svelte').then(() => undefined)
 
-export const baseOpening = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./open')>() : import('./open')
+export const baseOpening = () => (__EVEN_PLUGIN__ ? away<typeof import('./open')>() : import('./open'))
 
-export const baseMounting = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./mount')>() : import('./mount')
+export const baseMounting = () => (__EVEN_PLUGIN__ ? away<typeof import('./mount')>() : import('./mount'))
 
 export const rowsCopied = () => import('./copied')
 
-const todosEntry = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./todos-entry')>() : import('./todos-entry')
+const todosEntry = () => (__EVEN_PLUGIN__ ? away<typeof import('./todos-entry')>() : import('./todos-entry'))
 
 export const createDatabase: typeof import('./new-database').createDatabase = (...args) =>
   import('./new-database').then((one) => one.createDatabase(...args))

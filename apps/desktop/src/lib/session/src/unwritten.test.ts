@@ -102,9 +102,7 @@ describe('a tab with unwritten words', () => {
   test('a plane does not merge: the newer file stays, and the old words a draft', async () => {
     const before = '{"nodes":[]}'
     const { desk } = disk('{"nodes":[2]}')
-    expect(
-      await cameBack(draft({ kind: 'canvas', doc: '{"nodes":[1]}', base: before }), desk),
-    ).toEqual({
+    expect(await cameBack(draft({ kind: 'canvas', doc: '{"nodes":[1]}', base: before }), desk)).toEqual({
       path: null,
       text: '{"nodes":[1]}',
       dirty: true,
@@ -116,9 +114,11 @@ describe('a tab with unwritten words', () => {
   test('a plane whose file has not moved goes down', async () => {
     const before = '{"nodes":[]}'
     const { desk } = disk(before)
-    expect(
-      await cameBack(draft({ kind: 'canvas', doc: '{"nodes":[1]}', base: before }), desk),
-    ).toMatchObject({ path: '/s/Both.md', dirty: true, onDisk: before })
+    expect(await cameBack(draft({ kind: 'canvas', doc: '{"nodes":[1]}', base: before }), desk)).toMatchObject({
+      path: '/s/Both.md',
+      dirty: true,
+      onDisk: before,
+    })
   })
 })
 

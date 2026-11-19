@@ -19,9 +19,7 @@ const BLOCKS_APART =
 const QUOTE_DEPTH = /^(?:[ \t]*>)*/
 
 function quoteChanges(text: string): boolean {
-  const depths = text
-    .split('\n')
-    .map((line) => (QUOTE_DEPTH.exec(line)?.[0] ?? '').replace(/[ \t]/g, ''))
+  const depths = text.split('\n').map((line) => (QUOTE_DEPTH.exec(line)?.[0] ?? '').replace(/[ \t]/g, ''))
   return depths.some((depth, at) => at > 0 && depth !== depths[at - 1])
 }
 
@@ -68,9 +66,7 @@ function marksOf(state: EditorState, part: Part, mark: string): Part | null {
     doc.sliceString(Math.max(0, part.from - size), part.from) === mark &&
     starsAt(/\*+$/u.exec(line.text.slice(0, part.from - line.from))?.[0] ?? '')
   const inBack =
-    words.length >= (inFront ? size * 2 : size) &&
-    words.endsWith(mark) &&
-    starsAt(/\*+$/u.exec(words)?.[0] ?? '')
+    words.length >= (inFront ? size * 2 : size) && words.endsWith(mark) && starsAt(/\*+$/u.exec(words)?.[0] ?? '')
   const after =
     doc.sliceString(part.to, Math.min(doc.length, part.to + size)) === mark &&
     starsAt(/^\*+/u.exec(doc.sliceString(part.to, doc.lineAt(part.to).to))?.[0] ?? '')
@@ -256,14 +252,11 @@ function clearing(state: EditorState, from: number, to: number): ChangeSpec[] {
 
   for (const { open, close } of runsOver(state, from, to)) {
     const before = open.to + state.sliceDoc(open.to, Math.max(open.to, from)).trimEnd().length
-    const after =
-      close.from - state.sliceDoc(Math.min(to, close.from), close.from).trimStart().length
+    const after = close.from - state.sliceDoc(Math.min(to, close.from), close.from).trimStart().length
 
-    if (before > open.to)
-      closings.unshift({ from: before, insert: state.sliceDoc(close.from, close.to) })
+    if (before > open.to) closings.unshift({ from: before, insert: state.sliceDoc(close.from, close.to) })
     else taken.push(open)
-    if (after < close.from)
-      openings.push({ from: after, insert: state.sliceDoc(open.from, open.to) })
+    if (after < close.from) openings.push({ from: after, insert: state.sliceDoc(open.from, open.to) })
     else taken.push(close)
   }
 

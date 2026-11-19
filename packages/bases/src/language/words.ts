@@ -24,11 +24,7 @@ export const bare = (word: Word | undefined): string => (word?.key ?? '').replac
 const phraseAt = (words: readonly Word[], at: number, phrase: readonly string[]): boolean =>
   phrase.every((one, index) => bare(words[at + index]) === one)
 
-export function longestAt(
-  words: readonly Word[],
-  at: number,
-  phrases: readonly (readonly string[])[],
-): number {
+export function longestAt(words: readonly Word[], at: number, phrases: readonly (readonly string[])[]): number {
   let most = 0
   for (const phrase of phrases) {
     if (phrase.length > most && phraseAt(words, at, phrase)) most = phrase.length

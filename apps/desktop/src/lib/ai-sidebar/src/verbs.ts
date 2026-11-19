@@ -4,8 +4,7 @@ const VERBS: Record<string, string> = Object.fromEntries(
   Object.entries({
     Read: 'read_note read_canvas read_pdf browser_read browser_snapshot browser_find browser_screenshot browser_console browser_network browser_downloads',
     Searched: 'search_notes',
-    Listed:
-      'list_notes list_spaces list_backlinks list_versions browser_tabs workspace_tabs bookmarks',
+    Listed: 'list_notes list_spaces list_backlinks list_versions browser_tabs workspace_tabs bookmarks',
     Checked: 'get_context agent_status approval_status read_setting',
     Edited: 'edit_note write_note append_note set_property set_task edit_canvas pdf_highlights',
     Created: 'create_note create_folder capture_to_note attach_agent_log',
@@ -63,10 +62,7 @@ export function objectOf(args: unknown): string {
   return ''
 }
 
-export function helperOf(part: {
-  verb: string
-  result?: { text: string; agent?: string } | undefined
-}): string | null {
+export function helperOf(part: { verb: string; result?: { text: string; agent?: string } | undefined }): string | null {
   const name = bareName(part.verb)
   if (name !== 'run_agent' && name !== 'agent_result') return null
   if (part.result?.agent) return part.result.agent

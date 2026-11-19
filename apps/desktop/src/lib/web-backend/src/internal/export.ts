@@ -40,8 +40,7 @@ async function filesOf(root: string): Promise<{ path: string; read: () => Promis
       else {
         out.push({
           path: child.path.replace(/\\/g, '/').slice(base.length + 1),
-          read: async () =>
-            new Uint8Array(await crate<ArrayBuffer>('read_file', { path: child.path })),
+          read: async () => new Uint8Array(await crate<ArrayBuffer>('read_file', { path: child.path })),
         })
       }
     }
@@ -95,15 +94,9 @@ export async function exportSpaceTo(
   return into
 }
 
-export async function exportSpace(
-  root: string,
-  name: string,
-  metaOf: MetaOf = () => null,
-): Promise<string | null> {
+export async function exportSpace(root: string, name: string, metaOf: MetaOf = () => null): Promise<string | null> {
   const given = dialogAnswer()
-  const picked = given
-    ? await given(true)
-    : await (await import('@tauri-apps/plugin-dialog')).open({ directory: true })
+  const picked = given ? await given(true) : await (await import('@tauri-apps/plugin-dialog')).open({ directory: true })
   if (typeof picked !== 'string') return null
   return exportSpaceTo(root, name, picked, metaOf)
 }

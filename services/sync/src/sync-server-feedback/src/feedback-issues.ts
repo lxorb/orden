@@ -45,9 +45,7 @@ export function platformLabel(platform: string): string | null {
 }
 
 function longestTicks(text: string): number {
-  return [...text.matchAll(/`+/g)]
-    .map((run) => run[0].length)
-    .reduce((high, one) => Math.max(high, one), 0)
+  return [...text.matchAll(/`+/g)].map((run) => run[0].length).reduce((high, one) => Math.max(high, one), 0)
 }
 
 function cell(text: string): string {
@@ -69,9 +67,7 @@ function pictures(images: readonly string[] | undefined): string {
 }
 
 export function issueBody(report: Report): string {
-  const account = report.account
-    ? `\`${report.account.id}\`, ${cell(report.account.email)}`
-    : 'signed out'
+  const account = report.account ? `\`${report.account.id}\`, ${cell(report.account.email)}` : 'signed out'
   const head = `${fenced(report.text)}
 
 ${pictures(report.images)}| | |
@@ -188,9 +184,7 @@ async function reportOf(env: Env, id: string): Promise<Row | null> {
 }
 
 export async function imagesOf(env: Env, id: string): Promise<string[]> {
-  const { results } = await env.DB.prepare(
-    'select name from feedback_images where feedback_id = ? order by position',
-  )
+  const { results } = await env.DB.prepare('select name from feedback_images where feedback_id = ? order by position')
     .bind(id)
     .all<{ name: string }>()
   return results.map((one) => imageUrl(env, one.name))
@@ -237,15 +231,12 @@ export async function openIssue(env: Env, id: string, at = now()): Promise<boole
     platform: row.platform,
     log: row.log,
     createdAt: row.created_at,
-    account: row.user_id
-      ? { id: row.user_id, email: row.email ?? 'an account since deleted' }
-      : null,
+    account: row.user_id ? { id: row.user_id, email: row.email ?? 'an account since deleted' } : null,
     images: await imagesOf(env, row.id),
   }
 
   try {
-    const issue =
-      (row.issue_tries > 0 ? await openedBefore(to, report) : null) ?? (await opened(to, report))
+    const issue = (row.issue_tries > 0 ? await openedBefore(to, report) : null) ?? (await opened(to, report))
     const written = await env.DB.prepare(
       `update feedback set issue_number = ?2, issue_url = ?3, issue_node = ?4, issue_claim = null
         where id = ?1`,
@@ -254,9 +245,7 @@ export async function openIssue(env: Env, id: string, at = now()): Promise<boole
       .run()
     if (!written.meta.changes) {
       const what = `${ISSUES}${String(issue.number)}`
-      await env.DB.prepare('insert or ignore into leftovers (what, since) values (?1, ?2)')
-        .bind(what, at)
-        .run()
+      await env.DB.prepare('insert or ignore into leftovers (what, since) values (?1, ?2)').bind(what, at).run()
       if ((await withdrawIssues(env, [issue.number])).length) {
         await env.DB.prepare('delete from leftovers where what = ?1').bind(what).run()
       }
@@ -268,9 +257,7 @@ export async function openIssue(env: Env, id: string, at = now()): Promise<boole
     const tries = row.issue_tries + 1
     const wait = Math.min(LONGEST_WAIT, FIRST_WAIT * 2 ** Math.min(tries - 1, 20))
     console.warn(`feedback ${id}: no issue yet (${String(error)})`)
-    await env.DB.prepare(
-      `update feedback set issue_tries = ?2, issue_next_at = ?3, issue_claim = null where id = ?1`,
-    )
+    await env.DB.prepare(`update feedback set issue_tries = ?2, issue_next_at = ?3, issue_claim = null where id = ?1`)
       .bind(id, tries, at + wait)
       .run()
     return false
@@ -375,13 +362,7 @@ async function boardOf(to: Github, owner: string, number: number): Promise<Board
   return { project: project.id, status: project.field.id, todo: todo.id }
 }
 
-async function putOnBoard(
-  env: Env,
-  id: string,
-  node: string,
-  tries: number,
-  at: number,
-): Promise<void> {
+async function putOnBoard(env: Env, id: string, node: string, tries: number, at: number): Promise<void> {
   const to = github(env)
   const where = board(env)
   if (!to || !where) return
@@ -405,12 +386,7 @@ async function putOnBoard(
       `
         mutation ($project: ID!, $item: ID!, $field: ID!, $option: String!) {
           updateProjectV2ItemFieldValue(
-            input: {
-              projectId: $project
-              itemId: $item
-              fieldId: $field
-              value: { singleSelectOptionId: $option }
-            }
+            input: { projectId: $project, itemId: $item, fieldId: $field, value: { singleSelectOptionId: $option } }
           ) {
             projectV2Item {
               id

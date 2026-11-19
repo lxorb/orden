@@ -59,9 +59,7 @@ export function completion(list: readonly Visit[], typed: string, now: number): 
       continue
     }
 
-    const form = [parts.bareShown, parts.hostShown, parts.bare, parts.host].find((one) =>
-      one.startsWith(asked),
-    )
+    const form = [parts.bareShown, parts.hostShown, parts.bare, parts.host].find((one) => one.startsWith(asked))
     if (form === undefined) continue
 
     const site = `${parts.protocol}//${parts.host}`
@@ -96,19 +94,8 @@ function found(parts: Parts, term: string): number {
   return anywhere && term.length > 2 ? 1 : 0
 }
 
-export function suggested(
-  list: readonly Visit[],
-  typed: string,
-  now: number,
-  count = OFFERED,
-): Visit[] {
-  const terms = typed
-    .trim()
-    .replace(SCHEME, '')
-    .toLowerCase()
-    .normalize('NFC')
-    .split(/\s+/)
-    .filter(Boolean)
+export function suggested(list: readonly Visit[], typed: string, now: number, count = OFFERED): Visit[] {
+  const terms = typed.trim().replace(SCHEME, '').toLowerCase().normalize('NFC').split(/\s+/).filter(Boolean)
   if (!terms.length) return []
 
   const scored: { visit: Visit; site: boolean; score: number }[] = []

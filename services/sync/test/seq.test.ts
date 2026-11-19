@@ -83,9 +83,7 @@ describe('the cursor of a space', () => {
     })
     expect(saved.status).toBe(200)
     expect((await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
-    expect(
-      (await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })).status,
-    ).toBe(200)
+    expect((await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })).status).toBe(200)
 
     expect(alone).toEqual([])
     const { seqs, next } = numbered(space)

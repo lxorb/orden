@@ -46,8 +46,7 @@ async function leftOpen(typed: string | null) {
   for (let at = 0; at < localStorage.length; at++) {
     const key = localStorage.key(at) ?? ''
     const held = localStorage.getItem(key) ?? ''
-    if (held.includes('Stand-in'))
-      localStorage.setItem(key, held.replaceAll('Stand-in.md', 'AGENTS.md'))
+    if (held.includes('Stand-in')) localStorage.setItem(key, held.replaceAll('Stand-in.md', 'AGENTS.md'))
   }
   disk.current.files.delete(STAND_IN)
   vi.resetModules()

@@ -3,20 +3,17 @@ import { fold, undrawable } from './firmware'
 import { drawsScript, SCRIPTS, scriptsNotDrawn } from './scripts'
 
 describe('the scripts the firmware draws', () => {
-  test.each(SCRIPTS.map((one) => [one.code, one] as const))(
-    '%s is measured, not assumed',
-    (_code, script) => {
-      const missing = undrawable(script.sample)
+  test.each(SCRIPTS.map((one) => [one.code, one] as const))('%s is measured, not assumed', (_code, script) => {
+    const missing = undrawable(script.sample)
 
-      if (script.draws) {
-        expect(missing, `${script.name}: ${script.sample}`).toBe(0)
-        expect(fold(script.sample)).toBe(script.sample.normalize('NFC'))
-      } else {
-        expect(missing, `${script.name}: ${script.sample}`).toBeGreaterThan(0.3)
-        expect(fold(script.sample)).toContain('□')
-      }
-    },
-  )
+    if (script.draws) {
+      expect(missing, `${script.name}: ${script.sample}`).toBe(0)
+      expect(fold(script.sample)).toBe(script.sample.normalize('NFC'))
+    } else {
+      expect(missing, `${script.name}: ${script.sample}`).toBeGreaterThan(0.3)
+      expect(fold(script.sample)).toContain('□')
+    }
+  })
 
   test('says what the font is documented to carry, and no more', () => {
     const drawn = SCRIPTS.filter((one) => one.draws).map((one) => one.code)

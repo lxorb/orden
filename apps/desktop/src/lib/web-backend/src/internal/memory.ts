@@ -81,9 +81,7 @@ export function sharedWindows(late = false) {
             post(message) {
               for (const one of listeners) {
                 if (one === own) continue
-                const sent = late
-                  ? new Promise<void>((after) => setTimeout(after, 5))
-                  : Promise.resolve()
+                const sent = late ? new Promise<void>((after) => setTimeout(after, 5)) : Promise.resolve()
                 const delivery = sent.then(() => {
                   one(message)
                 })

@@ -200,10 +200,7 @@ describe('undoing an edit of a label', () => {
     let current = parsed(
       EditorState.create({
         doc,
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          history(),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), history()],
       }),
     )
     const dispatch = (transaction: { state: EditorState }) => (current = transaction.state)

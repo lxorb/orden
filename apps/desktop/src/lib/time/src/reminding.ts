@@ -12,9 +12,7 @@ const KEPT = 100
 function toldNow(): Set<string> {
   const held = stored(TOLD)
   return new Set(
-    (Array.isArray(held) ? (held as unknown[]) : []).filter(
-      (one): one is string => typeof one === 'string',
-    ),
+    (Array.isArray(held) ? (held as unknown[]) : []).filter((one): one is string => typeof one === 'string'),
   )
 }
 
@@ -25,11 +23,7 @@ function look(): void {
   for (const one of due) {
     told.add(one.key)
     const name = time.activity(one.activity)?.name ?? 'No activity'
-    notify(
-      name,
-      one.kind === 'goal' ? 'Goal reached' : `The timer has run for ${lasting(one.ms)}`,
-      `time-${one.key}`,
-    )
+    notify(name, one.kind === 'goal' ? 'Goal reached' : `The timer has run for ${lasting(one.ms)}`, `time-${one.key}`)
   }
   if (due.length) keepJson(TOLD, [...told].slice(-KEPT))
 }

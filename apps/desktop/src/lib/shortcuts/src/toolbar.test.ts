@@ -64,11 +64,7 @@ describe('putting one together', () => {
 
   test('moves one along, and a move off either end is the end', () => {
     toolbar.move(0, 2)
-    expect(toolbar.ids.slice(0, 3)).toEqual([
-      'format.italic',
-      'format.strikethrough',
-      'format.bold',
-    ])
+    expect(toolbar.ids.slice(0, 3)).toEqual(['format.italic', 'format.strikethrough', 'format.bold'])
 
     toolbar.move(2, -4)
     expect(toolbar.ids[0]).toBe('format.bold')

@@ -81,9 +81,7 @@ function saysMarkdown(item: SharedItem): boolean {
 
 export const sharedMarkdown = (arrived: Arrived): string =>
   arrived.items
-    .flatMap((one) =>
-      one.text === null ? [] : [saysMarkdown(one) ? one.text : plainWords(one.text)],
-    )
+    .flatMap((one) => (one.text === null ? [] : [saysMarkdown(one) ? one.text : plainWords(one.text)]))
     .join('\n\n')
     .trim()
 
@@ -109,9 +107,7 @@ export function sharedTask(arrived: Arrived): string {
   const words = sharedWords(arrived)
   const address = ADDRESS.exec(words)?.[0]
   const title = sharedTitle(arrived).replace(/[[\]]/g, '').replace(/\s+/g, ' ').trim()
-  return address
-    ? `[${taskWords(escapeText(title, { addresses: false }))}](${address})`
-    : plainTaskWords(title)
+  return address ? `[${taskWords(escapeText(title, { addresses: false }))}](${address})` : plainTaskWords(title)
 }
 
 export function embedFor(item: SharedItem, src: string): string {

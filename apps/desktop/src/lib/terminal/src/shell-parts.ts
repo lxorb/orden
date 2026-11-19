@@ -14,10 +14,7 @@ if (!__EVEN_PLUGIN__) {
     section: 'remote',
     card: false,
     shown: () => true,
-    places: () =>
-      isDesktop
-        ? [{ label: 'Add host', text: ['SSH', 'ssh config', 'Remote', 'Open config'] }]
-        : [],
+    places: () => (isDesktop ? [{ label: 'Add host', text: ['SSH', 'ssh config', 'Remote', 'Open config'] }] : []),
     load: async () => partView((await import('./remote/RemotePane.svelte')).default, () => ({})),
   })
   registerSettingsPart({
@@ -25,9 +22,7 @@ if (!__EVEN_PLUGIN__) {
     card: false,
     shown: () => true,
     places: () =>
-      account.user
-        ? [{ label: 'Online terminal', text: ['Machine', 'Start', 'Stop', 'Hours', 'CPU'] }]
-        : [],
+      account.user ? [{ label: 'Online terminal', text: ['Machine', 'Start', 'Stop', 'Hours', 'CPU'] }] : [],
     load: async () => partView((await import('./online/OnlinePane.svelte')).default, () => ({})),
   })
 }

@@ -12,12 +12,7 @@ export function showSource(cell: HTMLElement) {
   cell.replaceChildren(document.createTextNode(cell.dataset.source ?? ''))
 }
 
-export function posOnRow(
-  view: EditorView,
-  line: { from: number; to: number },
-  side: Side,
-  x: number,
-) {
+export function posOnRow(view: EditorView, line: { from: number; to: number }, side: Side, x: number) {
   const anchor = side === 'above' ? view.coordsAtPos(line.to, -1) : view.coordsAtPos(line.from, 1)
   if (!anchor) return side === 'above' ? line.to : line.from
 

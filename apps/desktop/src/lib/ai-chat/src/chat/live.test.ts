@@ -57,12 +57,7 @@ const engine = createApiEngine({
 
 async function send(thread: Thread, text: string) {
   const heard: EngineEvent[] = []
-  await engine.send(
-    thread,
-    { text, attachments: [] },
-    (event) => heard.push(event),
-    new AbortController().signal,
-  )
+  await engine.send(thread, { text, attachments: [] }, (event) => heard.push(event), new AbortController().signal)
   return heard.at(-1)
 }
 
@@ -72,12 +67,7 @@ describe.skipIf(!KEY)('OpenAI, live', () => {
     { timeout: 120_000 },
     async () => {
       const thread = newThread('space', 'openai', 'gpt-5.4-mini', 'max', 'full')
-      expect(
-        await send(
-          thread,
-          'Read the note Birds.md, then tell me in one short sentence what it says.',
-        ),
-      ).toEqual({
+      expect(await send(thread, 'Read the note Birds.md, then tell me in one short sentence what it says.')).toEqual({
         type: 'done',
         stop: 'end',
       })
@@ -94,24 +84,18 @@ describe.skipIf(!KEY)('OpenAI, live', () => {
     },
   )
 
-  test(
-    'chat completions with tools, as a compatible server speaks them',
-    { timeout: 120_000 },
-    async () => {
-      const thread = newThread('space', 'compatible-live', 'gpt-4.1-mini', 'auto', 'full')
-      expect(await send(thread, 'Read Birds.md and say what it says, briefly.')).toEqual({
-        type: 'done',
-        stop: 'end',
-      })
-      expect(thread.turns[1]?.parts.some((one) => one.kind === 'tool' && one.state === 'ok')).toBe(
-        true,
-      )
-      await engine.compact(thread)
-      expect(thread.compaction?.kind).toBe('summary')
-      expect(await send(thread, 'And again, in three words?')).toEqual({
-        type: 'done',
-        stop: 'end',
-      })
-    },
-  )
+  test('chat completions with tools, as a compatible server speaks them', { timeout: 120_000 }, async () => {
+    const thread = newThread('space', 'compatible-live', 'gpt-4.1-mini', 'auto', 'full')
+    expect(await send(thread, 'Read Birds.md and say what it says, briefly.')).toEqual({
+      type: 'done',
+      stop: 'end',
+    })
+    expect(thread.turns[1]?.parts.some((one) => one.kind === 'tool' && one.state === 'ok')).toBe(true)
+    await engine.compact(thread)
+    expect(thread.compaction?.kind).toBe('summary')
+    expect(await send(thread, 'And again, in three words?')).toEqual({
+      type: 'done',
+      stop: 'end',
+    })
+  })
 })

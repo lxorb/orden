@@ -24,9 +24,7 @@ interface Envelope<T> {
 }
 
 function access(env: Env): Access | null {
-  return env.CF_API_TOKEN && env.CF_ZONE_ID
-    ? { token: env.CF_API_TOKEN, zone: env.CF_ZONE_ID }
-    : null
+  return env.CF_API_TOKEN && env.CF_ZONE_ID ? { token: env.CF_API_TOKEN, zone: env.CF_ZONE_ID } : null
 }
 
 interface Access {
@@ -34,12 +32,7 @@ interface Access {
   zone: string
 }
 
-async function request<T>(
-  access: Access,
-  method: string,
-  path: string,
-  body?: unknown,
-): Promise<Envelope<T>> {
+async function request<T>(access: Access, method: string, path: string, body?: unknown): Promise<Envelope<T>> {
   const response = await fetch(`${API}/zones/${access.zone}/custom_hostnames${path}`, {
     method,
     headers: { authorization: `Bearer ${access.token}`, 'content-type': 'application/json' },
@@ -50,11 +43,7 @@ async function request<T>(
 }
 
 async function find(access: Access, domain: string): Promise<CustomHostname | null> {
-  const listed = await request<CustomHostname[]>(
-    access,
-    'GET',
-    `?hostname=${encodeURIComponent(domain)}`,
-  )
+  const listed = await request<CustomHostname[]>(access, 'GET', `?hostname=${encodeURIComponent(domain)}`)
   return listed.result?.find((one) => one.hostname === domain) ?? null
 }
 
@@ -109,9 +98,7 @@ export async function releaseLeftDomains(env: Env, domains: readonly string[]): 
 
   const done: string[] = []
   for (const domain of domains) {
-    const held = await env.DB.prepare('select 1 as one from spaces where blog_domain = ?')
-      .bind(domain)
-      .first()
+    const held = await env.DB.prepare('select 1 as one from spaces where blog_domain = ?').bind(domain).first()
     if (held || (await released(reachable, domain))) done.push(domain)
   }
   return done
@@ -137,8 +124,7 @@ function describe(hostname: CustomHostname): DomainStatus {
 
   if (hostname.status === 'active' && ssl === 'active') return { state: 'active', detail: null }
 
-  if (hostname.status === 'moved')
-    return { state: 'error', detail: 'the domain no longer points here' }
+  if (hostname.status === 'moved') return { state: 'error', detail: 'the domain no longer points here' }
   if (hostname.status === 'blocked') {
     return { state: 'error', detail: 'Cloudflare has blocked this domain' }
   }
@@ -147,9 +133,7 @@ function describe(hostname: CustomHostname): DomainStatus {
   }
 
   const waiting =
-    hostname.ssl?.validation_errors?.find((one) => one.message)?.message ??
-    hostname.verification_errors?.[0] ??
-    null
+    hostname.ssl?.validation_errors?.find((one) => one.message)?.message ?? hostname.verification_errors?.[0] ?? null
 
   return { state: 'pending', detail: waiting }
 }

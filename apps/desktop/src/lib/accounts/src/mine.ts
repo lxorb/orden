@@ -1,13 +1,6 @@
 import { account } from './account.svelte'
 import { sha256, withOrWithout } from '../../platform/src/api'
-import {
-  dropAvatar,
-  type OwnProfile,
-  type ProfileChanges,
-  saveAvatar,
-  saveNick,
-  saveProfile,
-} from './calls'
+import { dropAvatar, type OwnProfile, type ProfileChanges, saveAvatar, saveNick, saveProfile } from './calls'
 import type { Crop } from './crop'
 import { faceFrom } from './encode'
 

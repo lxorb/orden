@@ -250,9 +250,8 @@ test('a double click names a terminal in the strip, and an empty name gives it b
 test('Escape leaves the name as it was, and the menu offers the same field', async () => {
   const tab = await strip()
 
-  const rename = tabMenu(tab, tab.paneId).find(
-    (row) => row !== null && 'label' in row && row.label === 'Rename',
-  ) as { run: () => void } | undefined
+  const rename = tabMenu(tab, tab.paneId).find((row) => row !== null && 'label' in row && row.label === 'Rename') as
+    { run: () => void } | undefined
   expect(rename).toBeDefined()
   rename?.run()
 

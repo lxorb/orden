@@ -155,9 +155,7 @@ describe('the usage door', () => {
       expect((await send({ events: [daily()] }, headers)).status).toBe(200)
     }
     expect((await send({ events: [daily()] }, headers)).status).toBe(429)
-    expect((await send({ events: [daily()] }, { 'cf-connecting-ip': '198.51.100.5' })).status).toBe(
-      200,
-    )
+    expect((await send({ events: [daily()] }, { 'cf-connecting-ip': '198.51.100.5' })).status).toBe(200)
   })
 
   test('needs no account', async () => {
@@ -175,10 +173,7 @@ describe('the allowlist', () => {
     ['a field on a daily ping', { events: [daily({ email: 'a@b.c' })] }],
     ['a field on a usage day', { events: [usageDay({ search: 'secret words' })] }],
     ['errors in a usage day', { events: [usageDay({ errors: { js: 1 } })] }],
-    [
-      'a field on app',
-      { events: [daily({ app: { version: '0.21.1', channel: 'stable', build: 'x' } })] },
-    ],
+    ['a field on app', { events: [daily({ app: { version: '0.21.1', channel: 'stable', build: 'x' } })] }],
     [
       'a field on system',
       {
@@ -189,27 +184,15 @@ describe('the allowlist', () => {
         ],
       },
     ],
-    [
-      'a field on sizes',
-      { events: [usageDay({ sizes: { notes: '0', spaces: '0', tabs: '0', words: '0' } })] },
-    ],
+    ['a field on sizes', { events: [usageDay({ sizes: { notes: '0', spaces: '0', tabs: '0', words: '0' } })] }],
     ['a way a command is not run', { events: [usageDay({ commands: { print: { voice: 1 } } })] }],
     ['a startup bucket that is not one', { events: [usageDay({ startup: { '9s': 1 } })] }],
-    [
-      'a path as a command',
-      { events: [usageDay({ commands: { '/home/me/notes.md': { menu: 1 } } })] },
-    ],
+    ['a path as a command', { events: [usageDay({ commands: { '/home/me/notes.md': { menu: 1 } } })] }],
     ['a url as a tab kind', { events: [usageDay({ tabs: { 'https://example.com': 3 } })] }],
-    [
-      'text as a setting value',
-      { events: [usageDay({ settings: { 'general.dns': { 'My Words': 1 } } })] },
-    ],
+    ['text as a setting value', { events: [usageDay({ settings: { 'general.dns': { 'My Words': 1 } } })] }],
     ['an email as a feature', { events: [usageDay({ features: { 'me@example.com': 1 } })] }],
     ['a stable install id on a daily ping', { events: [daily({ install: 'ab'.repeat(16) })] }],
-    [
-      'a made-up os',
-      { events: [daily({ system: { os: 'beos', arch: 'x86', form: 'web', engine: 'other' } })] },
-    ],
+    ['a made-up os', { events: [daily({ system: { os: 'beos', arch: 'x86', form: 'web', engine: 'other' } })] }],
     [
       'a long os version',
       {

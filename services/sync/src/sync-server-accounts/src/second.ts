@@ -81,13 +81,7 @@ export function otpauth(secretHex: string, email: string): string {
 }
 
 export async function codeAt(secretHex: string, step: number): Promise<string> {
-  const key = await crypto.subtle.importKey(
-    'raw',
-    fromHex(secretHex),
-    { name: 'HMAC', hash: 'SHA-1' },
-    false,
-    ['sign'],
-  )
+  const key = await crypto.subtle.importKey('raw', fromHex(secretHex), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign'])
 
   const counter = new Uint8Array(8)
   new DataView(counter.buffer).setUint32(4, step, false)
@@ -140,9 +134,7 @@ export function recoveryCodes(): string[] {
 }
 
 export async function recoveryHash(userId: string, code: string, rounds: number): Promise<string> {
-  const material = await crypto.subtle.importKey('raw', encoder.encode(code), 'PBKDF2', false, [
-    'deriveBits',
-  ])
+  const material = await crypto.subtle.importKey('raw', encoder.encode(code), 'PBKDF2', false, ['deriveBits'])
 
   const bits = await crypto.subtle.deriveBits(
     {
@@ -155,9 +147,7 @@ export async function recoveryHash(userId: string, code: string, rounds: number)
     256,
   )
 
-  const digest = [...new Uint8Array(bits)]
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('')
+  const digest = [...new Uint8Array(bits)].map((byte) => byte.toString(16).padStart(2, '0')).join('')
   return `${RECOVERY_VERSION}.${digest}`
 }
 
@@ -167,9 +157,7 @@ async function writeRecovery(env: Env, userId: string): Promise<string[]> {
   await env.DB.prepare('delete from recovery_codes where user_id = ?').bind(userId).run()
 
   for (const code of codes) {
-    await env.DB.prepare(
-      'insert into recovery_codes (user_id, code_hash, used_at) values (?, ?, null)',
-    )
+    await env.DB.prepare('insert into recovery_codes (user_id, code_hash, used_at) values (?, ?, null)')
       .bind(userId, await recoveryHash(userId, code, recoveryCost()))
       .run()
   }
@@ -216,13 +204,8 @@ async function reseal(env: Env, userId: string, stored: string, secretHex: strin
     .run()
 }
 
-async function secondFor(
-  env: Env,
-  userId: string,
-): Promise<{ secret: string; stored: string } | null> {
-  const row = await env.DB.prepare(
-    'select totp_secret, totp_at from users where id = ? and totp_at is not null',
-  )
+async function secondFor(env: Env, userId: string): Promise<{ secret: string; stored: string } | null> {
+  const row = await env.DB.prepare('select totp_secret, totp_at from users where id = ? and totp_at is not null')
     .bind(userId)
     .first<{ totp_secret: string | null; totp_at: number | null }>()
 
@@ -305,9 +288,7 @@ async function turnOn(env: Env, userId: string, secretHex: string): Promise<stri
   const kept = await seal(env, userId, secretHex)
   if (!kept) return []
 
-  await env.DB.prepare(
-    'update users set totp_secret = ?, totp_at = ?, totp_step = null where id = ?',
-  )
+  await env.DB.prepare('update users set totp_secret = ?, totp_at = ?, totp_step = null where id = ?')
     .bind(kept, now(), userId)
     .run()
 
@@ -345,9 +326,7 @@ second.post('/', async (context) => {
   const secret = newSecret()
 
   const holding = randomToken()
-  await context.env.DB.prepare(
-    'insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)',
-  )
+  await context.env.DB.prepare('insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)')
     .bind('second-pending', await sha256(holding), `${user.id}:${secret}`, now() + 10 * 60 * 1000)
     .run()
 
@@ -367,9 +346,7 @@ second.post('/confirm', async (context) => {
   if (body.problem) return context.json({ error: body.problem }, 400)
   if (!holding || !code) return context.json({ error: WRONG_CODE }, 400)
 
-  const row = await context.env.DB.prepare(
-    'select value from cached where scope = ? and key = ? and until > ?',
-  )
+  const row = await context.env.DB.prepare('select value from cached where scope = ? and key = ? and until > ?')
     .bind('second-pending', await sha256(holding), now())
     .first<{ value: string }>()
 
@@ -405,9 +382,7 @@ second.delete('/', async (context) => {
     return context.json({ error: WRONG_CODE }, 400)
   }
 
-  await context.env.DB.prepare(
-    'update users set totp_secret = null, totp_at = null, totp_step = null where id = ?',
-  )
+  await context.env.DB.prepare('update users set totp_secret = null, totp_at = null, totp_step = null where id = ?')
     .bind(user.id)
     .run()
 
@@ -432,9 +407,7 @@ second.post('/recovery', async (context) => {
 export async function halfWay(env: Env, user: User): Promise<string> {
   const token = randomToken()
 
-  await env.DB.prepare(
-    'insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)',
-  )
+  await env.DB.prepare('insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)')
     .bind('second-half', await sha256(token), user.id, now() + 10 * 60 * 1000)
     .run()
 
@@ -442,9 +415,7 @@ export async function halfWay(env: Env, user: User): Promise<string> {
 }
 
 export async function whoseHalf(env: Env, token: string): Promise<string | null> {
-  const row = await env.DB.prepare(
-    'select value from cached where scope = ? and key = ? and until > ?',
-  )
+  const row = await env.DB.prepare('select value from cached where scope = ? and key = ? and until > ?')
     .bind('second-half', await sha256(token), now())
     .first<{ value: string }>()
 

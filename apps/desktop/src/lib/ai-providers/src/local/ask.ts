@@ -60,8 +60,7 @@ class Listening {
 
 function startError(error: unknown, kind: LocalKind): Error {
   const said = error instanceof Error ? error.message : String(error)
-  if (said === 'missing')
-    return new Error(`${KIND_NAMES[kind]} is not installed.`, { cause: error })
+  if (said === 'missing') return new Error(`${KIND_NAMES[kind]} is not installed.`, { cause: error })
   return new Error(said, { cause: error })
 }
 

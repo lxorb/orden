@@ -92,13 +92,9 @@ describe('with Memory saver on', () => {
   })
 
   test('never the page on screen or any in a pane on screen, even over its count', () => {
-    const pages = Array.from({ length: 9 }, (_, at) =>
-      page(`p${String(at)}`, at, { onScreen: at > 5 }),
-    )
+    const pages = Array.from({ length: 9 }, (_, at) => page(`p${String(at)}`, at, { onScreen: at > 5 }))
     expect(overCap(pages, 'maximum', NOW)).toEqual(['p5', 'p4', 'p3'])
-    const shown = Array.from({ length: 9 }, (_, at) =>
-      page(`p${String(at)}`, at, { onScreen: true }),
-    )
+    const shown = Array.from({ length: 9 }, (_, at) => page(`p${String(at)}`, at, { onScreen: true }))
     expect(overCap(shown, 'maximum', NOW)).toEqual([])
   })
 
@@ -111,10 +107,7 @@ describe('with Memory saver on', () => {
     ['private', { inPrivate: true }],
   ])('never one %s, by its time or its count', (_, more) => {
     expect(rest(page('a', 10 * 60, { frozen: true, ...more }), 'maximum', NOW).act).toBeNull()
-    const pages = [
-      page('a', 10 * 60, more),
-      ...Array.from({ length: 6 }, (_, at) => page(`p${String(at)}`, at)),
-    ]
+    const pages = [page('a', 10 * 60, more), ...Array.from({ length: 6 }, (_, at) => page(`p${String(at)}`, at))]
     expect(overCap(pages, 'maximum', NOW)).not.toContain('a')
   })
 

@@ -3,13 +3,9 @@ import { mapSources, sourcesOf } from './sources'
 
 describe('the addresses a page names', () => {
   test('every element that points at a file, once, in order; a source inside a video as well, which is how one names two codecs', () => {
-    const html =
-      '<img src="a.png"><audio src="b.mp3"></audio><video src="c.mp4"></video><img src="a.png">'
+    const html = '<img src="a.png"><audio src="b.mp3"></audio><video src="c.mp4"></video><img src="a.png">'
     expect(sourcesOf(html)).toEqual(['a.png', 'b.mp3', 'c.mp4'])
-    expect(sourcesOf('<video><source src="a.webm"><source src="a.mp4"></video>')).toEqual([
-      'a.webm',
-      'a.mp4',
-    ])
+    expect(sourcesOf('<video><source src="a.webm"><source src="a.mp4"></video>')).toEqual(['a.webm', 'a.mp4'])
   })
 
   test('and never a frame, whose address is a page somewhere else; only the ones the caller wants; nothing at all in a page that names none', () => {
@@ -30,9 +26,7 @@ describe('pointing them somewhere else', () => {
 
   test('and leaves the rest exactly as they were; an attribute before the source is kept', () => {
     const html = '<img src="a.png"><img src="b.png">'
-    expect(mapSources(html, (src) => (src === 'a.png' ? 'c.png' : null))).toBe(
-      '<img src="c.png"><img src="b.png">',
-    )
+    expect(mapSources(html, (src) => (src === 'a.png' ? 'c.png' : null))).toBe('<img src="c.png"><img src="b.png">')
     expect(mapSources('<img class="wide" src="a.png" width="30">', () => 'b.png')).toBe(
       '<img class="wide" src="b.png" width="30">',
     )

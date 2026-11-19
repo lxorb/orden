@@ -36,10 +36,7 @@ function same(one: unknown, other: unknown): boolean {
 }
 
 function written(before: string, after: string): number {
-  return edits(before, after, 'semantic').reduce(
-    (sum, edit) => sum + edit.insert.length + (edit.to - edit.from),
-    0,
-  )
+  return edits(before, after, 'semantic').reduce((sum, edit) => sum + edit.insert.length + (edit.to - edit.from), 0)
 }
 
 function withFields(thing: Thing, taken: Fields): Thing {
@@ -52,14 +49,7 @@ interface Outcome {
   overlaps: PlaneOverlap[]
 }
 
-function mergedObject(
-  id: string,
-  base: Thing,
-  local: Thing,
-  remote: Thing,
-  times: Times,
-  newer: Whose,
-): Outcome {
+function mergedObject(id: string, base: Thing, local: Thing, remote: Thing, times: Times, newer: Whose): Outcome {
   const [b, l, r] = [fieldsOf(base), fieldsOf(local), fieldsOf(remote)]
   const winner = newer === 'local' ? local : remote
   const overlaps: PlaneOverlap[] = []
@@ -94,13 +84,7 @@ function mergedObject(
   return { thing: withFields(winner, taken), overlaps }
 }
 
-function deletedOnOneSide(
-  id: string,
-  base: Thing,
-  kept: Thing,
-  keptBy: Whose,
-  newer: Whose,
-): Outcome {
+function deletedOnOneSide(id: string, base: Thing, kept: Thing, keptBy: Whose, newer: Whose): Outcome {
   if (same(fieldsOf(base), fieldsOf(kept))) return { thing: null, overlaps: [] }
 
   const b = fieldsOf(base)
@@ -118,12 +102,7 @@ function deletedOnOneSide(
   }
 }
 
-export function divergePlane(
-  base: Canvas,
-  local: Canvas,
-  remote: Canvas,
-  times: Times,
-): PlaneDivergence {
+export function divergePlane(base: Canvas, local: Canvas, remote: Canvas, times: Times): PlaneDivergence {
   const newer: Whose = times.local > times.remote ? 'local' : 'remote'
   const [b, l, r] = [thingsOf(base), thingsOf(local), thingsOf(remote)]
   const overlaps: PlaneOverlap[] = []

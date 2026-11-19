@@ -192,19 +192,9 @@ describe('the top row', () => {
   })
 
   test('holds the top two of a 2x2 split either way first', () => {
-    const across = split(
-      split(split(pane('a'), 'a', 'row', 'b'), 'a', 'column', 'c'),
-      'b',
-      'column',
-      'd',
-    )
+    const across = split(split(split(pane('a'), 'a', 'row', 'b'), 'a', 'column', 'c'), 'b', 'column', 'd')
     expect(topIds(across)).toEqual(['a', 'b'])
-    const down = split(
-      split(split(pane('a'), 'a', 'column', 'c'), 'a', 'row', 'b'),
-      'c',
-      'row',
-      'd',
-    )
+    const down = split(split(split(pane('a'), 'a', 'column', 'c'), 'a', 'row', 'b'), 'c', 'row', 'd')
     expect(topIds(down)).toEqual(['a', 'b'])
   })
 
@@ -218,8 +208,6 @@ describe('the tracks of a split', () => {
   test('share what is left once the room between the cards is taken', () => {
     const frame = split(pane('a'), 'a', 'row', 'b')
     if (frame.kind !== 'split') throw new Error('no split')
-    expect(tracks({ ...frame, fraction: 0.25 })).toBe(
-      'minmax(0, 0.25000fr) var(--card-gap) minmax(0, 0.75000fr)',
-    )
+    expect(tracks({ ...frame, fraction: 0.25 })).toBe('minmax(0, 0.25000fr) var(--card-gap) minmax(0, 0.75000fr)')
   })
 })

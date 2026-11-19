@@ -39,30 +39,13 @@
 
 <div class="field totp" data-field={label}>
   {#if totp}
-    <button
-      class="tap"
-      type="button"
-      title="Copy {label}"
-      onclick={() => now && void copyField(label, now.code)}
-    >
+    <button class="tap" type="button" title="Copy {label}" onclick={() => now && void copyField(label, now.code)}>
       <span class="label">{label}</span>
       <span class="value" dir="ltr">{shown || '••• •••'}</span>
     </button>
-    <svg
-      class="ring"
-      class:is-low={(now?.remaining ?? 30) <= 5}
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-    >
+    <svg class="ring" class:is-low={(now?.remaining ?? 30) <= 5} viewBox="0 0 24 24" aria-hidden="true">
       <circle class="track" cx="12" cy="12" r="9" />
-      <circle
-        class="left"
-        cx="12"
-        cy="12"
-        r="9"
-        stroke-dasharray={RING}
-        stroke-dashoffset={RING * (1 - left)}
-      />
+      <circle class="left" cx="12" cy="12" r="9" stroke-dasharray={RING} stroke-dashoffset={RING * (1 - left)} />
       <text x="12" y="12">{now?.remaining ?? ''}</text>
     </svg>
     <button

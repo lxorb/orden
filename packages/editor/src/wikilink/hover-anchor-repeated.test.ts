@@ -6,8 +6,7 @@ import { previewNoteOf } from './hover'
 function landing(source: string, block: string) {
   const section = sectionOf(source, { heading: null, block })
   if (section === null) throw new Error('no section')
-  return previewNoteOf(EditorState.create({}), 'Week.md', source, section, { heading: null, block })
-    .at
+  return previewNoteOf(EditorState.create({}), 'Week.md', source, section, { heading: null, block }).at
 }
 
 describe('the hover card of a link to a named block', () => {

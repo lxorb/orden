@@ -54,9 +54,7 @@
   })
 
   const readBefore = untrack(() => reading && drawnBefore.get(tab.id))
-  let made = $state(
-    readBefore && readBefore.key === untrack(() => reading?.key) ? readBefore.html : '',
-  )
+  let made = $state(readBefore && readBefore.key === untrack(() => reading?.key) ? readBefore.html : '')
 
   $effect(() => {
     const asked = reading
@@ -85,9 +83,7 @@
     if (!flying) html = now
   })
 
-  const latestShot = $derived(
-    how === 'photograph' ? (webPages().of(tab.id).shot ?? face?.shot ?? null) : null,
-  )
+  const latestShot = $derived(how === 'photograph' ? (webPages().of(tab.id).shot ?? face?.shot ?? null) : null)
   let shot = $state(untrack(() => latestShot))
   $effect.pre(() => {
     const now = latestShot
@@ -129,8 +125,7 @@
 
   function decoded(node: HTMLImageElement, shot: string) {
     const decode = (one: string) => {
-      const done =
-        typeof node.decode === 'function' ? node.decode().then(() => one) : Promise.resolve(one)
+      const done = typeof node.decode === 'function' ? node.decode().then(() => one) : Promise.resolve(one)
       drawing?.(done)
       void done.then(
         (seen) => {
@@ -178,14 +173,7 @@
     <pre class="screen" in:fade={arrive}>{screen.text}</pre>
   {:else if how === 'photograph' && shot}
     {@render mark()}
-    <img
-      class="shot"
-      class:is-drawn={decodedShot === shot}
-      src={shot}
-      alt=""
-      draggable="false"
-      use:decoded={shot}
-    />
+    <img class="shot" class:is-drawn={decodedShot === shot} src={shot} alt="" draggable="false" use:decoded={shot} />
   {:else if kept?.html}
     <div
       class="kept"

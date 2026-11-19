@@ -139,8 +139,7 @@ function keptFrom(parsed: unknown): Kept {
 
   return {
     pens,
-    at:
-      typeof held.at === 'number' ? Math.min(Math.max(0, Math.trunc(held.at)), pens.length - 1) : 0,
+    at: typeof held.at === 'number' ? Math.min(Math.max(0, Math.trunc(held.at)), pens.length - 1) : 0,
     recent: Array.isArray(held.recent)
       ? held.recent.filter((one): one is string => typeof one === 'string').slice(0, MOST_RECENT)
       : [],

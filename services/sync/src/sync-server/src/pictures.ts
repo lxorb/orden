@@ -14,9 +14,7 @@ const PICTURE = /\/i\/([a-f0-9]{64})(?:\.[a-z0-9]+)?(?:[?#].*)?$/i
 
 const ANYWHERE = /\/i\/([a-f0-9]{64})(?![a-f0-9])/gi
 
-export function picturesOfMeta(
-  meta: Readonly<Record<string, string>> | null | undefined,
-): string[] {
+export function picturesOfMeta(meta: Readonly<Record<string, string>> | null | undefined): string[] {
   const out: string[] = []
   for (const said of Object.values(meta ?? {})) {
     const hash = PICTURE.exec(said.trim())?.[1]
@@ -34,8 +32,7 @@ export function picturesOf(source: string, liveHtml = false): Set<string> {
   const html = liveHtml
     ? (markup: string) => {
         const plain = decoded(markup).replace(/[\t\n\f\r ]+/g, '')
-        for (const match of plain.matchAll(ANYWHERE))
-          if (match[1]) found.add(match[1].toLowerCase())
+        for (const match of plain.matchAll(ANYWHERE)) if (match[1]) found.add(match[1].toLowerCase())
       }
     : (markup: string) => {
         for (const address of drawnByHtml(markup)) add(address)
@@ -61,11 +58,7 @@ export function picturesOf(source: string, liveHtml = false): Set<string> {
   return found
 }
 
-function visit(
-  value: unknown,
-  add: (address: string | undefined) => void,
-  html: (markup: string) => void,
-): void {
+function visit(value: unknown, add: (address: string | undefined) => void, html: (markup: string) => void): void {
   if (Array.isArray(value)) {
     for (const one of value) visit(one, add, html)
     return
@@ -186,9 +179,7 @@ function drawnByHtml(html: string): string[] {
     at += name[0].length
 
     while (at < html.length && html[at] !== '>') {
-      const attribute = /^[\s/]*([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/.exec(
-        html.slice(at),
-      )
+      const attribute = /^[\s/]*([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/.exec(html.slice(at))
       if (!attribute?.[0]) {
         at += 1
         continue
@@ -228,13 +219,8 @@ const NAMED: Record<string, string> = {
 function decoded(value: string): string {
   return value.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);?/gi, (whole, said: string) => {
     if (said.startsWith('#')) {
-      const code =
-        said[1] === 'x' || said[1] === 'X'
-          ? parseInt(said.slice(2), 16)
-          : parseInt(said.slice(1), 10)
-      return Number.isFinite(code) && code > 0 && code <= 0x10ffff
-        ? String.fromCodePoint(code)
-        : whole
+      const code = said[1] === 'x' || said[1] === 'X' ? parseInt(said.slice(2), 16) : parseInt(said.slice(1), 10)
+      return Number.isFinite(code) && code > 0 && code <= 0x10ffff ? String.fromCodePoint(code) : whole
     }
     return NAMED[said.toLowerCase()] ?? whole
   })

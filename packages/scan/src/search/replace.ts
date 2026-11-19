@@ -15,11 +15,7 @@ export interface Change {
   back: Edit[]
 }
 
-export function expand(
-  replacement: string,
-  matched: string,
-  groups: readonly string[] | undefined,
-): string {
+export function expand(replacement: string, matched: string, groups: readonly string[] | undefined): string {
   if (!groups) return replacement
 
   return replacement.replace(/\$(\$|&|\d)/g, (whole, what: string) => {

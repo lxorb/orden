@@ -234,11 +234,9 @@ export interface Scan<T extends TableName = TableName> {
   space?: string
 }
 
-export type Query =
-  { [T in KeyedTable]: Get<T> }[KeyedTable] | { [T in TableName]: Scan<T> }[TableName]
+export type Query = { [T in KeyedTable]: Get<T> }[KeyedTable] | { [T in TableName]: Scan<T> }[TableName]
 
-export type Answer<Q> =
-  Q extends Get<infer T> ? Rows[T] | null : Q extends Scan<infer T> ? Rows[T][] : never
+export type Answer<Q> = Q extends Get<infer T> ? Rows[T] | null : Q extends Scan<infer T> ? Rows[T][] : never
 
 export type Answers<Q extends readonly Query[]> = { -readonly [I in keyof Q]: Answer<Q[I]> }
 
@@ -282,10 +280,7 @@ export interface Clear {
 }
 
 export type Change =
-  | { [T in TableName]: Put<T> }[TableName]
-  | { [T in KeyedTable]: Patch<T> }[KeyedTable]
-  | Delete
-  | Clear
+  { [T in TableName]: Put<T> }[TableName] | { [T in KeyedTable]: Patch<T> }[KeyedTable] | Delete | Clear
 
 export const put = <T extends TableName>(table: T, row: Rows[T]): Put<T> => ({
   t: 'put',
@@ -293,11 +288,12 @@ export const put = <T extends TableName>(table: T, row: Rows[T]): Put<T> => ({
   row,
 })
 
-export const patch = <T extends KeyedTable>(
-  table: T,
-  key: string,
-  set: Partial<Omit<Rows[T], Keys[T]>>,
-): Patch<T> => ({ t: 'patch', table, key, set })
+export const patch = <T extends KeyedTable>(table: T, key: string, set: Partial<Omit<Rows[T], Keys[T]>>): Patch<T> => ({
+  t: 'patch',
+  table,
+  key,
+  set,
+})
 
 export const remove = (table: KeyedTable, key: string): Delete => ({ t: 'delete', table, key })
 
@@ -318,11 +314,7 @@ export interface SyncStore {
   close(): Promise<void>
 }
 
-export async function openSyncStore(
-  account: string,
-  leads = false,
-  device?: string,
-): Promise<SyncStore> {
+export async function openSyncStore(account: string, leads = false, device?: string): Promise<SyncStore> {
   if (isNative()) {
     const { openNative } = await import('./native-sync-store')
     return openNative(account, leads, device)
@@ -469,12 +461,7 @@ export function answerOf<Q extends Query>(query: Q, value: unknown): Answer<Q> {
 export function openedOf(value: unknown): Opened {
   const said = (typeof value === 'object' && value !== null ? value : {}) as Record<string, unknown>
   const { device, wasClean, schema, recovered } = said
-  if (
-    typeof device !== 'string' ||
-    typeof wasClean !== 'boolean' ||
-    !fits(schema) ||
-    typeof recovered !== 'boolean'
-  ) {
+  if (typeof device !== 'string' || typeof wasClean !== 'boolean' || !fits(schema) || typeof recovered !== 'boolean') {
     throw new StoreError('the sync store answered an odd opening')
   }
   return { device, wasClean, schema, recovered }

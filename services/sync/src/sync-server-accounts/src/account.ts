@@ -72,9 +72,7 @@ account.post('/delete/verify', async (context) => {
   }
 
   const ticket = randomToken()
-  await context.env.DB.prepare(
-    'insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)',
-  )
+  await context.env.DB.prepare('insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)')
     .bind(TICKETS, await sha256(ticket), user.id, now() + TICKET_FOR)
     .run()
 
@@ -98,9 +96,7 @@ account.delete('/', async (context) => {
   if (!held) return context.json({ error: TOOK_TOO_LONG }, 400)
 
   await eraseAccount(context.env, user)
-  await context.env.DB.prepare(
-    'insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)',
-  )
+  await context.env.DB.prepare('insert or replace into cached (scope, key, value, until) values (?, ?, ?, ?)')
     .bind(LEFT, await sha256(ticket ?? ''), 'gone', now() + LEFT_FOR)
     .run()
 
@@ -114,9 +110,7 @@ left.post('/', async (context) => {
   const ticket = body.text('ticket', 128)
   if (body.problem || !ticket) return context.json({ error: body.problem ?? 'no ticket' }, 400)
 
-  const gone = await context.env.DB.prepare(
-    'select 1 as one from cached where scope = ? and key = ? and until > ?',
-  )
+  const gone = await context.env.DB.prepare('select 1 as one from cached where scope = ? and key = ? and until > ?')
     .bind(LEFT, await sha256(ticket), now())
     .first<{ one: number }>()
 

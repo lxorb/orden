@@ -22,10 +22,7 @@ export interface SpaceNews {
   unwatched?: 'folders' | 'limit'
 }
 
-export function watchSpaces(
-  roots: readonly string[],
-  heard: (news: SpaceNews) => void,
-): Promise<void> {
+export function watchSpaces(roots: readonly string[], heard: (news: SpaceNews) => void): Promise<void> {
   const news = new Channel<unknown>()
   news.onmessage = (message) => {
     const checked = newsOf(message)
@@ -52,11 +49,7 @@ export function scanSpace(root: string, each?: (chunk: Listed[]) => void): Promi
   return scanned('space_scan', root, each)
 }
 
-function scanned(
-  command: string,
-  root: string,
-  each?: (chunk: Listed[]) => void,
-): Promise<Listed[]> {
+function scanned(command: string, root: string, each?: (chunk: Listed[]) => void): Promise<Listed[]> {
   return new Promise((resolve, reject) => {
     const all: Listed[] = []
     const listing = new Channel<unknown>()
@@ -102,8 +95,7 @@ const record = (value: unknown): value is Loose => typeof value === 'object' && 
 
 const whole = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) >= 0
 
-const identity = (value: unknown): value is string | null =>
-  value === null || typeof value === 'string'
+const identity = (value: unknown): value is string | null => value === null || typeof value === 'string'
 
 function listedOf(value: unknown): Listed | null {
   if (!record(value)) return null
@@ -125,9 +117,7 @@ function changeOf(value: unknown): SpaceChange | null {
     }
     case 'renamed': {
       const listed = listedOf(value)
-      return listed && typeof value.from === 'string'
-        ? { kind: 'renamed', from: value.from, ...listed }
-        : null
+      return listed && typeof value.from === 'string' ? { kind: 'renamed', from: value.from, ...listed } : null
     }
     case 'removed': {
       const { path, dir, id } = value

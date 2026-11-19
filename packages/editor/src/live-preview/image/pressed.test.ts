@@ -66,9 +66,7 @@ describe('deleting it', () => {
     const picture = pictureAt(current, 2)
     if (edit !== undefined) current = current.update({ changes: { from: 0, insert: edit } }).state
 
-    const ran =
-      !!picture &&
-      deletePicture(picture)({ state: current, dispatch: (next) => (current = next.state) })
+    const ran = !!picture && deletePicture(picture)({ state: current, dispatch: (next) => (current = next.state) })
     return { ran, doc: current.doc.toString() }
   }
 

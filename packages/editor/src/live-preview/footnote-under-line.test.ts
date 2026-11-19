@@ -27,10 +27,7 @@ function viewOf(doc: string) {
       EditorState.create({
         doc,
         selection: EditorSelection.cursor(doc.length),
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          livePreview(),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), livePreview()],
       }),
     ),
   })
@@ -54,9 +51,7 @@ describe('a footnote defined on the line right under its paragraph', () => {
     const view = viewOf(NOTE)
     const number = view.contentDOM.querySelector('.cm-line .orden-footnote-number')
     expect(number).not.toBeNull()
-    number?.dispatchEvent(
-      new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }),
-    )
+    number?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
     expect(view.state.selection.main.head).toBe(NOTE.indexOf('Smith'))
   })
 

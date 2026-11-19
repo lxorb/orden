@@ -80,9 +80,7 @@ export function hostsOf(config: readonly ConfigHost[], kept: Kept): Host[] {
   }
 
   const all: Host[] = [
-    ...config.map((one) =>
-      hostOf(one, one.id, [...one.also, ...(one.hostname ? [one.hostname] : [])]),
-    ),
+    ...config.map((one) => hostOf(one, one.id, [...one.also, ...(one.hostname ? [one.hostname] : [])])),
     ...kept.own.map((one) => hostOf(one, one.name, [one.hostname], true)),
   ]
   const place = new Map(kept.order.map((id, at) => [id, at]))
@@ -131,10 +129,7 @@ export function pickerOrder(hosts: readonly Host[], kept: Kept): Placed[] {
     [pinned, null],
     [recent, null],
     [rest.filter((host) => !host.group), null],
-    ...groupsOf(rest, kept).map((group): [Host[], string] => [
-      rest.filter((host) => host.group === group),
-      group,
-    ]),
+    ...groupsOf(rest, kept).map((group): [Host[], string] => [rest.filter((host) => host.group === group), group]),
   ]
 
   const out: Placed[] = []
@@ -199,9 +194,7 @@ export function hostFor(hosts: readonly Host[], wanted: Destination): Host | nul
     hosts.find(
       (host) =>
         (plain && (host.name === wanted.hostname || host.also.includes(wanted.hostname))) ||
-        (host.hostname === wanted.hostname &&
-          host.user === wanted.user &&
-          (host.port ?? null) === wanted.port),
+        (host.hostname === wanted.hostname && host.user === wanted.user && (host.port ?? null) === wanted.port),
     ) ?? null
   )
 }

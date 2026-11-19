@@ -88,22 +88,14 @@
 <div class="recorder" role="status">
   {#if refused}
     <span class="refused">{refused}</span>
-    <button type="button" class="orden-glyph" aria-label="Close" onclick={ondone}
-      ><Glyph name="close" /></button
-    >
+    <button type="button" class="orden-glyph" aria-label="Close" onclick={ondone}><Glyph name="close" /></button>
   {:else}
     <span class="dot" aria-hidden="true"></span>
     <span class="time">{elapsed(started ? (now - started) / 1000 : 0)}</span>
     <span class="grow"></span>
-    <button type="button" class="orden-glyph" aria-label="Delete" onclick={cancel}
-      ><Glyph name="close" /></button
-    >
-    <button
-      type="button"
-      class="send"
-      aria-label="Send"
-      disabled={sending || !started}
-      onclick={() => void send()}><Glyph name="send" /></button
+    <button type="button" class="orden-glyph" aria-label="Delete" onclick={cancel}><Glyph name="close" /></button>
+    <button type="button" class="send" aria-label="Send" disabled={sending || !started} onclick={() => void send()}
+      ><Glyph name="send" /></button
     >
   {/if}
 </div>

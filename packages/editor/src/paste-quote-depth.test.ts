@@ -46,8 +46,7 @@ async function pasted(view: EditorView, copied: { text: string; html: string }) 
     value: {
       files: [],
       types: ['text/plain', 'text/html'],
-      getData: (type: string) =>
-        type === 'text/plain' ? copied.text : type === 'text/html' ? copied.html : '',
+      getData: (type: string) => (type === 'text/plain' ? copied.text : type === 'text/html' ? copied.html : ''),
     },
   })
   view.contentDOM.dispatchEvent(event)

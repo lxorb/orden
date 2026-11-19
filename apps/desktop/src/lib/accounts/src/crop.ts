@@ -24,13 +24,7 @@ export function clampZoom(zoom: number): number {
   return Math.min(MOST_ZOOM, Math.max(1, zoom))
 }
 
-export function clampOffset(
-  offset: Point,
-  width: number,
-  height: number,
-  view: number,
-  zoom: number,
-): Point {
+export function clampOffset(offset: Point, width: number, height: number, view: number, zoom: number): Point {
   const scale = scaleAt(width, height, view, zoom)
   const spareX = Math.max(0, (width * scale - view) / 2)
   const spareY = Math.max(0, (height * scale - view) / 2)
@@ -40,14 +34,7 @@ export function clampOffset(
   }
 }
 
-export function zoomed(
-  crop: Crop,
-  to: number,
-  at: Point,
-  width: number,
-  height: number,
-  view: number,
-): Crop {
+export function zoomed(crop: Crop, to: number, at: Point, width: number, height: number, view: number): Crop {
   const zoom = clampZoom(to)
   const ratio = zoom / crop.zoom
   const offset = {

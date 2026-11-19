@@ -8,16 +8,7 @@ import { type Desk, type NoteAt, openNote, reachable, TYPING, wordsOf } from './
 import { DocError } from './problem'
 import { revOf } from './rev'
 
-const INCLUDES = [
-  'text',
-  'outline',
-  'properties',
-  'tasks',
-  'links',
-  'backlinks',
-  'blocks',
-  'selection',
-] as const
+const INCLUDES = ['text', 'outline', 'properties', 'tasks', 'links', 'backlinks', 'blocks', 'selection'] as const
 
 type Include = (typeof INCLUDES)[number]
 

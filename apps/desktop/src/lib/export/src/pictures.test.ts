@@ -1,14 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { fromBase64, parseDataUri, toBase64 } from '../../platform/src/bytes'
-import {
-  inlinePictures,
-  isRemote,
-  mimeOf,
-  type Picture,
-  readPictures,
-  sourcesIn,
-  suffixFor,
-} from './pictures'
+import { inlinePictures, isRemote, mimeOf, type Picture, readPictures, sourcesIn, suffixFor } from './pictures'
 import { swapSources } from '../../files-out/src/api'
 
 const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0, 1, 2, 3])
@@ -106,9 +98,7 @@ describe('pointing a page’s pictures somewhere else', () => {
 
   test('keeps every other attribute exactly as it was', () => {
     const html = '<img alt="A cat" src="a.png" width="20">'
-    expect(swapSources(html, new Map([['a.png', 'x.png']]))).toBe(
-      '<img alt="A cat" src="x.png" width="20">',
-    )
+    expect(swapSources(html, new Map([['a.png', 'x.png']]))).toBe('<img alt="A cat" src="x.png" width="20">')
   })
 
   test('does nothing at all when the map is empty', () => {
@@ -144,19 +134,14 @@ describe('naming the pictures inside a package', () => {
       Promise.resolve(new Response(PNG, { status: 200, headers: { 'content-type': 'image/png' } })),
     )
 
-    const read = await readPictures([
-      'https://one.example.com/pic.png',
-      'https://two.example.com/pic.png',
-    ])
+    const read = await readPictures(['https://one.example.com/pic.png', 'https://two.example.com/pic.png'])
 
     expect(read.map((one) => one.name)).toEqual(['pic.png', 'pic 2.png'])
   })
 
   test('takes the type the server declared over the one the name suggests', async () => {
     vi.stubGlobal('fetch', () =>
-      Promise.resolve(
-        new Response(PNG, { status: 200, headers: { 'content-type': 'image/jpeg' } }),
-      ),
+      Promise.resolve(new Response(PNG, { status: 200, headers: { 'content-type': 'image/jpeg' } })),
     )
 
     const read = await readPictures(['https://orden.so/odd.png'])
@@ -204,9 +189,7 @@ describe('naming the pictures inside a package', () => {
 
   test('a declared type that is not a plain media type is not trusted', async () => {
     vi.stubGlobal('fetch', () =>
-      Promise.resolve(
-        new Response(PNG, { status: 200, headers: { 'content-type': 'image/png" onerror="x' } }),
-      ),
+      Promise.resolve(new Response(PNG, { status: 200, headers: { 'content-type': 'image/png" onerror="x' } })),
     )
 
     const read = await readPictures(['https://evil.example.com/a.png'])
@@ -221,11 +204,7 @@ describe('naming the pictures inside a package', () => {
   test('keeps the order it was asked in, minus what it could not read', async () => {
     vi.stubGlobal('fetch', () => Promise.reject(new Error('offline')))
 
-    const read = await readPictures([
-      inline('image/png'),
-      'https://orden.so/gone.png',
-      inline('image/gif'),
-    ])
+    const read = await readPictures([inline('image/png'), 'https://orden.so/gone.png', inline('image/gif')])
 
     expect(read.map((one) => one.mime)).toEqual(['image/png', 'image/gif'])
   })

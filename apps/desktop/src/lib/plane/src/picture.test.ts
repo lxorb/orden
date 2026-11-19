@@ -15,8 +15,7 @@ vi.mock('../../link-index/src/api', async () => {
       index: (path: string | null) => ({ notes: [], path, read: () => Promise.resolve(null) }),
       targetOf: () => null,
     },
-    notePicture: (src: string, notePath: string | null, source: string) =>
-      imageUrl(src, notePath, source),
+    notePicture: (src: string, notePath: string | null, source: string) => imageUrl(src, notePath, source),
   }
 })
 vi.mock('../../files-out/src/api', async (importOriginal) => ({
@@ -35,33 +34,26 @@ const { choices } = await import('../../modes/src/api')
 vi.mock('../../platform/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/api')>()),
   invoke: (command: string, args?: { path?: string }) =>
-    command === 'read_asset'
-      ? Promise.resolve(`data:image/png;base64,${args?.path ?? ''}`)
-      : Promise.resolve(null),
+    command === 'read_asset' ? Promise.resolve(`data:image/png;base64,${args?.path ?? ''}`) : Promise.resolve(null),
 }))
 
 vi.mock('../../pdf/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../pdf/src/api')>()),
   paperPicture: (at: { file: string }, page: number) => {
     world.pages.push(page)
-    return Promise.resolve(
-      at.file === 'Reading.pdf' ? `data:image/png;base64,UEFHRQ${page}A` : null,
-    )
+    return Promise.resolve(at.file === 'Reading.pdf' ? `data:image/png;base64,UEFHRQ${page}A` : null)
   },
 }))
 
 const { readCanvas } = await import('@orden/markdown/canvas')
-const { canvasSvg, exportCanvasPdf, exportCanvasSvg, inlinedSvg, printCanvas } =
-  await import('./picture')
+const { canvasSvg, exportCanvasPdf, exportCanvasSvg, inlinedSvg, printCanvas } = await import('./picture')
 
 const HOSTILE = '<img src=x onerror="alert(1)">'
 
 const plane = () =>
   readCanvas(
     JSON.stringify({
-      nodes: [
-        { id: 'a', type: 'text', text: `Card ${HOSTILE}`, x: 0, y: 0, width: 200, height: 100 },
-      ],
+      nodes: [{ id: 'a', type: 'text', text: `Card ${HOSTILE}`, x: 0, y: 0, width: 200, height: 100 }],
       edges: [],
       orden: {
         shapes: [
@@ -250,9 +242,7 @@ describe('a picture with its pictures inlined', () => {
   })
 
   test('both in one drawing, and a link in a card keeps its `href`', async () => {
-    const svg = await inlinedSvg(
-      `<svg><image href="a.png"/>${inFoo('<a href="b.md">b</a><img src="c.png"/>')}</svg>`,
-    )
+    const svg = await inlinedSvg(`<svg><image href="a.png"/>${inFoo('<a href="b.md">b</a><img src="c.png"/>')}</svg>`)
     expect(svg).toContain('<image href="data:image/png;base64,a.png"/>')
     expect(svg).toContain('<a href="b.md">b</a>')
     expect(svg).toContain('<img src="data:image/png;base64,c.png"/>')
@@ -286,9 +276,7 @@ describe('the sheet a plane of one’s own is printed on', () => {
   test('forbids every script before anything on it is read', async () => {
     const page = await printed('Card')
     const head = page.slice(0, page.indexOf('<body>'))
-    expect(head).toMatch(
-      /<meta http-equiv="Content-Security-Policy" content="[^"]*script-src 'none'/,
-    )
+    expect(head).toMatch(/<meta http-equiv="Content-Security-Policy" content="[^"]*script-src 'none'/)
     expect(page.indexOf('Content-Security-Policy')).toBeLessThan(page.indexOf('<title>'))
   })
 
@@ -301,9 +289,7 @@ describe('the sheet a plane of one’s own is printed on', () => {
     const page = await printed('<iframe src="https://x.test/page"></iframe>')
     const dom = new DOMParser().parseFromString(page, 'text/html')
     expect(dom.querySelector('iframe')).toBeNull()
-    expect(dom.querySelector('[data-frame]')?.getAttribute('data-frame')).toBe(
-      'https://x.test/page',
-    )
+    expect(dom.querySelector('[data-frame]')?.getAttribute('data-frame')).toBe('https://x.test/page')
     expect(page).not.toContain('frame-src')
   })
 

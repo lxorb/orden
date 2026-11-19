@@ -75,10 +75,7 @@ function step(drawings: readonly Drawing[]): void {
       box.scrollTop = box.scrollHeight - below
       continue
     }
-    const grew = above.reduce(
-      (sum, one) => sum + one.node.getBoundingClientRect().height - (tall.get(one) ?? 0),
-      0,
-    )
+    const grew = above.reduce((sum, one) => sum + one.node.getBoundingClientRect().height - (tall.get(one) ?? 0), 0)
     box.scrollTop += grew
   }
 }

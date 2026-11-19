@@ -5,17 +5,12 @@ import { languageNames, type Verb } from '../rewrite'
 import type { Thread } from '../../../ai-providers/src/api'
 import { type Host, sendHere } from './host'
 
-export function languageIn(
-  typed: string,
-  inEnglish: (id: string) => string = englishName,
-): string | null {
+export function languageIn(typed: string, inEnglish: (id: string) => string = englishName): string | null {
   const want = typed.trim().toLowerCase()
   if (!want) return null
   const found = languageNames().find(
     (one) =>
-      one.id.toLowerCase() === want ||
-      one.name.toLowerCase() === want ||
-      inEnglish(one.id).toLowerCase() === want,
+      one.id.toLowerCase() === want || one.name.toLowerCase() === want || inEnglish(one.id).toLowerCase() === want,
   )
   return found?.id ?? null
 }
@@ -47,9 +42,7 @@ export async function rewrite(verb: Verb, language = ''): Promise<boolean> {
 
 function about(named: string): string {
   const name = named.trim().replace(/^\[\[|\]\]$/g, '')
-  return name
-    ? `the note [[${name}]]`
-    : 'the selection, or the note in front if nothing is selected'
+  return name ? `the note [[${name}]]` : 'the selection, or the note in front if nothing is selected'
 }
 
 function explainPrompt(): string {

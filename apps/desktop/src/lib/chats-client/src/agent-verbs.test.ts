@@ -69,10 +69,7 @@ const VERBS: Record<
   react: verbs.react,
 }
 
-function agent(
-  mode: 'unsupervised' | 'confirm' | 'autonomous',
-  spaces: 'all' | string[] = ['Team'],
-) {
+function agent(mode: 'unsupervised' | 'confirm' | 'autonomous', spaces: 'all' | string[] = ['Team']) {
   return callerOf({
     id: 'claude',
     name: 'Claude Code',
@@ -82,11 +79,7 @@ function agent(
   })
 }
 
-async function call(
-  verb: string,
-  args: Record<string, unknown>,
-  caller: Caller = agent('confirm'),
-) {
+async function call(verb: string, args: Record<string, unknown>, caller: Caller = agent('confirm')) {
   try {
     return await VERBS[verb]?.({ verb, args, caller })
   } catch (error) {
@@ -140,12 +133,10 @@ describe('the chats an agent sees', () => {
     store.speak(secretThesis(), ME, 'the other thesis')
     answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
     try {
-      expect(
-        said(await call('read_chat', { chat: 'thesis' }, callerOf(GRANT, 'in-secret'))),
-      ).toContain('the other thesis')
-      expect(said(await call('read_chat', { chat: 'thesis' }, callerOf(GRANT)))).toContain(
-        'Draft of chapter 3',
+      expect(said(await call('read_chat', { chat: 'thesis' }, callerOf(GRANT, 'in-secret')))).toContain(
+        'the other thesis',
       )
+      expect(said(await call('read_chat', { chat: 'thesis' }, callerOf(GRANT)))).toContain('Draft of chapter 3')
     } finally {
       answerThreadSpaces(() => null)
     }
@@ -157,14 +148,10 @@ describe('the chats an agent sees', () => {
     store.speak(twin, ME, 'the other thesis')
     answerThreadSpaces((thread) => (thread === 'in-secret' ? 'secret' : null))
     try {
-      const asked = JSON.stringify(
-        await call('read_chat', { chat: 'thesis' }, callerOf(GRANT, 'in-secret')),
-      )
+      const asked = JSON.stringify(await call('read_chat', { chat: 'thesis' }, callerOf(GRANT, 'in-secret')))
       for (const part of ['"ok":false', 'ambiguous', twin, third]) expect(asked).toContain(part)
       expect(asked).not.toContain('the other thesis')
-      expect(said(await call('read_chat', { chat: twin }, callerOf(GRANT, 'in-secret')))).toContain(
-        'the other thesis',
-      )
+      expect(said(await call('read_chat', { chat: twin }, callerOf(GRANT, 'in-secret')))).toContain('the other thesis')
     } finally {
       answerThreadSpaces(() => null)
     }
@@ -174,9 +161,7 @@ describe('the chats an agent sees', () => {
     const twin = secretThesis()
     answerThreadSpaces((thread) => (thread === 'in-third' ? 'third' : null))
     try {
-      const asked = JSON.stringify(
-        await call('read_chat', { chat: 'thesis' }, callerOf(GRANT, 'in-third')),
-      )
+      const asked = JSON.stringify(await call('read_chat', { chat: 'thesis' }, callerOf(GRANT, 'in-third')))
       expect(asked).toContain('ambiguous')
       expect(asked).toContain(twin)
       expect(asked).not.toContain('Draft of chapter 3')
@@ -205,9 +190,9 @@ describe('the chats an agent sees', () => {
       expect(await call('read_chat', { chat: 'diary' })).toMatchObject({ ok: false })
       expect(await call('read_chat', { chat: diary })).toMatchObject({ ok: false })
       expect(said(await call('search_chats', { query: 'secret' }))).toBe('Nothing found.')
-      expect(
-        await call('post_message', { chat: diary, text: 'sneaked in' }, agent('autonomous')),
-      ).toMatchObject({ ok: false })
+      expect(await call('post_message', { chat: diary, text: 'sneaked in' }, agent('autonomous'))).toMatchObject({
+        ok: false,
+      })
     } finally {
       protection.set('/spaces/Team', '/spaces/Team/Private', null)
     }
@@ -292,9 +277,7 @@ describe('what an agent says in a chat', () => {
 
   test('reacts, and takes a reaction back', async () => {
     const message = store.ordered(thesis)[1]?.id ?? ''
-    expect(said(await call('react', { chat: 'thesis', message, emoji: '👍' }))).toMatch(
-      /^Reacted 👍/,
-    )
+    expect(said(await call('react', { chat: 'thesis', message, emoji: '👍' }))).toMatch(/^Reacted 👍/)
     await vi.waitFor(() => expect(store.ordered(thesis)[1]?.reactions['👍']).toEqual([ME]))
     await call('react', { chat: 'thesis', message, emoji: '👍', on: false })
     await vi.waitFor(() => expect(store.ordered(thesis)[1]?.reactions['👍'] ?? []).toEqual([]))
@@ -316,9 +299,7 @@ describe('what an agent says in a chat', () => {
     for (const verb of ['post_message', 'draft_message'])
       expect(await call(verb, { chat: read, text: 'hi' })).toMatchObject({ code: 'read_only' })
     const general = store.add('general', [OWNER, WRITER])
-    expect(said(await call('post_message', { chat: general, text: 'hi' }, READER))).toMatch(
-      /^Posted/,
-    )
+    expect(said(await call('post_message', { chat: general, text: 'hi' }, READER))).toMatch(/^Posted/)
     expect(asked).toEqual([])
   })
 })

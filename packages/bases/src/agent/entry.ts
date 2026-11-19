@@ -50,10 +50,7 @@ export interface Placed {
 const HEADING = /^(#{1,6})[ \t]+(.*?)[ \t#]*$/
 const ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 
-function headingsOf(
-  note: string,
-  all: readonly string[],
-): ({ level: number; text: string } | null)[] {
+function headingsOf(note: string, all: readonly string[]): ({ level: number; text: string } | null)[] {
   const block = frontMatterBlock(note)
   const wordsFrom = block ? note.slice(0, block.close).split('\n').length : 0
   const code = new CodeBlocks()

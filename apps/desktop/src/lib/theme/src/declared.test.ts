@@ -141,9 +141,7 @@ describe('a stylesheet, read', () => {
   test('stops at six, which is a theme and not a control panel', () => {
     const names = Array.from({ length: 9 }, (_one, at) => `d${at}`)
     const css = names.map((id) => `--orden-setting-${id}: x;`).join('\n')
-    const answers = Object.fromEntries(
-      names.map((id) => [`--orden-setting-${id}`, `range "${id}" 0 10 5`]),
-    )
+    const answers = Object.fromEntries(names.map((id) => [`--orden-setting-${id}`, `range "${id}" 0 10 5`]))
     expect(declaredIn(css, page(answers)).map((one) => one.id)).toEqual(names.slice(0, 6))
   })
 })

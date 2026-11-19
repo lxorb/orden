@@ -65,8 +65,7 @@ export function textOf(xml: string, name: string): string | null {
   return found === null ? null : plainText(found.inner)
 }
 
-export const textsOf = (xml: string, name: string): string[] =>
-  elements(xml, name).map((one) => plainText(one.inner))
+export const textsOf = (xml: string, name: string): string[] => elements(xml, name).map((one) => plainText(one.inner))
 
 export function plainText(inner: string): string {
   let out = ''

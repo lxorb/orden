@@ -1,11 +1,4 @@
-import {
-  isBoolean,
-  isNumber,
-  isRecord,
-  keepJson,
-  recordOf,
-  stored,
-} from '../../../platform/src/api'
+import { isBoolean, isNumber, isRecord, keepJson, recordOf, stored } from '../../../platform/src/api'
 import { isEffort } from './effort'
 import { lastMove, movedKeys, movesAfter, type Effort } from '../../../ai-providers/src/api'
 

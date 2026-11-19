@@ -17,9 +17,7 @@
   let query = $state('')
   let bringing = $state(false)
 
-  const main = MAIN_NOTES.map((id) => NOTES_APPS.find((one) => one.id === id)).filter(
-    (one) => one !== undefined,
-  )
+  const main = MAIN_NOTES.map((id) => NOTES_APPS.find((one) => one.id === id)).filter((one) => one !== undefined)
   const shown = $derived(matching(NOTES_APPS, query))
   const nothing = $derived(!!query.trim() && !shown.length)
 
@@ -30,9 +28,7 @@
     return NOTES_APPS.find((one) => one.id === picked) ?? null
   })
 
-  const way = $derived(
-    chosen === null ? null : setup.phone ? phoneBringing(chosen.id, chosen.bring) : chosen.bring,
-  )
+  const way = $derived(chosen === null ? null : setup.phone ? phoneBringing(chosen.id, chosen.bring) : chosen.bring)
   const elsewhere = $derived(way === 'computer')
 
   const prompt = $derived(chosen && !chosen.bring ? importPrompt(chosen.name) : '')
@@ -75,11 +71,7 @@
 
 {#snippet more()}
   <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"
-    ><circle cx="6" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle
-      cx="18"
-      cy="12"
-      r="1.8"
-    /></svg
+    ><circle cx="6" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="18" cy="12" r="1.8" /></svg
   >
 {/snippet}
 
@@ -109,11 +101,7 @@
     </div>
   {:else}
     <div class="o-pane pane-in">
-      <SearchField
-        value={query}
-        onvalue={(typed: string) => (query = typed)}
-        label="Bring your notes"
-      />
+      <SearchField value={query} onvalue={(typed: string) => (query = typed)} label="Bring your notes" />
       <div class="o-scroll">
         <div class="o-grid" role="radiogroup" aria-label="Bring your notes">
           {#each shown as one (one.id)}
@@ -127,12 +115,7 @@
             />
           {/each}
           {#if nothing}
-            <Tile
-              name={typedName(query)}
-              later="Request"
-              checked={picked === UNLISTED}
-              onpick={() => pick(UNLISTED)}
-            />
+            <Tile name={typedName(query)} later="Request" checked={picked === UNLISTED} onpick={() => pick(UNLISTED)} />
           {/if}
         </div>
       </div>

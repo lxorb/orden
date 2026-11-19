@@ -52,9 +52,7 @@ const world = vi.hoisted(() => {
         return answer(undefined)
       case 'list_snapshots':
         return answer(
-          [...(here.kept.get(path) ?? [])]
-            .map((_, at) => ({ path: `${path}#${at}`, taken_at: at, size: 0 }))
-            .reverse(),
+          [...(here.kept.get(path) ?? [])].map((_, at) => ({ path: `${path}#${at}`, taken_at: at, size: 0 })).reverse(),
         )
       case 'read_snapshot': {
         const [note = '', at = ''] = path.split('#')
@@ -79,11 +77,7 @@ const world = vi.hoisted(() => {
           ? []
           : [
               ...[...here.disk.keys()]
-                .filter(
-                  (one) =>
-                    one.startsWith(`${root}/`) &&
-                    !shut.some((folder) => one.startsWith(`${folder}/`)),
-                )
+                .filter((one) => one.startsWith(`${root}/`) && !shut.some((folder) => one.startsWith(`${folder}/`)))
                 .sort()
                 .map((one): Entry => ({
                   name: one.split('/').pop() ?? one,
@@ -230,11 +224,7 @@ async function meetingInTheGap(path: string, ours: string, theirs: string) {
 
 describe('a create that meets a note made since the pull', () => {
   test('the other words stay, beside the ones written here', async () => {
-    const { me, spaceId, device, mirror } = await meetingInTheGap(
-      'plan.md',
-      'words of A\n',
-      'words of B, only here\n',
-    )
+    const { me, spaceId, device, mirror } = await meetingInTheGap('plan.md', 'words of A\n', 'words of B, only here\n')
     await push(mirror, me.token, NOBODY)
 
     expect(copies(device)).toHaveLength(1)
@@ -245,22 +235,17 @@ describe('a create that meets a note made since the pull', () => {
 
   test('the 409 itself carries the words, for an app already out there', async () => {
     const { me, spaceId } = await meetingInTheGap('plan.md', 'A\n', 'B\n')
-    const again = await call<{ content?: string; note?: { id: string } }>(
-      env,
-      `/v1/spaces/${spaceId}/notes`,
-      { token: me.token, body: { path: 'plan.md', content: 'A\n' } },
-    )
+    const again = await call<{ content?: string; note?: { id: string } }>(env, `/v1/spaces/${spaceId}/notes`, {
+      token: me.token,
+      body: { path: 'plan.md', content: 'A\n' },
+    })
     expect(again.status).toBe(409)
     expect(again.json.content).toBe('B\n')
     expect(again.json.note?.id).toBeTruthy()
   })
 
   test("the space's inbox keeps the tasks of both", async () => {
-    const { me, spaceId, device, mirror } = await meetingInTheGap(
-      '.Inbox.md',
-      '- [ ] from A\n',
-      '- [ ] from B\n',
-    )
+    const { me, spaceId, device, mirror } = await meetingInTheGap('.Inbox.md', '- [ ] from A\n', '- [ ] from B\n')
     await push(mirror, me.token, NOBODY)
 
     const held = await accountHolds(me.token, spaceId, '.Inbox.md')
@@ -272,11 +257,7 @@ describe('a create that meets a note made since the pull', () => {
   test('a canvas keeps the cards of both', async () => {
     const card = (id: string) => ({ id, type: 'text', text: id, x: 0, y: 0, width: 9, height: 9 })
     const canvas = (id: string) => JSON.stringify({ nodes: [card(id)], edges: [] })
-    const { me, spaceId, mirror } = await meetingInTheGap(
-      'board.canvas',
-      canvas('mine'),
-      canvas('theirs'),
-    )
+    const { me, spaceId, mirror } = await meetingInTheGap('board.canvas', canvas('mine'), canvas('theirs'))
     await push(mirror, me.token, NOBODY)
 
     const held = await accountHolds(me.token, spaceId, 'board.canvas')
@@ -533,11 +514,7 @@ describe('a folder that will not list', () => {
     const { me, spaceId, device, mirror } = await synced()
     device.shut.add(`${ROOT}/shut`)
     await push(mirror, me.token, NOBODY)
-    expect((await accountHolds(me.token, spaceId)).paths).toEqual([
-      'plan.md',
-      'shut/inside.md',
-      'shutter.md',
-    ])
+    expect((await accountHolds(me.token, spaceId)).paths).toEqual(['plan.md', 'shut/inside.md', 'shutter.md'])
     expect(mirror.notes['shut/inside.md']).toBeDefined()
   })
 

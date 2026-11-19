@@ -10,13 +10,7 @@
 </script>
 
 {#if holding}
-  <div
-    class="arriving"
-    data-covers="all"
-    transition:fade={{ duration: dur(190) }}
-    role="status"
-    aria-live="polite"
-  >
+  <div class="arriving" data-covers="all" transition:fade={{ duration: dur(190) }} role="status" aria-live="polite">
     <div class="mark">{initial}</div>
 
     <div class="line">
@@ -26,11 +20,7 @@
     <p class="said">{arriving.said}</p>
 
     {#if arriving.stuck}
-      <button
-        type="button"
-        transition:fade={{ duration: dur(130) }}
-        onclick={() => arriving.giveUp()}
-      >
+      <button type="button" transition:fade={{ duration: dur(130) }} onclick={() => arriving.giveUp()}>
         Continue
       </button>
     {/if}

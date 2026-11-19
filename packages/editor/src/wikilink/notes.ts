@@ -73,8 +73,7 @@ const indexField = StateField.define<NoteIndex>({
   provide: (field) => noteIndex.from(field),
 })
 
-export const noteIndexExtension = (index: NoteIndex | undefined): Extension =>
-  indexField.init(() => index ?? EMPTY)
+export const noteIndexExtension = (index: NoteIndex | undefined): Extension => indexField.init(() => index ?? EMPTY)
 
 export const noteIndexEffect = (index: NoteIndex): StateEffect<unknown> => setIndex.of(index)
 
@@ -107,10 +106,9 @@ export interface LinkWrite {
   file?: string | null
 }
 
-export const linkWriter = Facet.define<
-  (target: LinkWrite) => string,
-  (target: LinkWrite) => string
->({ combine: (values) => values[0] ?? wikilinkFor })
+export const linkWriter = Facet.define<(target: LinkWrite) => string, (target: LinkWrite) => string>({
+  combine: (values) => values[0] ?? wikilinkFor,
+})
 
 function wikilinkFor(target: LinkWrite): string {
   const inner = target.fragment ? `${target.name}#${target.fragment}` : target.name
@@ -259,10 +257,7 @@ const freelyWritten = (target: string): boolean =>
 
 function relativeParts(index: NoteIndex, target: string): string[] {
   const written = target.replace(/\\/g, '/')
-  const parts =
-    index.path === null || written.startsWith('/')
-      ? []
-      : folderOf(index.path).split('/').filter(Boolean)
+  const parts = index.path === null || written.startsWith('/') ? [] : folderOf(index.path).split('/').filter(Boolean)
 
   for (const part of written.split('/')) {
     if (part === '' || part === '.') continue
@@ -296,9 +291,7 @@ function fileAt(index: NoteIndex, target: string): string | null {
   return (
     [...found].sort(
       (one, other) =>
-        beside(one) - beside(other) ||
-        one.split('/').length - other.split('/').length ||
-        (one < other ? -1 : 1),
+        beside(one) - beside(other) || one.split('/').length - other.split('/').length || (one < other ? -1 : 1),
     )[0] ?? null
   )
 }
@@ -362,14 +355,10 @@ export function jumpForHref(index: NoteIndex, href: string, wiki: boolean): Note
 
   if (isTabFile(target)) {
     const path = wiki ? target : resolveFile(index, target, 'markdown')
-    return path === null
-      ? null
-      : { path, target, heading: null, block: null, page: pageFragment(said) }
+    return path === null ? null : { path, target, heading: null, block: null, page: pageFragment(said) }
   }
 
-  const found = wiki
-    ? { path: target }
-    : (resolveRelative(index, target) ?? resolveNote(index, target))
+  const found = wiki ? { path: target } : (resolveRelative(index, target) ?? resolveNote(index, target))
   if (!found) return null
 
   const block = said?.startsWith('^') ? said.slice(1) : null
@@ -383,9 +372,8 @@ export function nameFor(index: NoteIndex, note: NoteRef): string {
   const spelled = (written: string) => (isTabFile(written) ? `${written}${own}` : written)
   const opened = index.files.includes(note.path)
   const reaches = (written: string) =>
-    (opened && isTabFile(written)
-      ? resolveFile(index, written, 'wikilink')
-      : resolveNote(index, written)?.path) === note.path
+    (opened && isTabFile(written) ? resolveFile(index, written, 'wikilink') : resolveNote(index, written)?.path) ===
+    note.path
   const name = spelled(note.name)
   if (reaches(name)) return name.normalize('NFC')
 

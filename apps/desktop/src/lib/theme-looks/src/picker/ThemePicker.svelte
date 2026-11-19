@@ -25,9 +25,7 @@
   let tokens = $state<string | null>(null)
   void import('@orden/themes/tokens.css?raw').then((one) => (tokens = one.default))
 
-  const custom = $derived(
-    picking.open ? (document.getElementById('orden-custom-css')?.textContent ?? '') : '',
-  )
+  const custom = $derived(picking.open ? (document.getElementById('orden-custom-css')?.textContent ?? '') : '')
 
   type Info = (typeof theme.all)[number]
 
@@ -56,9 +54,7 @@
   let browsing = $state(false)
 
   const cursor = $derived(
-    browsing
-      ? shown.length
-      : shown.findIndex((one) => one.id === (picking.pointed.id ?? picking.kept.id)),
+    browsing ? shown.length : shown.findIndex((one) => one.id === (picking.pointed.id ?? picking.kept.id)),
   )
 
   const COLUMNS = 3
@@ -248,10 +244,7 @@
           >
             <svg viewBox="0 0 14 14" aria-hidden="true">
               {#if choice === 'system'}
-                <circle cx="7" cy="7" r="5.2" /><path
-                  class="half"
-                  d="M7 1.8a5.2 5.2 0 0 1 0 10.4z"
-                />
+                <circle cx="7" cy="7" r="5.2" /><path class="half" d="M7 1.8a5.2 5.2 0 0 1 0 10.4z" />
               {:else if choice === 'dark'}
                 <path d="M12 8.6A5.6 5.6 0 1 1 5.4 2a4.4 4.4 0 0 0 6.6 6.6z" />
               {:else}

@@ -83,12 +83,7 @@ export function flushAll(core: Core): Change[] {
   return core.dirtyChanges()
 }
 
-async function ask(
-  core: Core,
-  space: SpaceState,
-  route: Parameters<Core['world']['account']['ask']>[0],
-  body: object,
-) {
+async function ask(core: Core, space: SpaceState, route: Parameters<Core['world']['account']['ask']>[0], body: object) {
   return await core.world.account.ask(route, body, space.id)
 }
 
@@ -123,8 +118,7 @@ async function sendOps(
   alive: () => boolean,
   unsent: ReadonlySet<string>,
 ): Promise<boolean> {
-  const going = (one: Outboxed) =>
-    one.record.t === 'op' && !(!one.record.sent && unsent.has(one.record.op.id))
+  const going = (one: Outboxed) => one.record.t === 'op' && !(!one.record.sent && unsent.has(one.record.op.id))
   for (let round = 0; round < 1000; round += 1) {
     if (!space.outbox.some(going)) return true
 
@@ -132,9 +126,7 @@ async function sendOps(
     const folded = fitted(
       space,
       coalesce(
-        waiting
-          .map((one) => (one.record.t === 'op' ? one.record.op : null))
-          .filter((op): op is Op => op !== null),
+        waiting.map((one) => (one.record.t === 'op' ? one.record.op : null)).filter((op): op is Op => op !== null),
       ),
     )
     const changes: Change[] = []
@@ -215,11 +207,7 @@ async function sendOps(
 
       if ('merged' in result && op.t === 'create') {
         const merge: Merging = { mine: op.id, into: result.merged, create: op }
-        const { one: queued, change } = core.outgoing(
-          space,
-          { t: 'merge', merge },
-          space.row.cursor,
-        )
+        const { one: queued, change } = core.outgoing(space, { t: 'merge', merge }, space.row.cursor)
         space.outbox.push(queued)
         done.push(change, core.counterRow())
         continue
@@ -273,8 +261,7 @@ function fitted(space: SpaceState, ops: Op[]): Op[] {
 function unplaced(space: SpaceState, batch: readonly Outboxed[], error: Refused) {
   if (error.status !== 400) return false
   const placing = (op: Op) =>
-    op.t === 'place' ||
-    ((op.t === 'move' || op.t === 'mkdir' || op.t === 'create') && op.pos !== undefined)
+    op.t === 'place' || ((op.t === 'move' || op.t === 'mkdir' || op.t === 'create') && op.pos !== undefined)
   const ops = batch.flatMap((one) => (one.record.t === 'op' ? [one.record.op] : []))
   const places = space.ordering.on && ops.some(placing)
   const describes = space.ordering.describes && ops.some((op) => op.t === 'meta')
@@ -295,33 +282,20 @@ function changesOf(core: Core, space: SpaceState, batch: readonly Outboxed[]): C
   return [...batch.map((one) => put('outbox', one.row)), ...core.orderChanges(space)]
 }
 
-function unmade(
-  core: Core,
-  space: SpaceState,
-  waiting: readonly Outboxed[],
-  folded: readonly Op[],
-): Change[] {
+function unmade(core: Core, space: SpaceState, waiting: readonly Outboxed[], folded: readonly Op[]): Change[] {
   const left = new Set(folded.map((op) => op.id))
   const ids = waiting.flatMap(({ record }) =>
-    record.t === 'op' &&
-    (record.op.t === 'create' || record.op.t === 'mkdir') &&
-    !left.has(record.op.id)
+    record.t === 'op' && (record.op.t === 'create' || record.op.t === 'mkdir') && !left.has(record.op.id)
       ? [record.op.id]
       : [],
   )
   return dropUnmade(core, space, ids)
 }
 
-export async function refused(
-  core: Core,
-  space: SpaceState,
-  op: Op,
-  why: string,
-): Promise<Change[]> {
+export async function refused(core: Core, space: SpaceState, op: Op, why: string): Promise<Change[]> {
   if (op.t === 'delete' && why === 'edited') {
     const entry = space.entries.get(op.id)
-    if (entry)
-      core.events.resurrected?.({ id: op.id, name: entry.name, device: core.by.get(op.id) ?? '' })
+    if (entry) core.events.resurrected?.({ id: op.id, name: entry.name, device: core.by.get(op.id) ?? '' })
     return []
   }
   if ((op.t === 'create' || op.t === 'mkdir') && why === 'role') {
@@ -581,12 +555,7 @@ async function pullDocs(
   return brought
 }
 
-async function foldedThenProjected(
-  core: Core,
-  space: SpaceState,
-  entry: EntryRow,
-  doc: Doc,
-): Promise<Change[]> {
+async function foldedThenProjected(core: Core, space: SpaceState, entry: EntryRow, doc: Doc): Promise<Change[]> {
   const changes = entry.local_path ? await foldIn(core, space, entry) : []
   if (core.isHeld(entry.id)) return changes
   return [...changes, ...(await project(core, space, entry, doc))]
@@ -749,11 +718,7 @@ function refusalRows(core: Core, space: SpaceState, said: Set<DocRefusal>): Chan
   )
 }
 
-async function pushDocs(
-  core: Core,
-  space: SpaceState,
-  alive: () => boolean,
-): Promise<number | null> {
+async function pushDocs(core: Core, space: SpaceState, alive: () => boolean): Promise<number | null> {
   const due = [...space.entries.values()].filter((entry) => pushable(core, entry))
   const said = new Set<DocRefusal>()
   let pushed = 0
@@ -800,8 +765,7 @@ async function pushDocs(
       before.push(...core.docChanges(doc))
     }
     if (!going.length) {
-      if (before.length || said.size)
-        await core.commit([...before, ...refusalRows(core, space, said)])
+      if (before.length || said.size) await core.commit([...before, ...refusalRows(core, space, said)])
       said.clear()
       continue
     }
@@ -855,12 +819,7 @@ async function pushDocs(
   return pushed
 }
 
-async function readOnly(
-  core: Core,
-  space: SpaceState,
-  entry: EntryRow,
-  doc: Doc,
-): Promise<Change[]> {
+async function readOnly(core: Core, space: SpaceState, entry: EntryRow, doc: Doc): Promise<Change[]> {
   const local = doc.text()
   if (entry.local_path && local.trim()) {
     const full = core.world.join(space.row.root, entry.local_path)
@@ -871,13 +830,7 @@ async function readOnly(
   return [...core.docChanges(doc), ...(await project(core, space, entry, doc))]
 }
 
-async function newEpoch(
-  core: Core,
-  space: SpaceState,
-  entry: EntryRow,
-  doc: Doc,
-  epoch: number,
-): Promise<Change[]> {
+async function newEpoch(core: Core, space: SpaceState, entry: EntryRow, doc: Doc, epoch: number): Promise<Change[]> {
   const reply = await ask(core, space, 'pull', {
     docs: [{ id: doc.id, epoch, sv: EMPTY_SV }],
     part: true,

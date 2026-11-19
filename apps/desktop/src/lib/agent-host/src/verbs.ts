@@ -11,15 +11,7 @@ import { captureToNote } from './capture'
 import { runCommand } from './commands'
 import { listBacklinks, searchNotes } from './find'
 import { attachAgentLog } from './log'
-import {
-  appendNote,
-  createNote,
-  editNote,
-  readNote,
-  setProperty,
-  setTask,
-  writeNote,
-} from './notes'
+import { appendNote, createNote, editNote, readNote, setProperty, setTask, writeNote } from './notes'
 import { pdfHighlights, readPdf } from './pdf'
 import { readSetting, writeSetting } from './settings'
 import { addRow, addTask, editBase, editRows, listTasks, queryBase, updateTask } from './tasks'

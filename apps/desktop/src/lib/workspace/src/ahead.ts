@@ -1,12 +1,5 @@
 import type { Entry } from '@orden/contracts'
-import {
-  sameSpelling,
-  isRecord,
-  isString,
-  internal,
-  invoke,
-  isDesktop,
-} from '../../platform/src/api'
+import { sameSpelling, isRecord, isString, internal, invoke, isDesktop } from '../../platform/src/api'
 import type { TreeOptions } from './workspace.svelte'
 
 export interface Plan {
@@ -38,18 +31,17 @@ function answerOf(value: unknown): Answer | null {
     },
     spaces: Array.isArray(value.spaces) ? (value.spaces as Answer['spaces']) : null,
     tree: isRecord(value.tree) ? (value.tree as unknown as Entry) : null,
-    notes: new Map(
-      Object.entries(words).flatMap(([path, text]) => (isString(text) ? [[path, text]] : [])),
-    ),
+    notes: new Map(Object.entries(words).flatMap(([path, text]) => (isString(text) ? [[path, text]] : []))),
   }
 }
 
 let answer: Promise<Answer | null> | null = null
 
 function received(): Promise<Answer | null> {
-  answer ??= Promise.resolve(
-    (window as unknown as { ordenEarly?: Promise<unknown> }).ordenEarly ?? null,
-  ).then(answerOf, () => null)
+  answer ??= Promise.resolve((window as unknown as { ordenEarly?: Promise<unknown> }).ordenEarly ?? null).then(
+    answerOf,
+    () => null,
+  )
   return answer
 }
 

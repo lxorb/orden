@@ -105,12 +105,8 @@ describe('matching a keystroke against a binding', () => {
   })
 
   test('nothing is a chord while an input method is composing', () => {
-    expect(
-      matchesCombination('Alt-3', { ...press('3', 'alt', 'Digit3'), isComposing: true }, 'win'),
-    ).toBe(false)
-    expect(
-      matchesCombination('Mod-Space', { ...press(' ', 'ctrl', 'Space'), isComposing: true }, 'win'),
-    ).toBe(false)
+    expect(matchesCombination('Alt-3', { ...press('3', 'alt', 'Digit3'), isComposing: true }, 'win')).toBe(false)
+    expect(matchesCombination('Mod-Space', { ...press(' ', 'ctrl', 'Space'), isComposing: true }, 'win')).toBe(false)
   })
 })
 
@@ -139,12 +135,9 @@ describe('showing a combination', () => {
     ['Meta Meta', 'linux', 'Super Super'],
     ['Shift Shift', 'mac', '⇧⇧'],
     ['Mod Mod', 'mac', '⌘⌘'],
-  ] as const)(
-    'shows %s on %s as %s, signs on a Mac in its order and words elsewhere',
-    (key, platform, shown) => {
-      expect(showCombination(key, platform)).toBe(shown)
-    },
-  )
+  ] as const)('shows %s on %s as %s, signs on a Mac in its order and words elsewhere', (key, platform, shown) => {
+    expect(showCombination(key, platform)).toBe(shown)
+  })
 
   test.each([
     ['Escape', '⎋', 'Esc'],

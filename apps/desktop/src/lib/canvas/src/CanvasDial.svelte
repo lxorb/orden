@@ -30,13 +30,7 @@
 <div class="dial">
   <span class="reading">{reading}</span>
 
-  <button
-    type="button"
-    title="Less"
-    aria-label="Less"
-    disabled={value <= least}
-    onclick={() => by(-1)}
-  >
+  <button type="button" title="Less" aria-label="Less" disabled={value <= least} onclick={() => by(-1)}>
     <Glyph node={MARKS.zoomOut} />
   </button>
 
@@ -52,13 +46,7 @@
     oninput={(event) => onvalue(Number(event.currentTarget.value))}
   />
 
-  <button
-    type="button"
-    title="More"
-    aria-label="More"
-    disabled={value >= most}
-    onclick={() => by(1)}
-  >
+  <button type="button" title="More" aria-label="More" disabled={value >= most} onclick={() => by(1)}>
     <Glyph node={MARKS.zoomIn} />
   </button>
 </div>

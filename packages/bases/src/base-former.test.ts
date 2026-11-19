@@ -30,9 +30,7 @@ describe('a base written under the old name', () => {
     const base = readBase(OLD)
     base.orden.locked = true
     const written = writeBase(base, OLD)
-    expect(written).toBe(
-      OLD.replace('    nib:', '    orden:').replace('\nnib:', '\norden:') + '  locked: true\n',
-    )
+    expect(written).toBe(OLD.replace('    nib:', '    orden:').replace('\nnib:', '\norden:') + '  locked: true\n')
     expect(readBase(written).views[0]?.orden.rows).toBe('tasks')
   })
 

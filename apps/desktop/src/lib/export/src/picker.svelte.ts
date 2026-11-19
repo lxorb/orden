@@ -15,9 +15,7 @@ function kept(): Kept {
   return {
     id: held.id,
     optioned: Object.fromEntries(
-      Object.entries(optioned).filter(
-        (one): one is [string, boolean] => typeof one[1] === 'boolean',
-      ),
+      Object.entries(optioned).filter((one): one is [string, boolean] => typeof one[1] === 'boolean'),
     ),
   }
 }

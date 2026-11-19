@@ -63,9 +63,7 @@ export async function chatsRevoked(
 
     for (const some of chunks(results, AT_ONCE)) {
       await Promise.all(
-        some.map((one) =>
-          tell(env, one.chat, 'revoke', { 'x-orden-revoked': who, 'x-orden-role': role }),
-        ),
+        some.map((one) => tell(env, one.chat, 'revoke', { 'x-orden-revoked': who, 'x-orden-role': role })),
       )
     }
 
@@ -75,9 +73,7 @@ export async function chatsRevoked(
 }
 
 export async function chatsMoved(env: Env, chat: string, space: string): Promise<void> {
-  await env.DB.prepare('update chats set space_id = ?, file_id = null where id = ?')
-    .bind(space, chat)
-    .run()
+  await env.DB.prepare('update chats set space_id = ?, file_id = null where id = ?').bind(space, chat).run()
   const { results } = await env.DB.prepare('select who from chat_sockets where chat_id = ?')
     .bind(chat)
     .all<{ who: string }>()
@@ -87,16 +83,11 @@ export async function chatsMoved(env: Env, chat: string, space: string): Promise
   )
 }
 
-export async function closeChats(
-  env: Env,
-  open: readonly { chat_id: string; who: string }[],
-): Promise<void> {
+export async function closeChats(env: Env, open: readonly { chat_id: string; who: string }[]): Promise<void> {
   if (!env.CHATS) return
   for (const round of chunks(open, AT_ONCE)) {
     await Promise.all(
-      round.map((one) =>
-        tell(env, one.chat_id, 'revoke', { 'x-orden-revoked': one.who, 'x-orden-role': 'none' }),
-      ),
+      round.map((one) => tell(env, one.chat_id, 'revoke', { 'x-orden-revoked': one.who, 'x-orden-role': 'none' })),
     )
   }
 }

@@ -1,13 +1,6 @@
 import { extracted, merged, type Split, splitAt } from '../../link-format/src/api'
 import { links, type Retargeting } from '../../link-index/src/api'
-import {
-  folderOf,
-  isMarkdownPath,
-  samePath,
-  withinSpace,
-  invoke,
-  joinPath,
-} from '../../platform/src/api'
+import { folderOf, isMarkdownPath, samePath, withinSpace, invoke, joinPath } from '../../platform/src/api'
 import { type Tab, UNTITLED } from '../../documents/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import type { FileActions } from '../../file-undo/src/api'
@@ -35,11 +28,7 @@ function keptLike(ws: Composes, from: string, to: string): void {
   ws.protection.copied(from, to, ws.rootHolding(from), ws.rootHolding(to))
 }
 
-export function mergeable(
-  root: string | null,
-  path: string,
-  writable: (path: string) => boolean,
-): boolean {
+export function mergeable(root: string | null, path: string, writable: (path: string) => boolean): boolean {
   return root !== null && isMarkdownPath(path) && withinSpace(root, path) !== null && writable(path)
 }
 
@@ -55,8 +44,7 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
   if (!mergeable(root, from, canWriteAt) || !mergeable(root, into, canWriteAt)) return
 
   ws.flush()
-  const words = (path: string) =>
-    ws.documentAt(path)?.text ?? invoke<string>('read_note', { path }).catch(() => null)
+  const words = (path: string) => ws.documentAt(path)?.text ?? invoke<string>('read_note', { path }).catch(() => null)
   const [fromContent, intoContent] = await Promise.all([words(from), words(into)])
   if (fromContent === null || intoContent === null) return
 

@@ -8,8 +8,7 @@ import { setTerminalIcon } from './icon'
 import { openTerminal, shellRows } from './open'
 import { readSpec } from './spec'
 
-const terminalOf = (id: string) =>
-  workspace.tabs.find((one) => one.id === id && one.kind === 'terminal') ?? null
+const terminalOf = (id: string) => workspace.tabs.find((one) => one.id === id && one.kind === 'terminal') ?? null
 
 function menu(id: string): TabMenuEntry[] {
   const tab = terminalOf(id)

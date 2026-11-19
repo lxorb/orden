@@ -39,8 +39,7 @@ export function openLightbox(view: EditorView, src: string, alt: string) {
     close()
   }
 
-  const fits = () =>
-    image.naturalWidth <= image.clientWidth + 1 && image.naturalHeight <= image.clientHeight + 1
+  const fits = () => image.naturalWidth <= image.clientWidth + 1 && image.naturalHeight <= image.clientHeight + 1
 
   image.addEventListener('load', () => backdrop.classList.toggle('can-zoom', !fits()))
   image.addEventListener('click', (event) => {

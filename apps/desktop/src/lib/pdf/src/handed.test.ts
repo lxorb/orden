@@ -176,11 +176,7 @@ test('a markdown file opens where it is when a space holds it, and comes in as a
   world.files = { 'C:\\Users\\me\\Idea.md': '# Idea' }
   await showPdfs(['C:\\Orden\\Home\\Notes\\Plan.md', 'C:\\Users\\me\\Idea.md'])
 
-  expect(world.done).toEqual([
-    'space home',
-    'open note C:\\Orden\\Home\\Notes\\Plan.md',
-    'new note Idea: # Idea',
-  ])
+  expect(world.done).toEqual(['space home', 'open note C:\\Orden\\Home\\Notes\\Plan.md', 'new note Idea: # Idea'])
 })
 
 test('a text file that cannot be read opens nothing', async () => {

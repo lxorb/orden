@@ -10,8 +10,7 @@ const BROKEN = [
 
 vi.mock('../../platform/src/api', async (original) => ({
   ...(await original<typeof import('../../platform/src/api')>()),
-  invoke: (command: string) =>
-    command === 'read_note' ? Promise.resolve(BROKEN) : Promise.resolve(null),
+  invoke: (command: string) => (command === 'read_note' ? Promise.resolve(BROKEN) : Promise.resolve(null)),
 }))
 vi.mock('../../workspace/src/api', () => ({
   workspace: {

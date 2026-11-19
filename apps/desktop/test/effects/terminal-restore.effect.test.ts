@@ -12,9 +12,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
   platform: () => system,
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     const at = `${String(args.space)}/${String(args.key)}`
-    done.push(
-      command === 'pty_spawn' ? `pty_spawn ${String(args.cols)}x${String(args.rows)}` : command,
-    )
+    done.push(command === 'pty_spawn' ? `pty_spawn ${String(args.cols)}x${String(args.rows)}` : command)
     if (command === 'terminal_history_read') return Promise.resolve(files.get(at) ?? null)
     if (command === 'terminal_history_forget') files.delete(at)
     if (command === 'terminal_history_write') files.set(at, args.history)
@@ -229,14 +227,7 @@ test('a terminal with nothing kept starts its shell at once', async () => {
   await vi.waitFor(() => expect(done.some((one) => one.startsWith('pty_spawn'))).toBe(true))
 
   expect(done.filter((one) => one.startsWith('write '))).toEqual([])
-  expect(done).toEqual([
-    'pty_held',
-    'terminal_history_read',
-    'open',
-    'fit',
-    'resize 132x40',
-    'pty_spawn 132x40',
-  ])
+  expect(done).toEqual(['pty_held', 'terminal_history_read', 'open', 'fit', 'resize 132x40', 'pty_spawn 132x40'])
 })
 
 test('with Restore history off nothing is read, and nothing is written', async () => {
@@ -299,7 +290,5 @@ test('a Mac asks the kernel where the shell went, and the tab remembers it', asy
 
   typing?.('cd ~/work/orden\r')
   await vi.waitFor(() => expect(done).toContain('pty_folder'), { timeout: 2000 })
-  await vi.waitFor(() =>
-    expect((JSON.parse(tab.doc) as { folder: string }).folder).toBe(KERNEL_FOLDER),
-  )
+  await vi.waitFor(() => expect((JSON.parse(tab.doc) as { folder: string }).folder).toBe(KERNEL_FOLDER))
 })

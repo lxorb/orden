@@ -39,8 +39,7 @@
 
   function add() {
     let value = 'New option'
-    for (let count = 2; options.some((one) => one.value === value); count++)
-      value = `New option ${count}`
+    for (let count = 2; options.some((one) => one.value === value); count++) value = `New option ${count}`
     write([...options, { value, tone: String((options.length % 6) + 1) }])
   }
 

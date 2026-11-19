@@ -79,9 +79,7 @@ describe('an open document', () => {
     expect(through).toEqual(['/s/Plan.md'])
     expect(doc.dirty).toBe(false)
     meetAcross(null)
-    const refused = await writeEdited(doc, '/s/Plan.md', 'words', null, () =>
-      Promise.reject(new Error('locked')),
-    )
+    const refused = await writeEdited(doc, '/s/Plan.md', 'words', null, () => Promise.reject(new Error('locked')))
     expect(refused).toBeNull()
     expect(owed).toEqual(['words'])
   })

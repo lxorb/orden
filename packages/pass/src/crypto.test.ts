@@ -57,9 +57,7 @@ describe('argon2id', () => {
     const asked: string[] = []
     useStretcher(async (secret, given, params) => {
       asked.push(secret)
-      return await argon2idAsync(utf8(secret), given, { ...params, dkLen: 32 }).then(
-        (bytes) => new Uint8Array(bytes),
-      )
+      return await argon2idAsync(utf8(secret), given, { ...params, dkLen: 32 }).then((bytes) => new Uint8Array(bytes))
     })
     try {
       expect(await stretch('pa\u0308ssword', salt, { m: 64, t: 1, p: 1 })).toEqual(slow)
@@ -80,9 +78,7 @@ describe('argon2id', () => {
   it('refuses parameters out of range and short salts', async () => {
     await expect(stretch('pw', utf8('short'), SMALL)).rejects.toThrow(WrongSecret)
     await expect(stretch('pw', utf8('saltsalt'), { m: 4, t: 1, p: 1 })).rejects.toThrow(WrongSecret)
-    await expect(stretch('pw', utf8('saltsalt'), { m: 64, t: 11, p: 1 })).rejects.toThrow(
-      WrongSecret,
-    )
+    await expect(stretch('pw', utf8('saltsalt'), { m: 64, t: 11, p: 1 })).rejects.toThrow(WrongSecret)
   })
 })
 
@@ -116,11 +112,7 @@ describe('kdfParamsIn', () => {
 
 describe('subkey', () => {
   it('matches RFC 5869 test case 1', async () => {
-    const okm = await subkey(
-      filled(22, 0x0b),
-      fromHex('f0f1f2f3f4f5f6f7f8f9'),
-      fromHex('000102030405060708090a0b0c'),
-    )
+    const okm = await subkey(filled(22, 0x0b), fromHex('f0f1f2f3f4f5f6f7f8f9'), fromHex('000102030405060708090a0b0c'))
     expect(hex(okm)).toBe('3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf')
   })
 
@@ -191,9 +183,7 @@ describe('wrapTo and unwrapWith', () => {
   it('refuses another pair, label, context or a tampered wrap', async () => {
     const pair = await newPair()
     const wrapped = await wrapTo(newKey(), pair.pub, 'vault-key', 'v1')
-    await expect(unwrapWith(wrapped, await newPair(), 'vault-key', 'v1')).rejects.toThrow(
-      WrongSecret,
-    )
+    await expect(unwrapWith(wrapped, await newPair(), 'vault-key', 'v1')).rejects.toThrow(WrongSecret)
     await expect(unwrapWith(wrapped, pair, 'item-key', 'v1')).rejects.toThrow(WrongSecret)
     await expect(unwrapWith(wrapped, pair, 'vault-key', 'v2')).rejects.toThrow(WrongSecret)
     const bytes = unbase64(wrapped)

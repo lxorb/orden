@@ -16,10 +16,7 @@ function state(doc: string, cursor: number, trusted = false) {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(cursor),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        trustedMarkup(trusted),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), trustedMarkup(trusted)],
     }),
   )
 }
@@ -32,13 +29,7 @@ interface Spec {
 
 type Pick = (text: string, spec: Spec, from: number, to: number) => string | string[] | undefined
 
-function walk(
-  doc: string,
-  cursor: number | undefined,
-  pick: Pick,
-  layer = 'decorations',
-  trusted = false,
-) {
+function walk(doc: string, cursor: number | undefined, pick: Pick, layer = 'decorations', trusted = false) {
   const full = cursor === undefined ? doc + PARK : doc
   const built = state(full, cursor ?? full.length, trusted)
   const set =
@@ -54,16 +45,13 @@ function walk(
 
 const concealed = (doc: string, cursor?: number, trusted = false) =>
   walk(doc, cursor, (text) => text, 'atomic', trusted)
-const blocks = (doc: string, cursor?: number, trusted = false) =>
-  walk(doc, cursor, (text) => text, 'blocks', trusted)
+const blocks = (doc: string, cursor?: number, trusted = false) => walk(doc, cursor, (text) => text, 'blocks', trusted)
 const marked = (doc: string, className: string, cursor?: number) =>
   walk(doc, cursor, (text, spec) => (spec.class === className ? text : undefined))
 const revealedMeta = (doc: string, cursor: number) => marked(doc, 'md-meta', cursor)
 const lineAttrs = (doc: string) =>
   walk(doc, undefined, (_, spec, from, to) =>
-    from === to && !spec.widget
-      ? (spec.attributes?.['data-callout'] ?? '') || undefined
-      : undefined,
+    from === to && !spec.widget ? (spec.attributes?.['data-callout'] ?? '') || undefined : undefined,
   )
 const lineClasses = (doc: string) =>
   walk(doc, undefined, (_, spec, from, to) =>
@@ -102,14 +90,7 @@ describe('inline emphasis', () => {
 
 describe('links', () => {
   test('leaves only the label visible', () => {
-    expect(concealed('see [docs](https://x.dev "t") now')).toEqual([
-      '[',
-      ']',
-      '(',
-      'https://x.dev',
-      '"t"',
-      ')',
-    ])
+    expect(concealed('see [docs](https://x.dev "t") now')).toEqual(['[', ']', '(', 'https://x.dev', '"t"', ')'])
   })
 })
 
@@ -140,18 +121,14 @@ describe('code line numbers', () => {
     const full = doc + PARK
     const out: { number: string | null; digits: string | undefined }[] = []
 
-    buildDecorations(state(full, full.length)).decorations.between(
-      0,
-      full.length,
-      (from, to, value) => {
-        const spec = value.spec as Spec
-        if (from !== to || spec.widget || !spec.class?.split(' ').includes('orden-code')) return
-        out.push({
-          number: spec.attributes?.['data-code-number'] ?? null,
-          digits: spec.attributes?.style,
-        })
-      },
-    )
+    buildDecorations(state(full, full.length)).decorations.between(0, full.length, (from, to, value) => {
+      const spec = value.spec as Spec
+      if (from !== to || spec.widget || !spec.class?.split(' ').includes('orden-code')) return
+      out.push({
+        number: spec.attributes?.['data-code-number'] ?? null,
+        digits: spec.attributes?.style,
+      })
+    })
 
     return out
   }
@@ -174,9 +151,7 @@ describe('code line numbers', () => {
 
   test('the column is as wide as the block needs and no wider', () => {
     const nine = `\`\`\`\n${'a\n'.repeat(9)}\`\`\``
-    expect(gutter(nine).map((line) => line.digits)).toEqual(
-      Array.from({ length: 11 }, () => '--code-digits:1'),
-    )
+    expect(gutter(nine).map((line) => line.digits)).toEqual(Array.from({ length: 11 }, () => '--code-digits:1'))
 
     const ten = `\`\`\`\n${'a\n'.repeat(10)}\`\`\``
     expect(new Set(gutter(ten).map((line) => line.digits))).toEqual(new Set(['--code-digits:2']))
@@ -189,17 +164,13 @@ describe('code line numbers', () => {
     const full = doc + PARK
     let carried = 0
 
-    buildDecorations(state(full, full.length)).decorations.between(
-      0,
-      full.length,
-      (from, to, value) => {
-        const spec = value.spec as Spec
-        if (!spec.attributes?.['data-code-number']) return
-        carried += 1
-        expect(from).toBe(to)
-        expect(spec.widget).toBeUndefined()
-      },
-    )
+    buildDecorations(state(full, full.length)).decorations.between(0, full.length, (from, to, value) => {
+      const spec = value.spec as Spec
+      if (!spec.attributes?.['data-code-number']) return
+      carried += 1
+      expect(from).toBe(to)
+      expect(spec.widget).toBeUndefined()
+    })
 
     expect(carried).toBe(1)
   })
@@ -289,14 +260,8 @@ describe('images', () => {
   })
 
   test.each([
-    [
-      'text <img src="pic.png" alt="a" style="zoom:60%" /> more',
-      ['<img src="pic.png" alt="a" style="zoom:60%" />'],
-    ],
-    [
-      'a\n\n<div style="page-break-after: always;"></div>\n\nb',
-      ['<div style="page-break-after: always;"></div>'],
-    ],
+    ['text <img src="pic.png" alt="a" style="zoom:60%" /> more', ['<img src="pic.png" alt="a" style="zoom:60%" />']],
+    ['a\n\n<div style="page-break-after: always;"></div>\n\nb', ['<div style="page-break-after: always;"></div>']],
   ])('%j', (input, wanted) => expect(concealed(input)).toEqual(wanted))
 
   test.each([
@@ -373,12 +338,7 @@ describe('extensions', () => {
   })
 
   test('shows a comment written across lines rather than hiding it', () => {
-    for (const doc of [
-      '%%\nmulti\nline\n%%',
-      '<!--\nmulti\nline\n-->',
-      'a <!-- c\nd --> b',
-      'a %%c\nd%% b',
-    ]) {
+    for (const doc of ['%%\nmulti\nline\n%%', '<!--\nmulti\nline\n-->', 'a <!-- c\nd --> b', 'a %%c\nd%% b']) {
       expect(concealed(doc)).toEqual([])
       expect(revealedMeta(doc + PARK, doc.length + PARK.length)).not.toEqual([])
     }
@@ -395,8 +355,7 @@ describe('extensions', () => {
       for (const trusted of [false, true]) {
         const { decorations } = buildDecorations(state(full, full.length, trusted))
         decorations.between(0, full.length, (from, to, value) => {
-          if (value.spec.class === undefined && from < to)
-            expect(full.slice(from, to), doc).not.toContain('\n')
+          if (value.spec.class === undefined && from < to) expect(full.slice(from, to), doc).not.toContain('\n')
         })
       }
     }
@@ -500,39 +459,23 @@ describe('links', () => {
   function linkMarks(doc: string, cursor?: number): { text: string; href: string | null }[] {
     const full = cursor === undefined ? doc + PARK : doc
     const out: { text: string; href: string | null }[] = []
-    buildDecorations(state(full, cursor ?? full.length)).decorations.between(
-      0,
-      full.length,
-      (from, to, value) => {
-        if (value.spec.class === 'orden-link') {
-          out.push({
-            text: full.slice(from, to),
-            href: value.spec.attributes?.['data-href'] ?? null,
-          })
-        }
-      },
-    )
+    buildDecorations(state(full, cursor ?? full.length)).decorations.between(0, full.length, (from, to, value) => {
+      if (value.spec.class === 'orden-link') {
+        out.push({
+          text: full.slice(from, to),
+          href: value.spec.attributes?.['data-href'] ?? null,
+        })
+      }
+    })
     return out
   }
 
   test.each([
     ['see [docs](https://x.dev) now', [{ text: 'docs', href: 'https://x.dev' }]],
-    [
-      'see https://a.test/?b=\\[1\\] now',
-      [{ text: 'https://a.test/?b=\\[1\\]', href: 'https://a.test/?b=[1]' }],
-    ],
-    [
-      'see https://a.test/a\\`b now',
-      [{ text: 'https://a.test/a\\`b', href: 'https://a.test/a`b' }],
-    ],
-    [
-      '(see https://a.test/a_b\\_) now',
-      [{ text: 'https://a.test/a_b\\', href: 'https://a.test/a_b' }],
-    ],
-    [
-      'see <https://a.test/\\[1\\]> now',
-      [{ text: 'https://a.test/\\[1\\]', href: 'https://a.test/\\[1\\]' }],
-    ],
+    ['see https://a.test/?b=\\[1\\] now', [{ text: 'https://a.test/?b=\\[1\\]', href: 'https://a.test/?b=[1]' }]],
+    ['see https://a.test/a\\`b now', [{ text: 'https://a.test/a\\`b', href: 'https://a.test/a`b' }]],
+    ['(see https://a.test/a_b\\_) now', [{ text: 'https://a.test/a_b\\', href: 'https://a.test/a_b' }]],
+    ['see <https://a.test/\\[1\\]> now', [{ text: 'https://a.test/\\[1\\]', href: 'https://a.test/\\[1\\]' }]],
     ['see www.w.dev now', [{ text: 'www.w.dev', href: 'https://www.w.dev' }]],
     ['see [below](#heading) now', [{ text: 'below', href: null }]],
     ['see [other](notes/other.md) now', []],
@@ -558,17 +501,13 @@ describe('links', () => {
   })
 
   test('the label of a link carries its target', () => {
-    expect(linkMarks('see [docs](https://x.dev) now')).toEqual([
-      { text: 'docs', href: 'https://x.dev' },
-    ])
+    expect(linkMarks('see [docs](https://x.dev) now')).toEqual([{ text: 'docs', href: 'https://x.dev' }])
   })
 
   test('a bare address stays visible and is the link', () => {
     const doc = 'go to https://bare.dev/p?q=1 now'
     expect(concealed(doc)).toEqual([])
-    expect(linkMarks(doc)).toEqual([
-      { text: 'https://bare.dev/p?q=1', href: 'https://bare.dev/p?q=1' },
-    ])
+    expect(linkMarks(doc)).toEqual([{ text: 'https://bare.dev/p?q=1', href: 'https://bare.dev/p?q=1' }])
   })
 
   test('an autolink hides its brackets and shows the address', () => {

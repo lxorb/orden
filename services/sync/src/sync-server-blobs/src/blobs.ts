@@ -79,11 +79,7 @@ blobs.put('/:hash', async (context) => {
   const verified = (await hashOfBytes(body)) === hash && !spellsADiagramName(body)
   if (!verified && type !== 'image/svg+xml') return context.json({ error: WRONG_BYTES }, 400)
   const drawn = said((name) => context.req.header(name), 'diagram')
-  if (
-    !verified &&
-    drawn !== undefined &&
-    !(await drawnFrom(context.env, context.get('who'), hash, drawn))
-  ) {
+  if (!verified && drawn !== undefined && !(await drawnFrom(context.env, context.get('who'), hash, drawn))) {
     return context.json({ error: WRONG_BYTES }, 400)
   }
   if (!verified && there) return context.json({ error: WRONG_BYTES }, 400)
@@ -92,8 +88,7 @@ blobs.put('/:hash', async (context) => {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
 
-  const put = () =>
-    context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
+  const put = () => context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
   const placed = !there || (verified && !(await holdsItsName(context.env, hash, body.byteLength)))
   if (placed) await put()
   const written = await context.env.DB.prepare(
@@ -163,8 +158,7 @@ async function publishedAnywhere(env: Env, hash: string, request: Request): Prom
 
   for (const space of results) {
     for (const file of readSpaceFiles(space.files)) {
-      if (file.hash === hash && (await hooks().blog.publishesFile(env, space, file, request)))
-        return true
+      if (file.hash === hash && (await hooks().blog.publishesFile(env, space, file, request))) return true
     }
   }
   return false
@@ -192,9 +186,7 @@ publicBlobs.get('/:name', async (context) => {
   return new Response(object.body, {
     headers: {
       'content-type': type,
-      'cache-control': DOCUMENTS.has(type)
-        ? 'private, no-cache'
-        : 'public, max-age=31536000, immutable',
+      'cache-control': DOCUMENTS.has(type) ? 'private, no-cache' : 'public, max-age=31536000, immutable',
       etag: `"${hash}"`,
       'x-content-type-options': 'nosniff',
       ...(type === 'image/svg+xml' ? { 'content-security-policy': SVG_POLICY } : {}),

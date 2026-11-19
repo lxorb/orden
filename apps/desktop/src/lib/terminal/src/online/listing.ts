@@ -26,9 +26,7 @@ export function rowOf(one: Listed): SessionRow {
 
 export function rowsOf(listed: readonly Listed[]): SessionRow[] {
   const heard = (one: Listed) => one.at ?? -1
-  return [...listed]
-    .sort((a, b) => heard(b) - heard(a) || (b.createdAt ?? 0) - (a.createdAt ?? 0))
-    .map(rowOf)
+  return [...listed].sort((a, b) => heard(b) - heard(a) || (b.createdAt ?? 0) - (a.createdAt ?? 0)).map(rowOf)
 }
 
 export function opens(one: Listed): boolean {

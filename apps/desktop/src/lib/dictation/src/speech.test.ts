@@ -71,9 +71,7 @@ describe('the ear', () => {
 
   test('leaves a short one whole', () => {
     const ear = heard(voice(10))
-    expect(ear.piecesOf(0, ear.levels.length, frames(60))).toEqual([
-      { from: 0, to: ear.levels.length },
-    ])
+    expect(ear.piecesOf(0, ear.levels.length, frames(60))).toEqual([{ from: 0, to: ear.levels.length }])
   })
 })
 

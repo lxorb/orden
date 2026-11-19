@@ -6,11 +6,9 @@ export const loadPhoneTabs = () =>
 export const loadPhoneYou = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./PhoneYou.svelte')>() : import('./PhoneYou.svelte')
 
-export const noteMore = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./note-more')>() : import('./note-more')
+export const noteMore = () => (__EVEN_PLUGIN__ ? away<typeof import('./note-more')>() : import('./note-more'))
 
 export const loadTabGrid = () =>
   __EVEN_PLUGIN__ ? away<typeof import('./TabGrid.svelte')>() : import('./TabGrid.svelte')
 
-export const tabSwipe = () =>
-  __EVEN_PLUGIN__ ? away<typeof import('./swipe')>() : import('./swipe')
+export const tabSwipe = () => (__EVEN_PLUGIN__ ? away<typeof import('./swipe')>() : import('./swipe'))

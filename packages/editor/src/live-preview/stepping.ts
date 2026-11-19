@@ -68,10 +68,7 @@ const step =
 
     const edge = edgeBeside(view.state, range.head, down)
     if (edge === null) return false
-    if (
-      farEdge(view.state, range.head, down) === null &&
-      withinWrappedLine(view, range.head, down)
-    ) {
+    if (farEdge(view.state, range.head, down) === null && withinWrappedLine(view, range.head, down)) {
       return false
     }
     if (edge === range.head && !view.state.facet(noReveal)) {

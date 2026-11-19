@@ -254,12 +254,7 @@ function facing(from: Point, to: Point): Side {
   return down >= 0 ? 'bottom' : 'top'
 }
 
-const ring = (from: Point, to: Point): Point[] => [
-  from,
-  { x: to.x, y: from.y },
-  to,
-  { x: from.x, y: to.y },
-]
+const ring = (from: Point, to: Point): Point[] => [from, { x: to.x, y: from.y }, to, { x: from.x, y: to.y }]
 
 export function takesOver(kind: string, since: number, now: number): boolean {
   if (kind === 'pinch') return false
@@ -346,10 +341,8 @@ function toolFor(input: Down, context: Context): Tool {
   return INK.has(context.tool) ? 'select' : context.tool
 }
 
-export const inks = (
-  pointer: PointerKind,
-  glass: { penSeen: boolean; fingerDraws: boolean },
-): boolean => pointer !== 'touch' || !glass.penSeen || glass.fingerDraws
+export const inks = (pointer: PointerKind, glass: { penSeen: boolean; fingerDraws: boolean }): boolean =>
+  pointer !== 'touch' || !glass.penSeen || glass.fingerDraws
 
 export function step(machine: Machine, input: Input, context: Context): Step {
   switch (input.kind) {
@@ -380,11 +373,7 @@ export function step(machine: Machine, input: Input, context: Context): Step {
 
 export function drives(machine: Machine, id: number): boolean {
   const one = machine.gesture
-  return (
-    machine.driver === null ||
-    machine.driver.id === id ||
-    (one?.kind === 'pinch' && one.ids.includes(id))
-  )
+  return machine.driver === null || machine.driver.id === id || (one?.kind === 'pinch' && one.ids.includes(id))
 }
 
 function onCancel(machine: Machine, id: number): Step {
@@ -404,16 +393,14 @@ function onCancel(machine: Machine, id: number): Step {
 
 function onDown(machine: Machine, input: Down, context: Context): Step {
   const next = landing(machine, input, context)
-  const palmRubbed =
-    input.pointer === 'pen' && machine.gesture?.kind === 'erase' && machine.driver?.kind === 'touch'
+  const palmRubbed = input.pointer === 'pen' && machine.gesture?.kind === 'erase' && machine.driver?.kind === 'touch'
   return palmRubbed ? { ...next, effects: [{ do: 'unrub' }, ...next.effects] } : next
 }
 
 function landing(machine: Machine, input: Down, context: Context): Step {
   if (input.pointer === 'touch' && machine.penDown) return { machine, effects: [] }
 
-  const now: Machine =
-    input.pointer === 'pen' ? { ...machine, gesture: null, spare: [], driver: null } : machine
+  const now: Machine = input.pointer === 'pen' ? { ...machine, gesture: null, spare: [], driver: null } : machine
 
   const penDown = now.penDown || input.pointer === 'pen'
   const tool = toolFor(input, context)
@@ -587,10 +574,7 @@ function select(machine: Machine, input: Down, context: Context): Step {
   if (hit.edge) {
     return {
       machine,
-      effects: [
-        { do: 'pick', ids: [hit.edge], adding: input.adds || input.shift },
-        { do: 'leave' },
-      ],
+      effects: [{ do: 'pick', ids: [hit.edge], adding: input.adds || input.shift }, { do: 'leave' }],
     }
   }
 
@@ -687,8 +671,7 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
       const which = one.ids.indexOf(input.id)
       if (which < 0) return { machine, effects: [] }
 
-      const screens: [Point, Point] =
-        which === 0 ? [input.screen, one.screens[1]] : [one.screens[0], input.screen]
+      const screens: [Point, Point] = which === 0 ? [input.screen, one.screens[1]] : [one.screens[0], input.screen]
       const apart = Math.hypot(screens[1].x - screens[0].x, screens[1].y - screens[0].y)
       const middle = {
         x: (screens[0].x + screens[1].x) / 2,
@@ -705,9 +688,7 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
       }
 
       const angle = angleOf(screens[0], screens[1])
-      const turning =
-        one.turning ||
-        (!!context.turns && Math.abs(settledTurn(angle - one.began)) >= TURN_DEADBAND)
+      const turning = one.turning || (!!context.turns && Math.abs(settledTurn(angle - one.began)) >= TURN_DEADBAND)
       if (turning && context.turns) {
         const by = settledTurn(angle - (one.turning ? one.angle : one.began))
         if (by) effects.push({ do: 'turn', at: middle, by })
@@ -770,10 +751,7 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
           ...machine,
           gesture: { ...one, last: input.at, lastScreen: input.screen },
         },
-        effects: rubbed(
-          rub,
-          rubbedBetween({ at: one.last, screen: one.lastScreen }, input, context.scale, rub.reach),
-        ),
+        effects: rubbed(rub, rubbedBetween({ at: one.last, screen: one.lastScreen }, input, context.scale, rub.reach)),
       }
     }
 
@@ -964,15 +942,7 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
       return {
         machine: rest,
         effects: moved
-          ? rubbed(
-              rub,
-              rubbedBetween(
-                { at: one.last, screen: one.lastScreen },
-                input,
-                context.scale,
-                rub.reach,
-              ),
-            )
+          ? rubbed(rub, rubbedBetween({ at: one.last, screen: one.lastScreen }, input, context.scale, rub.reach))
           : [],
       }
     }

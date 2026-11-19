@@ -26,10 +26,7 @@ export function note(at: string, error: unknown, id: string | null): void {
   )
 }
 
-export function failed(
-  error: Error,
-  context: Context<{ Bindings: Env; Variables: Variables }>,
-): Response {
+export function failed(error: Error, context: Context<{ Bindings: Env; Variables: Variables }>): Response {
   if (error instanceof HTTPException) return error.getResponse()
 
   const id = context.req.header('cf-ray') ?? null

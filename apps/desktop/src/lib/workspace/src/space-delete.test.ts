@@ -73,10 +73,7 @@ describe('a space of your own deleted signed in', () => {
   })
 
   test('with a dotfile in it goes to this device’s trash', async () => {
-    trees.set(
-      '/s/Work',
-      at('/s/Work', [at('/s/Work/a.md'), at('/s/Work/.git', [at('/s/Work/.git/HEAD')])]),
-    )
+    trees.set('/s/Work', at('/s/Work', [at('/s/Work/a.md'), at('/s/Work/.git', [at('/s/Work/.git/HEAD')])]))
     await deleteSpace(store(), 'w')
     expect(sent).toContain('trash_item')
     expect(sent).not.toContain('delete_space')

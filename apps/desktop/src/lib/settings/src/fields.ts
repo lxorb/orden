@@ -70,15 +70,7 @@ export interface Group {
   fields: Field[]
 }
 
-type PaneId =
-  | 'general'
-  | 'editor'
-  | 'kinds'
-  | 'spelling'
-  | 'markdown'
-  | 'appearance'
-  | 'experimental'
-  | 'export'
+type PaneId = 'general' | 'editor' | 'kinds' | 'spelling' | 'markdown' | 'appearance' | 'experimental' | 'export'
 
 export interface Pane {
   id: PaneId

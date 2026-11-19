@@ -14,10 +14,7 @@ export async function clipboard(call: Call): Promise<AgentAnswer> {
       throw new Refused('protected', 'the clipboard holds a secret copied from Pass')
     }
     const cut = words.length > MOST
-    return done(
-      { text: cut ? words.slice(0, MOST) : words, ...(cut ? { truncated: true } : {}) },
-      'clipboard',
-    )
+    return done({ text: cut ? words.slice(0, MOST) : words, ...(cut ? { truncated: true } : {}) }, 'clipboard')
   }
   if (op === 'write') {
     const words = text(call, 'text')

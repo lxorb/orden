@@ -104,10 +104,7 @@ export function carryNow(notes: () => Carried[], said: Carrying['said']): Promis
   return carrying
 }
 
-export async function paperFromAccount(
-  id: string,
-  note: string | null,
-): Promise<Uint8Array | null> {
+export async function paperFromAccount(id: string, note: string | null): Promise<Uint8Array | null> {
   const token = account.token
   if (!token) return null
   return await paperFor(id, note, how(token, account.user?.id ?? 'guest'))

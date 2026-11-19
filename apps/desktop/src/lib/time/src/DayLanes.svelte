@@ -52,9 +52,7 @@
   let width = $state(0)
   const hours = $derived.by(() => {
     const out: number[] = []
-    const step =
-      [1, 2, 3, 4, 6, 12].map((one) => one * HOUR).find((one) => (one / whole) * width >= 64) ??
-      12 * HOUR
+    const step = [1, 2, 3, 4, 6, 12].map((one) => one * HOUR).find((one) => (one / whole) * width >= 64) ?? 12 * HOUR
     for (let one = Math.ceil(from / step) * step; one <= to; one += step) out.push(one)
     return out
   })
@@ -168,9 +166,7 @@
           style:top="{(row / rows) * 100}%"
           style:height="{100 / rows}%"
           style:--tint={tintOf(piece.span.activity)}
-          title="{nameOf(piece.span.activity, 'No activity')}, {clock(piece.from)}–{clock(
-            piece.to,
-          )}"
+          title="{nameOf(piece.span.activity, 'No activity')}, {clock(piece.from)}–{clock(piece.to)}"
         >
           {#if pixels(piece.to - piece.from) > 40}
             <span class="name" dir="auto">{nameOf(piece.span.activity, 'No activity')}</span>

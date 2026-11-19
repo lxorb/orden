@@ -81,9 +81,7 @@ export async function audit(
   who: { who?: string | null; device?: string | null; detail?: Detail } = {},
   at = Date.now(),
 ): Promise<void> {
-  await env.DB.prepare(
-    'insert into machine_events (machine, at, kind, who, device, detail) values (?, ?, ?, ?, ?, ?)',
-  )
+  await env.DB.prepare('insert into machine_events (machine, at, kind, who, device, detail) values (?, ?, ?, ?, ?, ?)')
     .bind(
       machine,
       at,

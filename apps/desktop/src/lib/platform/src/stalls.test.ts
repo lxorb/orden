@@ -16,21 +16,9 @@ describe('a stall in the log', () => {
         startTime: 1200,
         took: 1843.6,
         scripts: [
-          script(
-            'TimerHandler:setTimeout',
-            'fold',
-            'http://tauri.localhost/assets/link-index-3bd2.js',
-            4120,
-            1610.2,
-          ),
+          script('TimerHandler:setTimeout', 'fold', 'http://tauri.localhost/assets/link-index-3bd2.js', 4120, 1610.2),
           script('Response.json.then', '', 'http://tauri.localhost/assets/index-a1.js?v=2', 88, 12),
-          script(
-            'Window.requestAnimationFrame',
-            'tick',
-            'http://tauri.localhost/assets/editor-9.js',
-            7,
-            120,
-          ),
+          script('Window.requestAnimationFrame', 'tick', 'http://tauri.localhost/assets/editor-9.js', 7, 120),
           script('IMG.onload', 'loaded', 'http://tauri.localhost/assets/x.js', 1, 5),
         ],
       },

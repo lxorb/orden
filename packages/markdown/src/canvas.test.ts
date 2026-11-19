@@ -158,10 +158,7 @@ describe('reading a canvas somebody else wrote', () => {
 
   test('drops a side, an end or a background style it has never heard of', () => {
     const canvas = read({
-      nodes: [
-        card('a'),
-        card('g', { type: 'group', text: undefined, backgroundStyle: 'stretched' }),
-      ],
+      nodes: [card('a'), card('g', { type: 'group', text: undefined, backgroundStyle: 'stretched' })],
       edges: [{ id: 'e', fromNode: 'a', toNode: 'a', fromSide: 'sideways', toEnd: 'circle' }],
     })
     expect(canvas.nodes[1]).not.toHaveProperty('backgroundStyle')
@@ -183,9 +180,7 @@ describe('writing a canvas', () => {
       nodes: Record<string, unknown>[]
       edges: Record<string, unknown>[]
     }
-    expect(Object.keys(written.nodes[0] ?? {})).toEqual(
-      'id type x y width height color text'.split(' '),
-    )
+    expect(Object.keys(written.nodes[0] ?? {})).toEqual('id type x y width height color text'.split(' '))
     expect(Object.keys(written.edges[1] ?? {})).toEqual(['id', 'fromNode', 'toNode'])
   })
 
@@ -254,11 +249,7 @@ describe('what Orden keeps beyond the spec', () => {
   test('is byte for byte the same on its own output; keeps the z order a shape sits at among the cards', () => {
     expect(writeCanvas(readCanvas(written))).toBe(written)
     const back: Canvas = { ...drawn, nodes: [drawn.nodes[1]!, drawn.nodes[0]!, drawn.nodes[2]!] }
-    expect(readCanvas(writeCanvas(back)).nodes.map((node) => node.id)).toEqual([
-      'box',
-      'card',
-      'ray',
-    ])
+    expect(readCanvas(writeCanvas(back)).nodes.map((node) => node.id)).toEqual(['box', 'card', 'ray'])
   })
 
   test('keeps all seven shapes, and the words inside one', () => {
@@ -568,11 +559,7 @@ describe('the icon a canvas wears', () => {
     const read = readCanvas(marked)
     expect(read.icon).toBe('rocket')
     expect(read.iconColor).toBe('violet')
-    expect(Object.keys((JSON.parse(marked) as { orden: object }).orden)).toEqual([
-      'version',
-      'icon',
-      'iconColor',
-    ])
+    expect(Object.keys((JSON.parse(marked) as { orden: object }).orden)).toEqual(['version', 'icon', 'iconColor'])
   })
 
   test('and a colour with no icon to colour is no colour at all', () => {
@@ -613,13 +600,7 @@ describe('writing a canvas a piece at a time', () => {
       ],
       edges: [{ id: 'e', fromNode: 'card', toNode: 'box' }],
       ink,
-      at: Object.fromEntries([
-        ...ink.map((one) => [one.id, 5]),
-        ['12', 7],
-        ['4294967295', 1],
-        ['07', 2],
-        ['card', 3],
-      ]),
+      at: Object.fromEntries([...ink.map((one) => [one.id, 5]), ['12', 7], ['4294967295', 1], ['07', 2], ['card', 3]]),
       gone: { '3': 1, old: 2 },
       icon: 'rocket',
       iconColor: 'teal',
@@ -632,10 +613,7 @@ describe('writing a canvas a piece at a time', () => {
     ['an empty plane', readCanvas(blankCanvas())],
     ['the spec example', read(SPEC_EXAMPLE)],
     ['a drawn plane', plane(3)],
-    [
-      'a plane with no icon colour and no times',
-      { ...plane(1), iconColor: null, at: {}, gone: {} },
-    ],
+    ['a plane with no icon colour and no times', { ...plane(1), iconColor: null, at: {}, gone: {} }],
     ['a page note', emptyPages()],
     [
       'words with no card round them',
@@ -908,11 +886,7 @@ describe('ids a canvas file uses twice', () => {
       ...canvas.edges.map((one) => one.id),
       ...canvas.ink.map((one) => one.id),
     ]
-    expect(canvas.nodes.map((one) => (one.type === 'text' ? one.text : ''))).toEqual([
-      'first',
-      'second',
-      'third',
-    ])
+    expect(canvas.nodes.map((one) => (one.type === 'text' ? one.text : ''))).toEqual(['first', 'second', 'third'])
     expect(canvas.edges.map((one) => one.label)).toEqual(['one to two', 'two to one'])
     expect(canvas.ink).toHaveLength(1)
     expect(new Set(ids).size).toBe(ids.length)
@@ -940,12 +914,7 @@ describe('ids a canvas file uses twice', () => {
     const shared = (count: number) =>
       JSON.stringify({ nodes: Array.from({ length: count }, () => card('a', 'x')), edges: [] })
     const read = linearly((count) => readCanvas(shared(count)), 4000)
-    expect(read.nodes.map((one) => one.id).slice(0, 4)).toEqual([
-      'a',
-      'a-card',
-      'a-card-2',
-      'a-card-3',
-    ])
+    expect(read.nodes.map((one) => one.id).slice(0, 4)).toEqual(['a', 'a-card', 'a-card-2', 'a-card-3'])
     expect(new Set(read.nodes.map((one) => one.id)).size).toBe(read.nodes.length)
   })
 })
@@ -956,9 +925,7 @@ describe('a stroke with a number that is not one', () => {
   test('is written with the value left as it would be read, not as a hole', () => {
     const text = writeCanvas({
       ...readCanvas(blankCanvas()),
-      ink: [
-        { id: 's', tool: 'pen', color: DEFAULT_INK, size: 2, points: [point(1, NaN), point(2)] },
-      ],
+      ink: [{ id: 's', tool: 'pen', color: DEFAULT_INK, size: 2, points: [point(1, NaN), point(2)] }],
     })
     expect(text).not.toContain('null')
     expect(readCanvas(text).ink[0]?.points.map((one) => [one.x, one.tiltX])).toEqual([

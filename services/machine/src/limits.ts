@@ -1,11 +1,4 @@
-import {
-  appendFileSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  rmdirSync,
-  writeFileSync,
-} from 'node:fs'
+import { appendFileSync, existsSync, mkdirSync, readFileSync, rmdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { sessionStates } from './proc'
 
@@ -47,14 +40,7 @@ const PRLIMIT = '/usr/bin/prlimit'
 export const SETPRIV = '/usr/bin/setpriv'
 
 export function asUser(user: User, command: string[]): string[] {
-  return [
-    SETPRIV,
-    `--reuid=${String(user.uid)}`,
-    `--regid=${String(user.gid)}`,
-    '--init-groups',
-    '--',
-    ...command,
-  ]
+  return [SETPRIV, `--reuid=${String(user.uid)}`, `--regid=${String(user.gid)}`, '--init-groups', '--', ...command]
 }
 
 export function shellCommand(

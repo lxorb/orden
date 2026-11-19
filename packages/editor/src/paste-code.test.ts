@@ -22,10 +22,7 @@ async function pasted(marked: string, text: string, html = ''): Promise<string> 
       EditorState.create({
         doc: marked.replace('|', ''),
         selection: { anchor: caret },
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          richPaste(),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), richPaste()],
       }),
     ),
   })
@@ -52,8 +49,7 @@ describe('a paste into code', () => {
 
   test('from an editor that copies HTML too is its plain text', async () => {
     const code = '// see [docs]\nconst a = 1'
-    const html =
-      '<div><div><span>// see [docs]</span></div><div><span>const a = 1</span></div></div>'
+    const html = '<div><div><span>// see [docs]</span></div><div><span>const a = 1</span></div></div>'
     await expect(pasted('```js\n|\n```', code, html)).resolves.toBe(`\`\`\`js\n${code}\n\`\`\``)
   })
 
@@ -64,21 +60,17 @@ describe('a paste into code', () => {
 
 describe('a paste with the caret right beside inline code, not in it', () => {
   test('bold words pasted right after a code span are still bold', async () => {
-    await expect(
-      pasted('Use `x`|', ' carefully', '<span> </span><b>carefully</b>'),
-    ).resolves.toContain('**carefully**')
+    await expect(pasted('Use `x`|', ' carefully', '<span> </span><b>carefully</b>')).resolves.toContain('**carefully**')
   })
 
   test('a web link pasted just before a code span is still a link', async () => {
-    await expect(
-      pasted('|`npm i` installs it', 'the docs', '<a href="https://docs.dev">the docs</a>'),
-    ).resolves.toBe('[the docs](https://docs.dev)`npm i` installs it')
+    await expect(pasted('|`npm i` installs it', 'the docs', '<a href="https://docs.dev">the docs</a>')).resolves.toBe(
+      '[the docs](https://docs.dev)`npm i` installs it',
+    )
   })
 
   test('paragraphs copied in Orden pasted right after a code span in an item stay in the item', async () => {
     const copied = '<div data-orden="markdown"><p>one</p><p>two</p></div>'
-    await expect(pasted('- run `x`|', ' one\n\ntwo', copied)).resolves.toBe(
-      '- run `x` one\n\n  two',
-    )
+    await expect(pasted('- run `x`|', ' one\n\ntwo', copied)).resolves.toBe('- run `x` one\n\n  two')
   })
 })

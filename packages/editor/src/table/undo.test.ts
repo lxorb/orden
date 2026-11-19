@@ -38,9 +38,7 @@ function note(on: { shared?: SharedDoc } = {}): EditorView {
 }
 
 function typeInCell(view: EditorView): HTMLElement {
-  const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
-    (one) => one.textContent === '1',
-  )
+  const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '1')
   if (!cell) throw new Error('the table drew no cell holding 1')
   cell.focus()
   cell.textContent = '1XYZ'
@@ -66,9 +64,7 @@ describe('undo in a table cell', () => {
     const view = createEditor({ parent: document.body, doc, selection: { anchor: 0 } })
     open.push(view)
     forceParsing(view, doc.length, 10_000)
-    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
-      (one) => one.textContent === '1',
-    )
+    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '1')
     if (!cell) throw new Error('the table drew no cell holding 1')
     cell.focus()
     for (const text of ['1x', '1xy']) {
@@ -112,9 +108,7 @@ describe('undo in a table cell', () => {
     const view = note({ shared: new SharedDoc(TABLE) })
     const cell = typeInCell(view)
 
-    cell.dispatchEvent(
-      new InputEvent('beforeinput', { inputType: 'historyUndo', bubbles: true, cancelable: true }),
-    )
+    cell.dispatchEvent(new InputEvent('beforeinput', { inputType: 'historyUndo', bubbles: true, cancelable: true }))
     expect(view.state.doc.toString()).toBe(TABLE)
   })
 })
@@ -130,9 +124,7 @@ describe('undo after typing in a table far down a note', () => {
     })
     open.push(view)
     forceParsing(view, LONG.length, 10_000)
-    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
-      (one) => one.textContent === '1',
-    )
+    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '1')
     if (!cell) throw new Error('the table drew no cell holding 1')
     cell.focus()
     cell.textContent = '1x'
@@ -145,8 +137,7 @@ describe('undo after typing in a table far down a note', () => {
     ['a shared note', () => new SharedDoc(LONG)],
   ])('in %s, an undo in the cell keeps the view where it is', (_, make) => {
     const { view, cell } = typed(make?.())
-    const scroll = (EditorView.scrollIntoView(0) as unknown as { type: StateEffectType<unknown> })
-      .type
+    const scroll = (EditorView.scrollIntoView(0) as unknown as { type: StateEffectType<unknown> }).type
     const from = seen.length
 
     press(cell)
@@ -189,13 +180,10 @@ test('an undo in a cell of an edit above the table keeps the view on the table',
     anchored.viewState.scrollAnchorAt = anchorAt
     return { ...anchorAt(top), from: start, top: 0 }
   }
-  const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
-    (one) => one.textContent === '1',
-  )
+  const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '1')
   if (!cell) throw new Error('the table drew no cell holding 1')
   cell.focus()
-  const scroll = (EditorView.scrollIntoView(0) as unknown as { type: StateEffectType<unknown> })
-    .type
+  const scroll = (EditorView.scrollIntoView(0) as unknown as { type: StateEffectType<unknown> }).type
   const from = seen.length
 
   press(cell)
@@ -213,9 +201,7 @@ test('typing in a cell leaves the caret off a heading right under the table', ()
   const view = createEditor({ parent: document.body, doc, selection: { anchor: doc.length } })
   open.push(view)
   forceParsing(view, doc.length, 10_000)
-  const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
-    (one) => one.textContent === '1',
-  )
+  const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '1')
   if (!cell) throw new Error('the table drew no cell holding 1')
   cell.focus()
   cell.textContent = '1x'

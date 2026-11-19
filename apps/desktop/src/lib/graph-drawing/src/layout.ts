@@ -107,11 +107,7 @@ export class Layout {
     this.growCells(Math.max(8, 4 * Math.ceil(count / IN_A_LEAF) + 8))
   }
 
-  private carry(
-    graph: NoteGraph,
-    from: ReadonlyMap<string, { x: number; y: number }>,
-    next: () => number,
-  ) {
+  private carry(graph: NoteGraph, from: ReadonlyMap<string, { x: number; y: number }>, next: () => number) {
     const known = new Uint8Array(this.count)
     for (const [one, node] of graph.nodes.entries()) {
       const was = from.get(node.id)
@@ -346,15 +342,7 @@ export class Layout {
     this.build(0, 0, count, least, lowest, side, 0)
   }
 
-  private build(
-    square: number,
-    low: number,
-    high: number,
-    x0: number,
-    y0: number,
-    side: number,
-    depth: number,
-  ) {
+  private build(square: number, low: number, high: number, x0: number, y0: number, side: number, depth: number) {
     const { order, scratch, x, y } = this
 
     this.first[square] = low

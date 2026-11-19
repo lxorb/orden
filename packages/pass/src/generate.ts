@@ -7,15 +7,7 @@ export interface RandomRule {
   symbols: boolean
 }
 
-export const SEPARATORS = [
-  'hyphen',
-  'space',
-  'period',
-  'comma',
-  'underscore',
-  'digit',
-  'digitOrSymbol',
-] as const
+export const SEPARATORS = ['hyphen', 'space', 'period', 'comma', 'underscore', 'digit', 'digitOrSymbol'] as const
 
 export type Separator = (typeof SEPARATORS)[number]
 
@@ -106,11 +98,7 @@ function capitalized(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1)
 }
 
-export function chosenWords(
-  rule: WordsRule,
-  words: readonly string[],
-  random: Random = secureRandom,
-): string[] {
+export function chosenWords(rule: WordsRule, words: readonly string[], random: Random = secureRandom): string[] {
   const count = clamped(rule.words, MEMORABLE_WORDS)
   const chosen = Array.from({ length: count }, () => words[random(words.length)] ?? '')
   const shaped = rule.capitalize ? chosen.map(capitalized) : chosen
@@ -130,10 +118,7 @@ export function joinedWords(
   separator: Separator | 'none',
   random: Random = secureRandom,
 ): string {
-  return chosen.reduce(
-    (text, word, at) => (at === 0 ? word : text + separatorOf(separator, random) + word),
-    '',
-  )
+  return chosen.reduce((text, word, at) => (at === 0 ? word : text + separatorOf(separator, random) + word), '')
 }
 
 export function memorablePassword(

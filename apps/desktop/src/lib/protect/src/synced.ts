@@ -50,8 +50,7 @@ function stirredOf(root: string): number {
 }
 
 const alike = (one: Record<string, Way>, other: Record<string, Way>) =>
-  Object.keys(one).length === Object.keys(other).length &&
-  Object.entries(one).every(([key, way]) => other[key] === way)
+  Object.keys(one).length === Object.keys(other).length && Object.entries(one).every(([key, way]) => other[key] === way)
 
 function stir(root: string): void {
   const all = stored(STIRRED_KEY)
@@ -103,16 +102,11 @@ async function pushNow(root: string): Promise<void> {
   if (now && accountId && !alike(held, ways)) protection.adopt(root, held, accountId)
 }
 
-export async function pushPassword(
-  token = account.token,
-  accountId = account.user?.id ?? null,
-): Promise<void> {
+export async function pushPassword(token = account.token, accountId = account.user?.id ?? null): Promise<void> {
   const password = protection.password
   if (!token || !accountId || !password) return
   protection.ownedBy(accountId)
-  await request('/v1/protected/password', { method: 'PUT', token, body: { password } }).catch(
-    () => undefined,
-  )
+  await request('/v1/protected/password', { method: 'PUT', token, body: { password } }).catch(() => undefined)
 }
 
 export async function pulled(

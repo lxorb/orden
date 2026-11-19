@@ -1,13 +1,5 @@
 export type ErrorKind =
-  | 'invalid'
-  | 'missing'
-  | 'refused'
-  | 'conflict'
-  | 'unreachable'
-  | 'timeout'
-  | 'too-large'
-  | 'unsupported'
-  | 'failed'
+  'invalid' | 'missing' | 'refused' | 'conflict' | 'unreachable' | 'timeout' | 'too-large' | 'unsupported' | 'failed'
 
 export interface OrdenError {
   readonly kind: ErrorKind
@@ -57,17 +49,11 @@ export function mapResult<Value, Next, Failure>(
 export const unwrapOr = <Value, Failure>(result: Result<Value, Failure>, fallback: Value): Value =>
   result.ok ? result.value : fallback
 
-export function attempt<Value>(
-  module: string,
-  run: () => Value,
-  kind: ErrorKind = 'failed',
-): Result<Value> {
+export function attempt<Value>(module: string, run: () => Value, kind: ErrorKind = 'failed'): Result<Value> {
   try {
     return ok(run())
   } catch (cause) {
-    return err(
-      failure(module, kind, cause instanceof Error ? cause.message : String(cause), { cause }),
-    )
+    return err(failure(module, kind, cause instanceof Error ? cause.message : String(cause), { cause }))
   }
 }
 
@@ -79,8 +65,6 @@ export async function attemptAsync<Value>(
   try {
     return ok(await run())
   } catch (cause) {
-    return err(
-      failure(module, kind, cause instanceof Error ? cause.message : String(cause), { cause }),
-    )
+    return err(failure(module, kind, cause instanceof Error ? cause.message : String(cause), { cause }))
   }
 }

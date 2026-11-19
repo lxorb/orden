@@ -251,10 +251,7 @@ export class FixtureChats implements Chats {
       held.scheduled.push({ id: event.post.message, sendAt: event.sendAt, post: event.post })
       return
     }
-    if (
-      event.kind === 'delete' &&
-      held.scheduled.some((one) => one.post.message === event.target)
-    ) {
+    if (event.kind === 'delete' && held.scheduled.some((one) => one.post.message === event.target)) {
       held.scheduled = held.scheduled.filter((one) => one.post.message !== event.target)
       return
     }
@@ -262,10 +259,7 @@ export class FixtureChats implements Chats {
       this.place(chat, this.me, event)
       return
     }
-    held.pending = [
-      ...held.pending,
-      { ...outboxMessage(event, this.me, this.now()), sending: true, refused: null },
-    ]
+    held.pending = [...held.pending, { ...outboxMessage(event, this.me, this.now()), sending: true, refused: null }]
     for (const view of held.views) view.refresh()
     await new Promise((done) => setTimeout(done, this.delay))
     held.pending = held.pending.filter((one) => one.id !== event.message)
@@ -384,8 +378,7 @@ export class FixtureChats implements Chats {
           message,
           chat: held.entry.name ?? '',
           me: this.me,
-          namesOf: (who: Who) =>
-            held.members.filter((one) => one.who === who).map((one) => one.name ?? ''),
+          namesOf: (who: Who) => held.members.filter((one) => one.who === who).map((one) => one.name ?? ''),
           dayOf,
         }
         if (matches(read, hit)) hits.push({ chat: id, message })
@@ -445,9 +438,7 @@ export class FixtureChats implements Chats {
     if (ask.around !== undefined && !asked) return Promise.resolve([])
     const parent = ask.parent ?? (asked?.parent && !asked.alsoToChat ? asked.parent : undefined)
     const all = [...state.messages.values()]
-      .filter((one) =>
-        parent === undefined ? !one.parent || one.alsoToChat : one.parent === parent,
-      )
+      .filter((one) => (parent === undefined ? !one.parent || one.alsoToChat : one.parent === parent))
       .sort((a, b) => a.seq - b.seq)
     if (ask.around !== undefined) {
       const at = all.findIndex((one) => one.id === ask.around)
@@ -598,8 +589,7 @@ class FixtureView implements ChatView {
   }
 
   private shownSpan(): { from: number; to: number } {
-    const to =
-      this.high === Infinity ? this.store.ordered(this.chat).length : this.indexOf(this.high + 1)
+    const to = this.high === Infinity ? this.store.ordered(this.chat).length : this.indexOf(this.high + 1)
     return { from: this.indexOf(this.low), to }
   }
 

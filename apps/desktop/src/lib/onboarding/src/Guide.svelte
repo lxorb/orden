@@ -14,9 +14,7 @@
   const notesApp = NOTES_APPS.find((one) => one.id === setup.answers.notes) ?? null
   const cards = guideCards({
     notes: setup.brought.notes && notesApp ? { id: notesApp.id, name: notesApp.name } : null,
-    browser: setup.brought.browser
-      ? (BROWSERS.find((one) => one.id === setup.answers.browser)?.name ?? null)
-      : null,
+    browser: setup.brought.browser ? (BROWSERS.find((one) => one.id === setup.answers.browser)?.name ?? null) : null,
     ai: setup.brought.ai,
     code: setup.answers.code,
     terminals: isDesktop,

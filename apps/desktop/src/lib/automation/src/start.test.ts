@@ -138,9 +138,7 @@ describe('a link that made a note', () => {
 describe('a link that added to a note', () => {
   test('is followed, and says whether the note was there already', async () => {
     world.answer = { ok: true, value: { path: 'Daily.md', added: true } }
-    await arrives(
-      `orden://append?path=Daily.md&content=A%20line.&x-success=${encodeURIComponent(BACK)}`,
-    )
+    await arrives(`orden://append?path=Daily.md&content=A%20line.&x-success=${encodeURIComponent(BACK)}`)
 
     expect(world.asked).toEqual(['append'])
 

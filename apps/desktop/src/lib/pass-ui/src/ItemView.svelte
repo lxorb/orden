@@ -44,9 +44,7 @@
   let showingQr = $state(false)
 
   const wifiCode = $derived(
-    showingQr && !sealed && content.kind === 'wifi'
-      ? wifiUri(content.ssid, content.password, content.security)
-      : null,
+    showingQr && !sealed && content.kind === 'wifi' ? wifiUri(content.ssid, content.password, content.security) : null,
   )
 
   const flagWord = (flag: Flag): string =>
@@ -141,9 +139,7 @@
             { label: 'Duplicate', run: () => void duplicated() },
             { label: 'History', run: () => (ui.sheet = { kind: 'history', item: item.id }) },
           ]),
-      ...(content.kind === 'custom' && linkable
-        ? [{ label: 'Choose an icon', run: () => chooseIcon() }]
-        : []),
+      ...(content.kind === 'custom' && linkable ? [{ label: 'Choose an icon', run: () => chooseIcon() }] : []),
       ...(linkable ? [{ label: 'Share', more: shareEntries, run: () => shareShown(from) }] : []),
       ...(content.kind === 'login'
         ? [
@@ -162,13 +158,7 @@
 <article class="item" aria-label={content.title} in:fade={{ duration: dur(120) }}>
   <header class="head">
     {#if stepped}
-      <button
-        class="orden-glyph"
-        type="button"
-        aria-label="Back"
-        title="Back"
-        onclick={() => ui.back()}
-      >
+      <button class="orden-glyph" type="button" aria-label="Back" title="Back" onclick={() => ui.back()}>
         <Glyph icon={ArrowLeft} />
       </button>
     {/if}
@@ -180,25 +170,18 @@
       </h2>
       {#if vault}
         <span class="vault"
-          ><VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} /><span dir="auto"
-            >{vault.name}</span
+          ><VaultMark color={vault.color} icon={vault.icon} mark={vault.mark} /><span dir="auto">{vault.name}</span
           ></span
         >
       {/if}
     </div>
     <div class="acts">
       {#if trashed}
-        <button
-          class="orden-button is-quiet is-soft"
-          type="button"
-          onclick={() => void pass.restore([item.id])}
-        >
+        <button class="orden-button is-quiet is-soft" type="button" onclick={() => void pass.restore([item.id])}>
           Restore
         </button>
       {:else}
-        <button class="orden-button" type="button" onclick={() => void ui.edit(item.id)}
-          >Edit</button
-        >
+        <button class="orden-button" type="button" onclick={() => void ui.edit(item.id)}>Edit</button>
       {/if}
       <button
         class="orden-glyph"
@@ -267,11 +250,7 @@
       <section class="pass-card">
         <h3 class="orden-section">Websites</h3>
         {#each content.websites as website, index (index)}
-          <button
-            class="line is-pressable site"
-            type="button"
-            onclick={() => openSite(website.url)}
-          >
+          <button class="line is-pressable site" type="button" onclick={() => openSite(website.url)}>
             <span class="address">{hostOf(website.url) ?? website.url}</span>
             <Glyph icon={ExternalLink} />
           </button>

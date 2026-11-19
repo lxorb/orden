@@ -56,8 +56,7 @@ function viewWith(above: { from: number; to: number }[]): EditorView {
   return view
 }
 
-const lineText = (view: EditorView): string =>
-  view.contentDOM.querySelectorAll('.cm-line')[2]?.textContent ?? ''
+const lineText = (view: EditorView): string => view.contentDOM.querySelectorAll('.cm-line')[2]?.textContent ?? ''
 
 describe('a replaced range that starts under one of higher precedence', () => {
   test.each([
@@ -76,9 +75,7 @@ describe('a replaced range that starts under one of higher precedence', () => {
     const view = viewWith(above)
     const visible = DOC.slice(to)
     view.dispatch({
-      effects: shown.of(
-        Decoration.set([Decoration.replace({ widget: new Gap(false) }).range(from, to)]),
-      ),
+      effects: shown.of(Decoration.set([Decoration.replace({ widget: new Gap(false) }).range(from, to)])),
     })
     expect(view.contentDOM.querySelectorAll('.gap')).toHaveLength(1)
     expect(lineText(view)).toBe(visible)
@@ -90,9 +87,7 @@ describe('a replaced range that starts under one of higher precedence', () => {
   test('is drawn again after the text in it changes', () => {
     const view = viewWith([{ from: LINE, to: LINE + 1 }])
     view.dispatch({
-      effects: shown.of(
-        Decoration.set([Decoration.replace({ widget: new Gap(false) }).range(LINE, LINE + 100)]),
-      ),
+      effects: shown.of(Decoration.set([Decoration.replace({ widget: new Gap(false) }).range(LINE, LINE + 100)])),
     })
     view.dispatch({ changes: { from: DOC.length, insert: 'q' } })
     expect(view.contentDOM.querySelectorAll('.gap')).toHaveLength(1)

@@ -17,11 +17,7 @@ export interface There {
   role: string
 }
 
-export async function meeting(
-  token: string,
-  local: readonly Here[],
-  remote: readonly There[],
-): Promise<Here[]> {
+export async function meeting(token: string, local: readonly Here[], remote: readonly There[]): Promise<Here[]> {
   const met: Here[] = []
   for (const space of local) {
     const namesake = remote.find((one) => one.role === 'owner' && one.name === space.name)
@@ -62,10 +58,7 @@ async function meets(token: string, root: string, spaceId: string): Promise<bool
   return differing.some((one) => !older.has(one.id))
 }
 
-async function notesOf(
-  token: string,
-  spaceId: string,
-): Promise<Map<string, { id: string; hash: string }>> {
+async function notesOf(token: string, spaceId: string): Promise<Map<string, { id: string; hash: string }>> {
   const out = new Map<string, { id: string; hash: string }>()
   let cursor = 0
   for (;;) {
@@ -82,11 +75,7 @@ async function notesOf(
 
 function words(path: string): boolean {
   return (
-    !isPdfTarget(path) &&
-    !isCanvasTarget(path) &&
-    !isPagesTarget(path) &&
-    !isWebTarget(path) &&
-    !inForeignCopy(path)
+    !isPdfTarget(path) && !isCanvasTarget(path) && !isPagesTarget(path) && !isWebTarget(path) && !inForeignCopy(path)
   )
 }
 

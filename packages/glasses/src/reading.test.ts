@@ -1,12 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  type Compaction,
-  COMPACTIONS,
-  DEFAULT_COMPACTION,
-  markLines,
-  MARKS,
-  type Marks,
-} from './mark'
+import { type Compaction, COMPACTIONS, DEFAULT_COMPACTION, markLines, MARKS, type Marks } from './mark'
 import { BODY_INNER } from './panel'
 
 describe('compaction', () => {
@@ -91,9 +84,7 @@ describe('the markers a reader may turn on', () => {
   const DRAWN = '‘‘‘'
 
   test('are off for everything that only styles words, which is the default', () => {
-    expect(shown('a **bold** *italic* ~~struck~~ ==lit== word', {})).toBe(
-      'a bold italic struck lit word',
-    )
+    expect(shown('a **bold** *italic* ~~struck~~ ==lit== word', {})).toBe('a bold italic struck lit word')
   })
 
   test('and on for each of them on its own', () => {
@@ -120,8 +111,6 @@ describe('the markers a reader may turn on', () => {
 
   test('write a link as markdown only when asked', () => {
     expect(shown('see [the notes](https://orden.so)', {})).toBe('see the notes')
-    expect(shown('see [the notes](https://orden.so)', { link: true })).toBe(
-      'see [the notes](https://orden.so)',
-    )
+    expect(shown('see [the notes](https://orden.so)', { link: true })).toBe('see [the notes](https://orden.so)')
   })
 })

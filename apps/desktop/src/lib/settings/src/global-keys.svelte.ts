@@ -25,12 +25,7 @@ const plain = (key: string) =>
     .replace(/control/g, 'ctrl')
     .replace(/logo|meta|win/g, 'super')
 
-export function noteFor(
-  keys: GlobalKeys | null,
-  id: string,
-  shown: string | null,
-  reachable = true,
-): Note | null {
+export function noteFor(keys: GlobalKeys | null, id: string, shown: string | null, reachable = true): Note | null {
   const flag = FLAGS[id]
   if (!keys || !flag) return null
   const taken = { text: 'From other apps: not available, pick another key', change: false }

@@ -1,11 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  DIVIDER,
-  matchesCombination,
-  type MenuGroup,
-  type MenuItem,
-  readCombination,
-} from '../../ui-kit/src/api'
+import { DIVIDER, matchesCombination, type MenuGroup, type MenuItem, readCombination } from '../../ui-kit/src/api'
 import {
   changesBetween,
   chordFor,
@@ -53,11 +47,7 @@ const GROUPS: MenuGroup[] = [
   {
     id: 'file',
     label: 'File',
-    rows: [
-      row('Print', 'app.print'),
-      DIVIDER,
-      row('Version history', undefined, { disabled: true }),
-    ],
+    rows: [row('Print', 'app.print'), DIVIDER, row('Version history', undefined, { disabled: true })],
   },
   {
     id: 'edit',
@@ -194,15 +184,7 @@ describe('a key a menu row can show', () => {
 
 describe('the strip', () => {
   test('is the app menu, the app’s own groups, then Window just before Help', () => {
-    expect(bar().map((one) => one.id)).toEqual([
-      'orden',
-      'file',
-      'edit',
-      'format',
-      'view',
-      'window',
-      'help',
-    ])
+    expect(bar().map((one) => one.id)).toEqual(['orden', 'file', 'edit', 'format', 'view', 'window', 'help'])
   })
 
   test('opens with the app’s own menu, the way every Mac app does', () => {
@@ -228,28 +210,14 @@ describe('the strip', () => {
 
   test('File has the making and closing rows around the in-window menu’s', () => {
     const file = menu(bar(), 'file')
-    expect(read(file)).toEqual([
-      'New Note',
-      'New Tab',
-      '---',
-      'Print',
-      '---',
-      'Version History',
-      '---',
-      'Close Note',
-    ])
+    expect(read(file)).toEqual(['New Note', 'New Tab', '---', 'Print', '---', 'Version History', '---', 'Close Note'])
     expect(itemIn(file, 'New Tab').accelerator).toBe('Cmd+T')
     expect(itemIn(file, 'Close Note').accelerator).toBe('Cmd+W')
   })
 
   test('and no doubled rule where the in-window menu has nothing under File', () => {
     const groups = GROUPS.map((one) => (one.id === 'file' ? { ...one, rows: [] } : one))
-    expect(read(menu(bar({ groups }), 'file'))).toEqual([
-      'New Note',
-      'New Tab',
-      '---',
-      'Close Note',
-    ])
+    expect(read(menu(bar({ groups }), 'file'))).toEqual(['New Note', 'New Tab', '---', 'Close Note'])
   })
 
   test('Edit’s clipboard rows are the system’s, so they reach a field and a web page', () => {
@@ -353,8 +321,7 @@ describe('the strip', () => {
   test('ends View with reloading a web tab, on its keys, from anywhere', () => {
     const reloading = sources({
       viewRows: [row('Reload', 'web.reload'), row('Hard reload', 'web.fresh', { disabled: true })],
-      keyFor: (command) =>
-        ({ 'web.reload': 'Mod-r', 'web.fresh': 'Mod-Shift-r' })[command] ?? KEYS[command] ?? null,
+      keyFor: (command) => ({ 'web.reload': 'Mod-r', 'web.fresh': 'Mod-Shift-r' })[command] ?? KEYS[command] ?? null,
       isWindowCommand: (command) => command.startsWith('app.') || command.startsWith('web.'),
     })
     const view = menu(describeMenuBar(reloading).entries, 'view')
@@ -374,8 +341,7 @@ describe('the strip', () => {
   test('takes back and forward on the brackets, from anywhere, as rows', () => {
     const stepping = sources({
       viewRows: [row('Back', 'web.back'), row('Forward', 'web.forward')],
-      keyFor: (command) =>
-        ({ 'web.back': 'Mod-[', 'web.forward': 'Mod-]' })[command] ?? KEYS[command] ?? null,
+      keyFor: (command) => ({ 'web.back': 'Mod-[', 'web.forward': 'Mod-]' })[command] ?? KEYS[command] ?? null,
       isWindowCommand: (command) => command.startsWith('app.') || command.startsWith('web.'),
     })
     const view = menu(describeMenuBar(stepping).entries, 'view')
@@ -421,9 +387,7 @@ describe('the strip, changed', () => {
     const file = {
       ...GROUPS[0]!,
       rows: GROUPS[0]!.rows.map((one) =>
-        one && 'label' in one && one.label === 'Version history'
-          ? { ...one, disabled: false }
-          : one,
+        one && 'label' in one && one.label === 'Version history' ? { ...one, disabled: false } : one,
       ),
     }
     const after = bar({
@@ -569,9 +533,7 @@ describe('the words a Mac writes its menus in', () => {
 
   test('a row that asks first ends in an ellipsis', () => {
     const groups = GROUPS.map((group) =>
-      group.id === 'file'
-        ? { ...group, rows: [row('Rename', 'app.rename', { asks: true }), ...group.rows] }
-        : group,
+      group.id === 'file' ? { ...group, rows: [row('Rename', 'app.rename', { asks: true }), ...group.rows] } : group,
     )
     const file = menu(bar({ groups }), 'file')
 
@@ -593,11 +555,6 @@ describe('the words a Mac writes its menus in', () => {
     const find = edit.items.at(-1)
 
     expect(find?.kind === 'submenu' && find.text).toBe('Find')
-    expect(find?.kind === 'submenu' && read(find)).toEqual([
-      'Find…',
-      'Replace…',
-      'Find Next',
-      'Find Previous',
-    ])
+    expect(find?.kind === 'submenu' && read(find)).toEqual(['Find…', 'Replace…', 'Find Next', 'Find Previous'])
   })
 })

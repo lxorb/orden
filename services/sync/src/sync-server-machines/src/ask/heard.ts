@@ -57,12 +57,7 @@ function languageIn(answer: unknown): string {
   return typeof said === 'string' ? said.trim().slice(0, 20) : ''
 }
 
-export async function heard(
-  env: Env,
-  audio: ArrayBuffer,
-  key: string | null,
-  like = '',
-): Promise<Heard> {
+export async function heard(env: Env, audio: ArrayBuffer, key: string | null, like = ''): Promise<Heard> {
   const said = await whisperHeard(env, audio, like)
   if (said.said) return said
 

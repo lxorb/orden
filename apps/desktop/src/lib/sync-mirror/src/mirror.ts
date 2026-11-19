@@ -96,10 +96,7 @@ export function readMirror(root: string, value: unknown): Mirror | null {
     files: readTrackedFiles(value.files),
     dropped: value.dropped === true,
     shared: value.shared === true,
-    ...(isRecord(value.moving) &&
-    isString(value.moving.id) &&
-    isString(value.moving.from) &&
-    isString(value.moving.to)
+    ...(isRecord(value.moving) && isString(value.moving.id) && isString(value.moving.from) && isString(value.moving.to)
       ? { moving: { id: value.moving.id, from: value.moving.from, to: value.moving.to } }
       : {}),
     ...readUntold(value.untold),

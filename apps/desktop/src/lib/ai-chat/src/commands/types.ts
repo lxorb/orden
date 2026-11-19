@@ -1,14 +1,6 @@
 import type { Limit } from '../../../ai-providers/src/api'
 import type { Provider } from '../../../ai-providers/src/api'
-import type {
-  Command,
-  Effort,
-  Mode,
-  Stop,
-  Thread,
-  Turn,
-  Usage,
-} from '../../../ai-providers/src/api'
+import type { Command, Effort, Mode, Stop, Thread, Turn, Usage } from '../../../ai-providers/src/api'
 
 export interface Once {
   mode?: Mode
@@ -55,12 +47,7 @@ export interface Panel {
   ensure?(): Thread
   voice?(on?: boolean): void
   turn?(thread: Thread, text: string, once?: Once): Promise<Ended>
-  turnWith?(
-    thread: Thread,
-    text: string,
-    attached: readonly Attached[],
-    once?: Once,
-  ): Promise<Ended>
+  turnWith?(thread: Thread, text: string, attached: readonly Attached[], once?: Once): Promise<Ended>
   adopt?(thread: Thread, open?: boolean): void
   touched?(thread: Thread): void
   answered?(thread: Thread): void

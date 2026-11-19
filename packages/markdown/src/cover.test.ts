@@ -1,12 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  COVER_KEY,
-  COVER_MIDDLE,
-  COVER_POSITION_KEY,
-  coverFigure,
-  coverOf,
-  coverPosition,
-} from './cover'
+import { COVER_KEY, COVER_MIDDLE, COVER_POSITION_KEY, coverFigure, coverOf, coverPosition } from './cover'
 import { renderMarkdown } from './index'
 
 const withCover = (rows: string) => `---\n${rows}\n---\n\n# Head\n\nWords.\n`
@@ -25,9 +18,7 @@ describe('the cover a note names', () => {
   })
 
   test('keeps an address as the address it is; takes the band from where the second key says; is nothing for a key with nothing under it', () => {
-    expect(coverOf(withCover('cover: https://orden.so/wide.jpg'))?.src).toBe(
-      'https://orden.so/wide.jpg',
-    )
+    expect(coverOf(withCover('cover: https://orden.so/wide.jpg'))?.src).toBe('https://orden.so/wide.jpg')
     expect(coverOf(withCover('cover: wide.jpg\ncover-position: 20'))?.position).toBe(20)
     expect(coverOf(withCover('cover:'))).toBeNull()
   })

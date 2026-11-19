@@ -18,11 +18,7 @@ function mkdir(state: TreeState, id: string, name: string, parent: string | null
 }
 
 function create(state: TreeState, id: string, name: string, parent: string | null = null) {
-  return applyOp(
-    state,
-    { op: opId(), t: 'create', id, kind: 'note', parent, name, seen: state.cursor },
-    OWNER,
-  )
+  return applyOp(state, { op: opId(), t: 'create', id, kind: 'note', parent, name, seen: state.cursor }, OWNER)
 }
 
 function live(state: TreeState, id: string): boolean {
@@ -211,11 +207,7 @@ describe('tree', () => {
     mkdir(state, 'f', 'Work')
     create(state, 'old', 'Old.md', 'f')
     const seen = state.cursor
-    applyOp(
-      state,
-      { op: opId(), t: 'create', id: 'new', kind: 'note', parent: 'f', name: 'New.md', seen },
-      PHONE,
-    )
+    applyOp(state, { op: opId(), t: 'create', id: 'new', kind: 'note', parent: 'f', name: 'New.md', seen }, PHONE)
 
     const result = applyOp(state, { op: opId(), t: 'delete', id: 'f', seen }, OWNER)
     expect(result).toMatchObject({ refused: 'edited' })
@@ -256,11 +248,7 @@ describe('tree', () => {
       PHONE,
     )
 
-    applyOp(
-      state,
-      { op: opId(), t: 'rename', id: 'n', name: 'Notes.md', seen: state.cursor },
-      OWNER,
-    )
+    applyOp(state, { op: opId(), t: 'rename', id: 'n', name: 'Notes.md', seen: state.cursor }, OWNER)
     applyOp(state, { op: opId(), t: 'delete', id: 'f', seen: state.cursor }, OWNER)
     expect(live(state, 'n')).toBe(false)
     expect(live(state, 'f')).toBe(false)
@@ -313,9 +301,9 @@ describe('tree', () => {
     const restored = state.cursor
     applyOp(state, { op: opId(), t: 'restore', id: 'n', seen }, PHONE)
 
-    expect(
-      applyOp(state, { op: opId(), t: 'delete', id: 'n', seen: restored }, OWNER),
-    ).toMatchObject({ refused: 'edited' })
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'n', seen: restored }, OWNER)).toMatchObject({
+      refused: 'edited',
+    })
     expect(live(state, 'n')).toBe(true)
   })
 
@@ -427,19 +415,13 @@ describe('tree', () => {
     mkdir(state, 'b', 'B')
     const seen = state.cursor
 
-    expect(
-      applyOp(state, { op: opId(), t: 'move', id: 'a', parent: 'b', seen }, OWNER),
-    ).toMatchObject({
+    expect(applyOp(state, { op: opId(), t: 'move', id: 'a', parent: 'b', seen }, OWNER)).toMatchObject({
       ok: true,
     })
-    expect(
-      applyOp(state, { op: opId(), t: 'move', id: 'b', parent: 'a', seen }, PHONE),
-    ).toMatchObject({
+    expect(applyOp(state, { op: opId(), t: 'move', id: 'b', parent: 'a', seen }, PHONE)).toMatchObject({
       refused: 'cycle',
     })
-    expect(
-      applyOp(state, { op: opId(), t: 'move', id: 'a', parent: 'a', seen }, PHONE),
-    ).toMatchObject({
+    expect(applyOp(state, { op: opId(), t: 'move', id: 'a', parent: 'a', seen }, PHONE)).toMatchObject({
       refused: 'cycle',
     })
   })
@@ -462,9 +444,9 @@ describe('tree', () => {
     expect(state.entries.get('b')?.pos).toBe('V')
 
     applyOp(state, { op: opId(), t: 'delete', id: 'b', seen: state.cursor }, OWNER)
-    expect(
-      applyOp(state, { op: opId(), t: 'place', id: 'b', pos: 'W', seen: state.cursor }, OWNER),
-    ).toMatchObject({ refused: 'gone' })
+    expect(applyOp(state, { op: opId(), t: 'place', id: 'b', pos: 'W', seen: state.cursor }, OWNER)).toMatchObject({
+      refused: 'gone',
+    })
   })
 
   test("an item's metadata: two devices setting different keys both keep theirs", () => {
@@ -493,9 +475,9 @@ describe('tree', () => {
     expect(state.cursor).toBe(before)
 
     meta('a', { icon: 'leaf' }, PHONE)
-    expect(applyOp(state, { op: opId(), t: 'delete', id: 'a', seen: before }, OWNER)).toMatchObject(
-      { refused: 'edited' },
-    )
+    expect(applyOp(state, { op: opId(), t: 'delete', id: 'a', seen: before }, OWNER)).toMatchObject({
+      refused: 'edited',
+    })
     applyOp(state, { op: opId(), t: 'delete', id: 'a', seen: state.cursor }, OWNER)
     expect(meta('a', { icon: 'x' })).toMatchObject({ refused: 'gone' })
   })
@@ -519,11 +501,7 @@ describe('tree', () => {
     expect(state.entries.get('n')).toMatchObject({ deleted: false, name: 'Kept.md' })
 
     applyOp(state, { op: opId(), t: 'delete', id: 'n', seen: state.cursor }, OWNER)
-    const stale = applyOp(
-      state,
-      { op: opId(), t: 'rename', id: 'n', name: 'X.md', seen: state.cursor },
-      PHONE,
-    )
+    const stale = applyOp(state, { op: opId(), t: 'rename', id: 'n', name: 'X.md', seen: state.cursor }, PHONE)
     expect(stale).toMatchObject({ refused: 'gone' })
   })
 
@@ -558,9 +536,7 @@ describe('tree', () => {
   test('an unknown id or a parent that is not a folder is gone', () => {
     const state = treeState()
     create(state, 'n', 'Plan.md')
-    expect(
-      applyOp(state, { op: opId(), t: 'rename', id: 'x', name: 'Y', seen: 0 }, OWNER),
-    ).toMatchObject({
+    expect(applyOp(state, { op: opId(), t: 'rename', id: 'x', name: 'Y', seen: 0 }, OWNER)).toMatchObject({
       refused: 'gone',
     })
     expect(create(state, 'm', 'Inside.md', 'n')).toMatchObject({ refused: 'gone' })
@@ -694,9 +670,7 @@ describe('tree properties', () => {
   test('property: every order of one set of ops keeps the tree whole', () => {
     fc.assert(
       fc.property(
-        steps.chain((list) =>
-          fc.tuple(fc.constant(list), fc.shuffledSubarray(list, { minLength: list.length })),
-        ),
+        steps.chain((list) => fc.tuple(fc.constant(list), fc.shuffledSubarray(list, { minLength: list.length }))),
         ([list, shuffled]) => {
           run(list)
           run(shuffled)
@@ -709,11 +683,7 @@ describe('tree properties', () => {
 
 describe('an online terminal in the tree', () => {
   function term(state: TreeState, id: string, name: string, parent: string | null = null) {
-    return applyOp(
-      state,
-      { op: opId(), t: 'create', id, kind: 'term', parent, name, seen: state.cursor },
-      OWNER,
-    )
+    return applyOp(state, { op: opId(), t: 'create', id, kind: 'term', parent, name, seen: state.cursor }, OWNER)
   }
 
   test('is named by its file, read off the extension', () => {
@@ -734,11 +704,7 @@ describe('an online terminal in the tree', () => {
   test('renamed, it keeps its id and its kind, so the session stays the one it named', () => {
     const state = treeState()
     term(state, 't', 'Terminal.term')
-    applyOp(
-      state,
-      { op: opId(), t: 'rename', id: 't', name: 'Build.term', seen: state.cursor },
-      OWNER,
-    )
+    applyOp(state, { op: opId(), t: 'rename', id: 't', name: 'Build.term', seen: state.cursor }, OWNER)
     expect(state.entries.get('t')).toMatchObject({
       name: 'Build.term',
       kind: 'term',
@@ -787,11 +753,7 @@ describe('an online terminal in the tree', () => {
 
 describe('a chat in the tree', () => {
   function chat(state: TreeState, id: string, name: string, parent: string | null = null) {
-    return applyOp(
-      state,
-      { op: opId(), t: 'create', id, kind: 'chat', parent, name, seen: state.cursor },
-      OWNER,
-    )
+    return applyOp(state, { op: opId(), t: 'create', id, kind: 'chat', parent, name, seen: state.cursor }, OWNER)
   }
 
   test('is named by its pointer file, read off the extension', () => {
@@ -811,11 +773,7 @@ describe('a chat in the tree', () => {
   test('renamed, it keeps its id and its kind', () => {
     const state = treeState()
     chat(state, 'c', 'Chat.chat')
-    applyOp(
-      state,
-      { op: opId(), t: 'rename', id: 'c', name: 'thesis.chat', seen: state.cursor },
-      OWNER,
-    )
+    applyOp(state, { op: opId(), t: 'rename', id: 'c', name: 'thesis.chat', seen: state.cursor }, OWNER)
     expect(state.entries.get('c')).toMatchObject({
       name: 'thesis.chat',
       kind: 'chat',

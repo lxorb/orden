@@ -56,8 +56,7 @@ vi.mock('../../../workspace/src/api', () => ({
       { id: 's2', name: 'Other', root: '/other' },
       { id: 's3', name: 'space', root: '/space2' },
     ],
-    noteText: (path: string) =>
-      fake.unreadable.has(path) ? Promise.resolve(null) : fake.desk.desk.noteText(path),
+    noteText: (path: string) => (fake.unreadable.has(path) ? Promise.resolve(null) : fake.desk.desk.noteText(path)),
     remove: (path: string) => {
       fake.removed.push(path)
       fake.undone.stack.push({ kind: 'delete', path, content: fake.desk.disk.get(path) ?? '' })
@@ -67,13 +66,7 @@ vi.mock('../../../workspace/src/api', () => ({
     get undone() {
       return fake.undone
     },
-    fileCame: async (
-      path: string,
-      _kind: string,
-      _key?: string,
-      _back?: string,
-      putBack?: boolean,
-    ) => {
+    fileCame: async (path: string, _kind: string, _key?: string, _back?: string, putBack?: boolean) => {
       const { tracksCame } = await import('../../../agent-docs/src/edit')
       await tracksCame(path, (at) => Promise.resolve(fake.desk.disk.get(at) ?? null), putBack)
     },
@@ -91,19 +84,14 @@ vi.mock('../../../workspace/src/api', () => ({
 vi.mock('../../../agent-docs/src/api', async (original) => {
   const edit = await import('../../../agent-docs/src/edit')
   const { located } = await import('../../../agent-docs/src/desk')
-  const at = (path: string) =>
-    located(fake.desk.desk, { path: path.slice('/space/'.length), space: 's1' })
+  const at = (path: string) => located(fake.desk.desk, { path: path.slice('/space/'.length), space: 's1' })
   const docs = {
     onTracks: edit.onTracks,
     trackedAgents: edit.trackedAgents,
     tracksOf: edit.tracksOf,
     tracksAside: edit.tracksAside,
-    undoSomeIn: (
-      agent: { id: string; name: string },
-      path: string,
-      ids: ReadonlySet<string>,
-      token?: string,
-    ) => edit.undoSomeAt(fake.desk.desk, agent, at(path), ids, token),
+    undoSomeIn: (agent: { id: string; name: string }, path: string, ids: ReadonlySet<string>, token?: string) =>
+      edit.undoSomeAt(fake.desk.desk, agent, at(path), ids, token),
     putBackIn: (agent: { id: string; name: string }, path: string, token: string) =>
       edit.putBackAt(fake.desk.desk, agent, at(path), token),
   }
@@ -192,12 +180,9 @@ async function message(
   thread.turns.push(turn)
   clock += 10
   for (const one of edits) {
-    await editNote(
-      fake.desk.desk,
-      { id: `orden-${thread.provider}`, name: 'orden', thread: by },
-      { path: one.path },
-      [{ at: one.at, replace: one.replace }],
-    )
+    await editNote(fake.desk.desk, { id: `orden-${thread.provider}`, name: 'orden', thread: by }, { path: one.path }, [
+      { at: one.at, replace: one.replace },
+    ])
   }
   thread.turns.push({
     id: `${words}-answer`,
@@ -215,12 +200,7 @@ async function madeNote(id = 'c1') {
   const thread = aThread()
   const result = { text: '{"path":"Made.md","created":true}', images: [], error: false }
   const args = { path: 'Made' }
-  await message(
-    thread,
-    'make',
-    [],
-    [{ kind: 'tool', id, verb: 'create_note', args, state: 'ok', result }],
-  )
+  await message(thread, 'make', [], [{ kind: 'tool', id, verb: 'create_note', args, state: 'ok', result }])
   return thread
 }
 
@@ -236,11 +216,7 @@ afterEach(() => {
 
 describe('a rewind', () => {
   test('across three notes takes back what came after, and Redo puts it back', async () => {
-    fake.desk = deskWith({ 'a.md': 'one', 'b.md': 'two', 'c.md': 'three' }, [
-      'a.md',
-      'b.md',
-      'c.md',
-    ])
+    fake.desk = deskWith({ 'a.md': 'one', 'b.md': 'two', 'c.md': 'three' }, ['a.md', 'b.md', 'c.md'])
     fake.documents = Object.values(fake.desk.panes).map((pane) => pane.note)
     const thread = aThread()
     const panel = { send: vi.fn(), text: '', touched: vi.fn(), release: vi.fn() }
@@ -252,11 +228,7 @@ describe('a rewind', () => {
       { path: 'c.md', at: { quote: 'three' }, replace: 'THREE' },
     ])
     fake.desk.panes['b.md']?.type(0, '> ')
-    expect(review.notes(thread).map((one) => one.path)).toEqual([
-      '/space/a.md',
-      '/space/b.md',
-      '/space/c.md',
-    ])
+    expect(review.notes(thread).map((one) => one.path)).toEqual(['/space/a.md', '/space/b.md', '/space/c.md'])
 
     await review.rewind(thread, 'second', 'both', panel)
     expect(fake.desk.panes['a.md']?.text).toBe('ONE')
@@ -422,12 +394,7 @@ describe('a local session', () => {
     await message(thread, 'other', [])
     fake.rewound = []
     expect(switchBranch(thread, 'other', -1)).toBe(true)
-    expect(thread.turns.map((one) => one.id)).toEqual([
-      'first',
-      'first-answer',
-      'second',
-      'second-answer',
-    ])
+    expect(thread.turns.map((one) => one.id)).toEqual(['first', 'first-answer', 'second', 'second-answer'])
     await vi.waitFor(() => expect(fake.rewound).toEqual([thread.id]))
   })
 })
@@ -450,12 +417,9 @@ describe('a rewind over a thread that did things in any order', () => {
   const acts = {
     edit: async (thread: Thread & { provider: string }, path: string, from: string, to: string) => {
       clock += 10
-      await editNote(
-        fake.desk.desk,
-        { id: `orden-${thread.provider}`, name: 'orden', thread: thread.id },
-        { path },
-        [{ at: { quote: from }, replace: to }],
-      )
+      await editNote(fake.desk.desk, { id: `orden-${thread.provider}`, name: 'orden', thread: thread.id }, { path }, [
+        { at: { quote: from }, replace: to },
+      ])
       clock += 10
       return [] as Turn['parts']
     },
@@ -479,10 +443,7 @@ describe('a rewind over a thread that did things in any order', () => {
       return [row(`c${String(clock)}`, 'create_note', { path }, { path, created: true })]
     },
   }
-  const running = async (
-    thread: Thread,
-    steps: (() => Promise<Turn['parts']> | Turn['parts'])[],
-  ) => {
+  const running = async (thread: Thread, steps: (() => Promise<Turn['parts']> | Turn['parts'])[]) => {
     clock += 1000
     thread.turns.push({
       id: 'go',
@@ -503,16 +464,11 @@ describe('a rewind over a thread that did things in any order', () => {
   }
   const editedThenTrashed = async (removed = true, ...more: (() => Turn['parts'])[]) => {
     const thread = aThread()
-    await running(thread, [
-      () => acts.edit(thread, 'A.md', 'original', 'EDITED'),
-      () => acts.trash('A.md'),
-      ...more,
-    ])
+    await running(thread, [() => acts.edit(thread, 'A.md', 'original', 'EDITED'), () => acts.trash('A.md'), ...more])
     if (removed) (await import('../../../agent-docs/src/edit')).tracksRemoved('/space/A.md')
     return thread
   }
-  const files = () =>
-    Object.fromEntries([...fake.desk.disk].map(([path, words]) => [path.slice(7), words]))
+  const files = () => Object.fromEntries([...fake.desk.disk].map(([path, words]) => [path.slice(7), words]))
 
   beforeEach(() => {
     fake.desk = deskWith(FILES)
@@ -822,13 +778,7 @@ describe('two threads of one provider at once', () => {
     fake.documents = Object.values(fake.desk.panes).map((pane) => pane.note)
     const thread = aThread()
     await message(thread, 'mine', [{ path: 'a.md', at: { quote: 'one' }, replace: 'ONE' }])
-    await message(
-      thread,
-      'while',
-      [{ path: 'b.md', at: { quote: 'two' }, replace: 'TWO' }],
-      [],
-      'another-thread',
-    )
+    await message(thread, 'while', [{ path: 'b.md', at: { quote: 'two' }, replace: 'TWO' }], [], 'another-thread')
     expect(review.notes(thread).map((one) => one.path)).toEqual(['/space/a.md'])
 
     await review.rewind(thread, 'mine', 'both', null)
@@ -848,9 +798,7 @@ describe('a change', () => {
 
     await message(thread, 'go', [{ path: 'k.md', at: { quote: 'two' }, replace: 'TWO' }])
     await settle()
-    expect(reviewMarksOf(viewer.state)).toEqual([
-      { id: expect.any(String) as string, from: 4, to: 7, removed: 'two' },
-    ])
+    expect(reviewMarksOf(viewer.state)).toEqual([{ id: expect.any(String) as string, from: 4, to: 7, removed: 'two' }])
 
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
     try {

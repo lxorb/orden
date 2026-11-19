@@ -102,8 +102,7 @@ async function sideBySide(focus: 'left' | 'right') {
   return { left: left.id, right: right.id }
 }
 
-const panesShown = () =>
-  [...target.querySelectorAll('[data-pane]')].map((one) => one.getAttribute('data-pane'))
+const panesShown = () => [...target.querySelectorAll('[data-pane]')].map((one) => one.getAttribute('data-pane'))
 
 for (const focus of ['left', 'right'] as const) {
   test(`the window narrowing into a phone's keeps the ${focus} pane and throws nothing`, async () => {

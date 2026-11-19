@@ -24,10 +24,7 @@ function valuesOf(path: string): string[] {
       for (const one of declared.declarations) {
         if (one.id.type === 'Identifier') names.push(one.id.name)
       }
-    } else if (
-      (declared?.type === 'FunctionDeclaration' || declared?.type === 'ClassDeclaration') &&
-      declared.id
-    ) {
+    } else if ((declared?.type === 'FunctionDeclaration' || declared?.type === 'ClassDeclaration') && declared.id) {
       names.push(declared.id.name)
     }
     for (const one of statement.specifiers) {

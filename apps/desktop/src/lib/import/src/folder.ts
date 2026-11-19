@@ -24,10 +24,7 @@ export interface FolderOptions {
   lost?: readonly string[]
 }
 
-export async function folderPlan(
-  sources: readonly Source[],
-  options: FolderOptions,
-): Promise<ImportPlan> {
+export async function folderPlan(sources: readonly Source[], options: FolderOptions): Promise<ImportPlan> {
   const placed: { source: Source; to: string; read: Placement['read'] }[] = []
   const files = new ExportFiles()
   const renamed = new Map<string, string>()
@@ -52,18 +49,11 @@ export async function folderPlan(
     }
 
     const said = await one.read(await one.source.text(), one.source)
-    const body = rewriteLinks(
-      said.text,
-      { was: one.source.path, now: one.to },
-      files.find,
-      files.reaches,
-    )
+    const body = rewriteLinks(said.text, { was: one.source.path, now: one.to }, files.find, files.reaches)
     written.push({
       kind: 'note',
       path: one.to,
-      text: said.kept
-        ? keptText(body)
-        : noteText(said.title ?? null, body, said.meta ?? {}, said.own),
+      text: said.kept ? keptText(body) : noteText(said.title ?? null, body, said.meta ?? {}, said.own),
     })
   }
 

@@ -81,8 +81,7 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
 
     const refuse = world.refuse
     const status = world.refuseStatus
-    const settle = () =>
-      refuse ? Promise.reject(new original.ApiError(status, refuse)) : Promise.resolve(who)
+    const settle = () => (refuse ? Promise.reject(new original.ApiError(status, refuse)) : Promise.resolve(who))
 
     if (!world.holding) return settle()
 
@@ -102,19 +101,15 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
         answer(`invite ${email} as ${role} to ${id}${about(item)}`),
       setMemberRole: (_token: string, id: string, email: string, role: string, item = '') =>
         answer(`${email} is now ${role} in ${id}${about(item)}`),
-      removeMember: (_token: string, _id: string, email: string, item = '') =>
-        answer(`remove ${email}${about(item)}`),
+      removeMember: (_token: string, _id: string, email: string, item = '') => answer(`remove ${email}${about(item)}`),
       setGuestRole: (_token: string, id: string, id2: string, role: string, item = '') =>
         answer(`guest ${id2} is now ${role} in ${id}${about(item)}`),
-      removeGuest: (_token: string, _id: string, id2: string, item = '') =>
-        answer(`remove guest ${id2}${about(item)}`),
-      acceptGuest: (_token: string, _id: string, id2: string, item = '') =>
-        answer(`accept guest ${id2}${about(item)}`),
+      removeGuest: (_token: string, _id: string, id2: string, item = '') => answer(`remove guest ${id2}${about(item)}`),
+      acceptGuest: (_token: string, _id: string, id2: string, item = '') => answer(`accept guest ${id2}${about(item)}`),
       setShareLink: (_token: string, _id: string, role: string, mode: string, item = '') =>
         answer(`link ${role} ${mode}${about(item)}`),
       revokeShareLink: (_token: string, _id: string, item = '') => answer(`revoke${about(item)}`),
-      acceptRequest: (_token: string, _id: string, email: string, item = '') =>
-        answer(`accept ${email}${about(item)}`),
+      acceptRequest: (_token: string, _id: string, email: string, item = '') => answer(`accept ${email}${about(item)}`),
       declineRequest: (_token: string, _id: string, email: string, item = '') =>
         answer(`decline ${email}${about(item)}`),
       listSpaces: () => Promise.resolve({ spaces: account.spaces, deleted: [] }),
@@ -191,8 +186,7 @@ providePort('workspace.view', {
   get tabs() {
     return world.tabs
   },
-  openShared: (item, text) =>
-    world.opened.push({ id: item.id, name: item.name, path: item.path, text }),
+  openShared: (item, text) => world.opened.push({ id: item.id, name: item.name, path: item.path, text }),
   closeShared: (id) => world.closed.push(id),
   showingShared: (id) => world.showing.includes(id),
   follow: (follower) => {
@@ -202,8 +196,7 @@ providePort('workspace.view', {
 })
 
 vi.mock('../../ui-kit/src/message', () => ({
-  message: (error: unknown, fallback: string) =>
-    error instanceof Error ? error.message : fallback,
+  message: (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback),
 }))
 
 import { account } from '../../accounts/src/account.svelte'
@@ -240,12 +233,7 @@ import { memoryStorage } from '../../../../test/disk'
 const storage = memoryStorage()
 vi.stubGlobal('localStorage', storage)
 
-function remote(
-  id: string,
-  role: 'owner' | 'write' | 'read',
-  shared = false,
-  sharedItems: string[] = [],
-): RemoteSpace {
+function remote(id: string, role: 'owner' | 'write' | 'read', shared = false, sharedItems: string[] = []): RemoteSpace {
   return { id, name: id, role, shared, sharedItems } as RemoteSpace
 }
 
@@ -318,10 +306,7 @@ beforeEach(() => {
 
 describe('the addresses in the field', () => {
   test('are separated by a comma, a semicolon or a space, in any mixture', () => {
-    expect(addressesIn('ada@example.com, bob@example.com')).toEqual([
-      'ada@example.com',
-      'bob@example.com',
-    ])
+    expect(addressesIn('ada@example.com, bob@example.com')).toEqual(['ada@example.com', 'bob@example.com'])
     expect(addressesIn('ada@example.com; bob@example.com grace@example.com')).toEqual([
       'ada@example.com',
       'bob@example.com',
@@ -331,19 +316,18 @@ describe('the addresses in the field', () => {
   })
 
   test('are read out of a name pasted from a mail program, a comma inside quotes and all', () => {
-    expect(
-      addressesIn('Ada Lovelace <ada@example.com>, "Hopper, Grace" <grace@example.com>'),
-    ).toEqual(['ada@example.com', 'grace@example.com'])
-    expect(addressesIn('<bob@example.com>; ada@example.com')).toEqual([
-      'bob@example.com',
+    expect(addressesIn('Ada Lovelace <ada@example.com>, "Hopper, Grace" <grace@example.com>')).toEqual([
       'ada@example.com',
+      'grace@example.com',
     ])
+    expect(addressesIn('<bob@example.com>; ada@example.com')).toEqual(['bob@example.com', 'ada@example.com'])
   })
 
   test('are each asked once, however often they were typed', () => {
-    expect(addressesIn('ada@example.com, Ada@Example.com bob@example.com ada@example.com')).toEqual(
-      ['ada@example.com', 'bob@example.com'],
-    )
+    expect(addressesIn('ada@example.com, Ada@Example.com bob@example.com ada@example.com')).toEqual([
+      'ada@example.com',
+      'bob@example.com',
+    ])
   })
 
   test('and each of them is looked at before anybody waits on the server', () => {
@@ -548,22 +532,16 @@ describe('what may be done before the account has listed its spaces', () => {
 
   test('keeps what the listing said of a space paired after it, for the next launch', async () => {
     world.mirrors = { Local: 'space-0' }
-    account.spaces = [
-      remote('space-0', 'owner'),
-      { ...remote('space-1', 'write', true), name: 'Team' },
-    ]
+    account.spaces = [remote('space-0', 'owner'), { ...remote('space-1', 'write', true), name: 'Team' }]
     await account.loadSpaces()
 
     const pairing: SyncPairing = {
-      pairs: () =>
-        Object.entries(world.mirrors).map(([root, spaceId]) => ({ root, spaceId, shared: false })),
+      pairs: () => Object.entries(world.mirrors).map(([root, spaceId]) => ({ root, spaceId, shared: false })),
       pair: (root, spaceId) => {
         world.mirrors = { ...world.mirrors, [root]: spaceId }
       },
       unpair: (root) => {
-        world.mirrors = Object.fromEntries(
-          Object.entries(world.mirrors).filter(([one]) => one !== root),
-        )
+        world.mirrors = Object.fromEntries(Object.entries(world.mirrors).filter(([one]) => one !== root))
       },
       share: () => undefined,
     }
@@ -828,10 +806,7 @@ describe('a space somebody has left', () => {
 
   test('marks the whole space for an answer that names many of its notes', () => {
     world.mirrors = { Home: 'space-1', Solo: 'space-2' }
-    account.spaces = [
-      { ...remote('space-1', 'owner'), onceShared: true },
-      remote('space-2', 'owner'),
-    ]
+    account.spaces = [{ ...remote('space-1', 'owner'), onceShared: true }, remote('space-2', 'owner')]
     account.listed = true
 
     expect(reachedAs('Home/evil.md')).toBe('space')
@@ -859,10 +834,7 @@ describe('a space somebody has left', () => {
 
   test('takes what an older build kept as shared as once shared', async () => {
     world.mirrors = { Home: 'space-1' }
-    storage.setItem(
-      'orden:space-roles',
-      JSON.stringify({ Home: { role: 'owner', shared: true, items: [] } }),
-    )
+    storage.setItem('orden:space-roles', JSON.stringify({ Home: { role: 'owner', shared: true, items: [] } }))
     account.spaces = [remote('space-1', 'owner')]
     await account.loadSpaces()
 
@@ -1058,10 +1030,7 @@ describe('the Share sheet', () => {
     await share.setRole(member('ada@example.com'), 'read')
     await share.remove(member('bob@example.com'))
 
-    expect(world.asked).toEqual([
-      'ada@example.com is now read in space-1',
-      'remove bob@example.com',
-    ])
+    expect(world.asked).toEqual(['ada@example.com is now read in space-1', 'remove bob@example.com'])
   })
 
   test('reaches the guest route for somebody a link let in', async () => {
@@ -1131,9 +1100,7 @@ describe('the Share sheet', () => {
     await removing
 
     expect(share.busy).toBe(false)
-    expect(world.asked.filter((one) => one.startsWith('remove'))).toEqual([
-      'remove ada@example.com',
-    ])
+    expect(world.asked.filter((one) => one.startsWith('remove'))).toEqual(['remove ada@example.com'])
   })
 
   test('reads the list again rather than complaining when they are already out', async () => {
@@ -1387,10 +1354,7 @@ describe('the files other people shared with you', () => {
   })
 
   test('open in a tab whose words came down once, and a canvas as a canvas', async () => {
-    world.shared = [
-      sharedFile('n1', 'Plans/meeting.md', 'Ada'),
-      sharedFile('n3', 'Work/b.canvas', 'Ada'),
-    ]
+    world.shared = [sharedFile('n1', 'Plans/meeting.md', 'Ada'), sharedFile('n3', 'Work/b.canvas', 'Ada')]
     world.words = { n1: '# the meeting', n3: '{}' }
     await sharedWithYou.load()
 
@@ -1451,10 +1415,7 @@ describe('the files other people shared with you', () => {
   })
 
   test('and one handed back while a listing was in the air stays gone', async () => {
-    world.shared = [
-      sharedFile('n1', 'Plans/meeting.md', 'Ada'),
-      sharedFile('n2', 'Plans/next.md', 'Ada'),
-    ]
+    world.shared = [sharedFile('n1', 'Plans/meeting.md', 'Ada'), sharedFile('n2', 'Plans/next.md', 'Ada')]
     await sharedWithYou.load()
 
     world.holding = true

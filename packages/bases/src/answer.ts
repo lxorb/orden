@@ -100,9 +100,7 @@ function spacedPath(space: string, path: string): string {
 
 export function placeOfKey(key: string): { space: string | null; path: string } {
   const at = key.lastIndexOf('//')
-  return at === -1
-    ? { space: null, path: key }
-    : { space: key.slice(0, at), path: key.slice(at + 2) }
+  return at === -1 ? { space: null, path: key } : { space: key.slice(0, at), path: key.slice(at + 2) }
 }
 
 function byNoteName(a: string, b: string): number {
@@ -153,8 +151,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
   const clock = filter.clock || [...formulas, ...getters].some((one) => one.clock)
 
   const kinds = view.orden.rows ?? 'notes'
-  const fanOut =
-    view.type === 'kanban' || view.type === 'board' || view.groupBy?.property === 'task.tags'
+  const fanOut = view.type === 'kanban' || view.type === 'board' || view.groupBy?.property === 'task.tags'
   const showCompleted = view.orden.showCompleted ?? false
   let facts = new WeakMap<Row, RowFacts>()
   let factsFor = ''
@@ -201,11 +198,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
     const wordsOf = (row: Row, one: RowFacts): string => {
       if (one.words === null) {
         scope.row = row
-        one.words = [
-          row.file.basename,
-          row.task?.text ?? '',
-          ...shown.map((get) => text(get.run(scope))),
-        ]
+        one.words = [row.file.basename, row.task?.text ?? '', ...shown.map((get) => text(get.run(scope)))]
           .join('\n')
           .toLowerCase()
       }
@@ -227,11 +220,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
 
     kept.sort((a, b) => {
       for (let index = 0; index < sorts.length; index++) {
-        const order = sortCompare(
-          a.facts.sort[index] ?? null,
-          b.facts.sort[index] ?? null,
-          context.zone,
-        )
+        const order = sortCompare(a.facts.sort[index] ?? null, b.facts.sort[index] ?? null, context.zone)
         if (order !== 0) {
           const nullLast = a.facts.sort[index] === null || b.facts.sort[index] === null
           return sorts[index]?.descending && !nullLast ? -order : order
@@ -240,8 +229,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       return a.at - b.at
     })
     const manySpaces =
-      [view.groupBy, view.orden.subGroupBy].some((by) => by?.property === 'file.path') &&
-      spaces.size > 1
+      [view.groupBy, view.orden.subGroupBy].some((by) => by?.property === 'file.path') && spaces.size > 1
     const limit = view.limit && view.limit > 0 ? view.limit : null
     const cut = <T>(members: T[]): T[] => (limit === null ? members : members.slice(0, limit))
 
@@ -271,8 +259,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       const noneFirst = view.orden.noneFirst === true
       if (view.orden.groupOrder !== 'rows')
         keys.sort((a, b) => {
-          if (a.key === null || b.key === null)
-            return a.key === b.key ? 0 : (a.key === null) !== noneFirst ? 1 : -1
+          if (a.key === null || b.key === null) return a.key === b.key ? 0 : (a.key === null) !== noneFirst ? 1 : -1
           const byRank = rank(a.key) - rank(b.key)
           if (byRank !== 0) return byRank
           const order =
@@ -344,8 +331,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       const manual = view.orden.order?.[name]
       if (!manual?.length) return members
       const place = new Map(manual.map((id, at) => [id, at]))
-      const rank = (one: T) =>
-        place.get(orderId(one.row)) ?? place.get(rowId(one.row)) ?? manual.length
+      const rank = (one: T) => place.get(orderId(one.row)) ?? place.get(rowId(one.row)) ?? manual.length
       return [...members].sort((a, b) => rank(a) - rank(b))
     }
 
@@ -367,32 +353,18 @@ export function compileView(base: Base, which?: string | number): CompiledView {
   return { view, answer }
 }
 
-export const rowId = (row: Row): string =>
-  row.anchor ? `${row.path}#${row.anchor.line}` : row.path
+export const rowId = (row: Row): string => (row.anchor ? `${row.path}#${row.anchor.line}` : row.path)
 
-export const orderId = (row: Row): string =>
-  row.anchor ? `${row.path}#^${row.anchor.hash}` : row.path
+export const orderId = (row: Row): string => (row.anchor ? `${row.path}#^${row.anchor.hash}` : row.path)
 
 const compiledViews = new WeakMap<Base, Map<string | number, CompiledView>>()
 
-export function answer(
-  base: Base,
-  view: string | number | undefined,
-  rows: readonly Row[],
-  context: Context,
-): Answer {
-  const { value, partial } = refusing(() =>
-    underGuard(base.guarded, () => answerOf(base, view, rows, context)),
-  )
+export function answer(base: Base, view: string | number | undefined, rows: readonly Row[], context: Context): Answer {
+  const { value, partial } = refusing(() => underGuard(base.guarded, () => answerOf(base, view, rows, context)))
   return partial ? { ...value, partial } : value
 }
 
-function answerOf(
-  base: Base,
-  view: string | number | undefined,
-  rows: readonly Row[],
-  context: Context,
-): Answer {
+function answerOf(base: Base, view: string | number | undefined, rows: readonly Row[], context: Context): Answer {
   const views = compiledViews.get(base) ?? new Map<string | number, CompiledView>()
   compiledViews.set(base, views)
   const key = view ?? 0

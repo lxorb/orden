@@ -27,10 +27,7 @@ onlineDoor.get('/:term/socket', async (context) => {
   const at = now()
   const term = context.req.param('term')
 
-  const [service, row] = await Promise.all([
-    serviceOf(env),
-    env.DB.prepare(DOOR).bind(hash, at, term, '').first<Row>(),
-  ])
+  const [service, row] = await Promise.all([serviceOf(env), env.DB.prepare(DOOR).bind(hash, at, term, '').first<Row>()])
   if (!service.on) return context.json({ error: NOT_FOUND }, 404)
   if (context.req.header('upgrade')?.toLowerCase() !== 'websocket') {
     return context.json({ error: 'an online terminal is a websocket' }, 426)
@@ -41,8 +38,7 @@ onlineDoor.get('/:term/socket', async (context) => {
 
   const named = deviceProtocol(offered)
   const device = named?.device
-  if (!named || !device)
-    return context.json({ error: 'an online terminal socket names its device' }, 400)
+  if (!named || !device) return context.json({ error: 'an online terminal socket names its device' }, 400)
 
   const reached = row ? reachedOf(row) : null
   if (!reached) return refusedSocket('gone', named.protocol)

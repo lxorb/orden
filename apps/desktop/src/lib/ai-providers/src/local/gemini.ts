@@ -35,9 +35,7 @@ export function geminiReader(): (line: string) => Heard {
         return { tool: { id: event.tool_id, name: '', done: { text: words, error: failed } } }
       }
       case 'error':
-        return event.severity === 'error' && typeof event.message === 'string'
-          ? trouble(event.message)
-          : {}
+        return event.severity === 'error' && typeof event.message === 'string' ? trouble(event.message) : {}
       case 'result': {
         const usage = usageOf(record(event.stats))
         if (event.status !== 'error') return { ...usage, ended: 'end' }

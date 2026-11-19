@@ -5,8 +5,7 @@ import { asks, rowsHere, showRow } from '../src/rows'
 
 describe('the module stands on its own', () => {
   test('asks, answers the other windows and quits through doors', () => {
-    for (const one of [mayStop, quitAsked, answerQuitting, holdToQuit])
-      expect(typeof one).toBe('function')
+    for (const one of [mayStop, quitAsked, answerQuitting, holdToQuit]) expect(typeof one).toBe('function')
   })
 })
 

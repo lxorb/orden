@@ -1,15 +1,6 @@
 import type { Api, Effort } from '../../../ai-providers/src/api'
 
-export const SCALE: readonly Effort[] = [
-  'auto',
-  'off',
-  'minimal',
-  'low',
-  'medium',
-  'high',
-  'xhigh',
-  'max',
-]
+export const SCALE: readonly Effort[] = ['auto', 'off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max']
 
 export function isEffort(value: unknown): value is Effort {
   return typeof value === 'string' && (SCALE as readonly string[]).includes(value)
@@ -71,9 +62,7 @@ export function refusesReasoning(said: string, param?: string): boolean {
 export function supportedIn(said: string): Effort[] | null {
   const list = /supported values are:?([^.]*)/i.exec(said)?.[1]
   if (!list) return null
-  const words = [...list.matchAll(/'([a-z]+)'/gi)].map((one) =>
-    one[1] === 'none' ? 'off' : one[1],
-  )
+  const words = [...list.matchAll(/'([a-z]+)'/gi)].map((one) => (one[1] === 'none' ? 'off' : one[1]))
   const levels = words.filter(isEffort)
   return levels.length ? ordered(levels) : null
 }

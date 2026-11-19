@@ -56,9 +56,7 @@ describe('taking a mark off a word next to a link inside the run', () => {
 
 describe('taking a mark off a word with only punctuation between it and the end of the run', () => {
   test('bold off a word in brackets at the end of the run leaves no empty marks', () => {
-    expect(pressed(toggleWrap('**'), '**Note (important)**', 'important')).toBe(
-      '**Note** (important)',
-    )
+    expect(pressed(toggleWrap('**'), '**Note (important)**', 'important')).toBe('**Note** (important)')
   })
 
   test('bold off a word in brackets at the start of the run leaves no empty marks', () => {

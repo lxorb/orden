@@ -109,9 +109,7 @@ test('stops at a dozen rows however long the reading was', () => {
 })
 
 test('on the History page nothing about a site is offered', () => {
-  const rows = webRows(page('orden://history'), 1, actions).flatMap((one) =>
-    one === null ? [] : [one],
-  )
+  const rows = webRows(page('orden://history'), 1, actions).flatMap((one) => (one === null ? [] : [one]))
   const named = (label: string) => rows.find((one) => one.label === label)
   expect(named('Print…')?.disabled).toBe(true)
   expect(named('Save as a note')?.disabled).toBe(true)

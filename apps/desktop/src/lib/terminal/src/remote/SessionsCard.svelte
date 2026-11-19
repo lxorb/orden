@@ -8,11 +8,9 @@
     void held.refresh()
   })
 
-  const when = (stamp: number) =>
-    stamp > 0 ? localDate(stamp, { dateStyle: 'short', timeStyle: 'short' }) : null
+  const when = (stamp: number) => (stamp > 0 ? localDate(stamp, { dateStyle: 'short', timeStyle: 'short' }) : null)
 
-  const machine = (row: HeldRow) =>
-    row.host === null ? 'This computer' : (remote.byId(row.host)?.name ?? row.host)
+  const machine = (row: HeldRow) => (row.host === null ? 'This computer' : (remote.byId(row.host)?.name ?? row.host))
 
   const named = (row: HeldRow) => row.name ?? row.program ?? machine(row)
 
@@ -88,11 +86,7 @@
       <div class="orden-setting session">
         <span class="name">
           {row.name}
-          <small
-            ><Facts
-              parts={[row.program, row.folder, row.attached ? 'Attached' : null, when(row.last)]}
-            /></small
-          >
+          <small><Facts parts={[row.program, row.folder, row.attached ? 'Attached' : null, when(row.last)]} /></small>
         </span>
         <div class="chips">
           <button class="orden-chip" onclick={() => held.adopt(row)}>Open</button>

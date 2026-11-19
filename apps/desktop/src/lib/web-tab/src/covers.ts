@@ -24,11 +24,9 @@ export const COVERS = {
   whole: ['orden-scrim', 'orden-swipe-room'],
 } as const
 
-const FLOATING = [
-  ...COVERS.floating.map((one) => `.${one}`),
-  '[data-covers]:not([data-covers="all"])',
-  CARDS,
-].join(', ')
+const FLOATING = [...COVERS.floating.map((one) => `.${one}`), '[data-covers]:not([data-covers="all"])', CARDS].join(
+  ', ',
+)
 const SCRIMS = [...COVERS.whole.map((one) => `.${one}`), '[data-covers="all"]'].join(', ')
 const ANY = `${FLOATING}, ${SCRIMS}`
 
@@ -42,9 +40,7 @@ function meets(one: Rect, other: Rect): boolean {
 }
 
 export function cutOf(hole: Rect, layers: readonly Layer[]): Cut | null {
-  const over = layers.filter(
-    (one) => one.box.width > 0 && one.box.height > 0 && meets(one.box, hole),
-  )
+  const over = layers.filter((one) => one.box.width > 0 && one.box.height > 0 && meets(one.box, hole))
   if (over.length === 0) return null
 
   return {

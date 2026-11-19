@@ -88,9 +88,7 @@ test('the drawer head on a phone says it and does not show it, and the bar shows
     fullscreen.on = true
     workspace.showPanel('tree')
     flushSync()
-    expect(
-      host.querySelector('.head [data-side-toggle="left"]')?.classList.contains('orden-said'),
-    ).toBe(false)
+    expect(host.querySelector('.head [data-side-toggle="left"]')?.classList.contains('orden-said')).toBe(false)
   } finally {
     fullscreen.on = false
     viewport.device = 'desktop'

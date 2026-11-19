@@ -47,9 +47,7 @@ describe('what changed between two writes of a plane', () => {
   })
 
   const listed = (ids: readonly number[]) =>
-    ids.flatMap((id, at) =>
-      at ? [',\n\t\t\t', `{"id": "s${String(id)}"}`] : [`{"id": "s${String(id)}"}`],
-    )
+    ids.flatMap((id, at) => (at ? [',\n\t\t\t', `{"id": "s${String(id)}"}`] : [`{"id": "s${String(id)}"}`]))
   const strokes = (count: number) => listed(Array.from({ length: count }, (_, at) => at))
 
   test('is a small piece for each stroke rubbed out, however far apart they lie', () => {
@@ -113,9 +111,7 @@ describe('what changed between two writes of a plane', () => {
       const changes = changesBetween(written([head, was, tail]), [head, now, tail]) ?? []
 
       expect(applied(text([head, was, tail]), changes)).toBe(text([head, now, tail]))
-      expect(changes.every((one, at) => at === 0 || (changes[at - 1]?.to ?? 0) <= one.from)).toBe(
-        true,
-      )
+      expect(changes.every((one, at) => at === 0 || (changes[at - 1]?.to ?? 0) <= one.from)).toBe(true)
     }
   })
 })

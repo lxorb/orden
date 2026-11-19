@@ -18,14 +18,7 @@
     onback?: (() => void) | null
   }
 
-  const {
-    title = '',
-    primary = null,
-    quiet = null,
-    head,
-    children,
-    onback = null,
-  }: Props = $props()
+  const { title = '', primary = null, quiet = null, head, children, onback = null }: Props = $props()
 
   function pressed(event: KeyboardEvent) {
     if (event.key !== 'Enter' || !primary || primary.disabled || primary.busy) return
@@ -68,12 +61,7 @@
       </button>
     {/if}
     {#if quiet}
-      <button
-        class="orden-button is-quiet skip"
-        type="button"
-        disabled={quiet.disabled}
-        onclick={quiet.onclick}
-      >
+      <button class="orden-button is-quiet skip" type="button" disabled={quiet.disabled} onclick={quiet.onclick}>
         {quiet.label}
       </button>
     {/if}

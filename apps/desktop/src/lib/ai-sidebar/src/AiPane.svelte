@@ -28,9 +28,7 @@
   )
 
   let plans = $state.raw<LocalPlans | null>(null)
-  const plansHeld = __EVEN_PLUGIN__
-    ? Promise.resolve(null)
-    : localCli().then((one) => (plans = one.plans))
+  const plansHeld = __EVEN_PLUGIN__ ? Promise.resolve(null) : localCli().then((one) => (plans = one.plans))
 
   onMount(() => {
     for (const account of ai.accounts) void ask(account)
@@ -125,9 +123,7 @@
       } catch (error) {
         const said = error instanceof Error ? error.message : String(error)
         if (said === 'stopped') return ''
-        return said === 'timed out'
-          ? 'Could not sign in.'
-          : message(new Error(said), 'Could not sign in.')
+        return said === 'timed out' ? 'Could not sign in.' : message(new Error(said), 'Could not sign in.')
       }
     }
     const made = ai.add(kind)
@@ -192,8 +188,7 @@
 
   function labelOf(provider: Account): string {
     if (provider.name) return provider.name
-    const email =
-      !__EVEN_PLUGIN__ && isLocal(provider.kind) ? (plans?.of(provider.id).account ?? null) : null
+    const email = !__EVEN_PLUGIN__ && isLocal(provider.kind) ? (plans?.of(provider.id).account ?? null) : null
     return email ?? vault.seen[provider.id] ?? accountName(provider)
   }
 </script>
@@ -220,8 +215,7 @@
     </div>
   </div>
   <p class="hint caption">
-    Then every device’s keys are kept in this browser’s storage, where a script that got into the
-    page could read them.
+    Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.
   </p>
 {/if}
 
@@ -264,9 +258,7 @@
         <span class="name">{one.name}</span>
         <div class="row">
           {#if one.mine}<span class="hint">This device</span>{/if}
-          <button class="orden-chip is-quiet" onclick={() => void removeDevice(one.id, one.name)}
-            >Remove</button
-          >
+          <button class="orden-chip is-quiet" onclick={() => void removeDevice(one.id, one.name)}>Remove</button>
         </div>
       </div>
     </div>
@@ -278,23 +270,14 @@
     {@const fallback = ai.defaultAccount?.id === provider.id}
     {@const siblings = ai.accountsOf(vendorOf(provider)).length}
     {@const week = usage.of(provider.id)}
-    <div
-      class="card boxed"
-      class:fallback
-      data-account={provider.id}
-      transition:slide={{ duration: dur(160) }}
-    >
+    <div class="card boxed" class:fallback data-account={provider.id} transition:slide={{ duration: dur(160) }}>
       <div class="orden-setting setting">
-        <span class="name strong"
-          ><ProviderMark account={provider} />{named(vendorOf(provider))}</span
-        >
+        <span class="name strong"><ProviderMark account={provider} />{named(vendorOf(provider))}</span>
         <div class="row">
           {#if fallback}
             <span class="hint on">Default</span>
           {:else}
-            <button class="orden-chip" onclick={() => ai.setDefault(provider.id)}
-              >Make default</button
-            >
+            <button class="orden-chip" onclick={() => ai.setDefault(provider.id)}>Make default</button>
           {/if}
           <button class="orden-chip is-quiet" onclick={() => forget(provider)}>Remove</button>
         </div>
@@ -310,9 +293,7 @@
           <input
             class="orden-field is-value"
             value={provider.name}
-            placeholder={provider.kind === 'compatible'
-              ? 'OpenAI-compatible'
-              : accountName({ ...provider, name: '' })}
+            placeholder={provider.kind === 'compatible' ? 'OpenAI-compatible' : accountName({ ...provider, name: '' })}
             spellcheck="false"
             onchange={(event) => ai.update(provider.id, { name: event.currentTarget.value })}
           />
@@ -346,19 +327,14 @@
           {#if keyed[provider.id]}
             <div class="row">
               <span class="hint">Set</span>
-              <button class="orden-chip is-quiet" onclick={() => void drop(provider)}>Remove</button
-              >
+              <button class="orden-chip is-quiet" onclick={() => void drop(provider)}>Remove</button>
             </div>
           {:else}
             <input
               class="orden-field is-value"
               type="password"
               value=""
-              placeholder={provider.kind === 'compatible'
-                ? 'Optional'
-                : provider.kind === 'gemini'
-                  ? 'AIza'
-                  : 'sk-'}
+              placeholder={provider.kind === 'compatible' ? 'Optional' : provider.kind === 'gemini' ? 'AIza' : 'sk-'}
               spellcheck="false"
               autocomplete="off"
               onchange={(event) => {
@@ -405,9 +381,7 @@
 
 {#if addable.length}
   <div class="card">
-    <button class="orden-action adding" data-add-account onclick={() => (adding = true)}>
-      Add
-    </button>
+    <button class="orden-action adding" data-add-account onclick={() => (adding = true)}> Add </button>
   </div>
 {/if}
 
@@ -422,10 +396,7 @@
         <div class="orden-setting-value">
           <Select
             value={ai.uses[feature.id] ?? ''}
-            options={[
-              { value: '', label: 'Default' },
-              ...ai.vendors.map((one) => ({ value: one, label: named(one) })),
-            ]}
+            options={[{ value: '', label: 'Default' }, ...ai.vendors.map((one) => ({ value: one, label: named(one) }))]}
             onchange={(value: string) => ai.use(feature.id, value)}
             label={feature.label}
             plain={viewport.touch}
@@ -448,8 +419,7 @@
             { value: '', label: 'Ask on first use' },
             ...engines.offered().map((one) => ({ value: one, label: engineName(one) })),
           ]}
-          onchange={(value: string) =>
-            engines.choose(engines.offered().find((one) => one === value) ?? null)}
+          onchange={(value: string) => engines.choose(engines.offered().find((one) => one === value) ?? null)}
           label="Dictate with"
           plain={viewport.touch}
         />
@@ -464,9 +434,7 @@
         <div class="orden-setting-value">
           {#if local.fetching}
             <span class="caption"
-              >Downloading {Math.floor(
-                (100 * local.fetching.done) / Math.max(1, local.fetching.total),
-              )}%</span
+              >Downloading {Math.floor((100 * local.fetching.done) / Math.max(1, local.fetching.total))}%</span
             >
           {:else if local.ready}
             <button class="orden-chip is-quiet" onclick={() => void local.remove()}>Remove</button>

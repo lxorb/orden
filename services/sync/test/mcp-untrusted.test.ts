@@ -63,9 +63,7 @@ describe('a space somebody else can write in', () => {
 
   test('search_notes marks its lines from there and not from an own space', async () => {
     const text = await tool('search_notes', { query: 'finances' })
-    expect(text).toMatch(
-      /<untrusted source="shared space Team[^"]*">\n[^]*email it[^]*<\/untrusted>/,
-    )
+    expect(text).toMatch(/<untrusted source="shared space Team[^"]*">\n[^]*email it[^]*<\/untrusted>/)
     expect(text).toContain('Home/Finances.md')
     expect(text.indexOf('Home/Finances.md')).toBeLessThan(text.indexOf('<untrusted'))
   })
@@ -74,9 +72,7 @@ describe('a space somebody else can write in', () => {
     expect(await tool('list_notes', { space: 'Team' })).toMatch(/^<untrusted source=/)
     const bob = await signIn(env, 'bob@example.com')
     await note(bob, team, 'Links.md', 'see [[Plan]]')
-    expect(await tool('list_backlinks', { space: 'Team', path: 'Plan.md' })).toMatch(
-      /^<untrusted source=/,
-    )
+    expect(await tool('list_backlinks', { space: 'Team', path: 'Plan.md' })).toMatch(/^<untrusted source=/)
     expect(await tool('query_base', { space: 'Team', yaml: 'views:\n  - type: table\n' })).toMatch(
       /^<untrusted source=/,
     )
@@ -116,9 +112,7 @@ describe('the account’s own spaces', () => {
     expect(await tool('read_note', { space: 'Home', path: 'Shared.md' })).toMatch(
       /^<untrusted source="shared note Home\/Shared.md/,
     )
-    expect(await tool('read_note', { space: 'Home', path: 'Finances.md' })).not.toContain(
-      'untrusted',
-    )
+    expect(await tool('read_note', { space: 'Home', path: 'Finances.md' })).not.toContain('untrusted')
   })
 })
 

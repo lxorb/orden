@@ -18,10 +18,7 @@ function opening(line: string, at: number): { from: number; to: number; close: s
   return found
 }
 
-export function stripLine(
-  line: string,
-  inside: string | null,
-): { text: string; inside: string | null } {
+export function stripLine(line: string, inside: string | null): { text: string; inside: string | null } {
   let out = ''
   let at = 0
   let open = inside
@@ -157,17 +154,12 @@ function valuesWithoutComments(body: string): string {
       continue
     }
 
-    const closes =
-      text.trim() === '' ? lines.findIndex((one, below) => below > at && one.includes(inside)) : -1
+    const closes = text.trim() === '' ? lines.findIndex((one, below) => below > at && one.includes(inside)) : -1
     if (closes === -1) {
       out.push(line)
       continue
     }
-    out.push(
-      text,
-      ...lines.slice(at + 1, closes).map(() => ''),
-      stripLine(lines[closes] ?? '', inside).text,
-    )
+    out.push(text, ...lines.slice(at + 1, closes).map(() => ''), stripLine(lines[closes] ?? '', inside).text)
     at = closes
   }
   return out.join('\n')

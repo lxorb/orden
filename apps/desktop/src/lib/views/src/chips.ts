@@ -25,8 +25,7 @@ export function valueText(value: Value, today: string): string {
     return dayWords(here.iso, today, here.time?.slice(0, 5))
   }
   if (isDurationValue(value)) return minutesText(Math.round(value.ms / 60_000))
-  if (isLinkValue(value))
-    return value.display ?? (value.target.split('/').pop() ?? value.target).replace(/\.md$/i, '')
+  if (isLinkValue(value)) return value.display ?? (value.target.split('/').pop() ?? value.target).replace(/\.md$/i, '')
   if ('kind' in value && 'name' in value && typeof value.name === 'string') return value.name
   if ('kind' in value && 'src' in value && typeof value.src === 'string') return value.src
   return ''

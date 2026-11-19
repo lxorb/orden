@@ -59,21 +59,7 @@
   let frame = 0
   let painted = false
   $effect(() => {
-    follows(
-      nodes,
-      edges,
-      picked,
-      dimmed,
-      skip,
-      view,
-      camera,
-      originX,
-      originY,
-      width,
-      height,
-      palette,
-      ratio,
-    )
+    follows(nodes, edges, picked, dimmed, skip, view, camera, originX, originY, width, height, palette, ratio)
     if (!element) return
     if (!painted) {
       painted = true
@@ -92,13 +78,7 @@
   })
 </script>
 
-<canvas
-  class="far"
-  bind:this={element}
-  style:width="{width}px"
-  style:height="{height}px"
-  data-far
-  aria-hidden="true"
+<canvas class="far" bind:this={element} style:width="{width}px" style:height="{height}px" data-far aria-hidden="true"
 ></canvas>
 
 <style>

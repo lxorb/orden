@@ -24,31 +24,16 @@ describe('tidying a document', () => {
   ])('%j', (input, wanted) => expect(reformat(input)).toEqual(wanted))
 
   test.each([
-    [
-      '|a|bb|\n|-|-|\n|cccc|d|\n',
-      ['| a    | bb  |', '| ---- | --- |', '| cccc | d   |', ''].join('\n'),
-    ],
-    [
-      '```js\nconst  x   =  1\n*  not a list\n```\n',
-      '```js\nconst  x   =  1\n*  not a list\n```\n',
-    ],
-    [
-      '```md\n~~~\n*  still code\n~~~\n```\n\n* a list\n',
-      '```md\n~~~\n*  still code\n~~~\n```\n\n- a list\n',
-    ],
+    ['|a|bb|\n|-|-|\n|cccc|d|\n', ['| a    | bb  |', '| ---- | --- |', '| cccc | d   |', ''].join('\n')],
+    ['```js\nconst  x   =  1\n*  not a list\n```\n', '```js\nconst  x   =  1\n*  not a list\n```\n'],
+    ['```md\n~~~\n*  still code\n~~~\n```\n\n* a list\n', '```md\n~~~\n*  still code\n~~~\n```\n\n- a list\n'],
     ['```\n*  still code\n_still code_\n', '```\n*  still code\n_still code_\n'],
     [
       '---\ntitle: _Notes_ on * things\ntags: [a, b]\n---\n\n* a list\n',
       '---\ntitle: _Notes_ on * things\ntags: [a, b]\n---\n\n- a list\n',
     ],
-    [
-      '# Title\n\n- one\n- two\n\n*emphasis* here\n',
-      '# Title\n\n- one\n- two\n\n*emphasis* here\n',
-    ],
-    [
-      'text\n\n    * not a list\n\n\n    _still code_\n',
-      'text\n\n    * not a list\n\n\n    _still code_\n',
-    ],
+    ['# Title\n\n- one\n- two\n\n*emphasis* here\n', '# Title\n\n- one\n- two\n\n*emphasis* here\n'],
+    ['text\n\n    * not a list\n\n\n    _still code_\n', 'text\n\n    * not a list\n\n\n    _still code_\n'],
   ])('%j', (input, wanted) => expect(reformat(input)).toBe(wanted))
 
   test('leaves an HTML comment as written', () => {
@@ -64,8 +49,7 @@ describe('code and blocks the parser keeps, wherever they sit', () => {
   })
 
   test('leaves code in a nested list item as written, blank lines and all', () => {
-    const source =
-      '- a\n  - b\n\n    ```py\n    * star\n    y = _x_ or __dunder__ \n\n\n    z\n    ```\n'
+    const source = '- a\n  - b\n\n    ```py\n    * star\n    y = _x_ or __dunder__ \n\n\n    z\n    ```\n'
     expect(reformat(source)).toBe(source)
   })
 
@@ -76,11 +60,7 @@ describe('code and blocks the parser keeps, wherever they sit', () => {
   ])('%j', (input, wanted) => expect(reformat(input)).toBe(wanted))
 
   test('a pipe table in a comment, maths or an HTML block stays as written', () => {
-    for (const source of [
-      '<!--\n|a|b|\n|-|-|\n-->\n',
-      '$$\n|a|b|\n|-|-|\n$$\n',
-      '<div>\n|a|b|\n|-|-|\n</div>\n',
-    ]) {
+    for (const source of ['<!--\n|a|b|\n|-|-|\n-->\n', '$$\n|a|b|\n|-|-|\n$$\n', '<div>\n|a|b|\n|-|-|\n</div>\n']) {
       expect(reformat(source)).toBe(source)
     }
   })
@@ -137,23 +117,18 @@ describe('bullets that mean something', () => {
 describe('what the parser calls front matter', () => {
   const kids = (source: string) => {
     const names: string[] = []
-    for (
-      let node = ordenMarkdownParser.parse(source).topNode.firstChild;
-      node;
-      node = node.nextSibling
-    )
+    for (let node = ordenMarkdownParser.parse(source).topNode.firstChild; node; node = node.nextSibling)
       names.push(node.name)
     return names
   }
 
-  test.each([
-    '---\nPriorität: hoch\n---\nb\n',
-    '---\ndue date: x\n---\nb\n',
-    '---\nk: v\n---\nb\n',
-  ])('%j is the same block the readers of a note take', (source) => {
-    expect(kids(source)[0]).toBe('FrontMatter')
-    expect(kids(source)).not.toContain('SetextHeading2')
-  })
+  test.each(['---\nPriorität: hoch\n---\nb\n', '---\ndue date: x\n---\nb\n', '---\nk: v\n---\nb\n'])(
+    '%j is the same block the readers of a note take',
+    (source) => {
+      expect(kids(source)[0]).toBe('FrontMatter')
+      expect(kids(source)).not.toContain('SetextHeading2')
+    },
+  )
 
   test('a leading rule nothing closes is a rule', () => {
     expect(kids('---\n\nwords\n')[0]).toBe('HorizontalRule')
@@ -164,11 +139,7 @@ describe('what the parser calls front matter', () => {
 describe('words that open a note under a rule', () => {
   const kids = (source: string) => {
     const names: string[] = []
-    for (
-      let node = ordenMarkdownParser.parse(source).topNode.firstChild;
-      node;
-      node = node.nextSibling
-    )
+    for (let node = ordenMarkdownParser.parse(source).topNode.firstChild; node; node = node.nextSibling)
       names.push(node.name)
     return names
   }

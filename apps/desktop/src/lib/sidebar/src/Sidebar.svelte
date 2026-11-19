@@ -33,14 +33,7 @@
     viewport,
     fullscreen,
   } from '../../ui-kit/src/api'
-  import {
-    alone,
-    swipeOpens,
-    dropOnList,
-    workspace,
-    agentMarks,
-    pullable,
-  } from '../../workspace/src/api'
+  import { alone, swipeOpens, dropOnList, workspace, agentMarks, pullable } from '../../workspace/src/api'
   import { movesSection, headingAt, lineOf } from '../../documents/src/api'
   import { onMount, untrack } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -270,8 +263,8 @@
     const pads: { id: Panel | 'scratchpad'; label: string; path: string }[] = padHere
       ? [{ id: 'scratchpad', label: 'Scratchpad', path: SCRATCHPAD_MARK }]
       : []
-    const panelsHere: { id: Panel | 'scratchpad'; label: string; path: string }[] = held.flatMap(
-      (id) => PANELS.filter((one) => one.id === id && offered(id)),
+    const panelsHere: { id: Panel | 'scratchpad'; label: string; path: string }[] = held.flatMap((id) =>
+      PANELS.filter((one) => one.id === id && offered(id)),
     )
     return [...panelsHere, ...pads]
   })
@@ -330,9 +323,7 @@
     const shown = (rows: MenuEntry[]) => menu.show(event, rows, { title: label })
     if (id !== 'tree') {
       const making = sidebarPart(id)?.menu?.() ?? Promise.resolve([])
-      void Promise.all([own, making]).then(([{ panelMenu }, rows]) =>
-        shown(panelMenu(id, side, [...rows])),
-      )
+      void Promise.all([own, making]).then(([{ panelMenu }, rows]) => shown(panelMenu(id, side, [...rows])))
       return
     }
 
@@ -372,9 +363,7 @@
     ongoto?.(line)
   }
 
-  const shallowest = $derived(
-    workspace.headings.reduce((least, heading) => Math.min(least, heading.level), 6),
-  )
+  const shallowest = $derived(workspace.headings.reduce((least, heading) => Math.min(least, heading.level), 6))
 
   const current = $derived.by(() => {
     if (showing !== 'outline') return -1
@@ -423,10 +412,7 @@
   }
 
   function headingMenu(at: number, text: string): MenuEntry[] {
-    return [
-      ...bookmarkEntry(workspace.bookmarks.forHeading(workspace.panelNote, text)),
-      ...moveSectionEntries(at),
-    ]
+    return [...bookmarkEntry(workspace.bookmarks.forHeading(workspace.panelNote, text)), ...moveSectionEntries(at)]
   }
 
   function moveSectionEntries(at: number): MenuEntry[] {
@@ -461,9 +447,7 @@
     list.querySelector('.row.is-on')?.scrollIntoView({ block: 'nearest' })
   })
 
-  const place = $derived(
-    workspace.shownSpaces.findIndex((one) => one.id === workspace.activeSpaceId),
-  )
+  const place = $derived(workspace.shownSpaces.findIndex((one) => one.id === workspace.activeSpaceId))
   let direction = $state(1)
   let lastPlace = -1
 
@@ -521,9 +505,7 @@
     bind:clientWidth={asideWidth}
     data-region={side === 'right' ? 'right' : undefined}
     data-sidebar
-    aria-label={side === 'right'
-      ? 'Right sidebar'
-      : `${workspace.activeSpace?.name ?? 'Space'} panel`}
+    aria-label={side === 'right' ? 'Right sidebar' : `${workspace.activeSpace?.name ?? 'Space'} panel`}
     class:resizing={size.dragging}
     class:right={side === 'right'}
   >

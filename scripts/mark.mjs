@@ -102,9 +102,7 @@ function indexed(size, rgba) {
       for (let x = 0; x < size; x++) {
         const i = (y * size + x) * 4
         const a = rgba[i + 3]
-        const key = a
-          ? [round(rgba[i]), round(rgba[i + 1]), round(rgba[i + 2]), a].join()
-          : '0,0,0,0'
+        const key = a ? [round(rgba[i]), round(rgba[i + 1]), round(rgba[i + 2]), a].join() : '0,0,0,0'
         let at = index.get(key)
         if (at === undefined) {
           if (index.size === 256) {
@@ -135,10 +133,7 @@ export function png(size, at, { grey = false, small = false } = {}) {
       let hits = 0
       for (let sy = 0; sy < SS; sy++) {
         for (let sx = 0; sx < SS; sx++) {
-          const found = at(
-            ((x + (sx + 0.5) / SS) / size) * GRID,
-            ((y + (sy + 0.5) / SS) / size) * GRID,
-          )
+          const found = at(((x + (sx + 0.5) / SS) / size) * GRID, ((y + (sy + 0.5) / SS) / size) * GRID)
           if (found === null) continue
           const c = grey ? [found, found, found] : found
           sum[0] += c[0]

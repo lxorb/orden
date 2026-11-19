@@ -14,9 +14,7 @@ const declared = (panel: TabPanel, tab: Filling): boolean =>
 const ASKS: Partial<Record<Panel, (tab: Filling) => boolean>> = {
   outline: (tab) =>
     declared('outline', tab) &&
-    (tab.kind === 'pages' ||
-      tab.kind === 'pdf' ||
-      (tab.markdown && tab.headings + tab.footnotes > 0)),
+    (tab.kind === 'pages' || tab.kind === 'pdf' || (tab.markdown && tab.headings + tab.footnotes > 0)),
   links: (tab) => declared('links', tab),
 }
 

@@ -20,8 +20,7 @@ export function ulid(now: number, random: () => number): string {
 
 const digit = (value: number): string => ALPHABET.charAt(Math.min(31, Math.max(0, value)))
 
-export const isUlid = (value: unknown): value is string =>
-  typeof value === 'string' && ULID.test(value)
+export const isUlid = (value: unknown): value is string => typeof value === 'string' && ULID.test(value)
 
 export function ulidTime(id: string): number | null {
   if (!isUlid(id)) return null

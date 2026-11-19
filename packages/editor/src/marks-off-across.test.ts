@@ -25,15 +25,11 @@ function pressed(mark: string, doc: string, picked: string): EditorState {
 
 describe('a mark pressed over the words of marked lines picked inside their marks', () => {
   test('bold takes the bold off two bold items', () => {
-    expect(pressed('**', '- **alpha**\n- **beta**', 'alpha**\n- **beta').doc.toString()).toBe(
-      '- alpha\n- beta',
-    )
+    expect(pressed('**', '- **alpha**\n- **beta**', 'alpha**\n- **beta').doc.toString()).toBe('- alpha\n- beta')
   })
 
   test('italic takes the italics off two italic items instead of making them bold', () => {
-    expect(pressed('*', '- *alpha*\n- *beta*', 'alpha*\n- *beta').doc.toString()).toBe(
-      '- alpha\n- beta',
-    )
+    expect(pressed('*', '- *alpha*\n- *beta*', 'alpha*\n- *beta').doc.toString()).toBe('- alpha\n- beta')
   })
 
   test('bold takes the bold off one bold paragraph written over two lines', () => {

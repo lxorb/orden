@@ -18,8 +18,7 @@
   import ChangesCard from './review/ChangesCard.svelte'
   import Reply from './Reply.svelte'
 
-  const { ongoto, ready }: { ongoto?: ((line: number) => void) | undefined; ready: boolean } =
-    $props()
+  const { ongoto, ready }: { ongoto?: ((line: number) => void) | undefined; ready: boolean } = $props()
 
   let talk = $state<HTMLElement>()
   let atEnd = $state(true)
@@ -34,8 +33,7 @@
     return -1
   })
   const waiting = $derived(
-    running &&
-      (pending !== undefined || !turns.at(-1)?.parts.length || turns.at(-1)?.role === 'you'),
+    running && (pending !== undefined || !turns.at(-1)?.parts.length || turns.at(-1)?.role === 'you'),
   )
   const hello = $derived(ready && !turns.length && pending === undefined && !running)
   const chats = $derived(ordered(chat.heads, chat.states, chat.unread))
@@ -193,11 +191,7 @@
       {@const index = from + at}
       {#if turn.role === 'you'}
         {@const words = turn.draft?.text ?? ''}
-        <div
-          class="said"
-          class:steered={turn.steered}
-          in:fly={{ y: 8, duration: dur(150), easing: cubicOut }}
-        >
+        <div class="said" class:steered={turn.steered} in:fly={{ y: 8, duration: dur(150), easing: cubicOut }}>
           {#if attachedOf(index).length}
             <div class="went">
               {#each attachedOf(index) as label, at (at)}
@@ -259,9 +253,7 @@
       onclick={down}
       transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}
     >
-      <svg viewBox="0 0 13 13" aria-hidden="true"
-        ><path d="M6.5 2.4v8M3.2 7.1l3.3 3.3 3.3-3.3" /></svg
-      >
+      <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M6.5 2.4v8M3.2 7.1l3.3 3.3 3.3-3.3" /></svg>
     </button>
   {/if}
 </div>
@@ -286,10 +278,7 @@
     flex-direction: column;
     gap: var(--space-3);
     padding-block: var(--space-2) var(--space-4);
-    padding-inline: max(
-      calc(var(--space-1) + var(--row-pad)),
-      calc((100% - var(--column, 100%)) / 2 + var(--space-4))
-    );
+    padding-inline: max(calc(var(--space-1) + var(--row-pad)), calc((100% - var(--column, 100%)) / 2 + var(--space-4)));
     mask-image: linear-gradient(to bottom, #000 calc(100% - var(--space-4)), transparent);
   }
 

@@ -29,9 +29,7 @@
   {/if}
 
   <div class="rows">
-    <button class="orden-button is-quiet" onclick={() => asking.answer(question.id, null)}>
-      Dismiss
-    </button>
+    <button class="orden-button is-quiet" onclick={() => asking.answer(question.id, null)}> Dismiss </button>
     {#if question.kind === 'text'}
       <button class="orden-button" onclick={() => asking.answer(question.id, typed)}> Send </button>
     {:else}

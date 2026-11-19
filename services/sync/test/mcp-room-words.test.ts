@@ -111,17 +111,14 @@ describe('a room whose settle is refused', () => {
 })
 
 describe('write_note to a new path', () => {
-  test.each(['board.canvas', 'book.pages'])(
-    'refuses prose for %s, as for one that is there',
-    async (path) => {
-      await prepare()
-      const answer = await tool('write_note', { path, content: 'my long prose' })
-      expect(answer).toMatch(/is a canvas\. Write JSON Canvas into it/)
-      expect(env.db.prepare('select count(*) as n from notes where path = ?').get(path)).toEqual({
-        n: 0,
-      })
-    },
-  )
+  test.each(['board.canvas', 'book.pages'])('refuses prose for %s, as for one that is there', async (path) => {
+    await prepare()
+    const answer = await tool('write_note', { path, content: 'my long prose' })
+    expect(answer).toMatch(/is a canvas\. Write JSON Canvas into it/)
+    expect(env.db.prepare('select count(*) as n from notes where path = ?').get(path)).toEqual({
+      n: 0,
+    })
+  })
 
   test('takes a canvas as a canvas', async () => {
     await prepare()
@@ -142,9 +139,7 @@ describe('write_note to a new path', () => {
     await made('Deep/keep.md', 'one\n')
     await prepare()
 
-    expect(await tool('write_note', { path: 'plan.md/child.md', content: 'x' })).toBe(
-      'Saved plan.md 2/child.md.',
-    )
+    expect(await tool('write_note', { path: 'plan.md/child.md', content: 'x' })).toBe('Saved plan.md 2/child.md.')
     expect(await tool('read_note', { path: 'plan.md 2/child.md' })).toBe('x')
   })
 })

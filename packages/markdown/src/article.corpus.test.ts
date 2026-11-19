@@ -93,9 +93,7 @@ describe('a page whose point is a table', () => {
   test('reads the same live and written down; keeps the table as a table; escapes a pipe a cell holds, so the row stays one row', () => {
     expect(written).toEqual(live)
     expect(markdown).toMatch(/\| Destination \| Leaves \| Arrives \| Couchette from \|/)
-    expect(markdown).toContain(
-      '| [Hamburg](https://rails.example/trains/hamburg) | 19:59 | 08:09 |',
-    )
+    expect(markdown).toContain('| [Hamburg](https://rails.example/trains/hamburg) | 19:59 | 08:09 |')
     expect(markdown).toContain('CHF 99 \\| sleeper only')
   })
 })

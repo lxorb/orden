@@ -24,8 +24,7 @@ export async function prepared(file: File): Promise<Prepared> {
   try {
     if (file.type.startsWith('image/') && !AS_THEY_ARE.has(file.type)) return await picture(file)
     if (file.type.startsWith('video/')) return { ...plain, ...(await videoFrame(file)) }
-    if (file.type.startsWith('audio/'))
-      return { ...plain, ...(await sound(await file.arrayBuffer())) }
+    if (file.type.startsWith('audio/')) return { ...plain, ...(await sound(await file.arrayBuffer())) }
   } catch {
     // A file this browser cannot read is still a file: it goes as it is, as a card.
   }
@@ -50,12 +49,7 @@ async function picture(file: File): Promise<Prepared> {
   }
 }
 
-async function encoded(
-  source: CanvasImageSource,
-  width: number,
-  height: number,
-  quality: number,
-): Promise<Blob> {
+async function encoded(source: CanvasImageSource, width: number, height: number, quality: number): Promise<Blob> {
   const canvas = document.createElement('canvas')
   canvas.width = width
   canvas.height = height

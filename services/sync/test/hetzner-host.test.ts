@@ -45,14 +45,13 @@ function host(given: Setup | null = setup()): HetznerHost {
   return new HetznerHost(env, storage, given)
 }
 
-const row = () =>
-  env.db.prepare('select * from machines where id = ?').get(ID) as Record<string, unknown>
+const row = () => env.db.prepare('select * from machines where id = ?').get(ID) as Record<string, unknown>
 
 const made = () =>
   (
-    env.db
-      .prepare("select detail from machine_events where machine = ? and kind = 'server'")
-      .all(ID) as { detail: string }[]
+    env.db.prepare("select detail from machine_events where machine = ? and kind = 'server'").all(ID) as {
+      detail: string
+    }[]
   ).map((one) => one.detail)
 
 beforeEach(async () => {
@@ -63,9 +62,7 @@ beforeEach(async () => {
   carry(new TextEncoder().encode('the bundle').buffer as ArrayBuffer)
   await signIn(env, 'owner@example.com')
   const user = env.db.prepare('select id from users').get() as { id: string }
-  env.db
-    .prepare("insert into machines (id, user_id, created_at, host) values (?, ?, 1, 'hetzner')")
-    .run(ID, user.id)
+  env.db.prepare("insert into machines (id, user_id, created_at, host) values (?, ?, 1, 'hetzner')").run(ID, user.id)
 })
 
 afterEach(() => {
@@ -77,9 +74,7 @@ describe('a Hetzner machine', () => {
   test('is made once: its tunnel, hostname, firewall and labelled CX43 in Nuremberg', async () => {
     await host().start(ID, 'machine', BOOT)
 
-    expect(cloud.tunnels).toEqual([
-      expect.objectContaining({ name: 'orden-machine-0123456789abcdef0123456789abcdef' }),
-    ])
+    expect(cloud.tunnels).toEqual([expect.objectContaining({ name: 'orden-machine-0123456789abcdef0123456789abcdef' })])
     expect(cloud.tunnels[0]?.config).toEqual({
       ingress: [
         {
@@ -97,9 +92,7 @@ describe('a Hetzner machine', () => {
         proxied: true,
       }),
     ])
-    expect(cloud.firewalls).toEqual([
-      expect.objectContaining({ labels: { 'orden-machine': ID }, rules: [] }),
-    ])
+    expect(cloud.firewalls).toEqual([expect.objectContaining({ labels: { 'orden-machine': ID }, rules: [] })])
 
     expect(cloud.servers).toHaveLength(1)
     const server = cloud.servers[0]
@@ -213,9 +206,7 @@ describe('a Hetzner machine', () => {
 
   test('nowhere to be had is an error that says so', async () => {
     cloud.available = ['hel1']
-    await expect(host().start(ID, 'machine', BOOT)).rejects.toThrow(
-      /no cx43 to be had in nbg1 or fsn1/,
-    )
+    await expect(host().start(ID, 'machine', BOOT)).rejects.toThrow(/no cx43 to be had in nbg1 or fsn1/)
     expect(cloud.servers).toEqual([])
   })
 
@@ -299,11 +290,9 @@ describe('a Hetzner machine', () => {
       priced_at: Date.UTC(2026, 10, 11),
       spent: 5.95,
     })
-    expect(
-      env.db
-        .prepare("select detail from machine_events where machine = ? and kind = 'resize'")
-        .all(ID),
-    ).toEqual([{ detail: 'cx53' }])
+    expect(env.db.prepare("select detail from machine_events where machine = ? and kind = 'resize'").all(ID)).toEqual([
+      { detail: 'cx53' },
+    ])
   })
 
   test('a server that will not shut down is powered off once told to be hard', async () => {
@@ -360,8 +349,7 @@ describe('a Hetzner machine', () => {
   })
 
   test('an emergency SSH key opens port 22 and is written into the server', async () => {
-    const key =
-      'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK0wmN/Cr3JXqmLW7u+g9pTh+wyqDHpSQEIQczXkVx9q emil@laptop'
+    const key = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK0wmN/Cr3JXqmLW7u+g9pTh+wyqDHpSQEIQczXkVx9q emil@laptop'
     env.db.prepare('update machines set ssh_key = ? where id = ?').run(key, ID)
     await host().start(ID, 'machine', BOOT)
     expect(cloud.firewalls[0]?.rules).toEqual([
@@ -375,9 +363,7 @@ describe('its names', () => {
   test('are its id’s, and only those are machine hostnames', () => {
     expect(namesOf(ID, 'nibeditor.com').hostname).toBe(HOSTNAME)
     expect(isMachineHost(HOSTNAME, 'nibeditor.com')).toBe(true)
-    expect(isMachineHost('M-0123456789ABCDEF0123456789ABCDEF.nibeditor.com', 'nibeditor.com')).toBe(
-      true,
-    )
+    expect(isMachineHost('M-0123456789ABCDEF0123456789ABCDEF.nibeditor.com', 'nibeditor.com')).toBe(true)
     expect(isMachineHost('m-blog.nibeditor.com', 'nibeditor.com')).toBe(false)
     expect(isMachineHost(`${HOSTNAME}.evil.com`, 'nibeditor.com')).toBe(false)
     expect(isMachineHost('nibeditor.com', 'nibeditor.com')).toBe(false)

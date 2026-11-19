@@ -59,13 +59,7 @@
   }
 </script>
 
-<button
-  class="orden-glyph"
-  aria-haspopup="menu"
-  title="Notifications"
-  aria-label="Notifications"
-  onclick={open}
->
+<button class="orden-glyph" aria-haspopup="menu" title="Notifications" aria-label="Notifications" onclick={open}>
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M10.268 21a2 2 0 0 0 3.464 0" />
     {#if ring === 'off'}

@@ -1,15 +1,7 @@
 import type { Member } from '@orden/chats'
 import { describe, expect, test } from 'vitest'
 import { MOST_BODY } from '@orden/chats/limits'
-import {
-  asFile,
-  enterDoes,
-  mentionAt,
-  mentionChoices,
-  mentionText,
-  ordenAsked,
-  trimmed,
-} from './compose'
+import { asFile, enterDoes, mentionAt, mentionChoices, mentionText, ordenAsked, trimmed } from './compose'
 
 const plain = { shift: false, mod: false }
 
@@ -51,9 +43,7 @@ describe('mentions', () => {
 
   test('who it could be: names first, then a word of a name, then here and everyone', () => {
     const who = (query: string) =>
-      mentionChoices(query, members, 'user:emil').map((one) =>
-        typeof one === 'string' ? one : one.who,
-      )
+      mentionChoices(query, members, 'user:emil').map((one) => (typeof one === 'string' ? one : one.who))
     expect(who('lu')).toEqual(['user:lucile', 'user:mia'])
     expect(who('e')).toEqual(['user:eve', 'everyone'])
     expect(who('h')).toEqual(['here'])

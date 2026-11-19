@@ -33,14 +33,7 @@
   import { basesOn } from '../../gates/src/api'
   import { insideSpace, samePath } from '../../platform/src/api'
   import { isTile, sameBookmark } from '../../space-kept/src/api'
-  import {
-    essentials,
-    workspace,
-    howFor,
-    middleOpens,
-    type TabAsk,
-    tabAsk,
-  } from '../../workspace/src/api'
+  import { essentials, workspace, howFor, middleOpens, type TabAsk, tabAsk } from '../../workspace/src/api'
   import { tabLetters, tabUnloading } from '../../tab-strip/src/api'
 
   const { onsearch }: { onsearch: (query: string) => void } = $props()
@@ -224,9 +217,7 @@
   function pressed(row: Row, ask: TabAsk) {
     if (row.mark.kind === 'note' && row.path) {
       const path = row.path
-      void reckoning().then((one) =>
-        ask === 'plain' ? one.openEssential(path) : one.openInStrip(path, howFor(ask)),
-      )
+      void reckoning().then((one) => (ask === 'plain' ? one.openEssential(path) : one.openInStrip(path, howFor(ask))))
       return
     }
 
@@ -297,10 +288,7 @@
 
   function rowMenu(row: Row, unloading: MenuEntry[] = []): MenuEntry[] {
     const group = row.mark.kind === 'group'
-    const icons =
-      row.mark.kind === 'note' || row.mark.kind === 'folder'
-        ? iconEntries(row.face, row.folder)
-        : []
+    const icons = row.mark.kind === 'note' || row.mark.kind === 'folder' ? iconEntries(row.face, row.folder) : []
 
     return [
       ...(row.mark.kind === 'note' && row.path
@@ -405,8 +393,7 @@
         onkeydown={(event) => hands?.gridKey(event)}
         use:dropOver={(event) => (hands ? hands.overGrid(event) : early(event))}
         ondragleave={(event) => hands?.leaving(event)}
-        ondrop={(event) =>
-          hands ? hands.dropOnGrid(event, (path) => byPath.get(path)) : late(event)}
+        ondrop={(event) => (hands ? hands.dropOnGrid(event, (path) => byPath.get(path)) : late(event))}
       >
         {#each tiles as tile (`${tile.mark.kind}:${tile.mark.path}`)}
           <li
@@ -471,8 +458,7 @@
                 draggable="true"
                 onclick={(event) => pressed(row, tabAsk(event))}
                 ondblclick={(event) =>
-                  tabAsk(event) === 'plain' &&
-                  (row.mark.kind === 'note' ? keepAsTab(row) : open(row, {}))}
+                  tabAsk(event) === 'plain' && (row.mark.kind === 'note' ? keepAsTab(row) : open(row, {}))}
                 use:middleOpens={(event) => pressed(row, tabAsk(event))}
                 oncontextmenu={(event) => showMenu(event, row)}
                 use:longPress={(event) => showMenu(event, row)}

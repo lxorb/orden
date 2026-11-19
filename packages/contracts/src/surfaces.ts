@@ -137,9 +137,7 @@ export function whenNoSurface(load: (id: SurfaceId) => Promise<unknown>) {
   missing = load
 }
 
-export function registerSurfaces(
-  given: Partial<Record<SurfaceId, () => Promise<unknown>>>,
-): () => void {
+export function registerSurfaces(given: Partial<Record<SurfaceId, () => Promise<unknown>>>): () => void {
   const held = Object.entries(given) as [SurfaceId, () => Promise<unknown>][]
   for (const [id, load] of held) loads.set(id, load)
   return () => {

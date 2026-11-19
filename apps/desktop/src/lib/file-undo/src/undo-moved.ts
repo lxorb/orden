@@ -9,8 +9,7 @@ function did(action: FileAction, from: string, to: string): boolean {
 }
 
 export function heardMove(steps: readonly FileAction[], op: Extract<FileOp, { op: 'moved' }>) {
-  if (op.kind !== 'space' && (landing(op.to) || steps.some((one) => did(one, op.from, op.to))))
-    return
+  if (op.kind !== 'space' && (landing(op.to) || steps.some((one) => did(one, op.from, op.to)))) return
   for (const action of steps) rewritten(action, op.from, op.to)
 }
 
@@ -54,9 +53,7 @@ export function rewritten(action: FileAction, from: string, to: string) {
       break
     case 'import':
       action.paths = action.paths.map(at)
-      action.wrote = Object.fromEntries(
-        Object.entries(action.wrote).map(([path, hash]) => [at(path), hash]),
-      )
+      action.wrote = Object.fromEntries(Object.entries(action.wrote).map(([path, hash]) => [at(path), hash]))
       break
     case 'copy':
       for (const one of action.made) {

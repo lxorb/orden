@@ -77,11 +77,7 @@ function expression(one: Asked): string {
   return refused ? `${wanted} NOT (${refused})` : wanted
 }
 
-export async function matching(
-  env: { DB: D1Database },
-  spaceId: string,
-  one: Asked,
-): Promise<Hit[]> {
+export async function matching(env: { DB: D1Database }, spaceId: string, one: Asked): Promise<Hit[]> {
   const match = expression(one)
   if (!match) return []
 

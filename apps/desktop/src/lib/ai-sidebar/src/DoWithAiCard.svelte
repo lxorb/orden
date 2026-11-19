@@ -37,10 +37,7 @@
 
 <div class="card">
   <div class="orden-setting setting">
-    {@render hinted(
-      'Do with AI',
-      'Whether a task done with AI asks before each change or makes them on its own.',
-    )}
+    {@render hinted('Do with AI', 'Whether a task done with AI asks before each change or makes them on its own.')}
     <div class="orden-setting-value">
       <Select
         value={tasked}

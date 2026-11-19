@@ -51,13 +51,11 @@ describe('a space somebody has left', () => {
   test('still marks their words on the connector', async () => {
     await invite()
     await note(friend, home, 'Evil.md', EVIL)
-    expect(
-      (await call(env, `/v1/spaces/${home}/share/me`, { token: friend, method: 'DELETE' })).status,
-    ).toBeLessThan(300)
-
-    expect(await tool('read_note', { space: 'Home', path: 'Evil.md' })).toMatch(
-      /^<untrusted source="shared space Home/,
+    expect((await call(env, `/v1/spaces/${home}/share/me`, { token: friend, method: 'DELETE' })).status).toBeLessThan(
+      300,
     )
+
+    expect(await tool('read_note', { space: 'Home', path: 'Evil.md' })).toMatch(/^<untrusted source="shared space Home/)
     expect(await tool('list_notes', { space: 'Home' })).toMatch(/^<untrusted source=/)
     expect(await tool('search_notes', { query: 'email' })).toContain('<untrusted')
   })
@@ -80,8 +78,7 @@ describe('a space somebody has left', () => {
       body: { role: 'write', mode: 'open' },
     })
     const link = /\/join\/([a-f0-9]+)/.exec(made.json.link?.url ?? '')?.[1] ?? ''
-    const guest = (await call(env, `/v1/join/${link}`, { method: 'POST', body: { name: 'G' } }))
-      .json.token
+    const guest = (await call(env, `/v1/join/${link}`, { method: 'POST', body: { name: 'G' } })).json.token
     expect(guest).toBeTruthy()
     await call(env, `/v1/spaces/${home}/share/link`, { method: 'DELETE', token })
     await call(env, `/v1/spaces/${home}/share/me`, { token: guest, method: 'DELETE' })
@@ -105,9 +102,7 @@ describe('a space somebody has left', () => {
 
     const trusted = await call(env, `/v1/spaces/${home}/share/trust`, { token, method: 'POST' })
     expect(trusted.status).toBeLessThan(300)
-    expect(await tool('read_note', { space: 'Home', path: 'Finances.md' })).not.toContain(
-      'untrusted',
-    )
+    expect(await tool('read_note', { space: 'Home', path: 'Finances.md' })).not.toContain('untrusted')
     expect((await listed()).onceShared).toBe(false)
   })
 
@@ -138,9 +133,7 @@ describe('a note somebody held on its own and has handed back', () => {
     expect(await tool('read_note', { space: 'Home', path: 'Shared.md' })).toMatch(
       /^<untrusted source="shared note Home\/Shared.md/,
     )
-    expect(await tool('read_note', { space: 'Home', path: 'Finances.md' })).not.toContain(
-      'untrusted',
-    )
+    expect(await tool('read_note', { space: 'Home', path: 'Finances.md' })).not.toContain('untrusted')
     const space = await listed()
     expect(space.sharedItems).toEqual([])
     expect(space.onceSharedItems).toEqual([shared])

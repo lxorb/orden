@@ -11,9 +11,7 @@ test('a canvas in a window is pictured no larger than the overview draws it', ()
   vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(
     () => ({ drawImage: () => undefined }) as unknown as CanvasRenderingContext2D,
   )
-  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockImplementation(function (
-    this: HTMLCanvasElement,
-  ) {
+  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockImplementation(function (this: HTMLCanvasElement) {
     encoded.push([this.width, this.height])
     return 'data:image/webp;base64,AA'
   })

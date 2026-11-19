@@ -27,9 +27,13 @@ export async function keepWords(
 ): Promise<void> {
   await env.DB.batch([
     env.DB.prepare('delete from note_search where note_id = ?').bind(note.id),
-    env.DB.prepare(
-      'insert into note_search (note_id, space_id, path, title, body) values (?, ?, ?, ?, ?)',
-    ).bind(note.id, note.space_id, note.path, title, plainWords(content)),
+    env.DB.prepare('insert into note_search (note_id, space_id, path, title, body) values (?, ?, ?, ?, ?)').bind(
+      note.id,
+      note.space_id,
+      note.path,
+      title,
+      plainWords(content),
+    ),
   ])
 }
 

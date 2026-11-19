@@ -82,8 +82,7 @@ export function ran(id: string | undefined, via: UsageVia): void {
 export function changed(key: string | undefined, value: unknown): void {
   const id = key ? settingName(key) : null
   if (!id) return
-  const said =
-    typeof value === 'boolean' ? (value ? 'on' : 'off') : typeof value === 'string' ? value : ''
+  const said = typeof value === 'boolean' ? (value ? 'on' : 'off') : typeof value === 'string' ? value : ''
   const name = usageName(said) === said && !said.includes(':') ? said : 'other'
   const tally = today()
   if (!tally) return

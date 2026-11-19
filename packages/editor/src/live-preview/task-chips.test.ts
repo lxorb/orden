@@ -91,13 +91,7 @@ describe('the chips', () => {
       },
       '2026-10-01',
     )
-    expect(chips.map((chip) => chip.field)).toEqual([
-      'date',
-      'recurrence',
-      'priority',
-      'remind',
-      'duration',
-    ])
+    expect(chips.map((chip) => chip.field)).toEqual(['date', 'recurrence', 'priority', 'remind', 'duration'])
     expect(chips.find((chip) => chip.field === 'duration')?.text).toBe('⏱ 1h30m')
     expect(chips.find((chip) => chip.field === 'priority')?.tone).toBe('p1')
   })
@@ -133,9 +127,7 @@ describe("a task's comment", () => {
 
   test('hides its when and its who like marks, and says them as quiet chips', () => {
     const state = stateOf(NOTE, NOTE.length)
-    expect(hidden(state)).toEqual(
-      expect.arrayContaining([' [at:: 2026-10-06T09:30]', ' [by:: Lu]']),
-    )
+    expect(hidden(state)).toEqual(expect.arrayContaining([' [at:: 2026-10-06T09:30]', ' [by:: Lu]']))
     let said: string[] = []
     buildDecorations(state).decorations.between(0, state.doc.length, (_from, _to, value) => {
       if (value.spec.widget instanceof CommentChipsWidget) said = [...value.spec.widget.chips]

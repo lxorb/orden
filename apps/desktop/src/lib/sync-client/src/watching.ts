@@ -23,9 +23,7 @@ const BATCH = 100
 function hidden(path: string): boolean {
   const parts = path.replace(/\\/g, '/').split('/')
   const name = parts.at(-1) ?? ''
-  return parts.some(
-    (part, at) => part.startsWith('.') && !(at === parts.length - 1 && carriedOwn(name)),
-  )
+  return parts.some((part, at) => part.startsWith('.') && !(at === parts.length - 1 && carriedOwn(name)))
 }
 
 function foreign(path: string): boolean {

@@ -36,9 +36,7 @@ function outsideMedia(css: string): string {
 }
 
 const rules = [
-  ...outsideMedia(readFileSync(SHEET, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')).matchAll(
-    /([^{}]+)\{([^{}]*)\}/g,
-  ),
+  ...outsideMedia(readFileSync(SHEET, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')).matchAll(/([^{}]+)\{([^{}]*)\}/g),
 ].map(([, selectors = '', body = '']) => ({
   selectors: selectors
     .split(',')

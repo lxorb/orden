@@ -10,11 +10,7 @@ function marked(icon: string | null): boolean {
   return icon?.startsWith('data:image/') ?? false
 }
 
-export async function withMarks(
-  sidebar: Sidebar,
-  browser: Browser,
-  profile: string,
-): Promise<Sidebar> {
+export async function withMarks(sidebar: Sidebar, browser: Browser, profile: string): Promise<Sidebar> {
   const pages = [...new Set(sidebar.tabs.filter((tab) => !marked(tab.icon)).map((tab) => tab.url))]
   if (!pages.length) return sidebar
 
@@ -43,9 +39,7 @@ export async function bringHistory(browser: Browser, profile: string): Promise<v
 
 export async function takeEngine(engine: BrowserEngine | null, browser: string): Promise<string[]> {
   if (!engine) return []
-  const taken = await webPages().takeEngine(
-    'id' in engine ? { id: engine.id } : { custom: engine.custom },
-  )
+  const taken = await webPages().takeEngine('id' in engine ? { id: engine.id } : { custom: engine.custom })
   if (taken !== 'kept') return []
   return [`${browser} searches with ${engine.name}: choose it in Settings to search with it here`]
 }
@@ -53,9 +47,5 @@ export async function takeEngine(engine: BrowserEngine | null, browser: string):
 export function droppedLine(sidebar: Sidebar): string[] {
   const count = sidebar.dropped ?? 0
   if (!count) return []
-  return [
-    count === 1
-      ? '1 page not on the web stays behind'
-      : `${count} pages not on the web stay behind`,
-  ]
+  return [count === 1 ? '1 page not on the web stays behind' : `${count} pages not on the web stay behind`]
 }

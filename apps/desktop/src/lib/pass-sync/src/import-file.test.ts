@@ -31,8 +31,6 @@ describe('a zip to import', () => {
   test('is refused when its files together unpack too big', async () => {
     const two = await zipOf({ a: new Uint8Array(500), b: new Uint8Array(501) })
     await expect(unzipped(two, LIMITS)).rejects.toThrow(ZIP_TOO_BIG)
-    expect(Object.keys(await unzipped(await zipOf({ a: new Uint8Array(500) }), LIMITS))).toEqual([
-      'a',
-    ])
+    expect(Object.keys(await unzipped(await zipOf({ a: new Uint8Array(500) }), LIMITS))).toEqual(['a'])
   })
 })

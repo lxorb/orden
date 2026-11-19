@@ -13,11 +13,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
     if (command === 'extensions_list' && lists.length) return lists.shift()
     if (command === 'extensions_install' && installs.length) return installs.shift()
     if (command === 'extensions_list') return Promise.resolve([row({ id: 'a', enabled: true })])
-    if (
-      command === 'extensions_install' &&
-      args?.anyway !== true &&
-      String(args?.link).includes('mozilla')
-    ) {
+    if (command === 'extensions_install' && args?.anyway !== true && String(args?.link).includes('mozilla')) {
       return Promise.resolve({
         name: 'Tree Style Tab',
         asks: { said: ['sidebar', 'unknown'], apis: ['dns'] },
@@ -32,8 +28,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   },
 }))
 
-const { UPDATE_EVERY, extensions, pinnedOf, readExtension, updateDue } =
-  await import('./extensions.svelte')
+const { UPDATE_EVERY, extensions, pinnedOf, readExtension, updateDue } = await import('./extensions.svelte')
 const { ASK_AGAIN, NOT_ANSWERING } = await import('./answering')
 
 function row(fields: Record<string, unknown>): Record<string, unknown> {
@@ -104,9 +99,7 @@ test('a Firefox add-on that does not run whole waits for the reader, and is inst
   })
   expect(await extensions.install(link, true)).toBe(true)
   expect(extensions.asking).toBeNull()
-  expect(
-    asked.filter((one) => one.command === 'extensions_install').map((one) => one.args),
-  ).toEqual([
+  expect(asked.filter((one) => one.command === 'extensions_install').map((one) => one.args)).toEqual([
     { link, anyway: false },
     { link, anyway: true },
   ])

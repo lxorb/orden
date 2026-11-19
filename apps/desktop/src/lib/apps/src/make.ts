@@ -1,10 +1,4 @@
-import {
-  type AppRun,
-  appFileText,
-  CATALOGUE_PATH,
-  catalogueOf,
-  type Installed,
-} from '@orden/online/apps'
+import { type AppRun, appFileText, CATALOGUE_PATH, catalogueOf, type Installed } from '@orden/online/apps'
 import { account } from '../../accounts/src/api'
 import { canWriteAt } from '../../sharing/src/api'
 import { nameOf, joinPath } from '../../platform/src/api'
@@ -75,9 +69,7 @@ export async function makeApplication(): Promise<Tab | null> {
     run = { kind: 'path', ...program, cwd: null }
   }
 
-  const name =
-    (run.kind === 'installed' ? run.name : nameOf(run.path).replace(/\.(exe|app)$/i, '')) ||
-    'Application'
+  const name = (run.kind === 'installed' ? run.name : nameOf(run.path).replace(/\.(exe|app)$/i, '')) || 'Application'
   const path = joinPath(root, await workspace.freeNameOnDisk(root, `${name}.application`))
   await writeFile(path, appFileText({ v: 1, host, run }))
   await workspace.fileCame(path, 'file')
@@ -96,9 +88,8 @@ async function installedOn(host: string, here: boolean, token: string): Promise<
     return catalogueOf(listed) ?? []
   }
   const { request } = await import('../../accounts/src/api')
-  const answered = await request<{ apps?: unknown }>(
-    `${CATALOGUE_PATH}/${encodeURIComponent(host)}`,
-    { token },
-  ).catch(() => null)
+  const answered = await request<{ apps?: unknown }>(`${CATALOGUE_PATH}/${encodeURIComponent(host)}`, { token }).catch(
+    () => null,
+  )
   return catalogueOf(answered?.apps) ?? []
 }

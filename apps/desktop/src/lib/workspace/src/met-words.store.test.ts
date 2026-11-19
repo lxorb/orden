@@ -111,9 +111,7 @@ describe('unwritten words meeting an open document', () => {
     await workspace.open(THERE)
     const open = workspace.tabs.find((one) => one.path === THERE)!.note
     await workspace.showSpace('one')
-    workspace.closed.restore([
-      { paneId: workspace.panes.focusedId, at: 0, draft: tab({ path: THERE, space: 'two' }) },
-    ])
+    workspace.closed.restore([{ paneId: workspace.panes.focusedId, at: 0, draft: tab({ path: THERE, space: 'two' }) }])
     await workspace.reopenClosed()
     await workspace.writesSettled()
     expect(workspace.activeSpaceId).toBe('two')
@@ -240,9 +238,7 @@ describe('unwritten words meeting an open document', () => {
   test('a closed entry of the document still open is a view of it, not words to bring back', async () => {
     await workspace.open(PATH)
     const note = workspace.tabs[0]!.note
-    workspace.closed.restore([
-      { paneId: workspace.panes.focusedId, at: 0, draft: tab({ share: note.key }) },
-    ])
+    workspace.closed.restore([{ paneId: workspace.panes.focusedId, at: 0, draft: tab({ share: note.key }) }])
     await workspace.reopenClosed()
     await workspace.writesSettled()
     expect(d.files.get(PATH)).toBe('base\n')

@@ -1,7 +1,6 @@
 const AI_LANGUAGE = 'ai'
 
-export const isAiLanguage = (language: string): boolean =>
-  language.trim().toLowerCase() === AI_LANGUAGE
+export const isAiLanguage = (language: string): boolean => language.trim().toLowerCase() === AI_LANGUAGE
 
 export const ANSWER_OPEN = '<!--orden:ai-->'
 export const ANSWER_CLOSE = '<!--/orden:ai-->'

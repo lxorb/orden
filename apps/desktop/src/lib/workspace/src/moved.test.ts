@@ -5,10 +5,8 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { formerRoot, hasMoved, rebased, restate, settleRoot, SPACES_ROOT } = await import('./moved')
 
-const OLD =
-  '/var/mobile/Containers/Data/Application/03742EE0-9B69-4F07-9D03-0AAB3201676B/Documents/Orden'
-const NEW =
-  '/var/mobile/Containers/Data/Application/853E8E51-0429-47D9-985E-E17A80F259DF/Documents/Orden'
+const OLD = '/var/mobile/Containers/Data/Application/03742EE0-9B69-4F07-9D03-0AAB3201676B/Documents/Orden'
+const NEW = '/var/mobile/Containers/Data/Application/853E8E51-0429-47D9-985E-E17A80F259DF/Documents/Orden'
 
 beforeEach(() => localStorage.clear())
 
@@ -121,10 +119,7 @@ describe('restating a record kept under both the old and the new folder', () => 
   })
 
   test('says a path twice in a list only once', () => {
-    localStorage.setItem(
-      'orden:recent',
-      JSON.stringify([`${NEW}/Notes/a.md`, `${OLD}/Notes/a.md`, 1, 1]),
-    )
+    localStorage.setItem('orden:recent', JSON.stringify([`${NEW}/Notes/a.md`, `${OLD}/Notes/a.md`, 1, 1]))
     restate(OLD, NEW)
     expect(JSON.parse(localStorage.getItem('orden:recent')!)).toEqual([`${NEW}/Notes/a.md`, 1, 1])
   })

@@ -155,12 +155,7 @@ export function dragged(transfer: DataTransfer | null): string[] {
 
 let carryingTile = false
 
-export function carryBookmark(
-  transfer: DataTransfer | null,
-  mark: Bookmark,
-  at: number,
-  tile = false,
-) {
+export function carryBookmark(transfer: DataTransfer | null, mark: Bookmark, at: number, tile = false) {
   if (!transfer) return
 
   carryHere(transfer, BOOKMARK, String(at))
@@ -226,9 +221,7 @@ export function draggedPage(transfer: DataTransfer | null): CarriedPage | null {
   if (!transfer || !isPageDrag(transfer)) return null
   try {
     const said = JSON.parse(transfer.getData(PAGE)) as Partial<CarriedPage> | null
-    return typeof said?.note === 'string' && typeof said.page === 'string'
-      ? { note: said.note, page: said.page }
-      : null
+    return typeof said?.note === 'string' && typeof said.page === 'string' ? { note: said.note, page: said.page } : null
   } catch {
     return null
   }
@@ -282,11 +275,7 @@ function index(transfer: DataTransfer | null, type: string): number | null {
 
 export type Over = (event: DragEvent) => unknown
 
-export function listenOver(
-  target: EventTarget,
-  over: Over,
-  options?: boolean | AddEventListenerOptions,
-): () => void {
+export function listenOver(target: EventTarget, over: Over, options?: boolean | AddEventListenerOptions): () => void {
   const heard = over as EventListener
   target.addEventListener('dragenter', heard, options)
   target.addEventListener('dragover', heard, options)
@@ -300,9 +289,7 @@ type OverNode = (event: DragEvent & { currentTarget: HTMLElement }) => unknown
 
 export const dropOver: Action<HTMLElement, OverNode> = (node, over) => {
   let current = over
-  const stop = listenOver(node, (event) =>
-    current(event as DragEvent & { currentTarget: HTMLElement }),
-  )
+  const stop = listenOver(node, (event) => current(event as DragEvent & { currentTarget: HTMLElement }))
   return {
     update(next: OverNode) {
       current = next

@@ -147,9 +147,8 @@ describe.each(Object.entries(READ))('%s', (_, rows) => {
   })
 })
 
-test.each(['', '   ', '""', '-', 'path:', 'content:', 'case:', 'line:()', 'line:'])(
-  '%j asks nothing',
-  (source) => expect(isEmpty(parseQuery(source))).toBe(true),
+test.each(['', '   ', '""', '-', 'path:', 'content:', 'case:', 'line:()', 'line:'])('%j asks nothing', (source) =>
+  expect(isEmpty(parseQuery(source))).toBe(true),
 )
 
 test('a group closes after an empty scope or a lone minus, and a link is a word', () => {

@@ -1,15 +1,5 @@
 import type { EditorView } from '@orden/editor'
-import {
-  log,
-  onDisk,
-  forget,
-  isRecord,
-  isString,
-  keepJson,
-  stored,
-  storedText,
-  invoke,
-} from '../../platform/src/api'
+import { log, onDisk, forget, isRecord, isString, keepJson, stored, storedText, invoke } from '../../platform/src/api'
 import { applied, type Edit } from '@orden/scan/search/replace'
 import { workspace } from '../../workspace/src/api'
 import { writeFile } from '../../file-writes/src/api'
@@ -163,10 +153,7 @@ class Scratchpad {
     return this.toChange(await this.where())
   }
 
-  async takeIn(
-    change: (now: string) => readonly Edit[],
-    settle: (after: string) => Promise<void>,
-  ): Promise<void> {
+  async takeIn(change: (now: string) => readonly Edit[], settle: (after: string) => Promise<void>): Promise<void> {
     const path = await this.where()
     const before = await this.toChange(path)
     const edits = change(before)
@@ -199,11 +186,7 @@ class Scratchpad {
     await this.written(path, after)
   }
 
-  private intoTab(
-    path: string,
-    changes: readonly { from: number; to: number; insert: string }[],
-    after: string,
-  ): void {
+  private intoTab(path: string, changes: readonly { from: number; to: number; insert: string }[], after: string): void {
     workspace.documentAt(path)?.edited(changes, after)
   }
 

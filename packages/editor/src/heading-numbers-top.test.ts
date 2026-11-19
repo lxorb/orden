@@ -11,17 +11,12 @@ function numbersDrawn(doc: string): string[] {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(doc.length),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        numberHeadings.of(true),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), numberHeadings.of(true)],
     }),
   )
   const out: string[] = []
   buildDecorations(state).decorations.between(0, doc.length, (at, _to, value) => {
-    const number = (value.spec.attributes as Record<string, string> | undefined)?.[
-      'data-heading-number'
-    ]
+    const number = (value.spec.attributes as Record<string, string> | undefined)?.['data-heading-number']
     if (number) out.push(`${number} ${state.doc.lineAt(at).text}`)
   })
   return out

@@ -44,24 +44,15 @@ const BARE = `<html><body>
 
 function anExport(): Source[] {
   return [
-    file(
-      'AppleJournalEntries/Index.html',
-      '<html><body><a href="Entries/x.html">x</a></body></html>',
-    ),
+    file('AppleJournalEntries/Index.html', '<html><body><a href="Entries/x.html">x</a></body></html>'),
     file('AppleJournalEntries/Entries/2026-09-04_9E1C2D3E.html', ENTRY),
     file('AppleJournalEntries/Entries/2026-09-04_1F2A3B4C.html', BARE),
     file(
       'AppleJournalEntries/Resources/A1B2C3D4-1111-2222-3333-444455556666.json',
       '{"date":810172800,"placeName":"Zurichsee"}',
     ),
-    sourceOf(
-      'AppleJournalEntries/Resources/A1B2C3D4-1111-2222-3333-444455556666.heic',
-      new Uint8Array([1, 2, 3]),
-    ),
-    sourceOf(
-      'AppleJournalEntries/Resources/B2C3D4E5-1111-2222-3333-444455556666.mov',
-      new Uint8Array([4, 5, 6]),
-    ),
+    sourceOf('AppleJournalEntries/Resources/A1B2C3D4-1111-2222-3333-444455556666.heic', new Uint8Array([1, 2, 3])),
+    sourceOf('AppleJournalEntries/Resources/B2C3D4E5-1111-2222-3333-444455556666.mov', new Uint8Array([4, 5, 6])),
   ]
 }
 
@@ -157,15 +148,11 @@ describe('an Apple Journal export', () => {
     ])
 
     expect(noteAt(plan, '2023-12-17.md')).toContain('Old Town Market Place')
-    expect(plan.lost).toContain(
-      '1 mood and activity cards are drawings, so only their words come over',
-    )
+    expect(plan.lost).toContain('1 mood and activity cards are drawings, so only their words come over')
   })
 
   test('an entry with no date anywhere is still a note', async () => {
-    const plan = await readJournal([
-      file('Entries/whatever.html', '<html><body>Words</body></html>'),
-    ])
+    const plan = await readJournal([file('Entries/whatever.html', '<html><body>Words</body></html>')])
     const note = plan.files[0]
 
     expect(note?.path).toBe('whatever.md')

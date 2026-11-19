@@ -26,12 +26,7 @@ export function relockField(): Field {
     words: ['protect', 'lock', 'password', 'timeout'],
     options: RELOCK_MINUTES.map((minutes) => ({
       value: String(minutes),
-      label:
-        minutes === NEVER
-          ? 'Only when Orden closes'
-          : minutes === 0
-            ? 'Right away'
-            : `${minutes} min`,
+      label: minutes === NEVER ? 'Only when Orden closes' : minutes === 0 ? 'Right away' : `${minutes} min`,
     })),
     initial: String(DEFAULT_RELOCK),
     get: () => String(unlocks.relock),
@@ -85,9 +80,7 @@ function remindersGroup(): Group {
 
   return {
     title: 'Reminders',
-    ...(isDesktop && platform() === 'linux'
-      ? { caption: { text: 'Reminders ring while Orden is open' } }
-      : {}),
+    ...(isDesktop && platform() === 'linux' ? { caption: { text: 'Reminders ring while Orden is open' } } : {}),
     fields: [
       {
         kind: 'select',
@@ -354,9 +347,7 @@ export function generalPane(): Pane {
         ? [{ title: 'Terminal', fields: settingFieldsIn('general', 'Terminal') }]
         : []),
 
-      ...(!__EVEN_PLUGIN__ && isDesktop && ['linux', 'windows'].includes(platform())
-        ? [gpuGroup()]
-        : []),
+      ...(!__EVEN_PLUGIN__ && isDesktop && ['linux', 'windows'].includes(platform()) ? [gpuGroup()] : []),
 
       ...(!__EVEN_PLUGIN__ && isDesktop ? [privacyGroup()] : []),
 
@@ -400,9 +391,7 @@ export function generalPane(): Pane {
           versionField(),
         ],
       },
-      ...(!__EVEN_PLUGIN__ && isDesktop
-        ? [{ title: 'Browser', fields: settingFieldsIn('general', 'Browser') }]
-        : []),
+      ...(!__EVEN_PLUGIN__ && isDesktop ? [{ title: 'Browser', fields: settingFieldsIn('general', 'Browser') }] : []),
     ],
   }
 }

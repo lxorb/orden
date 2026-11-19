@@ -18,13 +18,7 @@
   $effect(() => () => said.stop())
 </script>
 
-<button
-  class="copy"
-  class:wide
-  class:done={said.what}
-  {disabled}
-  onclick={() => void said.copy(value, true)}
->
+<button class="copy" class:wide class:done={said.what} {disabled} onclick={() => void said.copy(value, true)}>
   {said.what ? 'Copied' : word || 'Copy'}
 </button>
 

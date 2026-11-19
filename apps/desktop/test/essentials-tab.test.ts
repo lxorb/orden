@@ -11,9 +11,7 @@ vi.mock('../src/lib/platform/src/tauri', async (importOriginal) => ({
 vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('../src/lib/workspace/src/api')
-const { keepAsTab, openEssential } = await (
-  await import('../src/lib/workspace/src/api')
-).essentials()
+const { keepAsTab, openEssential } = await (await import('../src/lib/workspace/src/api')).essentials()
 const { essentialLetters } = await import('../src/lib/tab-strip/src/letters.svelte')
 const { droppedEssential } = await import('../src/lib/tab-strip/src/essential-drop')
 const { flushSync } = await import('svelte')
@@ -122,19 +120,13 @@ describe('an essential dragged into a strip', () => {
   })
 
   test('is what the strip does with a bookmark let go of on it', () => {
-    const tabs = readFileSync(
-      join(import.meta.dirname, '../src/lib/tab-strip/src/Tabs.svelte'),
-      'utf8',
-    )
+    const tabs = readFileSync(join(import.meta.dirname, '../src/lib/tab-strip/src/Tabs.svelte'), 'utf8')
     expect(tabs).toMatch(/const takes = [^\n]*\n(?:[^\n]*\n){0,3}[^\n]*isBookmarkDrag\(transfer\)/)
     expect(tabs).toContain('droppedEssential(mark, paneId, at)')
   })
 
   test('and the strip takes it from the moment it comes over the strip, as Safari asks', () => {
-    const tabs = readFileSync(
-      join(import.meta.dirname, '../src/lib/tab-strip/src/Tabs.svelte'),
-      'utf8',
-    )
+    const tabs = readFileSync(join(import.meta.dirname, '../src/lib/tab-strip/src/Tabs.svelte'), 'utf8')
     expect(tabs).toMatch(/use:dropOver=\{over\}/)
   })
 

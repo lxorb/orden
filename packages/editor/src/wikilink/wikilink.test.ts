@@ -22,12 +22,7 @@ import { parsed } from '../../test/parsed'
 
 const PARK = '\n\nx'
 
-function note(
-  path: string,
-  headings: string[] = [],
-  blocks: string[] = [],
-  aliases: string[] = [],
-): NoteRef {
+function note(path: string, headings: string[] = [], blocks: string[] = [], aliases: string[] = []): NoteRef {
   return {
     path,
     name: (path.split('/').pop() ?? path).replace(/\.[^.]+$/, ''),
@@ -64,10 +59,7 @@ function state(doc: string, cursor: number, notes = SPACE) {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(cursor),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        noteIndex.of(notes),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), noteIndex.of(notes)],
     }),
   )
 }
@@ -112,20 +104,16 @@ function linkMarks(doc: string, cursor?: number, notes = SPACE) {
   const full = cursor === undefined ? doc + PARK : doc
   const out: { text: string; note: string | null; missing: boolean }[] = []
 
-  buildDecorations(state(full, cursor ?? full.length, notes)).decorations.between(
-    0,
-    full.length,
-    (from, to, value) => {
-      const classes = String(value.spec.class ?? '')
-      if (!classes.includes('orden-link')) return
+  buildDecorations(state(full, cursor ?? full.length, notes)).decorations.between(0, full.length, (from, to, value) => {
+    const classes = String(value.spec.class ?? '')
+    if (!classes.includes('orden-link')) return
 
-      out.push({
-        text: full.slice(from, to),
-        note: value.spec.attributes?.['data-note'] ?? null,
-        missing: classes.includes('orden-link-missing'),
-      })
-    },
-  )
+    out.push({
+      text: full.slice(from, to),
+      note: value.spec.attributes?.['data-note'] ?? null,
+      missing: classes.includes('orden-link-missing'),
+    })
+  })
 
   return out
 }
@@ -133,13 +121,9 @@ function linkMarks(doc: string, cursor?: number, notes = SPACE) {
 function concealed(doc: string, cursor?: number): string[] {
   const full = cursor === undefined ? doc + PARK : doc
   const out: string[] = []
-  buildDecorations(state(full, cursor ?? full.length)).atomic.between(
-    0,
-    full.length,
-    (from, to) => {
-      out.push(full.slice(from, to))
-    },
-  )
+  buildDecorations(state(full, cursor ?? full.length)).atomic.between(0, full.length, (from, to) => {
+    out.push(full.slice(from, to))
+  })
   return out
 }
 
@@ -149,14 +133,10 @@ describe('a link into a note the space has archived', () => {
   function looks(doc: string): Record<string, string> {
     const full = doc + PARK
     const out: Record<string, string> = {}
-    buildDecorations(state(full, full.length, archived)).decorations.between(
-      0,
-      full.length,
-      (from, to, value) => {
-        const classes = String(value.spec.class ?? '')
-        if (classes.includes('orden-link')) out[full.slice(from, to)] = classes
-      },
-    )
+    buildDecorations(state(full, full.length, archived)).decorations.between(0, full.length, (from, to, value) => {
+      const classes = String(value.spec.class ?? '')
+      if (classes.includes('orden-link')) out[full.slice(from, to)] = classes
+    })
     return out
   }
 
@@ -176,9 +156,7 @@ describe('a wikilink in the live preview', () => {
   })
 
   test('shows the alias and hides the target with it', () => {
-    expect(linkMarks('see [[Plan|the plan]] now')).toEqual([
-      { text: 'the plan', note: 'Plan', missing: false },
-    ])
+    expect(linkMarks('see [[Plan|the plan]] now')).toEqual([{ text: 'the plan', note: 'Plan', missing: false }])
     expect(concealed('see [[Plan|the plan]] now')).toEqual(['[[Plan|', ']]'])
   })
 
@@ -187,10 +165,7 @@ describe('a wikilink in the live preview', () => {
     ['[[Plan#^abc]]', [{ text: 'Plan#^abc', note: 'Plan#^abc', missing: false }]],
     ['[[Nowhere]]', [{ text: 'Nowhere', note: 'Nowhere', missing: true }]],
     ['[[#Today]]', [{ text: '#Today', note: '#Today', missing: false }]],
-    [
-      'see [the plan](ideas/Plan.md) now',
-      [{ text: 'the plan', note: 'ideas/Plan.md', missing: false }],
-    ],
+    ['see [the plan](ideas/Plan.md) now', [{ text: 'the plan', note: 'ideas/Plan.md', missing: false }]],
     ['see [docs](https://x.dev) now', [{ text: 'docs', note: null, missing: false }]],
   ])('%j', (input, wanted) => expect(linkMarks(input)).toEqual(wanted))
 
@@ -232,9 +207,7 @@ describe('which note a name means', () => {
   })
 
   test('a bare name finds a note wherever it lives', () => {
-    expect(resolveNote(index([note('deep/down/Spark.md')]), 'Spark')?.path).toBe(
-      'deep/down/Spark.md',
-    )
+    expect(resolveNote(index([note('deep/down/Spark.md')]), 'Spark')?.path).toBe('deep/down/Spark.md')
   })
 
   test('case does not matter', () => {
@@ -254,9 +227,7 @@ describe('which note a name means', () => {
     expect(resolveNote(here, 'Road')?.path).toBe('B/Road.md')
     expect(resolveNote(here, '/Road')?.path).toBe('Road.md')
     expect(resolveNote(here, '/Road.md')?.path).toBe('Road.md')
-    expect(
-      resolveNote(index([note('X/B/Road.md'), note('B/Road.md')], 'X/B/x.md'), '/B/Road')?.path,
-    ).toBe('B/Road.md')
+    expect(resolveNote(index([note('X/B/Road.md'), note('B/Road.md')], 'X/B/x.md'), '/B/Road')?.path).toBe('B/Road.md')
     expect(resolveNote(index([note('X/Road.md')]), '/Road')).toBeNull()
 
     const files = { ...index([]), path: 'B/x.md', files: ['B/paper.pdf', 'paper.pdf'] }
@@ -311,9 +282,7 @@ describe('which note a name means', () => {
   })
 
   test('a markdown target written from the top or by name alone still finds its note', () => {
-    const here = index([note('ideas/Plan.md'), note('Plan B.md')], 'journal/Monday.md', {}, [
-      'files/pic.png',
-    ])
+    const here = index([note('ideas/Plan.md'), note('Plan B.md')], 'journal/Monday.md', {}, ['files/pic.png'])
     expect(resolveRelative(here, 'ideas/Plan.md')?.path).toBe('ideas/Plan.md')
     expect(resolveRelative(here, 'Plan.md')?.path).toBe('ideas/Plan.md')
     expect(resolveRelative(here, './Plan.md')).toBeNull()
@@ -326,9 +295,7 @@ describe('which note a name means', () => {
     const here = index([note('Plan.md'), note('Archive/Projects/Plan.md')], 'Projects/n.md')
     expect(resolveRelative(here, 'Plan.md')?.path).toBe('Plan.md')
     expect(resolveRelative(here, './Plan.md')).toBeNull()
-    expect(resolveRelative(here, '../Archive/Projects/Plan.md')?.path).toBe(
-      'Archive/Projects/Plan.md',
-    )
+    expect(resolveRelative(here, '../Archive/Projects/Plan.md')?.path).toBe('Archive/Projects/Plan.md')
   })
 
   test('a path written from the top of the space, as Obsidian writes one, still names it', () => {
@@ -412,10 +379,7 @@ describe('a name a note answers to', () => {
   })
 
   test('picks the nearest where two notes answer to it', () => {
-    const notes = [
-      note('far/Plan.md', [], [], ['Roadmap']),
-      note('here/Other.md', [], [], ['Roadmap']),
-    ]
+    const notes = [note('far/Plan.md', [], [], ['Roadmap']), note('here/Other.md', [], [], ['Roadmap'])]
     expect(resolveNote(index(notes, 'here/Note.md'), 'Roadmap')?.path).toBe('here/Other.md')
   })
 
@@ -557,8 +521,7 @@ describe('where a link goes', () => {
 describe('the link under a position', () => {
   test('is found from inside it and from either edge', () => {
     const doc = 'see [[Plan#Today]] now'
-    for (const at of [4, 8, 18])
-      expect(linkAt(state(doc, 0), at)).toMatchObject({ target: 'Plan', heading: 'Today' })
+    for (const at of [4, 8, 18]) expect(linkAt(state(doc, 0), at)).toMatchObject({ target: 'Plan', heading: 'Today' })
   })
 
   test('is nothing where there is no link', () => {
@@ -607,9 +570,7 @@ describe('an embed', () => {
 
   test('with words beside it stays a link', () => {
     expect(blocks('see ![[Plan]] here')).toEqual([])
-    expect(linkMarks('see ![[Plan]] here')).toEqual([
-      { text: 'Plan', note: 'Plan', missing: false },
-    ])
+    expect(linkMarks('see ![[Plan]] here')).toEqual([{ text: 'Plan', note: 'Plan', missing: false }])
   })
 
   test('on a line inside a paragraph stays a link', () => {

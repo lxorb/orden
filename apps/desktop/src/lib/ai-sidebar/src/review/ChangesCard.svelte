@@ -26,15 +26,11 @@
       <button class="orden-row is-short what" aria-expanded={listing} onclick={toggle}>
         <span class="orden-row-label"
           >{review.said ??
-            (notes.length + files.length === 1
-              ? '1 note'
-              : `${notes.length + files.length} notes`)}</span
+            (notes.length + files.length === 1 ? '1 note' : `${notes.length + files.length} notes`)}</span
         >
         <Tally {added} {removed} />
       </button>
-      <button class="orden-chip is-quiet" onclick={() => void review.undoAll(thread, files)}
-        >Undo</button
-      >
+      <button class="orden-chip is-quiet" onclick={() => void review.undoAll(thread, files)}>Undo</button>
       <button class="orden-chip" onclick={() => review.keepAll(thread, files)}>Keep</button>
     </div>
     <Changes {notes} {files} {thread} open={listing} />

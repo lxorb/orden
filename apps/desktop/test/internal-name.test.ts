@@ -38,9 +38,7 @@ describe('the old name inside the repo', () => {
       .filter((one) => one.kind === 'package')
       .flatMap(({ path, line, name }) => {
         const moved = MOVED_PACKAGES.find((pkg) => new RegExp(`^@nib/${pkg}(?![\\w-])`).test(name))
-        return moved
-          ? [`${path}:${line}: ${name} is @orden/${moved}${name.slice(5 + moved.length)} now`]
-          : []
+        return moved ? [`${path}:${line}: ${name} is @orden/${moved}${name.slice(5 + moved.length)} now`] : []
       })
     expect(written, written.join('\n')).toEqual([])
   })

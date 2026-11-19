@@ -9,11 +9,7 @@ import { noteIndex } from './notes'
 const REMOTE = /^(?:[a-z][a-z\d+.-]*:|\/\/)/i
 const written = (src: string): string => decodeTarget(src.replace(/&amp;/g, '&'))
 
-export async function renderNote(
-  source: string,
-  path: string | null,
-  state: EditorState,
-): Promise<string> {
+export async function renderNote(source: string, path: string | null, state: EditorState): Promise<string> {
   const host = state.facet(noteIndex).render
   if (host) return host(source, path)
 
@@ -22,7 +18,5 @@ export async function renderNote(
   const html = renderMarkdown(source, { footnotes: true, escapeHtml: true })
   const resolve = state.facet(imageResolver)
 
-  return mapSources(html, (src) =>
-    REMOTE.test(src) ? null : attributeValue(resolve(written(src))),
-  )
+  return mapSources(html, (src) => (REMOTE.test(src) ? null : attributeValue(resolve(written(src)))))
 }

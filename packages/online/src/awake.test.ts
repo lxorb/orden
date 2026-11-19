@@ -55,18 +55,10 @@ describe('awake: somebody using a terminal', () => {
     ['nobody connected', [], asleep('idle')],
     ['an active person with it on screen', [watcher(true, true)], STAY],
     ['an active person with it behind another tab', [watcher(true, false)], asleep('idle')],
-    [
-      'an idle person with it on screen (a second monitor overnight)',
-      [watcher(false, true)],
-      asleep('idle'),
-    ],
+    ['an idle person with it on screen (a second monitor overnight)', [watcher(false, true)], asleep('idle')],
     ['an idle person with it hidden', [watcher(false, false)], asleep('idle')],
     ['one idle and one active on screen', [watcher(false, true), watcher(true, true)], STAY],
-    [
-      'two people, neither both active and looking',
-      [watcher(true, false), watcher(false, true)],
-      asleep('idle'),
-    ],
+    ['two people, neither both active and looking', [watcher(true, false), watcher(false, true)], asleep('idle')],
   ])('%s', (_, watchers, answer) => {
     expect(ask({ watchers })).toEqual(answer)
   })
@@ -125,11 +117,7 @@ describe('awake: the allowance', () => {
     ['a second short of the CPU', { cpuS: FREE.cpuS - 1 }, STAY],
     ['the egress used', { egressBytes: FREE.egressBytes }, asleep('allowance')],
     ['a byte short of the egress', { egressBytes: FREE.egressBytes - 1 }, STAY],
-    [
-      'a full home (the disk fails writes; the machine stays)',
-      { homeBytes: FREE.homeBytes * 2 },
-      STAY,
-    ],
+    ['a full home (the disk fails writes; the machine stays)', { homeBytes: FREE.homeBytes * 2 }, STAY],
   ])('%s', (_, used, answer) => {
     expect(ask({ ...busy, used: { ...none, ...used } })).toEqual(answer)
   })
@@ -189,15 +177,7 @@ describe('awake: properties', () => {
     budgetLeft: fc.double({ min: -10, max: 40, noNaN: true }),
   })
   const answer = (given: Required<Case>) =>
-    awake(
-      NOW,
-      given.watchers,
-      given.recent,
-      given.keepAwake,
-      given.used,
-      given.limit,
-      given.budgetLeft,
-    )
+    awake(NOW, given.watchers, given.recent, given.keepAwake, given.used, given.limit, given.budgetLeft)
 
   it('more activity never sleeps sooner', () => {
     fc.assert(
@@ -211,22 +191,16 @@ describe('awake: properties', () => {
 
   it('busier reports never sleep sooner', () => {
     fc.assert(
-      fc.property(
-        inputs,
-        fc.nat(),
-        fc.double({ min: 0, max: 1, noNaN: true }),
-        fc.nat(),
-        (given, output, cpu, net) => {
-          if (!answer(given).stay) return
-          const busier = given.recent.map((one) => ({
-            ...one,
-            output: one.output + output,
-            cpu: Math.max(one.cpu, cpu),
-            net: one.net + net,
-          }))
-          expect(answer({ ...given, recent: busier }).stay).toBe(true)
-        },
-      ),
+      fc.property(inputs, fc.nat(), fc.double({ min: 0, max: 1, noNaN: true }), fc.nat(), (given, output, cpu, net) => {
+        if (!answer(given).stay) return
+        const busier = given.recent.map((one) => ({
+          ...one,
+          output: one.output + output,
+          cpu: Math.max(one.cpu, cpu),
+          net: one.net + net,
+        }))
+        expect(answer({ ...given, recent: busier }).stay).toBe(true)
+      }),
     )
   })
 
@@ -242,21 +216,16 @@ describe('awake: properties', () => {
 
   it('less used, or more budget, never sleeps sooner', () => {
     fc.assert(
-      fc.property(
-        inputs,
-        fc.double({ min: 0, max: 1, noNaN: true }),
-        fc.nat({ max: 100 }),
-        (given, less, more) => {
-          if (!answer(given).stay) return
-          const used = {
-            awakeS: given.used.awakeS * less,
-            cpuS: given.used.cpuS * less,
-            homeBytes: given.used.homeBytes,
-            egressBytes: given.used.egressBytes * less,
-          }
-          expect(answer({ ...given, used, budgetLeft: given.budgetLeft + more }).stay).toBe(true)
-        },
-      ),
+      fc.property(inputs, fc.double({ min: 0, max: 1, noNaN: true }), fc.nat({ max: 100 }), (given, less, more) => {
+        if (!answer(given).stay) return
+        const used = {
+          awakeS: given.used.awakeS * less,
+          cpuS: given.used.cpuS * less,
+          homeBytes: given.used.homeBytes,
+          egressBytes: given.used.egressBytes * less,
+        }
+        expect(answer({ ...given, used, budgetLeft: given.budgetLeft + more }).stay).toBe(true)
+      }),
     )
   })
 

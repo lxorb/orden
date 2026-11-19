@@ -85,10 +85,7 @@ function grewFrom(was: readonly InkStroke[], now: readonly InkStroke[]): boolean
   return true
 }
 
-function changed(
-  was: readonly InkStroke[],
-  now: readonly InkStroke[],
-): { gone: InkStroke[]; added: InkStroke[] } {
+function changed(was: readonly InkStroke[], now: readonly InkStroke[]): { gone: InkStroke[]; added: InkStroke[] } {
   const hunks = hunksOf(was, now)
   const before = hunks.flatMap((hunk) => hunk.was)
   const after = hunks.flatMap((hunk) => hunk.is)

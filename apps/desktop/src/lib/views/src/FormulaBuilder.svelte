@@ -77,19 +77,12 @@
     const old = name
     made = fresh
     const columns = live.columns.map((one) => (one === `formula.${old}` ? `formula.${fresh}` : one))
-    kit.change((one, at) =>
-      setColumns(setFormula(setFormula(one, old, null), fresh, source), at, columns),
-    )
+    kit.change((one, at) => setColumns(setFormula(setFormula(one, old, null), fresh, source), at, columns))
   }
 </script>
 
 {#if name !== undefined}
-  <input
-    class="orden-field"
-    value={name}
-    aria-label="Name"
-    onchange={(event) => rename(event.currentTarget.value)}
-  />
+  <input class="orden-field" value={name} aria-label="Name" onchange={(event) => rename(event.currentTarget.value)} />
 {/if}
 <input
   bind:this={field}

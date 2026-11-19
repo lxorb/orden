@@ -14,9 +14,7 @@ describe('papers', () => {
   test('each becomes its page note, byte for byte', async () => {
     const plan = await readPdfPages([file('Lecture 4.pdf', '%PDF-1.7')])
 
-    expect(plan.files).toEqual([
-      { kind: 'file', path: 'Lecture 4.pdf', bytes: expect.any(Uint8Array), pages: true },
-    ])
+    expect(plan.files).toEqual([{ kind: 'file', path: 'Lecture 4.pdf', bytes: expect.any(Uint8Array), pages: true }])
     expect(plan.lost).toEqual([])
   })
 
@@ -46,9 +44,7 @@ describe('papers', () => {
   test('a file that is not a PDF arrives as the file, and says so', async () => {
     const plan = await readPdfPages([file('Broken.pdf', 'hello')])
 
-    expect(plan.files).toEqual([
-      { kind: 'file', path: 'Broken.pdf', bytes: expect.any(Uint8Array) },
-    ])
+    expect(plan.files).toEqual([{ kind: 'file', path: 'Broken.pdf', bytes: expect.any(Uint8Array) }])
     expect(plan.lost).toHaveLength(1)
   })
 })

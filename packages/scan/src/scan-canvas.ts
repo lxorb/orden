@@ -40,8 +40,7 @@ export function planeMarks(content: string): PlaneMarks {
   }
 }
 
-export const scanCanvas = (path: string, content: string): ScannedNote =>
-  markedPlane(path, planeMarks(content))
+export const scanCanvas = (path: string, content: string): ScannedNote => markedPlane(path, planeMarks(content))
 
 export const markedPlane = (path: string, marks: PlaneMarks): ScannedNote => ({
   path,
@@ -57,7 +56,5 @@ export const markedPlane = (path: string, marks: PlaneMarks): ScannedNote => ({
   address: null,
   cover: null,
   bare: false,
-  links: marks.links.map((link) =>
-    link.target.startsWith('/') ? link : { ...link, target: `/${link.target}` },
-  ),
+  links: marks.links.map((link) => (link.target.startsWith('/') ? link : { ...link, target: `/${link.target}` })),
 })

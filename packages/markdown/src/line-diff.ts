@@ -48,9 +48,7 @@ function common(before: string[], after: string[]): [number, number][] {
       pairs.push([row, column])
       row++
       column++
-    } else if (
-      (lengths[(row + 1) * width + column] ?? 0) >= (lengths[row * width + column + 1] ?? 0)
-    ) {
+    } else if ((lengths[(row + 1) * width + column] ?? 0) >= (lengths[row * width + column + 1] ?? 0)) {
       row++
     } else {
       column++
@@ -85,8 +83,7 @@ export function lineDiff(before: string, after: string): Row[] {
   }
 
   const pairs =
-    (oldMiddle.length > MOST_LINES && nowMiddle.length > MOST_LINES) ||
-    oldMiddle.length * nowMiddle.length > MOST_CELLS
+    (oldMiddle.length > MOST_LINES && nowMiddle.length > MOST_LINES) || oldMiddle.length * nowMiddle.length > MOST_CELLS
       ? []
       : common(oldMiddle, nowMiddle)
 

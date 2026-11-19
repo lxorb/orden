@@ -30,5 +30,4 @@ export interface Heading {
 
 export const UNTITLED = 'Untitled'
 
-export const unixLines = (text: string): string =>
-  text.includes('\r') ? text.replace(/\r\n?/g, '\n') : text
+export const unixLines = (text: string): string => (text.includes('\r') ? text.replace(/\r\n?/g, '\n') : text)

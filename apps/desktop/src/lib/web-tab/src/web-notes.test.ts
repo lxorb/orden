@@ -1,13 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  leads,
-  openWebNote,
-  webNoteCandidates,
-  webNotesFor,
-  webNotesOf,
-  type Opening,
-  type WebNote,
-} from './web-notes'
+import { leads, openWebNote, webNoteCandidates, webNotesFor, webNotesOf, type Opening, type WebNote } from './web-notes'
 
 const ROOT = '/space'
 

@@ -30,9 +30,7 @@ const byName = (rows: [number, string[]][]) =>
 
 const ENGLISH_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
-const everyDay = Object.fromEntries(
-  days.map(([day, [name = '']]) => [`${name}s`, `every ${ENGLISH_DAYS[day] ?? ''}`]),
-)
+const everyDay = Object.fromEntries(days.map(([day, [name = '']]) => [`${name}s`, `every ${ENGLISH_DAYS[day] ?? ''}`]))
 
 export const DE: Grammar = {
   lang: 'de',
@@ -43,18 +41,7 @@ export const DE: Grammar = {
 
   weekdays: byName(days),
   shortDays: new Set(['mo', 'di', 'mi', 'do', 'fr', 'sa', 'so']),
-  context: new Set([
-    'am',
-    'nächsten',
-    'nächster',
-    'nächste',
-    'kommenden',
-    'diesen',
-    'bis',
-    'ab',
-    'jeden',
-    'jede',
-  ]),
+  context: new Set(['am', 'nächsten', 'nächster', 'nächste', 'kommenden', 'diesen', 'bis', 'ab', 'jeden', 'jede']),
 
   months: byName(months),
 

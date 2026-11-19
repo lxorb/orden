@@ -5,10 +5,7 @@ export interface ColourRule {
 
 export function colourExpression(rules: readonly ColourRule[]): string | undefined {
   if (!rules.length) return undefined
-  return rules.reduceRight(
-    (rest, rule) => `if(${rule.when}, ${JSON.stringify(rule.tone)}, ${rest})`,
-    'null',
-  )
+  return rules.reduceRight((rest, rule) => `if(${rule.when}, ${JSON.stringify(rule.tone)}, ${rest})`, 'null')
 }
 
 function argumentsOf(text: string, from: number): { args: string[]; end: number } | null {

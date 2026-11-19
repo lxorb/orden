@@ -53,15 +53,11 @@ describe('a link whose words carry inline marks', () => {
   })
 
   test('is still a link when its words are code', () => {
-    expect(linkMarks('run [`npm i`](https://x.dev) first')).toEqual([
-      { text: '`npm i`', href: 'https://x.dev' },
-    ])
+    expect(linkMarks('run [`npm i`](https://x.dev) first')).toEqual([{ text: '`npm i`', href: 'https://x.dev' }])
   })
 
   test('is still a link when it holds an escape', () => {
-    expect(linkMarks('read [C\\# guide](https://x.dev) here')).toEqual([
-      { text: 'C\\# guide', href: 'https://x.dev' },
-    ])
+    expect(linkMarks('read [C\\# guide](https://x.dev) here')).toEqual([{ text: 'C\\# guide', href: 'https://x.dev' }])
   })
 
   test('is still a link to a note when its words are italic', () => {

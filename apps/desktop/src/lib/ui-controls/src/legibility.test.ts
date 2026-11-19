@@ -1,15 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  AA,
-  hexOf,
-  inkFor,
-  luminance,
-  over,
-  ratio,
-  type Rgb,
-  rgbOf,
-  scrimFloor,
-} from './legibility'
+import { AA, hexOf, inkFor, luminance, over, ratio, type Rgb, rgbOf, scrimFloor } from './legibility'
 
 const WHITE: Rgb = [255, 255, 255]
 const BLACK: Rgb = [0, 0, 0]
@@ -103,8 +93,7 @@ describe('the least scrim', () => {
     const floor = scrimFloor(INK, SCRIM, span)
     for (let r = 10; r <= 250; r += 40) {
       for (let g = 40; g <= 200; g += 40) {
-        for (let b = 0; b <= 255; b += 51)
-          expect(reads(floor, [r, g, b]), `${r} ${g} ${b}`).toBe(true)
+        for (let b = 0; b <= 255; b += 51) expect(reads(floor, [r, g, b]), `${r} ${g} ${b}`).toBe(true)
       }
     }
   })
@@ -125,10 +114,7 @@ describe('the least scrim', () => {
     const span = { least: BLACK, most: WHITE }
     const floor = scrimFloor(ink, BLACK, span, [], 1.5)
     for (let level = 0; level <= 255; level += 5) {
-      expect(
-        ratio(ink, over(BLACK, floor, [level, level, level])),
-        String(level),
-      ).toBeGreaterThanOrEqual(1.5)
+      expect(ratio(ink, over(BLACK, floor, [level, level, level])), String(level)).toBeGreaterThanOrEqual(1.5)
     }
   })
 })

@@ -41,14 +41,11 @@ describe('the settings’ schema', () => {
       ]),
     )
     expect(schema['spelling.languages']?.type).toBe('list')
-    expect(
-      Object.keys(schema).some((key) => key.startsWith('shortcuts.') && key !== 'shortcuts.vim'),
-    ).toBe(true)
+    expect(Object.keys(schema).some((key) => key.startsWith('shortcuts.') && key !== 'shortcuts.vim')).toBe(true)
   })
 
   test('describes every setting', () => {
-    for (const [key, setting] of Object.entries(schema))
-      expect(setting.description, key).not.toBe('')
+    for (const [key, setting] of Object.entries(schema)) expect(setting.description, key).not.toBe('')
   })
 })
 

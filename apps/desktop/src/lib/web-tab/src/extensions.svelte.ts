@@ -31,8 +31,7 @@ interface Asking {
 }
 
 export function readExtension(said: unknown): Extension | null {
-  if (!isRecord(said) || typeof said.id !== 'string' || typeof said.version !== 'string')
-    return null
+  if (!isRecord(said) || typeof said.id !== 'string' || typeof said.version !== 'string') return null
 
   const text = (field: unknown) => (typeof field === 'string' && field ? field : null)
   return {
@@ -154,12 +153,7 @@ class Extensions {
       await this.load()
       return true
     } catch (error) {
-      this.failed =
-        typeof error === 'string'
-          ? error
-          : error instanceof Error
-            ? error.message
-            : 'that did not work'
+      this.failed = typeof error === 'string' ? error : error instanceof Error ? error.message : 'that did not work'
       return false
     } finally {
       if (this.installing === link) this.installing = null
@@ -187,9 +181,7 @@ class Extensions {
   }
 
   async named(url: string): Promise<string | null> {
-    const said = await invoke<[string, string] | null>('extensions_named', { link: url }).catch(
-      () => null,
-    )
+    const said = await invoke<[string, string] | null>('extensions_named', { link: url }).catch(() => null)
     return said ? said[1] : null
   }
 

@@ -14,9 +14,7 @@ test('wrangler applies every migration in order to an empty local D1', () => {
   const state = mkdtempSync(join(tmpdir(), 'orden-local-d1-'))
   try {
     migrateLocal(state)
-    expect(rowsLocal(state, 'select name from d1_migrations order by id')).toEqual(
-      MIGRATIONS.map((name) => ({ name })),
-    )
+    expect(rowsLocal(state, 'select name from d1_migrations order by id')).toEqual(MIGRATIONS.map((name) => ({ name })))
     expect(migrateLocal(state)).not.toContain('🕒')
   } finally {
     rmSync(state, { recursive: true, force: true, maxRetries: 10, retryDelay: 500 })

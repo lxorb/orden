@@ -39,11 +39,7 @@ describe('which way a message goes', () => {
       lines.push(String(line))
     })
 
-    const sent = await mailer(environment({ MAIL_FROM: 'Nib <nib@nibeditor.com>' })).send(
-      'a@b.dev',
-      'code',
-      MESSAGE,
-    )
+    const sent = await mailer(environment({ MAIL_FROM: 'Nib <nib@nibeditor.com>' })).send('a@b.dev', 'code', MESSAGE)
 
     expect(sent).toBe(true)
     expect(lines.join('\n')).toContain('123 456')
@@ -61,9 +57,11 @@ describe('which way a message goes', () => {
   test('through the binding, as a name and an address apart', async () => {
     const { email, handed } = binding(() => Promise.resolve({ messageId: 'm' }))
 
-    const sent = await mailer(
-      environment({ EMAIL: email, MAIL_FROM: 'Nib <nib@nibeditor.com>' }),
-    ).send('someone@example.org', 'code', MESSAGE)
+    const sent = await mailer(environment({ EMAIL: email, MAIL_FROM: 'Nib <nib@nibeditor.com>' })).send(
+      'someone@example.org',
+      'code',
+      MESSAGE,
+    )
 
     expect(sent).toBe(true)
     expect(handed).toEqual([
@@ -80,9 +78,7 @@ describe('which way a message goes', () => {
 
 describe('a refusal', () => {
   test('is a no, with the provider’s words in the log', async () => {
-    const { email } = binding(() =>
-      Promise.reject(new Error('destination address is not a verified address')),
-    )
+    const { email } = binding(() => Promise.reject(new Error('destination address is not a verified address')))
 
     let sent = true
     const lines = await logged(async () => {
@@ -102,9 +98,7 @@ describe('a refusal', () => {
 
   test('keeps the code Email Sending gives it', async () => {
     const { email } = binding(() =>
-      Promise.reject(
-        Object.assign(new Error('Sender domain not verified'), { code: 'E_SENDER_NOT_VERIFIED' }),
-      ),
+      Promise.reject(Object.assign(new Error('Sender domain not verified'), { code: 'E_SENDER_NOT_VERIFIED' })),
     )
 
     let sent = true

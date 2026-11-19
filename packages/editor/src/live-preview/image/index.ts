@@ -14,13 +14,5 @@ export {
   selectImageBehind,
   selectedImage,
 } from './selection'
-export {
-  imageAt,
-  imageEndingAt,
-  imageMarkup,
-  imageOfNode,
-  parseHtmlImage,
-  retag,
-  sourceCaret,
-} from './markup'
+export { imageAt, imageEndingAt, imageMarkup, imageOfNode, parseHtmlImage, retag, sourceCaret } from './markup'
 export { resizeTo, snapPercent } from './size'

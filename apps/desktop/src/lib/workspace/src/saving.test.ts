@@ -106,8 +106,7 @@ function open(path: string | null, { text = '# a', kind = 'note' }: Starting = {
     born: () => undefined,
     touched: () => undefined,
     keepPaper: () => Promise.resolve(),
-    fileCame: async (path: string, _kind: 'file' | 'folder', key?: string) =>
-      void came.push({ path, key }),
+    fileCame: async (path: string, _kind: 'file' | 'folder', key?: string) => void came.push({ path, key }),
   }
 
   const saving = new Saving(ws)
@@ -183,9 +182,7 @@ describe('what the pause after the typing writes', () => {
     note.replace('# a once more')
     expect(written()).toEqual([])
     await vi.advanceTimersByTimeAsync(400)
-    expect(written()).toEqual([
-      { command: 'write_note', path: `${SPACE}/a.md`, content: '# a once more' },
-    ])
+    expect(written()).toEqual([{ command: 'write_note', path: `${SPACE}/a.md`, content: '# a once more' }])
   })
 
   test('and never waits more than two seconds while the typing never stops', async () => {
@@ -205,9 +202,7 @@ describe('what the pause after the typing writes', () => {
     await vi.advanceTimersByTimeAsync(400)
     note.replace('# a b')
     await vi.advanceTimersByTimeAsync(400)
-    expect(versions()).toEqual([
-      { command: 'snapshot_note', path: `${SPACE}/a.md`, content: '# this morning' },
-    ])
+    expect(versions()).toEqual([{ command: 'snapshot_note', path: `${SPACE}/a.md`, content: '# this morning' }])
     expect(written()).toHaveLength(2)
   })
 })
@@ -243,9 +238,7 @@ describe('a draft', () => {
   test('a plane is written as it stands, drawn on or not', async () => {
     const { note, saving } = open(null, { text: '{"nodes":[]}', kind: 'canvas' })
     await saving.place(note, SPACE, 'Board.canvas')
-    expect(written()).toEqual([
-      { command: 'write_note', path: `${SPACE}/Board.canvas`, content: '{"nodes":[]}' },
-    ])
+    expect(written()).toEqual([{ command: 'write_note', path: `${SPACE}/Board.canvas`, content: '{"nodes":[]}' }])
   })
 
   test('given a place the disk refuses, says it is not there yet', async () => {
@@ -280,9 +273,8 @@ describe('a draft', () => {
 
   test('two given places together never land on one file', async () => {
     const { note, saving, ws } = open(null, { text: 'P' })
-    const other = new NoteDoc(
-      { kind: 'note', path: null, name: UNTITLED, text: 'P', dirty: false },
-      (one) => saving.edited(one),
+    const other = new NoteDoc({ kind: 'note', path: null, name: UNTITLED, text: 'P', dirty: false }, (one) =>
+      saving.edited(one),
     )
     ws.tabs.push(new Tab(other, 'p2'))
     ws.documents.push(other)
@@ -301,9 +293,7 @@ describe('the window going while the typing is still warm', () => {
     expect(written(PATH)).toEqual([])
     settleUp()
     await vi.advanceTimersByTimeAsync(0)
-    expect(written(PATH)).toEqual([
-      { command: 'write_note', path: PATH, content: '# a\n\nthe last sentence' },
-    ])
+    expect(written(PATH)).toEqual([{ command: 'write_note', path: PATH, content: '# a\n\nthe last sentence' }])
   })
 
   test('and puts the same words in the session, which storage takes at once', () => {
@@ -412,8 +402,7 @@ describe('a write the disk refuses', () => {
     vi.useFakeTimers()
     const { note, saving } = open(A)
     saving.across = {
-      writing: () =>
-        Promise.reject(Object.assign(new Error(`${A} would not read`), { name: 'WillNotRead' })),
+      writing: () => Promise.reject(Object.assign(new Error(`${A} would not read`), { name: 'WillNotRead' })),
     } as never
     note.replace('# a\n\nrefused')
     await vi.advanceTimersByTimeAsync(400 + 2000 + 4000)

@@ -33,9 +33,7 @@ export function stringOf(value: unknown): string {
 }
 
 export function recordOf(value: unknown): Record<string, unknown> {
-  return value !== null && typeof value === 'object' && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {}
+  return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {}
 }
 
 export function listOf(value: unknown): unknown[] {
@@ -92,9 +90,7 @@ export interface Extra {
 }
 
 export function fieldsOf(entries: readonly Extra[]): Field[] {
-  return entries
-    .filter((one) => one.value !== '')
-    .map((one) => fieldOf(one.name, one.value, one.kind))
+  return entries.filter((one) => one.value !== '').map((one) => fieldOf(one.name, one.value, one.kind))
 }
 
 export function sectionOf(name: string, fields: Field[]): Section {
@@ -280,9 +276,7 @@ export function identityOf(parts: IdentityParts): Identity {
     if (trimmed !== '' && isIdentityKey(key)) values[key] = trimmed
   }
   if (values.fullName === undefined) {
-    const full = [values.firstName, values.middleName, values.lastName]
-      .filter((one) => one !== undefined)
-      .join(' ')
+    const full = [values.firstName, values.middleName, values.lastName].filter((one) => one !== undefined).join(' ')
     if (full !== '') values.fullName = full
   }
   const extra = fieldsOf(parts.extra ?? [])
@@ -379,9 +373,7 @@ export class Collector {
 
   result(): Imported {
     return {
-      vaults: [...this.vaults]
-        .filter(([, items]) => items.length > 0)
-        .map(([name, items]) => ({ name, items })),
+      vaults: [...this.vaults].filter(([, items]) => items.length > 0).map(([name, items]) => ({ name, items })),
       skipped: this.skipped,
     }
   }

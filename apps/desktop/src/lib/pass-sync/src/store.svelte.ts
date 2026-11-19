@@ -1,14 +1,6 @@
 import { base64, randomBytes, unbase64 } from '@orden/pass/bytes'
 import type { KdfParams } from '@orden/pass/crypto'
-import {
-  kdfParamsIn,
-  newKey,
-  openText,
-  PASSWORD_KDF,
-  PIN_KDF,
-  seal,
-  WrongSecret,
-} from '@orden/pass/crypto'
+import { kdfParamsIn, newKey, openText, PASSWORD_KDF, PIN_KDF, seal, WrongSecret } from '@orden/pass/crypto'
 import { openForDevice, pinIn, sealForDevice } from '@orden/pass/device'
 import { newEnvelope, vaultMetaIn } from '@orden/pass/envelope'
 import { exportCsv, exportJson, sealExport } from '@orden/pass/export'
@@ -466,9 +458,7 @@ export class PassStore {
   }
 
   async restore(ids: string[]): Promise<void> {
-    await this.changeAll(ids, (envelope) =>
-      envelope.trashed === null ? null : { ...envelope, trashed: null },
-    )
+    await this.changeAll(ids, (envelope) => (envelope.trashed === null ? null : { ...envelope, trashed: null }))
   }
 
   remove(ids: string[]): Promise<void> {
@@ -502,15 +492,11 @@ export class PassStore {
   }
 
   async pin(id: string, on: boolean): Promise<void> {
-    await this.changeAll([id], (envelope) =>
-      envelope.pinned === on ? null : { ...envelope, pinned: on },
-    )
+    await this.changeAll([id], (envelope) => (envelope.pinned === on ? null : { ...envelope, pinned: on }))
   }
 
   async monitor(id: string, on: boolean): Promise<void> {
-    await this.changeAll([id], (envelope) =>
-      envelope.monitored === on ? null : { ...envelope, monitored: on },
-    )
+    await this.changeAll([id], (envelope) => (envelope.monitored === on ? null : { ...envelope, monitored: on }))
   }
 
   async used(id: string): Promise<void> {
@@ -576,9 +562,7 @@ export class PassStore {
     if (format === 'csv') {
       return { name, text: exportCsv(own.flatMap(({ items }) => items).map(envelopeOf)) }
     }
-    const json = exportJson(
-      own.map(({ vault, items }) => ({ meta: metaOf(vault), items: items.map(envelopeOf) })),
-    )
+    const json = exportJson(own.map(({ vault, items }) => ({ meta: metaOf(vault), items: items.map(envelopeOf) })))
     if (format === 'json') return { name, text: json }
     if (!passphrase) throw new Error('pass: a sealed export needs a passphrase')
     return { name, text: await sealExport(json, passphrase, kdf) }
@@ -588,9 +572,7 @@ export class PassStore {
     return activeLogins(this.items)
       .map((item) => ({
         item,
-        best: item.content.websites
-          .map((website) => rank(website, url))
-          .reduce((high, one) => Math.max(high, one), 0),
+        best: item.content.websites.map((website) => rank(website, url)).reduce((high, one) => Math.max(high, one), 0),
       }))
       .filter((one) => one.best > 0)
       .sort((a, b) => b.best - a.best || (b.item.used ?? 0) - (a.item.used ?? 0))
@@ -747,9 +729,7 @@ export class PassStore {
     }
   }
 
-  private async localOpened(
-    password: string,
-  ): Promise<{ opened: Opened; vaults: Vault[]; items: Item[] } | null> {
+  private async localOpened(password: string): Promise<{ opened: Opened; vaults: Vault[]; items: Item[] } | null> {
     const held = unlocked.get(this)
     if (held) return { opened: held.opened, vaults: this.vaults, items: this.items }
     const keyring = this.keyring?.keyring
@@ -778,20 +758,11 @@ export class PassStore {
     return { api, held, rows: deviceRows, email: emailOf(email), versions: readVersions }
   }
 
-  private async keptKeyring(
-    keyring: Keyring,
-    found: Opened,
-    password: string | undefined,
-  ): Promise<Opened> {
+  private async keptKeyring(keyring: Keyring, found: Opened, password: string | undefined): Promise<Opened> {
     const signing = await withSigner(keyring, found)
     const resealed =
       password !== undefined && isOldPasswordSeal(signing.keyring)
-        ? await changePassword(
-            signing.keyring,
-            signing.opened,
-            password,
-            kdfParamsIn(keyring.password) ?? kdf,
-          )
+        ? await changePassword(signing.keyring, signing.opened, password, kdfParamsIn(keyring.password) ?? kdf)
         : signing.keyring
     const row = this.keyring
     if (row && resealed !== keyring) await this.keepKeyring(row, resealed)
@@ -892,10 +863,7 @@ export class PassStore {
     if (!(await deviceSays('Unlock Pass'))) return null
     const secret = await deviceSecret()
     if (!secret) return null
-    return await openedWith(
-      keyring,
-      await openForDevice(device.seal, secret, undefined, device.kdf),
-    )
+    return await openedWith(keyring, await openForDevice(device.seal, secret, undefined, device.kdf))
   }
 
   private async forgetPin(): Promise<void> {

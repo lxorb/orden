@@ -44,8 +44,7 @@ function picker(mono: boolean, start = '') {
 }
 
 const field = () => target.querySelector('input')!
-const rows = () =>
-  [...document.querySelectorAll('[role=option]')].map((one) => one.textContent.trim())
+const rows = () => [...document.querySelectorAll('[role=option]')].map((one) => one.textContent.trim())
 
 async function opened() {
   field().focus()

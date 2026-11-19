@@ -80,10 +80,7 @@
   })
 </script>
 
-<svelte:window
-  onpointermove={(event: PointerEvent) => moved(event.clientY)}
-  onkeydown={onKeydown}
-/>
+<svelte:window onpointermove={(event: PointerEvent) => moved(event.clientY)} onkeydown={onKeydown} />
 
 {#if lights}
   <div class="lights" data-tauri-drag-region></div>

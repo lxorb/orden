@@ -22,13 +22,10 @@ function row(id: string, name: string, local: string, hash: string, deleted = fa
 }
 
 function space(rows: EntryRow[]) {
-  return new SpaceState(
-    { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
-    rows,
-    [],
-    'd',
-    { platform: 'linux', foldsCase: true } as never,
-  )
+  return new SpaceState({ space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null }, rows, [], 'd', {
+    platform: 'linux',
+    foldsCase: true,
+  } as never)
 }
 
 describe('a file sync numbered beside itself (#1904)', () => {
@@ -51,9 +48,7 @@ describe('a file sync numbered beside itself (#1904)', () => {
   test('keeps a numbered name the reader chose, other bytes, or a name already taken', () => {
     expect(madeTwice(space([row('b', 'Plan 2.pdf', 'Plan 2.pdf', 'h1')]))).toEqual([])
     expect(
-      madeTwice(
-        space([row('a', 'Plan.pdf', '', 'old', true), row('b', 'Plan 2.pdf', 'Plan 2.pdf', 'new')]),
-      ),
+      madeTwice(space([row('a', 'Plan.pdf', '', 'old', true), row('b', 'Plan 2.pdf', 'Plan 2.pdf', 'new')])),
     ).toEqual([])
     expect(
       madeTwice(

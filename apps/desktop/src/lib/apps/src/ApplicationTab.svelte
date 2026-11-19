@@ -166,15 +166,12 @@
     if (status.why) return NOT_STARTED[status.why](device)
     if (status.state === 'running') return `Running on ${device}`
     if (status.state === 'starting') return `Starting on ${device}…`
-    if (status.state === 'exited' && status.code !== null)
-      return `Exited with code ${String(status.code)}`
+    if (status.state === 'exited' && status.code !== null) return `Exited with code ${String(status.code)}`
     return `Not running on ${device}`
   })
 
   const picture = $derived(session.picture.status)
-  const showing = $derived(
-    status.is === 'here' && status.state === 'running' && picture.is === 'showing',
-  )
+  const showing = $derived(status.is === 'here' && status.state === 'running' && picture.is === 'showing')
   function noPicture(picture: PictureStatus, device: string): string | null {
     switch (picture.is) {
       case 'lost':
@@ -282,10 +279,7 @@
     let handle = 0
     const each = (_now: number, frame: VideoFrameCallbackMetadata) => {
       if (frame.rtpTimestamp !== undefined)
-        session.picture.presented(
-          frame.rtpTimestamp,
-          performance.timeOrigin + frame.expectedDisplayTime,
-        )
+        session.picture.presented(frame.rtpTimestamp, performance.timeOrigin + frame.expectedDisplayTime)
       handle = over.requestVideoFrameCallback(each)
     }
     handle = over.requestVideoFrameCallback(each)
@@ -298,9 +292,7 @@
       (status.is === 'here' && status.state === 'starting' && !status.unanswered),
   )
   const again = $derived(
-    'unsynced unserved unreachable not-running untaken outside old-sync shared unread'
-      .split(' ')
-      .includes(status.is),
+    'unsynced unserved unreachable not-running untaken outside old-sync shared unread'.split(' ').includes(status.is),
   )
   $effect(() => {
     if (account.accountToken && untrack(() => session.status.is) === 'signed-out') session.retry()
@@ -341,15 +333,10 @@
     onblur={letGo}></textarea>
   {#if showing}
     <div class="bar">
-      <button
-        type="button"
-        class="orden-button"
-        aria-pressed={overlay}
-        onclick={() => (overlay = !overlay)}>Stream stats</button
+      <button type="button" class="orden-button" aria-pressed={overlay} onclick={() => (overlay = !overlay)}
+        >Stream stats</button
       >
-      <button type="button" class="orden-button" onclick={() => session.run('restart')}
-        >Restart</button
-      >
+      <button type="button" class="orden-button" onclick={() => session.run('restart')}>Restart</button>
       <button type="button" class="orden-button" onclick={() => session.run('stop')}>Stop</button>
     </div>
   {/if}
@@ -395,13 +382,9 @@
       <button type="button" class="orden-button" onclick={() => account.ask()}>Sign in</button>
     {:else if again}
       {#if status.is === 'outside'}
-        <button type="button" class="orden-button" onclick={() => settingsWindow().show('sync')}
-          >Sync settings</button
-        >
+        <button type="button" class="orden-button" onclick={() => settingsWindow().show('sync')}>Sync settings</button>
       {/if}
-      <button type="button" class="orden-button is-quiet" onclick={() => session.retry()}
-        >Try again</button
-      >
+      <button type="button" class="orden-button is-quiet" onclick={() => session.retry()}>Try again</button>
     {:else if status.is === 'held'}
       <button type="button" class="orden-button" onclick={() => session.take()}
         >{status.holder.taken ? 'Take back' : 'Take over'}</button
@@ -413,9 +396,7 @@
         <div class="sweep"><Sweep /></div>
       {/if}
       <div class="row">
-        <button type="button" class="orden-button" onclick={() => session.run('restart')}
-          >Restart</button
-        >
+        <button type="button" class="orden-button" onclick={() => session.run('restart')}>Restart</button>
         <button type="button" class="orden-button" onclick={() => session.run('stop')}>Stop</button>
       </div>
     {:else if status.is === 'here' && status.why !== 'isolation' && (status.state !== 'starting' || status.unanswered)}

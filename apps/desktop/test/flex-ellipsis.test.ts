@@ -10,8 +10,7 @@ describe('an ellipsis', () => {
       const style = /<style>([\s\S]*?)<\/style>/.exec(readFileSync(path, 'utf8'))?.[1] ?? ''
       for (const rule of style.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
         const body = rule[2] ?? ''
-        if (!/display:\s*(?:inline-)?flex/.test(body) || !/text-overflow:\s*ellipsis/.test(body))
-          continue
+        if (!/display:\s*(?:inline-)?flex/.test(body) || !/text-overflow:\s*ellipsis/.test(body)) continue
         const where = `${relative(SOURCE, path).replace(/\\/g, '/')} ${(rule[1] ?? '').trim()}`
         wrong.push(where)
       }

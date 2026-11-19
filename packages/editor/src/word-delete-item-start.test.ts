@@ -27,11 +27,7 @@ function viewAt(doc: string, at: number, quiet = false) {
 }
 
 function wordBackspace(view: EditorView) {
-  runScopeHandlers(
-    view,
-    new KeyboardEvent('keydown', { key: 'Backspace', ctrlKey: true }),
-    'editor',
-  )
+  runScopeHandlers(view, new KeyboardEvent('keydown', { key: 'Backspace', ctrlKey: true }), 'editor')
 }
 
 describe('Ctrl+Backspace at the start of an item, where Home puts the caret', () => {

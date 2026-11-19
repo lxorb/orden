@@ -16,8 +16,7 @@ export function showPages(said: unknown) {
   if (!Array.isArray(said)) return
 
   for (const url of said) {
-    if (typeof url === 'string' && (isWebAddress(url) || isExtensionPage(url)))
-      workspace.openPage(url, 'front')
+    if (typeof url === 'string' && (isWebAddress(url) || isExtensionPage(url))) workspace.openPage(url, 'front')
     else log('warn', `web: a page handed over was not one: ${String(url)}`)
   }
 }

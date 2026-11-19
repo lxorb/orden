@@ -41,8 +41,6 @@ describe('turn into on a heading whose words start with a number', () => {
 
 describe('turn into on a paragraph whose later line starts with a number and a dot', () => {
   test('a quote keeps the number, which is words of the paragraph', () => {
-    expect(turned('We met in\n2024. It went well.\n', 'We met', 'quote')).toBe(
-      '> We met in\n> 2024. It went well.\n',
-    )
+    expect(turned('We met in\n2024. It went well.\n', 'We met', 'quote')).toBe('> We met in\n> 2024. It went well.\n')
   })
 })

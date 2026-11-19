@@ -52,9 +52,7 @@ function page(path: string, options: Record<string, unknown> = {}) {
 describe('what a note says about its page', () => {
   test('a comment closed in a value goes no further than the note', () => {
     expect(frontOf('---\ntitle: Launch %% secret price 5 %%\n---\nWords\n')?.title).toBe('Launch')
-    expect(
-      frontOf('---\ntitle: Launch\n%%\ndescription: secret\n%%\n---\nWords\n')?.description,
-    ).toBeUndefined()
+    expect(frontOf('---\ntitle: Launch\n%%\ndescription: secret\n%%\n---\nWords\n')?.description).toBeUndefined()
   })
 
   test('a comment sign in a value leaves the block and the note under it', () => {
@@ -114,9 +112,7 @@ describe('what a note says about its page', () => {
   })
 
   test('and strips the marks out of it', () => {
-    expect(frontOf('A **bold** [link](x) and [[a note|that note]].\n')?.summary).toBe(
-      'A bold link and that note.',
-    )
+    expect(frontOf('A **bold** [link](x) and [[a note|that note]].\n')?.summary).toBe('A bold link and that note.')
   })
 })
 
@@ -129,9 +125,7 @@ describe('which notes a site publishes', () => {
 
   test('the note wins over every rule', () => {
     expect(publishes({ ...rules, exclude: ['Work'] }, 'Work/One.md', { publish: true })).toBe(true)
-    expect(publishes({ ...rules, include: ['Work'] }, 'Work/One.md', { publish: false })).toBe(
-      false,
-    )
+    expect(publishes({ ...rules, include: ['Work'] }, 'Work/One.md', { publish: false })).toBe(false)
   })
 
   test('an excluded folder takes everything under it', () => {
@@ -361,11 +355,7 @@ describe('where a page lives', () => {
     expect(index.text).toContain('href="/hello-world-3"')
 
     const read = async (path: string) => (await page(path)).text
-    const shown = [
-      await read('/hello-world'),
-      await read('/hello-world-2'),
-      await read('/hello-world-3'),
-    ]
+    const shown = [await read('/hello-world'), await read('/hello-world-2'), await read('/hello-world-3')]
     expect(shown.filter((one) => one.includes('First words.'))).toHaveLength(1)
     expect(shown.filter((one) => one.includes('Second words.'))).toHaveLength(1)
     expect(shown.filter((one) => one.includes('Third words.'))).toHaveLength(1)
@@ -383,10 +373,7 @@ describe('where a page lives', () => {
 
 describe('what the head of a page says', () => {
   beforeEach(async () => {
-    await note(
-      'Plan.md',
-      '---\ndescription: What we decided.\ndate: 2026-03-04\n---\n\n# The plan\n\nWe shipped it.\n',
-    )
+    await note('Plan.md', '---\ndescription: What we decided.\ndate: 2026-03-04\n---\n\n# The plan\n\nWe shipped it.\n')
     await note('Bare.md', '# Bare\n\nThe first sentence of it.\n')
     await publish()
   })
@@ -471,9 +458,7 @@ describe('what the machines read', () => {
     const answer = await page('/feed.xml')
 
     expect(answer.headers.get('content-type')).toContain('application/atom+xml')
-    expect(answer.text.indexOf('<title>Two</title>')).toBeLessThan(
-      answer.text.indexOf('<title>One</title>'),
-    )
+    expect(answer.text.indexOf('<title>Two</title>')).toBeLessThan(answer.text.indexOf('<title>One</title>'))
     expect(answer.text).toContain('<summary>The first.</summary>')
     expect(answer.text).toContain('<summary>The second one.</summary>')
   })
@@ -482,9 +467,7 @@ describe('what the machines read', () => {
     const answer = await page('/rss.xml')
 
     expect(answer.headers.get('content-type')).toContain('application/rss+xml')
-    expect(answer.text.indexOf('<title>Two</title>')).toBeLessThan(
-      answer.text.indexOf('<title>One</title>'),
-    )
+    expect(answer.text.indexOf('<title>Two</title>')).toBeLessThan(answer.text.indexOf('<title>One</title>'))
     expect(answer.text).toContain('<description>The first.</description>')
     expect(answer.text).toContain('<description>The second one.</description>')
     expect(answer.text).toContain('<pubDate>Fri, 02 Jan 2026 00:00:00 GMT</pubDate>')
@@ -558,19 +541,13 @@ describe('the icon a tab shows', () => {
     await setSite({ icon: '<svg xmlns="http://www.w3.org/2000/svg"><circle r="8"/></svg>' })
 
     const answer = await page('/favicon.svg')
-    expect(answer.headers.get('content-security-policy')).toBe(
-      "default-src 'none'; style-src 'unsafe-inline'; sandbox",
-    )
+    expect(answer.headers.get('content-security-policy')).toBe("default-src 'none'; style-src 'unsafe-inline'; sandbox")
     expect(answer.headers.get('x-content-type-options')).toBe('nosniff')
   })
 })
 
 describe('the analytics script a site loads', () => {
-  const BROKEN = [
-    'https:// plausible.io/js/script.js',
-    'https://plausible.io /js/script.js',
-    'https://',
-  ]
+  const BROKEN = ['https:// plausible.io/js/script.js', 'https://plausible.io /js/script.js', 'https://']
 
   test('an address that does not parse is refused, and nothing is kept', async () => {
     await note('One.md', '# One\n')

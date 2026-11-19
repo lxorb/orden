@@ -47,9 +47,7 @@ export async function added(database: DatabaseDump): Promise<void> {
   const now = await versionOf(database.name)
   const db = await opened(database, Math.max(database.version, now ?? 1))
   try {
-    const names = database.stores
-      .map((store) => store.name)
-      .filter((name) => db.objectStoreNames.contains(name))
+    const names = database.stores.map((store) => store.name).filter((name) => db.objectStoreNames.contains(name))
     if (names.length === 0) return
     const writing = db.transaction(names, 'readwrite')
     for (const shape of database.stores) {
@@ -58,9 +56,7 @@ export async function added(database: DatabaseDump): Promise<void> {
       shape.values.forEach((value, at) => {
         const key = shape.keys[at]
         const asked =
-          store.keyPath === null
-            ? store.add(revived(value), revived(key) as IDBValidKey)
-            : store.add(revived(value))
+          store.keyPath === null ? store.add(revived(value), revived(key) as IDBValidKey) : store.add(revived(value))
         asked.onerror = (event) => {
           event.preventDefault()
           event.stopPropagation()
@@ -81,10 +77,7 @@ export async function carryOldDatabases(): Promise<void> {
     try {
       await added(database)
       if (database.skipped > 0) {
-        log(
-          'warn',
-          `${database.skipped} records of ${database.name} could not be read from the old engine`,
-        )
+        log('warn', `${database.skipped} records of ${database.name} could not be read from the old engine`)
       }
       if (database.name === PASS && database.skipped > 0) keep(PASS_LEFT_BEHIND, '1')
     } catch (error) {

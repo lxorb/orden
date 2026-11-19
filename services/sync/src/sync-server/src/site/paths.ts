@@ -106,9 +106,7 @@ export async function followOnlyNote(
 
   const to = moves.find((one) => one.from === pinned)?.to
   if (to === undefined || to === pinned) return
-  await env.DB.prepare('update spaces set blog_note = ? where id = ? and blog_note = ?')
-    .bind(to, spaceId, pinned)
-    .run()
+  await env.DB.prepare('update spaces set blog_note = ? where id = ? and blog_note = ?').bind(to, spaceId, pinned).run()
 }
 
 const MOST_MOVES_REMEMBERED = 500
@@ -119,11 +117,7 @@ export interface Moved {
   to: string
 }
 
-export async function rememberMoves(
-  env: Env,
-  spaceId: string,
-  moves: readonly Moved[],
-): Promise<void> {
+export async function rememberMoves(env: Env, spaceId: string, moves: readonly Moved[]): Promise<void> {
   if (!moves.length) return
   const space = await env.DB.prepare('select blog_enabled from spaces where id = ?')
     .bind(spaceId)
@@ -140,24 +134,13 @@ export async function rememberMoves(
     for (const one of piece) {
       if (!fronts.has(one.id)) continue
       const front = fronts.get(one.id) ?? null
-      await rememberOldPaths(
-        env,
-        { id: one.id, space_id: spaceId, path: one.from, front },
-        one.to,
-        readFront(front),
-      )
+      await rememberOldPaths(env, { id: one.id, space_id: spaceId, path: one.from, front }, one.to, readFront(front))
     }
   }
 }
 
-export async function rememberedNote(
-  env: Env,
-  spaceId: string,
-  slug: string,
-): Promise<string | null> {
-  const found = await env.DB.prepare(
-    'select note_id from blog_paths where space_id = ? and slug = ?',
-  )
+export async function rememberedNote(env: Env, spaceId: string, slug: string): Promise<string | null> {
+  const found = await env.DB.prepare('select note_id from blog_paths where space_id = ? and slug = ?')
     .bind(spaceId, slug)
     .first<{ note_id: string }>()
 

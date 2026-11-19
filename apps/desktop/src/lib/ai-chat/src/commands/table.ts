@@ -8,13 +8,13 @@ export interface Row {
   description: string
 }
 
-const row = (
-  group: Group,
-  name: string,
-  synonyms: readonly string[],
-  description: string,
-  args?: string,
-): Row => ({ name, synonyms, group, description, ...(args ? { args } : {}) })
+const row = (group: Group, name: string, synonyms: readonly string[], description: string, args?: string): Row => ({
+  name,
+  synonyms,
+  group,
+  description,
+  ...(args ? { args } : {}),
+})
 
 export const ROWS: readonly Row[] = [
   row('conversation', 'new', ['clear', 'reset'], 'New thread', '[name]'),

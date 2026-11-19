@@ -4,8 +4,7 @@
   import { Sheet } from '../../ui-controls/src/api'
   import { RELEASES_URL } from './links'
 
-  const { version, notes, onclose }: { version: string; notes: string; onclose: () => void } =
-    $props()
+  const { version, notes, onclose }: { version: string; notes: string; onclose: () => void } = $props()
 
   const shown = $derived(renderMarkdown(notes, { escapeHtml: true }))
 </script>
@@ -15,10 +14,7 @@
   <div class="notes">{@html shown}</div>
 
   {#snippet foot()}
-    <button
-      class="orden-button is-quiet"
-      onclick={() => void openExternal(`${RELEASES_URL}/tag/v${version}`)}
-    >
+    <button class="orden-button is-quiet" onclick={() => void openExternal(`${RELEASES_URL}/tag/v${version}`)}>
       Open on GitHub
     </button>
     <button class="orden-button" onclick={onclose}>Done</button>

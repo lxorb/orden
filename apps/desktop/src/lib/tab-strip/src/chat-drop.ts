@@ -20,9 +20,7 @@ export function droppedOnChat(tabId: string): boolean {
   if (tab.kind === 'web') carryTab(transfer, tabId)
   else if (tab.path) carry(transfer, [tab.path])
   else return false
-  on.dispatchEvent(
-    new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: transfer }),
-  )
+  on.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: transfer }))
   carriedNothing()
   return true
 }

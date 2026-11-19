@@ -2,9 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { describe, expect, test } from 'vitest'
 import { ROOT } from './files'
 
-const TRACKED = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' })
-  .split('\n')
-  .filter(Boolean)
+const TRACKED = execFileSync('git', ['ls-files'], { cwd: ROOT, encoding: 'utf8' }).split('\n').filter(Boolean)
 
 const MODULE_SUFFIXES = ['.svelte.ts', '.svelte.js']
 
@@ -42,12 +40,8 @@ describe('files on a disk that ignores case', () => {
   })
 
   test('the check knows the shape it refuses', () => {
-    expect(collisions(['a/Setup.svelte', 'a/setup.svelte'])).toEqual([
-      ['a/Setup.svelte', 'a/setup.svelte'],
-    ])
-    expect(shadowed(['a/Setup.svelte', 'a/setup.svelte.ts'])).toEqual([
-      ['a/setup.svelte.ts', 'a/Setup.svelte'],
-    ])
+    expect(collisions(['a/Setup.svelte', 'a/setup.svelte'])).toEqual([['a/Setup.svelte', 'a/setup.svelte']])
+    expect(shadowed(['a/Setup.svelte', 'a/setup.svelte.ts'])).toEqual([['a/setup.svelte.ts', 'a/Setup.svelte']])
     expect(shadowed(['a/Setup.svelte', 'a/setup-state.svelte.ts'])).toEqual([])
     expect(shadowed(['a/account.svelte.ts', 'a/account.test.ts'])).toEqual([])
   })

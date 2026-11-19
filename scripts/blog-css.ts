@@ -10,9 +10,7 @@ const BLOG = new URL('services/sync/src/sync-server-blog/src/', ROOT)
 const KATEX = new URL(
   '.',
   pathToFileURL(
-    createRequire(fileURLToPath(new URL('packages/themes/package.json', ROOT))).resolve(
-      'katex/dist/katex.min.css',
-    ),
+    createRequire(fileURLToPath(new URL('packages/themes/package.json', ROOT))).resolve('katex/dist/katex.min.css'),
   ),
 )
 

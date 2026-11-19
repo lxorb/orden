@@ -19,9 +19,7 @@
     { id: 'csv', label: () => 'CSV' },
   ]
 
-  const ready = $derived(
-    password !== '' && (format !== 'sealed' || (passphrase !== '' && passphrase === again)),
-  )
+  const ready = $derived(password !== '' && (format !== 'sealed' || (passphrase !== '' && passphrase === again)))
 
   async function exported(event: SubmitEvent) {
     event.preventDefault()
@@ -30,11 +28,7 @@
     wrong = ''
     saved = ''
     try {
-      const made = await pass.exportAll(
-        password,
-        format,
-        format === 'sealed' ? passphrase : undefined,
-      )
+      const made = await pass.exportAll(password, format, format === 'sealed' ? passphrase : undefined)
       if (!made) {
         wrong = 'Wrong password'
         return
@@ -56,9 +50,7 @@
 </script>
 
 <form class="card padded" onsubmit={exported}>
-  <p class="meta">
-    Only the vaults you own are exported. A vault shared with you stays with its owner.
-  </p>
+  <p class="meta">Only the vaults you own are exported. A vault shared with you stays with its owner.</p>
   <div class="orden-segmented" role="radiogroup" aria-label="Format" use:segmented>
     {#each FORMATS as one (one.id)}
       <button
@@ -105,9 +97,7 @@
   {#if wrong}<p class="pass-wrong" role="alert">{wrong}</p>{/if}
   {#if saved}<p class="meta" role="status">{saved}</p>{/if}
   <div class="buttons">
-    <button class="orden-button" type="submit" disabled={!ready || busy} aria-busy={busy}
-      >Export</button
-    >
+    <button class="orden-button" type="submit" disabled={!ready || busy} aria-busy={busy}>Export</button>
   </div>
 </form>
 

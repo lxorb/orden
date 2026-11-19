@@ -84,9 +84,7 @@ function moving(): boolean {
   if (typeof document.getAnimations !== 'function') return false
   return document
     .getAnimations()
-    .some(
-      (one) => one.playState === 'running' && one.effect?.getComputedTiming().endTime !== Infinity,
-    )
+    .some((one) => one.playState === 'running' && one.effect?.getComputedTiming().endTime !== Infinity)
 }
 
 function holderOf(node: HTMLElement): HTMLElement | null {
@@ -120,9 +118,7 @@ export function hang(node: HTMLElement, hanging: Hanging = {}) {
     if (options.stretch && node.style.width !== width) node.style.width = width
     const style = getComputedStyle(from)
     const inset =
-      typeof options.inset === 'string'
-        ? parseFloat(style.getPropertyValue(options.inset)) || 0
-        : (options.inset ?? 0)
+      typeof options.inset === 'string' ? parseFloat(style.getPropertyValue(options.inset)) || 0 : (options.inset ?? 0)
     const spot = placeOf(
       at,
       { width: node.offsetWidth, height: node.offsetHeight },
@@ -146,8 +142,7 @@ export function hang(node: HTMLElement, hanging: Hanging = {}) {
   for (const one of moved) window.addEventListener(one, soon, { capture: true, passive: true })
   const sized = typeof ResizeObserver === 'function' ? new ResizeObserver(soon) : null
   sized?.observe(node)
-  for (let up: HTMLElement | null = from; up && up !== document.body; up = up.parentElement)
-    sized?.observe(up)
+  for (let up: HTMLElement | null = from; up && up !== document.body; up = up.parentElement) sized?.observe(up)
 
   return {
     update(next: Hanging = {}) {

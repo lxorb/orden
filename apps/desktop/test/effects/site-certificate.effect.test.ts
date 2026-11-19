@@ -84,9 +84,7 @@ test('pressing the secure connection line shows the whole chain, site first, up 
 
   const steps = [...target.querySelectorAll<HTMLButtonElement>('.chain button')]
   expect(steps.map((one) => one.dataset.role)).toEqual(['site', 'intermediate', 'root'])
-  expect(
-    steps.map((one) => [...one.querySelectorAll('.name .fact')].map((fact) => fact.textContent)),
-  ).toEqual([
+  expect(steps.map((one) => [...one.querySelectorAll('.name .fact')].map((fact) => fact.textContent))).toEqual([
     ['example.com'],
     ['R3', "Let's Encrypt"],
     ['ISRG Root X1', 'Internet Security Research Group'],
@@ -119,9 +117,10 @@ test('a chain read from the site separately says so', async () => {
   target.querySelector<HTMLButtonElement>('button.how')?.click()
   flushSync()
   expect(text('.certificate .note')).toContain('Read from the site separately')
-  expect(
-    [...target.querySelectorAll<HTMLElement>('.chain button')].map((one) => one.dataset.role),
-  ).toEqual(['site', 'intermediate'])
+  expect([...target.querySelectorAll<HTMLElement>('.chain button')].map((one) => one.dataset.role)).toEqual([
+    'site',
+    'intermediate',
+  ])
 })
 
 test('an engine that found the certificate wrong is not called secure', async () => {

@@ -7,13 +7,7 @@ const made = vi.hoisted((): { path: string | null; titles: string[] } => ({
   titles: [],
 }))
 vi.mock('./add', () => ({
-  addNote: (
-    _base: unknown,
-    _at: number,
-    _file: unknown,
-    _group: unknown,
-    note: { title: string },
-  ) => {
+  addNote: (_base: unknown, _at: number, _file: unknown, _group: unknown, note: { title: string }) => {
     made.titles.push(note.title)
     return Promise.resolve(made.path)
   },

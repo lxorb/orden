@@ -16,12 +16,7 @@ import {
 import { MIRRORS_KEY, mirrorsFor, notePass } from '../../sync-mirror/src/api'
 import { type HoldCheck, spend } from '@orden/sync-core'
 import { calledAlso, revived } from './revived'
-import {
-  type SyncFileDoer,
-  type SyncFileOp,
-  type SyncPairing,
-  whenPortProvided,
-} from '@orden/contracts'
+import { type SyncFileDoer, type SyncFileOp, type SyncPairing, whenPortProvided } from '@orden/contracts'
 import { owesAtTheEnd, owesLast, writing } from '../../parting/src/api'
 import { keptAway } from '../../away/src/api'
 import { aloneHere, holdThisWindow, keptBudget, TRIM_AFTER } from './budget'
@@ -370,9 +365,7 @@ class Runner {
           (root, folder) => {
             const tree = workspace().tree
             if (!tree || !samePath(tree.path, root)) return null
-            return folder
-              ? (workspace().entryAt(joinPath(root, folder))?.children ?? null)
-              : tree.children
+            return folder ? (workspace().entryAt(joinPath(root, folder))?.children ?? null) : tree.children
           },
           () => this.nudge(),
         ),
@@ -452,9 +445,7 @@ class Runner {
   }
 
   async dropLocal(): Promise<void> {
-    await this.usingStore(() =>
-      this.inLane(() => (account().user ? this.carryLocal() : Promise.resolve())),
-    )
+    await this.usingStore(() => this.inLane(() => (account().user ? this.carryLocal() : Promise.resolve())))
   }
 
   async deviceOf(accountId: string): Promise<string | null> {
@@ -649,8 +640,7 @@ class Runner {
     const roots = ownRoots(this.accountId)
     const until = Date.now() + SIGN_OUT_WAITS
     for (let round = 0; ; round += 1) {
-      if (!(await unsentRoots(engine, roots, (id) => this.firstDone(engine, id))).length)
-        return true
+      if (!(await unsentRoots(engine, roots, (id) => this.firstDone(engine, id))).length) return true
       if (round >= SENDING_ROUNDS || Date.now() >= until || this.status === 'offline') break
       if (this.engine !== engine) return true
       await Promise.race([this.passNow().catch(() => false), waited(until - Date.now())])
@@ -794,25 +784,15 @@ class Runner {
           const space = engine.core.spaces.get(id)
           if (!space) return
           if (!(await this.firstDone(engine, id)) && isLocal(id)) {
-            const carried = await carriedFor(engine.core.store, space.row.root, (path) =>
-              space.key(path),
-            )
+            const carried = await carriedFor(engine.core.store, space.row.root, (path) => space.key(path))
             if (!(await localFirst(engine.core, space, carried))) return
-            await engine.core.commit([
-              put('meta', { key: `${FIRST}${id}`, value: 1 }),
-              carriedGone(space.row.root),
-            ])
+            await engine.core.commit([put('meta', { key: `${FIRST}${id}`, value: 1 }), carriedGone(space.row.root)])
             this.firsts.add(id)
             this.watched?.follow()
             this.watched?.caughtUp(id)
           } else if (!(await this.firstDone(engine, id))) {
-            const v1 = await wholeV1(
-              space.row.root,
-              this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null,
-            )
-            const carried = await carriedFor(engine.core.store, space.row.root, (path) =>
-              space.key(path),
-            )
+            const v1 = await wholeV1(space.row.root, this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null)
+            const carried = await carriedFor(engine.core.store, space.row.root, (path) => space.key(path))
             const first = `${FIRST}${id}`
             const done = [put('meta', { key: first, value: 1 }), carriedGone(space.row.root)]
             if (!(await firstPass(engine.core, space, v1, carried, done))) {
@@ -948,8 +928,7 @@ class Runner {
       share: (root, shared) => {
         const space = spaceRooted(core.spaces.values(), root)
         if (!space) return
-        const role =
-          account().spaces.find((one) => one.id === space.id)?.role ?? (shared ? 'write' : 'owner')
+        const role = account().spaces.find((one) => one.id === space.id)?.role ?? (shared ? 'write' : 'owner')
         if (space.row.role === role) return
         space.row = { ...space.row, role }
         changes.push(put('spaces', { ...space.row }))
@@ -1082,9 +1061,7 @@ class Runner {
       }
     }
     const back = keptAway.keep(files, (path) => this.fetchAway(engine, path))
-    const said = files
-      .map((one) => `${one.id}\0${one.path}\0${String(one.size)}\0${String(one.modified)}`)
-      .join('\n')
+    const said = files.map((one) => `${one.id}\0${one.path}\0${String(one.size)}\0${String(one.modified)}`).join('\n')
     if (said !== this.awaySaid) {
       this.awaySaid = said
       this.sayAway(files)
@@ -1152,15 +1129,12 @@ class Runner {
       }
       return undefined
     }
-    const key =
-      op.op === 'moved' ? `moved:${op.from}` : op.op === 'removed' ? `removed:${op.path}` : ''
+    const key = op.op === 'moved' ? `moved:${op.from}` : op.op === 'removed' ? `removed:${op.path}` : ''
     if (key && this.own.has(key)) return undefined
 
     const done = (async () => {
       if (op.op === 'created') {
-        const document = op.key
-          ? workspace().documents.find((one) => one.key === op.key)
-          : undefined
+        const document = op.key ? workspace().documents.find((one) => one.key === op.key) : undefined
         const text =
           op.kind === 'folder' || !holdsDocument(kindOfName(op.path))
             ? undefined
@@ -1372,11 +1346,7 @@ class Runner {
   private readonly parts = new Map<string, (value: unknown) => void>()
   private readonly alive = new Map<string, () => void>()
 
-  private ask(
-    what: string,
-    args: Record<string, unknown>,
-    part?: (value: unknown) => void,
-  ): Promise<unknown> {
+  private ask(what: string, args: Record<string, unknown>, part?: (value: unknown) => void): Promise<unknown> {
     if (!this.leaderId) return Promise.resolve(null)
     return new Promise((resolve) => {
       const id = crypto.randomUUID()
@@ -1481,10 +1451,7 @@ class Runner {
         this.leaderIs(said.from)
         this.seen = said.rows as Rows
         this.seenAt = new Map(
-          this.seen.notes.map(({ path, id, version, hash }) => [
-            pathKey(path),
-            { id, version, hash },
-          ]),
+          this.seen.notes.map(({ path, id, version, hash }) => [pathKey(path), { id, version, hash }]),
         )
         this.mirrors.unjoined()
       }),
@@ -1633,20 +1600,13 @@ class Runner {
     if (!Array.isArray(said)) return
     const files = (said as unknown[]).filter(isAway)
     const had = keptAway.all().length
-    const back = keptAway.keep(
-      files,
-      async (path) => (await this.ask('fetch-away', { path })) === true,
-    )
+    const back = keptAway.keep(files, async (path) => (await this.ask('fetch-away', { path })) === true)
     keptAway.answeredBy(new Map(), async (root, query, terms, limit, onFound, excluded) => {
       let told = 0
-      const found = await this.ask(
-        'search-away',
-        { root, query, terms, limit, excluded },
-        (one) => {
-          told += 1
-          onFound(one as Found)
-        },
-      )
+      const found = await this.ask('search-away', { root, query, terms, limit, excluded }, (one) => {
+        told += 1
+        onFound(one as Found)
+      })
       if (!Array.isArray(found)) return false
       for (const one of found.slice(told)) onFound(one as Found)
       return true
@@ -1703,8 +1663,7 @@ class Runner {
         const seen = this.seenAt
         const surfaces = rooms.surfaces
         untrack(() => {
-          if (!this.engine)
-            this.mirrors.follow(open, (path) => seen.get(pathKey(path))?.id ?? null, surfaces)
+          if (!this.engine) this.mirrors.follow(open, (path) => seen.get(pathKey(path))?.id ?? null, surfaces)
         })
       })
     })
@@ -1773,10 +1732,8 @@ class Runner {
       const surface = rooms.planes.get(one.key)
       const entry = engine.entryAt(one.path)
       const joins = entry && joinsAs(note.kind, entry.kind)
-      if (entry && engine.core.hasDoc(entry.id) && joins === null)
-        this.mismatched(one.key, one.path)
-      const on: On | null =
-        joins === 'views' ? { note } : joins === 'surface' && surface ? { surface } : null
+      if (entry && engine.core.hasDoc(entry.id) && joins === null) this.mismatched(one.key, one.path)
+      const on: On | null = joins === 'views' ? { note } : joins === 'surface' && surface ? { surface } : null
       if (on && entry && engine.core.hasDoc(entry.id))
         wanted.set(one.key, { id: entry.id, on, arrivals: () => note.arrivals })
     }
@@ -1812,9 +1769,7 @@ class Runner {
         'relay' in one.on
           ? await this.relayHold(engine, one.id, holds, again)
           : 'note' in one.on
-            ? await attach(engine, one.id, one.on.note, holds, again, () =>
-                rooms.carried.get(key)?.shown?.(),
-              )
+            ? await attach(engine, one.id, one.on.note, holds, again, () => rooms.carried.get(key)?.shown?.())
             : await attachPlane(engine, one.id, one.on.surface, holds, again)
       const part = typeof joined === 'function' ? joined : (joined?.part ?? null)
       if (!part || this.bound.get(key)?.id !== one.id) {
@@ -1826,15 +1781,11 @@ class Runner {
         id: one.id,
         part,
         plane: typeof joined === 'function' ? null : joined,
-        ...(typeof joined === 'function' && 'bound' in joined
-          ? { bound: (joined as Attached).bound }
-          : {}),
+        ...(typeof joined === 'function' && 'bound' in joined ? { bound: (joined as Attached).bound } : {}),
       })
       this.enter(engine, key, one.id, one.on)
     }
-    this.relay.roomsHeld(
-      new Set([...this.bound].flatMap(([key, one]) => (this.carried.has(key) ? [one.id] : []))),
-    )
+    this.relay.roomsHeld(new Set([...this.bound].flatMap(([key, one]) => (this.carried.has(key) ? [one.id] : []))))
     this.relay.follow((id) => this.liveOf(engine, id))
   }
 
@@ -1996,9 +1947,7 @@ async function searchedAway(args: unknown, part: (found: Found) => void): Promis
   return whole ? found : null
 }
 
-function isAway(
-  value: unknown,
-): value is { id: string; path: string; size: number; modified: number } {
+function isAway(value: unknown): value is { id: string; path: string; size: number; modified: number } {
   if (typeof value !== 'object' || value === null) return false
   const one = value as Record<string, unknown>
   return (
@@ -2038,8 +1987,7 @@ function pageNotes(engine: Engine): Carried[] {
   for (const space of engine.core.spaces.values()) {
     const writes = space.row.role !== 'read'
     for (const entry of space.entries.values()) {
-      if (entry.kind !== 'pages' || entry.deleted || entry.seq === null || !entry.local_path)
-        continue
+      if (entry.kind !== 'pages' || entry.deleted || entry.seq === null || !entry.local_path) continue
       if (!space.isLive(entry.id)) continue
       out.push({
         path: joinPath(space.row.root, entry.local_path),

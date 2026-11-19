@@ -33,9 +33,7 @@ export function laterTimes(now: number): number[] {
 
 export function stretch(count: number, unit: 'hour' | 'day' | 'week'): string {
   try {
-    return new Intl.NumberFormat(region(), { style: 'unit', unit, unitDisplay: 'long' }).format(
-      count,
-    )
+    return new Intl.NumberFormat(region(), { style: 'unit', unit, unitDisplay: 'long' }).format(count)
   } catch {
     return new Intl.NumberFormat('en', { style: 'unit', unit, unitDisplay: 'long' }).format(count)
   }

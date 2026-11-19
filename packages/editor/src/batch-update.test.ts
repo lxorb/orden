@@ -74,10 +74,7 @@ describe('an update of many transactions at once', () => {
   }, 60_000)
 })
 
-function typedOnEveryLine(
-  state: EditorState,
-  later: boolean,
-): { state: EditorState; took: number } {
+function typedOnEveryLine(state: EditorState, later: boolean): { state: EditorState; took: number } {
   const started = performance.now()
   for (let at = 1; at <= state.doc.lines; at++) {
     state = state.update({
@@ -100,10 +97,7 @@ describe('a run of edits joined into one undo step', () => {
 
   test('is joined in time that grows with its length', () => {
     const timed = (lines: number) =>
-      typedOnEveryLine(
-        EditorState.create({ doc: 'line\n'.repeat(lines), extensions: [history()] }),
-        false,
-      ).took
+      typedOnEveryLine(EditorState.create({ doc: 'line\n'.repeat(lines), extensions: [history()] }), false).took
     expect(measuredGrowth(timed, 4_000)).toBeLessThan(GROWS_AT_MOST)
   }, 60_000)
 })
@@ -111,9 +105,7 @@ describe('a run of edits joined into one undo step', () => {
 describe('edits that leave the parse for later', () => {
   test('end in the tree a parse of the note gives', () => {
     const extensions = [markdown({ base: markdownLanguage })]
-    const doc = Array.from({ length: 400 }, (_, at) =>
-      at % 3 ? `- item ${at}` : `# head ${at}`,
-    ).join('\n')
+    const doc = Array.from({ length: 400 }, (_, at) => (at % 3 ? `- item ${at}` : `# head ${at}`)).join('\n')
     const { state } = typedOnEveryLine(EditorState.create({ doc, extensions }), true)
     const fresh = EditorState.create({ doc: state.doc, extensions })
     const shape = (of: EditorState) => {

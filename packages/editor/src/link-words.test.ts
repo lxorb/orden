@@ -55,21 +55,15 @@ describe('a link whose words are a web address', () => {
   })
 
   test('keeps the address among other words', () => {
-    expect(shown('[Visit www.example.com now](https://example.com)')).toBe(
-      'Visit www.example.com now',
-    )
+    expect(shown('[Visit www.example.com now](https://example.com)')).toBe('Visit www.example.com now')
   })
 
   test('opens the address it points to, not the one in its words', () => {
-    expect(hrefs('[Visit www.example.com now](https://example.com)')).toEqual([
-      'https://example.com',
-    ])
+    expect(hrefs('[Visit www.example.com now](https://example.com)')).toEqual(['https://example.com'])
   })
 
   test('in brackets with no address after them stays as typed', () => {
-    expect(shown('See the docs [https://example.com/docs].')).toBe(
-      'See the docs [https://example.com/docs].',
-    )
+    expect(shown('See the docs [https://example.com/docs].')).toBe('See the docs [https://example.com/docs].')
   })
 })
 

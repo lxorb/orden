@@ -77,8 +77,7 @@
         class="orden-field"
         aria-label="Activity"
         value={entry.activity ?? ''}
-        onchange={(event) =>
-          time.changeSpan(entry.id, { activity: event.currentTarget.value || null })}
+        onchange={(event) => time.changeSpan(entry.id, { activity: event.currentTarget.value || null })}
       >
         <option value="">No activity</option>
         {#each time.activities.filter((one) => !one.archived || one.id === entry.activity) as one (one.id)}
@@ -110,10 +109,8 @@
         onchange={(event) => time.changeSpan(entry.id, { note: event.currentTarget.value })}
       />
       <div class="acts">
-        <button
-          type="button"
-          class="orden-chip"
-          onclick={() => entry.activity && time.start(entry.activity)}>Continue</button
+        <button type="button" class="orden-chip" onclick={() => entry.activity && time.start(entry.activity)}
+          >Continue</button
         >
         <button
           type="button"
@@ -129,11 +126,8 @@
     <p class="orden-section">Record this as</p>
     <div class="chips">
       {#each time.latest().slice(0, 8) as one (one.id)}
-        <button
-          type="button"
-          class="orden-chip as"
-          style:--tint={tintOf(one.id)}
-          onclick={() => recordAs(one.id)}><span class="dot"></span>{one.name}</button
+        <button type="button" class="orden-chip as" style:--tint={tintOf(one.id)} onclick={() => recordAs(one.id)}
+          ><span class="dot"></span>{one.name}</button
         >
       {/each}
     </div>
@@ -172,10 +166,7 @@
           <span class="dot" style:background={placeTint(place.key)}></span>
           <span class="label" dir="auto">{place.name}</span>
           <span class="bar"
-            ><span
-              style:width="{part(place.ms, group.list) * 100}%"
-              style:--tint={placeTint(place.key)}
-            ></span></span
+            ><span style:width="{part(place.ms, group.list) * 100}%" style:--tint={placeTint(place.key)}></span></span
           >
           <span class="meta">{length(place.ms)}</span>
         </li>

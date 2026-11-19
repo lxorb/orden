@@ -22,8 +22,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-const release = (body: unknown) => () =>
-  Promise.resolve(new Response(JSON.stringify({ body }), { status: 200 }))
+const release = (body: unknown) => () => Promise.resolve(new Response(JSON.stringify({ body }), { status: 200 }))
 
 test('a first start shows nothing and remembers the version it ran', async () => {
   expect(await newsSince('1.2.0')).toBeNull()

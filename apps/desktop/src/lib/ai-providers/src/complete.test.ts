@@ -39,9 +39,7 @@ beforeEach(() => {
 
 describe('a provider with no key on this device', () => {
   test('is not asked anything at all', async () => {
-    await expect(complete({ provider: HOSTED, model: HOSTED.model, ...ASKED })).rejects.toThrow(
-      /not set up/,
-    )
+    await expect(complete({ provider: HOSTED, model: HOSTED.model, ...ASKED })).rejects.toThrow(/not set up/)
     expect(sent).toEqual([])
   })
 
@@ -66,8 +64,7 @@ describe('a provider with a key', () => {
 
 describe('a streamed answer', () => {
   test('keeps its last line, though no line break follows it', async () => {
-    const line = (text: string) =>
-      `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}`
+    const line = (text: string) => `data: ${JSON.stringify({ choices: [{ delta: { content: text } }] })}`
     answer = () => new Response(`${line('one ')}\n${line('two')}`, { status: 200 })
     const pieces: string[] = []
     const whole = await complete({

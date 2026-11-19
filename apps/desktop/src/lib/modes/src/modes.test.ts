@@ -146,15 +146,12 @@ test.each([
   ['canvasTurns', true, () => modes.setCanvasTurns(false), false],
   ['canvasTurnSnaps', true, () => modes.setCanvasTurnSnaps(false), false],
   ['attachments', 'space', () => modes.setAttachments('named'), 'named'],
-] as const)(
-  '%s starts as %j and keeps a change across a restart',
-  async (key, start, change, to) => {
-    expect(modes[key]).toBe(start)
-    change()
-    expect(modes[key]).toBe(to)
-    expect((await restarted())[key]).toBe(to)
-  },
-)
+] as const)('%s starts as %j and keeps a change across a restart', async (key, start, change, to) => {
+  expect(modes[key]).toBe(start)
+  change()
+  expect(modes[key]).toBe(to)
+  expect((await restarted())[key]).toBe(to)
+})
 
 describe('read-only mode', () => {
   test('reaches the view it is toggled against', () => {
@@ -178,8 +175,7 @@ describe('read-only mode', () => {
 })
 
 describe('the glasses settings', () => {
-  const saved = () =>
-    JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
+  const saved = () => JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
 
   test('start a page at H2 and above, with the note’s own line numbers', () => {
     expect(modes.glassesBreak).toBe(2)
@@ -187,10 +183,7 @@ describe('the glasses settings', () => {
   })
 
   test('carry no scroll mode, and drop one an older version wrote down', async () => {
-    localStorage.setItem(
-      'orden:modes',
-      JSON.stringify({ glassesScroll: 'native', glassesLineNumbers: false }),
-    )
+    localStorage.setItem('orden:modes', JSON.stringify({ glassesScroll: 'native', glassesLineNumbers: false }))
 
     const back = await restarted()
     expect(back.glassesLineNumbers).toBe(false)
@@ -724,15 +717,12 @@ describe('taking over what the account holds', () => {
     [{ attachments: 'named' }, 'attachments', 'named'],
     [{ attachments: 'vault' }, 'attachments', 'space'],
     [{ undatedInToday: false, silent: true }, 'silent', true],
-  ] as [Held, string, unknown][])(
-    'takes %j from the account as %s %j',
-    async (settings, key, value) => {
-      api.settings = async () => ({ settings })
-      await modes.adopt('token')
-      expect((modes as unknown as Record<string, unknown>)[key]).toBe(value)
-      expect('undatedInToday' in modes).toBe(false)
-    },
-  )
+  ] as [Held, string, unknown][])('takes %j from the account as %s %j', async (settings, key, value) => {
+    api.settings = async () => ({ settings })
+    await modes.adopt('token')
+    expect((modes as unknown as Record<string, unknown>)[key]).toBe(value)
+    expect('undatedInToday' in modes).toBe(false)
+  })
 
   test('reads false from an older build as off', async () => {
     modes.setLigatures('all')
@@ -1070,8 +1060,7 @@ describe('translucency, a switch older builds kept', () => {
 })
 
 describe('the front matter', () => {
-  const saved = () =>
-    JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
+  const saved = () => JSON.parse(localStorage.getItem('orden:modes') ?? '{}') as Record<string, unknown>
 
   test('is no setting at all: what older builds wrote down about it is dropped', async () => {
     for (const old of [

@@ -57,15 +57,7 @@ function drawnAsCode(state: EditorState, from: number, to: number): string | nul
   return `<pre><code${named}>${text}</code></pre>`
 }
 
-const RUNS = new Set([
-  'StrongEmphasis',
-  'Emphasis',
-  'InlineCode',
-  'Link',
-  'Strikethrough',
-  'Highlight',
-  'Wikilink',
-])
+const RUNS = new Set(['StrongEmphasis', 'Emphasis', 'InlineCode', 'Link', 'Strikethrough', 'Highlight', 'Wikilink'])
 
 function marksOf(node: SyntaxNode): SyntaxNode[] {
   const marks: SyntaxNode[] = []
@@ -96,10 +88,7 @@ function closedRuns(state: EditorState, from: number, to: number): string {
   return before + state.doc.sliceString(from, to) + after
 }
 
-export function copiedFlavours(
-  state: EditorState,
-  cut = false,
-): { text: string; html: string | null } | null {
+export function copiedFlavours(state: EditorState, cut = false): { text: string; html: string | null } | null {
   const range = state.selection.main
   if (range.empty || state.selection.ranges.length > 1) return null
   if (cut && state.readOnly) return null

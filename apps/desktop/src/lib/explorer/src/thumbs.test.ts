@@ -16,9 +16,7 @@ function held() {
   const waiting = new Map<string, () => void>()
   const read = (path: string): Promise<Peek> => {
     asked.push(path)
-    return new Promise((done) =>
-      waiting.set(path, () => done({ bytes: new Uint8Array([1]), cut: false })),
-    )
+    return new Promise((done) => waiting.set(path, () => done({ bytes: new Uint8Array([1]), cut: false })))
   }
   const thumbs = new Thumbs(read, (name) => Promise.resolve(`small:${name}`))
   const answer = async (path: string) => {

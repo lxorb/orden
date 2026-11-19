@@ -100,21 +100,14 @@ export class MemoryCache implements ChatCache {
 
   window(ask: WindowAsk): Promise<Kept[]> {
     const all = [...(this.rows.get(ask.chat)?.values() ?? [])]
-      .filter((one) =>
-        ask.parent === undefined ? isMain(one.message) : one.message.parent === ask.parent,
-      )
+      .filter((one) => (ask.parent === undefined ? isMain(one.message) : one.message.parent === ask.parent))
       .sort((a, b) => a.message.seq - b.message.seq)
     const limit = Math.max(1, ask.limit)
-    const older = (from: number, many: number) =>
-      all.filter((one) => one.message.seq < from).slice(-many || all.length)
-    const newer = (from: number, many: number) =>
-      all.filter((one) => one.message.seq > from).slice(0, many)
+    const older = (from: number, many: number) => all.filter((one) => one.message.seq < from).slice(-many || all.length)
+    const newer = (from: number, many: number) => all.filter((one) => one.message.seq > from).slice(0, many)
     if (ask.around !== undefined) {
       const half = Math.floor(limit / 2)
-      return Promise.resolve([
-        ...(half > 0 ? older(ask.around, half) : []),
-        ...newer(ask.around - 1, limit - half),
-      ])
+      return Promise.resolve([...(half > 0 ? older(ask.around, half) : []), ...newer(ask.around - 1, limit - half)])
     }
     if (ask.after !== undefined) return Promise.resolve(newer(ask.after, limit))
     return Promise.resolve(older(ask.before ?? Number.MAX_SAFE_INTEGER, limit))
@@ -122,9 +115,7 @@ export class MemoryCache implements ChatCache {
 
   messages(chat: string, ids: readonly string[]): Promise<Kept[]> {
     const rows = this.rows.get(chat)
-    return Promise.resolve(
-      ids.flatMap((id) => rows?.get(id) ?? []).sort((a, b) => a.message.seq - b.message.seq),
-    )
+    return Promise.resolve(ids.flatMap((id) => rows?.get(id) ?? []).sort((a, b) => a.message.seq - b.message.seq))
   }
 
   search(ask: SearchAsk): Promise<{ chat: string; kept: Kept }[]> {
@@ -147,25 +138,20 @@ export class MemoryCache implements ChatCache {
         found.push({ chat, kept })
       }
     }
-    found.sort(
-      (a, b) => b.kept.message.at - a.kept.message.at || b.kept.message.seq - a.kept.message.seq,
-    )
+    found.sort((a, b) => b.kept.message.at - a.kept.message.at || b.kept.message.seq - a.kept.message.seq)
     return Promise.resolve(found.slice(0, ask.limit))
   }
 
   unread(chat: string, after: number, me: Who): Promise<number> {
     let count = 0
     for (const { message } of this.rows.get(chat)?.values() ?? []) {
-      if (isMain(message) && message.seq > after && message.author !== me && !message.deleted)
-        count += 1
+      if (isMain(message) && message.seq > after && message.author !== me && !message.deleted) count += 1
     }
     return Promise.resolve(count)
   }
 
   outbox(): Promise<OutboxRow[]> {
-    return Promise.resolve(
-      [...this.queued.values()].sort((a, b) => a.madeAt - b.madeAt || (a.id < b.id ? -1 : 1)),
-    )
+    return Promise.resolve([...this.queued.values()].sort((a, b) => a.madeAt - b.madeAt || (a.id < b.id ? -1 : 1)))
   }
 
   drafts(): Promise<DraftRow[]> {

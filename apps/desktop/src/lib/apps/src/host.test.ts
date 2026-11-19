@@ -42,9 +42,7 @@ function world(
 
   const runner: Runner = {
     start(key, file, view, heard) {
-      asked.push(
-        `start ${key} ${file.run.kind === 'installed' ? file.run.id : file.run.path} ${view.width}`,
-      )
+      asked.push(`start ${key} ${file.run.kind === 'installed' ? file.run.id : file.run.path} ${view.width}`)
       tell = heard
       if (why === null) heard({ state: 'running', code: null })
       return Promise.resolve(why)
@@ -75,9 +73,7 @@ function world(
     read: (path) => {
       options.reads?.push(path)
       const one = files[path]
-      return Promise.resolve(
-        one === undefined ? null : typeof one === 'string' ? one : JSON.stringify(one),
-      )
+      return Promise.resolve(one === undefined ? null : typeof one === 'string' ? one : JSON.stringify(one))
     },
     idOf: options.idOf ?? ((path) => Promise.resolve(`id-${path.replace(/\W/g, '')}`)),
     serves: () => Promise.resolve(options.serves ?? true),
@@ -350,11 +346,7 @@ describe('the host’s socket', () => {
     const link = new HostLink('app-1', linkWorld, () => undefined)
     link.open()
     await tick()
-    expect(offered[0]).toEqual([
-      'orden.token.token',
-      'orden.device.device-laptop',
-      'orden.role.host',
-    ])
+    expect(offered[0]).toEqual(['orden.token.token', 'orden.device.device-laptop', 'orden.role.host'])
     link.close()
   })
 })

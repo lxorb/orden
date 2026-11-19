@@ -1,5 +1,4 @@
-const languageOf = () =>
-  typeof document === 'undefined' ? undefined : document.documentElement.lang || undefined
+const languageOf = () => (typeof document === 'undefined' ? undefined : document.documentElement.lang || undefined)
 
 const dayNumber = (iso: string) => {
   const [year = 1970, month = 1, day = 1] = iso.split('-').map(Number)
@@ -16,9 +15,7 @@ const said = (iso: string, options: Intl.DateTimeFormatOptions) =>
   new Intl.DateTimeFormat(languageOf(), options).format(momentOf(iso))
 
 export const timeWords = (time: string): string =>
-  new Intl.DateTimeFormat(languageOf(), { hour: 'numeric', minute: '2-digit' }).format(
-    momentOf('2000-01-01', time),
-  )
+  new Intl.DateTimeFormat(languageOf(), { hour: 'numeric', minute: '2-digit' }).format(momentOf('2000-01-01', time))
 
 export function todayHere(): string {
   const now = new Date()
@@ -33,8 +30,7 @@ export function dayWords(iso: string, today: string, time?: string): string {
   else if (ahead === 1) day = 'Tomorrow'
   else if (ahead === -1) day = 'Yesterday'
   else if (ahead > 1 && ahead < 7) day = said(iso, { weekday: 'short' })
-  else if (iso.slice(0, 4) === today.slice(0, 4))
-    day = said(iso, { day: 'numeric', month: 'short' })
+  else if (iso.slice(0, 4) === today.slice(0, 4)) day = said(iso, { day: 'numeric', month: 'short' })
   else day = said(iso, { day: 'numeric', month: 'short', year: 'numeric' })
   return time ? `${day} ${timeWords(time)}` : day
 }

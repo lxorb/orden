@@ -2,19 +2,16 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const readOnly = new Set<string>()
 vi.mock('../../sharing/src/api', () => ({
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 const THEIRS = { id: 'theirs', name: 'Theirs', root: '/theirs' }
 const MINE = { id: 'mine', name: 'Mine', root: '/mine' }
 
-const held = vi.hoisted(
-  (): { active: unknown; spaces: { id: string; name: string; root: string }[] } => ({
-    active: null,
-    spaces: [],
-  }),
-)
+const held = vi.hoisted((): { active: unknown; spaces: { id: string; name: string; root: string }[] } => ({
+  active: null,
+  spaces: [],
+}))
 const NOTES = { id: 'notes', name: 'Notes', root: '/notes' }
 const opened = vi.hoisted((): [string, string, string | null][] => [])
 vi.mock('../../workspace/src/api', () => ({

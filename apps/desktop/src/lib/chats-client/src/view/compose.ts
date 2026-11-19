@@ -78,7 +78,5 @@ function fold(text: string): string {
 }
 
 export function asFile(words: string, name: string): File | null {
-  return words.length > MOST_BODY
-    ? new File([words], `${name}.md`, { type: 'text/markdown' })
-    : null
+  return words.length > MOST_BODY ? new File([words], `${name}.md`, { type: 'text/markdown' }) : null
 }

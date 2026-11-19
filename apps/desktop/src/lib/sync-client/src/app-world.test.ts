@@ -43,8 +43,7 @@ vi.mock('../../platform/src/tauri', () => ({
     if (command === 'trash_item') {
       trashed.push({ ...args })
       notes.delete(path)
-      if (path.endsWith('.pdf') && (args as { alone?: boolean }).alone !== true)
-        notes.delete(`${path}.highlights.json`)
+      if (path.endsWith('.pdf') && (args as { alone?: boolean }).alone !== true) notes.delete(`${path}.highlights.json`)
       return Promise.resolve({ id: `trash:${path}` })
     }
     if (command === 'file_stamp') return Promise.resolve(null)
@@ -104,9 +103,9 @@ describe('a move the engine makes', () => {
       },
     } as unknown as Parameters<typeof appWorld>[1]
 
-    await expect(
-      appWorld(() => null, telling).disk.move('/s/Stuck.md', '/s/Moved too.md', 'file'),
-    ).rejects.toThrow('/s/Stuck.md')
+    await expect(appWorld(() => null, telling).disk.move('/s/Stuck.md', '/s/Moved too.md', 'file')).rejects.toThrow(
+      '/s/Stuck.md',
+    )
 
     expect(notes.has('/s/Stuck.md')).toBe(true)
     expect(notes.has('/s/Moved too.md')).toBe(false)

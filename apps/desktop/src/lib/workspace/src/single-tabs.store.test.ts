@@ -95,8 +95,6 @@ describe('a tab that is one of its kind', () => {
     await workspace.selectSpace('work')
     const work = workspace.settingsTab!
     await sets.adopt([work], 'food')
-    expect(workspace.tabs.filter((one) => one.kind === 'settings').map((one) => one.id)).toEqual([
-      food?.id,
-    ])
+    expect(workspace.tabs.filter((one) => one.kind === 'settings').map((one) => one.id)).toEqual([food?.id])
   })
 })

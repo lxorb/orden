@@ -20,9 +20,7 @@ function shared(body: string, count: () => void): () => string {
 function corpus(): { notes: SearchNote[]; folds: () => number } {
   const lines: string[] = []
   for (let line = 0; line < 2_000; line++) {
-    lines.push(
-      `The quarter plan came together on Monday, with a note about the budget for line ${line}.`,
-    )
+    lines.push(`The quarter plan came together on Monday, with a note about the budget for line ${line}.`)
   }
 
   const body = lines.join('\n')

@@ -160,8 +160,7 @@ async function live() {
   return session
 }
 
-const line = (session: Awaited<ReturnType<typeof live>>) =>
-  session.status ? statusLine(session.status) : null
+const line = (session: Awaited<ReturnType<typeof live>>) => (session.status ? statusLine(session.status) : null)
 
 test('a relink keeps the screen, says nothing, and sends what was typed once it is back', async () => {
   const session = await live()

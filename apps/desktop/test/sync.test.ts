@@ -156,10 +156,7 @@ const fake = vi.hoisted(() => {
     hash: await sha256(note.content),
   })
 
-  const listed = (
-    space: { id: string; name: string; bookmarks?: Bookmark[]; role?: string },
-    position: number,
-  ) => ({
+  const listed = (space: { id: string; name: string; bookmarks?: Bookmark[]; role?: string }, position: number) => ({
     ...space,
     position,
     icon: null,
@@ -227,13 +224,7 @@ const fake = vi.hoisted(() => {
       remote.notes.push(note)
       return { note: await wire(note) }
     },
-    writeNote: async (
-      _token: string,
-      id: string,
-      path: string,
-      content: string,
-      baseVersion: number,
-    ) => {
+    writeNote: async (_token: string, id: string, path: string, content: string, baseVersion: number) => {
       remote.calls.push(`writeNote ${path}`)
       const note = found(id)
 
@@ -605,18 +596,14 @@ describe('a note that is open in its room while a pass runs', () => {
   }
 
   function files(): string[] {
-    return [...fake.disk.keys()]
-      .filter((path) => path.startsWith('/Account/') && !path.includes('/.'))
-      .sort()
+    return [...fake.disk.keys()].filter((path) => path.startsWith('/Account/') && !path.includes('/.')).sort()
   }
 
   test('is left where it is rather than pushed against a version that moved', async () => {
     await typingInTheOpenNote()
 
     expect(files()).toEqual(['/Account/Hello.md'])
-    expect(fake.remote.notes.filter((one) => !one.deleted).map((one) => one.path)).toEqual([
-      'Hello.md',
-    ])
+    expect(fake.remote.notes.filter((one) => !one.deleted).map((one) => one.path)).toEqual(['Hello.md'])
   })
 
   test('and the pass says nothing about it in the log', async () => {
@@ -633,9 +620,7 @@ describe('a space a pass cannot get through', () => {
     fake.addRemoteNote('s-Fine', 'Two.md', 'two')
     const changes = fake.api.changes
     fake.api.changes = (token: string, spaceId: string, since: number) =>
-      spaceId === 's-Broken'
-        ? Promise.reject(new Error('it stopped'))
-        : changes(token, spaceId, since)
+      spaceId === 's-Broken' ? Promise.reject(new Error('it stopped')) : changes(token, spaceId, since)
     try {
       await signIn()
       account.settled()
@@ -824,9 +809,7 @@ describe('a space somebody shared', () => {
     const real = fake.api.createNote
     fake.api.createNote = (token, spaceId, path, content) =>
       path === 'A too big.md'
-        ? Promise.reject(
-            new ApiError(400, 'that note is too large', { error: 'that note is too large' }),
-          )
+        ? Promise.reject(new ApiError(400, 'that note is too large', { error: 'that note is too large' }))
         : real(token, spaceId, path, content)
     try {
       await sync.pass()
@@ -955,10 +938,7 @@ describe('the mirrors this machine remembers', () => {
   })
 
   test('are kept by a machine that wrote them before there was an account beside them', async () => {
-    localStorage.setItem(
-      'orden:mirrors',
-      JSON.stringify({ '/Notes': { spaceId: 's-Notes', root: '/Notes' } }),
-    )
+    localStorage.setItem('orden:mirrors', JSON.stringify({ '/Notes': { spaceId: 's-Notes', root: '/Notes' } }))
 
     await started()
     try {
@@ -1514,9 +1494,7 @@ describe('two passes asked for at once', () => {
       fake.api.createSpace = real
     }
 
-    expect(fake.remote.calls.filter((call) => call.startsWith('createSpace'))).toEqual([
-      'createSpace Notes',
-    ])
+    expect(fake.remote.calls.filter((call) => call.startsWith('createSpace'))).toEqual(['createSpace Notes'])
     expect(fake.remote.spaces.map((space) => space.name)).toEqual(['Notes'])
     expect(workspace.spaces.map((space) => space.name)).toEqual(['Notes'])
   })
@@ -1566,8 +1544,7 @@ describe('a pass that fails partway through', () => {
     const real = fake.api.changes
     fake.api.changes = () => Promise.reject(new ApiError(401, 'unauthorized'))
     const me = fake.api.me
-    fake.api.me = () =>
-      Promise.reject(new ApiError(401, 'sign in first', { error: 'sign in first' }))
+    fake.api.me = () => Promise.reject(new ApiError(401, 'sign in first', { error: 'sign in first' }))
     try {
       await sync.run()
       await vi.waitFor(() => expect(account.token).toBeNull())

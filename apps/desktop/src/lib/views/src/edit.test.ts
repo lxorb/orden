@@ -24,10 +24,6 @@ test('an option renamed in the filters only comparisons of the renamed property 
   expect(renamed.filters).toBe('note.priority == "Low" || note.status == "Backlog"')
   expect(renamed.views[0]?.filters).toBe('status != "Backlog" && priority == "Low"')
   expect(renamed.views[1]?.filters).toEqual({
-    and: [
-      '"Backlog" == status',
-      'status.contains("Backlog") && tags.contains("Low")',
-      'note["status"] != "Backlog"',
-    ],
+    and: ['"Backlog" == status', 'status.contains("Backlog") && tags.contains("Low")', 'note["status"] != "Backlog"'],
   })
 })

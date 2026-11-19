@@ -17,18 +17,7 @@ export async function importDocument(): Promise<{
         filters: [
           {
             name: 'Documents',
-            extensions: [
-              'docx',
-              'odt',
-              'rtf',
-              'epub',
-              'rst',
-              'textile',
-              'tex',
-              'html',
-              'opml',
-              'org',
-            ],
+            extensions: ['docx', 'odt', 'rtf', 'epub', 'rst', 'textile', 'tex', 'html', 'opml', 'org'],
           },
         ],
       })

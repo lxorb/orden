@@ -34,8 +34,7 @@ export const SAVE_DELAY = 400
 
 export const SAVE_AT_MOST = 2000
 
-export const saveRetryDelay = (tries: number): number =>
-  Math.min(2_000 * 2 ** Math.max(0, tries - 1), 60_000)
+export const saveRetryDelay = (tries: number): number => Math.min(2_000 * 2 ** Math.max(0, tries - 1), 60_000)
 
 export const BEAT_EVERY = 10_000
 
@@ -45,5 +44,4 @@ export const INPUT_EVERY = 30_000
 
 export const PRESENCE_EVERY = 60_000
 
-export const passing = (status: number): boolean =>
-  status === 408 || status === 429 || status >= 500
+export const passing = (status: number): boolean => status === 408 || status === 429 || status >= 500

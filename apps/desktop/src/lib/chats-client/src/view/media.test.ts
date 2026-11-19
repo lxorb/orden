@@ -45,12 +45,7 @@ describe('pictures', () => {
   })
 
   test('files are sorted into what draws them', () => {
-    const sorted = sortFiles([
-      file('image/png'),
-      file('video/mp4'),
-      file('audio/webm'),
-      file('application/pdf'),
-    ])
+    const sorted = sortFiles([file('image/png'), file('video/mp4'), file('audio/webm'), file('application/pdf')])
     expect(sorted.seen.map((one) => one.type)).toEqual(['image/png', 'video/mp4'])
     expect(sorted.heard.map((one) => one.type)).toEqual(['audio/webm'])
     expect(sorted.other.map((one) => one.type)).toEqual(['application/pdf'])

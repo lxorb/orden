@@ -105,9 +105,7 @@ export class MemoryStore {
   private scanned(table: TableName, space: string | undefined): Row[] {
     const spec = TABLES[table]
     const all =
-      spec.key === null
-        ? this.tables.log
-        : [...this.rowsOf(table).values()].sort((a, b) => order(table, a, b))
+      spec.key === null ? this.tables.log : [...this.rowsOf(table).values()].sort((a, b) => order(table, a, b))
     if (space === undefined || spec.space === null) return all
     const column = spec.space
     return all.filter((row) => row[column] === space)

@@ -52,9 +52,7 @@ async function frozen(id: string) {
   env.ROOMS = {
     idFromName: (name: string) => rooms.idFromName(name),
     get: (named: DurableObjectId) =>
-      String(named) === id
-        ? { fetch: () => new Promise<never>(() => undefined) }
-        : rooms.get(named),
+      String(named) === id ? { fetch: () => new Promise<never>(() => undefined) } : rooms.get(named),
   } as unknown as DurableObjectNamespace
 }
 

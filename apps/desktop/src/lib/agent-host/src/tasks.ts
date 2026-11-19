@@ -83,14 +83,10 @@ async function baseAt(
 ): Promise<{ place: Place; relative: string; text: string; base: Base }> {
   const place = placeOf(call)
   const relative = judgedForWriting(need(call, name))
-  if (!/\.base$/i.test(relative))
-    throw new Refused('bad_arguments', `${relative} is not a .base file`)
+  if (!/\.base$/i.test(relative)) throw new Refused('bad_arguments', `${relative} is not a .base file`)
   readable(onDisk(place, relative), relative)
-  const text = await invoke<string>('read_note', { path: onDisk(place, relative) }).catch(
-    () => null,
-  )
-  if (text === null)
-    throw new Refused('no_such_file', `there is no ${relative} in ${place.space.name}`)
+  const text = await invoke<string>('read_note', { path: onDisk(place, relative) }).catch(() => null)
+  if (text === null) throw new Refused('no_such_file', `there is no ${relative} in ${place.space.name}`)
   try {
     return { place, relative, text, base: readBase(text) }
   } catch (error) {
@@ -129,8 +125,7 @@ function namedSpace(call: Call): TodoSpace | null {
   return todoSpaceOf(placeFor(call, kept?.id ?? named).space)
 }
 
-const unreached = () =>
-  new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
+const unreached = () => new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
 
 function openSpace(call: Call): TodoSpace | null {
   const thread = threadSpaceOf(call.caller)
@@ -141,10 +136,7 @@ function openSpace(call: Call): TodoSpace | null {
 
 function reachesTodoSpace(call: Call, id: string | null): boolean {
   if (reachesSpace(call, id)) return true
-  return (
-    id !== null &&
-    workspace.spaces.some((one) => isTodoSpace(todoSpaceOf(one), id) && reachesSpace(call, one.id))
-  )
+  return id !== null && workspace.spaces.some((one) => isTodoSpace(todoSpaceOf(one), id) && reachesSpace(call, one.id))
 }
 
 function textsOf(value: unknown): string[] | undefined {
@@ -156,8 +148,7 @@ function dayArg(call: Call, name: string): string | null | undefined {
   const value = call.args[name]
   if (value === undefined) return undefined
   if (value === null || value === '') return null
-  if (typeof value !== 'string')
-    throw new Refused('bad_arguments', `${name} is a day as YYYY-MM-DD`)
+  if (typeof value !== 'string') throw new Refused('bad_arguments', `${name} is a day as YYYY-MM-DD`)
   return value
 }
 
@@ -197,9 +188,7 @@ export async function listTasks(call: Call): Promise<AgentAnswer> {
   const withDone = flag(call, 'done')
   const limit = count(call, 'limit', 50, Number.MAX_SAFE_INTEGER)
   const inSpace = (one: Todo) =>
-    space === null ||
-    one.space === space.id ||
-    (one.space !== null && (space.also?.includes(one.space) ?? false))
+    space === null || one.space === space.id || (one.space !== null && (space.also?.includes(one.space) ?? false))
   const shown = sortedTodos(
     todos.todos.filter(
       (one) =>
@@ -230,8 +219,7 @@ export async function updateTask(call: Call): Promise<AgentAnswer> {
   const { todos } = await import('../../tasks-model/src/api')
   const id = maybe(call, 'id') ?? need(call, 'at')
   const was = todos.todo(id)
-  if (!was || !reachesTodoSpace(call, was.space))
-    throw new Refused('no_such_file', `there is no todo ${id}`)
+  if (!was || !reachesTodoSpace(call, was.space)) throw new Refused('no_such_file', `there is no todo ${id}`)
   const question = await asked(call, null, `Change the todo ${was.title}`)
   if (question) return question
   const patch = patchOf(call)
@@ -298,18 +286,13 @@ async function freePath(place: Place, folder: string, name: string): Promise<str
   throw new Refused('exists', `${name} is taken a hundred times over in ${folder || 'the space'}`)
 }
 
-async function templateOf(
-  place: Place,
-  link: string | undefined,
-  rows: readonly Row[],
-): Promise<string> {
+async function templateOf(place: Place, link: string | undefined, rows: readonly Row[]): Promise<string> {
   if (!link) return ''
   const wanted = link.toLowerCase().replace(/\.md$/i, '')
   const found = rows.find(
     (row) =>
       row.kind === 'note' &&
-      (row.path.toLowerCase().replace(/\.md$/i, '') === wanted ||
-        row.file.basename.toLowerCase() === wanted),
+      (row.path.toLowerCase().replace(/\.md$/i, '') === wanted || row.file.basename.toLowerCase() === wanted),
   )
   if (!found) return ''
   readable(onDisk(place, found.path), found.path)
@@ -350,12 +333,7 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
 export async function editRows(call: Call): Promise<AgentAnswer> {
   const paths = call.args.paths
   const properties = call.args.properties
-  if (
-    !Array.isArray(paths) ||
-    !paths.length ||
-    paths.length > 200 ||
-    !paths.every((one) => typeof one === 'string')
-  ) {
+  if (!Array.isArray(paths) || !paths.length || paths.length > 200 || !paths.every((one) => typeof one === 'string')) {
     throw new Refused('bad_arguments', 'paths is a list of up to 200 note paths')
   }
   if (typeof properties !== 'object' || properties === null || Array.isArray(properties)) {

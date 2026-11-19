@@ -97,8 +97,7 @@ async function strip() {
 
 const pick = (id: string) => target.querySelector<HTMLElement>(`.pick[data-tab="${id}"]`)
 const box = (id: string) => target.querySelector<HTMLElement>(`[data-box="${id}"]`)
-const picked = () =>
-  [...target.querySelectorAll<HTMLElement>('.tab.chosen')].map((one) => one.dataset.box)
+const picked = () => [...target.querySelectorAll<HTMLElement>('.tab.chosen')].map((one) => one.dataset.box)
 
 function press(id: string, held: { ctrlKey?: boolean; shiftKey?: boolean } = {}) {
   const node = pick(id)
@@ -145,9 +144,7 @@ test('Ctrl and Shift pick tabs, their menu is about all of them, and Ctrl+W clos
     bubbles: true,
     cancelable: true,
   })
-  expect(shortcuts.handle(event, { palette: () => undefined, fullscreen: () => undefined })).toBe(
-    true,
-  )
+  expect(shortcuts.handle(event, { palette: () => undefined, fullscreen: () => undefined })).toBe(true)
   await settles(() => expect(workspace.tabs.map((tab) => tab.id)).not.toContain(two))
   expect(workspace.tabs.map((tab) => tab.id)).not.toContain(four)
   expect(workspace.tabs).toHaveLength(NAMES.length - 2)
@@ -188,9 +185,7 @@ test('a tab closed with its cross goes as no longer in front, and the rest hold 
   expect(going?.classList.contains('leaving')).toBe(true)
   expect(going?.classList.contains('active')).toBe(false)
 
-  expect(
-    [...target.querySelectorAll('.tab.active')].map((node) => (node as HTMLElement).dataset.box),
-  ).toEqual([two])
+  expect([...target.querySelectorAll('.tab.active')].map((node) => (node as HTMLElement).dataset.box)).toEqual([two])
 
   for (const id of ids.slice(1)) expect(box(id)?.style.width, id).toBe(before.get(id))
 })
@@ -200,9 +195,7 @@ test('Delete on a tab leaves the keyboard on the tab in front after it, the one 
   const [one, two] = ids as [string, string]
 
   pick(one)?.focus()
-  pick(one)?.dispatchEvent(
-    new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }),
-  )
+  pick(one)?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }))
   await settles(() => expect(workspace.tabs.map((tab) => tab.id)).not.toContain(one))
   await settles(() => expect(document.activeElement).toBe(pick(two)))
 })

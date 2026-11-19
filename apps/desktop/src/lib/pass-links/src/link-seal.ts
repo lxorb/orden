@@ -43,19 +43,11 @@ export function sharedContent(content: Content): Content {
   return { ...content, passkeys: content.passkeys.map((one) => ({ ...one, privateKey: '' })) }
 }
 
-export async function sealedLink(
-  key: Uint8Array<ArrayBuffer>,
-  id: string,
-  content: Content,
-): Promise<string> {
+export async function sealedLink(key: Uint8Array<ArrayBuffer>, id: string, content: Content): Promise<string> {
   return await seal(key, JSON.stringify({ v: 1, content: sharedContent(content) }), 'link', id)
 }
 
-export async function openedLink(
-  key: Uint8Array<ArrayBuffer>,
-  id: string,
-  body: string,
-): Promise<Content | null> {
+export async function openedLink(key: Uint8Array<ArrayBuffer>, id: string, body: string): Promise<Content | null> {
   try {
     const raw: unknown = JSON.parse(await openText(key, body, 'link', id))
     if (typeof raw !== 'object' || raw === null || !('content' in raw)) return null

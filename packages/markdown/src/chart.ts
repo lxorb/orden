@@ -16,9 +16,10 @@ export interface Chart {
 }
 
 const KINDS = new Map<string, ChartKind>([
-  ...(['bar', 'line', 'scatter', 'pie', 'donut', 'radar', 'polar'] as const).map(
-    (kind): [string, ChartKind] => [kind, kind],
-  ),
+  ...(['bar', 'line', 'scatter', 'pie', 'donut', 'radar', 'polar'] as const).map((kind): [string, ChartKind] => [
+    kind,
+    kind,
+  ]),
   ['doughnut', 'donut'],
   ['polararea', 'polar'],
 ])
@@ -78,9 +79,7 @@ function valueOf(written: string): string {
   return value
 }
 
-function pair(
-  line: string,
-): { indent: number; key: string; value: string; written: string } | null {
+function pair(line: string): { indent: number; key: string; value: string; written: string } | null {
   const indent = line.length - line.trimStart().length
   const rest = line.trim().replace(/^-\s*/, '')
   const at = rest.indexOf(':')
@@ -153,9 +152,7 @@ export function readChart(source: string): Chart | null {
     else if (found.key === 'data') {
       current.data = numbers(found.value)
       if (found.value.trim() === '') {
-        const dash = listed
-          ? line.trimStart().length - line.trimStart().slice(1).trimStart().length
-          : 0
+        const dash = listed ? line.trimStart().length - line.trimStart().slice(1).trimStart().length : 0
         list = {
           column: found.indent + dash,
           into: (one) => current.data.push(numberOf(one) ?? 0),
@@ -204,8 +201,7 @@ export interface ChartOptions {
 
 function sayer(options?: ChartOptions): (value: number) => string {
   const format = new Intl.NumberFormat(options?.locale)
-  return (value) =>
-    format.format(Math.abs(value) > 1e15 ? value : Math.round(value * 100) / 100 + 0)
+  return (value) => format.format(Math.abs(value) > 1e15 ? value : Math.round(value * 100) / 100 + 0)
 }
 
 type Said = (value: number) => string
@@ -248,9 +244,7 @@ function frame(chart: Chart, low: number, high: number, step: number, said: Said
 
   for (const value of marks(low, high, step)) {
     const y = PLOT.y + PLOT.h * ((high - value) / (high - low))
-    out.push(
-      `<line class="chart-grid" x1="${PLOT.x}" y1="${round(y)}" x2="${PLOT.x + PLOT.w}" y2="${round(y)}"/>`,
-    )
+    out.push(`<line class="chart-grid" x1="${PLOT.x}" y1="${round(y)}" x2="${PLOT.x + PLOT.w}" y2="${round(y)}"/>`)
     out.push(text(said(value), PLOT.x - 8, y + 4, 'chart-tick', 'end'))
   }
 
@@ -285,9 +279,7 @@ function bars(chart: Chart, low: number, high: number, said: Said): string {
     }
   }
 
-  out.push(
-    `<line class="chart-axis" x1="${PLOT.x}" y1="${round(zero)}" x2="${PLOT.x + PLOT.w}" y2="${round(zero)}"/>`,
-  )
+  out.push(`<line class="chart-axis" x1="${PLOT.x}" y1="${round(zero)}" x2="${PLOT.x + PLOT.w}" y2="${round(zero)}"/>`)
   return out.join('')
 }
 
@@ -305,9 +297,7 @@ function lines(chart: Chart, low: number, high: number, said: Said, joined = tru
     if (drawn.length === 0) continue
 
     if (joined) {
-      out.push(
-        `<polyline class="chart-line" points="${drawn.join(' ')}" fill="none" stroke="${colour(which)}"/>`,
-      )
+      out.push(`<polyline class="chart-line" points="${drawn.join(' ')}" fill="none" stroke="${colour(which)}"/>`)
     }
     for (const [at, value] of series.data.entries()) {
       const x = PLOT.x + step * (at + 0.5)
@@ -340,9 +330,7 @@ function pie(chart: Chart, hole: number, said: Said): string {
 
     const name = chart.labels[at] ?? ''
     const path =
-      sweep >= Math.PI * 2 - 1e-9
-        ? ring(middle, radius, hole)
-        : slice(middle, radius, hole, turned, turned + sweep)
+      sweep >= Math.PI * 2 - 1e-9 ? ring(middle, radius, hole) : slice(middle, radius, hole, turned, turned + sweep)
 
     out.push(
       `<path class="chart-slice" d="${path}" fill="${colour(at)}"><title>${escape(`${name ? `${name}: ` : ''}${said(value)}`)}</title></path>`,
@@ -360,8 +348,7 @@ function round_middle(): { middle: { x: number; y: number }; radius: number } {
   }
 }
 
-const spoke = (count: number, at: number): number =>
-  -Math.PI / 2 + (at / Math.max(1, count)) * Math.PI * 2
+const spoke = (count: number, at: number): number => -Math.PI / 2 + (at / Math.max(1, count)) * Math.PI * 2
 
 function radar(chart: Chart, low: number, high: number, step: number, said: Said): string {
   const { middle, radius } = round_middle()
@@ -370,9 +357,7 @@ function radar(chart: Chart, low: number, high: number, step: number, said: Said
   const out: string[] = []
 
   for (const value of marks(low, high, step).slice(1)) {
-    const ring = Array.from({ length: count }, (_one, one) =>
-      at(middle, reach(value), spoke(count, one)),
-    )
+    const ring = Array.from({ length: count }, (_one, one) => at(middle, reach(value), spoke(count, one)))
     out.push(`<polygon class="chart-grid" points="${ring.join(' ')}" fill="none"/>`)
   }
 
@@ -440,13 +425,7 @@ function polar(chart: Chart, high: number, said: Said): string {
 const at = (middle: { x: number; y: number }, radius: number, angle: number): string =>
   `${round(middle.x + radius * Math.cos(angle))},${round(middle.y + radius * Math.sin(angle))}`
 
-function slice(
-  middle: { x: number; y: number },
-  radius: number,
-  hole: number,
-  from: number,
-  to: number,
-): string {
+function slice(middle: { x: number; y: number }, radius: number, hole: number, from: number, to: number): string {
   const big = to - from > Math.PI ? 1 : 0
   const inner = radius * hole
 
@@ -469,9 +448,7 @@ function ring(middle: { x: number; y: number }, radius: number, hole: number): s
 
 function legend(chart: Chart): string {
   const sliced = chart.kind === 'pie' || chart.kind === 'donut'
-  const named = sliced
-    ? chart.labels.slice(0, chart.series[0]?.data.length ?? 0)
-    : chart.series.map((one) => one.title)
+  const named = sliced ? chart.labels.slice(0, chart.series[0]?.data.length ?? 0) : chart.series.map((one) => one.title)
 
   const shown = named.filter((one) => one !== '')
   if (shown.length < 2) return ''

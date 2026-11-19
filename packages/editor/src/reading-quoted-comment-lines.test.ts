@@ -2,11 +2,9 @@ import { describe, expect, test } from 'vitest'
 import '@orden/markdown/eager'
 import { renderMarkdown } from '@orden/markdown'
 
-const CALLOUT_PERCENT =
-  '> [!note] Trip\n> Pack the bags\n> %%\n> old plan\n> %%\n> Book the hotel\n\nafter'
+const CALLOUT_PERCENT = '> [!note] Trip\n> Pack the bags\n> %%\n> old plan\n> %%\n> Book the hotel\n\nafter'
 
-const CALLOUT_HTML =
-  '> [!note] Trip\n> Pack the bags\n> <!--\n> old plan\n> -->\n> Book the hotel\n\nafter'
+const CALLOUT_HTML = '> [!note] Trip\n> Pack the bags\n> <!--\n> old plan\n> -->\n> Book the hotel\n\nafter'
 
 const QUOTE_PERCENT = '> Pack the bags\n> %%\n> old plan\n> %%\n> Book the hotel'
 

@@ -122,10 +122,7 @@ export function erased(): readonly (readonly [table: string, sql: string])[] {
     ['inbox_items', 'delete from inbox_items where user_id = ?1'],
     ['inbox_cursor', 'delete from inbox_cursor where user_id = ?1'],
     ['pad_updates', 'delete from pad_updates where user_id = ?1'],
-    [
-      'machine_events',
-      'delete from machine_events where machine in (select id from machines where user_id = ?1)',
-    ],
+    ['machine_events', 'delete from machine_events where machine in (select id from machines where user_id = ?1)'],
     ['term_sessions', 'delete from term_sessions where user_id = ?1'],
     ['machine_usage', 'delete from machine_usage where user_id = ?1'],
     ['machines', 'delete from machines where user_id = ?1'],
@@ -142,19 +139,11 @@ const NOTES_AT_ONCE = 500
 const ACCOUNTS_AT_ONCE = 5
 
 const DRAINED: readonly (readonly [table: string, where: string, noted: string | null])[] = [
-  [
-    'note_versions',
-    `note_id in (${OWNED_NOTES})`,
-    `select distinct 'versions/' || hash, ?3 from note_versions`,
-  ],
+  ['note_versions', `note_id in (${OWNED_NOTES})`, `select distinct 'versions/' || hash, ?3 from note_versions`],
   ['note_pictures', `note_id in (${OWNED_NOTES})`, null],
   ['tree_ops', `space_id in (${OWNED})`, null],
   ['space_entries', `space_id in (${OWNED})`, null],
-  [
-    'web_chunks',
-    'user_id = ?1',
-    `select 'web/' || user_id || '/chunks/' || name, ?3 from web_chunks`,
-  ],
+  ['web_chunks', 'user_id = ?1', `select 'web/' || user_id || '/chunks/' || name, ?3 from web_chunks`],
   ['pad_updates', 'user_id = ?1', null],
   ['time_entries', 'user_id = ?1', null],
   ['machine_events', 'machine in (select id from machines where user_id = ?1)', null],
@@ -181,13 +170,7 @@ async function drained(
   for (;;) {
     const results = await env.DB.batch([
       ...(noted
-        ? [
-            bound(
-              env,
-              `insert or ignore into leftovers (what, since) ${noted} where rowid in (${rows})`,
-              values,
-            ),
-          ]
+        ? [bound(env, `insert or ignore into leftovers (what, since) ${noted} where rowid in (${rows})`, values)]
         : []),
       bound(env, `delete from ${table} where rowid in (${rows})`, values),
     ])
@@ -197,9 +180,7 @@ async function drained(
 
 async function drainedNotes(env: Env, user: User, at: number): Promise<void> {
   for (;;) {
-    const { results } = await env.DB.prepare(
-      `select id from notes where space_id in (${OWNED}) limit ?2`,
-    )
+    const { results } = await env.DB.prepare(`select id from notes where space_id in (${OWNED}) limit ?2`)
       .bind(user.id, NOTES_AT_ONCE)
       .all<{ id: string }>()
     if (!results.length) return
@@ -210,9 +191,7 @@ async function drainedNotes(env: Env, user: User, at: number): Promise<void> {
 }
 
 export async function finishErasing(env: Env): Promise<void> {
-  const { results } = await env.DB.prepare(
-    'select what from leftovers where what like ? order by since, what limit ?',
-  )
+  const { results } = await env.DB.prepare('select what from leftovers where what like ? order by since, what limit ?')
     .bind(`${ERASING}%`, ACCOUNTS_AT_ONCE)
     .all<{ what: string }>()
 
@@ -258,11 +237,7 @@ export async function eraseAccount(env: Env, user: User): Promise<void> {
   const handed = await handedOn(env, user, at)
 
   await env.DB.batch([
-    bound(
-      env,
-      `insert or ignore into leftovers (what, since) values ('${ERASING}' || ?1, ?3)`,
-      values,
-    ),
+    bound(env, `insert or ignore into leftovers (what, since) values ('${ERASING}' || ?1, ?3)`, values),
     bound(env, 'delete from sessions where user_id = ?1', values),
     bound(env, `update term_sessions set ended_at = ?3 where ${THEIR_TERMS}`, values),
   ])
@@ -293,9 +268,7 @@ export async function eraseAccount(env: Env, user: User): Promise<void> {
 }
 
 function bound(env: Env, sql: string, values: readonly unknown[]): D1PreparedStatement {
-  const most = [...sql.matchAll(/\?(\d+)/g)]
-    .map((one) => Number(one[1]))
-    .reduce((high, one) => Math.max(high, one), 0)
+  const most = [...sql.matchAll(/\?(\d+)/g)].map((one) => Number(one[1])).reduce((high, one) => Math.max(high, one), 0)
   return env.DB.prepare(sql).bind(...values.slice(0, most))
 }
 
@@ -310,9 +283,7 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
   if (!held.length) return []
 
   const mine = new Set(held.map((one) => one.hash))
-  const pictures = new Set(
-    held.filter((one) => one.alone && one.type.startsWith('image/')).map((one) => one.hash),
-  )
+  const pictures = new Set(held.filter((one) => one.alone && one.type.startsWith('image/')).map((one) => one.hash))
   const owed = await usedElsewhere(env, user.id, mine)
   await unreadUses(env, user, pictures, owed)
 

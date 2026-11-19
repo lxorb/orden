@@ -156,10 +156,7 @@ describe('what a theme may not set', () => {
     [`[data-theme='dark'] { --a: "{"; --bg: red; }`, undefined],
     [tokens(`--bg: #000;`.repeat(9000)), ['the file is larger than 48 kB']],
     [tokens('--bg\n--text: #eee;'), ['--bg\n--text is not a property a theme may set']],
-    [
-      String.raw`#write p { p\6fsition: fixed; }`,
-      [expect.stringContaining('is not a property a theme may set')],
-    ],
+    [String.raw`#write p { p\6fsition: fixed; }`, [expect.stringContaining('is not a property a theme may set')]],
     [String.raw`[data-theme='dark'] { --b\67 : red; }`, undefined],
   ])(
     'comes to nothing for a nested rule, a stray bracket or brace, a file too big, a declaration left open or a CSS escape: %j',

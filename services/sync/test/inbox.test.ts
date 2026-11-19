@@ -21,8 +21,7 @@ beforeEach(async () => {
 
 afterEach(() => env.close())
 
-const read = (since = 0, as = token) =>
-  call<InboxPage>(env, `/v2/inbox?since=${since}`, { token: as })
+const read = (since = 0, as = token) => call<InboxPage>(env, `/v2/inbox?since=${since}`, { token: as })
 
 const write = (changes: unknown[], as = token) =>
   call<{ cursor: number; error?: string }>(env, '/v2/inbox', { token: as, body: { changes } })
@@ -68,9 +67,7 @@ describe('the inbox an account keeps', () => {
     await write([todo('a', { text: 'A' })])
     expect((await read(first)).json.items).toEqual([])
     await write([todo('a', { text: 'AA' }, 2)])
-    expect((await read(first)).json.items.map((one) => [one.id, one.fields.text])).toEqual([
-      ['a', 'AA'],
-    ])
+    expect((await read(first)).json.items.map((one) => [one.id, one.fields.text])).toEqual([['a', 'AA']])
   })
 
   test('takes two changes to one to-do in one request together', async () => {
@@ -80,9 +77,7 @@ describe('the inbox an account keeps', () => {
 
   test('pages a long inbox', async () => {
     for (let page = 0; page <= INBOX_PAGE / 200; page += 1) {
-      await write(
-        Array.from({ length: 200 }, (_, index) => todo(`p${page}-${index}`, { text: 'x' })),
-      )
+      await write(Array.from({ length: 200 }, (_, index) => todo(`p${page}-${index}`, { text: 'x' })))
     }
     const first = (await read()).json
     expect(first.items).toHaveLength(INBOX_PAGE)
@@ -92,15 +87,9 @@ describe('the inbox an account keeps', () => {
 
   test('refuses what is not a change to a to-do', async () => {
     expect((await write([{ id: 'a', fields: { text: 'x' }, stamps: {} }])).status).toBe(400)
-    expect((await write([{ id: 'a', fields: { text: {} }, stamps: { text: at(1) } }])).status).toBe(
-      400,
-    )
-    expect(
-      (await write([{ id: 'a b', fields: { text: 'x' }, stamps: { text: at(1) } }])).status,
-    ).toBe(400)
-    expect(
-      (await write([{ id: 'a', fields: { text: 'x' }, stamps: { text: 'soon' } }])).status,
-    ).toBe(400)
+    expect((await write([{ id: 'a', fields: { text: {} }, stamps: { text: at(1) } }])).status).toBe(400)
+    expect((await write([{ id: 'a b', fields: { text: 'x' }, stamps: { text: at(1) } }])).status).toBe(400)
+    expect((await write([{ id: 'a', fields: { text: 'x' }, stamps: { text: 'soon' } }])).status).toBe(400)
     expect((await read()).json.items).toEqual([])
   })
 
@@ -140,9 +129,9 @@ describe('the inbox an account keeps', () => {
     })
 
     expect((await write([todo('fresh', { text: 'x' })])).status).toBe(413)
-    expect(
-      env.db.prepare('select count(*) as n from inbox_items where user_id = ?').get(user.id),
-    ).toEqual({ n: MOST_INBOX_ITEMS })
+    expect(env.db.prepare('select count(*) as n from inbox_items where user_id = ?').get(user.id)).toEqual({
+      n: MOST_INBOX_ITEMS,
+    })
   })
 
   test('keeps no to-do that two changes to two fields grow past what a device reads', async () => {

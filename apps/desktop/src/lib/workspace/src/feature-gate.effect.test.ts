@@ -1,13 +1,6 @@
 import { flushSync } from 'svelte'
 import { beforeEach, describe, expect, test } from 'vitest'
-import {
-  setWord,
-  CHATS_WORD,
-  EXPERIMENTAL_WORD,
-  hiddenKinds,
-  PASS_WORD,
-  TIME_WORD,
-} from '../../gates/src/api'
+import { setWord, CHATS_WORD, EXPERIMENTAL_WORD, hiddenKinds, PASS_WORD, TIME_WORD } from '../../gates/src/api'
 import { whenChatsOn, whenPassOn, whenTimeOn } from './feature-gate.svelte'
 import { openPass } from '../../pass-sync/src/open'
 import { workspace } from './api'

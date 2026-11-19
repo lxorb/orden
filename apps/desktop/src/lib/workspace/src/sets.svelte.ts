@@ -1,30 +1,12 @@
 import { tick } from 'svelte'
 import { askSheet, webPages } from '@orden/contracts'
 import { focusEditor } from './focus'
-import {
-  identifier,
-  log,
-  without,
-  forget,
-  isRecord,
-  stored,
-  invoke,
-  isDesktop,
-} from '../../platform/src/api'
+import { identifier, log, without, forget, isRecord, stored, invoke, isDesktop } from '../../platform/src/api'
 import { IN_A_PAGE } from '../../ui-controls/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from './workspace.svelte'
 import { type Frame, pane, paneIn, panesIn } from '../../panes/src/api'
-import {
-  focusIn,
-  GLOBAL,
-  readSets,
-  type SetDraft,
-  type SetsDraft,
-  setKey,
-  sharedGoesTo,
-  tidied,
-} from './sets'
+import { focusIn, GLOBAL, readSets, type SetDraft, type SetsDraft, setKey, sharedGoesTo, tidied } from './sets'
 import { TABS_KEY, tabSets } from './spaces'
 import { TAB_KINDS } from '../../tab-kinds/src/api'
 
@@ -68,9 +50,7 @@ class Sets {
     forget(TABS_KEY)
     if (!shared || workspace.activeSpaceId === null) return
 
-    const owned = new Set(
-      isRecord(kept) ? Object.keys(kept).filter((one) => kept[one] === 'space') : [],
-    )
+    const owned = new Set(isRecord(kept) ? Object.keys(kept).filter((one) => kept[one] === 'space') : [])
     const to = sharedGoesTo(
       workspace.spaces.map((one) => one.id),
       owned,

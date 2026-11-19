@@ -193,10 +193,8 @@ const RUNS: Record<string, Run> = {
     const thread = threadOf(context)
     if (thread) await reply(host, thread, context.args)
   },
-  status: (context, host) =>
-    report(host, context, status(context.thread, host.panel.provider ?? null)),
-  usage: (context, host) =>
-    report(host, context, usage(context.thread, host.panel.provider ?? null)),
+  status: (context, host) => report(host, context, status(context.thread, host.panel.provider ?? null)),
+  usage: (context, host) => report(host, context, usage(context.thread, host.panel.provider ?? null)),
   login: (_context, host) => sign(host.panel.provider ?? null, false),
   logout: (_context, host) => sign(host.panel.provider ?? null, true),
   doctor: (context, host) => report(host, context, doctor(host.panel.provider ?? null)),

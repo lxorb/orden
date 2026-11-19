@@ -59,11 +59,7 @@ function linesOf(text: string): string[] {
   return text.match(/[^\n]*\n|[^\n]+$/g) ?? []
 }
 
-function alike(
-  one: string,
-  other: string,
-  compare: (a: string, b: string) => number | null,
-): number {
+function alike(one: string, other: string, compare: (a: string, b: string) => number | null): number {
   const a = one.replace(/\r?\n$/, '')
   const b = other.replace(/\r?\n$/, '')
   if (!a.trim() || !b.trim()) return 0
@@ -73,10 +69,7 @@ function alike(
   let front = 0
   while (front < shortest && a.charCodeAt(front) === b.charCodeAt(front)) front++
   let back = 0
-  while (
-    back < shortest - front &&
-    a.charCodeAt(a.length - 1 - back) === b.charCodeAt(b.length - 1 - back)
-  ) {
+  while (back < shortest - front && a.charCodeAt(a.length - 1 - back) === b.charCodeAt(b.length - 1 - back)) {
     back++
   }
   const ends = (2 * (front + back)) / total
@@ -163,10 +156,7 @@ function paired(gone: string, come: string): Diff[] {
 }
 
 function cost(diffs: readonly Diff[]): number {
-  return diffs.reduce(
-    (sum, [operation, text]) => sum + (operation === DIFF_EQUAL ? 0 : text.length),
-    0,
-  )
+  return diffs.reduce((sum, [operation, text]) => sum + (operation === DIFF_EQUAL ? 0 : text.length), 0)
 }
 
 function lines(old: string, now: string): Diff[] {
@@ -287,9 +277,7 @@ export type Tidy = 'semantic' | 'operations'
 function wordSpan(old: string, edit: Edit): Span {
   const gone = old.slice(edit.from, edit.to)
   const opens = isWordChar(charAt(gone, 0)) || isWordChar(charAt(edit.insert, 0))
-  const closes =
-    isWordChar(charBefore(gone, gone.length)) ||
-    isWordChar(charBefore(edit.insert, edit.insert.length))
+  const closes = isWordChar(charBefore(gone, gone.length)) || isWordChar(charBefore(edit.insert, edit.insert.length))
 
   return {
     from: opens && isWordChar(charBefore(old, edit.from)) ? wordStart(old, edit.from) : edit.from,
@@ -353,10 +341,7 @@ function read(old: string, now: string, middle: Edit): Edit[] {
   const to = ends ? middle.to : newline === -1 ? old.length : newline + 1
   const after = old.length - to
 
-  const { chars1, chars2, lineArray } = diffLinesToChars(
-    old.slice(from, to),
-    now.slice(from, now.length - after),
-  )
+  const { chars1, chars2, lineArray } = diffLinesToChars(old.slice(from, to), now.slice(from, now.length - after))
   const coarse = diffMain(chars1, chars2, UNCLOCKED, false)
   diffCharsToLines(coarse, lineArray)
 
@@ -373,8 +358,7 @@ function read(old: string, now: string, middle: Edit): Edit[] {
   }
 
   const rewrites = (one: { gone: string; come: string }) => one.gone !== '' && one.come !== ''
-  const longest = (one: { gone: string; come: string }) =>
-    Math.max(one.gone.length, one.come.length)
+  const longest = (one: { gone: string; come: string }) => Math.max(one.gone.length, one.come.length)
   const diffs: Diff[] = []
   const open = { gone: '', come: '' }
   const flush = () => {
@@ -390,9 +374,7 @@ function read(old: string, now: string, middle: Edit): Edit[] {
     const changes = (one: { gone: string; come: string }) => one.gone !== '' || one.come !== ''
     if (
       next &&
-      ((rewrites(open) &&
-        rewrites(next) &&
-        kept.length <= Math.min(longest(open), longest(next))) ||
+      ((rewrites(open) && rewrites(next) && kept.length <= Math.min(longest(open), longest(next))) ||
         (changes(open) && changes(next) && !kept.trim()))
     ) {
       open.gone += kept

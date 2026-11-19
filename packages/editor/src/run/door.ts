@@ -6,8 +6,7 @@ import { openViews } from '../open-views'
 
 const RUNNABLE = new Set(['js', 'javascript', 'mjs', 'cjs'])
 
-export const isRunnableLanguage = (language: string): boolean =>
-  RUNNABLE.has(language.trim().toLowerCase())
+export const isRunnableLanguage = (language: string): boolean => RUNNABLE.has(language.trim().toLowerCase())
 
 export interface RunnableFence {
   from: number

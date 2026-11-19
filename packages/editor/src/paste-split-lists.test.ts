@@ -16,8 +16,7 @@ function numbered(words: string, at: number): string {
 
 describe('a list written by Notion, one list element for each item', () => {
   test('is one tight bulleted list, as Notion drew it', () => {
-    const sub =
-      '<ul id="b-sub" class="bulleted-list"><li style="list-style-type:circle">Sub</li></ul>'
+    const sub = '<ul id="b-sub" class="bulleted-list"><li style="list-style-type:circle">Sub</li></ul>'
     const html = `<div class="page-body">${bullet('Milk')}${bullet('Eggs')}${bullet('Bread', sub)}</div>`
     const markdown = htmlToMarkdown(html, IMPORTING)
     expect(markdown).toBe('- Milk\n- Eggs\n- Bread\n  - Sub')

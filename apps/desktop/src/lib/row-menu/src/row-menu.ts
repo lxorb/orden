@@ -1,25 +1,11 @@
 import { type Entry, portOf, tabKindLoaded } from '@orden/contracts'
 import { foreignCopy } from '@orden/sync-core'
 import { isChatTarget } from '@orden/markdown/links'
-import {
-  moveTargets,
-  type MoveTarget,
-  movesInto,
-  folderNote,
-  nestedIn,
-  entryAt,
-} from '../../tree/src/api'
+import { moveTargets, type MoveTarget, movesInto, folderNote, nestedIn, entryAt } from '../../tree/src/api'
 import { basesOn, hiddenKinds, type KindName } from '../../gates/src/api'
 import { kindLabel } from '../../new-here/src/api'
 import { DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
-import {
-  archiveEntry,
-  coverEntries,
-  iconEntries,
-  searchAgainEntry,
-  shareEntry,
-  webDataEntry,
-} from './api'
+import { archiveEntry, coverEntries, iconEntries, searchAgainEntry, shareEntry, webDataEntry } from './api'
 import {
   rowName,
   folderOf,
@@ -96,10 +82,7 @@ function wallpaperEntry(entry: Entry): MenuEntry[] {
   return [
     {
       label: 'Use as wallpaper',
-      run: () =>
-        void import('../../theme-looks/src/api').then(({ wallpaper }) =>
-          wallpaper.takeFrom(entry.path),
-        ),
+      run: () => void import('../../theme-looks/src/api').then(({ wallpaper }) => wallpaper.takeFrom(entry.path)),
     },
   ]
 }
@@ -253,9 +236,7 @@ const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {
   canvas: (folder) => workspace.createCanvas(folder),
   pages: (folder) => workspace.createPages(folder),
   web: (folder) => workspace.createWebsite(folder),
-  ...(__EVEN_PLUGIN__
-    ? {}
-    : { chat: (folder?: string) => tabKindLoaded('chat').then((kind) => kind.make?.(folder)) }),
+  ...(__EVEN_PLUGIN__ ? {} : { chat: (folder?: string) => tabKindLoaded('chat').then((kind) => kind.make?.(folder)) }),
 }
 
 export function newFileRows(inside?: string): MenuEntry[] {

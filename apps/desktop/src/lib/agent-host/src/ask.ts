@@ -30,8 +30,7 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
   const reader = readerPort()
   const id = maybe(call, 'id')
   if (id !== null) {
-    if (!(await reader.knows(agent.id, id)))
-      throw new Refused('bad_arguments', `there is no question ${id}`)
+    if (!(await reader.knows(agent.id, id))) throw new Refused('bad_arguments', `there is no question ${id}`)
     return heard(reader, call, id, patience)
   }
 
@@ -57,10 +56,7 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
   }
   const placeholder = maybe(call, 'placeholder')
   if ([...choices, placeholder ?? ''].some((one) => one.length > LONGEST_CHOICE)) {
-    throw new Refused(
-      'bad_arguments',
-      `a choice or placeholder is at most ${LONGEST_CHOICE} characters`,
-    )
+    throw new Refused('bad_arguments', `a choice or placeholder is at most ${LONGEST_CHOICE} characters`)
   }
 
   if ((await reader.waiting(agent.id)) >= MOST_OPEN) {
@@ -95,12 +91,7 @@ export async function askReader(call: Call): Promise<AgentAnswer> {
   return heard(reader, call, asked, patience)
 }
 
-async function heard(
-  reader: AgentReaderPort,
-  call: Call,
-  id: string,
-  patience: number,
-): Promise<AgentAnswer> {
+async function heard(reader: AgentReaderPort, call: Call, id: string, patience: number): Promise<AgentAnswer> {
   const halting = await stopSignal(call)
   const said = await reader.heard(id, patience, halting.signal).finally(halting.end)
   if (halting.signal.aborted && said === null) throw stopRefused(`question ${id} is still open`)

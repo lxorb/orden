@@ -58,14 +58,7 @@ describe('the weekly usage', () => {
   })
 
   test('is never asked of an API key or a CLI without a weekly limit', () => {
-    for (const kind of [
-      'anthropic',
-      'openai',
-      'gemini',
-      'compatible',
-      'chatgpt',
-      'gemini-cli',
-    ] as const) {
+    for (const kind of ['anthropic', 'openai', 'gemini', 'compatible', 'chatgpt', 'gemini-cli'] as const) {
       expect(weeklyIn(kind, CLAUDE)).toBeNull()
       expect(weeklyIn(kind, CODEX)).toBeNull()
     }
@@ -83,9 +76,7 @@ describe('reading the usage', () => {
   test('asks the program of that account and keeps its week', async () => {
     asked.answer = CLAUDE
     await usage.look({ id: 'claude-code', kind: 'claude-code' }, true)
-    expect(asked.calls).toEqual([
-      { command: 'ai_cli_usage', args: { tool: 'claude-code', account: 'claude-code' } },
-    ])
+    expect(asked.calls).toEqual([{ command: 'ai_cli_usage', args: { tool: 'claude-code', account: 'claude-code' } }])
     expect(usage.of('claude-code')?.used).toBe(92)
   })
 

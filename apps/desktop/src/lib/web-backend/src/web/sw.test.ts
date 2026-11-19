@@ -6,8 +6,7 @@ const SW = join(import.meta.dirname, '../../../../../public/sw.js')
 const SOURCE = readFileSync(SW, 'utf8')
 const ORIGIN = 'http://127.0.0.1:18967'
 
-const PIXEL =
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg=='
+const PIXEL = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg=='
 
 interface Row {
   path: string
@@ -170,8 +169,7 @@ describe('the asset worker', () => {
 
   test('a piece asked for is the piece, so a player can read where it seeks', async () => {
     const whole = new Uint8Array(
-      (await (await worker.fetch(`${ORIGIN}/asset/Work/notes/screenshot.png`))?.arrayBuffer()) ??
-        new ArrayBuffer(0),
+      (await (await worker.fetch(`${ORIGIN}/asset/Work/notes/screenshot.png`))?.arrayBuffer()) ?? new ArrayBuffer(0),
     )
     const size = whole.length
     const piece = async (range: string) => {
@@ -277,9 +275,7 @@ describe('the asset worker', () => {
   })
 
   test('a row that is not base64 is a miss rather than a broken picture', async () => {
-    const odd = load([
-      { path: '/Work/a.png', type: 'image/png', data: 'not base64!!', modified: 1 },
-    ])
+    const odd = load([{ path: '/Work/a.png', type: 'image/png', data: 'not base64!!', modified: 1 }])
     expect((await odd.fetch(`${ORIGIN}/asset/Work/a.png`))?.status).toBe(404)
   })
 

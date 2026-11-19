@@ -55,11 +55,8 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
 }
 
 function looksLikeNotion(paths: readonly string[]): boolean {
-  const named = (path: string) =>
-    hasNotionId((path.split('/').pop() ?? path).replace(/_all(\.csv)$/i, '$1'))
-  const pages = paths.filter(
-    (one) => /\.(md|markdown|html?)$/i.test(one) && !/(^|\/)index\.html$/i.test(one),
-  )
+  const named = (path: string) => hasNotionId((path.split('/').pop() ?? path).replace(/_all(\.csv)$/i, '$1'))
+  const pages = paths.filter((one) => /\.(md|markdown|html?)$/i.test(one) && !/(^|\/)index\.html$/i.test(one))
   return pages.length ? pages.every(named) : paths.some(named)
 }
 
@@ -94,11 +91,7 @@ async function jsonKind(sources: readonly Source[]): Promise<FormatId | null> {
 
     if (said && typeof said === 'object') {
       const note = said as Record<string, unknown>
-      const keep =
-        'textContent' in note ||
-        'listContent' in note ||
-        'isTrashed' in note ||
-        'isArchived' in note
+      const keep = 'textContent' in note || 'listContent' in note || 'isTrashed' in note || 'isArchived' in note
       if (keep) return 'keep'
     }
   }

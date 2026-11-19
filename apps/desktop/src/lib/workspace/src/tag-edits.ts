@@ -1,12 +1,7 @@
 import { type Change, changeOf, type Edit } from '@orden/scan/search/replace'
 import { tagCuts, tagSpans } from '@orden/scan/search/tags'
 
-export function tagChange(
-  path: string,
-  before: string,
-  from: string,
-  to: string | null,
-): Change | null {
+export function tagChange(path: string, before: string, from: string, to: string | null): Change | null {
   const spans = to === null ? tagCuts(before, from) : tagSpans(before, from)
   if (!spans.length) return null
 

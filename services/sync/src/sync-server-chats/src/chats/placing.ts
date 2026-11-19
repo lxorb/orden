@@ -1,15 +1,5 @@
 import { apply, chatState, mayEvent } from '@orden/chats'
-import type {
-  Event,
-  FileRef,
-  Logged,
-  Mention,
-  Message,
-  Meta,
-  Preview,
-  Role,
-  Who,
-} from '@orden/chats'
+import type { Event, FileRef, Logged, Mention, Message, Meta, Preview, Role, Who } from '@orden/chats'
 import { BURST_POSTS, BURST_SECONDS, EVENTS_A_MINUTE } from '@orden/chats/limits'
 import type { Refusal } from '@orden/chats/wire'
 
@@ -77,10 +67,7 @@ export function metaOf(sql: SqlStorage): Meta {
 }
 
 export function readMeta(sql: SqlStorage, key: string): string | null {
-  return (
-    sql.exec<{ value: string | null }>('select value from meta where key = ?', key).toArray()[0]
-      ?.value ?? null
-  )
+  return sql.exec<{ value: string | null }>('select value from meta where key = ?', key).toArray()[0]?.value ?? null
 }
 
 export function setMeta(sql: SqlStorage, key: string, value: string | null): void {
@@ -92,20 +79,9 @@ export function setMeta(sql: SqlStorage, key: string, value: string | null): voi
   )
 }
 
-function paced(
-  sql: SqlStorage,
-  who: Who,
-  kind: string,
-  most: number,
-  window: number,
-  at: number,
-): boolean {
+function paced(sql: SqlStorage, who: Who, kind: string, most: number, window: number, at: number): boolean {
   const row = sql
-    .exec<{ since: number; count: number }>(
-      'select since, count from paces where who = ? and kind = ?',
-      who,
-      kind,
-    )
+    .exec<{ since: number; count: number }>('select since, count from paces where who = ? and kind = ?', who, kind)
     .toArray()[0]
   const fresh = !row || at - row.since >= window
   const count = fresh ? 1 : row.count + 1
@@ -125,10 +101,7 @@ function targetOf(event: Event): string | null {
 }
 
 const posts = (event: Event) =>
-  event.kind === 'post' ||
-  event.kind === 'schedule' ||
-  event.kind === 'react' ||
-  event.kind === 'vote'
+  event.kind === 'post' || event.kind === 'schedule' || event.kind === 'react' || event.kind === 'vote'
 
 export function admit(sql: SqlStorage, event: Event, asker: Asker, at: number): Refusal | null {
   const meta = metaOf(sql)
@@ -168,9 +141,7 @@ export function admit(sql: SqlStorage, event: Event, asker: Asker, at: number): 
 }
 
 function heldFor(sql: SqlStorage, message: string, who: Who): 'mine' | 'other' | null {
-  const row = sql
-    .exec<{ author: string }>('select author from scheduled where message = ?', message)
-    .toArray()[0]
+  const row = sql.exec<{ author: string }>('select author from scheduled where message = ?', message).toArray()[0]
   if (!row) return null
   return row.author === who ? 'mine' : 'other'
 }
@@ -228,20 +199,14 @@ export function place(
   }
 
   const answered =
-    event.kind === 'post' && event.parent !== undefined
-      ? (messageIn(sql, event.parent)?.author ?? null)
-      : null
+    event.kind === 'post' && event.parent !== undefined ? (messageIn(sql, event.parent)?.author ?? null) : null
   return {
     logged,
     effects: {
       called: event.kind === 'post' ? (event.mentions ?? []) : [],
       answered: answered === asker.who ? null : answered,
       files:
-        event.kind === 'post'
-          ? namedBy(event.files, event.preview)
-          : event.kind === 'edit'
-            ? (event.files ?? [])
-            : [],
+        event.kind === 'post' ? namedBy(event.files, event.preview) : event.kind === 'edit' ? (event.files ?? []) : [],
       freed: before && !before.deleted && frees(event) ? namedBy(before.files, before.preview) : [],
       freedBy: before?.author ?? null,
     },

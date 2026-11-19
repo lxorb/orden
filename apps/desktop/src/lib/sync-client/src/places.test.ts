@@ -47,11 +47,7 @@ describe('a folder renamed while a note was moved into it', () => {
 
       await settle(space, how)
 
-      expect([folder.local_path, note.local_path, inside.local_path]).toEqual([
-        'A',
-        'A/N.md',
-        'A/in.md',
-      ])
+      expect([folder.local_path, note.local_path, inside.local_path]).toEqual(['A', 'A/N.md', 'A/in.md'])
       expect(disk.folders.has('/r/B')).toBe(false)
       expect([...disk.files.keys()].sort()).toEqual(['/r/A/N.md', '/r/A/in.md'])
     },
@@ -245,26 +241,12 @@ describe('what a space holds at a path', () => {
       seed = (seed * 1103515245 + 12345) % 2147483648
       return seed % most
     }
-    const names = [
-      'a.md',
-      'A.md',
-      'b.md',
-      'Ä.md',
-      'Ä.md',
-      'f/a.md',
-      'F/A.md',
-      'f/g/b.md',
-      'F/G',
-      '',
-    ]
+    const names = ['a.md', 'A.md', 'b.md', 'Ä.md', 'Ä.md', 'f/a.md', 'F/A.md', 'f/g/b.md', 'F/G', '']
     const made = () =>
-      new SpaceState(
-        { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
-        [],
-        [],
-        'd',
-        { platform: 'linux', foldsCase: true } as never,
-      )
+      new SpaceState({ space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null }, [], [], 'd', {
+        platform: 'linux',
+        foldsCase: true,
+      } as never)
     const space = made()
     const walked = (path: string) => {
       const wanted = space.key(path)
@@ -327,9 +309,7 @@ describe('an ask for what a space holds at a path', () => {
   test('does not walk every entry, so a sync of many notes is not slowed by each one', () => {
     const space = new SpaceState(
       { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
-      Array.from({ length: 2000 }, (_, at) =>
-        row(`e${String(at)}`, 'note', null, 'x.md', `Note ${String(at)}.md`),
-      ),
+      Array.from({ length: 2000 }, (_, at) => row(`e${String(at)}`, 'note', null, 'x.md', `Note ${String(at)}.md`)),
       [],
       'd',
       { platform: 'linux', foldsCase: true } as never,
@@ -348,10 +328,7 @@ describe('an ask for what a space holds at a path', () => {
 
 describe('a tree of many folders gone from the account', () => {
   test('leaves the disk without a walk of every entry for each folder', async () => {
-    const rows = [
-      row('top', 'folder', null, 'Top', 'Top'),
-      row('keep', 'note', null, 'Keep.md', 'Keep.md'),
-    ]
+    const rows = [row('top', 'folder', null, 'Top', 'Top'), row('keep', 'note', null, 'Keep.md', 'Keep.md')]
     for (let f = 0; f < 300; f++) {
       rows.push(row(`f${String(f)}`, 'folder', 'top', `F${String(f)}`, `Top/F${String(f)}`))
       for (let n = 0; n < 5; n++) {
@@ -392,9 +369,7 @@ describe('a tree of many folders gone from the account', () => {
 
     expect(walks.mock.calls.length).toBeLessThan(10)
     expect(forgotten).toHaveLength(1500)
-    expect(
-      [...space.entries.values()].filter((one) => one.local_path).map((one) => one.id),
-    ).toEqual(['keep'])
+    expect([...space.entries.values()].filter((one) => one.local_path).map((one) => one.id)).toEqual(['keep'])
   })
 })
 

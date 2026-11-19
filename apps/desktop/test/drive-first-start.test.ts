@@ -12,17 +12,12 @@ const SURFACES = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'surfaces', 'src', 
 const ASK = read(ROOT, 'apps', 'desktop', 'src', 'lib', 'crash-reports', 'src', 'CrashAsk.svelte')
 const TOLD = read(SCRIPTS, 'crash_told.py')
 
-const constant = (name: string) =>
-  new RegExp(`export const ${name} = '([^']+)'`).exec(SURFACES)?.[1] ?? ''
+const constant = (name: string) => new RegExp(`export const ${name} = '([^']+)'`).exec(SURFACES)?.[1] ?? ''
 
 const run = new Set(
   readdirSync(WORKFLOWS)
     .filter((name) => /\.ya?ml$/.test(name))
-    .flatMap((name) =>
-      [...read(WORKFLOWS, name).matchAll(/scripts\/([\w-]+\.py)\b/g)].map(
-        (found) => found[1] ?? '',
-      ),
-    ),
+    .flatMap((name) => [...read(WORKFLOWS, name).matchAll(/scripts\/([\w-]+\.py)\b/g)].map((found) => found[1] ?? '')),
 )
 
 const script = (name: string) => read(SCRIPTS, name)
@@ -37,9 +32,9 @@ function answers(name: string, seen = new Set<string>()): boolean {
   seen.add(name)
   const text = script(name)
   if (/\bcrash_told\.told\(/.test(text)) return true
-  return [
-    ...text.matchAll(/import_module\("([\w-]+)"\)|^from ([\w]+) import [^\n]*\bendpoint\b/gm),
-  ].some((found) => answers(`${found[1] ?? found[2] ?? ''}.py`, seen))
+  return [...text.matchAll(/import_module\("([\w-]+)"\)|^from ([\w]+) import [^\n]*\bendpoint\b/gm)].some((found) =>
+    answers(`${found[1] ?? found[2] ?? ''}.py`, seen),
+  )
 }
 
 describe('a drive CI runs on a fresh profile', () => {

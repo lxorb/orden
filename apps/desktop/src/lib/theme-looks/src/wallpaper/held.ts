@@ -34,9 +34,7 @@ function sideOf(said: unknown): Side | null {
 
 function rgb(said: unknown): Rgb | null {
   if (!Array.isArray(said) || said.length !== 3) return null
-  return said.every((one) => isNumber(one) && one >= 0 && one <= 255)
-    ? (said as unknown as Rgb)
-    : null
+  return said.every((one) => isNumber(one) && one >= 0 && one <= 255) ? (said as unknown as Rgb) : null
 }
 
 function spanOf(said: unknown): Span | undefined {

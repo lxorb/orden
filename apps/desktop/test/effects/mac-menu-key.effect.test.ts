@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { macMenuKey } from '../../src/lib/ui-kit/src/system-menu'
 
-const key = (init: KeyboardEventInit) =>
-  new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init })
+const key = (init: KeyboardEventInit) => new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init })
 
 function holding(tag: string) {
   const held = document.createElement(tag)

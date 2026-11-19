@@ -103,8 +103,8 @@
       <button class="orden-chip" type="submit" disabled={busy || pin === ''}>Use PIN</button>
     </form>
     <p class="hint">
-      A PIN keeps out someone at this device. It does not stop a program running as you, which could
-      read the seal and try every PIN.
+      A PIN keeps out someone at this device. It does not stop a program running as you, which could read the seal and
+      try every PIN.
     </p>
   {/if}
   <div class="orden-setting row">
@@ -122,8 +122,7 @@
       label="Clear clipboard after"
       value={String(pass.settings.clipboardClear)}
       options={CLIPBOARD_CLEAR.map((one) => ({ value: String(one), label: clearWord(one) }))}
-      onchange={(value: string) =>
-        pass.setSetting('clipboardClear', Number(value) as ClipboardClear)}
+      onchange={(value: string) => pass.setSetting('clipboardClear', Number(value) as ClipboardClear)}
     />
   </div>
 </div>
@@ -136,13 +135,10 @@
   {:else}
     <div class="orden-setting">
       <span class="name">It encrypts everything in Pass.</span>
-      <button class="orden-chip" type="button" onclick={() => (changing = true)}
-        >Change Pass password</button
-      >
+      <button class="orden-chip" type="button" onclick={() => (changing = true)}>Change Pass password</button>
     </div>
     <p class="hint" data-old-secrets>
-      The keys inside Pass stay the same, so the old password still opens a copy of Pass somebody
-      kept from before.
+      The keys inside Pass stay the same, so the old password still opens a copy of Pass somebody kept from before.
     </p>
   {/if}
 </div>
@@ -152,17 +148,11 @@
   {#if recovery}
     <output class="code" dir="ltr">{recovery}</output>
     <div class="buttons pass-buttons">
-      <button
-        class="orden-chip"
-        type="button"
-        onclick={() => recovery && void copyField('Recovery key', recovery)}>Copy</button
+      <button class="orden-chip" type="button" onclick={() => recovery && void copyField('Recovery key', recovery)}
+        >Copy</button
       >
-      <button class="orden-chip" type="button" onclick={() => recovery && downloaded(recovery)}
-        >Download</button
-      >
-      <button class="orden-button" type="button" onclick={() => (recovery = null)}
-        >I saved it</button
-      >
+      <button class="orden-chip" type="button" onclick={() => recovery && downloaded(recovery)}>Download</button>
+      <button class="orden-button" type="button" onclick={() => (recovery = null)}>I saved it</button>
     </div>
   {:else if askingRecovery}
     <form class="orden-setting" onsubmit={madeRecovery}>
@@ -175,16 +165,12 @@
         aria-label="Pass password"
         bind:value={recoveryPassword}
       />
-      <button class="orden-chip" type="submit" disabled={busy || recoveryPassword === ''}
-        >Make a new key</button
-      >
+      <button class="orden-chip" type="submit" disabled={busy || recoveryPassword === ''}>Make a new key</button>
     </form>
   {:else}
     <div class="orden-setting">
       <span class="name">A new key stops the old one from opening Pass here.</span>
-      <button class="orden-chip" type="button" onclick={() => (askingRecovery = true)}
-        >New recovery key</button
-      >
+      <button class="orden-chip" type="button" onclick={() => (askingRecovery = true)}>New recovery key</button>
     </div>
     <p class="hint">The old key still opens a copy of Pass somebody kept from before.</p>
   {/if}

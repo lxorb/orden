@@ -2,16 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Entry } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
-import {
-  entryAt,
-  flatRows,
-  folderNote,
-  orderedTree,
-  rowIds,
-  withEntry,
-  withMove,
-  withoutEntry,
-} from '../src/api'
+import { entryAt, flatRows, folderNote, orderedTree, rowIds, withEntry, withMove, withoutEntry } from '../src/api'
 
 const SRC = join(import.meta.dirname, '../src')
 
@@ -41,9 +32,7 @@ test('the module stands on its own reaches no app module but the platform, the f
   const reached = readdirSync(SRC)
     .filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
     .flatMap((name) =>
-      [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.\.[^']*)'/g)].map(
-        (found) => found[1],
-      ),
+      [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.\.[^']*)'/g)].map((found) => found[1]),
     )
   expect([...new Set(reached)].sort()).toEqual([
     '../../file-ops/src/api',

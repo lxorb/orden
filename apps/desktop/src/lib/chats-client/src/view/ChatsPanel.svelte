@@ -101,9 +101,7 @@
     aria-label={`${nameOf(author, [], chat?.space ?? null)}: ${line}`}
     onclick={() => open(chat, message)}
   >
-    <span class="orden-row-mark"
-      ><Avatar face={faceOf(author, [], chat?.space ?? null)} size={20} /></span
-    >
+    <span class="orden-row-mark"><Avatar face={faceOf(author, [], chat?.space ?? null)} size={20} /></span>
     <span class="orden-row-label">{line}</span>
     <span class="orden-row-meta">{chat?.name ?? ''}</span>
   </button>
@@ -134,9 +132,7 @@
       <button type="button" class="orden-row entry" onclick={() => open(one.entry)}>
         <span class="orden-row-mark"><ChatMark path={one.entry.path} /></span>
         <span class="orden-row-label">{one.entry.name ?? 'Chat'}</span>
-        {#if one.entry.unread}<span class="orden-row-meta count"
-            >{localNumber(one.entry.unread)}</span
-          >{/if}
+        {#if one.entry.unread}<span class="orden-row-meta count">{localNumber(one.entry.unread)}</span>{/if}
       </button>
       <select
         class="level"
@@ -156,23 +152,16 @@
           <button
             type="button"
             class="orden-chip"
-            onclick={() => suggested.reply && useDraft(one.entry, suggested.reply)}
-            >Use draft</button
+            onclick={() => suggested.reply && useDraft(one.entry, suggested.reply)}>Use draft</button
           >
         {/if}
         {#if suggested.todo}
           <p class="draft">{suggested.todo.title}</p>
-          <button
-            type="button"
-            class="orden-chip"
-            onclick={() => suggested.todo && addTodo(one.entry, suggested.todo)}>Add as task</button
+          <button type="button" class="orden-chip" onclick={() => suggested.todo && addTodo(one.entry, suggested.todo)}
+            >Add as task</button
           >
         {/if}
-        <button
-          type="button"
-          class="orden-chip"
-          onclick={() => priorities.settle(one.entry.id, 'all')}>Dismiss</button
-        >
+        <button type="button" class="orden-chip" onclick={() => priorities.settle(one.entry.id, 'all')}>Dismiss</button>
       </div>
     {/if}
   {/snippet}
@@ -202,8 +191,7 @@
     <button type="button" class="orden-row" onclick={() => (showing = 'saved')}>
       <span class="orden-row-mark"><Glyph name="saved" /></span>
       <span class="orden-row-label">Saved</span>
-      {#if saved.list.length}<span class="orden-row-meta">{localNumber(saved.list.length)}</span
-        >{/if}
+      {#if saved.list.length}<span class="orden-row-meta">{localNumber(saved.list.length)}</span>{/if}
     </button>
 
     <div class="section">

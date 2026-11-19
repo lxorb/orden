@@ -13,8 +13,7 @@ AAAEB5cuSBEInnkEgbFm8C8FUYNVRZ7fSCmZNnh6HP8OvMxnlwoE0D5IiPx9/zf57rWomW
 cMayc24HDWk4uJdf9WNRAAAACnRlc3RAb3JkZW4BAgM=
 -----END OPENSSH PRIVATE KEY-----
 `
-const ED_PUBLIC =
-  'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHlwoE0D5IiPx9/zf57rWomWcMayc24HDWk4uJdf9WNR test@orden'
+const ED_PUBLIC = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHlwoE0D5IiPx9/zf57rWomWcMayc24HDWk4uJdf9WNR test@orden'
 const ED_PRINT = 'SHA256:G06dMLz14Dh0K2IZLO40np36K/ExRnTDdEXQIDXktxU'
 const RSA_PRIVATE = `-----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAAAlwAAAAdzc2gtcn
@@ -58,8 +57,7 @@ FAgNIMkNJHqcHgCPC7fGkfd2/tEty4PIIYQkLZyBI01+E0Bjtsg5GbXrsa2sJxiH9q/ZnO
 O75uH9QG4ZRHe7GA==
 -----END OPENSSH PRIVATE KEY-----
 `
-const LOCKED_PUBLIC =
-  'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJQ3vB7f95CQtoP3P+h1p26hGm10nkyEB7vj2MGxBhh5'
+const LOCKED_PUBLIC = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJQ3vB7f95CQtoP3P+h1p26hGm10nkyEB7vj2MGxBhh5'
 
 function keygen(): boolean {
   try {
@@ -134,9 +132,7 @@ describe('a new key', () => {
   it('is an Ed25519 pair in OpenSSH form', async () => {
     expect(await canMakeSshKey()).toBe(true)
     const made = await newSshKey(' me@orden ')
-    expect(made.publicKey).toMatch(
-      /^ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI[A-Za-z0-9+/]{43} me@orden$/,
-    )
+    expect(made.publicKey).toMatch(/^ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI[A-Za-z0-9+/]{43} me@orden$/)
     expect(made.privateKey.startsWith('-----BEGIN OPENSSH PRIVATE KEY-----\n')).toBe(true)
     expect(made.privateKey.endsWith('\n-----END OPENSSH PRIVATE KEY-----\n')).toBe(true)
     const lines = made.privateKey.trim().split('\n').slice(1, -1)

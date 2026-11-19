@@ -61,9 +61,7 @@ function opened(count: number) {
 }
 
 const press = (host: HTMLElement, key: string, ctrlKey = false) => {
-  host.dispatchEvent(
-    new KeyboardEvent('keydown', { key, ctrlKey, bubbles: true, cancelable: true }),
-  )
+  host.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey, bubbles: true, cancelable: true }))
   flushSync()
 }
 

@@ -83,10 +83,7 @@ function dictionariesOf(): Dictionaries {
   dictionaries ??= {
     common: new Map(COMMON_PASSWORDS.map((one, at) => [one, Math.log2(at + 2)])),
     words: new Set(WORDS.filter((one) => one.length >= 3)),
-    longest: [...COMMON_PASSWORDS, ...WORDS].reduce(
-      (high, one) => Math.max(high, one.length),
-      -Infinity,
-    ),
+    longest: [...COMMON_PASSWORDS, ...WORDS].reduce((high, one) => Math.max(high, one.length), -Infinity),
   }
   return dictionaries
 }
@@ -104,8 +101,7 @@ function poolOf(password: string): number {
 function caseBits(piece: string): number {
   const lower = piece.toLowerCase()
   if (piece === lower) return 0
-  if (piece === piece.toUpperCase() || piece === lower.charAt(0).toUpperCase() + lower.slice(1))
-    return 1
+  if (piece === piece.toUpperCase() || piece === lower.charAt(0).toUpperCase() + lower.slice(1)) return 1
   return 2
 }
 
@@ -190,21 +186,15 @@ function cheapestBits(password: string, memo: Map<string, number>): number {
     for (let to = from + 3; to <= Math.min(length, from + found.longest); to++) {
       for (const reading of readings) {
         const bits = wordBits(reading.text.slice(from, to), found)
-        if (bits < Infinity)
-          offer(to, bits + reading.bits + caseBits(password.slice(from, to)), from)
+        if (bits < Infinity) offer(to, bits + reading.bits + caseBits(password.slice(from, to)), from)
       }
       if (to - from === 4 && YEAR.test(password.slice(from, to))) offer(to, YEAR_BITS, from)
     }
     const keyboard = keyboardRun(lower, from)
     for (let run = 3; run <= keyboard; run++)
-      offer(
-        from + run,
-        KEYBOARD_BITS + Math.log2(run) + caseBits(password.slice(from, from + run)),
-        from,
-      )
+      offer(from + run, KEYBOARD_BITS + Math.log2(run) + caseBits(password.slice(from, from + run)), from)
     const sequence = sequenceRun(lower, from)
-    for (let run = 3; run <= sequence; run++)
-      offer(from + run, SEQUENCE_BITS + Math.log2(run), from)
+    for (let run = 3; run <= sequence; run++) offer(from + run, SEQUENCE_BITS + Math.log2(run), from)
     for (let block = 1; block <= Math.min(LONGEST_BLOCK, (length - from) / 2); block++) {
       const count = repeatsOf(password, from, block)
       if (count < 2 || (block === 1 && count < 3)) continue

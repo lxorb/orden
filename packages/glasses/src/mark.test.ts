@@ -5,8 +5,7 @@ import { markLines, MARKS, workDone } from './mark'
 import { BODY_INNER } from './panel'
 import fenceTable from '../../markdown/src/fence-table.json'
 
-const lines = (source: string, inner = BODY_INNER) =>
-  markLines(source, { inner }).map((one) => one.text)
+const lines = (source: string, inner = BODY_INNER) => markLines(source, { inner }).map((one) => one.text)
 
 const one = (source: string) => lines(source).join('\n')
 
@@ -37,12 +36,7 @@ describe('marks that say what something is', () => {
   })
 
   test('a fence says what it is called, above it, and names its language alone', () => {
-    expect(lines('```ts src/main.ts\nconst a = 1\n```\n')).toEqual([
-      'src/main.ts',
-      '‘‘‘ts',
-      'const a = 1',
-      '‘‘‘',
-    ])
+    expect(lines('```ts src/main.ts\nconst a = 1\n```\n')).toEqual(['src/main.ts', '‘‘‘ts', 'const a = 1', '‘‘‘'])
   })
 
   test('and reads a caption written the way other editors write one', () => {
@@ -123,11 +117,7 @@ describe('a list', () => {
 
   test('sets what follows an item at the item’s own indent', () => {
     expect(lines('- one\n\n  more about one\n')).toEqual(['• one', 'more about one'])
-    expect(lines('- one\n  - inside\n\n    under it\n')).toEqual([
-      '• one',
-      '   · inside',
-      '   under it',
-    ])
+    expect(lines('- one\n  - inside\n\n    under it\n')).toEqual(['• one', '   · inside', '   under it'])
   })
 })
 
@@ -137,10 +127,7 @@ describe('a quote', () => {
   })
 
   test('says a title of the writer’s own rather than the kind, as written', () => {
-    expect(lines('> [!tip] Mind the gap\n> Between the two.\n')).toEqual([
-      '│ Mind the gap',
-      '│ Between the two.',
-    ])
+    expect(lines('> [!tip] Mind the gap\n> Between the two.\n')).toEqual(['│ Mind the gap', '│ Between the two.'])
   })
 
   test('swallows the fold sign, which is not words', () => {
@@ -209,9 +196,9 @@ describe('nothing in a note is dropped', () => {
   })
 
   test('a titled chart is its title, because a panel of one font cannot draw one', () => {
-    expect(
-      lines('```chart\ntype: bar\ntitle: Two quarters\nseries:\n  - data: [1, 2]\n```\n'),
-    ).toEqual(['▤ Two quarters'])
+    expect(lines('```chart\ntype: bar\ntitle: Two quarters\nseries:\n  - data: [1, 2]\n```\n')).toEqual([
+      '▤ Two quarters',
+    ])
   })
 
   test('and an untitled one stays its numbers, which are the part that can be read', () => {
@@ -338,10 +325,9 @@ describe('where a line came from', () => {
   })
 
   test('only ever moves forwards through the note', () => {
-    const marked = markLines(
-      '# One\n\ntext\n\n- a\n- b\n\n> q\n\n```\nc\n```\n\n| h |\n| --- |\n| r |\n',
-      { inner: BODY_INNER },
-    )
+    const marked = markLines('# One\n\ntext\n\n- a\n- b\n\n> q\n\n```\nc\n```\n\n| h |\n| --- |\n| r |\n', {
+      inner: BODY_INNER,
+    })
 
     let last = -1
     for (const line of marked) {
@@ -526,8 +512,7 @@ describe('a block name', () => {
   })
 
   test('is set the same as with it cut, and in every kind of block', () => {
-    const shown = (source: string) =>
-      markLines(source, { inner: BODY_INNER }).map((one) => one.text.trimEnd())
+    const shown = (source: string) => markLines(source, { inner: BODY_INNER }).map((one) => one.text.trimEnd())
     for (const [named, plain] of [
       ['# Title ^abc\n\nWords\n', '# Title\n\nWords\n'],
       ['- one ^abc\n- two\n', '- one\n- two\n'],

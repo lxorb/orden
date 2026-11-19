@@ -88,18 +88,20 @@ const PRIORITY_BY_EMOJI = new Map<string, Priority>(
   PRIORITY_MARKS.filter(([, emoji]) => emoji).map(([at, emoji]) => [emoji, at]),
 )
 
-export const EMOJI_BY_PRIORITY = Object.fromEntries(
-  PRIORITY_MARKS.map(([at, emoji]) => [at, emoji]),
-) as Record<Priority, string>
+export const EMOJI_BY_PRIORITY = Object.fromEntries(PRIORITY_MARKS.map(([at, emoji]) => [at, emoji])) as Record<
+  Priority,
+  string
+>
 
 const PRIORITY_BY_WORD = new Map<string, Priority>([
   ...PRIORITY_MARKS.map(([at, , word]): [string, Priority] => [word, at]),
   ['normal', 4],
 ])
 
-export const WORD_BY_PRIORITY = Object.fromEntries(
-  PRIORITY_MARKS.map(([at, , word]) => [at, word]),
-) as Record<Priority, string>
+export const WORD_BY_PRIORITY = Object.fromEntries(PRIORITY_MARKS.map(([at, , word]) => [at, word])) as Record<
+  Priority,
+  string
+>
 
 export const EMOJI_BY_DATE: Partial<Record<FieldName, string>> = {
   completed: '✅',
@@ -168,13 +170,7 @@ export const KEY_BY_FIELD: Record<FieldName, string> = {
   block: 'block',
 }
 
-export const ORDEN_FIELDS: readonly FieldName[] = [
-  'time',
-  'duration',
-  'deadline',
-  'remind',
-  'assignee',
-]
+export const ORDEN_FIELDS: readonly FieldName[] = ['time', 'duration', 'deadline', 'remind', 'assignee']
 
 export const TASKS_FIELDS: readonly FieldName[] = [
   'id',
@@ -281,10 +277,9 @@ export function readDuration(value: string): number | null {
   const written = value.trim().toLowerCase()
   if (/^\d+$/.test(written)) return Number(written)
 
-  const found =
-    /^(?:(\d+(?:[.,]\d+)?)\s*(?:h|hr|hrs|hours?|std)\.?)?\s*(?:(\d+)\s*(?:m|min|mins|minutes?)\.?)?$/u.exec(
-      written,
-    )
+  const found = /^(?:(\d+(?:[.,]\d+)?)\s*(?:h|hr|hrs|hours?|std)\.?)?\s*(?:(\d+)\s*(?:m|min|mins|minutes?)\.?)?$/u.exec(
+    written,
+  )
   if (!found || (found[1] === undefined && found[2] === undefined)) return null
 
   const hours = Number((found[1] ?? '0').replace(',', '.'))
@@ -378,8 +373,7 @@ function setField(fields: TaskFields, field: FieldName, value: string): boolean 
       return true
     }
     case 'priority': {
-      const priority =
-        PRIORITY_BY_EMOJI.get(value) ?? PRIORITY_BY_WORD.get(value.trim().toLowerCase())
+      const priority = PRIORITY_BY_EMOJI.get(value) ?? PRIORITY_BY_WORD.get(value.trim().toLowerCase())
       if (priority === undefined) return false
       fields.priority = priority
       return true
@@ -444,13 +438,7 @@ function trailingTokens(
   const tokens: FieldToken[] = []
   let end = line.trimEnd().length
 
-  const take = (
-    found: Found,
-    field: FieldToken['field'],
-    form: FieldForm,
-    value: number,
-    key?: string,
-  ) => {
+  const take = (found: Found, field: FieldToken['field'], form: FieldForm, value: number, key?: string) => {
     const start = from + found.index
     const valueText = found[value] ?? ''
     const valueFrom =
@@ -523,13 +511,7 @@ function trailingTokens(
   return { tokens, end: Math.max(end, from) }
 }
 
-function inlineTokens(
-  line: string,
-  from: number,
-  to: number,
-  fields: TaskFields,
-  seen: Set<FieldName>,
-): FieldToken[] {
+function inlineTokens(line: string, from: number, to: number, fields: TaskFields, seen: Set<FieldName>): FieldToken[] {
   const tokens: FieldToken[] = []
   const words = line.slice(from, to)
   const last = { '[': words.lastIndexOf(']'), '(': words.lastIndexOf(')') }
@@ -554,8 +536,7 @@ function inlineTokens(
     const known = field !== undefined && !seen.has(field) && setField(fields, field, value)
     if (known) seen.add(field)
     else fields.fields[key.trim()] = value.trim()
-    const valueFrom =
-      value === '' ? start + found[0].length - 1 : start + found[0].lastIndexOf(value)
+    const valueFrom = value === '' ? start + found[0].length - 1 : start + found[0].lastIndexOf(value)
     const held = heldLength(known ? field : 'other', value)
     tokens.push({
       field: known ? field : 'other',
@@ -599,10 +580,7 @@ export function parseTask(line: string): ParsedTask | null {
 
   const trailingTags = trailing.filter((token) => token.field === 'tag')
   fields.tags = tagsIn(
-    [
-      line.slice(item.marker, end),
-      ...trailingTags.map((token) => line.slice(token.from, token.to)),
-    ].join(' '),
+    [line.slice(item.marker, end), ...trailingTags.map((token) => line.slice(token.from, token.to))].join(' '),
   )
 
   return {

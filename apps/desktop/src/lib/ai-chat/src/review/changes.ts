@@ -55,8 +55,7 @@ export function linesOf(words: string): number {
 
 export function providersOf(thread: Pick<Thread, 'provider' | 'turns'>): string[] {
   const all = new Set([thread.provider])
-  for (const turn of thread.turns)
-    if (turn.role === 'model' && turn.provider) all.add(turn.provider)
+  for (const turn of thread.turns) if (turn.role === 'model' && turn.provider) all.add(turn.provider)
   return [...all]
 }
 
@@ -115,11 +114,7 @@ export function byNote(changes: readonly Change[]): NoteChanges[] {
   return [...notes.values()]
 }
 
-export function changesSince(
-  changes: readonly Change[],
-  turns: readonly Turn[],
-  turn: string,
-): Change[] {
+export function changesSince(changes: readonly Change[], turns: readonly Turn[], turn: string): Change[] {
   const marks = checkpoints(turns).map((one) => one.id)
   const from = marks.indexOf(turn)
   if (from < 0) return []

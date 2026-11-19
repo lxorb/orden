@@ -46,8 +46,7 @@ beforeEach(async () => {
   })
   at(100_000)
 
-  chat = (await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space: thesis } }))
-    .json.chat
+  chat = (await call<{ chat: string }>(env, '/v2/chats', { token: owner, body: { space: thesis } })).json.chat
   note = (
     await call(env, `/v1/spaces/${notes}/notes`, {
       token: owner,

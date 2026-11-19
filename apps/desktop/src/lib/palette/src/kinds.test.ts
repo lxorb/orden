@@ -42,9 +42,9 @@ describe('one list of everything', () => {
     expect(found).toContain('> Print')
 
     expect(top('spelling', {}, 1)).toEqual(['setting Check spelling'])
-    expect(
-      top('moodle', { pages: [visit('https://moodle-app2.let.ethz.ch/', 'Moodle ETH')] }),
-    ).toContain('page Moodle ETH')
+    expect(top('moodle', { pages: [visit('https://moodle-app2.let.ethz.ch/', 'Moodle ETH')] })).toContain(
+      'page Moodle ETH',
+    )
   })
 
   test('puts a note before a command that matches as well, for a letter or two', () => {
@@ -158,14 +158,7 @@ describe('a field with nothing typed', () => {
       6,
     )
 
-    expect(rows.map(named)).toEqual([
-      '> Reopen closed tab',
-      'Tax',
-      '> Print',
-      'Plan',
-      'Lecture 3',
-      'Plan',
-    ])
+    expect(rows.map(named)).toEqual(['> Reopen closed tab', 'Tax', '> Print', 'Plan', 'Lecture 3', 'Plan'])
   })
 
   test('leaves out the tab in front', () => {

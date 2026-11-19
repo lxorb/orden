@@ -149,14 +149,9 @@
       standing = null
       const index = Math.min(standingAt, flat.length - 1)
       const next = flat[index]
-      const nowhere =
-        keyedOn || document.activeElement === null || document.activeElement === document.body
+      const nowhere = keyedOn || document.activeElement === null || document.activeElement === document.body
       keyedOn = false
-      if (
-        next &&
-        nowhere &&
-        workspace.rootHolding(next.entry.path) === workspace.rootHolding(was)
-      ) {
+      if (next && nowhere && workspace.rootHolding(next.entry.path) === workspace.rootHolding(was)) {
         stand(next.entry.path, true)
       } else if (!next && nowhere) {
         void tick().then(standOnList)
@@ -165,9 +160,7 @@
   })
 
   const pinned = $derived(
-    [pathAt(workspace.naming?.path), idAt(standing), idAt(reaching)].filter(
-      (one): one is number => one !== null,
-    ),
+    [pathAt(workspace.naming?.path), idAt(standing), idAt(reaching)].filter((one): one is number => one !== null),
   )
 
   const rows = $derived<Rows>({
@@ -303,8 +296,7 @@
       return
     }
 
-    const deleting =
-      shortcuts.pressed('tree.delete', event) || shortcuts.pressed('tree.delete.alt', event)
+    const deleting = shortcuts.pressed('tree.delete', event) || shortcuts.pressed('tree.delete.alt', event)
     if (deleting && workspace.selection.length) {
       event.preventDefault()
       if (!workspace.selection.every((path) => canWriteAt(path))) return
@@ -321,11 +313,7 @@
     const here = rowPath(event)
     if (fileKey(event, here) || here === null) return
 
-    const step = shortcuts.pressed('tree.extend-down', event)
-      ? 1
-      : shortcuts.pressed('tree.extend-up', event)
-        ? -1
-        : 0
+    const step = shortcuts.pressed('tree.extend-down', event) ? 1 : shortcuts.pressed('tree.extend-up', event) ? -1 : 0
     if (step !== 0) {
       event.preventDefault()
       stretch(here, step)
@@ -344,11 +332,7 @@
       return
     }
 
-    const moving = shortcuts.pressed('tree.move-up', event)
-      ? -1
-      : shortcuts.pressed('tree.move-down', event)
-        ? 1
-        : 0
+    const moving = shortcuts.pressed('tree.move-up', event) ? -1 : shortcuts.pressed('tree.move-down', event) ? 1 : 0
 
     if (moving !== 0) {
       event.preventDefault()
@@ -370,18 +354,13 @@
     [['edit.undo'], () => workspace.undoFileAction(), false],
     [['edit.redo', 'edit.redo.alt'], () => workspace.redoFileAction(), false],
     [['tree.duplicate'], (rows) => workspace.duplicateMany(rows), true],
-    [
-      ['app.new'],
-      (_, into) => (hiddenKinds.offers('note') ? workspace.createNote(into) : null),
-      true,
-    ],
+    [['app.new'], (_, into) => (hiddenKinds.offers('note') ? workspace.createNote(into) : null), true],
   ]
 
   function fileKey(event: KeyboardEvent, here: string | null): boolean {
     const found = FILE_KEYS.find(([ids]) => ids.some((id) => shortcuts.pressed(id, event)))
     const entry = here === null ? null : entryFor(here)
-    const into =
-      entry?.is_dir === false ? folderOf(entry.path) : (entry?.path ?? workspace.activeSpace?.root)
+    const into = entry?.is_dir === false ? folderOf(entry.path) : (entry?.path ?? workspace.activeSpace?.root)
     if (!found || into === undefined) return false
 
     event.preventDefault()
@@ -557,9 +536,7 @@
 
   $effect(() => {
     listMotion.before = () =>
-      new Map(
-        [...held.rows()].map((row) => [row.dataset.path ?? '', row.getBoundingClientRect().top]),
-      )
+      new Map([...held.rows()].map((row) => [row.dataset.path ?? '', row.getBoundingClientRect().top]))
     listMotion.after = (was) => {
       if (was) void liftCode().then((code) => code.arrive(held, was))
     }
@@ -585,8 +562,7 @@
     if (!how) return
 
     const row = event.currentTarget
-    const ordering =
-      how === 'move' && row instanceof HTMLElement && !isBookmarkDrag(event.dataTransfer)
+    const ordering = how === 'move' && row instanceof HTMLElement && !isBookmarkDrag(event.dataTransfer)
     if (lift && ordering && lift.aimAt(held, row, event.clientY, entry)) {
       event.preventDefault()
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
@@ -781,11 +757,7 @@
     untrack(() => settleRows(beforeIds, nowIds))
   })
 
-  function twisted(
-    moved: { at: number; rows: number } | null,
-    before: FlatRow[],
-    now: FlatRow[],
-  ): boolean {
+  function twisted(moved: { at: number; rows: number } | null, before: FlatRow[], now: FlatRow[]): boolean {
     if (!moved || moved.at < 1) return false
 
     const opening = now.length > before.length
@@ -1034,10 +1006,8 @@
       aria-expanded={entry.is_dir ? standsOpen(entry, isOpen) : undefined}
       draggable="true"
       onclick={(event) => openRowAt(event, entry)}
-      ondblclick={(event) =>
-        !onTwist(event) && tabAsk(event) === 'plain' && workspace.openRow(entry.path)}
-      use:middleOpens={(event) =>
-        onTwist(event) || void workspace.openRow(entry.path, howFor(tabAsk(event)))}
+      ondblclick={(event) => !onTwist(event) && tabAsk(event) === 'plain' && workspace.openRow(entry.path)}
+      use:middleOpens={(event) => onTwist(event) || void workspace.openRow(entry.path, howFor(tabAsk(event)))}
       oncontextmenu={(event) => showRowMenu(event, entry, name)}
       use:longPress={(event) => showRowMenu(event, entry, name)}
       ontouchstart={(event) => onRowTouchStart(event, entry)}

@@ -84,11 +84,7 @@ const wants = (client: Client, ask: Ask) =>
     ? `${escape(client.name)} would like to read your notes, and to change them if you let it.`
     : `${escape(client.name)} would like to read your notes.`
 
-export function emailStep(
-  client: Client,
-  ask: Ask,
-  given: { email?: string; error?: string },
-): string {
+export function emailStep(client: Client, ask: Ask, given: { email?: string; error?: string }): string {
   return `<h1>Connect ${escape(client.name)}</h1>
 <p>${wants(client, ask)} Sign in to allow it.</p>
 <form method="post" action="/oauth/authorize">
@@ -101,11 +97,7 @@ ${given.error ? sentence(given.error) : ''}
 <p class="where">Afterwards you go back to ${escape(describeDestination(ask.redirect_uri))}.</p>`
 }
 
-export function codeStep(
-  client: Client,
-  ask: Ask,
-  given: { email: string; error?: string },
-): string {
+export function codeStep(client: Client, ask: Ask, given: { email: string; error?: string }): string {
   const write = wantsWrite(ask)
     ? `<label class="check"><input type="checkbox" name="write" value="1">
 <span>Let ${escape(client.name)} change my notes as well<small>Without this it can only read them.</small></span></label>`
@@ -124,10 +116,7 @@ ${write}
 <p class="where">Afterwards you go back to ${escape(describeDestination(ask.redirect_uri))}.</p>`
 }
 
-export function secondStep(
-  ask: Ask,
-  given: { holding: string; write: boolean; error?: string },
-): string {
+export function secondStep(ask: Ask, given: { holding: string; write: boolean; error?: string }): string {
   return `<h1>Enter the code from your app</h1>
 <p>Or one of your recovery codes.</p>
 <form method="post" action="/oauth/authorize">

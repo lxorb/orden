@@ -141,9 +141,7 @@ test('typed words stay when a sync changes the note around the table and another
   typed(cellAt(view, 1, 1), 'Bob')
 
   const now = shared.text.toString()
-  shared.replace(
-    now.replace('intro', 'i').replace('| Column 2 |', '| Column 9 |').replace('end', 'end!'),
-  )
+  shared.replace(now.replace('intro', 'i').replace('| Column 2 |', '| Column 9 |').replace('end', 'end!'))
   flushTableEdits()
 
   expect(shared.text.toString()).toContain('Bob')

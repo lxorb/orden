@@ -1,12 +1,5 @@
 import type { AgentAnswer } from '@orden/contracts'
-import {
-  type Call,
-  done,
-  maybe,
-  openedBy,
-  Refused,
-  tabsInReach,
-} from '../../../agent-verbs/src/api'
+import { type Call, done, maybe, openedBy, Refused, tabsInReach } from '../../../agent-verbs/src/api'
 import { workspace } from '../../../workspace/src/api'
 import { held, type HeldRow } from '../remote/held.svelte'
 import { readSpec } from '../spec'

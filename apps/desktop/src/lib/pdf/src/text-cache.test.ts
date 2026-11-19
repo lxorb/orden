@@ -17,9 +17,7 @@ vi.mock('../../platform/src/tauri', () => ({
         return Promise.resolve(undefined)
       }
       case 'list_paper_texts':
-        return Promise.resolve(
-          [...store.records].map(([path_, content]) => ({ path: path_, size: content.length })),
-        )
+        return Promise.resolve([...store.records].map(([path_, content]) => ({ path: path_, size: content.length })))
       default:
         return Promise.reject(new Error(`no such command: ${command}`))
     }
@@ -115,9 +113,6 @@ describe('the bounds', () => {
     await keepPaperText(paperTextOf('/space/Big.pdf', 'a', 1, [[1, 'a'.repeat(80)]]))
     await keepPaperText(paperTextOf('/space/Small.pdf', 'b', 1, [[1, 'b'.repeat(10)]]))
 
-    expect((await paperFiles()).map((one) => one.path)).toEqual([
-      '/space/Small.pdf',
-      '/space/Big.pdf',
-    ])
+    expect((await paperFiles()).map((one) => one.path)).toEqual(['/space/Small.pdf', '/space/Big.pdf'])
   })
 })

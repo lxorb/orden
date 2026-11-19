@@ -38,8 +38,7 @@ function mergedMap<T, B>(
   for (const id of ids) {
     const mine = local[id]
     const theirs = remote[id]
-    const kept =
-      !base || !(id in base) ? (theirs ?? mine) : changedFrom('local', id, mine) ? mine : theirs
+    const kept = !base || !(id in base) ? (theirs ?? mine) : changedFrom('local', id, mine) ? mine : theirs
     if (kept !== undefined) out[id] = kept
   }
   return out
@@ -54,12 +53,7 @@ function mergedAccounts(base: Accounts | null, local: Accounts, remote: Accounts
   const byId = (list: readonly Account[]) => Object.fromEntries(list.map((one) => [one.id, one]))
   const baseById = base ? byId(base.accounts) : null
   const localById = byId(local.accounts)
-  const merged = mergedMap(
-    baseById,
-    localById,
-    byId(remote.accounts),
-    (_, id, value) => !same(value, baseById?.[id]),
-  )
+  const merged = mergedMap(baseById, localById, byId(remote.accounts), (_, id, value) => !same(value, baseById?.[id]))
   const order = [...remote.accounts, ...local.accounts]
     .map((one) => one.id)
     .filter((id, at, all) => all.indexOf(id) === at && id in merged)
@@ -73,19 +67,13 @@ function mergedAccounts(base: Accounts | null, local: Accounts, remote: Accounts
   return accountsIn({
     accounts: order.map((id) => merged[id]),
     active: records<string>((one) => one.active),
-    defaultVendor: mergedValue<Vendor | undefined>(
-      base?.defaultVendor,
-      local.defaultVendor,
-      remote.defaultVendor,
-    ),
+    defaultVendor: mergedValue<Vendor | undefined>(base?.defaultVendor, local.defaultVendor, remote.defaultVendor),
     uses: records<Vendor>((one) => one.uses),
   })
 }
 
 const moved = <T>(record: Record<string, T>, from: string, to: string): Record<string, T> =>
-  from in record
-    ? Object.fromEntries(Object.entries(record).map(([id, one]) => [id === from ? to : id, one]))
-    : record
+  from in record ? Object.fromEntries(Object.entries(record).map(([id, one]) => [id === from ? to : id, one])) : record
 
 function alike(mine: Account, theirs: Account, myKey?: string, theirKey?: string): boolean {
   return (
@@ -95,11 +83,7 @@ function alike(mine: Account, theirs: Account, myKey?: string, theirKey?: string
   )
 }
 
-function apart(
-  base: Base | null,
-  local: Side,
-  remote: Side,
-): { side: Side; moved: Record<string, string> } {
+function apart(base: Base | null, local: Side, remote: Side): { side: Side; moved: Record<string, string> } {
   const all = [base?.accounts, local.contents.accounts, remote.contents.accounts]
   const taken = new Set(all.flatMap((one) => one?.accounts.map((each) => each.id) ?? []))
   const agreed = new Set(base?.accounts.accounts.map((one) => one.id) ?? [])
@@ -127,21 +111,12 @@ function apart(
 
 export function merged(base: Base | null, mine: Side, remote: Side): Merged {
   const { side: local, moved: moves } = apart(base, mine, remote)
-  const accounts = mergedAccounts(
-    base?.accounts ?? null,
-    local.contents.accounts,
-    remote.contents.accounts,
-  )
+  const accounts = mergedAccounts(base?.accounts ?? null, local.contents.accounts, remote.contents.accounts)
   const ids = new Set(accounts.accounts.map((one) => one.id))
-  const keys = mergedMap(
-    base?.keys ?? null,
-    local.contents.keys,
-    remote.contents.keys,
-    (side, id) => {
-      const prints = side === 'local' ? local.prints : remote.prints
-      return prints[id] !== base?.keys[id]
-    },
-  )
+  const keys = mergedMap(base?.keys ?? null, local.contents.keys, remote.contents.keys, (side, id) => {
+    const prints = side === 'local' ? local.prints : remote.prints
+    return prints[id] !== base?.keys[id]
+  })
   const seen = mergedMap(
     base?.seen ?? null,
     local.contents.seen,
@@ -161,16 +136,10 @@ export function contentsIn(value: unknown): Contents {
   if (typeof value !== 'object' || value === null) return EMPTY
   const { accounts, keys, seen } = value as Record<string, unknown>
   const texts = (record: unknown): Record<string, string> =>
-    typeof record === 'object' && record !== null
-      ? Object.fromEntries(Object.entries(record).filter(isText))
-      : {}
+    typeof record === 'object' && record !== null ? Object.fromEntries(Object.entries(record).filter(isText)) : {}
   return { accounts: accountsIn(accounts), keys: texts(keys), seen: texts(seen) }
 }
 
-export function agrees(
-  base: Base | null,
-  contents: Contents,
-  prints: Record<string, string>,
-): boolean {
+export function agrees(base: Base | null, contents: Contents, prints: Record<string, string>): boolean {
   return !!base && same(baseOf(contents, prints), base)
 }

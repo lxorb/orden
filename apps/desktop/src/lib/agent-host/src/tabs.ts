@@ -85,9 +85,7 @@ function tabOf(tab: Tab) {
     ...(isDraft(tab.note) ? { unsaved: true } : {}),
     ...(workspace.previewTabId === tab.id ? { preview: true } : {}),
     ...(tab.note.shared !== null ? { shared: true } : {}),
-    ...(tab.kind === 'terminal'
-      ? { running: agentTabKindParts('terminal').running?.(tab.id) ?? false }
-      : {}),
+    ...(tab.kind === 'terminal' ? { running: agentTabKindParts('terminal').running?.(tab.id) ?? false } : {}),
     ...(isOnlineTab(tab) ? { online: true } : {}),
   }
 }
@@ -165,12 +163,8 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
     typing: last !== null && Date.now() - last < TYPING,
   }
 
-  const outside =
-    tab?.kind === 'terminal' ? 'tab titles and terminal output' : named ? 'tab titles' : null
-  return done(
-    context,
-    (tab ? sourceOfTab(tab) : null) ?? sharedSource(place) ?? sharedSource(front) ?? outside,
-  )
+  const outside = tab?.kind === 'terminal' ? 'tab titles and terminal output' : named ? 'tab titles' : null
+  return done(context, (tab ? sourceOfTab(tab) : null) ?? sharedSource(place) ?? sharedSource(front) ?? outside)
 }
 
 function namedOutside(call: Call): boolean {
@@ -186,10 +180,7 @@ function tabNamed(call: Call): Tab {
 }
 
 function answered(tab: Tab | null | undefined, place?: Place): AgentAnswer {
-  return done(
-    tab ? tabOf(tab) : null,
-    (tab ? sourceOfTab(tab) : null) ?? (place ? sharedSource(place) : null),
-  )
+  return done(tab ? tabOf(tab) : null, (tab ? sourceOfTab(tab) : null) ?? (place ? sharedSource(place) : null))
 }
 
 function sourceOfTab(tab: Tab): string | null {
@@ -268,9 +259,7 @@ async function openSomething(call: Call): Promise<AgentAnswer> {
     throw new Refused('no_such_file', `there is nothing at ${relative}`)
   }
 
-  const tab = place.open
-    ? await view.openFile(call, path)
-    : await view.openInSpace(call, place.space.id, path)
+  const tab = place.open ? await view.openFile(call, path) : await view.openInSpace(call, place.space.id, path)
   return answered(tab, place)
 }
 
@@ -328,8 +317,7 @@ async function newTab(call: Call): Promise<AgentAnswer> {
 async function renameTab(call: Call): Promise<AgentAnswer> {
   const tab = tabNamed(call)
   const name = need(call, 'name').trim()
-  if (!name || /[\\/]/.test(name))
-    throw new Refused('bad_arguments', 'a name is one step, no slash')
+  if (!name || /[\\/]/.test(name)) throw new Refused('bad_arguments', 'a name is one step, no slash')
 
   const place = placeFor(call, null)
   if (tab.path !== null && !workspace.outside(tab.path)) {
@@ -426,10 +414,7 @@ export async function workspaceTabs(call: Call): Promise<AgentAnswer> {
       const tab = tabNamed(call)
       const pane = view.paneFor(tab, maybe(call, 'pane'), maybe(call, 'toward'))
       if (pane === null) {
-        throw new Refused(
-          'bad_arguments',
-          'say pane, a pane id from list, or toward: left, right, up or down',
-        )
+        throw new Refused('bad_arguments', 'say pane, a pane id from list, or toward: left, right, up or down')
       }
       const at = 'at' in call.args ? Number(call.args.at) : null
       view.moveTabTo(call, tab, pane, at !== null && Number.isInteger(at) && at >= 0 ? at : null)

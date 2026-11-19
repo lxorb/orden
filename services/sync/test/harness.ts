@@ -258,11 +258,7 @@ export interface Answer<T> {
   headers: Headers
 }
 
-export async function call<T = Reply>(
-  env: Env,
-  path: string,
-  options: CallOptions = {},
-): Promise<Answer<T>> {
+export async function call<T = Reply>(env: Env, path: string, options: CallOptions = {}): Promise<Answer<T>> {
   const host = options.host ?? 'nibeditor.com'
   const headers: Record<string, string> = {}
 
@@ -270,14 +266,10 @@ export async function call<T = Reply>(
   if (options.token) headers.authorization = `Bearer ${options.token}`
   Object.assign(headers, options.headers ?? {})
 
-  const method =
-    options.method ?? (options.body === undefined && options.raw === undefined ? 'GET' : 'POST')
+  const method = options.method ?? (options.body === undefined && options.raw === undefined ? 'GET' : 'POST')
   const body = options.raw ?? (options.body === undefined ? null : JSON.stringify(options.body))
 
-  const response = await app.fetch(
-    new Request(`https://${host}${path}`, { method, headers, body }),
-    env,
-  )
+  const response = await app.fetch(new Request(`https://${host}${path}`, { method, headers, body }), env)
 
   const text = await response.text()
   let json: unknown = null

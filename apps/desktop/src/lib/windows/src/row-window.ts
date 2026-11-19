@@ -98,9 +98,7 @@ export function windowFor(rows: Rows): RowWindow {
   const skip = flatBand(first, end, rows)
   const held = [...new Set(rows.pinned ?? [])]
     .filter((one) => one >= 0 && one <= last)
-    .filter(
-      (one) => one < first || one > end || (skip !== null && one >= skip.from && one <= skip.to),
-    )
+    .filter((one) => one < first || one > end || (skip !== null && one >= skip.from && one <= skip.to))
     .sort((a, b) => a - b)
 
   return {
@@ -132,10 +130,7 @@ export function autoScrollBy(y: number, room: number, edge: number, most: number
   return 0
 }
 
-export function slotsFor(
-  held: ReadonlyMap<string, number>,
-  keys: readonly string[],
-): Map<string, number> {
+export function slotsFor(held: ReadonlyMap<string, number>, keys: readonly string[]): Map<string, number> {
   const out = new Map<string, number>()
   const numbers = [...held.values()].sort((one, other) => one - other)
   let next = (numbers.at(-1) ?? -1) + 1

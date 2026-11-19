@@ -28,10 +28,7 @@ export async function fetchPeople(token: string, list: readonly string[]): Promi
   return people.map(readPerson).filter((one): one is Person => one !== null)
 }
 
-export async function fetchPresence(
-  token: string,
-  list: readonly string[],
-): Promise<Record<string, Presence>> {
+export async function fetchPresence(token: string, list: readonly string[]): Promise<Record<string, Presence>> {
   const answer = await request<unknown>(`/v2/presence?ids=${ids(list)}`, { token })
   const said = isRecord(answer) && isRecord(answer.presence) ? answer.presence : {}
   return Object.fromEntries(Object.entries(said).map(([id, state]) => [id, readPresence(state)]))
@@ -52,13 +49,8 @@ export interface Picture {
   type: string
 }
 
-export async function saveAvatar(
-  token: string,
-  pictures: { s: Picture; l: Picture },
-): Promise<OwnProfile> {
-  await Promise.all(
-    [pictures.s, pictures.l].map((one) => api.putBlob(token, one.hash, one.type, one.bytes)),
-  )
+export async function saveAvatar(token: string, pictures: { s: Picture; l: Picture }): Promise<OwnProfile> {
+  await Promise.all([pictures.s, pictures.l].map((one) => api.putBlob(token, one.hash, one.type, one.bytes)))
   const { profile } = await request<{ profile: OwnProfile }>('/v2/me/avatar', {
     method: 'PUT',
     token,
@@ -80,15 +72,14 @@ export async function fetchNicks(token: string, space: string): Promise<Record<s
     token,
   })
   const said = isRecord(answer) && isRecord(answer.nicks) ? answer.nicks : {}
-  return Object.fromEntries(
-    Object.entries(said).filter((entry): entry is [string, string] => isString(entry[1])),
-  )
+  return Object.fromEntries(Object.entries(said).filter((entry): entry is [string, string] => isString(entry[1])))
 }
 
 export async function saveNick(token: string, space: string, nick: string): Promise<string | null> {
-  const answer = await request<{ nick: string | null }>(
-    `/v2/spaces/${encodeURIComponent(space)}/nick`,
-    { method: 'PUT', token, body: { nick } },
-  )
+  const answer = await request<{ nick: string | null }>(`/v2/spaces/${encodeURIComponent(space)}/nick`, {
+    method: 'PUT',
+    token,
+    body: { nick },
+  })
   return answer.nick
 }

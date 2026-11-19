@@ -5,9 +5,7 @@ import { codeBlocks, renderMarkdown } from './index'
 
 describe('looking for the fences of a note', () => {
   test('finds them, whichever mark they were written with; finds one inside a quote, which is not at the start of its line; reads a note with neither mark in it no further', () => {
-    expect(codeBlocks('```ts\nconst a = 1\n```\n')).toEqual([
-      { language: 'ts', code: 'const a = 1' },
-    ])
+    expect(codeBlocks('```ts\nconst a = 1\n```\n')).toEqual([{ language: 'ts', code: 'const a = 1' }])
     expect(codeBlocks('~~~py\nx = 1\n~~~\n')).toEqual([{ language: 'py', code: 'x = 1' }])
     expect(codeBlocks('> ```ts\n> const a = 1\n> ```\n')).toHaveLength(1)
     expect(codeBlocks('# Just words\n\nand a `span` of code.\n')).toEqual([])
@@ -137,8 +135,7 @@ describe('a construct on a line of its own still ends the paragraph above it', (
 })
 
 describe('a paragraph of many breaks', () => {
-  const quick = (source: (size: number) => string, size: number) =>
-    linearly((one) => renderMarkdown(source(one)), size)
+  const quick = (source: (size: number) => string, size: number) => linearly((one) => renderMarkdown(source(one)), size)
 
   test('renders in linear time', () => {
     quick((n) => '!a '.repeat(n), 66_000)

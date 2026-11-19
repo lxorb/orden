@@ -14,9 +14,7 @@ const using = (pattern: RegExp) =>
 
 describe('the words of a note written by anything but its own editor', () => {
   test('go through the one edit that passes a shut protected note by', () => {
-    expect(
-      using(/import \{[^}]*\b(?:writeInTurn|writeEdited)\b[^}]*\} from '|\.writeTo\(/),
-    ).toEqual([
+    expect(using(/import \{[^}]*\b(?:writeInTurn|writeEdited)\b[^}]*\} from '|\.writeTo\(/)).toEqual([
       'documents/src/documents.svelte.ts',
       'file-writes/src/api.ts',
       'link-index/src/links.svelte.ts',
@@ -26,9 +24,6 @@ describe('the words of a note written by anything but its own editor', () => {
   })
 
   test('and only a change made for every note alike may go through its lock', () => {
-    expect(using(/throughLocks: true/)).toEqual([
-      'workspace/src/own-keys-moved.ts',
-      'workspace/src/setext.ts',
-    ])
+    expect(using(/throughLocks: true/)).toEqual(['workspace/src/own-keys-moved.ts', 'workspace/src/setext.ts'])
   })
 })

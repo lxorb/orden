@@ -28,9 +28,7 @@ describe('a sealed file', () => {
     const itemKey = newKey()
     const sealed = await sealFile(itemKey, ITEM, FILE, new Uint8Array(0))
     expect(sealed.parts).toHaveLength(1)
-    expect(await openFile(itemKey, ITEM, FILE, sealed.key, sealed.parts, 0)).toEqual(
-      new Uint8Array(0),
-    )
+    expect(await openFile(itemKey, ITEM, FILE, sealed.key, sealed.parts, 0)).toEqual(new Uint8Array(0))
   })
 
   it('is cut into parts of 4 MiB, each no bigger than the account takes', async () => {
@@ -55,21 +53,11 @@ describe('a sealed file', () => {
     const [first, second] = sealed.parts
     if (!first || !second) throw new Error('two parts')
     const size = bytes.length
-    await expect(openFile(itemKey, ITEM, FILE, sealed.key, [second, first], size)).rejects.toThrow(
-      WrongSecret,
-    )
-    await expect(openFile(itemKey, ITEM, FILE, sealed.key, [first], size)).rejects.toThrow(
-      WrongSecret,
-    )
-    await expect(openFile(itemKey, ITEM, FILE, sealed.key, [first], FILE_PART)).rejects.toThrow(
-      WrongSecret,
-    )
-    await expect(openFile(itemKey, 'item-2', FILE, sealed.key, sealed.parts, size)).rejects.toThrow(
-      WrongSecret,
-    )
-    await expect(openFile(newKey(), ITEM, FILE, sealed.key, sealed.parts, size)).rejects.toThrow(
-      WrongSecret,
-    )
+    await expect(openFile(itemKey, ITEM, FILE, sealed.key, [second, first], size)).rejects.toThrow(WrongSecret)
+    await expect(openFile(itemKey, ITEM, FILE, sealed.key, [first], size)).rejects.toThrow(WrongSecret)
+    await expect(openFile(itemKey, ITEM, FILE, sealed.key, [first], FILE_PART)).rejects.toThrow(WrongSecret)
+    await expect(openFile(itemKey, 'item-2', FILE, sealed.key, sealed.parts, size)).rejects.toThrow(WrongSecret)
+    await expect(openFile(newKey(), ITEM, FILE, sealed.key, sealed.parts, size)).rejects.toThrow(WrongSecret)
   })
 
   it('is refused over 100 MiB', async () => {

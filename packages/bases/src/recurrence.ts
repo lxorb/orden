@@ -1,14 +1,4 @@
-import {
-  addDays,
-  civil,
-  dayNumber,
-  daysInMonth,
-  fromDayNumber,
-  isoOf,
-  monthName,
-  weekday,
-  weekdayName,
-} from './dates'
+import { addDays, civil, dayNumber, daysInMonth, fromDayNumber, isoOf, monthName, weekday, weekdayName } from './dates'
 
 export interface Rule {
   every: number
@@ -73,9 +63,7 @@ function ordinal(word: string): number | null {
 function yearlyDate(words: readonly string[]): { month: number; day: number } | null {
   const [one = '', two = '', three = ''] = words
   const read = (month: number | undefined, day: number | null) =>
-    month !== undefined && day !== null && day >= 1 && day <= daysInMonth(2024, month)
-      ? { month, day }
-      : null
+    month !== undefined && day !== null && day >= 1 && day <= daysInMonth(2024, month) ? { month, day } : null
   if (words.length === 2) {
     return read(MONTH_NAMES[one], ordinal(two)) ?? read(MONTH_NAMES[two], ordinal(one))
   }
@@ -281,9 +269,7 @@ const sameDays = (a: readonly { day: number; nth?: number }[], days: readonly nu
 const mondayFirst = (day: number) => (day + 6) % 7
 
 const joined = (parts: readonly string[], last = ' and '): string =>
-  parts.length < 2
-    ? (parts[0] ?? '')
-    : `${parts.slice(0, -1).join(', ')}${last}${parts.at(-1) ?? ''}`
+  parts.length < 2 ? (parts[0] ?? '') : `${parts.slice(0, -1).join(', ')}${last}${parts.at(-1) ?? ''}`
 
 function untilText(iso: string): string {
   const parts = civil(iso)
@@ -291,16 +277,13 @@ function untilText(iso: string): string {
 }
 
 export function ruleText(rule: Rule): string {
-  const every = (unit: string) =>
-    rule.every === 1 ? `every ${unit}` : `every ${rule.every} ${unit}s`
+  const every = (unit: string) => (rule.every === 1 ? `every ${unit}` : `every ${rule.every} ${unit}s`)
   let text: string
 
   const onDays = () => {
     const parts = [
       ...rule.monthDays.map((day) => nthText(day)),
-      ...rule.weekdays.map(
-        (one) => `${one.nth === undefined ? '' : `${nthText(one.nth)} `}${weekdayName(one.day)}`,
-      ),
+      ...rule.weekdays.map((one) => `${one.nth === undefined ? '' : `${nthText(one.nth)} `}${weekdayName(one.day)}`),
     ]
     return parts.length ? ` on the ${joined(parts)}` : ''
   }
@@ -309,13 +292,10 @@ export function ruleText(rule: Rule): string {
     text = 'every weekday'
   } else if (rule.unit === 'week') {
     const days = [...rule.weekdays].sort((a, b) => mondayFirst(a.day) - mondayFirst(b.day))
-    text =
-      every('week') +
-      (days.length ? ` on ${days.map((one) => weekdayName(one.day)).join(', ')}` : '')
+    text = every('week') + (days.length ? ` on ${days.map((one) => weekdayName(one.day)).join(', ')}` : '')
   } else if (rule.unit === 'year' && rule.months.length) {
     const months = joined(rule.months.map(monthName))
-    text =
-      (rule.every === 1 ? `every ${months}` : `every ${rule.every} years in ${months}`) + onDays()
+    text = (rule.every === 1 ? `every ${months}` : `every ${rule.every} years in ${months}`) + onDays()
   } else {
     text = every(rule.unit) + onDays()
   }
@@ -326,13 +306,7 @@ export function ruleText(rule: Rule): string {
   return text
 }
 
-function daysIn(
-  rule: Rule,
-  year: number,
-  month: number,
-  fallback: number,
-  clamp: boolean,
-): number[] {
+function daysIn(rule: Rule, year: number, month: number, fallback: number, clamp: boolean): number[] {
   const length = daysInMonth(year, month)
   const days = new Set<number>()
 
@@ -366,16 +340,12 @@ function candidates(rule: Rule, start: string, period: number): string[] {
   switch (rule.unit) {
     case 'day': {
       const date = addDays(start, step)
-      return !rule.weekdays.length || rule.weekdays.some((one) => one.day === weekday(date))
-        ? [date]
-        : []
+      return !rule.weekdays.length || rule.weekdays.some((one) => one.day === weekday(date)) ? [date] : []
     }
     case 'week': {
       const monday = dayNumber(start) - mondayFirst(weekday(start)) + step * 7
       const days = rule.weekdays.length ? rule.weekdays.map((one) => one.day) : [weekday(start)]
-      return [...new Set(days.map(mondayFirst))]
-        .sort((a, b) => a - b)
-        .map((offset) => fromDayNumber(monday + offset))
+      return [...new Set(days.map(mondayFirst))].sort((a, b) => a - b).map((offset) => fromDayNumber(monday + offset))
     }
     case 'month': {
       const index = parts.year * 12 + parts.month - 1 + step

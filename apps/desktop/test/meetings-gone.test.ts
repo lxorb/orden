@@ -57,10 +57,7 @@ describe('no surface offers to make one', () => {
   test('no row of the app carries the id or the words', () => {
     const source = walk(
       APP,
-      (path) =>
-        /\.(ts|svelte)$/.test(path) &&
-        !path.endsWith('.test.ts') &&
-        !/[\\/]locales[\\/]/.test(path),
+      (path) => /\.(ts|svelte)$/.test(path) && !path.endsWith('.test.ts') && !/[\\/]locales[\\/]/.test(path),
     )
     const offering = source.filter((path) =>
       /'meeting'|Meeting notes|Stop the meeting|canTakeMeetingNotes/.test(read(path)),

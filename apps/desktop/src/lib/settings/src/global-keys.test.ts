@@ -24,9 +24,7 @@ describe('what a shortcut row says about other apps', () => {
     const said = noteFor(keys({ reach: 'none', run: 'orden' }), 'app.quick-add', 'Ctrl+Alt+Space')
     expect(said?.text).toContain('orden --quick-add')
     expect(said?.change).toBe(false)
-    expect(noteFor(keys({ reach: 'none' }), 'agents.stop', null)?.text).toContain(
-      'orden --stop-agents',
-    )
+    expect(noteFor(keys({ reach: 'none' }), 'agents.stop', null)?.text).toContain('orden --stop-agents')
   })
 
   test('the key the system gave, where it is another', () => {
@@ -71,9 +69,7 @@ describe('what a shortcut row says about other apps', () => {
     }
     expect(noteFor(keys({ reach: 'system' }), 'app.quick-add', null, false)).toBeNull()
     expect(noteFor(keys({ reach: 'system' }), 'app.sidebar', 'Ctrl+Ü', false)).toBeNull()
-    expect(noteFor(keys({ reach: 'none' }), 'app.quick-add', 'Ctrl+Ü', false)?.text).toContain(
-      'orden --quick-add',
-    )
+    expect(noteFor(keys({ reach: 'none' }), 'app.quick-add', 'Ctrl+Ü', false)?.text).toContain('orden --quick-add')
   })
 
   test('nothing while the portal has not answered yet', () => {

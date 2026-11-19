@@ -3,8 +3,7 @@ import { agentMarks } from './agent-marks.svelte'
 import { isRegion, type Region, REGIONS, stepRegion } from './regions'
 import { workspace } from './workspace.svelte'
 
-const FOCUSABLE =
-  '[tabindex="0"], button, input, select, textarea, a[href], summary, [contenteditable="true"]'
+const FOCUSABLE = '[tabindex="0"], button, input, select, textarea, a[href], summary, [contenteditable="true"]'
 
 function reachable(node: Element): boolean {
   if (!(node instanceof HTMLElement)) return false

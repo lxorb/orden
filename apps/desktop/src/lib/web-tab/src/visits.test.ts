@@ -23,16 +23,12 @@ describe('a visit', () => {
     const once = visited([], 'https://example.com/a', 'A', NOW)
     const twice = visited(once, 'https://example.com/a#b', '', NOW + 5)
 
-    expect(twice).toEqual([
-      { url: 'https://example.com/a', title: 'A', visits: 2, typed: 0, last: NOW + 5 },
-    ])
+    expect(twice).toEqual([{ url: 'https://example.com/a', title: 'A', visits: 2, typed: 0, last: NOW + 5 }])
   })
 
   test('typed is counted apart, and is not a visit', () => {
     const list = typedTo([], 'https://example.com/', NOW)
-    expect(list).toEqual([
-      { url: 'https://example.com/', title: '', visits: 0, typed: 1, last: NOW },
-    ])
+    expect(list).toEqual([{ url: 'https://example.com/', title: '', visits: 0, typed: 1, last: NOW }])
   })
 
   test('a title arriving later renames the row and counts nothing', () => {
@@ -70,9 +66,7 @@ describe('what an earlier run wrote down', () => {
       'nonsense',
     ])
 
-    expect(read).toEqual([
-      { url: 'https://example.com/', title: 'Ex', visits: 2, typed: 1, last: NOW },
-    ])
+    expect(read).toEqual([{ url: 'https://example.com/', title: 'Ex', visits: 2, typed: 1, last: NOW }])
   })
 
   test('and reads nothing from nothing', () => {

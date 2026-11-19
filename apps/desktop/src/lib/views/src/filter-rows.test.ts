@@ -31,13 +31,11 @@ test('a number in a list stays a number when another row changes', () => {
 test('a quoted value moved to another property is read afresh', () => {
   const [row] = rowsOf('note.zip == "007"').rows
   if (!row || 'kept' in row) throw new Error('no row')
-  expect(
-    filterOf({ join: 'and', rows: [{ ...withProperty(row, 'note.count'), value: '5' }] }),
-  ).toBe('note.count == 5')
+  expect(filterOf({ join: 'and', rows: [{ ...withProperty(row, 'note.count'), value: '5' }] })).toBe('note.count == 5')
 })
 
 test('a date typed for a text property is still read as a date', () => {
-  expect(
-    filterOf({ join: 'and', rows: [{ property: 'note.due', op: '<', value: '2026-03-05' }] }, text),
-  ).toBe('note.due < date("2026-03-05")')
+  expect(filterOf({ join: 'and', rows: [{ property: 'note.due', op: '<', value: '2026-03-05' }] }, text)).toBe(
+    'note.due < date("2026-03-05")',
+  )
 })

@@ -29,16 +29,13 @@ function shifted(today: string, by: string | undefined): string {
 const PLACEHOLDER = /\{\{\s*(title|date|time)\s*([+-]\d+[dwMy])?\s*(?::([^}]*))?\}\}/g
 
 export const fillTemplate = (text: string, filling: Filling): string =>
-  text.replace(
-    PLACEHOLDER,
-    (_written, name: string, by: string | undefined, format: string | undefined) => {
-      if (name === 'title') return filling.title
-      const iso = shifted(filling.today, by)
-      const value = { kind: 'date' as const, iso, time: `${filling.time}:00` }
-      if (format?.trim()) return formatDate(value, format.trim())
-      return name === 'time' ? filling.time : iso
-    },
-  )
+  text.replace(PLACEHOLDER, (_written, name: string, by: string | undefined, format: string | undefined) => {
+    if (name === 'title') return filling.title
+    const iso = shifted(filling.today, by)
+    const value = { kind: 'date' as const, iso, time: `${filling.time}:00` }
+    if (format?.trim()) return formatDate(value, format.trim())
+    return name === 'time' ? filling.time : iso
+  })
 
 const TEMPLATE_KEYS = ['repeat', 'made', 'folder'] as const
 
@@ -62,10 +59,7 @@ const MOST_MISSED = 400
 
 const PERIOD_DAYS = { day: 1, week: 7, month: 31, year: 366 }
 
-export function repeatDue(
-  note: Record<string, Value>,
-  today: string,
-): { day: string; missed: string[] } | null {
+export function repeatDue(note: Record<string, Value>, today: string): { day: string; missed: string[] } | null {
   const said = note.repeat
   if (typeof said !== 'string') return null
   const rule = parseRule(said.replace(/^🔁\s*/u, ''))

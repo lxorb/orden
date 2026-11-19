@@ -9,16 +9,11 @@ export interface OccurrenceOptions {
   created?: boolean
 }
 
-const referenceOf = (task: TaskFields): string | undefined =>
-  task.due ?? task.scheduled ?? task.start ?? task.deadline
+const referenceOf = (task: TaskFields): string | undefined => task.due ?? task.scheduled ?? task.start ?? task.deadline
 
 const later = (a: string, b: string) => (a > b ? a : b)
 
-export function nextOccurrence(
-  task: TaskFields,
-  today: string,
-  options: OccurrenceOptions = {},
-): TaskFields | null {
+export function nextOccurrence(task: TaskFields, today: string, options: OccurrenceOptions = {}): TaskFields | null {
   if (!task.recurrence) return null
   const rule = parseRule(task.recurrence)
   if (!rule) return null
@@ -50,9 +45,7 @@ function shiftedBy(task: TaskFields, days: number): TaskFields {
     const date = task[field]
     if (date) moved[field] = addDays(date, days)
   }
-  moved.remind = task.remind.map((one) =>
-    'at' in one ? { ...one, at: addDays(one.at, days) } : one,
-  )
+  moved.remind = task.remind.map((one) => ('at' in one ? { ...one, at: addDays(one.at, days) } : one))
   return moved
 }
 
@@ -120,12 +113,7 @@ function childrenOf(lines: readonly { text: string }[], at: number): number[] {
 const placed = (edits: readonly TextEdit[], from: number): TextEdit[] =>
   edits.map((edit) => ({ from: edit.from + from, to: edit.to + from, insert: edit.insert }))
 
-export function tick(
-  note: string,
-  line: number,
-  today: string,
-  options: OccurrenceOptions = {},
-): TextEdit[] {
+export function tick(note: string, line: number, today: string, options: OccurrenceOptions = {}): TextEdit[] {
   const lines = linesOf(note)
   const target = lines[line]
   if (!target) return []
@@ -133,10 +121,7 @@ export function tick(
   if (!task) return []
 
   if (task.done || task.cancelled) {
-    return placed(
-      writeTask(target.text, { status: ' ', completed: null, cancelledOn: null }),
-      target.from,
-    )
+    return placed(writeTask(target.text, { status: ' ', completed: null, cancelledOn: null }), target.from)
   }
 
   const children = childrenOf(lines, line)
@@ -171,10 +156,7 @@ export function tick(
   return edits
 }
 
-function repeatedChildren(
-  lines: readonly { text: string }[],
-  children: readonly number[],
-): string[] {
+function repeatedChildren(lines: readonly { text: string }[], children: readonly number[]): string[] {
   const out: string[] = []
   let seenTask = false
   for (const index of children) {
@@ -198,7 +180,6 @@ export function skip(line: string, today: string, options: OccurrenceOptions = {
   return next ? writeTask(line, changeBetween(task, { ...next, status: task.status })) : []
 }
 
-export const finish = (line: string): TextEdit[] =>
-  writeTask(line, { done: true, recurrence: null })
+export const finish = (line: string): TextEdit[] => writeTask(line, { done: true, recurrence: null })
 
 export { todayOf }

@@ -101,10 +101,7 @@ export async function readTomboy(sources: readonly Source[]): Promise<ImportPlan
   return { format: 'tomboy', files: written, lost }
 }
 
-export function tomboyMarkdown(
-  content: string,
-  link: (title: string) => string = (title) => `[[${title}]]`,
-): string {
+export function tomboyMarkdown(content: string, link: (title: string) => string = (title) => `[[${title}]]`): string {
   const out: string[] = []
   let at = 0
   let depth = 0
@@ -246,9 +243,7 @@ function unescaped(words: string): string {
 }
 
 function code(words: string): string {
-  const longest = (words.match(/`+/g) ?? [])
-    .map((run) => run.length)
-    .reduce((high, one) => Math.max(high, one), 0)
+  const longest = (words.match(/`+/g) ?? []).map((run) => run.length).reduce((high, one) => Math.max(high, one), 0)
   const fence = '`'.repeat(longest + 1)
   const pad = words.startsWith('`') || words.endsWith('`') ? ' ' : ''
   return `${fence}${pad}${words}${pad}${fence}`

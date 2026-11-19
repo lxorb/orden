@@ -93,16 +93,11 @@ class Decorator {
     for (const [pos, classes] of this.lineClasses) {
       const attributes = this.lineAttrs.get(pos)
       const className = [...classes].join(' ')
-      lines.push(
-        Decoration.line(attributes ? { class: className, attributes } : { class: className }).range(
-          pos,
-        ),
-      )
+      lines.push(Decoration.line(attributes ? { class: className, attributes } : { class: className }).range(pos))
     }
 
     const doc = this.state.doc
-    const oneLine = (range: Range<Decoration>) =>
-      doc.lineAt(range.from).number === doc.lineAt(range.to).number
+    const oneLine = (range: Range<Decoration>) => doc.lineAt(range.from).number === doc.lineAt(range.to).number
     const hidden = this.hidden.filter(oneLine)
     const faded = this.hidden
       .filter((range) => range.value === hide && !oneLine(range))
@@ -268,19 +263,11 @@ class Decorator {
     if (link.embed && !shown) {
       const kind = embedKind(link.target)
       if (kind === 'image') {
-        this.inlineWidget(
-          node,
-          new EmbedImageWidget(link, this.state.facet(imageResolver)(link.target)),
-          false,
-        )
+        this.inlineWidget(node, new EmbedImageWidget(link, this.state.facet(imageResolver)(link.target)), false)
         return false
       }
       if (kind === 'audio' || kind === 'video') {
-        this.inlineWidget(
-          node,
-          new EmbedMediaWidget(link, kind, this.state.facet(imageResolver)(link.target)),
-          false,
-        )
+        this.inlineWidget(node, new EmbedMediaWidget(link, kind, this.state.facet(imageResolver)(link.target)), false)
         return false
       }
       const block = embedOfBlock(this.state, node.from, node.to)
@@ -306,11 +293,7 @@ class Decorator {
     const archived = !missing && archivedLink(index, link, link.kind)
     this.marks.push(
       Decoration.mark({
-        class: missing
-          ? 'orden-link orden-link-missing'
-          : archived
-            ? 'orden-link orden-link-archived'
-            : 'orden-link',
+        class: missing ? 'orden-link orden-link-missing' : archived ? 'orden-link orden-link-archived' : 'orden-link',
         attributes: { 'data-note': linkTarget(link), title: noteLinkTitle(link, missing) },
       }).range(from, to),
     )
@@ -379,12 +362,7 @@ class Decorator {
 
     const inner = this.state.doc.sliceString(open.to, close.from)
     const { colour, from } = readHighlight(inner)
-    this.marks.push(
-      Decoration.mark({ class: `orden-highlight ${colour.className}`.trim() }).range(
-        node.from,
-        node.to,
-      ),
-    )
+    this.marks.push(Decoration.mark({ class: `orden-highlight ${colour.className}`.trim() }).range(node.from, node.to))
     if (colour.className === '') return
 
     this.conceal(open.to, open.to + from, overlaps(this.state, node.from, node.to))
@@ -438,8 +416,7 @@ class Decorator {
     const language = fenceLanguage(this.state, node)
 
     const drawn =
-      RENDERED_LANGUAGES.has(language) &&
-      (language !== 'chart' || readChart(fenceCode(this.state, node)) !== null)
+      RENDERED_LANGUAGES.has(language) && (language !== 'chart' || readChart(fenceCode(this.state, node)) !== null)
     if (drawn && !overlaps(this.state, node.from, node.to)) return false
 
     this.markLines(node, 'orden-code')
@@ -473,11 +450,7 @@ class Decorator {
     if (overlaps(this.state, node.from, node.to)) return true
 
     const tex = this.state.doc.sliceString(node.from + 1, node.to - 1)
-    this.inlineWidget(
-      node,
-      new MathWidget(tex, false, undefined, equationsOf(this.state).labels),
-      false,
-    )
+    this.inlineWidget(node, new MathWidget(tex, false, undefined, equationsOf(this.state).labels), false)
     return false
   }
 
@@ -508,10 +481,7 @@ class Decorator {
     if (listMark) this.conceal(listMark.from, this.eatSpace(listMark.to), false)
 
     this.hidden.push(
-      Decoration.replace({ widget: new CheckboxWidget(checked, node.from, node.to) }).range(
-        node.from,
-        node.to,
-      ),
+      Decoration.replace({ widget: new CheckboxWidget(checked, node.from, node.to) }).range(node.from, node.to),
     )
 
     if (checked) this.addLineClass(this.state.doc.lineAt(node.from).from, 'orden-task-done')
@@ -541,11 +511,7 @@ class Decorator {
     const shown = lineRevealed(this.state, line.from)
     for (const span of drawn.hide) this.conceal(line.from + span.from, line.from + span.to, shown)
     if (shown) return
-    this.marks.push(
-      Decoration.widget({ widget: new chips.CommentChipsWidget(drawn.chips), side: 1 }).range(
-        line.to,
-      ),
-    )
+    this.marks.push(Decoration.widget({ widget: new chips.CommentChipsWidget(drawn.chips), side: 1 }).range(line.to))
   }
 
   private image(node: SyntaxNode): boolean {
@@ -560,11 +526,7 @@ class Decorator {
       return false
     }
 
-    this.inlineWidget(
-      node,
-      new ImageWidget(image, this.state.facet(imageResolver)(image.src)),
-      false,
-    )
+    this.inlineWidget(node, new ImageWidget(image, this.state.facet(imageResolver)(image.src)), false)
     return false
   }
 
@@ -586,8 +548,7 @@ class Decorator {
       this.conceal(node.from, node.to, shown)
       this.conceal(next.from, next.to, shown)
       this.claimed.push({ from: next.from, to: next.to })
-      if (node.to < next.from)
-        this.marks.push(Decoration.mark({ class: 'orden-underline' }).range(node.to, next.from))
+      if (node.to < next.from) this.marks.push(Decoration.mark({ class: 'orden-underline' }).range(node.to, next.from))
       return true
     }
     return false
@@ -660,8 +621,7 @@ class Decorator {
 
   private depth(node: SyntaxNode): number {
     let depth = 0
-    for (let parent = node.parent; parent; parent = parent.parent)
-      if (parent.name === 'BulletList') depth++
+    for (let parent = node.parent; parent; parent = parent.parent) if (parent.name === 'BulletList') depth++
     return Math.max(depth - 1, 0)
   }
 
@@ -698,12 +658,7 @@ class Decorator {
     return number === undefined ? undefined : { 'data-heading-number': number }
   }
 
-  private markLines(
-    node: SyntaxNode,
-    className: string,
-    firstOnly = false,
-    attrs?: Record<string, string>,
-  ) {
+  private markLines(node: SyntaxNode, className: string, firstOnly = false, attrs?: Record<string, string>) {
     const doc = this.state.doc
     const last = firstOnly ? node.from : Math.min(node.to, doc.length)
 
@@ -789,9 +744,7 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
         update.startState.facet(numberHeadings) !== update.state.facet(numberHeadings) ||
         update.startState.facet(noteIndex) !== update.state.facet(noteIndex) ||
         trustChanged(update.startState, update.state)
-      const landed = update.transactions.some((one) =>
-        one.effects.some((effect) => effect.is(enginesLanded)),
-      )
+      const landed = update.transactions.some((one) => one.effects.some((effect) => effect.is(enginesLanded)))
       if (
         update.docChanged ||
         update.viewportChanged ||
@@ -832,7 +785,6 @@ export const livePreviewDecorations = ViewPlugin.fromClass(
         setTimeout(() => this.catchUp(view), COMPOSITION_SETTLES)
       },
     },
-    provide: (plugin) =>
-      EditorView.atomicRanges.of((view) => view.plugin(plugin)?.atomic ?? Decoration.none),
+    provide: (plugin) => EditorView.atomicRanges.of((view) => view.plugin(plugin)?.atomic ?? Decoration.none),
   },
 )

@@ -18,8 +18,7 @@ const ROWS = 'rows'
 const META = 'meta'
 const MINUTES = 'minutes'
 
-const nameFor = (owner: string | null): string =>
-  owner === null ? 'orden-time' : `orden-time:${owner}`
+const nameFor = (owner: string | null): string => (owner === null ? 'orden-time' : `orden-time:${owner}`)
 
 const settled = <T>(request: IDBRequest<T>): Promise<T> =>
   new Promise((resolve, reject) => {
@@ -68,8 +67,7 @@ export async function openTimeDisk(owner: string | null): Promise<TimeDisk> {
       for (const row of rows) store.put({ ...row, key: `${row.kind}\u0000${row.id}` })
       await finished(tx)
     },
-    read: async (key) =>
-      settled<unknown>((await held.transaction(META)).objectStore(META).get(key)),
+    read: async (key) => settled<unknown>((await held.transaction(META)).objectStore(META).get(key)),
     keep: async (key, value) => {
       const tx = await held.transaction(META, 'readwrite')
       tx.objectStore(META).put(value, key)
@@ -83,9 +81,7 @@ export async function openTimeDisk(owner: string | null): Promise<TimeDisk> {
     },
     minutes: async (from, to) => {
       const range = IDBKeyRange.bound(from, to, false, true)
-      const all = await settled(
-        (await held.transaction(MINUTES)).objectStore(MINUTES).getAll(range),
-      )
+      const all = await settled((await held.transaction(MINUTES)).objectStore(MINUTES).getAll(range))
       return all.map(minuteValue).filter((one): one is Minute => one !== null)
     },
     keepMinutes: async (minutes, before) => {

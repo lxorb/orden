@@ -197,8 +197,7 @@ function check(
     const near = strokes.filter((one) => reachesTile(one, scale, x, y))
 
     const samples: (readonly [number, number])[] = []
-    for (let py = 0; py < TILE; py += 16)
-      for (let px = 0; px < TILE; px += 16) samples.push([px, py])
+    for (let py = 0; py < TILE; py += 16) for (let px = 0; px < TILE; px += 16) samples.push([px, py])
     for (const one of [...near, ...gone]) samples.push(middle(one, across, down))
 
     for (const [px, py] of samples) {
@@ -303,16 +302,8 @@ function expected(strokes: readonly InkStroke[], at: ReturnType<typeof view>): M
     other.y < one.y + one.height
 
   const out = new Map<string, number>()
-  for (
-    let across = Math.floor((seen.x * scale) / TILE);
-    across * side < seen.x + seen.width;
-    across++
-  ) {
-    for (
-      let down = Math.floor((seen.y * scale) / TILE);
-      down * side < seen.y + seen.height;
-      down++
-    ) {
+  for (let across = Math.floor((seen.x * scale) / TILE); across * side < seen.x + seen.width; across++) {
+    for (let down = Math.floor((seen.y * scale) / TILE); down * side < seen.y + seen.height; down++) {
       const box = {
         x: across * side - spare,
         y: down * side - spare,
@@ -352,9 +343,7 @@ describe('a plane seen whole, arriving', () => {
     expect(frames.length).toBeGreaterThan(1)
     frames.forEach((filled, at) => {
       const outlined = (outlines[at] ?? 0) * OUTLINE_WEIGHT
-      expect(filled + outlined + (filings[at] ?? 0) * FILE_WEIGHT).toBeLessThanOrEqual(
-        FILLED_A_FRAME,
-      )
+      expect(filled + outlined + (filings[at] ?? 0) * FILE_WEIGHT).toBeLessThanOrEqual(FILLED_A_FRAME)
     })
 
     expect(sum(filings)).toBe(strokes.length)
@@ -427,9 +416,7 @@ describe('moving over a plane already painted', () => {
     const filled = sum(settle(() => tiles.paint(layer.ctx, strokes, to, palette)))
 
     const before = expected(strokes, from)
-    const uncovered = sum(
-      [...expected(strokes, to)].filter(([tile]) => !before.has(tile)).map(([, count]) => count),
-    )
+    const uncovered = sum([...expected(strokes, to)].filter(([tile]) => !before.has(tile)).map(([, count]) => count))
 
     expect(filled).toBeGreaterThan(0)
     expect(filled).toBe(uncovered)

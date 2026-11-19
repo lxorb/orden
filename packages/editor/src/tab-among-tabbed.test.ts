@@ -18,9 +18,7 @@ function typedAfterEnter(doc: string, words: string): string {
   const state = parsed(editorState({ doc, selection: EditorSelection.cursor(doc.length) }))
   let next = state
   continueLists({ state, dispatch: (one: Transaction) => (next = one.state) })
-  return next
-    .update({ changes: { from: next.selection.main.head, insert: words } })
-    .state.doc.toString()
+  return next.update({ changes: { from: next.selection.main.head, insert: words } }).state.doc.toString()
 }
 
 function embedded(text: string, id: string): string | null {

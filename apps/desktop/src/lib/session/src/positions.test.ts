@@ -77,11 +77,7 @@ describe('a note that moves', () => {
     places.remember('/Workshop.md', 3, 3)
     places.follow(moved('/Work', '/Play', 'folder'))
 
-    expect(Object.keys(places.all).sort()).toEqual([
-      '/Play/a.md',
-      '/Play/deep/b.md',
-      '/Workshop.md',
-    ])
+    expect(Object.keys(places.all).sort()).toEqual(['/Play/a.md', '/Play/deep/b.md', '/Workshop.md'])
   })
 })
 

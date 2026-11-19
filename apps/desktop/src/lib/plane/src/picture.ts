@@ -17,17 +17,7 @@ import {
 } from '../../files-out/src/api'
 import { type Canvas, type CanvasNode } from '@orden/markdown/canvas'
 import { planeBox } from './edits'
-import {
-  arrowAt,
-  type Box,
-  boxOf,
-  edgeEnds,
-  edgeMiddle,
-  edgePath,
-  isLineShape,
-  shapeLine,
-  shapePath,
-} from './geometry'
+import { arrowAt, type Box, boxOf, edgeEnds, edgeMiddle, edgePath, isLineShape, shapeLine, shapePath } from './geometry'
 import { inkSvg } from './svg'
 import { paletteOf } from './palette'
 import type { Palette } from './paint'
@@ -114,10 +104,7 @@ function plainCard(text: string, box: Box, palette: Palette): string {
   if (!lines.length) return ''
 
   const spans = lines
-    .map(
-      (line, index) =>
-        `<tspan x="${box.x + 12}" y="${box.y + 20 + index * LINE}">${escapeAll(line)}</tspan>`,
-    )
+    .map((line, index) => `<tspan x="${box.x + 12}" y="${box.y + 20 + index * LINE}">${escapeAll(line)}</tspan>`)
     .join('')
 
   return `<text font-size="${CARD_FONT}" fill="${palette.text ?? '#111'}" class="words">${spans}</text>`
@@ -298,9 +285,7 @@ export function canvasSvg(
   const width = Math.max(1, Math.round(box.width + 2 * PADDING))
   const height = Math.max(1, Math.round(box.height + 2 * PADDING))
 
-  const nodes = canvas.nodes
-    .map((node) => drawnNode(node, palette, canvasPath, root, plain, trusted, faces))
-    .join('')
+  const nodes = canvas.nodes.map((node) => drawnNode(node, palette, canvasPath, root, plain, trusted, faces)).join('')
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`,
@@ -403,8 +388,7 @@ export async function inlinedSvg(svg: string): Promise<string> {
     return await inlineImages(
       svg.replace(
         DRAWN,
-        (_whole: string, before: string, src: string, after: string) =>
-          `${before}${found.get(src) ?? src}${after}`,
+        (_whole: string, before: string, src: string, after: string) => `${before}${found.get(src) ?? src}${after}`,
       ),
       fromAsset,
     )
@@ -443,15 +427,7 @@ export async function exportCanvasPng(drawing: Drawing) {
 }
 
 function sheetOf(drawing: Drawing, faces: Faces, policy: string) {
-  const svg = canvasSvg(
-    drawing.canvas,
-    paletteOf('light'),
-    drawing.path,
-    drawing.root,
-    false,
-    drawing.trusted,
-    faces,
-  )
+  const svg = canvasSvg(drawing.canvas, paletteOf('light'), drawing.path, drawing.root, false, drawing.trusted, faces)
   const { width, height } = sizeOf(svg)
 
   const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="${policy}"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`

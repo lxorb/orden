@@ -25,12 +25,7 @@
     ],
     browserSettings: [],
   }
-  const SETTINGS = new Set([
-    'privacy.network',
-    'privacy.services',
-    'privacy.websites',
-    'browserSettings',
-  ])
+  const SETTINGS = new Set(['privacy.network', 'privacy.services', 'privacy.websites', 'browserSettings'])
   const CONSTANTS = {
     'tabs.TAB_ID_NONE': -1,
     'tabs.TAB_INDEX_NONE': -1,
@@ -81,8 +76,7 @@
       setTimeout(() => {
         if (port || listening.size === 0) return
         connect()
-        for (const [key, one] of listening)
-          send({ kind: 'listen', key, path: one.path, extra: one.extra })
+        for (const [key, one] of listening) send({ kind: 'listen', key, path: one.path, extra: one.extra })
       }, 0)
     })
   }
@@ -149,9 +143,7 @@
         }
       },
       hasListener(listener) {
-        return [...listening.values()].some(
-          (one) => one.name === name && one.listeners.has(listener),
-        )
+        return [...listening.values()].some((one) => one.name === name && one.listeners.has(listener))
       },
       hasListeners() {
         return [...listening.values()].some((one) => one.name === name && one.listeners.size > 0)
@@ -213,9 +205,7 @@
         pressed.set(id, onclick)
         if (!hearing) {
           hearing = true
-          event([path[0], 'onClicked']).addListener((info, tab) =>
-            pressed.get(info.menuItemId)?.(info, tab),
-          )
+          event([path[0], 'onClicked']).addListener((info, tab) => pressed.get(info.menuItemId)?.(info, tab))
         }
       }
       ask([...path, 'create'], [{ ...rest, id }]).then(
@@ -271,10 +261,8 @@
         else if (/^[A-Z][A-Z0-9_]*$/.test(name))
           value = /^[A-Z]/.test(path[path.length - 1]) ? name.toLowerCase() : undefined
         else if (/^on[A-Z]/.test(name)) value = event(inner)
-        else if (/^[A-Z]/.test(name) || SETTINGS.has(dotted) || INSIDE[dotted]?.includes(name))
-          value = namespace(inner)
-        else if (name === 'create' && (dotted === 'menus' || dotted === 'contextMenus'))
-          value = menu(path)
+        else if (/^[A-Z]/.test(name) || SETTINGS.has(dotted) || INSIDE[dotted]?.includes(name)) value = namespace(inner)
+        else if (name === 'create' && (dotted === 'menus' || dotted === 'contextMenus')) value = menu(path)
         else if (FILED.has(at)) value = filed(inner)
         else if (at === 'tabs.connect') value = connecting(inner)
         else if (at === 'contentScripts.register') value = call(inner, registered)
@@ -318,8 +306,7 @@
           return typeof value === 'function' ? value.bind(nativeRuntime) : value
         }
         if (name in own) target[name] = own[name]
-        else if (typeof name === 'string' && /^on[A-Z]/.test(name))
-          target[name] = event(['runtime', name])
+        else if (typeof name === 'string' && /^on[A-Z]/.test(name)) target[name] = event(['runtime', name])
         else target[name] = call(['runtime', name])
         return target[name]
       },
@@ -371,9 +358,7 @@
     getURL: (path) => runtime.getURL(path),
     getBackgroundPage: () => window,
     getViews: (filter = {}) =>
-      filter.type === undefined && filter.windowId === undefined && filter.tabId === undefined
-        ? [window]
-        : [],
+      filter.type === undefined && filter.windowId === undefined && filter.tabId === undefined ? [window] : [],
     inIncognitoContext: false,
     isAllowedIncognitoAccess: call(['extension', 'isAllowedIncognitoAccess']),
     isAllowedFileSchemeAccess: call(['extension', 'isAllowedFileSchemeAccess']),

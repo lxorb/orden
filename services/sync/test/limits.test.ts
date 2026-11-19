@@ -38,15 +38,11 @@ describe('addresses mailed in a day', () => {
   test('stay at the most when another is mailed at the same moment', async () => {
     alreadyMailed(499)
     env.justBefore(/insert into mailed_days/, () => {
-      env.db
-        .prepare('insert into mailed_days (day, email) values (?, ?)')
-        .run(today(), 'quicker@example.com')
+      env.db.prepare('insert into mailed_days (day, email) values (?, ?)').run(today(), 'quicker@example.com')
     })
 
     expect((await askForACode('late@example.com')).status).toBe(429)
-    expect(
-      env.db.prepare('select count(*) as n from mailed_days where day = ?').get(today()),
-    ).toEqual({ n: 500 })
+    expect(env.db.prepare('select count(*) as n from mailed_days where day = ?').get(today())).toEqual({ n: 500 })
   })
 })
 
@@ -73,9 +69,7 @@ describe('mail from one machine', () => {
       expect((await askForACode(`six-${at}@example.com`, machine)).status).toBe(200)
     }
 
-    expect((await askForACode('six-more@example.com', '2001:0DB8:0000:0000:ffff::1')).status).toBe(
-      429,
-    )
+    expect((await askForACode('six-more@example.com', '2001:0DB8:0000:0000:ffff::1')).status).toBe(429)
     expect((await askForACode('next-door@example.com', '2001:db8:0:1::1')).status).toBe(200)
   })
 
@@ -135,8 +129,7 @@ describe('the people the service writes to in a day', () => {
 
   test('holds an invitation to the same ceiling, before it writes anything', async () => {
     const owner = await signIn(env, 'owner@example.com')
-    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json
-      .space.id
+    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json.space.id
 
     alreadyMailed(500)
 
@@ -203,8 +196,7 @@ describe('mail to one address', () => {
 
   test('counts every kind of message, and keeps quiet to somebody inviting it', async () => {
     const owner = await signIn(env, 'owner@example.com')
-    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json
-      .space.id
+    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json.space.id
 
     for (let at = 0; at < 6; at++) {
       gapPassed()
@@ -228,15 +220,13 @@ describe('mail to one address', () => {
 })
 
 function alreadySent(many: number, until = Date.now() + 60 * 60 * 1000): void {
-  env.db
-    .prepare(`insert into limits (scope, key, count, until) values ('mail-sent', 'earlier', ?, ?)`)
-    .run(many, until)
+  env.db.prepare(`insert into limits (scope, key, count, until) values ('mail-sent', 'earlier', ?, ?)`).run(many, until)
 }
 
 function sentToday(): number {
-  const row = env.db
-    .prepare(`select coalesce(sum(count), 0) as sent from limits where scope = 'mail-sent'`)
-    .get() as { sent: number }
+  const row = env.db.prepare(`select coalesce(sum(count), 0) as sent from limits where scope = 'mail-sent'`).get() as {
+    sent: number
+  }
   return row.sent
 }
 
@@ -261,8 +251,7 @@ describe('the mail the service sends in a day', () => {
 
   test('holds an invitation too, before it writes anything', async () => {
     const owner = await signIn(env, 'owner@example.com')
-    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json
-      .space.id
+    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json.space.id
 
     alreadySent(900)
 
@@ -398,9 +387,7 @@ describe('how many people may be waiting on one space', () => {
     expect((await call(env, `/v1/join/${link}`, { method: 'POST', token: guest })).status).toBe(200)
 
     const another = await signIn(env, 'another@example.com')
-    expect((await call(env, `/v1/join/${link}`, { method: 'POST', token: another })).status).toBe(
-      429,
-    )
+    expect((await call(env, `/v1/join/${link}`, { method: 'POST', token: another })).status).toBe(429)
   })
 
   test('lets the next person in once the waiting has run out', async () => {
@@ -420,9 +407,7 @@ describe('how many people may be waiting on one space', () => {
 
   test('keeps a guest who is in the space, however long ago they arrived', async () => {
     const long = Date.now() - 10 * MONTH
-    env.db
-      .prepare('insert into guests (id, name, created_at) values (?, ?, ?)')
-      .run('resident', 'Resident', long)
+    env.db.prepare('insert into guests (id, name, created_at) values (?, ?, ?)').run('resident', 'Resident', long)
     env.db
       .prepare(
         `insert into guest_members (space_id, guest_id, role, joined_at, created_at)

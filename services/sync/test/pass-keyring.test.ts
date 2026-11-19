@@ -77,13 +77,9 @@ describe('a keyring', () => {
       { keyring: { ...aKeyring(), private: sealed(MOST_KEYRING_BYTES) }, rev: 0 },
     ]
     for (const body of junk) {
-      expect((await passCall(env, ada, 'PUT', '/keyring', body)).status, JSON.stringify(body)).toBe(
-        400,
-      )
+      expect((await passCall(env, ada, 'PUT', '/keyring', body)).status, JSON.stringify(body)).toBe(400)
     }
-    expect(
-      (await call(env, '/v2/pass/keyring', { method: 'PUT', token: ada.token, raw: '[]' })).status,
-    ).toBe(400)
+    expect((await call(env, '/v2/pass/keyring', { method: 'PUT', token: ada.token, raw: '[]' })).status).toBe(400)
     expect(env.db.prepare('select count(*) as n from pass_keyrings').get()).toEqual({ n: 0 })
   })
 
@@ -97,8 +93,7 @@ describe('a keyring', () => {
 describe('somebody’s public key', () => {
   test('is there once they have a keyring, and null before', async () => {
     const bob = await person(env, 'bob@example.com')
-    const lookup = () =>
-      passCall<{ pub: string | null }>(env, ada, 'GET', '/people/key?email=Bob@Example.com')
+    const lookup = () => passCall<{ pub: string | null }>(env, ada, 'GET', '/people/key?email=Bob@Example.com')
 
     expect((await lookup()).json).toEqual({ pub: null, signPub: null })
     const keyring = aKeyring(1)

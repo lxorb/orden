@@ -33,19 +33,13 @@ export function blocksOf(parts: readonly Part[]): Block[] {
   return out
 }
 
-export function foldOf(
-  blocks: readonly Block[],
-  live: boolean,
-): { before: Block[]; work: Block[]; after: Block[] } {
+export function foldOf(blocks: readonly Block[], live: boolean): { before: Block[]; work: Block[]; after: Block[] } {
   const first = blocks.findIndex((one) => one.kind === 'row' || one.kind === 'explored')
-  const called = blocks.some(
-    (one) => one.kind === 'explored' || (one.kind === 'row' && one.row.kind === 'tool'),
-  )
+  const called = blocks.some((one) => one.kind === 'explored' || (one.kind === 'row' && one.row.kind === 'tool'))
   const said = (one: Block | undefined) => one?.kind === 'words' && one.text.trim() !== ''
   let last = blocks.length - 1
   while (last >= 0 && !said(blocks[last])) last--
-  if (live || !called || first < 0 || last < first)
-    return { before: [...blocks], work: [], after: [] }
+  if (live || !called || first < 0 || last < first) return { before: [...blocks], work: [], after: [] }
   return {
     before: blocks.slice(0, first),
     work: blocks.slice(first, last),

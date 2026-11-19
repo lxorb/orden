@@ -27,9 +27,7 @@ function logOf(seed: number, length: number): Logged[] {
         message,
         body: `words ${String(seq)}`,
         ...(parent ? { parent, ...(next() < 0.3 ? { alsoToChat: true } : {}) } : {}),
-        ...(poll
-          ? { poll: { question: 'q', answers: ['a', 'b', 'c'], several: next() < 0.5 } }
-          : {}),
+        ...(poll ? { poll: { question: 'q', answers: ['a', 'b', 'c'], several: next() < 0.5 } } : {}),
       }
       live.set(message, { author, poll })
     } else {

@@ -38,13 +38,7 @@ export function barOf(
     const task = row.task
     const begins = startOf(task, task.dueReads)
     const deadline = deadlineOf(task, task.dueReads)
-    const from = begins
-      ? 'task.start'
-      : task.scheduled
-        ? 'task.scheduled'
-        : deadline
-          ? 'task.deadline'
-          : null
+    const from = begins ? 'task.start' : task.scheduled ? 'task.scheduled' : deadline ? 'task.deadline' : null
     if (from === null) return null
     const start = begins ?? task.scheduled ?? deadline ?? ''
     const to = deadline && from !== 'task.deadline' ? 'task.deadline' : from
@@ -91,10 +85,7 @@ export function spanOf(bars: readonly Bar[], today: string): { first: string; la
   return { first, last }
 }
 
-export function drawnOf(
-  bar: Bar,
-  span: { first: string; last: string },
-): { start: string; end: string; far: boolean } {
+export function drawnOf(bar: Bar, span: { first: string; last: string }): { start: string; end: string; far: boolean } {
   const start = bar.start < span.first ? span.first : bar.start > span.last ? span.last : bar.start
   const end = bar.end > span.last ? span.last : bar.end < span.first ? span.first : bar.end
   return { start, end, far: start !== bar.start || end !== bar.end }
@@ -102,11 +93,7 @@ export function drawnOf(
 
 export const daysBetween = (from: string, to: string): number => dayNumber(to) - dayNumber(from)
 
-export function dragged(
-  bar: Bar,
-  part: 'move' | 'start' | 'end',
-  days: number,
-): Record<string, string> {
+export function dragged(bar: Bar, part: 'move' | 'start' | 'end', days: number): Record<string, string> {
   if (!days) return {}
   const { fromTime = '', toTime = '', fromShift = 0, toShift = 0 } = bar
   const from = (day: string) => `${addDays(day, fromShift)}${fromTime}`
@@ -131,9 +118,7 @@ function stretched(bar: Bar, part: 'start' | 'end', days: number): Record<string
   const end = part === 'end' ? addDays(bar.end, days) : bar.end
   if (start >= end) return {}
   if (bar.from === 'task.deadline') {
-    return part === 'start'
-      ? { 'task.start': start }
-      : { 'task.start': start, 'task.deadline': end }
+    return part === 'start' ? { 'task.start': start } : { 'task.start': start, 'task.deadline': end }
   }
   return part === 'start' ? { [bar.from]: start, 'task.deadline': end } : { 'task.deadline': end }
 }

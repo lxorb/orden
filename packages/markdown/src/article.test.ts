@@ -1,15 +1,6 @@
 // @vitest-environment jsdom
 import { beforeEach, describe, expect, test } from 'vitest'
-import {
-  absolutise,
-  clean,
-  extract,
-  linkTitle,
-  pageTags,
-  pageTitle,
-  readSnapshot,
-  widestOf,
-} from './article'
+import { absolutise, clean, extract, linkTitle, pageTags, pageTitle, readSnapshot, widestOf } from './article'
 import { SELECTED } from './snapshot'
 
 const PAGE = 'https://site.example/section/page.html'
@@ -38,9 +29,7 @@ describe('the widest candidate a srcset offers', () => {
     const srcset =
       'https://res.cloudinary.com/d/image/upload/w_400,h_300,c_fill/a.jpg 400w, ' +
       'https://res.cloudinary.com/d/image/upload/w_800,h_600,c_fill/a.jpg 800w'
-    expect(widestOf(srcset)).toBe(
-      'https://res.cloudinary.com/d/image/upload/w_800,h_600,c_fill/a.jpg',
-    )
+    expect(widestOf(srcset)).toBe('https://res.cloudinary.com/d/image/upload/w_800,h_600,c_fill/a.jpg')
   })
 
   test('takes the only one when there is only one', () => {
@@ -57,9 +46,7 @@ describe('making addresses absolute', () => {
   test('resolves a link beside the page', () => {
     const page = pageOf('<a href="other.html">x</a>')
     absolutise(page.body, PAGE)
-    expect(page.querySelector('a')?.getAttribute('href')).toBe(
-      'https://site.example/section/other.html',
-    )
+    expect(page.querySelector('a')?.getAttribute('href')).toBe('https://site.example/section/other.html')
   })
 
   test('resolves a link from the root', () => {
@@ -93,11 +80,7 @@ describe('making addresses absolute', () => {
   })
 
   test('sees through a scheme written with something in the middle of it', () => {
-    for (const href of [
-      'java\tscript:alert(1)',
-      'java\nscript:alert(1)',
-      '  JavaScript:alert(1)',
-    ]) {
+    for (const href of ['java\tscript:alert(1)', 'java\nscript:alert(1)', '  JavaScript:alert(1)']) {
       const page = pageOf(`<a href="${href.replace(/\t/g, '&#9;').replace(/\n/g, '&#10;')}">x</a>`)
       absolutise(page.body, PAGE)
       expect(page.querySelector('a')?.hasAttribute('href'), href).toBe(false)
@@ -113,9 +96,7 @@ describe('making addresses absolute', () => {
   test('resolves a picture beside the page', () => {
     const page = pageOf('<img src="photo.jpg">')
     absolutise(page.body, PAGE)
-    expect(page.querySelector('img')?.getAttribute('src')).toBe(
-      'https://site.example/section/photo.jpg',
-    )
+    expect(page.querySelector('img')?.getAttribute('src')).toBe('https://site.example/section/photo.jpg')
   })
 
   test('finds the address a lazy picture was deferring', () => {
@@ -131,14 +112,10 @@ describe('making addresses absolute', () => {
   })
 
   test('takes the widest of a picture element and unwraps it', () => {
-    const page = pageOf(
-      '<picture><source srcset="s.jpg 400w, l.jpg 1200w"><img src="" alt="a"></picture>',
-    )
+    const page = pageOf('<picture><source srcset="s.jpg 400w, l.jpg 1200w"><img src="" alt="a"></picture>')
     absolutise(page.body, PAGE)
     expect(page.querySelector('picture')).toBe(null)
-    expect(page.querySelector('img')?.getAttribute('src')).toBe(
-      'https://site.example/section/l.jpg',
-    )
+    expect(page.querySelector('img')?.getAttribute('src')).toBe('https://site.example/section/l.jpg')
   })
 
   test('drops a picture with nowhere to point', () => {
@@ -182,9 +159,7 @@ describe('cleaning', () => {
   })
 
   test('leaves a wrapper that holds more than the formula hidden', () => {
-    const page = pageOf(
-      '<div aria-hidden="true"><p>words</p><math alttext="x"><mi>x</mi></math></div>',
-    )
+    const page = pageOf('<div aria-hidden="true"><p>words</p><math alttext="x"><mi>x</mi></math></div>')
     clean(page.body)
     expect(page.querySelectorAll('math')).toHaveLength(0)
   })
@@ -230,10 +205,7 @@ describe('the tags a page publishes about itself', () => {
   })
 
   test('collects one from each article tag', () => {
-    const page = pageOf(
-      '',
-      '<meta property="article:tag" content="A"><meta property="article:tag" content="B">',
-    )
+    const page = pageOf('', '<meta property="article:tag" content="A"><meta property="article:tag" content="B">')
     expect(pageTags(page)).toEqual(['A', 'B'])
   })
 
@@ -260,10 +232,7 @@ describe('what a clip is called', () => {
   })
 
   test('prefers what the page calls itself when something else shows the name', () => {
-    const page = pageOf(
-      '',
-      '<title>Deep work | The Journal</title><meta property="og:title" content="Deep work">',
-    )
+    const page = pageOf('', '<title>Deep work | The Journal</title><meta property="og:title" content="Deep work">')
     expect(pageTitle(page, PAGE)).toBe('Deep work')
   })
 
@@ -384,14 +353,11 @@ describe('a page a web tab wrote down', () => {
 })
 
 describe('a page whose words stand in a form', () => {
-  const page = (body: string) =>
-    new DOMParser().parseFromString(`<html><body>${body}</body></html>`, 'text/html')
+  const page = (body: string) => new DOMParser().parseFromString(`<html><body>${body}</body></html>`, 'text/html')
   const clipped = (body: string) => extract(page(body), 'page', 'https://a.example/').html
 
   test('keeps them', () => {
-    expect(clipped('<form><table><tr><td>Result A</td><td>12</td></tr></table></form>')).toContain(
-      'Result A',
-    )
+    expect(clipped('<form><table><tr><td>Result A</td><td>12</td></tr></table></form>')).toContain('Result A')
     const list = clipped('<form><p>Search results</p><ul><li>r1</li></ul></form>')
     expect(list).toContain('Search results')
     expect(list).toContain('r1')

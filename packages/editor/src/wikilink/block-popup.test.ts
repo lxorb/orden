@@ -11,9 +11,7 @@ import { type NoteIndex, noteIndex } from './notes'
 const GROCERIES = '# Groceries\n\nBuy these on Friday.\n\n- milk\n- eggs\n'
 
 const index: NoteIndex = {
-  notes: [
-    { path: 'Groceries.md', name: 'Groceries', headings: ['Groceries'], blocks: [], aliases: [] },
-  ],
+  notes: [{ path: 'Groceries.md', name: 'Groceries', headings: ['Groceries'], blocks: [], aliases: [] }],
   files: [],
   path: 'Today.md',
   read: () => Promise.resolve(GROCERIES),

@@ -1,13 +1,5 @@
 import { AccountOwed, type AccountSettings } from '../../accounts/src/api'
-import {
-  chosenOn,
-  gated,
-  hiddenKinds,
-  KINDS_KEY,
-  type KindName,
-  kindsHere,
-  shownOf,
-} from './gates.svelte'
+import { chosenOn, gated, hiddenKinds, KINDS_KEY, type KindName, kindsHere, shownOf } from './gates.svelte'
 import { forget, isString, keepJson } from '../../platform/src/api'
 
 const OWED_KEY = 'orden:kinds-owed'

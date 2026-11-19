@@ -11,8 +11,7 @@ function refused(text: string, anchor: Anchor): { code: string; message: string;
   try {
     resolve(anchor, text)
   } catch (error) {
-    if (error instanceof DocError)
-      return { code: error.code, message: error.message, count: error.count }
+    if (error instanceof DocError) return { code: error.code, message: error.message, count: error.count }
     throw error
   }
   throw new Error('the anchor resolved')
@@ -97,9 +96,7 @@ describe('a heading', () => {
 
   test('by its words in any case, or by the id a link gives it', () => {
     expect(named(NOTE, { heading: 'plan/later' })).toMatch(/^## Later/)
-    expect(named('## Q3 Goals & plans\nx', { heading: 'q3-goals-plans' })).toBe(
-      '## Q3 Goals & plans\nx',
-    )
+    expect(named('## Q3 Goals & plans\nx', { heading: 'q3-goals-plans' })).toBe('## Q3 Goals & plans\nx')
   })
 
   test('never inside a fence', () => {

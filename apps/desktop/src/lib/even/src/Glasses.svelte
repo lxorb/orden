@@ -28,9 +28,7 @@
   const showing = $derived(bridge.showing)
 
   let overlaid = $state(false)
-  const covered = $derived(
-    overlaid || settingsWindow().open || account.open || (viewport.drawer && !!workspace.panel),
-  )
+  const covered = $derived(overlaid || settingsWindow().open || account.open || (viewport.drawer && !!workspace.panel))
 
   interface Region {
     from: number

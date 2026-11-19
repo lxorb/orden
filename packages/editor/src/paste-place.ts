@@ -1,9 +1,4 @@
-import {
-  EditorSelection,
-  type EditorState,
-  type SelectionRange,
-  type TransactionSpec,
-} from '@codemirror/state'
+import { EditorSelection, type EditorState, type SelectionRange, type TransactionSpec } from '@codemirror/state'
 import { syntaxTree } from '@codemirror/language'
 import { enclosingNamed } from './nodes'
 import { everywhere, type Landing, plainAt, withLineFeeds } from './paste'
@@ -15,18 +10,13 @@ const ITEM_MARKS = /((?:[-*+]|\d+[.)])[ \t]+)(?:\[[ xX]\][ \t]+)?/g
 const LEAD = /^([ \t]*(?:>[ \t]?)*[ \t]*)((?:[-*+]|\d+[.)])[ \t]+(?:\[[ xX]\][ \t]+)?)?/
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
 
-const INNERMOST =
-  /(?:>[ \t]?|([-*+])[ \t]+(?:\[[ xX]\][ \t]+)?|\d+([.)])[ \t]+(?:\[[ xX]\][ \t]+)?)[ \t]*$/
+const INNERMOST = /(?:>[ \t]?|([-*+])[ \t]+(?:\[[ xX]\][ \t]+)?|\d+([.)])[ \t]+(?:\[[ xX]\][ \t]+)?)[ \t]*$/
 
 function sameKind(prefix: string): { outer: string; marks: RegExp } | null {
   const found = INNERMOST.exec(prefix)
   if (!found) return null
   const [, bullet, delimiter] = found
-  const marks = bullet
-    ? new RegExp(`^\\${bullet}[ \t]`)
-    : delimiter
-      ? new RegExp(`^\\d+\\${delimiter}[ \t]`)
-      : /^>/
+  const marks = bullet ? new RegExp(`^\\${bullet}[ \t]`) : delimiter ? new RegExp(`^\\d+\\${delimiter}[ \t]`) : /^>/
   return { outer: prefix.slice(0, found.index), marks }
 }
 
@@ -48,8 +38,7 @@ function spaced(prefix: string): string {
   return prefix.replace(ITEM_MARKS, (_all, mark: string) => ' '.repeat(mark.length))
 }
 
-const OPENS_BLOCK =
-  /^(?:#{1,6}[ \t]|\||`{3,}|~{3,}|>[ \t]?|(?:[-*+]|\d+[.)])[ \t]|\$\$|(?:-{3,}|\*{3,}|_{3,})$)/
+const OPENS_BLOCK = /^(?:#{1,6}[ \t]|\||`{3,}|~{3,}|>[ \t]?|(?:[-*+]|\d+[.)])[ \t]|\$\$|(?:-{3,}|\*{3,}|_{3,})$)/
 
 const TAKES_LAZY = /^[ \t]*(?:>|(?:[-*+]|\d+[.)])[ \t])/
 
@@ -167,16 +156,12 @@ function placedAt(state: EditorState, range: SelectionRange, written: string): L
   const opens = !inFront && OPENS_BLOCK.test(first)
   const closes = after.trim() !== '' && CLOSES_BLOCK.test(last)
   const doc = state.doc
-  const words = (number: number) =>
-    number >= 1 && number <= doc.lines && doc.line(number).text.trim() !== ''
+  const words = (number: number) => number >= 1 && number <= doc.lines && doc.line(number).text.trim() !== ''
   const inOwnTable = inTable(state, line.from)
-  const apart = (number: number) =>
-    words(number) && !(inOwnTable && inTable(state, doc.line(number).from))
+  const apart = (number: number) => words(number) && !(inOwnTable && inTable(state, doc.line(number).from))
   const under =
     after.trim() === '' &&
-    (last.startsWith('|')
-      ? apart(end.number + 1)
-      : TAKES_LAZY.test(last) && lazyLineBelow(state, end.number + 1))
+    (last.startsWith('|') ? apart(end.number + 1) : TAKES_LAZY.test(last) && lazyLineBelow(state, end.number + 1))
       ? `\n${lead.trimEnd()}`
       : ''
   const over = inFront && !before && first.startsWith('|') && apart(line.number - 1) ? '\n' : ''

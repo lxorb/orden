@@ -47,9 +47,7 @@ function row(id: string): Row {
 }
 
 function folders(): FolderRow[] {
-  return env.db
-    .prepare('select * from folders where space_id = ? order by name')
-    .all(space) as unknown as FolderRow[]
+  return env.db.prepare('select * from folders where space_id = ? order by name').all(space) as unknown as FolderRow[]
 }
 
 async function made(path: string, content = `# ${path}\n`): Promise<string> {
@@ -141,9 +139,9 @@ describe('preparing a space', () => {
 
   test('places many notes in many folders in time that grows with them, not their square', async () => {
     const seed = await made('F0/S0/seed.md')
-    const columns = (
-      env.db.prepare('pragma table_info(notes)').all() as unknown as { name: string }[]
-    ).map((one) => one.name)
+    const columns = (env.db.prepare('pragma table_info(notes)').all() as unknown as { name: string }[]).map(
+      (one) => one.name,
+    )
     const picked = columns.map((one) =>
       one === 'id'
         ? "printf('m%05d', value)"
@@ -206,9 +204,7 @@ describe('preparing a space', () => {
     const a = await made('a.md')
     await prepare()
     const unnamed = (id: string, path: string) => {
-      const { next } = env.db
-        .prepare('select next from space_cursor where space_id = ?')
-        .get(space) as { next: number }
+      const { next } = env.db.prepare('select next from space_cursor where space_id = ?').get(space) as { next: number }
       env.db
         .prepare(
           `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
@@ -237,9 +233,7 @@ describe('preparing a space', () => {
 
   test('passes a note an old device deleted before the space was prepared, which never gets a name, so a new device hears every note after it', async () => {
     const first = await made('first.md')
-    const { next } = env.db
-      .prepare('select next from space_cursor where space_id = ?')
-      .get(space) as { next: number }
+    const { next } = env.db.prepare('select next from space_cursor where space_id = ?').get(space) as { next: number }
     env.db
       .prepare(
         `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash)
@@ -315,10 +309,7 @@ describe('tree operations', () => {
   })
 
   test('refuse a move that would put a folder inside itself', async () => {
-    await ops([
-      op('mkdir', { id: 'a', parent: null, name: 'A' }),
-      op('mkdir', { id: 'b', parent: null, name: 'B' }),
-    ])
+    await ops([op('mkdir', { id: 'a', parent: null, name: 'A' }), op('mkdir', { id: 'b', parent: null, name: 'B' })])
     expect(await one(op('move', { id: 'a', parent: 'b' }))).toMatchObject({ ok: true })
     expect(await one(op('move', { id: 'b', parent: 'a' }), other)).toMatchObject({
       refused: 'cycle',
@@ -347,9 +338,7 @@ describe('tree operations', () => {
   })
 
   test('bring back something deleted after its device last looked, for a rename of it', async () => {
-    const { cursor } = await ops([
-      op('create', { id: 'n', kind: 'note', parent: null, name: 'n.md' }),
-    ])
+    const { cursor } = await ops([op('create', { id: 'n', kind: 'note', parent: null, name: 'n.md' })])
     await one(op('delete', { id: 'n' }, cursor))
 
     expect(await one(op('rename', { id: 'n', name: 'm.md' }, cursor), other)).toMatchObject({
@@ -529,13 +518,10 @@ describe('tree operations', () => {
       op('mkdir', { id: 'f', parent: null, name: 'Folder' }),
       op('create', { id: 'a', kind: 'note', parent: null, name: 'A.md' }),
     ])
-    expect(
-      await one(op('meta', { id: 'a', meta: { icon: 'rocket', 'icon-color': 'red' } }, cursor)),
-    ).toMatchObject({ ok: true })
-    await one(
-      op('meta', { id: 'a', meta: { cover: 'pics/sea.png', 'icon-color': null } }, cursor),
-      other,
-    )
+    expect(await one(op('meta', { id: 'a', meta: { icon: 'rocket', 'icon-color': 'red' } }, cursor))).toMatchObject({
+      ok: true,
+    })
+    await one(op('meta', { id: 'a', meta: { cover: 'pics/sea.png', 'icon-color': null } }, cursor), other)
     await one(op('rename', { id: 'a', name: 'Renamed.md' }, cursor))
     await one(op('move', { id: 'a', parent: 'f' }, cursor))
     await one(op('meta', { id: 'f', meta: { icon: 'star' } }, cursor))
@@ -558,9 +544,7 @@ describe('tree operations', () => {
   })
 
   test("count a picture an item's metadata shows as a picture the note uses", async () => {
-    const { cursor } = await ops([
-      op('create', { id: 'n', kind: 'note', parent: null, name: 'N.md' }),
-    ])
+    const { cursor } = await ops([op('create', { id: 'n', kind: 'note', parent: null, name: 'N.md' })])
     const hash = 'a'.repeat(64)
     await one(op('meta', { id: 'n', meta: { cover: `https://x.test/i/${hash}.png` } }, cursor))
     const pictures = () =>
@@ -573,9 +557,7 @@ describe('tree operations', () => {
   })
 
   test("keep an item's metadata from a delete that had not seen it", async () => {
-    const { cursor } = await ops([
-      op('create', { id: 'n', kind: 'note', parent: null, name: 'N.md' }),
-    ])
+    const { cursor } = await ops([op('create', { id: 'n', kind: 'note', parent: null, name: 'N.md' })])
     await one(op('meta', { id: 'n', meta: { icon: 'rocket' } }, cursor), other)
     expect(await one(op('delete', { id: 'n' }, cursor))).toMatchObject({ refused: 'edited' })
   })
@@ -609,9 +591,10 @@ describe('tree operations', () => {
 
     await one(op('rename', { id: 'big', name: 'Huge' }))
 
-    const paths = env.db
-      .prepare("select path, seq from notes where space_id = ? and id like 'n%'")
-      .all(space) as { path: string; seq: number }[]
+    const paths = env.db.prepare("select path, seq from notes where space_id = ? and id like 'n%'").all(space) as {
+      path: string
+      seq: number
+    }[]
     expect(paths).toHaveLength(500)
     expect(paths.every((one) => /^Huge\/(Sub\/)?\d+\.md$/.test(one.path))).toBe(true)
     expect(new Set(paths.map((one) => one.seq)).size).toBe(500)
@@ -637,9 +620,9 @@ describe('tree operations', () => {
 
   test('refuse every op of somebody who may only read the space', async () => {
     const reader = await invited(env, token, space, 'reader@example.com', 'read')
-    expect(
-      await one(op('create', { id: 'r', kind: 'note', parent: null, name: 'r.md' }), reader),
-    ).toMatchObject({ refused: 'role' })
+    expect(await one(op('create', { id: 'r', kind: 'note', parent: null, name: 'r.md' }), reader)).toMatchObject({
+      refused: 'role',
+    })
   })
 
   test('answer somebody given one file of the space with nothing at all', async () => {
@@ -676,9 +659,7 @@ describe('tree operations', () => {
   })
 
   test('keep an online terminal out of what a v1 app reads', async () => {
-    const result = await one(
-      op('create', { id: 't', kind: 'term', parent: null, name: 'Build.term' }),
-    )
+    const result = await one(op('create', { id: 't', kind: 'term', parent: null, name: 'Build.term' }))
     expect(result).toMatchObject({ ok: true })
 
     const v1 = await call(env, `/v1/spaces/${space}/changes?since=0`, { token })
@@ -775,9 +756,7 @@ describe('an id that spells a path', () => {
 
   test('held from before, and deleted, the feed says so to whoever took it in', async () => {
     await send({ t: 'create', kind: 'note', parent: null, name: 'b.md', id: 'bad' })
-    env.db
-      .prepare("update notes set id = '../../x', deleted = 1, deleted_at = 1 where id = 'bad'")
-      .run()
+    env.db.prepare("update notes set id = '../../x', deleted = 1, deleted_at = 1 where id = 'bad'").run()
     const { value } = await framed<FeedPage>(env, `/v2/spaces/${space}/feed`, token)
     expect(value.items.map((item) => [item.id, item.deleted])).toEqual([['../../x', true]])
   })

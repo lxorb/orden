@@ -12,9 +12,7 @@ const OLD_NAME = /(?<![A-Za-z])(?:Nib|[Nn]ib[Ee]ditor)(?![A-Za-z])/g
 function identifier(text: string, at: number, length: number): boolean {
   const before = text[at - 1] ?? ''
   const after = text.slice(at + length)
-  return (
-    /[\\/]/.test(before) || /^(?:[\\/]|\.[A-Za-z]|-(?:Added|Home|Icon|Data|Chosen)\b)/.test(after)
-  )
+  return /[\\/]/.test(before) || /^(?:[\\/]|\.[A-Za-z]|-(?:Added|Home|Icon|Data|Chosen)\b)/.test(after)
 }
 
 const NAMED: Record<string, string[]> = {
@@ -84,9 +82,7 @@ function literals(code: string): string[] {
 function readable(path: string, source: string): string[] {
   if (!path.endsWith('.svelte')) return literals(source)
 
-  const scripts = [...source.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map(
-    (match) => match[1] ?? '',
-  )
+  const scripts = [...source.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)].map((match) => match[1] ?? '')
   const markup = source
     .replace(/<script[\s\S]*?<\/script>/g, '')
     .replace(/<style[\s\S]*?<\/style>/g, '')
@@ -154,9 +150,7 @@ describe('the name a reader sees', () => {
     const page = readFileSync(join(APP, 'pass.html'), 'utf8')
     expect(/<title>([^<]*)<\/title>/.exec(page)?.[1]).toBe('Orden Pass')
     for (const name of ['apple-mobile-web-app-title', 'application-name']) {
-      expect(new RegExp(`<meta name="${name}" content="([^"]*)"`).exec(page)?.[1], name).toBe(
-        'Orden Pass',
-      )
+      expect(new RegExp(`<meta name="${name}" content="([^"]*)"`).exec(page)?.[1], name).toBe('Orden Pass')
     }
     const manifest = JSON.parse(readFileSync(join(APP, 'public/pass.webmanifest'), 'utf8')) as {
       name: string

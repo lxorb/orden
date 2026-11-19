@@ -23,9 +23,7 @@ function treeOf(state: EditorState): string {
     enter: (node) => {
       let indent = 0
       for (let parent = node.node.parent; parent; parent = parent.parent) indent++
-      out.push(
-        `${'  '.repeat(indent)}${node.name} ${JSON.stringify(doc.slice(node.from, node.to))}`,
-      )
+      out.push(`${'  '.repeat(indent)}${node.name} ${JSON.stringify(doc.slice(node.from, node.to))}`)
     },
   })
   return out.join('\n')
@@ -45,8 +43,7 @@ describe('front matter being typed', () => {
   const top = (state: EditorState): string => {
     const out: string[] = []
     const tree = ensureSyntaxTree(state, state.doc.length, 5000) ?? syntaxTree(state)
-    for (let at = tree.topNode.firstChild; at; at = at.nextSibling)
-      out.push(`${at.name}@${at.from}-${at.to}`)
+    for (let at = tree.topNode.firstChild; at; at = at.nextSibling) out.push(`${at.name}@${at.from}-${at.to}`)
     return out.join(' ')
   }
   const fresh = (doc: string) => top(EditorState.create({ doc, extensions: [language] }))
@@ -243,21 +240,13 @@ describe('fenced code', () => {
     expect(found).toContain('ATXHeading1')
     expect(found).toContain('Emphasis')
     expect(tree('```\n# Title')).toBe(
-      [
-        'Document "```\\n# Title"',
-        '  Paragraph "```"',
-        '  ATXHeading1 "# Title"',
-        '    HeaderMark "#"',
-      ].join('\n'),
+      ['Document "```\\n# Title"', '  Paragraph "```"', '  ATXHeading1 "# Title"', '    HeaderMark "#"'].join('\n'),
     )
   })
 
   test('many fences that never close are read in time that grows with their number', () => {
-    const lines = (count: number) =>
-      Array.from({ length: count }, (_, i) => `${'~'.repeat(3 + (i % 7))}a\n`).join('')
-    expect(growth((count) => ordenMarkdownParser.parse(lines(count)), 2_000)).toBeLessThan(
-      GROWS_AT_MOST,
-    )
+    const lines = (count: number) => Array.from({ length: count }, (_, i) => `${'~'.repeat(3 + (i % 7))}a\n`).join('')
+    expect(growth((count) => ordenMarkdownParser.parse(lines(count)), 2_000)).toBeLessThan(GROWS_AT_MOST)
   }, 60_000)
 
   test('a fence after ones that never close still closes, by its own marks', () => {
@@ -269,12 +258,7 @@ describe('fenced code', () => {
   test.each([
     [
       '# Title\n\n```',
-      [
-        'Document "# Title\\n\\n```"',
-        '  ATXHeading1 "# Title"',
-        '    HeaderMark "#"',
-        '  Paragraph "```"',
-      ].join('\n'),
+      ['Document "# Title\\n\\n```"', '  ATXHeading1 "# Title"', '    HeaderMark "#"', '  Paragraph "```"'].join('\n'),
     ],
     ['text\n```', ['Document "text\\n```"', '  Paragraph "text"', '  Paragraph "```"'].join('\n')],
     [
@@ -371,8 +355,7 @@ describe('fenced code', () => {
 })
 
 describe('fenced code while editing', () => {
-  const padding =
-    '# Heading\n\nA paragraph of prose, long enough for the parse to keep it around.\n\n'.repeat(2)
+  const padding = '# Heading\n\nA paragraph of prose, long enough for the parse to keep it around.\n\n'.repeat(2)
 
   function edited(doc: string, from: number, to: number, insert: string): string[] {
     const state = stateFor(doc)
@@ -448,8 +431,7 @@ describe('fenced code while editing', () => {
 
 describe('a long paragraph', () => {
   test('parses in time that grows with its length', () => {
-    const parser = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
-      .language.parser
+    const parser = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }).language.parser
     const log = (lines: number) => {
       let doc = ''
       for (let line = 0; line < lines; line++)
@@ -470,8 +452,7 @@ describe('a long paragraph', () => {
   }, 60_000)
 
   test('full of dollar signs that close nothing parses in time that grows with its length', () => {
-    const parser = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
-      .language.parser
+    const parser = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }).language.parser
     let maths = 0
     const read = (count: number) => {
       maths = 0
@@ -491,9 +472,7 @@ describe('a long paragraph', () => {
       (length: number) => `https://a.b/${')'.repeat(length)}\n`,
     ]
     for (const run of runs) {
-      expect(growth((length) => ordenMarkdownParser.parse(run(length)), 16_000)).toBeLessThan(
-        GROWS_AT_MOST,
-      )
+      expect(growth((length) => ordenMarkdownParser.parse(run(length)), 16_000)).toBeLessThan(GROWS_AT_MOST)
     }
   }, 60_000)
 
@@ -520,8 +499,7 @@ describe('a long paragraph', () => {
   })
 
   test('repeating what opens a link or emphasis parses in time that grows with its length', () => {
-    const parser = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
-      .language.parser
+    const parser = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }).language.parser
     const parsed = (unit: string) => (length: number) =>
       parser.parse(`${unit.repeat(Math.ceil(length / unit.length))}\n`)
     for (const unit of ['[a](', '![a](', '[a](x (', '*[a', '_[a', '*a_ [b ', '==a ', '%%a '])
@@ -536,9 +514,7 @@ describe('a long paragraph', () => {
   }, 120_000)
 
   test('reads a link and emphasis that close as before', () => {
-    expect(
-      tree('[a](b(c)) [d](e (f)) *g [h](i)* **j**').match(/(URL|LinkTitle|\w*Emphasis) ".*"/g),
-    ).toEqual([
+    expect(tree('[a](b(c)) [d](e (f)) *g [h](i)* **j**').match(/(URL|LinkTitle|\w*Emphasis) ".*"/g)).toEqual([
       'URL "b(c)"',
       'URL "e"',
       'LinkTitle "(f)"',
@@ -552,8 +528,10 @@ describe('a long paragraph', () => {
   })
 
   test('still ends an address at the bracket of the link it is in', () => {
-    expect(tree('[a [b](c) www.example.com] and [see www.example.com]').match(/URL ".*"/g)).toEqual(
-      ['URL "c"', 'URL "www.example.com"', 'URL "www.example.com"'],
-    )
+    expect(tree('[a [b](c) www.example.com] and [see www.example.com]').match(/URL ".*"/g)).toEqual([
+      'URL "c"',
+      'URL "www.example.com"',
+      'URL "www.example.com"',
+    ])
   })
 })

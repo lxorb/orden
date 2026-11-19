@@ -1,12 +1,4 @@
-import {
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  rmSync,
-  statSync,
-  utimesSync,
-  writeFileSync,
-} from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, statSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { flushSync, mount, unmount } from 'svelte'
@@ -47,9 +39,7 @@ function described(path: string, name: string): Entry {
 const below = (root: string, folder: string, query: string): Found[] =>
   readdirSync(folder).flatMap((name) => {
     const path = join(folder, name)
-    const here = name.toLowerCase().includes(query)
-      ? [{ ...described(path, name), within: folder }]
-      : []
+    const here = name.toLowerCase().includes(query) ? [{ ...described(path, name), within: folder }] : []
     return statSync(path).isDirectory() ? [...here, ...below(root, path, query)] : here
   })
 
@@ -126,11 +116,7 @@ let close: (() => void) | undefined
 async function explorer() {
   target = document.createElement('div')
   document.body.append(target)
-  const tab = workspace.openUnsaved(
-    'explorer',
-    JSON.stringify({ folder: root, back: [], ahead: [] }),
-    'sort',
-  )
+  const tab = workspace.openUnsaved('explorer', JSON.stringify({ folder: root, back: [], ahead: [] }), 'sort')
   const shown = mount(ExplorerTab, { target, props: { tab, focused: true } })
   close = () => void unmount(shown)
   await settle()
@@ -160,8 +146,7 @@ const shown = (): string[] =>
     })
     .map((one) => one.querySelector('.orden-row-label')?.textContent ?? '')
 
-const heads = (): string[] =>
-  [...target.querySelectorAll('.head .column')].map((one) => one.textContent.trim())
+const heads = (): string[] => [...target.querySelectorAll('.head .column')].map((one) => one.textContent.trim())
 
 function header(at: string) {
   target.querySelector<HTMLElement>(`.head .column.${at}`)?.click()
@@ -259,12 +244,7 @@ describe('sorting a real folder in the file explorer', () => {
     const files = ['Ärger.pdf', 'File 2.md', 'file 10.txt']
     expect(shown()).toEqual([...FOLDERS_BY_NAME, ...files, 'inner 1.txt', 'inner 2.txt'])
     header('name')
-    expect(shown()).toEqual([
-      ...back(FOLDERS_BY_NAME),
-      'inner 2.txt',
-      'inner 1.txt',
-      ...back(files),
-    ])
+    expect(shown()).toEqual([...back(FOLDERS_BY_NAME), 'inner 2.txt', 'inner 1.txt', ...back(files)])
     header('kind')
     expect(heads()[3]).toBe('Folder ↑')
     expect(shown()).toEqual([...FOLDERS_BY_NAME, ...files, 'inner 2.txt', 'inner 1.txt'])

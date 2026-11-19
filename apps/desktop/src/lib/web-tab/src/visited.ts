@@ -1,15 +1,7 @@
 import { forget as forgetStored, Shared } from '../../platform/src/api'
 import { forget } from './favicons'
 import { completion, suggested, type Completion } from './omnibox'
-import {
-  broughtIn,
-  named,
-  typedTo,
-  unvisited,
-  unvisitedSince,
-  visited as arrived,
-  visitsFrom,
-} from './visits'
+import { broughtIn, named, typedTo, unvisited, unvisitedSince, visited as arrived, visitsFrom } from './visits'
 import { type Visit, visitKey } from '@orden/scan/visits'
 
 type Book = string

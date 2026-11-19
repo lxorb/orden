@@ -404,9 +404,7 @@ test('an agent lists detached sessions and names one as a tab, which opens it be
   expect(answer).toMatchObject({
     ok: true,
     result: {
-      sessions: [
-        { session: 'd3', name: 'Build', detached: true, running: true, tab: 'session:d3' },
-      ],
+      sessions: [{ session: 'd3', name: 'Build', detached: true, running: true, tab: 'session:d3' }],
     },
   })
   const active = workspace.activeTabId
@@ -416,7 +414,7 @@ test('an agent lists detached sessions and names one as a tab, which opens it be
   expect(workspace.activeTabId).toBe(active)
   const again = await heldCall({ verb: 'read_terminal', args: { tab: 'session:d3' }, caller })
   expect(again.args.tab).toBe(call.args.tab)
-  await expect(
-    heldCall({ verb: 'read_terminal', args: { tab: 'session:gone' }, caller }),
-  ).rejects.toThrow('there is no session gone')
+  await expect(heldCall({ verb: 'read_terminal', args: { tab: 'session:gone' }, caller })).rejects.toThrow(
+    'there is no session gone',
+  )
 })

@@ -10,8 +10,7 @@ export interface KeptItem {
   block?: true
 }
 
-export const writtenList = (items: readonly ListItem[]): string =>
-  `[${items.map(writtenItem).join(', ')}]`
+export const writtenList = (items: readonly ListItem[]): string => `[${items.map(writtenItem).join(', ')}]`
 
 function writtenItem(item: ListItem): string {
   if (item === null || typeof item === 'boolean') return String(item)
@@ -61,11 +60,7 @@ export function writeProperty(
   return frontMatterEdit(source, key, value === null ? null : written(value, kind))
 }
 
-export function writeList(
-  source: string,
-  key: string,
-  items: readonly ListItem[],
-): TextEdit | null {
+export function writeList(source: string, key: string, items: readonly ListItem[]): TextEdit | null {
   const rows = readProperties(source)
   const found = rows && keyCalled(rows, key)
   if (!found) return frontMatterEdit(source, key, writtenList(items))

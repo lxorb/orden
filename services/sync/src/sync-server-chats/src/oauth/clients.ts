@@ -90,9 +90,7 @@ export async function clientFor(env: Env, id: string): Promise<Client | null> {
   if (!id || id.length > LONGEST_URI) return null
   if (/^https:\/\//i.test(id)) return clientFromDocument(id)
 
-  const row = await env.DB.prepare(
-    'select id, name, redirect_uris, secret_hash from oauth_clients where id = ?',
-  )
+  const row = await env.DB.prepare('select id, name, redirect_uris, secret_hash from oauth_clients where id = ?')
     .bind(id)
     .first<{ id: string; name: string; redirect_uris: string; secret_hash: string | null }>()
 
@@ -128,10 +126,7 @@ registration.post('/register', async (context) => {
 
   const refused = redirectUris.find((uri) => !redirectAllowed(uri))
   if (refused) {
-    return context.json(
-      failure('invalid_redirect_uri', `${refused} is not https, localhost or a known app`),
-      400,
-    )
+    return context.json(failure('invalid_redirect_uri', `${refused} is not https, localhost or a known app`), 400)
   }
 
   const method = body.token_endpoint_auth_method
@@ -159,10 +154,7 @@ registration.post('/register', async (context) => {
     if ((held?.many ?? 0) >= MOST_CLIENTS) return context.json(FULL, 503)
 
     if (!(await mayRegister(context.env, machineOf(context.req)))) {
-      return context.json(
-        failure('temporarily_unavailable', 'too many registrations from here, try again later'),
-        429,
-      )
+      return context.json(failure('temporarily_unavailable', 'too many registrations from here, try again later'), 429)
     }
 
     const added = await context.env.DB.prepare(

@@ -44,13 +44,7 @@ export const PRICES = {
   storedGbMonth: 0.015,
 } as const
 
-export function accrue(
-  usage: Usage,
-  seconds: number,
-  size: MachineSize,
-  cpuS: number,
-  egressBytes: number,
-): Usage {
+export function accrue(usage: Usage, seconds: number, size: MachineSize, cpuS: number, egressBytes: number): Usage {
   const awake = Math.max(0, seconds)
   return {
     awakeS: usage.awakeS + awake,
@@ -103,8 +97,7 @@ export function shares(used: Allowance, limit: Allowance): Allowance {
 
 const NEAR = 0.8
 
-export const near = (used: Allowance, limit: Allowance): boolean =>
-  shares(used, limit).awakeS >= NEAR
+export const near = (used: Allowance, limit: Allowance): boolean => shares(used, limit).awakeS >= NEAR
 
 export function monthOf(at: number): string {
   const date = new Date(at)

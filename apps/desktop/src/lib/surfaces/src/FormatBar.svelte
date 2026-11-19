@@ -1,11 +1,5 @@
 <script lang="ts">
-  import {
-    selectedImage,
-    toggleHighlight,
-    type EditorView,
-    type StateCommand,
-    type Transaction,
-  } from '@orden/editor'
+  import { selectedImage, toggleHighlight, type EditorView, type StateCommand, type Transaction } from '@orden/editor'
   import { HIGHLIGHT_COLOURS, type HighlightColour } from '@orden/markdown/highlights'
   import type { IconNode } from 'lucide'
   import PenLine from 'lucide/dist/esm/icons/pen-line.mjs'
@@ -77,12 +71,7 @@
 
     const ours = bar?.contains(document.activeElement) ?? false
 
-    if (
-      range.empty ||
-      (!current.hasFocus && !ours) ||
-      current.state.readOnly ||
-      selectedImage(current.state)
-    ) {
+    if (range.empty || (!current.hasFocus && !ours) || current.state.readOnly || selectedImage(current.state)) {
       at = null
       colouring = false
       return
@@ -115,11 +104,7 @@
   }
 
   function act(id: string) {
-    runEntry(
-      id,
-      context?.() ?? { view, palette: () => undefined, fullscreen: () => undefined },
-      'button',
-    )
+    runEntry(id, context?.() ?? { view, palette: () => undefined, fullscreen: () => undefined }, 'button')
   }
 
   const HIGHLIGHT = 'format.highlight'

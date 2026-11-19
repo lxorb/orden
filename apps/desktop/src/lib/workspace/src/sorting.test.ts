@@ -6,11 +6,7 @@ vi.mock('../../space-kept/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../space-kept/src/api')>()),
   push: async (
     root: string,
-    save: (
-      api: { saveSort: (t: string, id: string, sort: string) => unknown },
-      token: string,
-      id: string,
-    ) => unknown,
+    save: (api: { saveSort: (t: string, id: string, sort: string) => unknown }, token: string, id: string) => unknown,
   ) => {
     await save({ saveSort: (_t, _id, sort) => sent.push({ root, sort }) }, 'token', 'space')
   },
@@ -43,10 +39,7 @@ describe('the order a space is read in', () => {
   })
 
   test('what this machine chose before is taken over once, from where it kept it', () => {
-    store.setItem(
-      'orden:list-order',
-      JSON.stringify({ [ROOT]: 'modified-desc', '/other': 'sideways' }),
-    )
+    store.setItem('orden:list-order', JSON.stringify({ [ROOT]: 'modified-desc', '/other': 'sideways' }))
     const sorting = made()
     expect(sorting.of(ROOT)).toBe('modified-desc')
     expect(sorting.of('/other')).toBe('name')

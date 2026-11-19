@@ -8,9 +8,7 @@ const turn = { threadId: 't', turnId: 'u' }
 
 const crateServer = /pub const SERVER: &str = "([^"]+)";/.exec(
   readFileSync(
-    fileURLToPath(
-      new URL('../../../../../src-tauri/crates/ai/src/ai_cli/args.rs', import.meta.url),
-    ),
+    fileURLToPath(new URL('../../../../../src-tauri/crates/ai/src/ai_cli/args.rs', import.meta.url)),
     'utf8',
   ),
 )?.[1]
@@ -47,10 +45,7 @@ describe('an answer', () => {
 
   test('thinks in its reasoning summary', () => {
     const read = codexReader()
-    expect(
-      read(said('item/reasoning/summaryTextDelta', { ...turn, itemId: 'r', delta: 'Hmm.' }))
-        .thinking,
-    ).toBe('Hmm.')
+    expect(read(said('item/reasoning/summaryTextDelta', { ...turn, itemId: 'r', delta: 'Hmm.' })).thinking).toBe('Hmm.')
   })
 
   test('knows its server by the name the crate gives it, and by the old one', () => {
@@ -70,9 +65,7 @@ describe('an answer', () => {
       tool: 'read_note',
       arguments: { path: 'Herons.md' },
     }
-    expect(
-      read(said('item/started', { ...turn, item: { ...item, status: 'inProgress' } })).tool,
-    ).toEqual({
+    expect(read(said('item/started', { ...turn, item: { ...item, status: 'inProgress' } })).tool).toEqual({
       id: 'c',
       name: 'read_note',
       args: { path: 'Herons.md' },
@@ -114,10 +107,7 @@ describe('an answer', () => {
 
   test('a compaction is said', () => {
     const read = codexReader()
-    expect(
-      read(said('item/completed', { ...turn, item: { type: 'contextCompaction', id: 'x' } }))
-        .compacted,
-    ).toBe(true)
+    expect(read(said('item/completed', { ...turn, item: { type: 'contextCompaction', id: 'x' } })).compacted).toBe(true)
   })
 })
 
@@ -168,9 +158,7 @@ describe('a failure', () => {
 
   test('an interrupted turn stopped', () => {
     expect(
-      codexReader()(
-        said('turn/completed', { threadId: 't', turn: { id: 'u', status: 'interrupted' } }),
-      ).ended,
+      codexReader()(said('turn/completed', { threadId: 't', turn: { id: 'u', status: 'interrupted' } })).ended,
     ).toBe('stopped')
   })
 

@@ -48,13 +48,7 @@ export async function matches(held: SitePassword, given: string): Promise<boolea
 }
 
 async function signature(key: string, until: number): Promise<string> {
-  const signing = await crypto.subtle.importKey(
-    'raw',
-    bytes(key),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign'],
-  )
+  const signing = await crypto.subtle.importKey('raw', bytes(key), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
 
   const signed = await crypto.subtle.sign('HMAC', signing, bytes(String(until)))
   return hex(new Uint8Array(signed))
@@ -65,11 +59,7 @@ export async function newTicket(held: SitePassword, at: number): Promise<string>
   return `${until}.${await signature(held.key, until)}`
 }
 
-async function ticketHolds(
-  held: SitePassword,
-  ticket: string | null,
-  at: number,
-): Promise<boolean> {
+async function ticketHolds(held: SitePassword, ticket: string | null, at: number): Promise<boolean> {
   if (!ticket) return false
 
   const [said, signed] = ticket.split('.')
@@ -98,11 +88,7 @@ function ticketsIn(header: string | null): string[] {
   return [...current, ...old]
 }
 
-export async function letIn(
-  held: SitePassword,
-  header: string | null,
-  at: number,
-): Promise<boolean> {
+export async function letIn(held: SitePassword, header: string | null, at: number): Promise<boolean> {
   for (const ticket of ticketsIn(header)) {
     if (await ticketHolds(held, ticket, at)) return true
   }

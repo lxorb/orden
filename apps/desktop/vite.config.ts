@@ -54,12 +54,8 @@ export default defineConfig(({ command, mode }) => ({
     __EVEN_PLUGIN__: 'false',
     __APP_VERSION__: JSON.stringify(appVersion()),
     __APP_COMMIT__: JSON.stringify(commit(command === 'serve')),
-    __CLAUDE_CODE__: JSON.stringify(
-      !['off', '0', 'false'].includes(process.env.ORDEN_CLAUDE_CODE ?? ''),
-    ),
-    __DRIVEABLE__: JSON.stringify(
-      command === 'serve' || mode === 'drive' || mode === 'development',
-    ),
+    __CLAUDE_CODE__: JSON.stringify(!['off', '0', 'false'].includes(process.env.ORDEN_CLAUDE_CODE ?? '')),
+    __DRIVEABLE__: JSON.stringify(command === 'serve' || mode === 'drive' || mode === 'development'),
   },
   css: { postcss: { plugins: [everyPage] } },
   clearScreen: false,

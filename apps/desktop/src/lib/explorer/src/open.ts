@@ -10,13 +10,7 @@ import { writeSpec } from './spec'
 export async function openExplorer(folder?: string, activate = true): Promise<Tab> {
   const at = folder ?? (await places.home())
   const words = at ? writeSpec({ folder: at, back: [], ahead: [] }) : ''
-  return workspace.openUnsaved(
-    'explorer',
-    words,
-    at ? folderName(at) : 'File explorer',
-    null,
-    activate,
-  )
+  return workspace.openUnsaved('explorer', words, at ? folderName(at) : 'File explorer', null, activate)
 }
 
 export function ordenOpens(path: string): boolean {

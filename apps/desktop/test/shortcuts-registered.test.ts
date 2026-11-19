@@ -5,12 +5,10 @@ import { code, walk } from './files'
 
 const EDITOR = fileURLToPath(new URL('../../../packages/editor/src/', import.meta.url))
 
-const files = walk(EDITOR, (path) => path.endsWith('.ts') && !path.endsWith('.test.ts')).map(
-  (path) => ({
-    name: path.slice(EDITOR.length).replace(/\\/g, '/'),
-    text: readFileSync(path, 'utf8'),
-  }),
-)
+const files = walk(EDITOR, (path) => path.endsWith('.ts') && !path.endsWith('.test.ts')).map((path) => ({
+  name: path.slice(EDITOR.length).replace(/\\/g, '/'),
+  text: readFileSync(path, 'utf8'),
+}))
 
 describe('the editor package', () => {
   test('was found', () => {
@@ -24,9 +22,7 @@ describe('the editor package', () => {
   })
 
   test('name the search engine in one module only', () => {
-    const named = files
-      .filter((one) => one.text.includes("from '@codemirror/search'"))
-      .map((one) => one.name)
+    const named = files.filter((one) => one.text.includes("from '@codemirror/search'")).map((one) => one.name)
 
     expect(named).toEqual(['finding.ts'])
   })

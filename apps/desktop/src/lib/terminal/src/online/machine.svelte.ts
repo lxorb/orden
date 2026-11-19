@@ -1,13 +1,5 @@
 import { type MachineState, near } from '@orden/online'
-import {
-  type Offers,
-  offers,
-  type Online,
-  online,
-  refusedOf,
-  type Refused,
-  startStop,
-} from './calls'
+import { type Offers, offers, type Online, online, refusedOf, type Refused, startStop } from './calls'
 
 class OnlineMachine {
   known = $state<Online | null>(null)

@@ -29,11 +29,7 @@ const LISTS = new Set(['BulletList', 'OrderedList'])
 
 function listAround(state: EditorState, line: Line): Run | null {
   const doc = state.doc
-  for (
-    let node: SyntaxNode | null = syntaxTree(state).resolveInner(line.to, -1);
-    node;
-    node = node.parent
-  ) {
+  for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(line.to, -1); node; node = node.parent) {
     const list = node.parent
     if (node.name !== 'ListItem' || !list || !LISTS.has(list.name)) continue
 
@@ -125,9 +121,7 @@ function runAround(state: EditorState, number: number): Run {
   const joins = (other: Line) =>
     !blank(other) &&
     (verbatim !== null ||
-      (verbatimBlockAt(state, other) === null &&
-        !HEADING_LINE.test(other.text) &&
-        listAround(state, other) === null))
+      (verbatimBlockAt(state, other) === null && !HEADING_LINE.test(other.text) && listAround(state, other) === null))
   let first = number
   let last = number
   while (first > top && joins(doc.line(first - 1))) first--
@@ -142,9 +136,7 @@ function propertiesIn(state: EditorState, lines: Lines, rows: Lines): Run {
     if (text.trim() !== '' && yamlLevel(text) < yamlLevel(state.doc.line(anchor).text)) anchor = at
   }
   const run = propertyRun(state, anchor, rows)
-  const items = (run.items ?? []).filter(
-    (item) => item.last >= lines.first && item.first <= lines.last,
-  )
+  const items = (run.items ?? []).filter((item) => item.last >= lines.first && item.first <= lines.last)
   const [top, bottom] = [items[0], items.at(-1)]
   if (!top || !bottom || lines.last > run.last) return lines
   return { first: top.first, last: bottom.last, items }
@@ -244,9 +236,7 @@ function reordered(reorder: (lines: string[]) => string[]): StateCommand {
       const gapBefore = (i: number) => {
         const before = entries[i - 1]
         const entry = entries[i]
-        return before && entry
-          ? state.sliceDoc(doc.line(before.last).to, doc.line(entry.first).from)
-          : ''
+        return before && entry ? state.sliceDoc(doc.line(before.last).to, doc.line(entry.first).from) : ''
       }
       const start = Number(ORDINAL.exec(items[0] ?? '')?.[2] ?? 1)
       const order = run.ordered ? renumbered(reorder(items), start) : reorder(items)

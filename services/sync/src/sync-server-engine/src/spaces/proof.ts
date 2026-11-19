@@ -28,13 +28,7 @@ async function proofAt(domain: string): Promise<{ asked: boolean; values: string
   }
 }
 
-async function stamped(
-  env: Env,
-  id: string,
-  domain: string,
-  token: string,
-  at: number | null,
-): Promise<boolean> {
+async function stamped(env: Env, id: string, domain: string, token: string, at: number | null): Promise<boolean> {
   const wrote = await env.DB.prepare(
     `update spaces set blog_domain_verified_at = ?
       where id = ? and blog_domain = ? and blog_domain_token = ?`,
@@ -44,10 +38,7 @@ async function stamped(
   return wrote.meta.changes > 0
 }
 
-export async function proveDomain(
-  env: Env,
-  space: Space,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+export async function proveDomain(env: Env, space: Space): Promise<{ ok: true } | { ok: false; error: string }> {
   const domain = space.blog_domain
   const token = space.blog_domain_token
   if (!domain || !token) return { ok: false, error: NO_ADDRESS }

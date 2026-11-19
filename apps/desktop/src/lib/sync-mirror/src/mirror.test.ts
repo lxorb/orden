@@ -179,9 +179,7 @@ const fake = vi.hoisted(() => {
 
   const api = {
     changes: async (_token: string, _spaceId: string, since: number) => {
-      const notes = [...remote.values()]
-        .filter((one) => one.seq > since)
-        .sort((a, b) => a.seq - b.seq)
+      const notes = [...remote.values()].filter((one) => one.seq > since).sort((a, b) => a.seq - b.seq)
 
       return {
         notes: await Promise.all(notes.map(present)),
@@ -195,13 +193,7 @@ const fake = vi.hoisted(() => {
       fetched.push(note.path)
       return { note: await present(note), content: note.content }
     },
-    writeNote: async (
-      _token: string,
-      id: string,
-      path: string,
-      content: string,
-      _baseVersion = 0,
-    ) => {
+    writeNote: async (_token: string, id: string, path: string, content: string, _baseVersion = 0) => {
       calls.push(`writeNote ${path}`)
       const note = remote.get(id)
       if (!note) throw new Error('no such note')
@@ -386,9 +378,7 @@ describe('a note renamed on this machine', () => {
 
     expect(fake.calls).toEqual([])
     expect([...fake.disk.keys()].sort()).toEqual([`${ROOT}/Two.md`])
-    expect([...fake.remote.values()].filter((one) => !one.deleted).map((one) => one.id)).toEqual([
-      id,
-    ])
+    expect([...fake.remote.values()].filter((one) => !one.deleted).map((one) => one.id)).toEqual([id])
   })
 
   test('and a rename that only changes case is the same note, not another one', async () => {
@@ -398,9 +388,7 @@ describe('a note renamed on this machine', () => {
     await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/one.md`)
 
     expect(fake.calls).toEqual(['writeNote one.md'])
-    expect([...fake.remote.values()].filter((one) => !one.deleted).map((one) => one.id)).toEqual([
-      id,
-    ])
+    expect([...fake.remote.values()].filter((one) => !one.deleted).map((one) => one.id)).toEqual([id])
     expect(mirror.notes['one.md']?.id).toBe(id)
   })
 
@@ -428,8 +416,7 @@ describe('a note renamed on this machine', () => {
   })
 
   describe('and another device wrote in it while the name changed', () => {
-    const THEIRS =
-      '# One' + String.fromCharCode(10) + 'typed on the other device' + String.fromCharCode(10)
+    const THEIRS = '# One' + String.fromCharCode(10) + 'typed on the other device' + String.fromCharCode(10)
 
     async function racing(mine?: string) {
       const pairing = await paired('One.md', HERE)
@@ -493,9 +480,7 @@ describe('a note renamed on this machine', () => {
     renameOnDisk('One.md', 'Two.md')
 
     const asked: Clash[] = []
-    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id]), (one) =>
-      asked.push(one),
-    )
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id]), (one) => asked.push(one))
 
     expect(fake.remote.get(id)).toMatchObject({ path: 'Two.md', content: `${HERE}there\n` })
     expect(asked).toEqual([
@@ -519,9 +504,7 @@ describe('a note renamed on this machine', () => {
     fake.refusing.delete = null
     const reading = fake.api.readNote
     fake.api.readNote = () => Promise.reject(new TypeError('Failed to fetch'))
-    expect(
-      await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id])),
-    ).toBe(true)
+    expect(await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id]))).toBe(true)
     expect(mirror.notes['One.md']?.id).toBe(id)
     fake.api.readNote = reading
     fake.calls.length = 0
@@ -641,28 +624,25 @@ describe('a note renamed on this machine', () => {
     expect(clashes.map((one) => one.path)).toEqual([`${ROOT}/Three.md`])
   })
 
-  test.each([503, 409])(
-    'and a note whose write keeps answering %i holds up no other note',
-    async (status) => {
-      const first = await paired('A.md', HERE)
-      const second = fake.addRemote('B.md', HERE)
-      fake.disk.set(`${ROOT}/B.md`, HERE)
-      await pull(first.mirror, 'token', NOBODY)
-      fake.disk.set(`${ROOT}/A.md`, `${HERE}a\n`)
-      fake.disk.set(`${ROOT}/B.md`, `${HERE}b\n`)
-      const writing = fake.api.writeNote
-      fake.api.writeNote = (token, id, ...rest) => {
-        if (id !== first.id) return writing(token, id, ...rest)
-        const note = { id, version: 1, hash: 'theirs' }
-        return Promise.reject(new ApiError(status, 'no', { note, content: `${HERE}x\n` }))
-      }
+  test.each([503, 409])('and a note whose write keeps answering %i holds up no other note', async (status) => {
+    const first = await paired('A.md', HERE)
+    const second = fake.addRemote('B.md', HERE)
+    fake.disk.set(`${ROOT}/B.md`, HERE)
+    await pull(first.mirror, 'token', NOBODY)
+    fake.disk.set(`${ROOT}/A.md`, `${HERE}a\n`)
+    fake.disk.set(`${ROOT}/B.md`, `${HERE}b\n`)
+    const writing = fake.api.writeNote
+    fake.api.writeNote = (token, id, ...rest) => {
+      if (id !== first.id) return writing(token, id, ...rest)
+      const note = { id, version: 1, hash: 'theirs' }
+      return Promise.reject(new ApiError(status, 'no', { note, content: `${HERE}x\n` }))
+    }
 
-      await push(first.mirror, 'token', NOBODY)
-      fake.api.writeNote = writing
+    await push(first.mirror, 'token', NOBODY)
+    fake.api.writeNote = writing
 
-      expect(fake.remote.get(second)?.content).toBe(`${HERE}b\n`)
-    },
-  )
+    expect(fake.remote.get(second)?.content).toBe(`${HERE}b\n`)
+  })
 
   test('and one the account refused to rename is told again, never deleted', async () => {
     const { mirror, id } = await paired('One.md', HERE)
@@ -1608,8 +1588,7 @@ describe('a delete the account did not take', () => {
 })
 
 describe('a note deleted on another device', () => {
-  const live = () =>
-    [...fake.remote.values()].filter((one) => !one.deleted).map((one) => [one.path, one.content])
+  const live = () => [...fake.remote.values()].filter((one) => !one.deleted).map((one) => [one.path, one.content])
 
   test('is kept when it was written in here since, and goes back up', async () => {
     const { mirror, id } = await paired('Plan.md', '# Plan\n')
@@ -1884,9 +1863,7 @@ describe('a note renamed on another device', () => {
           })
         })
         expect([...fake.disk.keys()].sort()).toEqual(names.map((name) => `${ROOT}/${name}`))
-        expect(fake.calls.filter((one) => /^(writeNote|createNote|deleteNote)/.test(one))).toEqual(
-          [],
-        )
+        expect(fake.calls.filter((one) => /^(writeNote|createNote|deleteNote)/.test(one))).toEqual([])
       }
     })
   }
@@ -1937,13 +1914,9 @@ describe('a note renamed on another device', () => {
     await pull(mirror, 'token', NOBODY)
     await push(mirror, 'token', NOBODY)
 
-    const shown = [...fake.disk.entries()].filter(
-      ([path]) => !path.split('/').pop()!.startsWith('.'),
-    )
+    const shown = [...fake.disk.entries()].filter(([path]) => !path.split('/').pop()!.startsWith('.'))
     expect(shown.map(([, words]) => words)).toContain('# A.md\n\nTyped while it waited.\n')
-    expect([...fake.trash.values()].map((one) => one.content)).not.toContain(
-      '# A.md\n\nTyped while it waited.\n',
-    )
+    expect([...fake.trash.values()].map((one) => one.content)).not.toContain('# A.md\n\nTyped while it waited.\n')
   })
 
   test('puts a note waiting aside back where sync v2 will read it', async () => {
@@ -2046,11 +2019,7 @@ describe('a web note both sides changed', () => {
       const { mirror, id } = await paired('Docs.url', BASE)
       fake.disk.set(`${ROOT}/Docs.url`, site('https://docs.dev/a', HOME))
       fake.modified.set(`${ROOT}/Docs.url`, 1_000)
-      fake.editRemote(
-        id,
-        site('https://docs.dev/b', `${HOME}Orden-Icon=data:image/png;base64,AA\r\n`),
-        2_000,
-      )
+      fake.editRemote(id, site('https://docs.dev/b', `${HOME}Orden-Icon=data:image/png;base64,AA\r\n`), 2_000)
       const clashes: Clash[] = []
 
       await pull(mirror, 'token', NOBODY, { rule, clashed: (one) => clashes.push(one) })
@@ -2110,9 +2079,7 @@ describe('a web note’s old copies', () => {
 
     expect(conflicts()).toEqual([])
     expect(fake.disk.get(`${ROOT}/Docs.url`)).toContain('Orden-Icon=data:theirs')
-    expect([...fake.trash.values()].map((one) => one.path).sort()).toEqual(
-      [`${ROOT}/${COPY}`, second].sort(),
-    )
+    expect([...fake.trash.values()].map((one) => one.path).sort()).toEqual([`${ROOT}/${COPY}`, second].sort())
     expect(fake.remote.get(copy)?.deleted).toBe(true)
   })
 

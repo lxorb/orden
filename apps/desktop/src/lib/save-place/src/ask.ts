@@ -28,9 +28,8 @@ export function askPlace(tabId: string | null, saved?: () => void): void {
 
 function anchorOf(id: string): DOMRect | null {
   const node =
-    [...document.querySelectorAll<HTMLElement>('[data-tab]')].find(
-      (one) => one.dataset.tab === id,
-    ) ?? document.querySelector('[data-save-anchor]')
+    [...document.querySelectorAll<HTMLElement>('[data-tab]')].find((one) => one.dataset.tab === id) ??
+    document.querySelector('[data-save-anchor]')
   const box = node?.getBoundingClientRect()
   return box && box.width > 0 ? box : null
 }

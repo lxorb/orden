@@ -81,8 +81,7 @@ function typed(doc: string, at: number, text: string): string {
   } as unknown as EditorView
 
   const press = () => {
-    for (const handle of state.facet(EditorView.inputHandler))
-      if (handle(view, at, at, text, insert)) return true
+    for (const handle of state.facet(EditorView.inputHandler)) if (handle(view, at, at, text, insert)) return true
     return false
   }
 
@@ -97,9 +96,7 @@ test('and a tag typed inside a raw block still closes itself', async () => {
   await htmlGrammar()
 
   const block = '# Typing\n\n<div>\n  <p>Wind</p><em\n'
-  expect(typed(block, block.indexOf('<em') + 3, '>')).toBe(
-    '# Typing\n\n<div>\n  <p>Wind</p><em></em>\n',
-  )
+  expect(typed(block, block.indexOf('<em') + 3, '>')).toBe('# Typing\n\n<div>\n  <p>Wind</p><em></em>\n')
 
   const prose = '# Typing\n\nplain text\n'
   expect(typed(prose, prose.length - 1, '>')).toBe(prose)

@@ -61,8 +61,7 @@ interface Thing {
 
 const FIELDS = ['icon', 'iconColor', 'extras'] as const
 
-const same = (one: unknown, other: unknown): boolean =>
-  one === other || JSON.stringify(one) === JSON.stringify(other)
+const same = (one: unknown, other: unknown): boolean => one === other || JSON.stringify(one) === JSON.stringify(other)
 
 interface ListChange {
   change: Map<string, Thing | null>

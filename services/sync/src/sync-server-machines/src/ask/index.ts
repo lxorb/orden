@@ -87,10 +87,7 @@ ask.post('/', async (context) => {
     })
     return context.json({ answer })
   } catch (error) {
-    return context.json(
-      { error: error instanceof Error ? error.message : 'the model refused' },
-      502,
-    )
+    return context.json({ error: error instanceof Error ? error.message : 'the model refused' }, 502)
   }
 })
 
@@ -108,10 +105,7 @@ ask.post('/heard', async (context) => {
 
   const ofRecording = context.req.query('piece') === '1'
   if (!shortEnough(wav, ofRecording ? PIECE_SECONDS : undefined)) {
-    return context.json(
-      { error: ofRecording ? 'that piece is too long' : 'that is more than a spoken command' },
-      413,
-    )
+    return context.json({ error: ofRecording ? 'that piece is too long' : 'that is more than a spoken command' }, 413)
   }
 
   if (!(await mayTranscribe(context.env, user.id))) {

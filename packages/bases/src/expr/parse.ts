@@ -55,8 +55,7 @@ const NAME_PART = /[\p{L}\p{N}_$]/u
 
 function opensRegex(previous: Token | undefined): boolean {
   if (!previous) return true
-  if (previous.kind === 'number' || previous.kind === 'string' || previous.kind === 'regex')
-    return false
+  if (previous.kind === 'number' || previous.kind === 'string' || previous.kind === 'regex') return false
   if (previous.kind === 'name') return false
   return !(previous.text === ')' || previous.text === ']' || previous.text === '}')
 }
@@ -150,14 +149,7 @@ function tokens(source: string): Token[] {
   return out
 }
 
-const LEVELS: string[][] = [
-  ['||'],
-  ['&&'],
-  ['==', '!='],
-  ['<', '>', '<=', '>='],
-  ['+', '-'],
-  ['*', '/', '%'],
-]
+const LEVELS: string[][] = [['||'], ['&&'], ['==', '!='], ['<', '>', '<=', '>='], ['+', '-'], ['*', '/', '%']]
 
 export function parseExpression(source: string): Node {
   const list = tokens(source)
@@ -173,10 +165,7 @@ export function parseExpression(source: string): Node {
   const expect = (text: string) => {
     if (!is(text)) {
       const token = peek()
-      throw new BasesError(
-        token.kind === 'end' ? `Expected "${text}" at the end` : `Expected "${text}"`,
-        token.at,
-      )
+      throw new BasesError(token.kind === 'end' ? `Expected "${text}" at the end` : `Expected "${text}"`, token.at)
     }
     return next()
   }
@@ -282,8 +271,7 @@ export function parseExpression(source: string): Node {
     const entries: [string, Node][] = []
     while (!is('}')) {
       const key = next()
-      if (key.kind !== 'string' && key.kind !== 'name')
-        throw new BasesError('Expected a key', key.at)
+      if (key.kind !== 'string' && key.kind !== 'name') throw new BasesError('Expected a key', key.at)
       expect(':')
       entries.push([key.kind === 'string' ? String(key.value) : key.text, binary(0)])
       if (!is(',')) break

@@ -26,13 +26,9 @@ describe('the DNS setting, gone', () => {
     const kept = /remove_file\(config\.join\("dns\.json"\)\)/.exec(lib)?.[0] ?? ''
     expect(kept).not.toBe('')
     const all = [...files(src), ...files(join(ROOT, 'apps/desktop/src-tauri/crates'))]
-    const named = all
-      .filter((path) => /dns/i.test(relative(src, path)))
-      .map((path) => relative(ROOT, path))
+    const named = all.filter((path) => /dns/i.test(relative(src, path))).map((path) => relative(ROOT, path))
     expect(named).toEqual([])
-    const holding = all
-      .filter((path) => WORDS.test(read(path).replace(kept, '')))
-      .map((path) => relative(ROOT, path))
+    const holding = all.filter((path) => WORDS.test(read(path).replace(kept, ''))).map((path) => relative(ROOT, path))
     expect(holding).toEqual([])
   })
 

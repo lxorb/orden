@@ -22,12 +22,7 @@ export class ApiError extends Error {
 const TRY_AGAIN: ReadonlySet<number> = new Set([401, 408, 429])
 
 export function turnedDown(error: unknown): boolean {
-  return (
-    error instanceof ApiError &&
-    error.status >= 400 &&
-    error.status < 500 &&
-    !TRY_AGAIN.has(error.status)
-  )
+  return error instanceof ApiError && error.status >= 400 && error.status < 500 && !TRY_AGAIN.has(error.status)
 }
 
 export function fromServer(error: unknown): error is ApiError {
@@ -54,9 +49,7 @@ export async function request<T>(
   if (!response.ok) {
     const said = isRecord(body) && isString(body.error) ? body.error : null
     const otherwise =
-      response.status >= 500
-        ? 'could not reach the server - try again'
-        : `request failed (${response.status})`
+      response.status >= 500 ? 'could not reach the server - try again' : `request failed (${response.status})`
 
     throw new ApiError(response.status, said ?? otherwise, body)
   }
@@ -75,9 +68,7 @@ export function warmCalls(): Promise<unknown> {
 }
 
 type Later<T> = {
-  readonly [K in keyof T]: T[K] extends (...args: infer A) => Promise<infer R>
-    ? (...args: A) => Promise<R>
-    : never
+  readonly [K in keyof T]: T[K] extends (...args: infer A) => Promise<infer R> ? (...args: A) => Promise<R> : never
 }
 
 function calling(name: keyof Routes) {
@@ -88,8 +79,7 @@ function calling(name: keyof Routes) {
 }
 
 export const api = new Proxy({} as Later<Routes>, {
-  get: (_nothing, name) =>
-    typeof name === 'string' && name !== 'then' ? calling(name as keyof Routes) : undefined,
+  get: (_nothing, name) => (typeof name === 'string' && name !== 'then' ? calling(name as keyof Routes) : undefined),
 })
 
 export const MCP_URL = `${BASE}/mcp`

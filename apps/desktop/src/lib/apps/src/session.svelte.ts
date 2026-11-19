@@ -59,8 +59,7 @@ export type AppStatus =
       unanswered: boolean
     }
 
-type Blocked =
-  'signed-out' | 'syncing' | 'unsynced' | 'unserved' | 'unreachable' | Unfound | 'shared'
+type Blocked = 'signed-out' | 'syncing' | 'unsynced' | 'unserved' | 'unreachable' | Unfound | 'shared'
 
 export type Found = IdAt | { none: 'old-sync' }
 
@@ -89,10 +88,8 @@ export function unreadOf(error: unknown): Unread | null {
   if (/too large/i.test(said)) return null
   if (/not on this device/i.test(said)) return 'away'
   if (/os error (32|33)\b|used by another process|locked/i.test(said)) return 'locked'
-  if (/permission denied|access is denied|not permitted|os error (1|5|13)\b/i.test(said))
-    return 'denied'
-  if (/no such|not found|cannot find|nothing is at|no file at|os error (2|3)\b/i.test(said))
-    return 'missing'
+  if (/permission denied|access is denied|not permitted|os error (1|5|13)\b/i.test(said)) return 'denied'
+  if (/no such|not found|cannot find|nothing is at|no file at|os error (2|3)\b/i.test(said)) return 'missing'
   return 'unread'
 }
 
@@ -149,8 +146,7 @@ const sessionWorld: SessionWorld = {
     }).catch(() => null)
     if (!answer) return 'unreachable'
     const body: unknown = await answer.json().catch(() => null)
-    const error =
-      typeof body === 'object' && body !== null ? (body as { error?: unknown }).error : null
+    const error = typeof body === 'object' && body !== null ? (body as { error?: unknown }).error : null
     return lookOf(answer.status, error)
   },
   link(app, heard, view) {
@@ -487,8 +483,7 @@ export async function find(path: string, until: number): Promise<Found> {
 const sessions = new Map<string, AppSession>()
 let watching = false
 
-export const appSessionIfAny = (tab: { readonly id: string }): AppSession | null =>
-  sessions.get(tab.id) ?? null
+export const appSessionIfAny = (tab: { readonly id: string }): AppSession | null => sessions.get(tab.id) ?? null
 
 export function appSessionOf(tab: Tab): AppSession {
   if (!watching) {

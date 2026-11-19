@@ -216,9 +216,7 @@ describe('a note open in a window that does not sync', () => {
     await settled()
 
     rooms.carried.get('k1')?.room.moved(2, 2)
-    const theirs = [...device.awareness.getStates().entries()].filter(
-      ([client]) => client !== device.live.clientID,
-    )
+    const theirs = [...device.awareness.getStates().entries()].filter(([client]) => client !== device.live.clientID)
     expect(theirs.some(([, state]) => (state as { caret?: unknown }).caret)).toBe(true)
 
     const remote = new Awareness(new Y.Doc())
@@ -288,9 +286,7 @@ describe('a canvas open in a window that does not sync', () => {
     expect(readPlane(device.live).nodes.map((one) => one.id)).toEqual(['a', 'from the tab'])
 
     const there = readPlane(device.live)
-    device.live.transact(() =>
-      pushPlane(device.live, there, { ...there, nodes: [...there.nodes, card('b')] }),
-    )
+    device.live.transact(() => pushPlane(device.live, there, { ...there, nodes: [...there.nodes, card('b')] }))
     expect(surface.canvas.nodes.map((one) => one.id)).toContain('b')
   })
 
@@ -313,9 +309,7 @@ describe('a canvas open in a window that does not sync', () => {
     await settled()
 
     surface.shared?.hand({ x: 4, y: 5 }, null)
-    const theirs = [...device.awareness.getStates().entries()].filter(
-      ([client]) => client !== device.live.clientID,
-    )
+    const theirs = [...device.awareness.getStates().entries()].filter(([client]) => client !== device.live.clientID)
     expect(theirs.some(([, state]) => (state as { hand?: unknown }).hand)).toBe(true)
 
     const remote = new Awareness(new Y.Doc())

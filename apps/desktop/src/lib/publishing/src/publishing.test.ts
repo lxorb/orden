@@ -33,9 +33,7 @@ vi.mock('../../accounts/src/client', async (importOriginal) => {
   const answer = <T>(what: string, value: T): Promise<T> => {
     world.asked.push(what)
     const settle = (): Promise<T> =>
-      world.refuse
-        ? Promise.reject(new original.ApiError(403, world.refuse))
-        : Promise.resolve(value)
+      world.refuse ? Promise.reject(new original.ApiError(403, world.refuse)) : Promise.resolve(value)
     return world.held ? world.held.then(settle) : settle()
   }
 
@@ -100,8 +98,7 @@ vi.mock('../../workspace/src/api', () => ({
 }))
 
 vi.mock('../../ui-kit/src/message', () => ({
-  message: (error: unknown, fallback: string) =>
-    error instanceof Error ? error.message : fallback,
+  message: (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback),
 }))
 
 import { account } from '../../accounts/src/account.svelte'
@@ -274,9 +271,7 @@ describe('the Publish sheet', () => {
     publish.subdomain = 'emil2'
     await publish.publish()
 
-    expect(world.asked).toContain(
-      `publish space-1 ${JSON.stringify({ subdomain: 'emil2', note: null })}`,
-    )
+    expect(world.asked).toContain(`publish space-1 ${JSON.stringify({ subdomain: 'emil2', note: null })}`)
     expect(publish.error).toBeNull()
   })
 
@@ -532,12 +527,8 @@ describe("the site's theme", () => {
 
   function dressed(held?: { name: string; hash: string }) {
     const rules = { include: [], exclude: [], otherwise: 'all' }
-    account.spaces = [
-      remote('space-1', 'owner', { site: { rules, ...(held ? { theme: held } : {}) } }),
-    ]
-    theme.files = [
-      { id: 'warm-paper.css', name: 'Warm Paper', variants: ['light', 'dark'], path: 'warm.css' },
-    ]
+    account.spaces = [remote('space-1', 'owner', { site: { rules, ...(held ? { theme: held } : {}) } })]
+    theme.files = [{ id: 'warm-paper.css', name: 'Warm Paper', variants: ['light', 'dark'], path: 'warm.css' }]
     world.sheet = WARM
     publish.show(local('Notes'))
     publish.fill(publish.blog)

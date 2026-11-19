@@ -10,19 +10,14 @@ import {
 } from '@orden/markdown/links'
 import { isMarkdownPath } from '../../platform/src/api'
 
-export type Opener =
-  'pdf' | 'web' | 'pages' | 'canvas' | 'view' | 'chat' | 'term' | 'application' | 'note'
+export type Opener = 'pdf' | 'web' | 'pages' | 'canvas' | 'view' | 'chat' | 'term' | 'application' | 'note'
 
 export interface Build {
   evenBuild: boolean
   isPlugin: boolean
 }
 
-export function openerFor(
-  path: string,
-  isUrlNote: (path: string) => boolean,
-  build: Build,
-): Opener | null {
+export function openerFor(path: string, isUrlNote: (path: string) => boolean, build: Build): Opener | null {
   if (isPdfTarget(path)) return build.evenBuild ? null : 'pdf'
   if (isWebTarget(path)) return 'web'
   if (isMarkdownPath(path) && isUrlNote(path)) return 'web'

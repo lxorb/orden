@@ -3,17 +3,7 @@ import { type PullResponse, type PushResponse, seedUpdate } from '@orden/sync-co
 import { TEXT } from '@orden/rooms'
 import * as Y from 'yjs'
 import { MOST_MEMBERS } from '../src/sync-server-engine/src/spaces/share'
-import {
-  call,
-  invitation,
-  joined,
-  mail,
-  signIn,
-  testEnv,
-  type JoinView,
-  type ShareView,
-  type TestEnv,
-} from './harness'
+import { call, invitation, joined, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 import { framed, live } from './sync2'
 
 const NO_FACE = { id: null, avatar: null }
@@ -38,8 +28,7 @@ let readingGuest: string
 
 const invite = (email: string, role: 'write' | 'read') => joined(env, owner, space, email, role)
 
-const inviteLink = (email: string, role: 'write' | 'read') =>
-  invitation(env, owner, space, email, role)
+const inviteLink = (email: string, role: 'write' | 'read') => invitation(env, owner, space, email, role)
 
 function shareView(as = owner) {
   return call<ShareView>(env, `/v1/spaces/${space}/share`, { token: as })
@@ -107,14 +96,12 @@ const ROUTES: Route[] = [
   {
     what: 'making a note',
     needs: 'write',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'new.md', content: 'hi' } }),
+    go: (token) => call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'new.md', content: 'hi' } }),
   },
   {
     what: 'writing a note',
     needs: 'write',
-    go: (token) =>
-      call(env, `/v1/notes/${note}`, { method: 'PUT', token, body: { content: 'changed' } }),
+    go: (token) => call(env, `/v1/notes/${note}`, { method: 'PUT', token, body: { content: 'changed' } }),
   },
   {
     what: 'deleting a note',
@@ -124,14 +111,12 @@ const ROUTES: Route[] = [
   {
     what: 'keeping bookmarks',
     needs: 'write',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}/bookmarks`, { method: 'PUT', token, body: { bookmarks: [] } }),
+    go: (token) => call(env, `/v1/spaces/${space}/bookmarks`, { method: 'PUT', token, body: { bookmarks: [] } }),
   },
   {
     what: 'dressing the folders',
     needs: 'write',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}/icons`, { method: 'PUT', token, body: { icons: {} } }),
+    go: (token) => call(env, `/v1/spaces/${space}/icons`, { method: 'PUT', token, body: { icons: {} } }),
   },
   {
     what: 'arranging the folders',
@@ -146,14 +131,12 @@ const ROUTES: Route[] = [
   {
     what: 'drawing the graph',
     needs: 'write',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}/graph`, { method: 'PUT', token, body: { graph: {} } }),
+    go: (token) => call(env, `/v1/spaces/${space}/graph`, { method: 'PUT', token, body: { graph: {} } }),
   },
   {
     what: 'leaving a note out of the search',
     needs: 'write',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}/excluded`, { method: 'PUT', token, body: { excluded: [] } }),
+    go: (token) => call(env, `/v1/spaces/${space}/excluded`, { method: 'PUT', token, body: { excluded: [] } }),
   },
   {
     what: 'putting a note away',
@@ -168,8 +151,7 @@ const ROUTES: Route[] = [
   {
     what: 'keeping the files beside the notes',
     needs: 'write',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}/files`, { method: 'PUT', token, body: { files: [] } }),
+    go: (token) => call(env, `/v1/spaces/${space}/files`, { method: 'PUT', token, body: { files: [] } }),
   },
   {
     what: "choosing the space's icon",
@@ -194,8 +176,7 @@ const ROUTES: Route[] = [
   {
     what: 'renaming the space',
     needs: 'owner',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}`, { method: 'PATCH', token, body: { name: 'X' } }),
+    go: (token) => call(env, `/v1/spaces/${space}`, { method: 'PATCH', token, body: { name: 'X' } }),
   },
   {
     what: 'deleting the space',
@@ -205,8 +186,7 @@ const ROUTES: Route[] = [
   {
     what: 'publishing the space',
     needs: 'owner',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}/blog`, { method: 'PUT', token, body: { subdomain: 'plans' } }),
+    go: (token) => call(env, `/v1/spaces/${space}/blog`, { method: 'PUT', token, body: { subdomain: 'plans' } }),
   },
   {
     what: 'unpublishing the space',
@@ -245,8 +225,7 @@ const ROUTES: Route[] = [
   {
     what: 'taking somebody out',
     needs: 'owner',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}/share/members/${READER}`, { method: 'DELETE', token }),
+    go: (token) => call(env, `/v1/spaces/${space}/share/members/${READER}`, { method: 'DELETE', token }),
   },
   {
     what: 'making the link',
@@ -266,20 +245,17 @@ const ROUTES: Route[] = [
   {
     what: 'accepting a request',
     needs: 'owner',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, { method: 'POST', token }),
+    go: (token) => call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, { method: 'POST', token }),
   },
   {
     what: 'declining a request',
     needs: 'owner',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, { method: 'DELETE', token }),
+    go: (token) => call(env, `/v1/spaces/${space}/share/requests/${STRANGER}`, { method: 'DELETE', token }),
   },
   {
     what: 'letting a guest in',
     needs: 'owner',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}/share/guests/${waitingGuest}`, { method: 'POST', token }),
+    go: (token) => call(env, `/v1/spaces/${space}/share/guests/${waitingGuest}`, { method: 'POST', token }),
   },
   {
     what: "changing a guest's role",
@@ -294,8 +270,7 @@ const ROUTES: Route[] = [
   {
     what: 'taking a guest out',
     needs: 'owner',
-    go: (token) =>
-      call(env, `/v1/spaces/${space}/share/guests/${readingGuest}`, { method: 'DELETE', token }),
+    go: (token) => call(env, `/v1/spaces/${space}/share/guests/${readingGuest}`, { method: 'DELETE', token }),
   },
 ]
 
@@ -313,9 +288,7 @@ async function fileEntry(): Promise<{ id: string; hash: string }> {
   await call(env, `/v2/spaces/${space}/ops`, {
     token: owner,
     body: {
-      ops: [
-        { op: 'file', t: 'create', id: 'file', kind, parent: null, name: 'a.webm', hash, seen: 0 },
-      ],
+      ops: [{ op: 'file', t: 'create', id: 'file', kind, parent: null, name: 'a.webm', hash, seen: 0 }],
     },
   })
   return { id: 'file', hash }
@@ -352,8 +325,7 @@ ROUTES.push(
   {
     what: 'keeping the other side of an answer as a version',
     needs: 'write',
-    go: (token) =>
-      call(env, '/v2/docs/keep', { token, body: { id: note, text: 'kept', device: 'Laptop' } }),
+    go: (token) => call(env, '/v2/docs/keep', { token, body: { id: note, text: 'kept', device: 'Laptop' } }),
   },
 )
 
@@ -461,25 +433,21 @@ describe('every route that names a space', () => {
       what: 'changing the tree',
       needs: 'write',
       go: async (token) => {
-        const answer = await call<{ results?: Record<string, unknown>[] }>(
-          env,
-          `/v2/spaces/${space}/ops`,
-          {
-            token,
-            body: {
-              ops: [
-                {
-                  op: `mk-${token.slice(0, 8)}`,
-                  t: 'mkdir',
-                  id: `f-${token.slice(0, 8)}`,
-                  parent: null,
-                  name: `F ${token.slice(0, 8)}`,
-                  seen: 0,
-                },
-              ],
-            },
+        const answer = await call<{ results?: Record<string, unknown>[] }>(env, `/v2/spaces/${space}/ops`, {
+          token,
+          body: {
+            ops: [
+              {
+                op: `mk-${token.slice(0, 8)}`,
+                t: 'mkdir',
+                id: `f-${token.slice(0, 8)}`,
+                parent: null,
+                name: `F ${token.slice(0, 8)}`,
+                seen: 0,
+              },
+            ],
           },
-        )
+        })
         return { status: answer.status, result: answer.json.results?.[0] }
       },
     },
@@ -493,9 +461,7 @@ describe('every route that names a space', () => {
         doc.getText(TEXT).insert(0, 'x')
         const update = Y.encodeStateAsUpdateV2(doc, base)
         const answer = await framed<PushResponse>(env, '/v2/docs/push', token, {
-          docs: [
-            { id: note, push: `p-${token.slice(0, 8)}`, epoch: 1, seq: 1, base, update, at: 1 },
-          ],
+          docs: [{ id: note, push: `p-${token.slice(0, 8)}`, epoch: 1, seq: 1, base, update, at: 1 }],
         })
         return {
           status: answer.status,
@@ -600,8 +566,7 @@ describe('the space listing', () => {
 
   test('reorders only what the account owns, so a rail cannot move somebody else’s', async () => {
     writer = await invite(WRITER, 'write')
-    const mine = (await call(env, '/v1/spaces', { token: writer, body: { name: 'Mine' } })).json
-      .space.id
+    const mine = (await call(env, '/v1/spaces', { token: writer, body: { name: 'Mine' } })).json.space.id
 
     await call(env, '/v1/spaces/order', {
       method: 'PUT',
@@ -628,9 +593,7 @@ describe('an invitation', () => {
     expect(sent).toMatch(/https:\/\/orden\.so\/join\/[a-f0-9]{64}/)
 
     const { json } = await shareView()
-    expect(json.members).toEqual([
-      { ...NO_FACE, email: READER, guest: null, name: null, role: 'read', pending: true },
-    ])
+    expect(json.members).toEqual([{ ...NO_FACE, email: READER, guest: null, name: null, role: 'read', pending: true }])
   })
 
   test('waits for the address to be proved before anybody has been in', async () => {
@@ -735,9 +698,7 @@ describe('an invitation', () => {
     expect(response.status).toBe(200)
     expect(response.json.members.some((one) => one.email === STRANGER)).toBe(true)
 
-    const gap = env.db
-      .prepare('select count(*) as many from mailed where email = ?')
-      .get(STRANGER) as { many: number }
+    const gap = env.db.prepare('select count(*) as many from mailed where email = ?').get(STRANGER) as { many: number }
     expect(gap.many).toBe(0)
   })
 
@@ -802,20 +763,15 @@ describe('an invitation', () => {
     const joined = await call(env, `/v1/join/${link}`, { method: 'POST', token: stranger })
 
     expect(joined.status).toBe(404)
-    expect(
-      env.db.prepare('select count(*) as n from space_members where email = ?').get(STRANGER),
-    ).toEqual({ n: 0 })
+    expect(env.db.prepare('select count(*) as n from space_members where email = ?').get(STRANGER)).toEqual({ n: 0 })
   })
 
   test('opens no sign-in by itself, however often it is followed', async () => {
     const link = await inviteLink('fresh@example.com', 'read')
-    const sessions = () =>
-      (env.db.prepare('select count(*) as n from sessions').get() as { n: number }).n
+    const sessions = () => (env.db.prepare('select count(*) as n from sessions').get() as { n: number }).n
     const before = sessions()
 
-    const answers = await Promise.all(
-      [0, 1].map(() => call(env, `/v1/join/${link}`, { method: 'POST' })),
-    )
+    const answers = await Promise.all([0, 1].map(() => call(env, `/v1/join/${link}`, { method: 'POST' })))
 
     expect(answers.map((one) => [one.status, one.json.code])).toEqual([
       [200, true],
@@ -949,9 +905,7 @@ describe('as many people as one space holds', () => {
     const at = Date.now()
     for (let one = 0; one < MOST_MEMBERS - spare; one++) {
       env.db
-        .prepare(
-          'insert into space_members (space_id, email, role, created_at) values (?, ?, ?, ?)',
-        )
+        .prepare('insert into space_members (space_id, email, role, created_at) values (?, ?, ?, ?)')
         .run(space, `filler${one}@example.com`, 'read', at + one)
     }
   }
@@ -997,9 +951,7 @@ describe('as many people as one space holds', () => {
     expect(joined.json.space.role).toBe('write')
   })
   function held(table: 'space_members' | 'space_requests'): number {
-    const row = env.db
-      .prepare(`select count(*) as n from ${table} where space_id = ?`)
-      .get(space) as { n: number }
+    const row = env.db.prepare(`select count(*) as n from ${table} where space_id = ?`).get(space) as { n: number }
     return row.n
   }
 
@@ -1008,9 +960,7 @@ describe('as many people as one space holds', () => {
     fillMembers(1)
     env.justBefore(/insert into space_members/, () => {
       env.db
-        .prepare(
-          'insert into space_members (space_id, email, role, created_at) values (?, ?, ?, ?)',
-        )
+        .prepare('insert into space_members (space_id, email, role, created_at) values (?, ?, ?, ?)')
         .run(space, 'quicker@example.com', 'read', Date.now())
     })
 
@@ -1057,9 +1007,7 @@ describe('as many people as one space holds', () => {
     const at = Date.now()
     const ask = (email: string, when: number) =>
       env.db
-        .prepare(
-          'insert into space_requests (space_id, email, role, created_at) values (?, ?, ?, ?)',
-        )
+        .prepare('insert into space_requests (space_id, email, role, created_at) values (?, ?, ?, ?)')
         .run(space, email, 'read', when)
     for (let one = 0; one < MOST_MEMBERS - 1; one++) ask(`waiting${one}@example.com`, at + one)
     env.justBefore(/insert into space_requests/, () => ask('quicker@example.com', at))
@@ -1096,9 +1044,7 @@ describe('as many people as one space holds', () => {
     expect(admitted.status).toBe(409)
     expect(admitted.json.error).toBe('that is as many people as one space holds')
     const joined = env.db
-      .prepare(
-        'select count(*) as n from guest_members where space_id = ? and joined_at is not null',
-      )
+      .prepare('select count(*) as n from guest_members where space_id = ? and joined_at is not null')
       .get(space) as { n: number }
     expect(joined.n).toBe(200)
   })
@@ -1108,19 +1054,13 @@ describe('as many people as one space holds', () => {
     const asked = await call(env, `/v1/join/${token}`, { method: 'POST', body: { name: 'Wren' } })
     const guest = await guestOf(asked.json.token)
     env.justBefore(/update guest_members set declined_at/, () =>
-      env.db
-        .prepare('update guest_members set joined_at = ? where guest_id = ?')
-        .run(Date.now(), guest),
+      env.db.prepare('update guest_members set joined_at = ? where guest_id = ?').run(Date.now(), guest),
     )
 
     await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'DELETE', token: owner })
 
     expect(
-      env.db
-        .prepare(
-          'select count(*) as n from guest_members where guest_id = ? and joined_at is not null',
-        )
-        .get(guest),
+      env.db.prepare('select count(*) as n from guest_members where guest_id = ? and joined_at is not null').get(guest),
     ).toEqual({ n: 0 })
   })
 
@@ -1138,24 +1078,18 @@ describe('as many people as one space holds', () => {
         )
         .run(space, `filler-guest-${String(one)}`, long, long)
     }
-    const guestsBefore = (env.db.prepare('select count(*) as n from guests').get() as { n: number })
-      .n
+    const guestsBefore = (env.db.prepare('select count(*) as n from guests').get() as { n: number }).n
 
     const answers = await Promise.all(
-      [0, 1, 2].map(() =>
-        call(env, `/v1/join/${token}`, { method: 'POST', body: { device: 'Windows' } }),
-      ),
+      [0, 1, 2].map(() => call(env, `/v1/join/${token}`, { method: 'POST', body: { device: 'Windows' } })),
     )
 
     const joined = env.db
-      .prepare(
-        'select count(*) as n from guest_members where space_id = ? and joined_at is not null',
-      )
+      .prepare('select count(*) as n from guest_members where space_id = ? and joined_at is not null')
       .get(space) as { n: number }
     expect(joined.n).toBe(200)
     expect(answers.filter((one) => one.status === 429)).toHaveLength(2)
-    const guestsAfter = (env.db.prepare('select count(*) as n from guests').get() as { n: number })
-      .n
+    const guestsAfter = (env.db.prepare('select count(*) as n from guests').get() as { n: number }).n
     expect(guestsAfter - guestsBefore).toBe(1)
   })
 })
@@ -1203,9 +1137,7 @@ describe('a share link', () => {
   test('asks first when it is set to, and tells the owner somebody is waiting', async () => {
     const token = await link('read', 'approval')
 
-    const sent = await mail(() =>
-      call(env, `/v1/join/${token}`, { method: 'POST', token: stranger }),
-    )
+    const sent = await mail(() => call(env, `/v1/join/${token}`, { method: 'POST', token: stranger }))
     expect(sent).toContain(OWNER)
     expect(sent).toContain(`would like to join ${SHARED}`)
 
@@ -1315,9 +1247,7 @@ describe('a share link', () => {
 
     expect((await shareView()).json.link).toBeNull()
     expect((await call(env, `/v1/join/${token}`)).status).toBe(404)
-    expect((await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })).status).toBe(
-      404,
-    )
+    expect((await call(env, `/v1/join/${token}`, { method: 'POST', token: stranger })).status).toBe(404)
   })
 
   test('is a fresh one when a revoked space is shared again', async () => {
@@ -1348,9 +1278,7 @@ describe('a share link', () => {
 
   test('is nothing at all when the token names nothing', async () => {
     expect((await call(env, '/v1/join/deadbeef')).status).toBe(404)
-    expect((await call(env, '/v1/join/deadbeef', { method: 'POST', token: stranger })).status).toBe(
-      404,
-    )
+    expect((await call(env, '/v1/join/deadbeef', { method: 'POST', token: stranger })).status).toBe(404)
   })
 
   test('needs no session at all: it hands out a guest instead', async () => {
@@ -1445,9 +1373,7 @@ describe('recently deleted in a shared space', () => {
     await call(env, `/v1/notes/${note}`, { method: 'DELETE', token: writer })
 
     expect((await call(env, '/v1/trash', { token: writer })).json.notes).toEqual([])
-    expect(
-      (await call(env, '/v1/trash', { token: owner })).json.notes.map((one) => one.path),
-    ).toEqual(['plan.md'])
+    expect((await call(env, '/v1/trash', { token: owner })).json.notes.map((one) => one.path)).toEqual(['plan.md'])
   })
 
   test('is not a way into somebody else’s notes', async () => {
@@ -1532,9 +1458,7 @@ describe('the connector in a shared space', () => {
       content: 'rewritten',
     })
 
-    expect(said.json.result.content[0]?.text).toBe(
-      `${SHARED} was shared with you to read, not to write.`,
-    )
+    expect(said.json.result.content[0]?.text).toBe(`${SHARED} was shared with you to read, not to write.`)
   })
 
   test('cannot see a space nobody shared', async () => {

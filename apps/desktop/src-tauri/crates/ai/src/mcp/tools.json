@@ -13,19 +13,7 @@
       "properties": {
         "op": {
           "type": "string",
-          "enum": [
-            "read",
-            "write",
-            "append",
-            "list",
-            "stat",
-            "mkdir",
-            "move",
-            "copy",
-            "delete",
-            "search",
-            "changes"
-          ]
+          "enum": ["read", "write", "append", "list", "stat", "mkdir", "move", "copy", "delete", "search", "changes"]
         },
         "path": { "type": "string" },
         "to": { "type": "string" },
@@ -559,16 +547,7 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": [
-              "text",
-              "outline",
-              "properties",
-              "tasks",
-              "links",
-              "backlinks",
-              "blocks",
-              "selection"
-            ]
+            "enum": ["text", "outline", "properties", "tasks", "links", "backlinks", "blocks", "selection"]
           }
         }
       }
@@ -922,16 +901,7 @@
             "properties": {
               "op": {
                 "type": "string",
-                "enum": [
-                  "add_card",
-                  "edit_text",
-                  "move",
-                  "connect",
-                  "remove",
-                  "add_page",
-                  "remove_page",
-                  "move_page"
-                ]
+                "enum": ["add_card", "edit_text", "move", "connect", "remove", "add_page", "remove_page", "move_page"]
               }
             },
             "required": ["op"]
@@ -1105,18 +1075,7 @@
       "properties": {
         "op": {
           "type": "string",
-          "enum": [
-            "list",
-            "open",
-            "new",
-            "rename",
-            "save",
-            "close",
-            "split",
-            "focus",
-            "move",
-            "arrange"
-          ]
+          "enum": ["list", "open", "new", "rename", "save", "close", "split", "focus", "move", "arrange"]
         },
         "tab": { "type": "string", "description": "A tab id from get_context." },
         "space": { "type": "string" },

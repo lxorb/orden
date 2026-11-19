@@ -4,17 +4,7 @@ const ACCOUNTS = 'orden:chat-accounts'
 const CLEARED = 'orden:chats-retired'
 const SEALED = 'orden-chat-sealed'
 const DATABASES = [SEALED, 'orden-signal']
-const FIELDS = [
-  'password',
-  'token',
-  'appToken',
-  'apiId',
-  'apiHash',
-  'clientSecret',
-  'refresh',
-  'session',
-  'kept',
-]
+const FIELDS = ['password', 'token', 'appToken', 'apiId', 'apiHash', 'clientSecret', 'refresh', 'session', 'kept']
 
 export interface RetiredWorld {
   forgetSecret(name: string): Promise<void>

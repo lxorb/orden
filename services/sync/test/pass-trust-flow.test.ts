@@ -88,11 +88,7 @@ describe('a vault key the account hands out', () => {
     const { a, vault, id } = await flow.family()
     const b = await flow.joined(a, vault, bob, 'editor')
     await flow.joined(a, vault, cy, 'editor')
-    const old = rowOf(
-      'select key from pass_members where vault_id = ? and email = ?',
-      vault,
-      bob.email,
-    )
+    const old = rowOf('select key from pass_members where vault_id = ? and email = ?', vault, bob.email)
     expect(await k.removedMember(flow.sharing(a, ada), vault, cy.email)).toBe(2)
     expect(await flow.synced(b, bob)).toBe('synced')
     const renewed = keyOf(b, vault)
@@ -185,12 +181,8 @@ describe('after somebody is removed', () => {
 
     expect(await k.removedMember(flow.sharing(a, ada), vault, bob.email)).toBe(2)
     const [row] = await flow.apiOf(ada).allVaultItems(vault)
-    await expect(
-      k.openItemBody(oldItemKey, vault, id, row!.body, row!.keyVersion),
-    ).rejects.toThrow()
-    await expect(
-      k.openItem(oldVaultKey, vault, id, row!.key, row!.body, row!.keyVersion),
-    ).rejects.toThrow()
+    await expect(k.openItemBody(oldItemKey, vault, id, row!.body, row!.keyVersion)).rejects.toThrow()
+    await expect(k.openItem(oldVaultKey, vault, id, row!.key, row!.body, row!.keyVersion)).rejects.toThrow()
     expect(await flow.synced(c, cy)).toBe('synced')
     expect(content(c, id)).toMatchObject({ title: 'Bank', password: 'one' })
     await edited(a, ada, id, 'after')
@@ -262,9 +254,7 @@ describe('the key Pass wraps a vault’s key to', () => {
     expect(offered.code).toBe(await k.codeOf(fake))
     expect(offered.code).not.toBe(await k.codeOf(real))
     expect(await k.invitedState(flow.sharing(a, ada), vault, offered, 'editor')).toBe('confirm')
-    expect(
-      rowOf('select key from pass_members where vault_id = ? and email = ?', vault, bob.email).key,
-    ).toBeNull()
+    expect(rowOf('select key from pass_members where vault_id = ? and email = ?', vault, bob.email).key).toBeNull()
 
     flow.tamper = null
     const honest = await flow.checked(a, ada, bob.email)

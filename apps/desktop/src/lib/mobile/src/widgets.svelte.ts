@@ -1,12 +1,5 @@
 import { shownWords } from '@orden/markdown/escapes'
-import {
-  shownName,
-  insideSpace,
-  afterQuiet,
-  frameWord,
-  method,
-  wordSaid,
-} from '../../platform/src/api'
+import { shownName, insideSpace, afterQuiet, frameWord, method, wordSaid } from '../../platform/src/api'
 import { todos } from '../../tasks-model/src/api'
 import { type Entry, workspace } from '../../workspace/src/api'
 import { isTile } from '../../space-kept/src/api'
@@ -49,11 +42,7 @@ export function todayRows(
   })
 }
 
-export function widgetRows(
-  notes: readonly Entry[],
-  kept: readonly string[],
-  most = MOST,
-): WidgetRow[] {
+export function widgetRows(notes: readonly Entry[], kept: readonly string[], most = MOST): WidgetRow[] {
   const rows: WidgetRow[] = []
 
   const add = (entry: Entry) => {
@@ -73,9 +62,7 @@ export function widgetRows(
 
 function widgetState(today: TodayRow[]): WidgetState {
   const root = workspace.activeSpace?.root
-  const kept = root
-    ? workspace.bookmarks.list.filter(isTile).map((one) => insideSpace(root, one.path))
-    : []
+  const kept = root ? workspace.bookmarks.list.filter(isTile).map((one) => insideSpace(root, one.path)) : []
 
   return {
     title: workspace.activeSpace?.name ?? 'Notes',

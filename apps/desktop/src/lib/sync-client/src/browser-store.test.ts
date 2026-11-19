@@ -92,10 +92,7 @@ describe('the browser sync store', () => {
 
     await expect(store.write([file('a'), file('b'), bad])).rejects.toThrow('files.state')
     await expect(
-      store.write([
-        file('a'),
-        { t: 'patch', table: 'files', key: 'a', set: { hash: 'z' } } as Change,
-      ]),
+      store.write([file('a'), { t: 'patch', table: 'files', key: 'a', set: { hash: 'z' } } as Change]),
     ).rejects.toThrow('cannot change')
     expect(await store.read([scan('files')])).toEqual([[]])
 
@@ -261,10 +258,7 @@ test('is what the engine opens in a browser, and every table takes its row', asy
 
 describe('one engine per browser', () => {
   const locked = () =>
-    expect(
-      (globalThis.navigator as Navigator | undefined)?.locks,
-      'Web Locks need Node 24',
-    ).toBeDefined()
+    expect((globalThis.navigator as Navigator | undefined)?.locks, 'Web Locks need Node 24').toBeDefined()
 
   test('the second tab leads once the first lets go', async () => {
     locked()

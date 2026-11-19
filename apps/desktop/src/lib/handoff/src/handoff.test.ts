@@ -36,10 +36,7 @@ function opened(name: string, version: number, make: (db: IDBDatabase) => void) 
 function notesShape(db: IDBDatabase) {
   db.createObjectStore('files', { keyPath: 'path' })
   db.createObjectStore('meta')
-  db.createObjectStore('snapshots', { keyPath: 'id', autoIncrement: true }).createIndex(
-    'notePath',
-    'notePath',
-  )
+  db.createObjectStore('snapshots', { keyPath: 'id', autoIncrement: true }).createIndex('notePath', 'notePath')
 }
 
 function write(db: IDBDatabase, store: string, value: unknown, key?: IDBValidKey) {
@@ -119,13 +116,9 @@ describe('the new address, given it', () => {
 
     await unpack(handoff)
 
-    expect((await all(fresh, 'files')).values).toEqual([
-      { path: '/Notes/Mine.md', content: 'written in a browser' },
-    ])
+    expect((await all(fresh, 'files')).values).toEqual([{ path: '/Notes/Mine.md', content: 'written in a browser' }])
     expect(await all(fresh, 'meta')).toEqual({ keys: ['seeded'], values: ['yes'] })
-    expect((await all(fresh, 'snapshots')).values).toEqual([
-      { id: 1, notePath: '/Notes/Mine.md', content: 'earlier' },
-    ])
+    expect((await all(fresh, 'snapshots')).values).toEqual([{ id: 1, notePath: '/Notes/Mine.md', content: 'earlier' }])
     fresh.close()
     expect(now.local.get('orden:session')).toBe('{"token":"t"}')
     expect(now.local.get('orden:accent')).toBe('teal')
@@ -149,9 +142,7 @@ describe('the new address, given it', () => {
 
     await unpack(handoff)
 
-    expect((await all(fresh, 'stats')).values).toEqual([
-      { path: '/Notes/Mine.md', modified: 5, created: 5, size: 9 },
-    ])
+    expect((await all(fresh, 'stats')).values).toEqual([{ path: '/Notes/Mine.md', modified: 5, created: 5, size: 9 }])
     fresh.close()
   })
 

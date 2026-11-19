@@ -11,15 +11,11 @@ const PREFIX = /performance\.mark\(`([^`$]*)\$\{step\}`\)/.exec(TRACE)?.[1] ?? '
 const marking = walk(SRC, (path) => /\.(ts|svelte)$/.test(path) && !path.includes('.test.'))
   .map((path) => readFileSync(path, 'utf8'))
   .filter((text) =>
-    /import \{[^}]*\bmark(?:Painted)?\b[^}]*\} from '[./]*(?:lib\/)?(?:platform\/src\/api|trace)'/.test(
-      text,
-    ),
+    /import \{[^}]*\bmark(?:Painted)?\b[^}]*\} from '[./]*(?:lib\/)?(?:platform\/src\/api|trace)'/.test(text),
   )
 
 const STEPS = new Set(
-  marking.flatMap((text) =>
-    [...text.matchAll(/\bmark(?:Painted)?\('([^']+)'\)/g)].map((found) => found[1] ?? ''),
-  ),
+  marking.flatMap((text) => [...text.matchAll(/\bmark(?:Painted)?\('([^']+)'\)/g)].map((found) => found[1] ?? '')),
 )
 
 const DRIVES = [
@@ -38,14 +34,9 @@ describe('the launch marks a drive waits for', () => {
 
   test('are named with the prefix the app marks them with', () => {
     const steps = [...STEPS].map(escaped).join('|')
-    const named = new RegExp(
-      `(?:getEntriesByName\\(|marks\\.get\\(|LAUNCHED = )(['"])(\\w+): (${steps})\\1`,
-      'g',
-    )
+    const named = new RegExp(`(?:getEntriesByName\\(|marks\\.get\\(|LAUNCHED = )(['"])(\\w+): (${steps})\\1`, 'g')
     const wrong = DRIVES.flatMap(({ path, text }) =>
-      [...text.matchAll(named)]
-        .filter((found) => `${found[2]}: ` !== PREFIX)
-        .map((found) => `${path}: ${found[0]}`),
+      [...text.matchAll(named)].filter((found) => `${found[2]}: ` !== PREFIX).map((found) => `${path}: ${found[0]}`),
     )
 
     expect(wrong).toEqual([])

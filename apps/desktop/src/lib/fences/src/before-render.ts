@@ -16,10 +16,7 @@ export async function prepareEmbeds(
 ): Promise<(link: Wikilink) => string | EmbeddedNote | null> {
   const wanted = new Set(
     findLinks(source)
-      .filter(
-        (link) =>
-          link.embed && link.kind === 'wikilink' && link.target && embedKind(link.target) === null,
-      )
+      .filter((link) => link.embed && link.kind === 'wikilink' && link.target && embedKind(link.target) === null)
       .map((link) => link.target),
   )
 

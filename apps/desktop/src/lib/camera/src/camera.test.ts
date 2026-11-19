@@ -140,10 +140,7 @@ describe('one notch of a zoom', () => {
   })
 
   test('is as big from a wheel that counts in lines or pages as from one that counts pixels', () => {
-    expect(ctrlWheelZoom({ deltaY: -3, deltaMode: 1 })).toBeCloseTo(
-      ctrlWheelZoom({ deltaY: -120, deltaMode: 0 }),
-      10,
-    )
+    expect(ctrlWheelZoom({ deltaY: -3, deltaMode: 1 })).toBeCloseTo(ctrlWheelZoom({ deltaY: -120, deltaMode: 0 }), 10)
     expect(ctrlWheelZoom({ deltaY: 1, deltaMode: 2 })).toBeLessThan(1 / NOTCH)
   })
 })
@@ -184,9 +181,7 @@ describe('what is under the pointer', () => {
   test('a dot never shrinks below something a pointer can find', () => {
     const far: Camera = { x: 0, y: 0, scale: 0.0001 }
 
-    expect(
-      nodeAt(at(0), at(0), at(6), far, WIDTH, HEIGHT, WIDTH / 2 + SMALLEST_DOT, HEIGHT / 2, 0),
-    ).toBe(0)
+    expect(nodeAt(at(0), at(0), at(6), far, WIDTH, HEIGHT, WIDTH / 2 + SMALLEST_DOT, HEIGHT / 2, 0)).toBe(0)
   })
 
   test('the camera moving moves what is under the pointer', () => {

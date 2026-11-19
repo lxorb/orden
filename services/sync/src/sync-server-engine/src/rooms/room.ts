@@ -376,11 +376,7 @@ export class NoteRoom implements DurableObject {
     return new Response(null, { status: 101, webSocket: pair[0] })
   }
 
-  async enter(
-    server: WebSocket,
-    held: Held,
-    joining: Joining = { writes: true, who: '' },
-  ): Promise<void> {
+  async enter(server: WebSocket, held: Held, joining: Joining = { writes: true, who: '' }): Promise<void> {
     await this.arrive(held)
     await this.caughtUpWithEpoch(joining.epoch)
 
@@ -475,9 +471,7 @@ export class NoteRoom implements DurableObject {
     }
 
     if ((held.epoch ?? 0) >= 1) {
-      await this.env.DB.prepare(
-        'update notes set epoch = epoch + 1, epoch_base = hash where id = ? and epoch = ?',
-      )
+      await this.env.DB.prepare('update notes set epoch = epoch + 1, epoch_base = hash where id = ? and epoch = ?')
         .bind(held.noteId, held.epoch)
         .run()
     }
@@ -509,9 +503,7 @@ export class NoteRoom implements DurableObject {
 
   private async sweep(held: Held): Promise<void> {
     await sweepOpened(this.env, { name: 'room_sockets', key: 'note_id' }, (noteId, them) =>
-      noteId === held.noteId
-        ? Promise.resolve(this.hasSocketOf(them))
-        : roomHolds(this.env, noteId, them),
+      noteId === held.noteId ? Promise.resolve(this.hasSocketOf(them)) : roomHolds(this.env, noteId, them),
     )
   }
 
@@ -527,9 +519,7 @@ export class NoteRoom implements DurableObject {
     const others = this.ctx.getWebSockets().some((one) => one !== socket && whoOf(one) === who)
     if (others) return
 
-    await this.env.DB.prepare('delete from room_sockets where note_id = ? and who = ?')
-      .bind(held.noteId, who)
-      .run()
+    await this.env.DB.prepare('delete from room_sockets where note_id = ? and who = ?').bind(held.noteId, who).run()
   }
 
   private async askSignIns(): Promise<Set<WebSocket>> {
@@ -573,9 +563,7 @@ export class NoteRoom implements DurableObject {
     const noteId = this.held?.noteId
     for (const who of gone) {
       if (!who || !noteId) continue
-      await this.env.DB.prepare('delete from room_sockets where note_id = ? and who = ?')
-        .bind(noteId, who)
-        .run()
+      await this.env.DB.prepare('delete from room_sockets where note_id = ? and who = ?').bind(noteId, who).run()
     }
     return closed
   }
@@ -594,8 +582,7 @@ export class NoteRoom implements DurableObject {
 
     for (const socket of theirs) {
       const login = loginOf(socket)
-      const may =
-        access && login !== undefined ? (access.get(login) ?? 'ended') : toRead ? 'read' : 'none'
+      const may = access && login !== undefined ? (access.get(login) ?? 'ended') : toRead ? 'read' : 'none'
 
       if (may === 'write' || may === 'read') {
         if (may === 'read' && mayWrite(socket)) demote(socket, this.awareness)
@@ -768,9 +755,7 @@ export class NoteRoom implements DurableObject {
   private async caughtUp(held: Held): Promise<void> {
     if (held.version === undefined || held.hash === undefined) return
 
-    const row = await this.env.DB.prepare(
-      'select version, path, kind, epoch from notes where id = ? and deleted = 0',
-    )
+    const row = await this.env.DB.prepare('select version, path, kind, epoch from notes where id = ? and deleted = 0')
       .bind(held.noteId)
       .first<{ version: number; path: string; kind: string | null; epoch: number | null }>()
 
@@ -944,9 +929,7 @@ export class NoteRoom implements DurableObject {
   }
 
   private placed(noteId: string): Promise<Placed | null> {
-    return this.env.DB.prepare(
-      'select version, path, epoch, epoch_base, hash, deleted from notes where id = ?',
-    )
+    return this.env.DB.prepare('select version, path, epoch, epoch_base, hash, deleted from notes where id = ?')
       .bind(noteId)
       .first<Placed>()
   }
@@ -981,9 +964,7 @@ export class NoteRoom implements DurableObject {
       if (kept) seed = await kept.text()
     }
     if (seed === null) {
-      await this.env.DB.prepare(
-        'update notes set epoch = ?, epoch_base = ? where id = ? and epoch = ?',
-      )
+      await this.env.DB.prepare('update notes set epoch = ?, epoch_base = ? where id = ? and epoch = ?')
         .bind(epoch + 1, bodyHash, held.noteId, epoch)
         .run()
       const again = await this.placed(held.noteId)
@@ -1023,9 +1004,7 @@ export class NoteRoom implements DurableObject {
   }
 
   private async besideTheNote(held: Held, words: string): Promise<void> {
-    const file = await this.env.DB.prepare('select * from notes where id = ?')
-      .bind(held.noteId)
-      .first<Note>()
+    const file = await this.env.DB.prepare('select * from notes where id = ?').bind(held.noteId).first<Note>()
     if (file && !(await noteBeside(this.env, file, words, this.settling))) {
       noted(`room ${held.noteId}`, new Error('there was nowhere free to keep it'), null)
     }
@@ -1048,9 +1027,7 @@ export class NoteRoom implements DurableObject {
     }
 
     if (sockets.length && this.held) {
-      await this.env.DB.prepare('delete from room_sockets where note_id = ?')
-        .bind(this.held.noteId)
-        .run()
+      await this.env.DB.prepare('delete from room_sockets where note_id = ?').bind(this.held.noteId).run()
     }
   }
 
@@ -1070,9 +1047,7 @@ export class NoteRoom implements DurableObject {
   }
 
   private async settleDocument(held: Held, crossing: boolean): Promise<boolean> {
-    let file = await this.env.DB.prepare('select * from notes where id = ?')
-      .bind(held.noteId)
-      .first<Note>()
+    let file = await this.env.DB.prepare('select * from notes where id = ?').bind(held.noteId).first<Note>()
     if (!file) return false
 
     if ((file.epoch ?? 0) > (held.epoch ?? 0)) {
@@ -1200,10 +1175,7 @@ export class NoteRoom implements DurableObject {
     const seq = this.state.seq
     const sv = Y.encodeStateVector(this.state.doc)
     await this.state.flushAll()
-    await this.ctx.storage.put(
-      'pushes',
-      [...remembered, { push: pushed.push, seq, sv }].slice(-REMEMBERED_PUSHES),
-    )
+    await this.ctx.storage.put('pushes', [...remembered, { push: pushed.push, seq, sv }].slice(-REMEMBERED_PUSHES))
     await this.settleSoon()
 
     return frame({ ok: true, seq, sv } satisfies RoomAnswer)
@@ -1237,9 +1209,7 @@ export class NoteRoom implements DurableObject {
     const settled = !unsettled || (await this.settle())
 
     const level = held.hash
-    const row = await this.env.DB.prepare('select * from notes where id = ?')
-      .bind(held.noteId)
-      .first<Note>()
+    const row = await this.env.DB.prepare('select * from notes where id = ?').bind(held.noteId).first<Note>()
     if (!row) return { refused: 'gone' }
     if (asked.base !== undefined && row.version !== asked.base) return { conflict: true }
     if (!readsAs(held.kind, asked.text)) return { refused: UNREADABLE }
@@ -1268,9 +1238,7 @@ export class NoteRoom implements DurableObject {
     await this.state.flushAll()
     if (!(await this.settle())) return { refused: 'unsaved' }
 
-    const after = await this.env.DB.prepare('select * from notes where id = ?')
-      .bind(held.noteId)
-      .first<Note>()
+    const after = await this.env.DB.prepare('select * from notes where id = ?').bind(held.noteId).first<Note>()
     return after ? { note: after } : { refused: 'gone' }
   }
 
@@ -1323,9 +1291,7 @@ async function roomHolds(env: Env, noteId: string, who: string): Promise<boolean
   try {
     const room = namespace.get(namespace.idFromName(noteId))
     return await openIn(
-      await room.fetch(
-        new Request(`https://rooms.invalid/${noteId}`, { headers: { [OPEN_HEADER]: who } }),
-      ),
+      await room.fetch(new Request(`https://rooms.invalid/${noteId}`, { headers: { [OPEN_HEADER]: who } })),
     )
   } catch {
     return null

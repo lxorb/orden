@@ -65,10 +65,7 @@ function holding(text: string, open?: string) {
   const note =
     open === undefined
       ? null
-      : new NoteDoc(
-          { kind: 'note', path: PATH, name: 'Plan.md', text: open, dirty: true },
-          () => undefined,
-        )
+      : new NoteDoc({ kind: 'note', path: PATH, name: 'Plan.md', text: open, dirty: true }, () => undefined)
 
   const ws = {
     activeSpace: { id: 's', name: 'Space', root: '/space' },
@@ -100,12 +97,10 @@ describe('a property written from a view', () => {
 
   test('sets, adds and takes away keys in the front matter', () => {
     const text = '---\nstatus: open\n---\n# Plan\n'
-    expect(changed(text, note, { note: { status: 'done' } })).toBe(
-      '---\nstatus: done\n---\n# Plan\n',
+    expect(changed(text, note, { note: { status: 'done' } })).toBe('---\nstatus: done\n---\n# Plan\n')
+    expect(changed(text, note, { note: { due: { kind: 'date', iso: '2026-10-06' }, done: true } })).toBe(
+      '---\nstatus: open\ndue: 2026-10-06\ndone: true\n---\n# Plan\n',
     )
-    expect(
-      changed(text, note, { note: { due: { kind: 'date', iso: '2026-10-06' }, done: true } }),
-    ).toBe('---\nstatus: open\ndue: 2026-10-06\ndone: true\n---\n# Plan\n')
     expect(changed(text, note, { note: { status: null } })).toBe('# Plan\n')
     expect(
       changed(text, note, {
@@ -150,9 +145,7 @@ describe('a property written from a view', () => {
     expect(changed(text, row, { list: { flags: { add: '3' } } })).toBe(
       '---\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5, 3]\n---\n# N\n',
     )
-    expect(changed('---\ntags: a\n---\n', row, { list: { tags: { add: 'b' } } })).toBe(
-      '---\ntags: [a, b]\n---\n',
-    )
+    expect(changed('---\ntags: a\n---\n', row, { list: { tags: { add: 'b' } } })).toBe('---\ntags: [a, b]\n---\n')
     expect(changed('---\ntags: a\n---\n', row, { list: { links: { add: 'b' } } })).toBe(
       '---\ntags: a\nlinks: [b]\n---\n',
     )
@@ -164,15 +157,10 @@ describe('a property written from a view', () => {
   test('puts a chip on or takes one off a list in a block the rows cannot draw', () => {
     const commented = '---\n# kept\ntags: [a, "b"]\n---\n# N\n'
     const row = noteRow(commented)
-    expect(changed(commented, row, { list: { tags: { add: 'z' } } })).toBe(
-      '---\n# kept\ntags: [a, "b", z]\n---\n# N\n',
-    )
-    expect(changed(commented, row, { list: { tags: { remove: 0 } } })).toBe(
-      '---\n# kept\ntags: ["b"]\n---\n# N\n',
-    )
+    expect(changed(commented, row, { list: { tags: { add: 'z' } } })).toBe('---\n# kept\ntags: [a, "b", z]\n---\n# N\n')
+    expect(changed(commented, row, { list: { tags: { remove: 0 } } })).toBe('---\n# kept\ntags: ["b"]\n---\n# N\n')
 
-    const scalar =
-      '---\nsummary: |\n  Line one.\n  Line two.\ntags:\n  - a\n  - 007\nafter: x\n---\n'
+    const scalar = '---\nsummary: |\n  Line one.\n  Line two.\ntags:\n  - a\n  - 007\nafter: x\n---\n'
     expect(changed(scalar, row, { list: { tags: { add: 'z' } } })).toBe(
       '---\nsummary: |\n  Line one.\n  Line two.\ntags: [a, 007, z]\nafter: x\n---\n',
     )
@@ -188,16 +176,10 @@ describe('a property written from a view', () => {
   test('puts a chip on the list a note writes in another case, in its own spelling', () => {
     const row = noteRow('---\ntags: [a]\n---\n')
     const flow = '---\nTags: [x, y]\n---\nbody\n'
-    expect(changed(flow, row, { list: { tags: { add: 'z' } } })).toBe(
-      '---\nTags: [x, y, z]\n---\nbody\n',
-    )
-    expect(changed(flow, row, { list: { tags: { remove: 0 } } })).toBe(
-      '---\nTags: [y]\n---\nbody\n',
-    )
+    expect(changed(flow, row, { list: { tags: { add: 'z' } } })).toBe('---\nTags: [x, y, z]\n---\nbody\n')
+    expect(changed(flow, row, { list: { tags: { remove: 0 } } })).toBe('---\nTags: [y]\n---\nbody\n')
     const block = '---\nTags:\n  - x\n  - y\ntitle: a\n---\nbody\n'
-    expect(changed(block, row, { list: { tags: { add: 'z' } } })).toBe(
-      '---\nTags: [x, y, z]\ntitle: a\n---\nbody\n',
-    )
+    expect(changed(block, row, { list: { tags: { add: 'z' } } })).toBe('---\nTags: [x, y, z]\ntitle: a\n---\nbody\n')
     const commented = '---\n# kept\nTags:\n  - x\n  - 007\n---\nbody\n'
     expect(changed(commented, row, { list: { tags: { add: 'z' } } })).toBe(
       '---\n# kept\nTags: [x, 007, z]\n---\nbody\n',
@@ -261,9 +243,7 @@ describe('a property written from a view', () => {
   })
 
   test('opens a block in a note that has none', () => {
-    expect(changed('# Plan\n', note, { note: { priority: 2 } })).toBe(
-      '---\npriority: 2\n---\n# Plan\n',
-    )
+    expect(changed('# Plan\n', note, { note: { priority: 2 } })).toBe('---\npriority: 2\n---\n# Plan\n')
   })
 })
 
@@ -283,9 +263,7 @@ describe('a task field written from a view', () => {
 
     const after = changed(moved, row, { task: { priority: 1 } }) ?? ''
     expect(readTask(after.split('\n')[4] ?? '')?.priority).toBe(1)
-    expect(taskLine(moved, row.anchor ?? { line: 0, hash: '' })?.from).toBe(
-      moved.indexOf('- [ ] Water'),
-    )
+    expect(taskLine(moved, row.anchor ?? { line: 0, hash: '' })?.from).toBe(moved.indexOf('- [ ] Water'))
   })
 
   test('writes nothing for a task that is no longer there', () => {
@@ -308,9 +286,7 @@ describe('a task field written from a view', () => {
 
   test('a field and the tick in one change', () => {
     const go = '- [ ] Go\n'
-    expect(changed(go, taskRow(go, 'Go'), { task: { done: true, priority: 1 } })).toBe(
-      '- [x] Go 🔺\n',
-    )
+    expect(changed(go, taskRow(go, 'Go'), { task: { done: true, priority: 1 } })).toBe('- [x] Go 🔺\n')
   })
 
   test('keeps the line break a Windows file wrote', () => {
@@ -334,9 +310,7 @@ describe('the write itself', () => {
   test('a note open with unsaved words keeps them, and takes the edit in its own document', async () => {
     const { ws, note } = holding('- [ ] Go\n', '- [ ] Go\nwords typed since\n')
 
-    expect(await writeRow(ws, PATH, taskRow('- [ ] Go\n', 'Go'), { task: { done: true } })).toBe(
-      true,
-    )
+    expect(await writeRow(ws, PATH, taskRow('- [ ] Go\n', 'Go'), { task: { done: true } })).toBe(true)
     expect(note?.text).toBe('- [x] Go\nwords typed since\n')
     expect(disk.get(PATH)).toBe('- [x] Go\nwords typed since\n')
   })

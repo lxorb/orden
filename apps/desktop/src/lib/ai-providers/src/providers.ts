@@ -52,10 +52,7 @@ const LOOPBACK = /^http:\/\/(?:127\.0\.0\.1|\[::1\])(?=[:/]|$)/i
 export function apiRoot(provider: Provider): string {
   if (isLocal(provider.kind)) return ''
   if (provider.kind !== 'compatible') return ROOTS[provider.kind]
-  const typed = (provider.baseUrl ?? '')
-    .trim()
-    .replace(/\/+$/, '')
-    .replace(LOOPBACK, 'http://localhost')
+  const typed = (provider.baseUrl ?? '').trim().replace(/\/+$/, '').replace(LOOPBACK, 'http://localhost')
   if (!typed) return ''
   return /\/v\d+$/.test(typed) ? typed : `${typed}/v1`
 }
@@ -261,9 +258,7 @@ function responsesBody(model: string, messages: readonly Message[]): string {
   return JSON.stringify({
     model,
     ...(instructions ? { instructions } : {}),
-    input: messages
-      .filter((one) => one.role !== 'system')
-      .map((one) => ({ role: one.role, content: one.content })),
+    input: messages.filter((one) => one.role !== 'system').map((one) => ({ role: one.role, content: one.content })),
     store: false,
     stream: true,
   })

@@ -25,8 +25,7 @@ export function routed(want: string, offered: readonly Offered[], parent: Provid
   }
 
   const is = (one: ModelInfo) => one.id.toLowerCase() === asked || one.name.toLowerCase() === asked
-  const holds = (one: ModelInfo) =>
-    one.id.toLowerCase().includes(asked) || one.name.toLowerCase().includes(asked)
+  const holds = (one: ModelInfo) => one.id.toLowerCase().includes(asked) || one.name.toLowerCase().includes(asked)
   for (const test of [is, holds]) {
     for (const { provider, models } of order) {
       const found = models.find(test)

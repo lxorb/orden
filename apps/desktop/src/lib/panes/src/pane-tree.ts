@@ -54,14 +54,7 @@ export function canSplit(frame: Frame, id: string, along: Along): boolean {
   return trail.length === 1 && outer !== undefined && outer.along !== along
 }
 
-export function withSplit(
-  frame: Frame,
-  id: string,
-  along: Along,
-  made: Pane,
-  split: string,
-  near = false,
-): Frame {
+export function withSplit(frame: Frame, id: string, along: Along, made: Pane, split: string, near = false): Frame {
   if (frame.kind === 'pane') {
     if (frame.id !== id) return frame
 
@@ -72,10 +65,7 @@ export function withSplit(
   const [first, second] = frame.sides
   return {
     ...frame,
-    sides: [
-      withSplit(first, id, along, made, split, near),
-      withSplit(second, id, along, made, split, near),
-    ],
+    sides: [withSplit(first, id, along, made, split, near), withSplit(second, id, along, made, split, near)],
   }
 }
 
@@ -127,16 +117,10 @@ function placesIn(frame: Frame, x = 0, y = 0, width = 1, height = 1): Place[] {
   const [first, second] = frame.sides
   if (frame.along === 'row') {
     const split = width * frame.fraction
-    return [
-      ...placesIn(first, x, y, split, height),
-      ...placesIn(second, x + split, y, width - split, height),
-    ]
+    return [...placesIn(first, x, y, split, height), ...placesIn(second, x + split, y, width - split, height)]
   }
   const split = height * frame.fraction
-  return [
-    ...placesIn(first, x, y, width, split),
-    ...placesIn(second, x, y + split, width, height - split),
-  ]
+  return [...placesIn(first, x, y, width, split), ...placesIn(second, x, y + split, width, height - split)]
 }
 
 function overlap(from: number, length: number, otherFrom: number, otherLength: number): number {

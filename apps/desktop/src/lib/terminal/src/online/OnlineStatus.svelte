@@ -12,13 +12,9 @@
 <div class="status" class:failed={failed || held !== null} role="status">
   <p>{statusLine(status)}</p>
   {#if held}
-    <button type="button" class="orden-button" onclick={onretry}
-      >{held.taken ? 'Take back' : 'Take over'}</button
-    >
+    <button type="button" class="orden-button" onclick={onretry}>{held.taken ? 'Take back' : 'Take over'}</button>
   {:else if failed}
-    <button type="button" class="orden-button" onclick={onretry}
-      >{gone ? 'New online terminal' : 'Try again'}</button
-    >
+    <button type="button" class="orden-button" onclick={onretry}>{gone ? 'New online terminal' : 'Try again'}</button>
   {:else}
     <div class="sweep"><Sweep /></div>
   {/if}

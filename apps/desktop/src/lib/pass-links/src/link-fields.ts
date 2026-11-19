@@ -79,10 +79,7 @@ function mainOf(content: Content): LinkField[] {
         field('private', 'Private key', content.privateKey, 'hidden'),
       ]
     case 'wifi':
-      return [
-        field('ssid', 'Network name', content.ssid),
-        field('password', 'Password', content.password, 'hidden'),
-      ]
+      return [field('ssid', 'Network name', content.ssid), field('password', 'Password', content.password, 'hidden')]
     case 'note':
     case 'identity':
     case 'custom':
@@ -96,12 +93,7 @@ function identityOf(content: Content): LinkGroup[] {
     id: group,
     name: GROUPS[group as keyof typeof IDENTITY_FIELDS],
     fields: keys.map((key) =>
-      field(
-        key,
-        spoken(key),
-        content.values[key] ?? '',
-        HIDDEN_IDENTITY.has(key) ? 'hidden' : 'text',
-      ),
+      field(key, spoken(key), content.values[key] ?? '', HIDDEN_IDENTITY.has(key) ? 'hidden' : 'text'),
     ),
   }))
 }
@@ -138,7 +130,5 @@ export function linkGroupsOf(content: Content): LinkGroup[] {
 }
 
 export function websitesOf(content: Content): string[] {
-  return content.kind === 'login'
-    ? content.websites.map((one) => one.url).filter((url) => url.trim() !== '')
-    : []
+  return content.kind === 'login' ? content.websites.map((one) => one.url).filter((url) => url.trim() !== '') : []
 }

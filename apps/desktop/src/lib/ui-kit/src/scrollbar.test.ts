@@ -40,10 +40,7 @@ describe('dragging the thumb', () => {
     [{}, 4],
     [{ track: 20 }, 0],
     [{ content: 400 }, 0],
-  ])(
-    'over %o moves the content by the same share, or nothing when there is nothing to move',
-    (patch, share) => {
-      expect(contentPerThumb(track(patch))).toBe(share)
-    },
-  )
+  ])('over %o moves the content by the same share, or nothing when there is nothing to move', (patch, share) => {
+    expect(contentPerThumb(track(patch))).toBe(share)
+  })
 })

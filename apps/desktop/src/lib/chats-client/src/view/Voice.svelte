@@ -46,11 +46,7 @@
     seek(event)
     const move = (one: PointerEvent) => seek(one)
     node.addEventListener('pointermove', move)
-    node.addEventListener(
-      'lostpointercapture',
-      () => node.removeEventListener('pointermove', move),
-      { once: true },
-    )
+    node.addEventListener('lostpointercapture', () => node.removeEventListener('pointermove', move), { once: true })
   }
 
   function step() {
@@ -95,21 +91,14 @@
     }}
   >
     {#each wave as bar, index (index)}
-      <span
-        class="bar"
-        class:heard={index / wave.length < done}
-        style:height="{Math.max(12, (bar / 255) * 100)}%"
+      <span class="bar" class:heard={index / wave.length < done} style:height="{Math.max(12, (bar / 255) * 100)}%"
       ></span>
     {/each}
   </div>
   <span class="time">{elapsed(playing || at > 0 ? at : seconds)}</span>
   <button type="button" class="rate" aria-label={`${rate}×`} onclick={step}>{rate}×</button>
-  <button
-    type="button"
-    class="words"
-    class:busy={hearing}
-    aria-label="Transcribe"
-    onclick={() => void transcribe()}><Glyph name="words" /></button
+  <button type="button" class="words" class:busy={hearing} aria-label="Transcribe" onclick={() => void transcribe()}
+    ><Glyph name="words" /></button
   >
   <audio
     bind:this={audio}

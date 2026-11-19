@@ -125,9 +125,7 @@ describe('the row a list is made of', () => {
       'lib/palette/src/Palette.svelte',
     ]
 
-    const missing = lists.filter(
-      (name) => !components.find((one) => one.name === name)?.text.includes('orden-row'),
-    )
+    const missing = lists.filter((name) => !components.find((one) => one.name === name)?.text.includes('orden-row'))
 
     expect(missing, `these draw a list without the row: ${missing.join(', ')}`).toEqual([])
   })
@@ -149,9 +147,7 @@ describe('the ring a keyboard leaves', () => {
         rules(one.style).some(
           (rule) =>
             rule.selector.includes(':focus') &&
-            outlines(rule.declarations).some(
-              (value) => value !== 'none' && !value.startsWith('var(--focus-ring)'),
-            ),
+            outlines(rule.declarations).some((value) => value !== 'none' && !value.startsWith('var(--focus-ring)')),
         ),
       )
       .map((one) => one.name)
@@ -175,9 +171,7 @@ describe('the ring a keyboard leaves', () => {
       .map((rule) => `${rule.name} (${rule.selector})`)
       .sort()
 
-    expect(own, `these take the ring off and put nothing in its place: ${own.join(', ')}`).toEqual(
-      [],
-    )
+    expect(own, `these take the ring off and put nothing in its place: ${own.join(', ')}`).toEqual([])
   })
 
   test('and a component never silences a control, in any rule at all', () => {
@@ -201,8 +195,7 @@ describe('the ring a keyboard leaves', () => {
         rules(one.style)
           .filter(
             (rule) =>
-              (rule.selector.includes(':focus-within') ||
-                /:has\([^)]*:focus/.test(rule.selector)) &&
+              (rule.selector.includes(':focus-within') || /:has\([^)]*:focus/.test(rule.selector)) &&
               ['border', 'border-color', 'box-shadow', 'outline'].some(
                 (property) => valuesOf(rule.declarations, property).length > 0,
               ),
@@ -385,17 +378,13 @@ function isCross(d: string): boolean {
   const ends = (line: number[]) => [`${line[0]},${line[1]}`, `${line[2]},${line[3]}`]
   const meet = ends(one).some((end) => ends(two).includes(end))
 
-  return (
-    !meet && Math.abs(slope(one) + slope(two)) < 0.01 && Math.abs(Math.abs(slope(one)) - 1) < 0.01
-  )
+  return !meet && Math.abs(slope(one) + slope(two)) < 0.01 && Math.abs(Math.abs(slope(one)) - 1) < 0.01
 }
 
 describe('the cross that shuts something', () => {
   test('is drawn in one component, at one drawing per size it is seen at', () => {
     const drawing = components
-      .filter((one) =>
-        [...one.text.matchAll(/\bd="([^"]+)"/g)].some((path) => isCross(path[1] ?? '')),
-      )
+      .filter((one) => [...one.text.matchAll(/\bd="([^"]+)"/g)].some((path) => isCross(path[1] ?? '')))
       .map((one) => one.name)
       .sort()
 
@@ -502,9 +491,7 @@ describe('the segmented control', () => {
   })
 
   test('is the class every one of them wears', () => {
-    const own = components
-      .filter((one) => one.text.includes('class="segmented"'))
-      .map((one) => one.name)
+    const own = components.filter((one) => one.text.includes('class="segmented"')).map((one) => one.name)
     expect(own).toEqual([])
   })
 })
@@ -517,13 +504,9 @@ describe('how a surface swaps what it is showing', () => {
     expect(slide).toContain('export function leave')
     expect(slide).toContain('export function segmented')
 
-    const moved = [...slide.matchAll(/(?:css: \(t, u\) =>|thumb\.style\.)(\w+)/g)].map(
-      (one) => one[1],
-    )
+    const moved = [...slide.matchAll(/(?:css: \(t, u\) =>|thumb\.style\.)(\w+)/g)].map((one) => one[1])
     for (const property of moved) {
-      expect(['opacity', 'transform', 'width', 'height', 'transition'], property).toContain(
-        property,
-      )
+      expect(['opacity', 'transform', 'width', 'height', 'transition'], property).toContain(property)
     }
     expect(slide).toContain('thumb.style.transform = `translate(')
     expect(slide).toContain('transform: translateY(')
@@ -548,10 +531,7 @@ describe('how a surface swaps what it is showing', () => {
       .map((one) => one.name)
       .sort()
 
-    expect(without).toEqual([
-      'lib/canvas/src/CanvasCatch.svelte',
-      'lib/canvas/src/CanvasRub.svelte',
-    ])
+    expect(without).toEqual(['lib/canvas/src/CanvasCatch.svelte', 'lib/canvas/src/CanvasRub.svelte'])
   })
 })
 

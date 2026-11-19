@@ -139,9 +139,7 @@ describe('Claude Code on this machine', () => {
     const call = asked.find((one) => one.command === 'ai_cli_ask')
     expect(call?.args.tool).toBe('claude-code')
     expect(call?.args.model).toBeNull()
-    expect(call?.args.prompt).toBe(
-      '<instructions>\nBe brief.\n</instructions>\n\n<user>\nWhat waits?\n</user>',
-    )
+    expect(call?.args.prompt).toBe('<instructions>\nBe brief.\n</instructions>\n\n<user>\nWhat waits?\n</user>')
   })
 
   test('a stop ends the program and throws as a stopped request does', async () => {
@@ -181,8 +179,7 @@ describe('Claude Code on this machine', () => {
 })
 
 describe('a ChatGPT plan', () => {
-  const events = (...said: object[]) =>
-    said.map((one) => `event: x\ndata: ${JSON.stringify(one)}\n\n`).join('')
+  const events = (...said: object[]) => said.map((one) => `event: x\ndata: ${JSON.stringify(one)}\n\n`).join('')
 
   test('streams from the Responses API with the token of the hour and no system message', async () => {
     reply = () =>
@@ -218,9 +215,9 @@ describe('a ChatGPT plan', () => {
         }),
         { status: 429 },
       )
-    await expect(
-      complete({ provider: CHATGPT, model: 'gpt-plan', messages: ASKED }),
-    ).rejects.toThrow('Your ChatGPT plan is at its limit for now.')
+    await expect(complete({ provider: CHATGPT, model: 'gpt-plan', messages: ASKED })).rejects.toThrow(
+      'Your ChatGPT plan is at its limit for now.',
+    )
     expect(plans.chatgptLimit?.state).toBe('reached')
   })
 

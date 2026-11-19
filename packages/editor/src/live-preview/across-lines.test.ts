@@ -54,10 +54,7 @@ test('a note swapped in for another is the one drawn', () => {
   view.setState(
     EditorState.create({
       doc: next,
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        livePreview(),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), livePreview()],
     }),
   )
   expect(view.contentDOM.textContent).toContain('Your notes')

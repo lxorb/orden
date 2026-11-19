@@ -48,8 +48,7 @@ vi.mock('../../windows/src/api', async (importOriginal) => ({
 
 vi.mock('../../web-backend/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../web-backend/src/api')>()),
-  keptCameFrom: () =>
-    Promise.resolve([{ root: '/Orden/.orden/Notes/Notes', from: '/Orden/Notes' }]),
+  keptCameFrom: () => Promise.resolve([{ root: '/Orden/.orden/Notes/Notes', from: '/Orden/Notes' }]),
   keptFolder: (path: string) =>
     Promise.resolve(
       path === '/Orden/.orden/Notes/Notes'

@@ -1,13 +1,6 @@
 <script lang="ts">
   import { moved, removed, reshaped } from '@orden/markdown/pages'
-  import {
-    type Canvas,
-    type PageNode,
-    type Paper,
-    PAPER_NAMES,
-    type Pattern,
-    PATTERNS,
-  } from '@orden/markdown/canvas'
+  import { type Canvas, type PageNode, type Paper, PAPER_NAMES, type Pattern, PATTERNS } from '@orden/markdown/canvas'
   import { paintSketch, readPalette } from '../../plane/src/api'
   import {
     carryPage,
@@ -59,8 +52,7 @@
       away: false,
     }))
     const away = pages[pinned]
-    if (away)
-      out.splice(pinned < view.from ? 0 : out.length, 0, { page: away, at: pinned, away: true })
+    if (away) out.splice(pinned < view.from ? 0 : out.length, 0, { page: away, at: pinned, away: true })
     return out
   })
 
@@ -131,9 +123,7 @@
   const inks = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>()
 
   const watcher =
-    typeof IntersectionObserver === 'undefined'
-      ? null
-      : new IntersectionObserver(sighted, { rootMargin: '50% 0px' })
+    typeof IntersectionObserver === 'undefined' ? null : new IntersectionObserver(sighted, { rootMargin: '50% 0px' })
 
   $effect(() => () => {
     watcher?.disconnect()
@@ -208,13 +198,7 @@
 
     const paper =
       page.file && page.page
-        ? await paperOf(
-            store.paperAt(page.file, spaceRoot),
-            page.page,
-            asked.signal,
-            true,
-            densityFor(scale * ratio),
-          )
+        ? await paperOf(store.paperAt(page.file, spaceRoot), page.page, asked.signal, true, densityFor(scale * ratio))
         : null
     if (asked.signal.aborted) return
     drawing.delete(page.id)
@@ -400,10 +384,7 @@
               aria-hidden="true"
               data-page={page.id}
               style:aspect-ratio="{page.width} / {page.height}"
-              bind:this={
-                () => sheets.get(page.id),
-                (element: HTMLCanvasElement | undefined) => keep(page.id, element)
-              }
+              bind:this={() => sheets.get(page.id), (element: HTMLCanvasElement | undefined) => keep(page.id, element)}
             ></canvas>
             <span class="number">{at + 1}</span>
           </button>

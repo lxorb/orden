@@ -40,10 +40,7 @@ export function planRefusal(status: number, body: unknown): string | null {
   if (code === 'subscription_sharing_user_not_eligible') {
     return 'This ChatGPT plan cannot be used here.'
   }
-  if (
-    code === 'subscription_sharing_usage_unavailable' ||
-    code === 'subscription_sharing_user_unavailable'
-  ) {
+  if (code === 'subscription_sharing_usage_unavailable' || code === 'subscription_sharing_user_unavailable') {
     return 'ChatGPT is not answering right now. Try again in a moment.'
   }
   return null

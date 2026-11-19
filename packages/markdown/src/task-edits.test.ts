@@ -64,23 +64,11 @@ const CHANGES: [string, TaskChange, string][] = [
   ['- [ ] a [time:: 16:00]', { time: '09:30' }, '- [ ] a [time:: 09:30]'],
   ['- [ ] a [time:: 16:00]', { zone: 'Europe/Zurich' }, '- [ ] a [time:: 16:00 Europe/Zurich]'],
   ['- [ ] a [time:: 16:00] 📅 2026-10-06', { time: null }, '- [ ] a 📅 2026-10-06'],
-  [
-    '- [ ] a',
-    { duration: 90, remind: [{ before: 15 }] },
-    '- [ ] a [duration:: 1h30m] [remind:: 15m]',
-  ],
-  [
-    '- [ ] a',
-    { deadline: '2026-10-20', assignee: 'Lucile' },
-    '- [ ] a [deadline:: 2026-10-20] [assignee:: Lucile]',
-  ],
+  ['- [ ] a', { duration: 90, remind: [{ before: 15 }] }, '- [ ] a [duration:: 1h30m] [remind:: 15m]'],
+  ['- [ ] a', { deadline: '2026-10-20', assignee: 'Lucile' }, '- [ ] a [deadline:: 2026-10-20] [assignee:: Lucile]'],
   ['- [ ] a', { done: true, completed: '2026-10-04' }, '- [x] a ✅ 2026-10-04'],
   ['- [x] a ✅ 2026-10-04', { done: false, completed: null }, '- [ ] a'],
-  [
-    '- [ ] a 📅 2026-10-06',
-    { cancelled: true, cancelledOn: '2026-10-04' },
-    '- [-] a 📅 2026-10-06 ❌ 2026-10-04',
-  ],
+  ['- [ ] a 📅 2026-10-06', { cancelled: true, cancelledOn: '2026-10-04' }, '- [-] a 📅 2026-10-06 ❌ 2026-10-04'],
   ['- [ ] a 📅 2026-10-06', { status: '/' }, '- [/] a 📅 2026-10-06'],
   ['- [ ] a 📅 2026-10-06', { recurrence: 'every week' }, '- [ ] a 🔁 every week 📅 2026-10-06'],
   ['- [ ] a 🔁 every week 📅 2026-10-06', { recurrence: null }, '- [ ] a 📅 2026-10-06'],
@@ -115,17 +103,14 @@ describe('a change', () => {
     ['- [ ] [due:: 2026-10-01] #a Buy milk', { tags: [], due: null }],
     ['- [ ] #a [k:: v] Buy milk', { tags: [], fields: {} }],
     ['- [ ] [k:: v] #a Buy milk', { tags: [], fields: {} }],
-  ] as [string, TaskChange][])(
-    '%s with %o takes both off in edits that never overlap',
-    (line, change) => {
-      const edits = writeTask(line, change)
-      edits.forEach((edit, at) => {
-        const next = edits[at + 1]
-        if (next) expect(edit.to).toBeLessThanOrEqual(next.from)
-      })
-      expect(changedTask(line, change)).toBe('- [ ] Buy milk')
-    },
-  )
+  ] as [string, TaskChange][])('%s with %o takes both off in edits that never overlap', (line, change) => {
+    const edits = writeTask(line, change)
+    edits.forEach((edit, at) => {
+      const next = edits[at + 1]
+      if (next) expect(edit.to).toBeLessThanOrEqual(next.from)
+    })
+    expect(changedTask(line, change)).toBe('- [ ] Buy milk')
+  })
 
   test('touches only the characters that change; of a field written twice is made to the one that is read; taken off goes from among the words too', () => {
     expect(writeTask('- [ ] a ⏫ 📅 2026-10-06', { due: '2026-10-07' })).toEqual([
@@ -158,15 +143,14 @@ describe('a change', () => {
   })
 
   test('of new words keeps a tag the words held and the change still holds', () => {
-    expect(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: ['milk'] })).toBe(
-      '- [ ] Buy now #milk',
+    expect(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: ['milk'] })).toBe('- [ ] Buy now #milk')
+    expect(readTask(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: ['milk'] }))).toMatchObject({
+      text: 'Buy now',
+      tags: ['milk'],
+    })
+    expect(changedTask('- [ ] Buy #milk now #shop', { text: 'Get #milk', tags: ['milk', 'shop'] })).toBe(
+      '- [ ] Get #milk #shop',
     )
-    expect(
-      readTask(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: ['milk'] })),
-    ).toMatchObject({ text: 'Buy now', tags: ['milk'] })
-    expect(
-      changedTask('- [ ] Buy #milk now #shop', { text: 'Get #milk', tags: ['milk', 'shop'] }),
-    ).toBe('- [ ] Get #milk #shop')
     expect(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: [] })).toBe('- [ ] Buy now')
   })
 
@@ -176,9 +160,7 @@ describe('a change', () => {
 
   test('of the words of a line with none stands a blank from the box and the fields', () => {
     expect(changedTask('- [ ] #work', { text: 'Call Bob' })).toBe('- [ ] Call Bob #work')
-    expect(changedTask('- [ ] 📅 2026-10-06', { text: 'Call Bob' })).toBe(
-      '- [ ] Call Bob 📅 2026-10-06',
-    )
+    expect(changedTask('- [ ] 📅 2026-10-06', { text: 'Call Bob' })).toBe('- [ ] Call Bob 📅 2026-10-06')
     expect(changedTask('- [ ]', { text: 'Call Bob' })).toBe('- [ ] Call Bob')
     expect(readTask(changedTask('- [ ] #work', { text: 'Call Bob' }))).toMatchObject({
       text: 'Call Bob',
@@ -195,20 +177,14 @@ describe('a change', () => {
 
 test('unknown fields an object would answer from its prototype: are removed, changed and added like any other', () => {
   expect(changedTask('- [ ] Pay [toString:: 1]', { fields: {} })).toBe('- [ ] Pay')
-  expect(changedTask('- [ ] Pay [toString:: 1]', { fields: { toString: '2' } })).toBe(
-    '- [ ] Pay [toString:: 2]',
-  )
-  expect(changedTask('- [ ] Pay', { fields: { constructor: '1' } })).toBe(
-    '- [ ] Pay [constructor:: 1]',
-  )
+  expect(changedTask('- [ ] Pay [toString:: 1]', { fields: { toString: '2' } })).toBe('- [ ] Pay [toString:: 2]')
+  expect(changedTask('- [ ] Pay', { fields: { constructor: '1' } })).toBe('- [ ] Pay [constructor:: 1]')
 })
 
 describe('code in a task', () => {
   test('keeps a hash at its end when the words change; is not cut into when a tag is taken away', () => {
     const line = '- [ ] run `git tag #v2`'
-    expect(changedTask(line, { text: 'run `git tag #v2` extra' })).toBe(
-      '- [ ] run `git tag #v2` extra',
-    )
+    expect(changedTask(line, { text: 'run `git tag #v2` extra' })).toBe('- [ ] run `git tag #v2` extra')
     expect(changedTask('- [ ] run `a #foo` now #foo', { tags: [] })).toBe('- [ ] run `a #foo` now')
   })
 
@@ -222,9 +198,9 @@ describe('code in a task', () => {
     expect(changedTask('- [ ] Pay 🔁 every month 🛫 2026-09-28 📅 2026-10-01', { due: null })).toBe(
       '- [ ] Pay 🔁 every month 🛫 2026-09-28',
     )
-    expect(
-      changedTask('- [ ] Pay [repeat:: every week when done] [time:: 09:00]', { priority: 1 }),
-    ).toBe('- [ ] Pay [priority:: highest] [repeat:: every week when done] [time:: 09:00]')
+    expect(changedTask('- [ ] Pay [repeat:: every week when done] [time:: 09:00]', { priority: 1 })).toBe(
+      '- [ ] Pay [priority:: highest] [repeat:: every week when done] [time:: 09:00]',
+    )
   })
 
   test('reads a date given as undefined as left, and one given as nothing as taken; keeps a repeat and a time the change itself gives, with its last date taken', () => {
@@ -233,12 +209,10 @@ describe('code in a task', () => {
       '- [ ] Pay ⏫ 🔁 every week 📅 2026-10-01',
     )
     expect(changedTask(line, { due: '' })).toBe('- [ ] Pay')
-    expect(lastDateTaken(readTaskOf('- [ ] Pay 🔁 every week 📅 2026-10-01'), { due: null })).toBe(
-      true,
+    expect(lastDateTaken(readTaskOf('- [ ] Pay 🔁 every week 📅 2026-10-01'), { due: null })).toBe(true)
+    expect(changedTask('- [ ] Pay 🔁 every week 📅 2026-10-01', { due: null, recurrence: 'every day' })).toBe(
+      '- [ ] Pay 🔁 every day',
     )
-    expect(
-      changedTask('- [ ] Pay 🔁 every week 📅 2026-10-01', { due: null, recurrence: 'every day' }),
-    ).toBe('- [ ] Pay 🔁 every day')
   })
 })
 
@@ -249,10 +223,6 @@ function readTaskOf(line: string) {
 }
 
 test('a field arriving in front of one glued to the words: stands apart from them, so a tag is a tag; and adds no second blank where there is one', () => {
-  expect(changedTask('- [ ] x⏫ 📅 2026-01-02', { tags: ['new'] })).toBe(
-    '- [ ] x #new ⏫ 📅 2026-01-02',
-  )
-  expect(changedTask('- [ ] x ⏫ 📅 2026-01-02', { tags: ['new'] })).toBe(
-    '- [ ] x #new ⏫ 📅 2026-01-02',
-  )
+  expect(changedTask('- [ ] x⏫ 📅 2026-01-02', { tags: ['new'] })).toBe('- [ ] x #new ⏫ 📅 2026-01-02')
+  expect(changedTask('- [ ] x ⏫ 📅 2026-01-02', { tags: ['new'] })).toBe('- [ ] x #new ⏫ 📅 2026-01-02')
 })

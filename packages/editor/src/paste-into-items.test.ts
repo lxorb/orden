@@ -17,9 +17,7 @@ function pasted(doc: string, text: string): string {
 
 describe('code pasted into an item or quote keeps all of its lines inside', () => {
   test('a diff pasted after the words of a bullet stays in the item', () => {
-    expect(pasted('- see', '```diff\n- old\n+ new\n```')).toBe(
-      '- see\n\n  ```diff\n  - old\n  + new\n  ```',
-    )
+    expect(pasted('- see', '```diff\n- old\n+ new\n```')).toBe('- see\n\n  ```diff\n  - old\n  + new\n  ```')
   })
 
   test('a prompt pasted into a quote keeps its own marker', () => {

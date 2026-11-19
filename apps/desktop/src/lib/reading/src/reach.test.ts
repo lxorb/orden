@@ -15,8 +15,6 @@ test('what a note reads as changes once a note it links to is made, and not on e
 
 test('a note that embeds or asks follows every change of the index', () => {
   for (const doc of ['![[Plan]]', '```query\ntag:x\n```']) {
-    expect(reachKey(doc, 'Start.md', index([], 1))).not.toBe(
-      reachKey(doc, 'Start.md', index([], 2)),
-    )
+    expect(reachKey(doc, 'Start.md', index([], 1))).not.toBe(reachKey(doc, 'Start.md', index([], 2)))
   }
 })

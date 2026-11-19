@@ -24,11 +24,7 @@
   })
 </script>
 
-<div
-  class="notice"
-  transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}
-  {@attach told(said)}
->
+<div class="notice" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }} {@attach told(said)}>
   <img
     class="mark"
     src="/icon-256.png"

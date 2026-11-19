@@ -201,9 +201,7 @@ describe('a caret put where a block is drawn', () => {
   test('and the formula is drawn again on the way out', () => {
     const doc = 'intro\n\n$$x = 1$$ \ntail\n'
     const end = doc.indexOf(' \ntail') + 1
-    const out = parsed(
-      caretAt(doc, end).update({ selection: EditorSelection.cursor(doc.indexOf('tail')) }).state,
-    )
+    const out = parsed(caretAt(doc, end).update({ selection: EditorSelection.cursor(doc.indexOf('tail')) }).state)
 
     expect(out.selection.main.head).toBe(doc.indexOf('tail'))
     expect(drawn(out.field(blockDecorations), doc)).toEqual(['$$x = 1$$ '])
@@ -273,13 +271,9 @@ function afterTyping(doc: string, at: number, insert: string, to = at) {
 
 function drawn(blocks: { decorations: { between: unknown } }, doc: string): string[] {
   const out: string[] = []
-  ;(blocks.decorations as import('@codemirror/view').DecorationSet).between(
-    0,
-    doc.length,
-    (from, to) => {
-      out.push(doc.slice(from, to))
-    },
-  )
+  ;(blocks.decorations as import('@codemirror/view').DecorationSet).between(0, doc.length, (from, to) => {
+    out.push(doc.slice(from, to))
+  })
   return out
 }
 
@@ -317,9 +311,7 @@ describe('prose typed away from every construct', () => {
       )
       at += 1
     }
-    now = parsed(
-      now.update({ selection: EditorSelection.cursor(now.doc.length), userEvent: 'select' }).state,
-    )
+    now = parsed(now.update({ selection: EditorSelection.cursor(now.doc.length), userEvent: 'select' }).state)
     const text = now.doc.toString()
     const table = '| Name | Age\n| --- | --- |\n| Ann | 30 |'
     expect(drawn({ decorations: buildBlockDecorations(now) }, text), 'reopened').toEqual([table])
@@ -357,9 +349,7 @@ describe('prose typed away from every construct', () => {
     const at = plain.indexOf('```') + 3
     const after = parsed(state(plain).update({ changes: { from: at, insert: 'mermaid' } }).state)
 
-    expect(drawn(after.field(blockDecorations), after.doc.toString())).toEqual([
-      '```mermaid\ngraph TD\n```',
-    ])
+    expect(drawn(after.field(blockDecorations), after.doc.toString())).toEqual(['```mermaid\ngraph TD\n```'])
   })
 
   test('an equation uncovered by deleting the word in front of it is found', () => {
@@ -398,9 +388,7 @@ describe('prose typed away from every construct', () => {
   test('a toc completed by deleting the words after it is drawn', () => {
     const draft = 'intro\n\n[toc] draft\n\n# One\n'
     const from = draft.indexOf('[toc]') + '[toc]'.length
-    const after = parsed(
-      state(draft).update({ changes: { from, to: from + ' draft'.length } }).state,
-    )
+    const after = parsed(state(draft).update({ changes: { from, to: from + ' draft'.length } }).state)
 
     expect(drawn(after.field(blockDecorations), after.doc.toString())).toEqual(['[toc]'])
   })

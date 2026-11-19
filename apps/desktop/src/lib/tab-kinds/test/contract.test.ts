@@ -2,23 +2,14 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { TAB_KINDS as KINDS } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
-import {
-  builtinName,
-  isTabKind,
-  kindsWhere,
-  readViewSpec,
-  TAB_KINDS,
-  writeViewSpec,
-} from '../src/api'
+import { builtinName, isTabKind, kindsWhere, readViewSpec, TAB_KINDS, writeViewSpec } from '../src/api'
 
 describe('the module stands on its own', () => {
   test('reads nothing but contracts and the platform', () => {
     const reads = (name: string) =>
-      [
-        ...readFileSync(join(import.meta.dirname, '../src', name), 'utf8').matchAll(
-          /from '([^']*)'/g,
-        ),
-      ].map((found) => found[1])
+      [...readFileSync(join(import.meta.dirname, '../src', name), 'utf8').matchAll(/from '([^']*)'/g)].map(
+        (found) => found[1],
+      )
     expect(reads('api.ts')).toEqual(['@orden/contracts', './view-spec'])
     expect(reads('view-spec.ts')).toEqual(['../../platform/src/api'])
   })

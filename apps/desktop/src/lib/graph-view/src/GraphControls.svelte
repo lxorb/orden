@@ -62,9 +62,7 @@
 
   function setGroup(index: number, change: { query?: string; colour?: number }) {
     workspace.graphSettings.set({
-      groups: settings.groups.map((group, one) =>
-        one === index ? { ...group, ...change } : group,
-      ),
+      groups: settings.groups.map((group, one) => (one === index ? { ...group, ...change } : group)),
     })
   }
 
@@ -131,8 +129,7 @@
           value={settings.depth}
           aria-label="Depth"
           style:--fill="{((settings.depth - SHALLOWEST) / (DEEPEST - SHALLOWEST)) * 100}%"
-          oninput={(event) =>
-            workspace.graphSettings.set({ depth: Number(event.currentTarget.value) })}
+          oninput={(event) => workspace.graphSettings.set({ depth: Number(event.currentTarget.value) })}
         />
       </div>
 
@@ -192,8 +189,7 @@
             value={spread}
             aria-label="Spread"
             style:--fill="{((spread - LEAST_SPREAD) / (MOST_SPREAD - LEAST_SPREAD)) * 100}%"
-            oninput={(event) =>
-              workspace.graphSettings.set({ spread: Number(event.currentTarget.value) })}
+            oninput={(event) => workspace.graphSettings.set({ spread: Number(event.currentTarget.value) })}
           />
         </div>
 
@@ -207,11 +203,8 @@
             step="4"
             value={settings.distance}
             aria-label="Link distance"
-            style:--fill="{((settings.distance - LEAST_DISTANCE) /
-              (MOST_DISTANCE - LEAST_DISTANCE)) *
-              100}%"
-            oninput={(event) =>
-              workspace.graphSettings.set({ distance: Number(event.currentTarget.value) })}
+            style:--fill="{((settings.distance - LEAST_DISTANCE) / (MOST_DISTANCE - LEAST_DISTANCE)) * 100}%"
+            oninput={(event) => workspace.graphSettings.set({ distance: Number(event.currentTarget.value) })}
           />
         </div>
 
@@ -226,8 +219,7 @@
             value={settings.push}
             aria-label="Push"
             style:--fill="{((settings.push - LEAST_PUSH) / (MOST_PUSH - LEAST_PUSH)) * 100}%"
-            oninput={(event) =>
-              workspace.graphSettings.set({ push: Number(event.currentTarget.value) })}
+            oninput={(event) => workspace.graphSettings.set({ push: Number(event.currentTarget.value) })}
           />
         </div>
 
@@ -253,8 +245,7 @@
           value={settings.lines}
           aria-label="Lines"
           style:--fill="{((settings.lines - LEAST_LINES) / (MOST_LINES - LEAST_LINES)) * 100}%"
-          oninput={(event) =>
-            workspace.graphSettings.set({ lines: Number(event.currentTarget.value) })}
+          oninput={(event) => workspace.graphSettings.set({ lines: Number(event.currentTarget.value) })}
         />
       </div>
 
@@ -269,8 +260,7 @@
           value={settings.fade}
           aria-label="Text fade"
           style:--fill="{((settings.fade - LEAST_FADE) / (MOST_FADE - LEAST_FADE)) * 100}%"
-          oninput={(event) =>
-            workspace.graphSettings.set({ fade: Number(event.currentTarget.value) })}
+          oninput={(event) => workspace.graphSettings.set({ fade: Number(event.currentTarget.value) })}
         />
       </div>
 

@@ -1,14 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  asksFirst,
-  imageIn,
-  imageKindAt,
-  imageKindOf,
-  linesIn,
-  pasted,
-  spokenPath,
-  spokenPaths,
-} from './paste'
+import { asksFirst, imageIn, imageKindAt, imageKindOf, linesIn, pasted, spokenPath, spokenPaths } from './paste'
 
 describe('a paste into a terminal', () => {
   test('loses the whitespace after a single line', () => {

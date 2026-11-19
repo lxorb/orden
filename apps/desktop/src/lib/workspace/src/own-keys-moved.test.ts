@@ -52,10 +52,7 @@ beforeEach(() => {
 
 describe("a space's notes from before Orden kept its own metadata", () => {
   test('have their icon, colour and cover moved out of the text, once', async () => {
-    held.texts.set(
-      PLAN,
-      '---\ntitle: Plan\nicon: rocket\nicon-color: red\ncover: sea.png\n---\n\n# Plan\n',
-    )
+    held.texts.set(PLAN, '---\ntitle: Plan\nicon: rocket\nicon-color: red\ncover: sea.png\n---\n\n# Plan\n')
     held.texts.set('/space/Bare.md', '# Bare\n')
     await moved()
     expect(workspace.itemMeta.of(PLAN)).toEqual({

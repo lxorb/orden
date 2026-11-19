@@ -3,15 +3,7 @@ import { blank } from '@orden/pass/envelope'
 import type { Card, Content, Identity, Login, Website } from '@orden/pass/types'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import '../test/no-device'
-import type {
-  FieldRole,
-  FillTarget,
-  FormKind,
-  PassForms,
-  PassFrame,
-  PassMark,
-  PassSubmitted,
-} from './channel'
+import type { FieldRole, FillTarget, FormKind, PassForms, PassFrame, PassMark, PassSubmitted } from './channel'
 import type { Pause, Paused } from './settings'
 
 const heard = vi.hoisted(() => ({
@@ -198,11 +190,7 @@ describe('where Pass fills', () => {
   test("a frame whose address is not on the engine's origin is dropped", async () => {
     await kept(login({ username: 'alice', password: 'pw' }))
     made()
-    await marked(
-      frameAt('https://bank.com/login', { origin: 'https://evil.com' }),
-      'login',
-      SIGN_IN,
-    )
+    await marked(frameAt('https://bank.com/login', { origin: 'https://evil.com' }), 'login', SIGN_IN)
     expect(shown()).toBeNull()
     expect(heard.filled).toHaveLength(0)
   })
@@ -214,9 +202,7 @@ describe('where Pass fills', () => {
     await marked(inner, 'login', SIGN_IN)
     const bubble = shown()
     expect(bubble?.kind === 'choose' && bubble.logins).toEqual([])
-    const named = await kept(
-      login({ title: 'Named', websites: [site('https://accounts.bank.com', 'host')] }),
-    )
+    const named = await kept(login({ title: 'Named', websites: [site('https://accounts.bank.com', 'host')] }))
     await marked(inner, 'login', SIGN_IN)
     const again = shown()
     expect(again?.kind === 'choose' && again.logins.map((one) => one.id)).toEqual([named.id])
@@ -225,11 +211,7 @@ describe('where Pass fills', () => {
   test('a frame of another site entirely is offered no login', async () => {
     await kept(login({ username: 'alice', password: 'pw' }))
     made()
-    await marked(
-      frameAt('https://evil.com/frame', { frame: 'inner', top: false }),
-      'login',
-      SIGN_IN,
-    )
+    await marked(frameAt('https://evil.com/frame', { frame: 'inner', top: false }), 'login', SIGN_IN)
     const bubble = shown()
     expect(bubble?.kind === 'choose' && bubble.logins).toEqual([])
   })
@@ -243,9 +225,7 @@ describe('the mark', () => {
     await marked(frame, 'login', SIGN_IN)
     const bubble = shown()
     expect(bubble?.kind).toBe('choose')
-    expect(bubble?.kind === 'choose' && bubble.logins).toEqual([
-      { id: item.id, title: 'Bank', subtitle: 'alice' },
-    ])
+    expect(bubble?.kind === 'choose' && bubble.logins).toEqual([{ id: item.id, title: 'Bank', subtitle: 'alice' }])
     await autofill.choose(TAB, item.id)
     const target: FillTarget = { tab: TAB, frame: 'main', origin: BANK, form: '1' }
     expect(heard.filled).toEqual([{ target, values: { e10: 'alice', e11: 'pw' }, submit: false }])
@@ -266,11 +246,7 @@ describe('the mark', () => {
 
   test('a sign-up form offers a generated password into its new password fields', async () => {
     const autofill = made()
-    await marked(frameAt('https://bank.com/join'), 'signup', [
-      'email',
-      'new-password',
-      'new-password',
-    ])
+    await marked(frameAt('https://bank.com/join'), 'signup', ['email', 'new-password', 'new-password'])
     const bubble = shown()
     expect(bubble?.kind === 'choose' && bubble.generate).toBe(true)
     await autofill.generate(TAB)
@@ -301,14 +277,7 @@ describe('the mark', () => {
     }
     const item = await kept(card)
     const autofill = made()
-    const roles: FieldRole[] = [
-      'cc-name',
-      'cc-number',
-      'cc-exp',
-      'cc-exp-month',
-      'cc-exp-year',
-      'cc-csc',
-    ]
+    const roles: FieldRole[] = ['cc-name', 'cc-number', 'cc-exp', 'cc-exp-month', 'cc-exp-year', 'cc-csc']
     await marked(frameAt('https://shop.com/pay'), 'card', roles)
     const bubble = shown()
     expect(bubble?.kind === 'choose' && bubble.cards.map((one) => one.id)).toEqual([item.id])
@@ -469,10 +438,7 @@ describe('saving what was sent', () => {
     const item = await kept(login({ username: 'alice', password: 'pw' }))
     const autofill = made()
     const frame = frameAt('https://bank.com/settings')
-    await said(
-      'submitted',
-      submitted(frame, { kind: 'change', password: 'pw', newPassword: 'new-pw' }),
-    )
+    await said('submitted', submitted(frame, { kind: 'change', password: 'pw', newPassword: 'new-pw' }))
     expect(shown()).toMatchObject({ kind: 'save', update: true })
     await autofill.save(TAB)
     const content = store.items.find((one) => one.id === item.id)?.content
@@ -482,10 +448,7 @@ describe('saving what was sent', () => {
   test("a sign-up's new password is what is saved", async () => {
     const autofill = made()
     const frame = frameAt('https://bank.com/join')
-    await said(
-      'submitted',
-      submitted(frame, { kind: 'signup', username: 'carol', newPassword: 'fresh' }),
-    )
+    await said('submitted', submitted(frame, { kind: 'signup', username: 'carol', newPassword: 'fresh' }))
     await autofill.save(TAB)
     const content = store.items[0]?.content
     expect(content?.kind === 'login' && content.password).toBe('fresh')
@@ -588,9 +551,7 @@ describe('signing in by itself', () => {
   })
 
   test('a login naming the subdomain itself signs in there', async () => {
-    await kept(
-      login({ username: 'alice', password: 'pw', websites: [site('https://accounts.bank.com')] }),
-    )
+    await kept(login({ username: 'alice', password: 'pw', websites: [site('https://accounts.bank.com')] }))
     made()
     await said('forms', loginPage('https://accounts.bank.com/login'))
     await settled(1)
@@ -660,10 +621,7 @@ describe('signing in by itself', () => {
   test('an insecure page is never signed in', async () => {
     await kept(login({ username: 'alice', password: 'pw', websites: [site('http://bank.com')] }))
     made()
-    await said(
-      'forms',
-      forms(frameAt('http://bank.com/login', { secure: false }), 'login', SIGN_IN),
-    )
+    await said('forms', forms(frameAt('http://bank.com/login', { secure: false }), 'login', SIGN_IN))
     await unsent()
   })
 })

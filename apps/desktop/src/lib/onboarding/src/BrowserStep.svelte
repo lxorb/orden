@@ -35,16 +35,13 @@
     void currentSettings().then((now) => (custom = now))
   })
 
-  const main = MAIN_BROWSERS.map((id) => BROWSERS.find((one) => one.id === id)).filter(
-    (one) => one !== undefined,
-  )
+  const main = MAIN_BROWSERS.map((id) => BROWSERS.find((one) => one.id === id)).filter((one) => one !== undefined)
   const known = $derived(matching(BROWSERS, query))
   const later = $derived(matching(LATER_BROWSERS, query))
   const nothing = $derived(!!query.trim() && !known.length && !later.length)
 
   const asked = $derived.by((): Brand | null => {
-    if (picked === UNLISTED)
-      return { id: UNLISTED, name: typedName(query), icon: null, colour: null }
+    if (picked === UNLISTED) return { id: UNLISTED, name: typedName(query), icon: null, colour: null }
     return LATER_BROWSERS.find((one) => one.id === picked) ?? null
   })
 
@@ -87,11 +84,7 @@
 
 {#snippet sliders()}
   <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true"
-    ><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle
-      cx="10"
-      cy="17"
-      r="2"
-    /></svg
+    ><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg
   >
 {/snippet}
 
@@ -116,11 +109,7 @@
     </div>
   {:else}
     <div class="o-pane pane-in">
-      <SearchField
-        value={query}
-        onvalue={(typed: string) => (query = typed)}
-        label="Which browser do you use now?"
-      />
+      <SearchField value={query} onvalue={(typed: string) => (query = typed)} label="Which browser do you use now?" />
       <div class="o-scroll">
         <div class="o-grid" role="radiogroup" aria-label="Which browser do you use now?">
           {#each known as one (one.id)}
@@ -149,12 +138,7 @@
               onpick={() => (picked = UNLISTED)}
             />
           {/if}
-          <Tile
-            name="Custom"
-            checked={picked === CUSTOM}
-            glyph={sliders}
-            onpick={() => (picked = CUSTOM)}
-          />
+          <Tile name="Custom" checked={picked === CUSTOM} glyph={sliders} onpick={() => (picked = CUSTOM)} />
         </div>
       </div>
     </div>
@@ -177,11 +161,7 @@
     </div>
   {:else if asked}
     <div class="o-list pane-in">
-      <RequestRow
-        name={asked.name}
-        colour={asked.colour}
-        asked={requestKey('browser', asked.name)}
-      />
+      <RequestRow name={asked.name} colour={asked.colour} asked={requestKey('browser', asked.name)} />
     </div>
   {/if}
 

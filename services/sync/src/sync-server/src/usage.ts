@@ -111,8 +111,7 @@ async function usageEvents(event: UsageDay, timestamp: string): Promise<Captured
 }
 
 async function capturedOf(event: UsageEvent, at: number): Promise<Captured[]> {
-  const timestamp =
-    event.day === dayOf(at) ? new Date(at).toISOString() : `${event.day}T12:00:00.000Z`
+  const timestamp = event.day === dayOf(at) ? new Date(at).toISOString() : `${event.day}T12:00:00.000Z`
   if (event.kind === 'usage') return usageEvents(event, timestamp)
   return [{ event: 'daily install', distinct_id: newId(), timestamp, properties: shared(event) }]
 }
@@ -144,8 +143,7 @@ usage.post('/', async (context) => {
   const env = context.env
   const machine = machineOf(context.req)
   const allowed =
-    (machine === null ||
-      (await within(env, 'usage-from', await sha256(machine), FROM_ONE_MACHINE, AN_HOUR))) &&
+    (machine === null || (await within(env, 'usage-from', await sha256(machine), FROM_ONE_MACHINE, AN_HOUR))) &&
     (await within(env, 'usage', 'all', ALL_IN_A_DAY, A_DAY))
   if (!allowed) return context.json({ error: TRY_IN_AN_HOUR }, 429)
 

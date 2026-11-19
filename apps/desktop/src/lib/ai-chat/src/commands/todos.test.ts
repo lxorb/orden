@@ -20,8 +20,7 @@ function host(said = '') {
   const sent: { text: string; once: unknown }[] = []
   const fake = {
     panel: { send: (text: string) => sent.push({ text, once: undefined }) },
-    line: (_thread: Thread, text: string, code?: string) =>
-      lines.push({ text, ...(code ? { code } : {}) }),
+    line: (_thread: Thread, text: string, code?: string) => lines.push({ text, ...(code ? { code } : {}) }),
     ask,
     turn: (_thread: Thread, text: string, once: unknown) => {
       sent.push({ text, once })

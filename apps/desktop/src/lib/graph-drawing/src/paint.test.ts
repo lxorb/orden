@@ -70,8 +70,7 @@ function context(): {
         colour: fake.fillStyle,
         shapes: path ? [...(path as unknown as FakePath).steps] : [],
       }),
-    fillText: (text: string) =>
-      labels.push({ text, alpha: Math.round(fake.globalAlpha * 1000) / 1000 }),
+    fillText: (text: string) => labels.push({ text, alpha: Math.round(fake.globalAlpha * 1000) / 1000 }),
     save: () => saved.push([dx, dy]),
     restore: () => {
       const back = saved.pop() ?? [0, 0]
@@ -237,8 +236,7 @@ describe('a file a note embeds', () => {
 })
 
 describe('the names', () => {
-  const named = (scale: number, fade: number) =>
-    painted(2, 2, { camera: { x: 0, y: 0, scale }, fade }).labels
+  const named = (scale: number, fade: number) => painted(2, 2, { camera: { x: 0, y: 0, scale }, fade }).labels
 
   test('arrive at the zoom they always have when the dial is untouched', () => {
     expect(named(0.5, 1)).toEqual([])

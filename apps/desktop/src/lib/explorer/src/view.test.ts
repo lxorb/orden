@@ -32,8 +32,7 @@ vi.mock('./commands', () => ({
     listed.push(path)
     const names = DISK[path]
     const waited = slow.get(path) ?? Promise.resolve()
-    if (!names)
-      return waited.then(() => Promise.reject(new Error(`${path}: No such file or directory`)))
+    if (!names) return waited.then(() => Promise.reject(new Error(`${path}: No such file or directory`)))
     return waited.then(() => ({
       path,
       parent: null,
@@ -106,9 +105,7 @@ describe('a file explorer', () => {
   })
 
   test('goes back and forward, and up with the folder it left picked', async () => {
-    const view = viewOf(
-      tabWith('{"folder":"/home/me/Pictures","back":["/home/me"],"ahead":[]}') as never,
-    )
+    const view = viewOf(tabWith('{"folder":"/home/me/Pictures","back":["/home/me"],"ahead":[]}') as never)
     await view.appear()
     await view.back()
     expect(view.folder).toBe('/home/me')

@@ -27,11 +27,7 @@ function hit(path: string, line: number, text: string, ranges = [{ from: 0, to: 
 
 describe('the words a question is searched by', () => {
   test('leave the grammar out, in English and in German', () => {
-    expect(searchWords('Where do herons stand in the winter?')).toEqual([
-      'herons',
-      'stand',
-      'winter',
-    ])
+    expect(searchWords('Where do herons stand in the winter?')).toEqual(['herons', 'stand', 'winter'])
     expect(searchWords('Wo stehen die Reiher im Winter?')).toEqual(['stehen', 'reiher', 'winter'])
   })
 
@@ -177,9 +173,7 @@ describe('what the model is shown', () => {
     const [message] = contextFor(passages, '')
 
     expect(message?.role).toBe('system')
-    expect(message?.content).toContain(
-      '<passage n="1" note="A \'quoted\'" line="5">\nfirst\n</passage>',
-    )
+    expect(message?.content).toContain('<passage n="1" note="A \'quoted\'" line="5">\nfirst\n</passage>')
     expect(message?.content).toContain('<passage n="2" note="C" line="1">')
   })
 
@@ -220,23 +214,19 @@ describe('the citations in an answer', () => {
   })
 
   test('name the notes alone where a link would not reach them, once in a row', () => {
-    expect(
-      linkedAnswer('Still [1][1]. Hovers [2] [2]. Both [1, 2]. Nothing [7].', birds, named),
-    ).toBe('Still Herons. Hovers Kestrels. Both Herons Kestrels. Nothing [7].')
+    expect(linkedAnswer('Still [1][1]. Hovers [2] [2]. Both [1, 2]. Nothing [7].', birds, named)).toBe(
+      'Still Herons. Hovers Kestrels. Both Herons Kestrels. Nothing [7].',
+    )
   })
 
   test('leave the words alone where a short name cited is said in them', () => {
     const sources = [{ path: 'an.md', name: 'an' }]
-    expect(linkedAnswer('A banana, an an apple [1] [1].', sources, named)).toBe(
-      'A banana, an an apple an.',
-    )
+    expect(linkedAnswer('A banana, an an apple [1] [1].', sources, named)).toBe('A banana, an an apple an.')
   })
 
   test('fold a name cited right after the answer says it', () => {
     const sources = [heron, { path: 'Japan.md', name: 'an' }]
-    expect(linkedAnswer('About Herons [1]. In Japan [2].', sources, named)).toBe(
-      'About Herons. In Japan an.',
-    )
+    expect(linkedAnswer('About Herons [1]. In Japan [2].', sources, named)).toBe('About Herons. In Japan an.')
   })
 })
 
@@ -253,8 +243,7 @@ describe('asking the space', () => {
     ) => {
       const excluded = left ?? []
       asked.push({ excluded })
-      const words =
-        query.kind === 'any' ? query.of.flatMap((one) => ('text' in one ? [one.text] : [])) : []
+      const words = query.kind === 'any' ? query.of.flatMap((one) => ('text' in one ? [one.text] : [])) : []
       const hits: Hit[] = []
       for (const [path, text] of Object.entries(notes)) {
         if (excluded.includes(path)) continue
@@ -296,10 +285,7 @@ describe('asking the space', () => {
   })
 
   test('hands the search what the space leaves out, which is how the archive stays out', async () => {
-    const { space, asked } = spaceOf(
-      { 'Old.md': 'a secret roost', 'New.md': 'a roost' },
-      { excluded: ['Old.md'] },
-    )
+    const { space, asked } = spaceOf({ 'Old.md': 'a secret roost', 'New.md': 'a roost' }, { excluded: ['Old.md'] })
 
     const found = await retrieve('Where is the roost?', space, null)
     expect(asked[0]?.excluded).toEqual(['Old.md'])
@@ -324,8 +310,7 @@ describe('asking the space', () => {
         }, 200)
       })
     }
-    const read = (path: string) =>
-      Promise.resolve(path.endsWith('Early.md') ? 'wind early' : 'wind late')
+    const read = (path: string) => Promise.resolve(path.endsWith('Early.md') ? 'wind early' : 'wind late')
 
     const found = await retrieve('wind', { ...space, search: late, read, deadline: 20 }, null)
     expect(found.map((one) => one.path)).toEqual(['Early.md'])
@@ -333,8 +318,7 @@ describe('asking the space', () => {
 
   test('keeps within its budget however much the space says', async () => {
     const notes: Record<string, string> = {}
-    for (let at = 0; at < 20; at++)
-      notes[`n${at}.md`] = Array(200).fill('wind words here').join('\n')
+    for (let at = 0; at < 20; at++) notes[`n${at}.md`] = Array(200).fill('wind words here').join('\n')
     const { space } = spaceOf(notes)
 
     const found = await retrieve('wind', space, null)

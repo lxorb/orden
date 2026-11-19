@@ -48,13 +48,7 @@ export interface Listening {
   took: Took | null
 }
 
-const HOPELESS = new Set([
-  'network',
-  'service-not-allowed',
-  'not-allowed',
-  'audio-capture',
-  'language-not-supported',
-])
+const HOPELESS = new Set(['network', 'service-not-allowed', 'not-allowed', 'audio-capture', 'language-not-supported'])
 
 const NO_FRAMES = 2000
 

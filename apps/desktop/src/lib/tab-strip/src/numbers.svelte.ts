@@ -160,16 +160,14 @@ class Numbers {
   }
 
   private essentialsWorn(): Worn[] {
-    return [...document.querySelectorAll<HTMLElement>('[data-essential-letter]')].flatMap(
-      (tile) => {
-        const label = tile.dataset.essentialLetter
-        const box = tile.getBoundingClientRect()
-        if (!label || !box.width || box.right <= 0 || box.left >= innerWidth) return []
-        if (box.bottom <= 0 || box.top >= innerHeight) return []
-        const x = box.right
-        return [{ id: `essential:${label}`, label, x, y: box.bottom }]
-      },
-    )
+    return [...document.querySelectorAll<HTMLElement>('[data-essential-letter]')].flatMap((tile) => {
+      const label = tile.dataset.essentialLetter
+      const box = tile.getBoundingClientRect()
+      if (!label || !box.width || box.right <= 0 || box.left >= innerWidth) return []
+      if (box.bottom <= 0 || box.top >= innerHeight) return []
+      const x = box.right
+      return [{ id: `essential:${label}`, label, x, y: box.bottom }]
+    })
   }
 }
 
@@ -177,9 +175,7 @@ const FOLLOW_FRAMES = 60
 
 function moving(): boolean {
   return [...document.querySelectorAll('[data-strip]')].some(
-    (strip) =>
-      typeof strip.getAnimations === 'function' &&
-      strip.getAnimations({ subtree: true }).length > 0,
+    (strip) => typeof strip.getAnimations === 'function' && strip.getAnimations({ subtree: true }).length > 0,
   )
 }
 

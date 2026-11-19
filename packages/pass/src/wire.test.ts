@@ -132,9 +132,7 @@ describe('the shapes the account answers with', () => {
     expect(itemRowIn({ ...ITEM, body: '' })).toBeNull()
     expect(itemRowIn({ ...ITEM, deleted: true })).toBeNull()
     expect(memberIn({ email: '', name: '', role: 'editor', state: 'active', pub: null })).toBeNull()
-    expect(
-      memberIn({ email: 'a@b.c', name: '', role: 'editor', state: 'removed', pub: null }),
-    ).toBeNull()
+    expect(memberIn({ email: 'a@b.c', name: '', role: 'editor', state: 'removed', pub: null })).toBeNull()
     expect(
       linkRowIn({
         id: 'link-one',
@@ -146,9 +144,7 @@ describe('the shapes the account answers with', () => {
         created: 1,
       }),
     ).toBeNull()
-    expect(
-      changesIn({ seq: 1, more: false, keyring: null, vaults: [{}], items: [], invites: [] }),
-    ).toBeNull()
+    expect(changesIn({ seq: 1, more: false, keyring: null, vaults: [{}], items: [], invites: [] })).toBeNull()
     for (const junk of [null, 1, 'x', [], {}]) {
       expect(vaultRowIn(junk)).toBeNull()
       expect(itemRowIn(junk)).toBeNull()

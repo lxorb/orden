@@ -85,10 +85,7 @@ describe('the first sync engine', () => {
     const note = { id: 'n1', version: 2, hash: 'h' }
     held.set('orden:mirrors', JSON.stringify(mirrorOf({ 'Later.md': note })))
     sync.start()
-    held.set(
-      'orden:mirrors',
-      JSON.stringify(mirrorOf({ 'Plan.md': note, 'Other.md': { ...note, id: 'n2' } })),
-    )
+    held.set('orden:mirrors', JSON.stringify(mirrorOf({ 'Plan.md': note, 'Other.md': { ...note, id: 'n2' } })))
 
     sync.reread()
 

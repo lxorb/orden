@@ -1,14 +1,5 @@
 export type BrowserId =
-  | 'safari'
-  | 'firefox'
-  | 'chrome'
-  | 'edge'
-  | 'brave'
-  | 'chromium'
-  | 'vivaldi'
-  | 'opera'
-  | 'opera-gx'
-  | 'arc'
+  'safari' | 'firefox' | 'chrome' | 'edge' | 'brave' | 'chromium' | 'vivaldi' | 'opera' | 'opera-gx' | 'arc'
 
 export type Importer = BrowserId | 'zen'
 

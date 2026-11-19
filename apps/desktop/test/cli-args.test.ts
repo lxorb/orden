@@ -8,9 +8,7 @@ import { expect, test } from 'vitest'
 
 const CLI = join(import.meta.dirname, '../../cli/orden.mjs')
 
-async function sent(
-  words: string[],
-): Promise<{ verb: string; args: Record<string, unknown>; rest: string[] }> {
+async function sent(words: string[]): Promise<{ verb: string; args: Record<string, unknown>; rest: string[] }> {
   let body = ''
   const server = createServer((request, response) => {
     request.on('data', (chunk: Buffer) => (body += chunk.toString()))
@@ -59,10 +57,7 @@ test('after a bare -- every word is a word, flag-shaped or not', async () => {
   })
 })
 
-async function ran(
-  words: string[],
-  answer: unknown,
-): Promise<{ out: string; err: string; code: number | null }> {
+async function ran(words: string[], answer: unknown): Promise<{ out: string; err: string; code: number | null }> {
   const server = createServer((request, response) => {
     request.resume()
     request.on('end', () => response.end(JSON.stringify(answer)))
@@ -85,15 +80,21 @@ async function ran(
 }
 
 test('a verb the app answers in an agent’s shape reads as done when it is done', async () => {
-  expect(
-    await ran(['browser_tabs'], { status: 'ok', result: { tabs: [{ id: 't1', title: 'Docs' }] } }),
-  ).toEqual({ out: 't1\tDocs\n', err: '', code: 0 })
-  expect(
-    await ran(['browser_tabs'], { status: 'error', code: 'failed', message: 'no browser' }),
-  ).toEqual({ out: '', err: 'no browser\n', code: 1 })
-  expect(
-    await ran(['browser_tabs'], { status: 'needs_approval', approval: 'a1', summary: 'Approve?' }),
-  ).toEqual({ out: '', err: 'Approve?\n', code: 1 })
+  expect(await ran(['browser_tabs'], { status: 'ok', result: { tabs: [{ id: 't1', title: 'Docs' }] } })).toEqual({
+    out: 't1\tDocs\n',
+    err: '',
+    code: 0,
+  })
+  expect(await ran(['browser_tabs'], { status: 'error', code: 'failed', message: 'no browser' })).toEqual({
+    out: '',
+    err: 'no browser\n',
+    code: 1,
+  })
+  expect(await ran(['browser_tabs'], { status: 'needs_approval', approval: 'a1', summary: 'Approve?' })).toEqual({
+    out: '',
+    err: 'Approve?\n',
+    code: 1,
+  })
   expect((await ran(['browser_tabs', '--json'], { status: 'ok', result: {} })).code).toBe(0)
 })
 
@@ -114,9 +115,7 @@ test.skipIf(process.platform !== 'linux')(
       join(home, '.config', 'so.orden.Orden', 'automation.json'),
       JSON.stringify({ port, secret: 's', pid: 1 }),
     )
-    const env = Object.fromEntries(
-      Object.entries(process.env).filter(([name]) => !name.startsWith('ORDEN_')),
-    )
+    const env = Object.fromEntries(Object.entries(process.env).filter(([name]) => !name.startsWith('ORDEN_')))
 
     const codes: (number | null)[] = []
     for (const config of ['', 'relative/config']) {

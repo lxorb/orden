@@ -306,8 +306,7 @@ export function wrap(text: string, inner: number, hang = ''): readonly string[] 
   return rows
 }
 
-export const rows = (text: string, inner: number, hang = ''): number =>
-  wrap(text, inner, hang).length
+export const rows = (text: string, inner: number, hang = ''): number => wrap(text, inner, hang).length
 
 export function fit(text: string, most: number): string {
   const whole = fold(text)

@@ -17,9 +17,7 @@ describe('an inbox stamp', () => {
 
   test('is read back by the wire', () => {
     const stamp = inboxStamp(Date.UTC(2026, 10, 7), 3, 'laptop-1')
-    expect(
-      inboxChangeOf({ id: 'a', fields: { text: 'x' }, stamps: { text: stamp } }),
-    ).not.toBeNull()
+    expect(inboxChangeOf({ id: 'a', fields: { text: 'x' }, stamps: { text: stamp } })).not.toBeNull()
   })
 })
 
@@ -35,8 +33,6 @@ describe('merging a change into a to-do', () => {
     })
     expect(merged.fields).toEqual({ text: 'a', due: '2' })
     expect(merged.changed).toBe(true)
-    expect(
-      mergedInbox(merged, { fields: { due: '9' }, stamps: { due: inboxStamp(2, 0, 'z') } }).changed,
-    ).toBe(false)
+    expect(mergedInbox(merged, { fields: { due: '9' }, stamps: { due: inboxStamp(2, 0, 'z') } }).changed).toBe(false)
   })
 })

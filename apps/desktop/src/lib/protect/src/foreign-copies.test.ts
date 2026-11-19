@@ -10,8 +10,7 @@ const SYNCTHING = `${ROOT}/Diary.sync-conflict-20261115-101010-ABCDEFG.md`
 
 beforeEach(() => localStorage.clear())
 
-const beside = (protection: InstanceType<typeof Protection>) =>
-  protection.seesFiles(() => [NOTE, DROPBOX, SYNCTHING])
+const beside = (protection: InstanceType<typeof Protection>) => protection.seesFiles(() => [NOTE, DROPBOX, SYNCTHING])
 
 describe('a foreign sync tool copy beside a locked note', () => {
   test('is locked while the note keeps its name', () => {

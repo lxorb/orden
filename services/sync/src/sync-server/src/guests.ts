@@ -63,9 +63,7 @@ async function openGuestSession(env: Env, guestId: string): Promise<string> {
   await env.DB.prepare('delete from guest_sessions where expires_at < ?').bind(now()).run()
 
   const token = randomToken()
-  await env.DB.prepare(
-    'insert into guest_sessions (token_hash, guest_id, created_at, expires_at) values (?, ?, ?, ?)',
-  )
+  await env.DB.prepare('insert into guest_sessions (token_hash, guest_id, created_at, expires_at) values (?, ?, ?, ?)')
     .bind(await sha256(token), guestId, now(), now() + GUEST_TTL)
     .run()
 
@@ -158,9 +156,7 @@ export async function claimGuest(env: Env, guestId: string, user: User): Promise
       .bind(held.space_id, user.email, held.item, held.role, now(), user.id)
       .run()
 
-    await env.DB.prepare(
-      'delete from guest_members where guest_id = ? and space_id = ? and item = ?',
-    )
+    await env.DB.prepare('delete from guest_members where guest_id = ? and space_id = ? and item = ?')
       .bind(guestId, held.space_id, held.item)
       .run()
   }
@@ -181,9 +177,7 @@ const WAITED_FOR = 30 * 24 * 60 * 60 * 1000
 export async function expireGuests(env: Env, at: number): Promise<number> {
   const cutoff = at - WAITED_FOR
 
-  const waiting = await env.DB.prepare(
-    'delete from guest_members where joined_at is null and created_at < ?',
-  )
+  const waiting = await env.DB.prepare('delete from guest_members where joined_at is null and created_at < ?')
     .bind(cutoff)
     .run()
 

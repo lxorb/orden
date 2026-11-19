@@ -58,12 +58,7 @@ describe('chats from other services', () => {
       const manifest = JSON.parse(read(path)) as Record<string, Record<string, string> | undefined>
       const names = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies']
         .flatMap((field) => Object.keys(manifest[field] ?? {}))
-        .concat(
-          Object.keys(
-            (manifest.pnpm as { patchedDependencies?: object } | undefined)?.patchedDependencies ??
-              {},
-          ),
-        )
+        .concat(Object.keys((manifest.pnpm as { patchedDependencies?: object } | undefined)?.patchedDependencies ?? {}))
       return names.filter(known).map((name) => `${relative(ROOT, path)}: ${name}`)
     })
     expect(held).toEqual([])
@@ -71,9 +66,7 @@ describe('chats from other services', () => {
 
   test('the lockfile installs none', () => {
     const lock = read(join(ROOT, 'pnpm-lock.yaml'))
-    const installed = [...lock.matchAll(/^ {2}'?(@?[^@\s'][^@\s']*)@[^:\s]+'?:$/gm)].map(
-      ([, name = '']) => name,
-    )
+    const installed = [...lock.matchAll(/^ {2}'?(@?[^@\s'][^@\s']*)@[^:\s]+'?:$/gm)].map(([, name = '']) => name)
     expect([...new Set(installed.filter(known))]).toEqual([])
   })
 
@@ -101,9 +94,7 @@ describe('chats from other services', () => {
       join(ROOT, 'apps/desktop/src/lib/chats-client'),
       join(ROOT, 'apps/desktop/src-tauri/src'),
       join(ROOT, 'apps/desktop/src-tauri/crates'),
-    ].flatMap((dir) =>
-      files(dir, (path) => SERVICES.test(relative(dir, path))).map((path) => relative(ROOT, path)),
-    )
+    ].flatMap((dir) => files(dir, (path) => SERVICES.test(relative(dir, path))).map((path) => relative(ROOT, path)))
     expect(named).toEqual([])
   })
 

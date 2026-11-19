@@ -8,8 +8,7 @@ describe('pinIn', () => {
   it('keeps 4 to 12 digits, trimmed', () => {
     expect(pinIn(' 1234 ')).toBe('1234')
     expect(pinIn('123456789012')).toBe('123456789012')
-    for (const bad of ['123', '1234567890123', '12a4', '12 34', '١٢٣٤', ''])
-      expect(pinIn(bad)).toBeNull()
+    for (const bad of ['123', '1234567890123', '12a4', '12 34', '١٢٣٤', '']) expect(pinIn(bad)).toBeNull()
   })
 })
 
@@ -33,12 +32,8 @@ describe('device seals', () => {
     await expect(openForDevice(sealed, secret, undefined, SMALL)).rejects.toThrow(WrongSecret)
     await expect(openForDevice(sealed, secret, 'abcd', SMALL)).rejects.toThrow(WrongSecret)
     await expect(openForDevice(sealed, newKey(), '2468', SMALL)).rejects.toThrow(WrongSecret)
-    await expect(
-      openForDevice({ ...sealed, way: 'device' }, secret, '2468', SMALL),
-    ).rejects.toThrow(WrongSecret)
-    await expect(openForDevice({ ...sealed, salt: null }, secret, '2468', SMALL)).rejects.toThrow(
-      WrongSecret,
-    )
+    await expect(openForDevice({ ...sealed, way: 'device' }, secret, '2468', SMALL)).rejects.toThrow(WrongSecret)
+    await expect(openForDevice({ ...sealed, salt: null }, secret, '2468', SMALL)).rejects.toThrow(WrongSecret)
   })
 
   it('refuses to seal with a PIN that is not one', async () => {

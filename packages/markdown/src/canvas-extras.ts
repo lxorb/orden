@@ -1,11 +1,7 @@
 const NODE_FIELDS = new Set(
-  'id type x y width height color text file subpath url label background backgroundStyle'.split(
-    ' ',
-  ),
+  'id type x y width height color text file subpath url label background backgroundStyle'.split(' '),
 )
-const EDGE_FIELDS = new Set(
-  'id fromNode fromSide fromEnd toNode toSide toEnd color label'.split(' '),
-)
+const EDGE_FIELDS = new Set('id fromNode fromSide fromEnd toNode toSide toEnd color label'.split(' '))
 const TOP_FIELDS = new Set(['nodes', 'edges', 'orden', 'nib'])
 
 export function ownOf(file: Record<string, unknown>): Fields | undefined {
@@ -45,8 +41,7 @@ const named = (kind: Kind, id: string): string => `${kind}:${id}`
 const isRecord = (value: unknown): value is Fields =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
-const idOf = (value: Fields): string | null =>
-  typeof value.id === 'string' && value.id ? value.id : null
+const idOf = (value: Fields): string | null => (typeof value.id === 'string' && value.id ? value.id : null)
 
 function beyond(value: Fields, known: ReadonlySet<string>): Fields | null {
   let out: Fields | null = null
@@ -199,12 +194,7 @@ export function mergedExtras(ours: Extras = none(), theirs: Extras = none()): Ex
   const mine = everyOf(ours)
   const yours = everyOf(theirs)
   const out = none()
-  const names = new Set([
-    ...mine.keys(),
-    ...yours.keys(),
-    ...ours.buried.keys(),
-    ...theirs.buried.keys(),
-  ])
+  const names = new Set([...mine.keys(), ...yours.keys(), ...ours.buried.keys(), ...theirs.buried.keys()])
 
   for (const name of names) {
     const one = mine.get(name)
@@ -290,9 +280,7 @@ export function withExtras(text: string, extras: Extras | undefined): string {
   }
 
   const written = none()
-  written.top = Object.fromEntries(
-    Object.entries(extras.top).filter(([key]) => !TOP_FIELDS.has(key)),
-  )
+  written.top = Object.fromEntries(Object.entries(extras.top).filter(([key]) => !TOP_FIELDS.has(key)))
   written.nib = extras.nib
   for (const [id, node] of extras.nodes) if (nodes.includes(node)) written.nodes.set(id, node)
   for (const [id, edge] of extras.edges) if (edges.includes(edge)) written.edges.set(id, edge)
@@ -318,8 +306,7 @@ export function withExtras(text: string, extras: Extras | undefined): string {
 }
 
 export function extrasText(extras: Extras): string {
-  const sorted = (map: Map<string, Fields>) =>
-    [...map].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+  const sorted = (map: Map<string, Fields>) => [...map].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
   return JSON.stringify({
     top: extras.top,
     nib: extras.nib,
@@ -345,15 +332,13 @@ export function extrasRead(text: unknown): Extras {
   const pairs = (value: unknown) =>
     new Map(
       (Array.isArray(value) ? value : []).filter(
-        (one): one is [string, Fields] =>
-          Array.isArray(one) && typeof one[0] === 'string' && isRecord(one[1]),
+        (one): one is [string, Fields] => Array.isArray(one) && typeof one[0] === 'string' && isRecord(one[1]),
       ),
     )
   const counts = (value: unknown) =>
     new Map(
       (Array.isArray(value) ? value : []).filter(
-        (one): one is [string, number] =>
-          Array.isArray(one) && typeof one[0] === 'string' && Number.isInteger(one[1]),
+        (one): one is [string, number] => Array.isArray(one) && typeof one[0] === 'string' && Number.isInteger(one[1]),
       ),
     )
   return {

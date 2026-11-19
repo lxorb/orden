@@ -1,12 +1,6 @@
 import { webPages } from '@orden/contracts'
 import type { EditorView } from '@orden/editor'
-import type {
-  CheckMenuItem,
-  Menu,
-  MenuItem as TauriMenuItem,
-  PredefinedMenuItem,
-  Submenu,
-} from '@tauri-apps/api/menu'
+import type { CheckMenuItem, Menu, MenuItem as TauriMenuItem, PredefinedMenuItem, Submenu } from '@tauri-apps/api/menu'
 import { takeKeyboard, currentWindow, invoke, afterQuiet } from '../../platform/src/api'
 import { hiddenKinds } from '../../gates/src/api'
 import { type MenuItem, fullscreen } from '../../ui-kit/src/api'
@@ -215,9 +209,7 @@ class MenuBar {
     const entries = this.owned(described.entries)
 
     this.runs = new Map([...described.runs].map(([id, run]) => [this.idOf(id), run]))
-    this.live = new Map(
-      flatten(entries).flatMap((one) => (one.kind === 'item' ? [[one.id, one]] : [])),
-    )
+    this.live = new Map(flatten(entries).flatMap((one) => (one.kind === 'item' ? [[one.id, one]] : [])))
 
     const fresh = raise && this.told !== null && (await othersOpen())
     const changes = this.menu && !fresh ? changesBetween(this.shown, entries) : null

@@ -25,8 +25,7 @@ const SPACE: NoteIndex = {
   files: [],
   path: 'Today.md',
   read: () => Promise.resolve('Read [[Budget]] first.'),
-  render: () =>
-    Promise.resolve('<p>Read <a class="wikilink" href="Budget.md">Budget</a> first.</p>'),
+  render: () => Promise.resolve('<p>Read <a class="wikilink" href="Budget.md">Budget</a> first.</p>'),
 }
 
 const NOTE = 'Top\n\n![[Plan]]\n\nend\n'

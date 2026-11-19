@@ -62,10 +62,7 @@ describe('tasks-views contract', () => {
       const imports = [...text.matchAll(/from '([^']+)'/g)].map((m) => m[1] ?? '')
       for (const one of imports) {
         const allowed =
-          one.startsWith('./') ||
-          one === 'svelte' ||
-          one === '@orden/contracts' ||
-          one === '../../tasks-model/src/api'
+          one.startsWith('./') || one === 'svelte' || one === '@orden/contracts' || one === '../../tasks-model/src/api'
         expect(allowed, `${name} imports ${one}`).toBe(true)
       }
     }

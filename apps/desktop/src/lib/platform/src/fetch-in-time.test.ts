@@ -18,9 +18,7 @@ function hanging(after: 'headers' | 'body') {
     const body = new ReadableStream({
       start(controller) {
         controller.enqueue(new TextEncoder().encode('{"half":'))
-        signal?.addEventListener('abort', () =>
-          controller.error(new DOMException('aborted', 'AbortError')),
-        )
+        signal?.addEventListener('abort', () => controller.error(new DOMException('aborted', 'AbortError')))
       },
     })
     return Promise.resolve(new Response(body, { status: 200 }))
@@ -41,9 +39,7 @@ describe('a request to the account', () => {
 
   test('that answers is read whole, status and headers too', async () => {
     vi.stubGlobal('fetch', () =>
-      Promise.resolve(
-        new Response('{"ok":true}', { status: 201, headers: { 'x-orden-cursor': '7' } }),
-      ),
+      Promise.resolve(new Response('{"ok":true}', { status: 201, headers: { 'x-orden-cursor': '7' } })),
     )
     const response = await fetchInTime(new Request('https://orden.so/v2/spaces'))
     expect(response.status).toBe(201)

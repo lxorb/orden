@@ -77,15 +77,12 @@ crashes.post('/', async (context) => {
   if (typeof report === 'string') return context.json({ error: report }, 400)
 
   const env = context.env
-  const known = await env.DB.prepare('select 1 as here from crash_reports where id = ?')
-    .bind(report.id)
-    .first()
+  const known = await env.DB.prepare('select 1 as here from crash_reports where id = ?').bind(report.id).first()
   if (known) return context.json({ ok: true, id: report.id })
 
   const machine = machineOf(context.req)
   const allowed =
-    (machine === null ||
-      (await within(env, 'crash-from', await sha256(machine), FROM_ONE_MACHINE, AN_HOUR))) &&
+    (machine === null || (await within(env, 'crash-from', await sha256(machine), FROM_ONE_MACHINE, AN_HOUR))) &&
     (await within(env, 'crashes', 'all', ALL_IN_A_DAY, A_DAY))
   if (!allowed) return context.json({ error: TRY_IN_AN_HOUR }, 429)
 
@@ -96,15 +93,7 @@ crashes.post('/', async (context) => {
     `insert or ignore into crash_reports (id, signature, kind, version, platform, created_at, body)
        values (?, ?, ?, ?, ?, ?, ?)`,
   )
-    .bind(
-      report.id,
-      signature,
-      report.kind,
-      report.app.version,
-      report.system.os,
-      at,
-      JSON.stringify(report),
-    )
+    .bind(report.id, signature, report.kind, report.app.version, report.system.os, at, JSON.stringify(report))
     .run()
 
   if (added.meta.changes > 0) {
@@ -291,9 +280,7 @@ crashes.get('/:id', reader, async (context) => {
     .first<GroupRow>()
 
   const spread = await db
-    .prepare(
-      'select signature, version, platform from crash_reports where signature = ? group by version, platform',
-    )
+    .prepare('select signature, version, platform from crash_reports where signature = ? group by version, platform')
     .bind(row.signature)
     .all<{ signature: string; version: string; platform: string }>()
   const { versions, platforms } = tally(spread.results)(row.signature)

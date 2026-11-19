@@ -136,8 +136,7 @@ describe('what the grid shows', () => {
     }),
   ].map((one) => ({ ...one, variants: ['light' as const], palettes: { light: {}, dark: {} } }))
 
-  const names = (query: string, order: 'newest' | 'name') =>
-    arrange(catalogue, query, order).map((one) => one.name)
+  const names = (query: string, order: 'newest' | 'name') => arrange(catalogue, query, order).map((one) => one.name)
 
   test.each([
     ['', 'newest', ['Amber', 'Mono', 'Zinc']],
@@ -333,10 +332,7 @@ describe('keeping up with the catalogue', () => {
   test('leaves a theme at the catalogue version alone, and a hand-placed one too', async () => {
     await installedFrom()
     folder.files.set('night-owl', sheet('#001122'))
-    const asked = serving([
-      entry(),
-      entry({ id: 'night-owl', name: 'Night Owl', version: '9.0.0' }),
-    ])
+    const asked = serving([entry(), entry({ id: 'night-owl', name: 'Night Owl', version: '9.0.0' })])
     store.themes = []
     await store.keepUp()
     expect(asked.filter((url) => url.endsWith('theme.css'))).toEqual([])

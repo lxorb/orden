@@ -56,9 +56,7 @@ export async function readEvernote(sources: readonly Source[]): Promise<ImportPl
 
   for (const source of files) {
     const xml = await source.text()
-    const notebook = perNotebook
-      ? safeName((source.path.split('/').pop() ?? '').replace(/\.enex$/i, ''))
-      : ''
+    const notebook = perNotebook ? safeName((source.path.split('/').pop() ?? '').replace(/\.enex$/i, '')) : ''
 
     for (const note of elements(xml, 'note')) {
       const content = textOf(note.inner, 'content') ?? ''
@@ -193,11 +191,7 @@ function tasksOf(note: string): Map<string, string[]> {
       tasks
         .map((task, at) => ({ task, at }))
         .sort((one, other) =>
-          one.task.weight === other.task.weight
-            ? one.at - other.at
-            : one.task.weight < other.task.weight
-              ? -1
-              : 1,
+          one.task.weight === other.task.weight ? one.at - other.at : one.task.weight < other.task.weight ? -1 : 1,
         )
         .map(({ task }) => task.line),
     ]),
@@ -266,11 +260,7 @@ function withTaskGroups(
   return { html: placed, order }
 }
 
-function withTasks(
-  words: string,
-  order: readonly string[],
-  groups: ReadonlyMap<string, readonly string[]>,
-): string {
+function withTasks(words: string, order: readonly string[], groups: ReadonlyMap<string, readonly string[]>): string {
   const shown = new Set<string>()
   const placed = words.replace(new RegExp(`${PLACE}(\\d+)${PLACE}`, 'g'), (_whole, at: string) => {
     const group = order[Number(at)] ?? ''
@@ -295,10 +285,8 @@ function withoutEvernote(
   let encrypted = 0
   let missing = 0
 
-  let html = enml.replace(
-    /<([A-Za-z][\w:.-]*)(\s[^<>]*?)?\s*\/>/g,
-    (whole, name: string, said: string | undefined) =>
-      VOID.test(name) || /^en-/i.test(name) ? whole : `<${name}${said ?? ''}></${name}>`,
+  let html = enml.replace(/<([A-Za-z][\w:.-]*)(\s[^<>]*?)?\s*\/>/g, (whole, name: string, said: string | undefined) =>
+    VOID.test(name) || /^en-/i.test(name) ? whole : `<${name}${said ?? ''}></${name}>`,
   )
 
   html = codeBlocks(html)
@@ -312,8 +300,7 @@ function withoutEvernote(
 
   html = html.replace(
     /<li\b([^>]*?--en-checked:\s*(true|false)[^>]*)>/gi,
-    (_whole, said: string, checked: string) =>
-      `<li${said}>${box(checked.toLowerCase() === 'true')}`,
+    (_whole, said: string, checked: string) => `<li${said}>${box(checked.toLowerCase() === 'true')}`,
   )
 
   html = html.replace(
@@ -346,9 +333,7 @@ function withoutEvernote(
     const address = `${folder}${encodeTarget(attachment.path)}`
     const name = attachment.path.split('/').pop() ?? attachment.path
 
-    return type.startsWith('image/')
-      ? `<img src="${address}" alt="">`
-      : `<a href="${address}">${name}</a>`
+    return type.startsWith('image/') ? `<img src="${address}" alt="">` : `<a href="${address}">${name}</a>`
   }
 
   html = html.replace(/<en-media([^>]*)\/?>(?:<\/en-media>)?/gi, (_whole, said: string) => {

@@ -4,8 +4,7 @@ import { nameOf, samePath } from '../../platform/src/api'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
 
-export const appName = (path: string): string =>
-  nameOf(path).replace(/\.application$/i, '') || nameOf(path)
+export const appName = (path: string): string => nameOf(path).replace(/\.application$/i, '') || nameOf(path)
 
 export function openApplication(path: string, how: OpenHow = {}): Tab | null {
   if (__EVEN_PLUGIN__ || !appsOn()) return null

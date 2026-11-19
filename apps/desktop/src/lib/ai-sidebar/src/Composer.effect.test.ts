@@ -46,9 +46,7 @@ vi.mock('./picture', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./picture')>()),
   chatPicture: (file: File) => {
     drawn.push(file.name)
-    return new Promise((resolve) =>
-      setTimeout(() => resolve({ mime: 'image/png', data: 'AAAA' }), 5),
-    )
+    return new Promise((resolve) => setTimeout(() => resolve({ mime: 'image/png', data: 'AAAA' }), 5))
   },
 }))
 
@@ -204,9 +202,7 @@ test('a very long paste comes in as text beside the field, not into it', () => {
   const long = 'The heron stands still. '.repeat(5_000)
   const event = pasted(field, [], long)
   expect(event.defaultPrevented).toBe(true)
-  expect(panel.chips).toEqual([
-    { kind: 'words', id: expect.any(String), label: 'Text', text: long },
-  ])
+  expect(panel.chips).toEqual([{ kind: 'words', id: expect.any(String), label: 'Text', text: long }])
   expect(field.value).toBe('')
   pasted(field, [], `${long}again`)
   expect(panel.chips).toHaveLength(2)
@@ -225,9 +221,7 @@ test('a file too large or not text says why it was not added', async () => {
   panel.trouble = null
   pasted(field, [new File(['plain words'], 'notes.txt', { type: 'text/plain' })])
   await vi.waitFor(() =>
-    expect(panel.chips).toEqual([
-      { kind: 'words', id: expect.any(String), label: 'notes.txt', text: 'plain words' },
-    ]),
+    expect(panel.chips).toEqual([{ kind: 'words', id: expect.any(String), label: 'notes.txt', text: 'plain words' }]),
   )
   expect(panel.trouble).toBeNull()
 })

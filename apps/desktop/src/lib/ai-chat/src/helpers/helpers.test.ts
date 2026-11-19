@@ -26,8 +26,7 @@ const answered = (text: string, stop: Ended['stop'] = 'end'): Ended => ({
 })
 
 function roads() {
-  const runs: { thread: Thread; text: string; signal: AbortSignal; end: (ended: Ended) => void }[] =
-    []
+  const runs: { thread: Thread; text: string; signal: AbortSignal; end: (ended: Ended) => void }[] = []
   const made: Roads = {
     offered: () =>
       Promise.resolve([

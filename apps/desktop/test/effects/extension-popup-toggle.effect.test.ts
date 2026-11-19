@@ -19,8 +19,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
           action: true,
         })),
       )
-    if (command === 'extension_popup_open')
-      return Promise.resolve(`web-extension-popup-${String(built++)}`)
+    if (command === 'extension_popup_open') return Promise.resolve(`web-extension-popup-${String(built++)}`)
     return Promise.resolve(undefined)
   },
 }))

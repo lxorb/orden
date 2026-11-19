@@ -11,8 +11,7 @@ export const dragging = StateField.define<boolean>({
   },
 })
 
-export const dragsSelection = (button: number, pointer: string): boolean =>
-  button === 0 && pointer === 'mouse'
+export const dragsSelection = (button: number, pointer: string): boolean => button === 0 && pointer === 'mouse'
 
 const watcher = ViewPlugin.fromClass(
   class {
@@ -33,8 +32,7 @@ const watcher = ViewPlugin.fromClass(
     }
 
     private end() {
-      if (this.view.state.field(dragging, false))
-        this.view.dispatch({ effects: setDragging.of(false) })
+      if (this.view.state.field(dragging, false)) this.view.dispatch({ effects: setDragging.of(false) })
     }
   },
   {

@@ -22,8 +22,7 @@ const snippet = (name: string) => {
   return start < 0 ? '' : PANEL.slice(start, PANEL.indexOf('{/snippet}', start))
 }
 
-const named = (source: string) =>
-  [...source.matchAll(/<span class="name">([^<{]+)<\/span>/g)].map((hit) => hit[1])
+const named = (source: string) => [...source.matchAll(/<span class="name">([^<{]+)<\/span>/g)].map((hit) => hit[1])
 
 function* sources(folder: string): Generator<string> {
   for (const entry of readdirSync(folder, { withFileTypes: true })) {
@@ -37,10 +36,7 @@ describe('the Theme group in Appearance', () => {
   test('starts with Style and Mode', () => {
     const [theme] = appearancePane().groups
     expect(theme?.title).toBe('Theme')
-    expect(theme?.fields.slice(0, 2).map((one) => one.key)).toEqual([
-      'appearance.style',
-      'appearance.mode',
-    ])
+    expect(theme?.fields.slice(0, 2).map((one) => one.key)).toEqual(['appearance.style', 'appearance.mode'])
   })
 
   test('holds Browse themes and Reload right below Mode', () => {
@@ -82,9 +78,7 @@ describe('the Theme group in Appearance', () => {
 test('every field of a theme not worn reads as its starting value on a fresh profile', async () => {
   await import('../../theme-ports')
   const fields = await (await import('./appearance-pane')).themeDeclarations()
-  expect(
-    fields.filter((one) => one.kind === 'switch' && one.initial === true).length,
-  ).toBeGreaterThan(0)
+  expect(fields.filter((one) => one.kind === 'switch' && one.initial === true).length).toBeGreaterThan(0)
   for (const one of fields) {
     if (!('initial' in one) || one.initial === undefined) continue
     expect([one.key, one.get()]).toEqual([one.key, one.initial])

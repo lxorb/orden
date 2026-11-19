@@ -2,20 +2,9 @@
   const { onclick }: { onclick: (event: MouseEvent) => void } = $props()
 </script>
 
-<button
-  class="orden-glyph more"
-  role="menuitem"
-  aria-haspopup="menu"
-  title="More"
-  aria-label="More"
-  {onclick}
->
+<button class="orden-glyph more" role="menuitem" aria-haspopup="menu" title="More" aria-label="More" {onclick}>
   <svg viewBox="0 0 13 13"
-    ><circle cx="3" cy="6.5" r="1" /><circle cx="6.5" cy="6.5" r="1" /><circle
-      cx="10"
-      cy="6.5"
-      r="1"
-    /></svg
+    ><circle cx="3" cy="6.5" r="1" /><circle cx="6.5" cy="6.5" r="1" /><circle cx="10" cy="6.5" r="1" /></svg
   >
 </button>
 

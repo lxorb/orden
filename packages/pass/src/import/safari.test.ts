@@ -19,9 +19,7 @@ describe('parseSafari', () => {
       note: 'a\nb',
       totp: totpOf(OTP),
     })
-    expect(
-      items[0]?.content.kind === 'login' && items[0].content.totp.startsWith('otpauth://'),
-    ).toBe(true)
+    expect(items[0]?.content.kind === 'login' && items[0].content.totp.startsWith('otpauth://')).toBe(true)
     expect(items[1]?.content).toMatchObject({ title: 'Ünïcode', username: 'ü' })
     expect(items[2]?.content).toMatchObject({ totp: 'not a secret!' })
   })

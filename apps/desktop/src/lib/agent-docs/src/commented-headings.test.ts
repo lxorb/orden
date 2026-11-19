@@ -42,14 +42,8 @@ describe('a section with a %% commented-out heading under it', () => {
   })
 
   test('deleting Tasks above an HTML-commented heading keeps the commented words hidden', () => {
-    const note = NOTE.replace('%%\n## Ideas', '<!--\n## Ideas').replace(
-      'thought\n%%',
-      'thought\n-->',
-    )
-    const after = applied(
-      note,
-      plan(readEdits([{ at: { heading: 'Tasks' }, delete: true }]), note).edits,
-    )
+    const note = NOTE.replace('%%\n## Ideas', '<!--\n## Ideas').replace('thought\n%%', 'thought\n-->')
+    const after = applied(note, plan(readEdits([{ at: { heading: 'Tasks' }, delete: true }]), note).edits)
     expect(withoutComments(after)).not.toContain('half a thought')
   })
 })

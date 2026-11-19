@@ -18,8 +18,7 @@ vi.mock('../../platform/src/tauri', () => ({
 
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
-    noteText: (path: string) =>
-      Promise.resolve(fake.unreadable.has(path) ? null : (fake.disk.get(path) ?? null)),
+    noteText: (path: string) => Promise.resolve(fake.unreadable.has(path) ? null : (fake.disk.get(path) ?? null)),
     documentAt: () => null,
   },
 }))

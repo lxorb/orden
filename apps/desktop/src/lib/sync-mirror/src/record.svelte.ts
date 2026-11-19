@@ -1,15 +1,6 @@
 import { syncStore, workspaceView } from '@orden/contracts'
 import { isWebTarget } from '@orden/markdown/links'
-import {
-  log,
-  insideSpace,
-  withinSpace,
-  forget,
-  isRecord,
-  keepJson,
-  stored,
-  invoke,
-} from '../../platform/src/api'
+import { log, insideSpace, withinSpace, forget, isRecord, keepJson, stored, invoke } from '../../platform/src/api'
 import type { FileOp } from '../../file-ops/src/api'
 import type { Answer, Clash } from './conflicts'
 

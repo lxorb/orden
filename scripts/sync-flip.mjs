@@ -57,12 +57,9 @@ function when(at) {
 function showRollout(json) {
   say(`rollout ${json.mode}${json.min ? ` (min ${json.min})` : ''}  since ${when(json.since)}`)
   if (json.accounts) say(`  accounts: v1 ${json.accounts.v1}, v2 ${json.accounts.v2}`)
-  if (json.moved !== undefined)
-    say(`  ${json.dry ? 'would move' : 'moved'} ${json.moved} back to v1`)
+  if (json.moved !== undefined) say(`  ${json.dry ? 'would move' : 'moved'} ${json.moved} back to v1`)
   for (const one of json.moves ?? []) {
-    say(
-      `  ${when(one.at)}  ${one.email}  ${one.from} -> ${one.to}  ${one.why}${one.min ? ` (min ${one.min})` : ''}`,
-    )
+    say(`  ${when(one.at)}  ${one.email}  ${one.from} -> ${one.to}  ${one.why}${one.min ? ` (min ${one.min})` : ''}`)
   }
 }
 
@@ -96,15 +93,9 @@ function show(answer, what) {
   }
   const blockers = json.blockers ?? []
   if (blockers.length) {
-    say(
-      what === 'to1'
-        ? `  too old to roll back cleanly, ${blockers.length}:`
-        : `  held back by ${blockers.length}:`,
-    )
+    say(what === 'to1' ? `  too old to roll back cleanly, ${blockers.length}:` : `  held back by ${blockers.length}:`)
     for (const one of blockers)
-      say(
-        `    ${one.kind} ${one.id}  ${one.name || ''}  ${one.why}${one.app ? ` (${one.app})` : ''}`,
-      )
+      say(`    ${one.kind} ${one.id}  ${one.name || ''}  ${one.why}${one.app ? ` (${one.app})` : ''}`)
   }
 }
 
@@ -167,11 +158,7 @@ async function main() {
     }
     if (answer.status !== 200) throw new Error(answer.json.error ?? String(answer.status))
     if (what !== 'status') {
-      say(
-        answer.json.changed
-          ? `now sync v${answer.json.version}`
-          : `unchanged (sync v${answer.json.version})`,
-      )
+      say(answer.json.changed ? `now sync v${answer.json.version}` : `unchanged (sync v${answer.json.version})`)
     }
   } finally {
     if (signedIn) await ask('/v1/auth/signout', signedIn, {}).catch(() => undefined)

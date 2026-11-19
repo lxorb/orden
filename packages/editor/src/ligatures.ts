@@ -1,12 +1,6 @@
 import { syntaxTree } from '@codemirror/language'
 import { type EditorState, type Extension, Prec, type Range } from '@codemirror/state'
-import {
-  Decoration,
-  type DecorationSet,
-  EditorView,
-  ViewPlugin,
-  type ViewUpdate,
-} from '@codemirror/view'
+import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import { inCode } from './code'
 import { enclosingNamed } from './nodes'
 
@@ -49,9 +43,7 @@ export interface Ligature {
 export function findLigatures(text: string, offset = 0): Ligature[] {
   const out: Ligature[] = []
   for (let at = 0; at < text.length;) {
-    const found = OPENERS.has(text.charAt(at))
-      ? RUNS.find(([run]) => text.startsWith(run, at))
-      : undefined
+    const found = OPENERS.has(text.charAt(at)) ? RUNS.find(([run]) => text.startsWith(run, at)) : undefined
     if (!found) {
       at += 1
       continue
@@ -122,8 +114,7 @@ function buildLigatures(
   ranges?: readonly { from: number; to: number }[],
 ): DecorationSet {
   const out: Range<Decoration>[] = []
-  for (const one of ligaturesIn(state, ranges, scope))
-    out.push(markFor(one.glyph).range(one.from, one.to))
+  for (const one of ligaturesIn(state, ranges, scope)) out.push(markFor(one.glyph).range(one.from, one.to))
   return Decoration.set(out, true)
 }
 

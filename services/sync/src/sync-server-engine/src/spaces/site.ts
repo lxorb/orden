@@ -113,12 +113,7 @@ site.put('/:id/site', atLeast('owner'), async (context) => {
     rules: {
       include: sent.rules === undefined ? held.rules.include : folders(given.include),
       exclude: sent.rules === undefined ? held.rules.exclude : folders(given.exclude),
-      otherwise:
-        sent.rules === undefined
-          ? held.rules.otherwise
-          : given.otherwise === 'none'
-            ? 'none'
-            : 'all',
+      otherwise: sent.rules === undefined ? held.rules.otherwise : given.otherwise === 'none' ? 'none' : 'all',
     },
   }
 

@@ -24,10 +24,7 @@ export function thumbFor(track: Track): Thumb | null {
   const scrolled = track.content - track.visible
   if (scrolled - (track.slack ?? 0) <= 1 || track.track <= 0) return null
 
-  const size = Math.min(
-    track.track,
-    Math.max(track.least, (track.visible / track.content) * track.track),
-  )
+  const size = Math.min(track.track, Math.max(track.least, (track.visible / track.content) * track.track))
   const room = Math.max(0, track.track - size)
   const along = Math.min(Math.max(track.at, 0), scrolled) / scrolled
 

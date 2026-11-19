@@ -72,29 +72,13 @@
     rectBetween,
     shapePath,
   } from '../../plane/src/api'
-  import {
-    type Canvas as Plane,
-    type InkPoint,
-    readCanvas,
-    type Shape,
-    writeCanvas,
-  } from '@orden/markdown/canvas'
+  import { type Canvas as Plane, type InkPoint, readCanvas, type Shape, writeCanvas } from '@orden/markdown/canvas'
   import { cursorFor, type Over } from './cursor'
   import { hand } from './hand.svelte'
   import { aimed, fading, latticeLayers, latticeLevel, settled, stepped } from './lattice'
   import { drawnWidth, pens, shownWidth } from './pens.svelte'
   import { hitAt, HANDLE, PORT, roomFor } from './hit'
-  import {
-    drives,
-    type Effect,
-    type Hit,
-    type Input,
-    type Machine,
-    NOTHING,
-    puts,
-    start,
-    step,
-  } from './pointer'
+  import { drives, type Effect, type Hit, type Input, type Machine, NOTHING, puts, start, step } from './pointer'
   import { NO_SNAP, snapMove, snapPoint, snapResize } from './snap'
   import { Trace } from './trace'
   import { CanvasStore } from './store.svelte'
@@ -232,11 +216,7 @@
     const box = pickedBox(store.canvas, drag.ids)
     if (!box) return NO_SNAP
 
-    const snap = snapMove(
-      { ...box, x: box.x + drag.dx, y: box.y + drag.dy },
-      bystanders(drag.ids),
-      GRID / 2,
-    )
+    const snap = snapMove({ ...box, x: box.x + drag.dx, y: box.y + drag.dy }, bystanders(drag.ids), GRID / 2)
 
     return { dx: drag.dx + snap.dx, dy: drag.dy + snap.dy, guides: snap.guides }
   })
@@ -273,9 +253,7 @@
 
     const from = shown.nodes.find((one) => one.id === pulling.fromNode)
     const side = facingSide(boxOf(node), { ...pulling.from, width: 0, height: 0 })
-    const leaves = from
-      ? sidePoint(boxOf(from), facingSide(boxOf(from), boxOf(node)))
-      : pulling.from
+    const leaves = from ? sidePoint(boxOf(from), facingSide(boxOf(from), boxOf(node))) : pulling.from
 
     return { id: node.id, side, at: sidePoint(boxOf(node), side), leaves }
   })
@@ -335,9 +313,7 @@
       const wanted = new Set(store.picked)
       return {
         ...base,
-        ink: base.ink.map((stroke) =>
-          wanted.has(stroke.id) ? transformed(stroke, moved) : stroke,
-        ),
+        ink: base.ink.map((stroke) => (wanted.has(stroke.id) ? transformed(stroke, moved) : stroke)),
       }
     }
 
@@ -368,9 +344,7 @@
     playing = new Set(on ? [...playing, id] : [...playing].filter((one) => one !== id))
   }
 
-  const cards = $derived(
-    shown.nodes.filter((node) => playing.has(node.id) || overlaps(boxOf(node), inView)),
-  )
+  const cards = $derived(shown.nodes.filter((node) => playing.has(node.id) || overlaps(boxOf(node), inView)))
 
   const watched = $derived.by(() => {
     const across = spanX / camera.scale / 2
@@ -378,13 +352,9 @@
     return { x: camera.x - across, y: camera.y - down, width: across * 2, height: down * 2 }
   })
 
-  const far = $derived(
-    cards.length > MOST_CARDS || (!placed && !store.framed && shown.nodes.length > MOST_CARDS),
-  )
+  const far = $derived(cards.length > MOST_CARDS || (!placed && !store.framed && shown.nodes.length > MOST_CARDS))
 
-  const wanted = $derived(
-    far ? cards.filter((node) => node.id === store.editing || playing.has(node.id)) : cards,
-  )
+  const wanted = $derived(far ? cards.filter((node) => node.id === store.editing || playing.has(node.id)) : cards)
 
   const onPage = $derived.by(() => {
     const scale = 2 ** (roughZoom / 4)
@@ -401,9 +371,7 @@
   let madeAround = $state.raw<ReadonlySet<string>>(new Set())
 
   const drawnCards = $derived.by(() => {
-    const waiting = wanted.filter(
-      (node) => !madeAround.has(node.id) && !overlaps(boxOf(node), onPage),
-    )
+    const waiting = wanted.filter((node) => !madeAround.has(node.id) && !overlaps(boxOf(node), onPage))
     if (waiting.length <= MADE_A_FRAME) return wanted
     const late = new Set(waiting.map((node) => node.id))
     return wanted.filter((node) => !late.has(node.id))
@@ -435,10 +403,7 @@
   const holdsShape = $derived.by(() => {
     if (!store.picked.length) return false
     const cards = store.canvas.nodes.filter((node) => store.pickedSet.has(node.id))
-    return (
-      cards.length === store.pickedSet.size &&
-      cards.every((node) => node.type === 'file' && isPicture(node.file))
-    )
+    return cards.length === store.pickedSet.size && cards.every((node) => node.type === 'file' && isPicture(node.file))
   })
 
   const box = $derived(pickedBox(shown, store.picked))
@@ -541,11 +506,7 @@
   })
 
   const guides = $derived(
-    dragSnap.guides.length
-      ? dragSnap.guides
-      : sizeSnap.guides.length
-        ? sizeSnap.guides
-        : pullSnap.guides,
+    dragSnap.guides.length ? dragSnap.guides : sizeSnap.guides.length ? sizeSnap.guides : pullSnap.guides,
   )
 
   const modulo = (value: number, by: number): number => (by > 0 ? ((value % by) + by) % by : 0)
@@ -635,14 +596,7 @@
       element,
       (at, by) => {
         const rect = element.getBoundingClientRect()
-        store.camera = zoomed(
-          camera,
-          width,
-          height,
-          at.clientX - rect.left,
-          at.clientY - rect.top,
-          by,
-        )
+        store.camera = zoomed(camera, width, height, at.clientX - rect.left, at.clientY - rect.top, by)
       },
       (at, by) => {
         if (!modes.canvasTurns) return
@@ -786,10 +740,7 @@
         else store.pickAll(effect.ids, effect.adding)
         break
       case 'band':
-        store.pickAll([
-          ...effect.was,
-          ...caught(preview.nodes, rectBetween(effect.from, effect.to)),
-        ])
+        store.pickAll([...effect.was, ...caught(preview.nodes, rectBetween(effect.from, effect.to))])
         break
       case 'clear':
         store.clearPicked()
@@ -888,8 +839,7 @@
     predicted = []
   }
 
-  const kindOf = (event: PointerEvent) =>
-    penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
+  const kindOf = (event: PointerEvent) => penKind(event, { penSeen: hand.penSeen, touch: viewport.touch })
 
   const contacts = new Contacts()
 
@@ -1017,11 +967,7 @@
       return
     }
 
-    if (
-      hovering(event) &&
-      machine.driver?.id === event.pointerId &&
-      contacts.has(event.pointerId)
-    ) {
+    if (hovering(event) && machine.driver?.id === event.pointerId && contacts.has(event.pointerId)) {
       onPointerUp(event)
       return
     }
@@ -1043,8 +989,8 @@
 
     const drawing = ours && !floating && machine.gesture?.kind === 'draw' ? machine.gesture : null
     const samples = drawing
-      ? (typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [event]).map(
-          (one) => sampleOf(one, began),
+      ? (typeof event.getCoalescedEvents === 'function' ? event.getCoalescedEvents() : [event]).map((one) =>
+          sampleOf(one, began),
         )
       : []
 
@@ -1055,26 +1001,18 @@
           : []
       const laid = drawing.stroke.points
       const nib = samples[samples.length - 1] ?? laid[laid.length - 1]
-      const before =
-        samples.length > 1
-          ? samples[samples.length - 2]
-          : laid[laid.length - (samples.length ? 1 : 2)]
+      const before = samples.length > 1 ? samples[samples.length - 2] : laid[laid.length - (samples.length ? 1 : 2)]
 
       predicted = leadPoint(before, nib, guessed)
     }
 
     if (!floating) repairPen(event, point)
 
-    if (
-      ours &&
-      holding &&
-      Math.hypot(point.x - held.x, point.y - held.y) * camera.scale > A_TWITCH
-    ) {
+    if (ours && holding && Math.hypot(point.x - held.x, point.y - held.y) * camera.scale > A_TWITCH) {
       stopHolding()
     }
 
-    const wants =
-      !machine.gesture || machine.gesture.kind === 'erase' || machine.gesture.kind === 'pull'
+    const wants = !machine.gesture || machine.gesture.kind === 'erase' || machine.gesture.kind === 'pull'
     const found = wants ? hitFor(point, coarse) : NOTHING
 
     if (!machine.gesture) over = overOf(found)
@@ -1216,10 +1154,7 @@
 
   function onTapClick(event: MouseEvent) {
     const target = event.target
-    if (
-      target instanceof Element &&
-      target.closest('.cluster, button, input, textarea, [contenteditable="true"]')
-    ) {
+    if (target instanceof Element && target.closest('.cluster, button, input, textarea, [contenteditable="true"]')) {
       return
     }
 
@@ -1237,8 +1172,7 @@
     if (found.node && !store.isPicked(found.node)) store.pick(found.node)
     if (found.edge && !store.isPicked(found.edge)) store.pick(found.edge)
     if (found.stroke && !store.isPicked(found.stroke)) store.pick(found.stroke)
-    const bare =
-      !about && !found.node && !found.edge && !found.stroke && !found.ink && !found.handle
+    const bare = !about && !found.node && !found.edge && !found.stroke && !found.ink && !found.handle
     const under = about ? null : nodeAt(shown.nodes, point, 12)
 
     const rect = host?.getBoundingClientRect()
@@ -1251,8 +1185,7 @@
       canvasMenu(store, point, {
         bare,
         locked: under?.locked ? under.id : null,
-        again: (rows, title) =>
-          menu.show(new MouseEvent('contextmenu', screen), rows, { title, near }),
+        again: (rows, title) => menu.show(new MouseEvent('contextmenu', screen), rows, { title, near }),
         path: tab.path,
         name: tab.name,
         palette,
@@ -1281,11 +1214,7 @@
   function typing(target: EventTarget | null): boolean {
     if (!(target instanceof HTMLElement)) return false
 
-    return (
-      target.isContentEditable ||
-      target instanceof HTMLInputElement ||
-      target instanceof HTMLTextAreaElement
-    )
+    return target.isContentEditable || target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
   }
 
   function onKeyDown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
@@ -1323,10 +1252,7 @@
 
     if (shortcuts.pressed('edit.select-all', event)) {
       event.preventDefault()
-      store.pickAll([
-        ...store.canvas.nodes.map((node) => node.id),
-        ...store.canvas.ink.map((stroke) => stroke.id),
-      ])
+      store.pickAll([...store.canvas.nodes.map((node) => node.id), ...store.canvas.ink.map((stroke) => stroke.id)])
       return
     }
 
@@ -1375,10 +1301,7 @@
 
     const data = event.clipboardData
     const files = filesIn(data).filter(isCanvasFile)
-    const words = wordsBesidePicture(
-      data?.getData('text/html') ?? '',
-      data?.getData('text/plain') ?? '',
-    )
+    const words = wordsBesidePicture(data?.getData('text/html') ?? '', data?.getData('text/plain') ?? '')
     if (files.length && !words) {
       event.preventDefault()
       placeFiles(files, pasteSpot())
@@ -1531,13 +1454,9 @@
     return stroke && shownWidth(stroke.size, camera.scale)
   })
 
-  const onFrame = $derived(
-    store.canvas.nodes.some((node) => node.type === 'group' && picked.has(node.id)),
-  )
+  const onFrame = $derived(store.canvas.nodes.some((node) => node.type === 'group' && picked.has(node.id)))
 
-  const bare = $derived(
-    !store.canvas.nodes.length && !store.canvas.edges.length && !store.canvas.ink.length,
-  )
+  const bare = $derived(!store.canvas.nodes.length && !store.canvas.edges.length && !store.canvas.ink.length)
 </script>
 
 <svelte:window onblur={letGoOfSpace} />
@@ -1618,12 +1537,7 @@
     {/if}
 
     <div class="plane" style:transform="translate({originX}px, {originY}px) scale({camera.scale})">
-      <CanvasEdges
-        edges={drawnEdges}
-        nodes={shown.nodes}
-        picked={store.pickedSet}
-        provisional={drawing}
-      />
+      <CanvasEdges edges={drawnEdges} nodes={shown.nodes} picked={store.pickedSet} provisional={drawing} />
 
       {#each drawnCards as node (node.id)}
         <CanvasNode
@@ -1723,8 +1637,7 @@
             {#if pullHead}
               <path
                 class="point"
-                d="M 0 0 L {-pullHead.size} {-pullHead.size *
-                  0.5} L {-pullHead.size} {pullHead.size * 0.5} Z"
+                d="M 0 0 L {-pullHead.size} {-pullHead.size * 0.5} L {-pullHead.size} {pullHead.size * 0.5} Z"
                 transform="translate({pullHead.x} {pullHead.y}) rotate({pullHead.angle})"
               />
             {/if}
@@ -1788,9 +1701,7 @@
       {#if lasso && lasso.length > 1}
         <svg class="lasso" aria-hidden="true" width="1" height="1" style:overflow="visible">
           <path
-            d="M {lasso
-              .map((point) => `${Math.round(point.x)} ${Math.round(point.y)}`)
-              .join(' L ')} Z"
+            d="M {lasso.map((point) => `${Math.round(point.x)} ${Math.round(point.y)}`).join(' L ')} Z"
             style:stroke-width="{1.5 * unit}px"
             style:stroke-dasharray="{5 * unit}
             {4 * unit}"

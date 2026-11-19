@@ -127,11 +127,7 @@ export class Predictor {
   private decide(): void {
     const median = this.latency
     const right = this.outcomes.filter(Boolean).length
-    if (
-      this.outcomes.length < DECIDES ||
-      median === null ||
-      right / this.outcomes.length < ACCURATE
-    ) {
+    if (this.outcomes.length < DECIDES || median === null || right / this.outcomes.length < ACCURATE) {
       this.worth = false
     } else if (median >= SHOW_FROM) {
       this.worth = true

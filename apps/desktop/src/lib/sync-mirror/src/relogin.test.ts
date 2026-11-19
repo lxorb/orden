@@ -41,9 +41,7 @@ const world = vi.hoisted(() => {
         return answer(undefined)
       case 'list_snapshots':
         return answer(
-          [...(here.kept.get(path) ?? [])]
-            .map((_, at) => ({ path: `${path}#${at}`, taken_at: at, size: 0 }))
-            .reverse(),
+          [...(here.kept.get(path) ?? [])].map((_, at) => ({ path: `${path}#${at}`, taken_at: at, size: 0 })).reverse(),
         )
       case 'read_snapshot': {
         const [note = '', at = ''] = path.split('#')
@@ -106,9 +104,7 @@ let env: Env
 
 beforeEach(() => {
   env = testEnv()
-  vi.stubGlobal('fetch', (url: string, init?: RequestInit) =>
-    worker.fetch(new Request(url, init), env),
-  )
+  vi.stubGlobal('fetch', (url: string, init?: RequestInit) => worker.fetch(new Request(url, init), env))
 })
 
 afterEach(() => {
@@ -176,20 +172,11 @@ async function elsewhere(token: string, spaceId: string, content: string) {
   })
 }
 
-async function asks(
-  device: Device,
-  token: string,
-  id: string,
-  saved: Parameters<typeof baseFor>[0],
-): Promise<boolean> {
+async function asks(device: Device, token: string, id: string, saved: Parameters<typeof baseFor>[0]): Promise<boolean> {
   world.use(device)
   const base = baseFor(saved, id)
   if (base === 'mine') return false
-  const listed = await call<{ spaces: { id: string; name: string; role: string }[] }>(
-    env,
-    '/v1/spaces',
-    { token },
-  )
+  const listed = await call<{ spaces: { id: string; name: string; role: string }[] }>(env, '/v1/spaces', { token })
   const met = await meeting(token, [{ name: 'Plans', root: ROOT }], listed.json.spaces)
   return asksOnReturn(base, met.length > 0)
 }
@@ -264,9 +251,7 @@ describe('signing back in to the same account', () => {
     expect(await asks(laptop, back.token, back.id, saved)).toBe(false)
 
     await pass(laptop, mirror, back.token)
-    expect(laptop.disk.get(NOTE)).toBe(
-      '# Plan\n\nfirst line, here\n\nsecond line\n\nthird, there\n',
-    )
+    expect(laptop.disk.get(NOTE)).toBe('# Plan\n\nfirst line, here\n\nsecond line\n\nthird, there\n')
     expect([...laptop.disk.keys()].filter((one) => one.includes(COPY))).toEqual([])
   })
 

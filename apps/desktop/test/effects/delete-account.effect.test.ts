@@ -36,8 +36,7 @@ let ended: number
 function serve(routes: Record<string, Answer>) {
   vi.stubGlobal('fetch', (url: string, init: RequestInit = {}) => {
     const route = `${init.method ?? 'GET'} ${new URL(url).pathname}`
-    const body =
-      typeof init.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : null
+    const body = typeof init.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : null
     const token = (init.headers as Record<string, string> | undefined)?.authorization ?? null
 
     asked.push({ route, body, token })
@@ -64,15 +63,11 @@ function type(label: string, value: string) {
 }
 
 function submit() {
-  host
-    .querySelector('form')
-    ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+  host.querySelector('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
 }
 
 function press(words: string) {
-  const button = [...host.querySelectorAll('button')].find(
-    (one) => one.textContent.trim() === words,
-  )
+  const button = [...host.querySelectorAll('button')].find((one) => one.textContent.trim() === words)
   if (!button) throw new Error(`no button ${words}`)
   button.click()
 }
@@ -106,9 +101,7 @@ test('pressing it mails a code; a wrong one is said, and nothing is deleted', as
   open()
   await settle()
 
-  expect(asked).toEqual([
-    { route: 'POST /v1/account/delete/code', body: {}, token: 'Bearer session' },
-  ])
+  expect(asked).toEqual([{ route: 'POST /v1/account/delete/code', body: {}, token: 'Bearer session' }])
   expect(host.textContent).toContain('me@example.com')
   expect(host.textContent).not.toContain('Notes on this device stay')
   expect(host.querySelector('input[aria-label="App code to delete"]')).toBeNull()
@@ -130,8 +123,7 @@ test('the codes, the second one, the last question, and then signed out and quie
       body?.code === '123456' && body.second === '654321'
         ? [200, { ticket: 'earned' }]
         : [400, { error: 'that code is not right' }],
-    'DELETE /v1/account': (body) =>
-      body?.ticket === 'earned' ? [200, { ok: true }] : [400, { error: 'start again' }],
+    'DELETE /v1/account': (body) => (body?.ticket === 'earned' ? [200, { ok: true }] : [400, { error: 'start again' }]),
     ...SIGNED_OUT,
   })
 
@@ -173,11 +165,7 @@ test('the codes, the second one, the last question, and then signed out and quie
 test('the last question names the spaces other people lose, and only those', async () => {
   const space = (name: string, role: string, shared: boolean) =>
     ({ id: name, name, role, shared }) as unknown as RemoteSpace
-  account.spaces = [
-    space('Plans', 'owner', true),
-    space('Diary', 'owner', false),
-    space('Theirs', 'write', true),
-  ]
+  account.spaces = [space('Plans', 'owner', true), space('Diary', 'owner', false), space('Theirs', 'write', true)]
   serve({
     'POST /v1/account/delete/code': () => [200, { resendIn: 30, second: false }],
     'POST /v1/account/delete/verify': () => [200, { ticket: 'earned' }],
@@ -243,9 +231,7 @@ test('a session ended elsewhere is not taken for a deleted account', async () =>
 
   expect(account.user).toBeNull()
   expect(account.open).toBe(true)
-  expect(account.error).toBe(
-    'Signed out elsewhere; the account was not deleted. Sign in again to delete it.',
-  )
+  expect(account.error).toBe('Signed out elsewhere; the account was not deleted. Sign in again to delete it.')
   expect(ended).toBe(1)
 })
 

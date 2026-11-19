@@ -1,13 +1,7 @@
 import { tabKindParts, webPages } from '@orden/contracts'
 import { agentMarks } from '../../workspace/src/api'
 import { DIVIDER, type MenuEntry, viewport } from '../../ui-kit/src/api'
-import {
-  archiveEntry,
-  bookmarkAll,
-  shareEntry,
-  stackEntries,
-  webDataEntry,
-} from '../../row-menu/src/api'
+import { archiveEntry, bookmarkAll, shareEntry, stackEntries, webDataEntry } from '../../row-menu/src/api'
 import { shortcuts } from '../../shortcuts/src/api'
 import { shownName, nameOf, withinSpace } from '../../platform/src/api'
 import { toggleFill } from '../../tab-fill/src/api'
@@ -84,9 +78,7 @@ function paneEntries(tab: Tab): MenuEntry[] {
 function readingEntry(tab: Tab): MenuEntry[] {
   return when(
     tab.kind === 'note',
-    keyed(tab.reading ? 'Leave reading' : 'Reading', 'app.reading', () =>
-      workspace.toggleReading(tab.id),
-    ),
+    keyed(tab.reading ? 'Leave reading' : 'Reading', 'app.reading', () => workspace.toggleReading(tab.id)),
     DIVIDER,
   )
 }
@@ -140,11 +132,7 @@ function closeEntries(tab: Tab, close: () => void, others: number, after: () => 
 }
 
 function saveEntry(tab: Tab): MenuEntry[] {
-  return when(
-    isUnsaved(tab.note),
-    { label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(tab.id) },
-    DIVIDER,
-  )
+  return when(isUnsaved(tab.note), { label: 'Save', hint: shortcuts.saveHint, run: () => askPlace(tab.id) }, DIVIDER)
 }
 
 function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {

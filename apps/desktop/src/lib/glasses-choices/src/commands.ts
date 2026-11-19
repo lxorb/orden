@@ -257,15 +257,10 @@ export function settled(said: string, words: Readonly<Record<string, string>> = 
   const exact = phrases.find(said_)
   if (!exact || exact.takes) return false
 
-  return !phrases.some(
-    (one) => one.words.length > heard.length && heard.every((word, at) => one.words[at] === word),
-  )
+  return !phrases.some((one) => one.words.length > heard.length && heard.every((word, at) => one.words[at] === word))
 }
 
-export function commandIn(
-  said: string,
-  words: Readonly<Record<string, string>> = {},
-): Command | null {
+export function commandIn(said: string, words: Readonly<Record<string, string>> = {}): Command | null {
   const heard = bare(said).split(' ').filter(Boolean)
   if (!heard.length) return null
 

@@ -98,18 +98,14 @@ describe('a page thumbnail drawn again', () => {
   test('and another sheet when a stroke on it is rubbed out, moved or recoloured', () => {
     const drawn = sheetDrawn(one, ink, palette)
     expect(sameSheet(drawn, sheetDrawn(one, [ink[1]!, ink[2]!], palette))).toBe(false)
-    expect(sameSheet(drawn, sheetDrawn(one, [stroke('a', 140), ink[1]!, ink[2]!], palette))).toBe(
-      false,
-    )
+    expect(sameSheet(drawn, sheetDrawn(one, [stroke('a', 140), ink[1]!, ink[2]!], palette))).toBe(false)
     expect(sameSheet(drawn, sheetDrawn(one, ink, { ink: '#fff' }))).toBe(false)
   })
 
   test('and another sheet when the page itself moved or changed its paper', () => {
     const drawn = sheetDrawn(one, ink, palette)
     expect(sameSheet(drawn, sheetDrawn({ ...one, y: 20 }, ink, palette))).toBe(false)
-    expect(sameSheet(drawn, sheetDrawn({ ...one, file: 'X.pdf', page: 2 }, ink, palette))).toBe(
-      false,
-    )
+    expect(sameSheet(drawn, sheetDrawn({ ...one, file: 'X.pdf', page: 2 }, ink, palette))).toBe(false)
   })
 })
 

@@ -57,27 +57,19 @@ export function planSpaces(input: {
   const gone = new Set(deleted)
 
   const discarding =
-    untouched !== null &&
-    roots.has(untouched) &&
-    !mirrorByRoot.has(untouched) &&
-    remote.some((one) => !one.shared)
+    untouched !== null && roots.has(untouched) && !mirrorByRoot.has(untouched) && remote.some((one) => !one.shared)
       ? untouched
       : null
   if (discarding !== null) plan.discard.push(discarding)
 
-  const removing = new Set(
-    mirrors.filter((one) => roots.has(one.root) && gone.has(one.spaceId)).map((one) => one.root),
-  )
+  const removing = new Set(mirrors.filter((one) => roots.has(one.root) && gone.has(one.spaceId)).map((one) => one.root))
 
   const spoken = new Set(
-    mirrors
-      .filter((one) => roots.has(one.root) && !removing.has(one.root))
-      .map((one) => one.spaceId),
+    mirrors.filter((one) => roots.has(one.root) && !removing.has(one.root)).map((one) => one.spaceId),
   )
 
   const loose = local.filter(
-    (space) =>
-      !mirrorByRoot.has(space.root) && !removing.has(space.root) && space.root !== discarding,
+    (space) => !mirrorByRoot.has(space.root) && !removing.has(space.root) && space.root !== discarding,
   )
   const housed = new Set<string>()
   for (const space of loose) {
@@ -112,10 +104,7 @@ export function planSpaces(input: {
       !space.shared &&
       local.some(
         (one) =>
-          one.name === space.name &&
-          !removing.has(one.root) &&
-          one.root !== discarding &&
-          !claimed.has(one.root),
+          one.name === space.name && !removing.has(one.root) && one.root !== discarding && !claimed.has(one.root),
       )
     ) {
       continue

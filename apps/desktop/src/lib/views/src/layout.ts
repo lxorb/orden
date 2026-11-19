@@ -11,9 +11,8 @@ export function switched(base: Base, at: number, layout: Layout, rows: readonly 
 
   if (layout === 'kanban' && !view.groupBy) {
     const property =
-      knownProperties(base, kinds, rows).find(
-        (one) => one.startsWith('note.') && optionsOf(base, one).length,
-      ) ?? 'note.status'
+      knownProperties(base, kinds, rows).find((one) => one.startsWith('note.') && optionsOf(base, one).length) ??
+      'note.status'
     next = setGroup(next, at, { property, direction: 'ASC' })
   }
 

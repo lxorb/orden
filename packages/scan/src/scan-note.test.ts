@@ -5,10 +5,7 @@ import { scanNote, scanShortcut } from './scan-note'
 
 describe('reading a note for the index', () => {
   test('finds its headings, its blocks and its links', () => {
-    const note = scanNote(
-      'ideas/Plan.md',
-      '# Plan\n\nSee [[Other]] and [x](../notes/Third.md). ^abc123\n\n## Later\n',
-    )
+    const note = scanNote('ideas/Plan.md', '# Plan\n\nSee [[Other]] and [x](../notes/Third.md). ^abc123\n\n## Later\n')
 
     expect(note.name).toBe('Plan')
     expect(note.headings).toEqual(['Plan', 'Later'])
@@ -71,25 +68,16 @@ Costs $5 and [six](Six.md) $10.
     const aliases = (body: string) => scanNote('Plan.md', body).aliases
 
     expect(aliases('---\naliases: [Roadmap, The plan]\n---\n')).toEqual(['Roadmap', 'The plan'])
-    expect(aliases('---\naliases:\n  - Roadmap\n  - The plan\n---\n')).toEqual([
-      'Roadmap',
-      'The plan',
-    ])
+    expect(aliases('---\naliases:\n  - Roadmap\n  - The plan\n---\n')).toEqual(['Roadmap', 'The plan'])
     expect(aliases('---\naliases:\n- Roadmap\n---\n')).toEqual(['Roadmap'])
-    expect(aliases('---\r\naliases:\r\n  - Foo\r\n  - Bar\r\n---\r\nbody\r\n')).toEqual([
-      'Foo',
-      'Bar',
-    ])
+    expect(aliases('---\r\naliases:\r\n  - Foo\r\n  - Bar\r\n---\r\nbody\r\n')).toEqual(['Foo', 'Bar'])
     expect(aliases('---\naliases: Roadmap\n---\n')).toEqual(['Roadmap'])
     expect(aliases('---\naliases: ["One", \'Two\']\n---\n')).toEqual(['One', 'Two'])
   })
 
   test('reads the front matter tags of a note written with CRLF endings', () => {
     expect(scanNote('N.md', '---\r\ntags: [work]\r\n---\r\nx\r\n').tags).toEqual(['work'])
-    expect(scanNote('N.md', '---\r\ntags:\r\n  - work\r\n---\r\nx #orden\r\n').tags).toEqual([
-      'work',
-      'orden',
-    ])
+    expect(scanNote('N.md', '---\r\ntags:\r\n  - work\r\n---\r\nx #orden\r\n').tags).toEqual(['work', 'orden'])
   })
 
   test('gives a note that names none an empty list rather than nothing at all', () => {
@@ -214,8 +202,7 @@ describe('reading a canvas for the index', () => {
   })
 
   test('stops at the icon of a plane in the order this app writes one', () => {
-    const cards =
-      '"nodes":[{"id":"a","type":"file","x":0,"y":0,"width":1,"height":1,"file":"Plan.md"}]'
+    const cards = '"nodes":[{"id":"a","type":"file","x":0,"y":0,"width":1,"height":1,"file":"Plan.md"}]'
     const orden = '"orden":{"version":1,"icon":"rocket","iconColor":"violet","ink":[[[['
     const read = scanCanvas('Board.canvas', `{${cards},"edges":[],${orden}`)
 
@@ -233,8 +220,7 @@ describe('reading a canvas for the index', () => {
 })
 
 describe('reading a website for the index', () => {
-  const url =
-    '[InternetShortcut]\nURL=https://svelte.dev/docs\nOrden-Icon=https://svelte.dev/favicon.png\n'
+  const url = '[InternetShortcut]\nURL=https://svelte.dev/docs\nOrden-Icon=https://svelte.dev/favicon.png\n'
 
   test('carries the favicon out of its Orden-Icon key', () => {
     const site = scanShortcut('Reading/Svelte docs.url', url)
@@ -254,9 +240,7 @@ describe('reading a website for the index', () => {
 
   test('and where a .webloc points, and nothing for a note or a canvas', () => {
     const webloc = '<plist><dict><key>URL</key><string>https://a.example/?x=1&amp;y=2</string>'
-    expect(scanShortcut('A.webloc', `${webloc}</dict></plist>`).address).toBe(
-      'https://a.example/?x=1&y=2',
-    )
+    expect(scanShortcut('A.webloc', `${webloc}</dict></plist>`).address).toBe('https://a.example/?x=1&y=2')
     expect(scanNote('Plan.md', '# Plan').address).toBeNull()
     expect(scanCanvas('Board.canvas', '{}').address).toBeNull()
   })

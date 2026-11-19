@@ -68,8 +68,7 @@ export const buildBody = (source: string, options: HtmlOptions = {}): string =>
   })
 
 export function buildStyles(body: string, source: string, options: HtmlOptions = {}): string {
-  const palette =
-    CODE_PALETTES.find((entry) => entry.id === options.codeTheme) ?? CODE_PALETTES.at(0)
+  const palette = CODE_PALETTES.find((entry) => entry.id === options.codeTheme) ?? CODE_PALETTES.at(0)
 
   return [
     mathCss(body),
@@ -143,12 +142,7 @@ export async function renderNote(
   return options.resolveImage ? inlineImages(html, options.resolveImage) : html
 }
 
-export async function exportPandoc(
-  source: string,
-  name: string,
-  format: PandocFormat,
-  note: string | null = null,
-) {
+export async function exportPandoc(source: string, name: string, format: PandocFormat, note: string | null = null) {
   if (!isDesktop || __EVEN_PLUGIN__) return
 
   const spec = PANDOC_FORMATS.find((entry) => entry.id === format)

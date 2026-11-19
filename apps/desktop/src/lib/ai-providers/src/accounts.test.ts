@@ -139,11 +139,7 @@ describe('the default and the features', () => {
 
 describe('kept and read back', () => {
   test('what is written reads back the same', () => {
-    const state = used(
-      activated(made('anthropic', 'anthropic', 'openai'), 'anthropic-2'),
-      'block',
-      'openai',
-    )
+    const state = used(activated(made('anthropic', 'anthropic', 'openai'), 'anthropic-2'), 'block', 'openai')
     const changed = updated(state, 'anthropic-2', { name: 'Work', model: 'opus' })
     expect(accountsIn(JSON.parse(accountsText(changed)))).toEqual(changed)
   })

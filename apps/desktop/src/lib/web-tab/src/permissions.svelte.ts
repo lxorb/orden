@@ -86,9 +86,9 @@ class Grants {
     if (!site) return
 
     const before = (privately ? this.privately : this.by())[site] ?? {}
-    const kept = Object.fromEntries(
-      Object.entries(before).filter(([one]) => one !== ask),
-    ) as Partial<Record<Ask, Answer>>
+    const kept = Object.fromEntries(Object.entries(before).filter(([one]) => one !== ask)) as Partial<
+      Record<Ask, Answer>
+    >
     if (answer !== null) kept[ask] = answer
 
     if (privately) {

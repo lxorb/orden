@@ -39,8 +39,7 @@ const PLAN = '/spaces/Work/Plan.md'
 const IDEAS = '/spaces/Work/Ideas.md'
 const FOOD = '/spaces/Home/Food.md'
 
-const onScreen = () =>
-  workspace.panes.all.flatMap((one) => workspace.tabsIn(one.id).map((tab) => tab.name))
+const onScreen = () => workspace.panes.all.flatMap((one) => workspace.tabsIn(one.id).map((tab) => tab.name))
 
 const tabAt = (path: string) => {
   const found = workspace.tabs.find((tab) => tab.path === path)

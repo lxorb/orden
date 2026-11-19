@@ -61,9 +61,7 @@ export interface CrashReport {
   breadcrumbs?: { at: number; what: string }[] | undefined
   log?: string[] | undefined
   open?: { windows: number; kinds: Record<string, number> } | undefined
-  resources?:
-    | { memory?: number | undefined; cpu?: number | undefined; uptime?: number | undefined }
-    | undefined
+  resources?: { memory?: number | undefined; cpu?: number | undefined; uptime?: number | undefined } | undefined
 }
 
 class Wrong extends Error {}
@@ -147,10 +145,7 @@ function threadOf(value: unknown, label: string): CrashThread {
 function openOf(value: unknown): NonNullable<CrashReport['open']> {
   const open = objectOf(value, 'open')
   const kinds: Record<string, number> = {}
-  for (const [kind, many] of Object.entries(objectOf(open.kinds, 'open.kinds')).slice(
-    0,
-    MANY.kinds,
-  )) {
+  for (const [kind, many] of Object.entries(objectOf(open.kinds, 'open.kinds')).slice(0, MANY.kinds)) {
     kinds[cut(kind, MOST.kind)] = numberOf(many, `open.kinds.${kind}`)
   }
   return { windows: numberOf(open.windows, 'open.windows'), kinds }
@@ -200,9 +195,7 @@ function reportOf(sent: Raw): CrashReport {
     process: maybe(sent.process, (one) => textOf(one, 'process', MOST.process)),
     reason: maybe(sent.reason, (one) => textOf(one, 'reason', MOST.reason)),
     threads: maybe(sent.threads, (one) =>
-      listOf(one, 'threads', MANY.threads).map((thread, index) =>
-        threadOf(thread, `threads[${index}]`),
-      ),
+      listOf(one, 'threads', MANY.threads).map((thread, index) => threadOf(thread, `threads[${index}]`)),
     ),
     stack: maybe(sent.stack, (one) => textOf(one, 'stack', MOST.stack)),
     breadcrumbs: maybe(sent.breadcrumbs, (one) =>

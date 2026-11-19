@@ -101,10 +101,7 @@ export function fenceSource(code: string, path: string | null, stranger = false)
       const written = writeBase(next, words)
       shown = now ?? shown
       if (shown) remember(fenceKey(path, written), shown)
-      const after =
-        text.slice(0, at.from) +
-        (written.endsWith('\n') ? written : `${written}\n`) +
-        text.slice(at.to)
+      const after = text.slice(0, at.from) + (written.endsWith('\n') ? written : `${written}\n`) + text.slice(at.to)
       await writeNoteText(workspace, path, text, after)
       words = written
     },

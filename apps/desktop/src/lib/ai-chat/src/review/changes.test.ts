@@ -1,16 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import type { Turn } from '../../../ai-providers/src/chat/types'
-import {
-  agentOf,
-  agentsOf,
-  answered,
-  byNote,
-  changesOf,
-  changesSince,
-  type Edit,
-  linesOf,
-  providerOf,
-} from './changes'
+import { agentOf, agentsOf, answered, byNote, changesOf, changesSince, type Edit, linesOf, providerOf } from './changes'
 import { forkAt, cutForEdit, switchBranch, type Branched } from './branches'
 import { fileChangesOf, verbOf } from './files'
 import { planFor } from './plan'
@@ -45,12 +35,7 @@ const answering = (provider: string, at: number) =>
 
 describe('a thread’s changes', () => {
   test('are the edits its provider’s agent made while it was answering', () => {
-    const edits = [
-      edit('e1', 12),
-      edit('e2', 22),
-      edit('e3', 45),
-      edit('x', 12, '/s/a.md', 'claude-code'),
-    ]
+    const edits = [edit('e1', 12), edit('e2', 22), edit('e3', 45), edit('x', 12, '/s/a.md', 'claude-code')]
     const changes = changesOf(thread, edits, answering, new Set())
     expect(changes.map((one) => one.id)).toEqual(['e1', 'e2'])
   })
@@ -135,11 +120,7 @@ describe('the rewind plan', () => {
     const turns = [
       you('m1', 10),
       model('a1', 11, [
-        tool(
-          'mcp__orden__create_note',
-          { path: 'Plan', space: 'Work' },
-          '{"path":"Plan.md","created":true}',
-        ),
+        tool('mcp__orden__create_note', { path: 'Plan', space: 'Work' }, '{"path":"Plan.md","created":true}'),
         tool('read_note', { path: 'x' }),
         tool('edit_note', { path: 'x' }),
       ]),
@@ -158,16 +139,8 @@ describe('the rewind plan', () => {
     const turns = [
       you('m1', 10),
       model('a1', 11, [
-        tool(
-          'mcp__orden__move_file',
-          { path: 'Plan', to: 'Old/Plan' },
-          '{"from":"Plan.md","to":"Old/Plan.md"}',
-        ),
-        tool(
-          'trash_file',
-          { path: 'Herons', space: 'Work' },
-          '{"path":"Herons.md","trashed":true}',
-        ),
+        tool('mcp__orden__move_file', { path: 'Plan', to: 'Old/Plan' }, '{"from":"Plan.md","to":"Old/Plan.md"}'),
+        tool('trash_file', { path: 'Herons', space: 'Work' }, '{"path":"Herons.md","trashed":true}'),
         tool('move_file', { path: 'A', to: 'A' }, '{"from":"A.md","to":"A.md"}'),
       ]),
     ]
@@ -179,9 +152,7 @@ describe('the rewind plan', () => {
       { id: 'trash_file', kind: 'trashed', path: 'Herons.md', space: 'Work' },
     ])
     expect(fileChangesOf(turns, new Set(['trash_file']))).toHaveLength(1)
-    expect(
-      planFor({ turns }, 'm1', [], new Set(['mcp__orden__move_file', 'trash_file']))?.files,
-    ).toEqual([])
+    expect(planFor({ turns }, 'm1', [], new Set(['mcp__orden__move_file', 'trash_file']))?.files).toEqual([])
   })
 })
 

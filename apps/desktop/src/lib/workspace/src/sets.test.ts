@@ -1,16 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { type Frame, pane, panesIn, successor } from '../../panes/src/api'
-import {
-  focusIn,
-  GLOBAL,
-  isHiddenTabs,
-  onLeaving,
-  ownerOf,
-  readSets,
-  setKey,
-  sharedGoesTo,
-  tidied,
-} from './sets'
+import { focusIn, GLOBAL, isHiddenTabs, onLeaving, ownerOf, readSets, setKey, sharedGoesTo, tidied } from './sets'
 
 describe('which set a space shows', () => {
   test('its own, every space', () => {

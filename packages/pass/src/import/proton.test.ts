@@ -79,10 +79,7 @@ const EXPORT = {
           },
           { pinned: true, folderId: 'f2' },
         ),
-        item(
-          { type: 'note', metadata: { name: 'Geheim', note: 'Ünïcödé 🔐' }, content: {} },
-          { state: 2 },
-        ),
+        item({ type: 'note', metadata: { name: 'Geheim', note: 'Ünïcödé 🔐' }, content: {} }, { state: 2 }),
         item(
           { type: 'alias', metadata: { name: 'Shop alias', note: '' }, content: {} },
           { aliasEmail: 'shop.abc@passmail.net' },
@@ -114,9 +111,7 @@ const EXPORT = {
             countryOrRegion: 'CH',
             passportNumber: 'X123',
             workEmail: 'rene@work.example',
-            extraPersonalDetails: [
-              { fieldName: 'Nickname', type: 'text', data: { content: 'Rene' } },
-            ],
+            extraPersonalDetails: [{ fieldName: 'Nickname', type: 'text', data: { content: 'Rene' } }],
             extraSections: [
               {
                 sectionName: 'Club',
@@ -233,9 +228,7 @@ describe('parseProton', () => {
 
   it('keeps an unknown kind as a note and says so', () => {
     expect(as(find(result, 'Future').content, 'note').note).toBe('from the future')
-    expect(result.skipped).toEqual([
-      { reason: expect.stringContaining('hologram'), title: 'Future' },
-    ])
+    expect(result.skipped).toEqual([{ reason: expect.stringContaining('hologram'), title: 'Future' }])
   })
 
   it('reads the zip and refuses the encrypted export', () => {
@@ -274,9 +267,7 @@ describe('parseProton', () => {
     const login = as(find(parseProton(JSON.stringify(old)), 'Legacy').content, 'login')
     expect(login.email).toBe('legacy@example.com')
     expect(login.username).toBe('')
-    expect(login.websites).toEqual([
-      { url: normalizeUrl('https://a.example.com'), match: 'domain' },
-    ])
+    expect(login.websites).toEqual([{ url: normalizeUrl('https://a.example.com'), match: 'domain' }])
   })
 })
 
@@ -327,9 +318,7 @@ describe('parseProton CSV', () => {
   })
 
   it('reads the old CSV whose username is the email', () => {
-    const old = parseProton(
-      'name,url,username,password,note,totp\nOld,https://x.example.com,old@example.com,pw,,\n',
-    )
+    const old = parseProton('name,url,username,password,note,totp\nOld,https://x.example.com,old@example.com,pw,,\n')
     const login = as(find(old, 'Old').content, 'login')
     expect(login.email).toBe('old@example.com')
     expect(login.username).toBe('')

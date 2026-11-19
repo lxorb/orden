@@ -17,9 +17,7 @@ const side = (words: string) => ({ device: 'Laptop', at: 1, excerpt: { text: wor
 
 const engine = {
   held: {
-    notes: [
-      { id: 'one', path: NOTE, name: 'Diary', mine: side('what nobody'), theirs: side('may read') },
-    ],
+    notes: [{ id: 'one', path: NOTE, name: 'Diary', mine: side('what nobody'), theirs: side('may read') }],
     answer: (_id: string, answer: string) => {
       if (answer !== 'both') return Promise.resolve(undefined)
       if (moving.file) workspace.protection.moved(NOTE, `${ROOT}/Diary 2.md`, ROOT)

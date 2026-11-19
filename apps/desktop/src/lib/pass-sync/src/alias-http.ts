@@ -108,11 +108,7 @@ function said(body: unknown, status: number): string {
   return `the alias service refused (${String(status)})`
 }
 
-export async function answerOf(
-  fetcher: AliasFetcher,
-  url: string,
-  init: RequestInit,
-): Promise<unknown> {
+export async function answerOf(fetcher: AliasFetcher, url: string, init: RequestInit): Promise<unknown> {
   const response = await fetcher(url, init)
   const text = await response.text()
   let body: unknown
@@ -126,8 +122,6 @@ export async function answerOf(
 }
 
 export function withQuery(url: string, query: Record<string, string | undefined>): string {
-  const pairs = Object.entries(query).filter(
-    (one): one is [string, string] => one[1] !== undefined && one[1] !== '',
-  )
+  const pairs = Object.entries(query).filter((one): one is [string, string] => one[1] !== undefined && one[1] !== '')
   return pairs.length ? `${url}?${new URLSearchParams(pairs).toString()}` : url
 }

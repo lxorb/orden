@@ -1,12 +1,4 @@
-import {
-  cpSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  statSync,
-  writeFileSync,
-} from 'node:fs'
+import { cpSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const from = process.argv[2] ?? join('apps', 'desktop', 'dist-even')
@@ -46,9 +38,7 @@ for (const stray of [
   rmSync(join(to, stray), { force: true })
 }
 
-const MANIFEST = JSON.parse(
-  readFileSync(new URL('../apps/desktop/even.app.json', import.meta.url), 'utf8'),
-)
+const MANIFEST = JSON.parse(readFileSync(new URL('../apps/desktop/even.app.json', import.meta.url), 'utf8'))
 const ALLOWED = MANIFEST.permissions.find((one) => one.name === 'network')?.whitelist ?? []
 
 const NAMESPACES = /^https?:\/\/www\.w3\.org\//

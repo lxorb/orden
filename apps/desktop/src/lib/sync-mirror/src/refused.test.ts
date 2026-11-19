@@ -42,9 +42,7 @@ const world = vi.hoisted(() => {
         return answer(undefined)
       case 'list_snapshots':
         return answer(
-          [...(here.kept.get(path) ?? [])]
-            .map((_, at) => ({ path: `${path}#${at}`, taken_at: at, size: 0 }))
-            .reverse(),
+          [...(here.kept.get(path) ?? [])].map((_, at) => ({ path: `${path}#${at}`, taken_at: at, size: 0 })).reverse(),
         )
       case 'read_snapshot': {
         const [note = '', at = ''] = path.split('#')
@@ -142,11 +140,7 @@ beforeEach(async () => {
       listsSaid.push(files)
     }
     if (offered !== null) offers.push(offered)
-    if (
-      answering &&
-      answering.left > 0 &&
-      answering.to.test(`${asked.method} ${asked.url} ${String(offered)}`)
-    ) {
+    if (answering && answering.left > 0 && answering.to.test(`${asked.method} ${asked.url} ${String(offered)}`)) {
       answering.left -= 1
       return new Response(answering.page ? '<html>too large</html>' : '{"error":"no"}', {
         status: answering.status,
@@ -320,13 +314,9 @@ test('a network that is down is not taken for a refusal', async () => {
 
   await pass(mirror)
   expect(told).toEqual([])
-  const words = await call<{ content: string }>(
-    env,
-    `/v1/notes/${mirror.notes['a.md']?.id ?? ''}`,
-    {
-      token,
-    },
-  )
+  const words = await call<{ content: string }>(env, `/v1/notes/${mirror.notes['a.md']?.id ?? ''}`, {
+    token,
+  })
   expect(words.json.content).toBe('second\n')
 })
 

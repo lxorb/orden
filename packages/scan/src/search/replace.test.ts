@@ -41,9 +41,7 @@ describe('replacing', () => {
   })
 
   test('says which edits it made, so a pane can take them as edits', () => {
-    expect(rewrite('a alpha b\n', 'alpha', 'beta')?.edits).toEqual([
-      { from: 2, to: 7, insert: 'beta' },
-    ])
+    expect(rewrite('a alpha b\n', 'alpha', 'beta')?.edits).toEqual([{ from: 2, to: 7, insert: 'beta' }])
   })
 
   test('puts nothing where a filter found no words', () => {

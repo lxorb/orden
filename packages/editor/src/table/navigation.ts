@@ -24,8 +24,7 @@ const tableSpan = (state: EditorState, from: number, to: number): TableSpan => (
   to: state.doc.lineAt(to).to,
 })
 
-export const standsAlone = (state: EditorState, from: number): boolean =>
-  state.doc.lineAt(from).from === from
+export const standsAlone = (state: EditorState, from: number): boolean => state.doc.lineAt(from).from === from
 
 export function renderedTables(state: EditorState): TableSpan[] {
   const spans: TableSpan[] = []

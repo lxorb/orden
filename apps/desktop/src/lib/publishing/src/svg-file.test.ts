@@ -1,8 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { shapesOnly } from './svg-file'
 
-const drawing = (inner: string) =>
-  `<svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`
+const drawing = (inner: string) => `<svg viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`
 
 describe('a handler', () => {
   test('goes, in double quotes, in single quotes and in none', () => {
@@ -40,9 +39,7 @@ describe('a target outside the picture', () => {
   })
 
   test('while a place in the picture stays', () => {
-    expect(shapesOnly(drawing('<a href="#inside">in</a>'))).toBe(
-      drawing('<a href="#inside">in</a>'),
-    )
+    expect(shapesOnly(drawing('<a href="#inside">in</a>'))).toBe(drawing('<a href="#inside">in</a>'))
     expect(shapesOnly(drawing('<path fill="url(#grad)" d="M0 0"/>'))).toContain('url(#grad)')
   })
 })
@@ -109,9 +106,7 @@ describe('the drawing itself', () => {
   })
 
   test('while a comment, a doctype and an instruction say nothing worth keeping', () => {
-    const out = shapesOnly(
-      '<svg viewBox="0 0 10 10"><!-- drawn by mermaid --><?xml-stylesheet href="x"?><rect/></svg>',
-    )
+    const out = shapesOnly('<svg viewBox="0 0 10 10"><!-- drawn by mermaid --><?xml-stylesheet href="x"?><rect/></svg>')
 
     expect(out).toBe('<svg viewBox="0 0 10 10"><rect/></svg>')
   })

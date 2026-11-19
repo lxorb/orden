@@ -55,8 +55,7 @@ function opened(opening: Promise<IDBDatabase>, name: string): Promise<IDBDatabas
     request.onupgradeneeded = () => {
       const db = request.result
       if (!db.objectStoreNames.contains('files')) db.createObjectStore('files', { keyPath: 'path' })
-      if (!db.objectStoreNames.contains('assets'))
-        db.createObjectStore('assets', { keyPath: 'path' })
+      if (!db.objectStoreNames.contains('assets')) db.createObjectStore('assets', { keyPath: 'path' })
       if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta')
 
       if (!db.objectStoreNames.contains('snapshots')) {
@@ -90,10 +89,7 @@ function lost(was: Promise<IDBDatabase>) {
   if (open === was) open = null
 }
 
-async function begun(
-  stores: string | readonly string[],
-  mode: IDBTransactionMode,
-): Promise<IDBTransaction> {
+async function begun(stores: string | readonly string[], mode: IDBTransactionMode): Promise<IDBTransaction> {
   const opening = database()
   const db = await opening
   try {
@@ -130,11 +126,7 @@ function statOf(row: FileRow | AssetRow): StatRow {
   return { path: row.path, modified: row.modified, created, size }
 }
 
-function run<T>(
-  store: string,
-  mode: IDBTransactionMode,
-  action: (store: IDBObjectStore) => IDBRequest,
-): Promise<T> {
+function run<T>(store: string, mode: IDBTransactionMode, action: (store: IDBObjectStore) => IDBRequest): Promise<T> {
   return begun(store, mode).then(
     (transaction) =>
       new Promise<T>((resolve, reject) => {
@@ -142,25 +134,20 @@ function run<T>(
 
         if (mode === 'readonly') request.onsuccess = () => resolve(request.result as T)
         else transaction.oncomplete = () => resolve(request.result as T)
-        transaction.onabort = () =>
-          reject(transaction.error ?? request.error ?? new Error(`${store} was rolled back`))
+        transaction.onabort = () => reject(transaction.error ?? request.error ?? new Error(`${store} was rolled back`))
         request.onerror = () => reject(request.error ?? new Error(`${store} failed`))
       }),
   )
 }
 
-function batch(
-  stores: readonly string[],
-  queue: (transaction: IDBTransaction) => void,
-): Promise<void> {
+function batch(stores: readonly string[], queue: (transaction: IDBTransaction) => void): Promise<void> {
   const named = stores.join(' and ')
 
   return begun(stores, 'readwrite').then(
     (transaction) =>
       new Promise<void>((resolve, reject) => {
         transaction.oncomplete = () => resolve()
-        transaction.onabort = () =>
-          reject(transaction.error ?? new Error(`${named} was rolled back`))
+        transaction.onabort = () => reject(transaction.error ?? new Error(`${named} was rolled back`))
         transaction.onerror = () => reject(transaction.error ?? new Error(`${named} failed`))
 
         try {
@@ -188,8 +175,7 @@ function walk(store: string, visit: (row: FileRow) => void): Promise<void> {
         }
 
         transaction.oncomplete = () => resolve()
-        transaction.onabort = () =>
-          reject(transaction.error ?? new Error(`${store} was rolled back`))
+        transaction.onabort = () => reject(transaction.error ?? new Error(`${store} was rolled back`))
         transaction.onerror = () => reject(transaction.error ?? new Error(`${store} failed`))
       }),
   )
@@ -331,10 +317,7 @@ const ownStats = {
     const at = await run<IDBValidKey | undefined>('stats', 'readonly', (s) => s.getKey(path))
     if (at !== undefined) return true
     const under = IDBKeyRange.bound(`${path}/`, `${path}/\uffff`)
-    return (
-      (await run<IDBValidKey | undefined>('stats', 'readonly', (s) => s.getKey(under))) !==
-      undefined
-    )
+    return (await run<IDBValidKey | undefined>('stats', 'readonly', (s) => s.getKey(under))) !== undefined
   },
   all: () =>
     inSlices<StatRow>(
@@ -443,10 +426,7 @@ function everyRows(): Rows[] {
   return [...(OWN_HERE ? [OWN_HERE] : []), ...mounts.values()]
 }
 
-async function together<T>(
-  read: (rows: Rows) => Promise<T[]>,
-  keyOf: (row: T) => string,
-): Promise<T[]> {
+async function together<T>(read: (rows: Rows) => Promise<T[]>, keyOf: (row: T) => string): Promise<T[]> {
   const lists = await Promise.all(everyRows().map(read))
   if (lists.length === 1) return lists[0] ?? []
   return lists.flat().sort((a, b) => (keyOf(a) < keyOf(b) ? -1 : keyOf(a) > keyOf(b) ? 1 : 0))
@@ -515,8 +495,7 @@ export const stats: Rows['stats'] = {
 
 export const meta = {
   get: (key: string) => run<string | undefined>('meta', 'readonly', (s) => s.get(key)),
-  put: (key: string, value: string) =>
-    run<IDBValidKey>('meta', 'readwrite', (s) => s.put(value, key)),
+  put: (key: string, value: string) => run<IDBValidKey>('meta', 'readwrite', (s) => s.put(value, key)),
   remove: (key: string) => run<undefined>('meta', 'readwrite', (s) => s.delete(key)),
   keys: () => run<IDBValidKey[]>('meta', 'readonly', (s) => s.getAllKeys()),
 }
@@ -528,8 +507,7 @@ export const snapshots = {
     run<IDBCursorWithValue | null>('snapshots', 'readonly', (s) =>
       s.index('notePath').openCursor(IDBKeyRange.only(notePath), 'prev'),
     ).then((cursor) => cursor?.value as SnapshotRow | undefined),
-  idsOf: (notePath: string) =>
-    run<number[]>('snapshots', 'readonly', (s) => s.index('notePath').getAllKeys(notePath)),
+  idsOf: (notePath: string) => run<number[]>('snapshots', 'readonly', (s) => s.index('notePath').getAllKeys(notePath)),
   remove: (id: number) => run<undefined>('snapshots', 'readwrite', (s) => s.delete(id)),
   forNote: (notePath: string) =>
     run<SnapshotRow[]>('snapshots', 'readonly', (s) => s.index('notePath').getAll(notePath)),

@@ -88,19 +88,13 @@ function blockName(kind: BlockKind): string {
 export const blockLinkName = (path: string | null | undefined): string | null =>
   path && isMarkdownPath(path) ? noteName(path) : null
 
-function blockEntries(
-  view: EditorView | undefined,
-  at: number | null,
-  path: string | null | undefined,
-): MenuEntry[] {
+function blockEntries(view: EditorView | undefined, at: number | null, path: string | null | undefined): MenuEntry[] {
   if (!view || at === null || view.state.readOnly) return []
 
   const spans = blocksFor(view, at)
   if (!spans.length) return []
 
-  const words = countText(
-    spans.map((span) => view.state.doc.sliceString(span.from, span.to)).join('\n'),
-  ).words
+  const words = countText(spans.map((span) => view.state.doc.sliceString(span.from, span.to)).join('\n')).words
   const name = blockLinkName(path)
   const first = spans[0]
 
@@ -218,9 +212,7 @@ function blockBookmark(view: EditorView, at: number, path: string | null | undef
       : {
           label: spans.length > 1 ? 'Add blocks to Essentials' : 'Add block to Essentials',
           run: () => {
-            const said = blocksFor(view, at).map((one) =>
-              firstWords(view.state.doc.sliceString(one.from, one.to)),
-            )
+            const said = blocksFor(view, at).map((one) => firstWords(view.state.doc.sliceString(one.from, one.to)))
 
             for (const [index, target] of blockTargets(view, at).entries()) {
               const mark = workspace.bookmarks.forBlock(relative, target, said[index] ?? words)
@@ -246,11 +238,7 @@ function pasteInto(view: EditorView, cell: HTMLElement | null): void {
     .catch(() => undefined)
 }
 
-function editorMenu(
-  view: EditorView | undefined,
-  block: MenuEntry[],
-  cell: HTMLElement | null = null,
-): MenuEntry[] {
+function editorMenu(view: EditorView | undefined, block: MenuEntry[], cell: HTMLElement | null = null): MenuEntry[] {
   const selected = cell
     ? !(cell.ownerDocument.getSelection()?.isCollapsed ?? true)
     : !!view && !view.state.selection.main.empty
@@ -354,11 +342,7 @@ function recordingEntries(view: EditorView | undefined, at: number | null): Menu
   return rows.length ? [DIVIDER, ...rows] : []
 }
 
-function linkEntries(
-  view: EditorView | undefined,
-  event: MouseEvent,
-  path: string | null | undefined,
-): MenuEntry[] {
+function linkEntries(view: EditorView | undefined, event: MouseEvent, path: string | null | undefined): MenuEntry[] {
   const target = event.target
   const link = target instanceof Element ? target.closest('.orden-link') : null
   if (!link) return []
@@ -370,9 +354,7 @@ function linkEntries(
 
   return [
     ...(jump && view ? noteEntries(jump, path ?? null, view.state) : []),
-    ...(href && webHref(href) !== null
-      ? [{ label: 'Open in the browser', run: () => void openExternal(href) }]
-      : []),
+    ...(href && webHref(href) !== null ? [{ label: 'Open in the browser', run: () => void openExternal(href) }] : []),
     ...(href ? [{ label: 'Copy link address', run: () => void copyText(href) }] : []),
     ...(view && parts
       ? [
@@ -401,9 +383,7 @@ const noteEntries = (jump: NoteJump, from: string | null, state: EditorState): M
 
 function linkOf(jump: NoteJump, state: EditorState): string {
   const fragment =
-    jump.block !== null
-      ? `^${jump.block}`
-      : (jump.heading ?? (jump.page === null ? null : `page=${String(jump.page)}`))
+    jump.block !== null ? `^${jump.block}` : (jump.heading ?? (jump.page === null ? null : `page=${String(jump.page)}`))
 
   const name = jump.path ? (linkNameAt(state, jump.path) ?? noteName(jump.path)) : jump.target
   return linkTo(name, null, {
@@ -435,11 +415,7 @@ function pictureEntries(view: EditorView | undefined, event: MouseEvent): MenuEn
   ]
 }
 
-export function showEditorMenu(
-  event: MouseEvent,
-  view: EditorView | undefined,
-  path?: string | null,
-) {
+export function showEditorMenu(event: MouseEvent, view: EditorView | undefined, path?: string | null) {
   const at = view ? view.posAtCoords({ x: event.clientX, y: event.clientY }, false) : null
 
   menu.show(
@@ -447,11 +423,7 @@ export function showEditorMenu(
     [
       ...pictureEntries(view, event),
       ...linkEntries(view, event, path),
-      ...editorMenu(
-        view,
-        blockEntries(view, at, path),
-        view ? editableCellAt(view, event.target) : null,
-      ),
+      ...editorMenu(view, blockEntries(view, at, path), view ? editableCellAt(view, event.target) : null),
       ...recordingEntries(view, at),
     ],
     { near: true, until: unlocks.held },

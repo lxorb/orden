@@ -4,16 +4,10 @@ import { baseUnder, placedUnder } from './rename'
 
 describe('a filter landed under a folder', () => {
   test('names the folders and paths it named, under that folder', () => {
-    expect(placedUnder('file.inFolder("Projects")', 'Vault')).toBe(
-      'file.inFolder("Vault/Projects")',
-    )
+    expect(placedUnder('file.inFolder("Projects")', 'Vault')).toBe('file.inFolder("Vault/Projects")')
     expect(placedUnder('file.inFolder("")', 'Vault')).toBe('file.inFolder("Vault")')
-    expect(placedUnder('"Projects" == file.folder', 'Vault')).toBe(
-      '"Vault/Projects" == file.folder',
-    )
-    expect(placedUnder('file.path.startsWith("/Projects/")', 'Vault/')).toBe(
-      'file.path.startsWith("Vault/Projects/")',
-    )
+    expect(placedUnder('"Projects" == file.folder', 'Vault')).toBe('"Vault/Projects" == file.folder')
+    expect(placedUnder('file.path.startsWith("/Projects/")', 'Vault/')).toBe('file.path.startsWith("Vault/Projects/")')
     expect(placedUnder('!(file.folder != "A") || file.inFolder("B")', 'In')).toBe(
       '!(file.folder != "In/A") || file.inFolder("In/B")',
     )
@@ -42,9 +36,7 @@ describe('a filter landed under a folder', () => {
     expect(placedUnder('file.path.startsWith("/Tasks/Sub/")', 'In', moved)).toBe(
       'file.path.startsWith("In/Tasks 2/Sub/")',
     )
-    expect(baseUnder('filters: file.inFolder("Tasks")\n', '', moved)).toBe(
-      'filters: file.inFolder("Tasks 2")\n',
-    )
+    expect(baseUnder('filters: file.inFolder("Tasks")\n', '', moved)).toBe('filters: file.inFolder("Tasks 2")\n')
   })
 
   test('reads every filter and formula of a base, and keeps the rest as it was written', () => {
@@ -82,8 +74,6 @@ describe('a filter landed under a folder', () => {
       '',
     ].join('\n')
 
-    expect(baseUnder(yaml, 'In')).toBe(
-      yaml.replace('"Work"', '"In/Work"').replace('"Home"', '"In/Home"'),
-    )
+    expect(baseUnder(yaml, 'In')).toBe(yaml.replace('"Work"', '"In/Work"').replace('"Home"', '"In/Home"'))
   })
 })

@@ -97,9 +97,7 @@
   function showTrail(event: MouseEvent, tab: Tab) {
     if (!tab.canGoBack) return
     event.preventDefault()
-    void here(tabMenus()).then(({ trailMenu }) =>
-      menu.show(event, trailMenu(tab), { title: 'Back' }),
-    )
+    void here(tabMenus()).then(({ trailMenu }) => menu.show(event, trailMenu(tab), { title: 'Back' }))
   }
 
   function showMenu(event: MouseEvent, tab: Tab) {
@@ -111,9 +109,7 @@
   }
 
   function showNoteMenu(event: MouseEvent) {
-    void here(import('./note-menu').then(({ noteMenu }) => noteMenu(paneId))).then((rows) =>
-      menu.show(event, rows),
-    )
+    void here(import('./note-menu').then(({ noteMenu }) => noteMenu(paneId))).then((rows) => menu.show(event, rows))
   }
 
   let onMark = false
@@ -202,8 +198,7 @@
     }
     const now = untrack(() => fits)
     const keys = Object.keys(next)
-    if (keys.length !== Object.keys(now).length || keys.some((id) => now[id] !== next[id]))
-      fits = next
+    if (keys.length !== Object.keys(now).length || keys.some((id) => now[id] !== next[id])) fits = next
   })
 
   const sized = $derived(
@@ -215,9 +210,7 @@
     })),
   )
 
-  const opened = $derived(
-    icons && !drag.on && hovered !== null && hovered !== activeId ? hovered : null,
-  )
+  const opened = $derived(icons && !drag.on && hovered !== null && hovered !== activeId ? hovered : null)
 
   let settledOpen = $state<string | null>(null)
   $effect(() => {
@@ -234,22 +227,15 @@
     if (!icons) return new Set<string>()
     const looks = tabs.map((tab) => {
       const own =
-        tab.kind === 'terminal' ||
-        tab.kind === 'graph' ||
-        (tab.path !== null && chosenIcon(tab.path) !== null)
-      const look = own
-        ? null
-        : tab.kind === 'web'
-          ? siteLook(tab.address ?? webPages().addressOf(tab.id))
-          : tab.kind
+        tab.kind === 'terminal' || tab.kind === 'graph' || (tab.path !== null && chosenIcon(tab.path) !== null)
+      const look = own ? null : tab.kind === 'web' ? siteLook(tab.address ?? webPages().addressOf(tab.id)) : tab.kind
       return { id: tab.id, look }
     })
     return twins(looks)
   })
 
   const widths = $derived.by(() => {
-    const shared =
-      (closing?.widths ? keptWidths(sized, closing.widths) : null) ?? widthsFor(sized, room)
+    const shared = (closing?.widths ? keptWidths(sized, closing.widths) : null) ?? widthsFor(sized, room)
     const at = opened === null ? -1 : sized.findIndex((one) => one.id === opened)
     return at < 0 ? shared : widened(shared, at, room, sized[at]?.fit)
   })
@@ -262,9 +248,7 @@
   const lifted = $derived(drag.tabId === null ? [] : (block?.ids ?? [drag.tabId]))
 
   const landing = $derived(workspace.panes.landing)
-  const incoming = $derived(
-    landing?.kind === 'strip' && landing.paneId === paneId && !drag.on ? landing.at : null,
-  )
+  const incoming = $derived(landing?.kind === 'strip' && landing.paneId === paneId && !drag.on ? landing.at : null)
 
   const behind = (one: (typeof sized)[number]) => ({ ...one, active: false, icon: icons })
 
@@ -577,10 +561,7 @@
 
   function flyHome(tabId: string, from: { left: number; top: number }) {
     carry?.flyHome(
-      () => [
-        strip?.querySelector<HTMLElement>(`[data-box="${CSS.escape(tabId)}"]`),
-        layout.boxes[tabId],
-      ],
+      () => [strip?.querySelector<HTMLElement>(`[data-box="${CSS.escape(tabId)}"]`), layout.boxes[tabId]],
       from,
       TOP,
     )
@@ -649,8 +630,7 @@
     return {
       duration,
       easing: quintOut,
-      css: (t: number, u: number) =>
-        `width: ${t * width}px; transform: translateX(${x + dx * u}px)`,
+      css: (t: number, u: number) => `width: ${t * width}px; transform: translateX(${x + dx * u}px)`,
     }
   }
 
@@ -671,10 +651,7 @@
   }
 
   const takes = (transfer: DataTransfer | null) =>
-    isTreeDrag(transfer) ||
-    isBookmarkDrag(transfer) ||
-    isAiChatDrag(transfer) ||
-    mayCarryAddress(transfer?.types ?? [])
+    isTreeDrag(transfer) || isBookmarkDrag(transfer) || isAiChatDrag(transfer) || mayCarryAddress(transfer?.types ?? [])
 
   function over(event: DragEvent) {
     if (!takes(event.dataTransfer)) return
@@ -683,9 +660,7 @@
     event.stopPropagation()
     if (
       event.dataTransfer &&
-      (isTreeDrag(event.dataTransfer) ||
-        isBookmarkDrag(event.dataTransfer) ||
-        isAiChatDrag(event.dataTransfer))
+      (isTreeDrag(event.dataTransfer) || isBookmarkDrag(event.dataTransfer) || isAiChatDrag(event.dataTransfer))
     ) {
       event.dataTransfer.dropEffect = 'move'
     }
@@ -708,9 +683,7 @@
 
     const mark = workspace.bookmarks.indexOf(draggedBookmark(transfer))
     if (mark !== null) {
-      void here(essentialDropping()).then(({ droppedEssential }) =>
-        droppedEssential(mark, paneId, at),
-      )
+      void here(essentialDropping()).then(({ droppedEssential }) => droppedEssential(mark, paneId, at))
       return
     }
 
@@ -721,9 +694,7 @@
     }
 
     if (!isTreeDrag(transfer)) {
-      const held = new Map(
-        ['text/uri-list', 'text/plain'].map((type) => [type, transfer?.getData(type) ?? '']),
-      )
+      const held = new Map(['text/uri-list', 'text/plain'].map((type) => [type, transfer?.getData(type) ?? '']))
       const address = droppedAddress((type) => held.get(type) ?? '')
       const from = workspace.panes.at(paneId)?.activeTabId ?? undefined
       const id = address === null ? null : workspace.openPage(address, 'plain', from)
@@ -923,8 +894,7 @@
             aria-label={tab.shown}
             aria-current={tab.id === activeId ? 'page' : undefined}
             onfocus={(event) => {
-              if (event.currentTarget.matches(':focus-visible'))
-                card(tab, event.currentTarget, true)
+              if (event.currentTarget.matches(':focus-visible')) card(tab, event.currentTarget, true)
             }}
             onblur={() => card(tab, null)}
             onclick={(event) => {
@@ -953,13 +923,9 @@
             use:longPress={(event) => showMenu(event, tab)}
           >
             <span class="face" class:hidden={!parts.mark} class:unloaded={tab.unloaded}
-              ><TabMark {tab} />{#if icon && lettered.has(tab.id)}<span
-                  class="letter"
-                  aria-hidden="true">{initialOf(tab.shown)}</span
-                >{/if}{#if isDraft(tab.note) && (icon || !parts.title)}<UnsavedDot
-                  corner
-                  pressable
-                />{/if}</span
+              ><TabMark {tab} />{#if icon && lettered.has(tab.id)}<span class="letter" aria-hidden="true"
+                  >{initialOf(tab.shown)}</span
+                >{/if}{#if isDraft(tab.note) && (icon || !parts.title)}<UnsavedDot corner pressable />{/if}</span
             >
             {#if tab.reading}
               <svg
@@ -1001,17 +967,9 @@
               {#await syncMark.asked then Held}<Held path={tab.path} />{/await}
             {/if}
             {#if (elsewhere || faces.length) && parts.title}
-              <span
-                class="here"
-                role="img"
-                aria-label="Also open elsewhere"
-                title="Also open elsewhere"
-              >
+              <span class="here" role="img" aria-label="Also open elsewhere" title="Also open elsewhere">
                 {#each faces as one (one.key)}
-                  <span
-                    class="who face"
-                    style:--fill={one.fill}
-                    transition:fade={{ duration: dur(190) }}
+                  <span class="who face" style:--fill={one.fill} transition:fade={{ duration: dur(190) }}
                     >{initial(one.name)}{#if one.face && !faceless.has(one.face)}<img
                         src={one.face}
                         alt=""
@@ -1072,21 +1030,13 @@
       onclick={() => workspace.toggleLink(paneId)}
     >
       <svg viewBox="0 0 14 14">
-        <path
-          d="M5.6 8.4 8.4 5.6M6.6 4 8 2.6a2.8 2.8 0 0 1 4 4L10.6 8M7.4 10 6 11.4a2.8 2.8 0 0 1-4-4L3.4 6"
-        />
+        <path d="M5.6 8.4 8.4 5.6M6.6 4 8 2.6a2.8 2.8 0 0 1 4 4L10.6 8M7.4 10 6 11.4a2.8 2.8 0 0 1-4-4L3.4 6" />
       </svg>
     </button>
   {/if}
 
   {#if walking?.kind === 'note'}
-    <button
-      class="orden-glyph more"
-      title="More"
-      aria-label="More"
-      aria-haspopup="menu"
-      onclick={showNoteMenu}
-    >
+    <button class="orden-glyph more" title="More" aria-label="More" aria-haspopup="menu" onclick={showNoteMenu}>
       <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h0M8 8h0M13 8h0" /></svg>
     </button>
   {/if}
@@ -1252,8 +1202,7 @@
     height: var(--tab-foot);
     --rise:
       transparent calc(var(--tab-foot) - 1.5px),
-      var(--tab-rim) calc(var(--tab-foot) - 1px) calc(var(--tab-foot) - 0.5px),
-      var(--tab-ground) var(--tab-foot);
+      var(--tab-rim) calc(var(--tab-foot) - 1px) calc(var(--tab-foot) - 0.5px), var(--tab-ground) var(--tab-foot);
   }
 
   .tab.active .fill::before {

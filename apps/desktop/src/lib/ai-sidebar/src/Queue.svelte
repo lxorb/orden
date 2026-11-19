@@ -32,12 +32,8 @@
         animate:flip={{ duration: dur(150) }}
         transition:fly={{ y: 8, duration: dur(150), easing: cubicOut }}
       >
-        <svg class="grip" viewBox="0 0 13 13" aria-hidden="true"
-          ><path d="M3.5 4h6M3.5 6.5h6M3.5 9h6" /></svg
-        >
-        <button class="words" dir="auto" title="Edit" onclick={() => chat.editQueued(one.id)}
-          >{one.text}</button
-        >
+        <svg class="grip" viewBox="0 0 13 13" aria-hidden="true"><path d="M3.5 4h6M3.5 6.5h6M3.5 9h6" /></svg>
+        <button class="words" dir="auto" title="Edit" onclick={() => chat.editQueued(one.id)}>{one.text}</button>
         {#if chat.canSteer}
           <button
             class="orden-glyph small"
@@ -48,12 +44,7 @@
             <svg viewBox="0 0 13 13"><path d="M6.5 10.6V2.6M3.2 5.9l3.3-3.3 3.3 3.3" /></svg>
           </button>
         {/if}
-        <button
-          class="orden-glyph small"
-          title="Remove"
-          aria-label="Remove"
-          onclick={() => chat.unqueue(one.id)}
-        >
+        <button class="orden-glyph small" title="Remove" aria-label="Remove" onclick={() => chat.unqueue(one.id)}>
           <Cross />
         </button>
       </li>

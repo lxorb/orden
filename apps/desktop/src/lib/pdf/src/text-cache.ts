@@ -34,9 +34,7 @@ export function textWork(): { read: number; wrote: number } {
 
 const isPages = (value: unknown): value is [number, string][] =>
   Array.isArray(value) &&
-  value.every(
-    (one) => Array.isArray(one) && one.length === 2 && isNumber(one[0]) && isString(one[1]),
-  )
+  value.every((one) => Array.isArray(one) && one.length === 2 && isNumber(one[0]) && isString(one[1]))
 
 function isPaperText(value: unknown): value is PaperText {
   if (!isRecord(value)) return false
@@ -79,11 +77,7 @@ export async function paperFiles(): Promise<PaperFile[]> {
   return found.filter(isPaperFile).sort((one, other) => one.size - other.size)
 }
 
-export async function paperText(
-  path: string,
-  modified?: number,
-  hash?: string,
-): Promise<PaperText | null> {
+export async function paperText(path: string, modified?: number, hash?: string): Promise<PaperText | null> {
   work.read += 1
   const text = await invoke<unknown>('read_paper_text', { path }).catch(() => '')
   if (!isString(text) || !text) return null

@@ -11,15 +11,11 @@ const keptCoverField = StateField.define<Cover | null>({
   },
 })
 
-export const coverMover = Facet.define<
-  (position: number) => void,
-  ((position: number) => void) | null
->({
+export const coverMover = Facet.define<(position: number) => void, ((position: number) => void) | null>({
   combine: (values) => values.at(-1) ?? null,
 })
 
-export const keptCover = (state: EditorState): Cover | null =>
-  state.field(keptCoverField, false) ?? null
+export const keptCover = (state: EditorState): Cover | null => state.field(keptCoverField, false) ?? null
 
 export function keptCoverChanged(before: EditorState, after: EditorState): boolean {
   const one = keptCover(before)

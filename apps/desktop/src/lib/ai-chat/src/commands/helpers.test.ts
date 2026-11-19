@@ -20,9 +20,7 @@ const model = (text: string): Turn => ({
 
 describe('the commands on a thread', () => {
   test('/batch finds the folders and tags an instruction names', () => {
-    expect(
-      batchTargets('tag every note in @Inbox/ and Reading/Birds/ with #todo, then #later.'),
-    ).toEqual({
+    expect(batchTargets('tag every note in @Inbox/ and Reading/Birds/ with #todo, then #later.')).toEqual({
       folders: ['Inbox/', 'Reading/Birds/'],
       tags: ['todo', 'later'],
     })

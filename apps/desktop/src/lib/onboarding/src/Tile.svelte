@@ -15,14 +15,7 @@
   const { name, icon = null, colour = null, checked, later = '', glyph, onpick }: Props = $props()
 </script>
 
-<button
-  class="tile"
-  class:later={!!later}
-  type="button"
-  role="radio"
-  aria-checked={checked}
-  onclick={onpick}
->
+<button class="tile" class:later={!!later} type="button" role="radio" aria-checked={checked} onclick={onpick}>
   <span class="ring" aria-hidden="true"></span>
   <span class="mark">
     {#if glyph}{@render glyph()}{:else}<Logo {name} {icon} {colour} />{/if}

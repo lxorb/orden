@@ -27,15 +27,13 @@ function graphOf(entry: string): { files: string[]; packages: Set<string> } {
   return { files, packages }
 }
 
-const names = (files: readonly string[]) =>
-  files.map((one) => one.split(/[\\/]/).pop() ?? one).sort()
+const names = (files: readonly string[]) => files.map((one) => one.split(/[\\/]/).pop() ?? one).sort()
 
 describe('what showing a note loads', () => {
   test('no formula engine, no chemistry pack and no emoji table: the renderer asks for them', () => {
     const { packages, files } = graphOf(resolve(MARKDOWN, 'index.ts'))
 
-    for (const heavy of ['katex', 'katex/contrib/mhchem', 'node-emoji'])
-      expect(packages, heavy).not.toContain(heavy)
+    for (const heavy of ['katex', 'katex/contrib/mhchem', 'node-emoji']) expect(packages, heavy).not.toContain(heavy)
     expect(names(files)).toContain('engines.ts')
   })
 

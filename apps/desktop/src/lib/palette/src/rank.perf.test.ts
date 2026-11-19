@@ -16,10 +16,7 @@ const BIG = world({
     command(`c${String(index)}`, `Do the thing number ${String(index)}`),
   ),
   pages: Array.from({ length: 500 }, (_, index) =>
-    visit(
-      `https://site${String(index)}.example.com/page/${String(index)}`,
-      `Page ${String(index)}`,
-    ),
+    visit(`https://site${String(index)}.example.com/page/${String(index)}`, `Page ${String(index)}`),
   ),
   settings: Array.from({ length: 100 }, (_, index) =>
     setting(`Setting ${String(index)}`, 'Editor', { names: ['word'] }),

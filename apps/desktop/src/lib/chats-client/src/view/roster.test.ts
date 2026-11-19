@@ -75,11 +75,7 @@ describe('the members of a chat in groups', () => {
     expect(shown.length).toBeLessThan(20)
     expect(shown[0]?.top).toBeLessThanOrEqual(44 * 2000)
     expect((shown.at(-1)?.top ?? 0) + 44).toBeGreaterThanOrEqual(44 * 2000 + 600)
-    expect(visible(laid.rows, 0, 100).map((row) => row.line.kind)).toEqual([
-      'group',
-      'member',
-      'member',
-    ])
+    expect(visible(laid.rows, 0, 100).map((row) => row.line.kind)).toEqual(['group', 'member', 'member'])
   })
 })
 

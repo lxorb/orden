@@ -42,9 +42,7 @@ describe('an answer', () => {
   test('never takes words from a subagent', () => {
     const read = claudeReader()
     expect(
-      read(
-        '{"type":"assistant","message":{"content":[{"type":"text","text":"inner"}]},"parent_tool_use_id":"t"}',
-      ),
+      read('{"type":"assistant","message":{"content":[{"type":"text","text":"inner"}]},"parent_tool_use_id":"t"}'),
     ).toEqual({})
   })
 
@@ -73,21 +71,18 @@ describe('a failure', () => {
       ).limit,
     ).toEqual({ state: 'reached', until: 1790819400_000, untilWords: null })
     expect(
-      read(
-        '{"type":"rate_limit_event","rate_limit_info":{"status":"allowed_warning","resetsAt":1}}',
-      ).limit?.state,
+      read('{"type":"rate_limit_event","rate_limit_info":{"status":"allowed_warning","resetsAt":1}}').limit?.state,
     ).toBe('near')
-    expect(
-      read('{"type":"result","is_error":true,"result":"You\'ve hit your limit · resets 3pm"}').limit
-        ?.state,
-    ).toBe('reached')
+    expect(read('{"type":"result","is_error":true,"result":"You\'ve hit your limit · resets 3pm"}').limit?.state).toBe(
+      'reached',
+    )
   })
 
   test('an error with no words is its subtype', () => {
     const read = claudeReader()
-    expect(
-      read('{"type":"result","subtype":"error_during_execution","is_error":true}').trouble,
-    ).toBe('error_during_execution')
+    expect(read('{"type":"result","subtype":"error_during_execution","is_error":true}').trouble).toBe(
+      'error_during_execution',
+    )
   })
 })
 
@@ -127,10 +122,9 @@ describe('a session turn', () => {
         '{"type":"stream_event","event":{"type":"message_start","message":{"model":"claude-opus-5-5","usage":{"input_tokens":20,"cache_read_input_tokens":500,"cache_creation_input_tokens":10,"output_tokens":1}}}}',
       ).usage,
     ).toEqual({ input: 530, cached: 500, output: 1 })
-    expect(
-      read('{"type":"stream_event","event":{"type":"message_delta","usage":{"output_tokens":42}}}')
-        .usage,
-    ).toEqual({ input: 530, cached: 500, output: 42 })
+    expect(read('{"type":"stream_event","event":{"type":"message_delta","usage":{"output_tokens":42}}}').usage).toEqual(
+      { input: 530, cached: 500, output: 42 },
+    )
     const end = read(
       '{"type":"result","subtype":"success","is_error":false,"modelUsage":{"claude-opus-5-5":{"contextWindow":1000000}}}',
     )
@@ -141,8 +135,6 @@ describe('a session turn', () => {
   test('a compaction is said, and a failed turn ends in error', () => {
     const read = claudeReader()
     expect(read('{"type":"system","subtype":"compact_boundary"}').compacted).toBe(true)
-    expect(read('{"type":"result","subtype":"error_during_execution","is_error":true}').ended).toBe(
-      'error',
-    )
+    expect(read('{"type":"result","subtype":"error_during_execution","is_error":true}').ended).toBe('error')
   })
 })

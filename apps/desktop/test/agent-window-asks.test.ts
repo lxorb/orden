@@ -44,8 +44,7 @@ const { asking } = await import('../src/lib/agents/src/api')
 providePort('agents.reader', {
   knows: (agent, id) => Promise.resolve(asking.knows(agent, id)),
   waiting: (agent) => Promise.resolve(asking.of(agent).length),
-  ask: (question) =>
-    Promise.resolve(asking.ask({ ...question, choices: [...question.choices] }).id),
+  ask: (question) => Promise.resolve(asking.ask({ ...question, choices: [...question.choices] }).id),
   answer: (id, answer) => asking.answer(id, answer),
   heard: (id, patience, signal) => asking.heard(id, patience, signal),
   hear: (on) => {
@@ -89,9 +88,9 @@ describe('the clipboard', () => {
 
   test('asks before it is written in confirm mode, as every write does', async () => {
     answer = { status: 'needs_approval', approval: 'a1', summary: 'Copy' }
-    expect(
-      await clipboard(call('system_clipboard', { op: 'write', text: 'hi' }, 'confirm')),
-    ).toMatchObject({ status: 'needs_approval' })
+    expect(await clipboard(call('system_clipboard', { op: 'write', text: 'hi' }, 'confirm'))).toMatchObject({
+      status: 'needs_approval',
+    })
     expect(copied).toEqual([])
     expect(asked[0]).toMatchObject({ command: 'agents_ask', args: { category: 'writing' } })
   })
@@ -105,16 +104,14 @@ describe('the clipboard', () => {
 
 describe('a question put to the reader', () => {
   test('a notice is told and answered at once', async () => {
-    expect(
-      await askReader(call('ask_reader', { kind: 'notice', message: 'Build finished' })),
-    ).toMatchObject({ result: { shown: true } })
+    expect(await askReader(call('ask_reader', { kind: 'notice', message: 'Build finished' }))).toMatchObject({
+      result: { shown: true },
+    })
     expect(shown[0]).toMatchObject({ title: 'Claude', body: 'Build finished' })
   })
 
   test('a choice is shown under the agent, and its answer comes back to the call', async () => {
-    const waiting = askReader(
-      call('ask_reader', { kind: 'choice', message: 'Deploy?', choices: ['Yes', 'No'] }),
-    )
+    const waiting = askReader(call('ask_reader', { kind: 'choice', message: 'Deploy?', choices: ['Yes', 'No'] }))
     await vi.waitFor(() => expect(asking.of('claude')).toHaveLength(1))
     const [question] = asking.of('claude')
     expect(question).toMatchObject({ kind: 'choice', choices: ['Yes', 'No'] })
@@ -124,9 +121,7 @@ describe('a question put to the reader', () => {
   })
 
   test('its notification opens the agent’s session, where it is answered (#1120)', async () => {
-    const waiting = askReader(
-      call('ask_reader', { kind: 'choice', message: 'Deploy?', choices: ['Yes', 'No'] }),
-    )
+    const waiting = askReader(call('ask_reader', { kind: 'choice', message: 'Deploy?', choices: ['Yes', 'No'] }))
     await vi.waitFor(() => expect(shown).toHaveLength(1))
     shown[0]?.opened?.()
     expect(opened).toEqual(['claude'])
@@ -142,9 +137,7 @@ describe('a question put to the reader', () => {
   })
 
   test('not answered in time is its id, asked about again; put away is dismissed', async () => {
-    const first = await askReader(
-      call('ask_reader', { kind: 'text', message: 'Name?', wait_ms: 1 }),
-    )
+    const first = await askReader(call('ask_reader', { kind: 'text', message: 'Name?', wait_ms: 1 }))
     expect(first).toMatchObject({ result: { waiting: true } })
     const id = (first as { result: { id: string } }).result.id
 
@@ -157,20 +150,18 @@ describe('a question put to the reader', () => {
   test('at most five of an agent’s questions are open at once', async () => {
     const ids: string[] = []
     for (let one = 0; one < 5; one++) {
-      const said = await askReader(
-        call('ask_reader', { kind: 'text', message: `Name ${one}?`, wait_ms: 1 }),
-      )
+      const said = await askReader(call('ask_reader', { kind: 'text', message: `Name ${one}?`, wait_ms: 1 }))
       ids.push((said as { result: { id: string } }).result.id)
     }
-    await expect(
-      askReader(call('ask_reader', { kind: 'text', message: 'Again?', wait_ms: 1 })),
-    ).rejects.toMatchObject({ code: 'bad_arguments' })
+    await expect(askReader(call('ask_reader', { kind: 'text', message: 'Again?', wait_ms: 1 }))).rejects.toMatchObject({
+      code: 'bad_arguments',
+    })
     expect(asking.of('claude')).toHaveLength(5)
 
     asking.answer(ids[0] ?? '', 'Ada')
-    expect(
-      await askReader(call('ask_reader', { kind: 'text', message: 'Again?', wait_ms: 1 })),
-    ).toMatchObject({ result: { waiting: true } })
+    expect(await askReader(call('ask_reader', { kind: 'text', message: 'Again?', wait_ms: 1 }))).toMatchObject({
+      result: { waiting: true },
+    })
     asking.forget('claude')
   })
 
@@ -188,12 +179,12 @@ describe('a question put to the reader', () => {
   })
 
   test('a choice offers between one and twelve, and a kind is one of three', async () => {
-    await expect(
-      askReader(call('ask_reader', { kind: 'choice', message: 'Pick', choices: [] })),
-    ).rejects.toMatchObject({ code: 'bad_arguments' })
-    await expect(
-      askReader(call('ask_reader', { kind: 'shout', message: 'Hi' })),
-    ).rejects.toMatchObject({ code: 'bad_arguments' })
+    await expect(askReader(call('ask_reader', { kind: 'choice', message: 'Pick', choices: [] }))).rejects.toMatchObject(
+      { code: 'bad_arguments' },
+    )
+    await expect(askReader(call('ask_reader', { kind: 'shout', message: 'Hi' }))).rejects.toMatchObject({
+      code: 'bad_arguments',
+    })
     const long = 'x'.repeat(201)
     await expect(
       askReader(call('ask_reader', { kind: 'choice', message: 'Pick', choices: ['Yes', long] })),

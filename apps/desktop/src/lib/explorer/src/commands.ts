@@ -22,16 +22,7 @@ export interface Listing {
 }
 
 export type PlaceKind =
-  | 'home'
-  | 'desktop'
-  | 'documents'
-  | 'downloads'
-  | 'pictures'
-  | 'music'
-  | 'videos'
-  | 'spaces'
-  | 'root'
-  | 'disk'
+  'home' | 'desktop' | 'documents' | 'downloads' | 'pictures' | 'music' | 'videos' | 'spaces' | 'root' | 'disk'
 
 export interface Place {
   kind: PlaceKind
@@ -39,13 +30,11 @@ export interface Place {
   name: string | null
 }
 
-export const listFolder = (path: string): Promise<Listing> =>
-  invoke<Listing>('explorer_list', { path })
+export const listFolder = (path: string): Promise<Listing> => invoke<Listing>('explorer_list', { path })
 
 export const listPlaces = (): Promise<Place[]> => invoke<Place[]>('explorer_places')
 
-export const openWithSystem = (path: string): Promise<void> =>
-  invoke<undefined>('explorer_open', { path })
+export const openWithSystem = (path: string): Promise<void> => invoke<undefined>('explorer_open', { path })
 
 const watchTurns = new Map<string, Promise<void>>()
 
@@ -137,15 +126,10 @@ export const transfer = (
     ...(fenced ? { fenced } : {}),
   }).then((done) => carried(done, how))
 
-export const put = (
-  job: string,
-  pairs: readonly Pair[],
-  how: 'copy' | 'move',
-): Promise<Transferred> =>
+export const put = (job: string, pairs: readonly Pair[], how: 'copy' | 'move'): Promise<Transferred> =>
   invoke<Transferred>('explorer_put', { job, pairs, how }).then((done) => carried(done, how))
 
-export const cancelJob = (job: string): Promise<void> =>
-  invoke<undefined>('explorer_cancel', { job })
+export const cancelJob = (job: string): Promise<void> => invoke<undefined>('explorer_cancel', { job })
 
 export const PROGRESS = 'explorer://progress'
 
@@ -177,8 +161,7 @@ export interface Count {
   cancelled: boolean
 }
 
-export const countIn = (job: string, path: string): Promise<Count> =>
-  invoke<Count>('explorer_count', { job, path })
+export const countIn = (job: string, path: string): Promise<Count> => invoke<Count>('explorer_count', { job, path })
 
 export interface Found extends Entry {
   within: string
@@ -190,11 +173,7 @@ export interface Searched {
   cancelled: boolean
 }
 
-export const searchBelow = (
-  job: string,
-  folder: string,
-  query: string,
-  hidden: boolean,
-): Promise<Searched> => invoke<Searched>('explorer_search', { job, folder, query, hidden })
+export const searchBelow = (job: string, folder: string, query: string, hidden: boolean): Promise<Searched> =>
+  invoke<Searched>('explorer_search', { job, folder, query, hidden })
 
 export const FOUND = 'explorer://found'

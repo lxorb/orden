@@ -11,10 +11,7 @@ const labels = (entries: [string, number][]) => new Map(entries)
 function numbered(doc: string) {
   const state = EditorState.create({
     doc,
-    extensions: [
-      markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-      numberEquations.of(true),
-    ],
+    extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), numberEquations.of(true)],
   })
   ensureSyntaxTree(state, state.doc.length, 5000)
   return state

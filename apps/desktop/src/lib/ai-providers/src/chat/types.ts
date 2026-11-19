@@ -41,16 +41,7 @@ export interface ToolOutput {
 }
 
 export type NoticeCode =
-  | 'compacted'
-  | 'model'
-  | 'steps'
-  | 'max_tokens'
-  | 'refusal'
-  | 'error'
-  | 'stopped'
-  | 'no_tools'
-  | 'command'
-  | 'tasks'
+  'compacted' | 'model' | 'steps' | 'max_tokens' | 'refusal' | 'error' | 'stopped' | 'no_tools' | 'command' | 'tasks'
 
 export type Part =
   | { kind: 'text'; text: string }
@@ -193,18 +184,8 @@ export type Stop = 'end' | 'stopped' | 'max_tokens' | 'refusal' | 'steps' | 'err
 
 export interface Engine {
   models(provider: Provider): Promise<ModelInfo[]>
-  send(
-    thread: Thread,
-    message: Draft,
-    on: (event: EngineEvent) => void,
-    signal: AbortSignal,
-  ): Promise<void>
-  goal?(
-    thread: Thread,
-    to: GoalTo,
-    on: (event: EngineEvent) => void,
-    signal: AbortSignal,
-  ): Promise<GoalState | null>
+  send(thread: Thread, message: Draft, on: (event: EngineEvent) => void, signal: AbortSignal): Promise<void>
+  goal?(thread: Thread, to: GoalTo, on: (event: EngineEvent) => void, signal: AbortSignal): Promise<GoalState | null>
   steer(thread: Thread, text: string): Promise<boolean>
   compact(thread: Thread, focus?: string): Promise<void>
   rewound?(thread: Thread): void

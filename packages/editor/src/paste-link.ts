@@ -1,10 +1,5 @@
 import { syntaxTree } from '@codemirror/language'
-import {
-  EditorSelection,
-  type EditorState,
-  type SelectionRange,
-  type TransactionSpec,
-} from '@codemirror/state'
+import { EditorSelection, type EditorState, type SelectionRange, type TransactionSpec } from '@codemirror/state'
 import type { Tree } from '@lezer/common'
 import { inCode, insideCode } from './code'
 import { inside } from './commands'

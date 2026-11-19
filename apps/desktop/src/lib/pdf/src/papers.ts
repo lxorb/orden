@@ -114,11 +114,7 @@ export async function writePapers(): Promise<void> {
   }
 }
 
-export function papersListed(
-  root: string,
-  modified: Map<string, number>,
-  walked?: Walked | null,
-): void {
+export function papersListed(root: string, modified: Map<string, number>, walked?: Walked | null): void {
   listing = {
     root,
     at: ++listings,
@@ -311,12 +307,7 @@ function leftOut(relative: string, excluded: readonly string[]): boolean {
   return excluded.some((one) => relative === one || relative.startsWith(`${one}/`))
 }
 
-export function searchPapers(
-  root: string,
-  query: Query,
-  limit: number,
-  excluded: readonly string[] = [],
-): Hit[] {
+export function searchPapers(root: string, query: Query, limit: number, excluded: readonly string[] = []): Hit[] {
   if (!held.size || limit <= 0) return []
 
   const matcher = new Matcher(query)
@@ -341,9 +332,7 @@ export function searchPapers(
       if (!spans) continue
 
       const first = spans[0]
-      const { text, at } = first
-        ? windowOf(body, first.from)
-        : { text: body.slice(0, WINDOW).trim(), at: -1 }
+      const { text, at } = first ? windowOf(body, first.from) : { text: body.slice(0, WINDOW).trim(), at: -1 }
 
       const length = first ? first.to - first.from : 0
       out.push({

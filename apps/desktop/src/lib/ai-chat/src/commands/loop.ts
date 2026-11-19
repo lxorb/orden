@@ -10,10 +10,7 @@ export const PACED = 10 * MINUTE
 const UNITS: Record<string, number> = { s: 1_000, m: MINUTE, h: 60 * MINUTE, d: 24 * 60 * MINUTE }
 
 export function intervalIn(word: string): number | null {
-  const found =
-    /^(\d+(?:\.\d+)?)\s*(s|secs?|seconds?|m|mins?|minutes?|h|hrs?|hours?|d|days?)$/i.exec(
-      word.trim(),
-    )
+  const found = /^(\d+(?:\.\d+)?)\s*(s|secs?|seconds?|m|mins?|minutes?|h|hrs?|hours?|d|days?)$/i.exec(word.trim())
   if (!found) return null
   const unit = UNITS[(found[2] ?? 'm').charAt(0).toLowerCase()] ?? MINUTE
   return Math.min(LONGEST, Math.max(SHORTEST, Number(found[1]) * unit))
@@ -46,9 +43,7 @@ export function nextIn(answer: string): number | 'done' | null {
 }
 
 export function answerOf(ended: Ended): string {
-  return (
-    ended.turn?.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join('') ?? ''
-  )
+  return ended.turn?.parts.flatMap((part) => (part.kind === 'text' ? [part.text] : [])).join('') ?? ''
 }
 
 export function loopPrompt(asked: LoopAsk, thread: Pick<Thread, 'turns'> | null): string {
@@ -63,12 +58,7 @@ export interface LoopRoad {
   ended(why: string): void
 }
 
-export async function runLoop(
-  asked: LoopAsk,
-  prompt: string,
-  road: LoopRoad,
-  signal: AbortSignal,
-): Promise<void> {
+export async function runLoop(asked: LoopAsk, prompt: string, road: LoopRoad, signal: AbortSignal): Promise<void> {
   const text = asked.every === null ? `${prompt}\n\n${PACING}` : prompt
   const stopped = () => signal.aborted
   for (;;) {

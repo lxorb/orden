@@ -110,17 +110,11 @@ test('what helps to debug stays', () => {
   const panic = scrubbedReport(sample('panic'))
   expect(panic.where).toBe('src/web_tabs.rs:120:9')
   expect(panic.doing).toBe('web_open < web_place')
-  expect(panic.threads?.[0]?.frames.map((one) => one.module)).toEqual([
-    'orden.exe',
-    'WebView2Loader.dll',
-    'ntdll.dll',
-  ])
+  expect(panic.threads?.[0]?.frames.map((one) => one.module)).toEqual(['orden.exe', 'WebView2Loader.dll', 'ntdll.dll'])
   expect(panic.threads?.[0]?.frames[2]?.symbol).toBe('NtWaitForSingleObject')
   expect(panic.breadcrumbs?.map((one) => one.what)).toEqual(['web_open', 'read_note'])
   expect(panic.open).toEqual({ windows: 2, kinds: { note: 3, web: 1 } })
-  expect(panic.log?.[1]).toBe(
-    '2026-10-03T22:11:01.000Z INFO  opened https://secret-bank.example.com/…',
-  )
+  expect(panic.log?.[1]).toBe('2026-10-03T22:11:01.000Z INFO  opened https://secret-bank.example.com/…')
 
   const freeze = scrubbedReport(sample('freeze'))
   expect(freeze.summary).toBe('The window did not answer for 41 s (read_note), 98% of a core busy')
@@ -133,9 +127,7 @@ test('what helps to debug stays', () => {
 })
 
 test('a page keeps only its host', () => {
-  expect(scrubbedText('opened https://www.example.com/private/path?q=1#x')).toBe(
-    'opened https://www.example.com/…',
-  )
+  expect(scrubbedText('opened https://www.example.com/private/path?q=1#x')).toBe('opened https://www.example.com/…')
 })
 
 test('secrets go whatever they are called', () => {

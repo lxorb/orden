@@ -17,9 +17,7 @@ class Version {
   }
 
   private which(): string {
-    return webChannel !== null && __APP_COMMIT__
-      ? `${__APP_VERSION__} (${__APP_COMMIT__})`
-      : __APP_VERSION__
+    return webChannel !== null && __APP_COMMIT__ ? `${__APP_VERSION__} (${__APP_COMMIT__})` : __APP_VERSION__
   }
 
   said(): string {

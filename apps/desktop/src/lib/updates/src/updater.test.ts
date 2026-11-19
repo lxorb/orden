@@ -128,9 +128,16 @@ describe('where a package manager keeps the install', () => {
 
 describe('where the system updates the install', () => {
   test('is apt and dnf, and no other manager', () => {
-    expect(
-      ['apt', 'dnf', 'aur', 'flatpak', 'snap', 'nix', 'brew', null].map(updater.updatedBySystem),
-    ).toEqual([true, true, false, false, false, false, false, false])
+    expect(['apt', 'dnf', 'aur', 'flatpak', 'snap', 'nix', 'brew', null].map(updater.updatedBySystem)).toEqual([
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ])
   })
 
   test('installs the version on the channel, then restarts', async () => {

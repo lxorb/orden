@@ -12,10 +12,7 @@ async function fresh() {
 
 async function relaunched() {
   vi.resetModules()
-  const [{ gate }, { setup }] = await Promise.all([
-    import('./gate.svelte'),
-    import('./setup-state.svelte'),
-  ])
+  const [{ gate }, { setup }] = await Promise.all([import('./gate.svelte'), import('./setup-state.svelte')])
   gate.restore()
   if (gate.showing) setup.resume()
   return setup

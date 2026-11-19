@@ -60,9 +60,7 @@ describe('divergePlane', () => {
 
     const result = divergePlane(base, local, remote, LOCAL_NEWER)
     expect(result.verdict).toBe('minor')
-    expect(textOf(result.resolution, 'a')).toBe(
-      'The first line, edited.\n\nThe second line, edited.',
-    )
+    expect(textOf(result.resolution, 'a')).toBe('The first line, edited.\n\nThe second line, edited.')
   })
 
   test("both rewrote a card's sentence: it asks", () => {
@@ -78,12 +76,7 @@ describe('divergePlane', () => {
 
   test('a card deleted on one side and rewritten on the other asks', () => {
     const base = plane(card('a', 'Buy milk'))
-    const result = divergePlane(
-      base,
-      plane(),
-      plane(card('a', 'Buy milk and eggs and bread and cheese')),
-      LOCAL_NEWER,
-    )
+    const result = divergePlane(base, plane(), plane(card('a', 'Buy milk and eggs and bread and cheese')), LOCAL_NEWER)
     expect(result.verdict).toBe('diverged')
     expect(result.overlaps).toEqual([{ id: 'a', field: 'deleted', newer: 'local', asks: true }])
   })

@@ -25,10 +25,8 @@ function viewOf(doc: string) {
   return view
 }
 
-const CLOSED_BELOW =
-  '<iframe src="https://example.com/map" height="300">\n</iframe>\n\nWords.\n\nend'
-const TAG_OVER_LINES =
-  '<iframe\n  src="https://example.com/map"\n  height="300"></iframe>\n\nWords.\n\nend'
+const CLOSED_BELOW = '<iframe src="https://example.com/map" height="300">\n</iframe>\n\nWords.\n\nend'
+const TAG_OVER_LINES = '<iframe\n  src="https://example.com/map"\n  height="300"></iframe>\n\nWords.\n\nend'
 
 describe('a web frame written over more than one line, with the caret elsewhere', () => {
   test('is a card in the reading view', () => {

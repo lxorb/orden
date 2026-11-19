@@ -28,28 +28,19 @@ describe('where the offers go', () => {
   const make = { folder: '', name: 'Print it.md' }
 
   test('after everything that was found, so Enter still takes the command', () => {
-    expect(withOffers([RUN], 'print it', null, make).map(named)).toEqual([
-      '> Print',
-      'new Print it.md',
-    ])
+    expect(withOffers([RUN], 'print it', null, make).map(named)).toEqual(['> Print', 'new Print it.md'])
   })
 
   test('first, where nothing was found, so Enter makes the note', () => {
-    expect(
-      withOffers([], 'Groceries', null, { folder: '', name: 'Groceries.md' }).map(named),
-    ).toEqual(['new Groceries.md'])
+    expect(withOffers([], 'Groceries', null, { folder: '', name: 'Groceries.md' }).map(named)).toEqual([
+      'new Groceries.md',
+    ])
   })
 
   test('an address typed goes last, unless it is written out in full', () => {
     const address = { url: 'https://svelte.dev/', shown: 'svelte.dev' }
-    expect(withOffers([RUN], 'svelte.dev', address, null).map(named)).toEqual([
-      '> Print',
-      'go svelte.dev',
-    ])
-    expect(withOffers([RUN], 'https://svelte.dev', address, null).map(named)).toEqual([
-      'go svelte.dev',
-      '> Print',
-    ])
+    expect(withOffers([RUN], 'svelte.dev', address, null).map(named)).toEqual(['> Print', 'go svelte.dev'])
+    expect(withOffers([RUN], 'https://svelte.dev', address, null).map(named)).toEqual(['go svelte.dev', '> Print'])
   })
 
   test('an address a row already goes to is that row', () => {

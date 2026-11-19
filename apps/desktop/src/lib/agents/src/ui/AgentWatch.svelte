@@ -4,8 +4,7 @@
   import { shownHost } from '@orden/scan/web-address'
   import { LOOK_EVERY, Watching } from './watching.svelte'
 
-  const { activity, tab, onclose }: { activity: Activity; tab: string; onclose: () => void } =
-    $props()
+  const { activity, tab, onclose }: { activity: Activity; tab: string; onclose: () => void } = $props()
 
   const watching = new Watching(() => activity.peek(tab))
 

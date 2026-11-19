@@ -56,14 +56,10 @@ describe('an id on its own line under a list names the whole list', () => {
   })
 
   test('the section the hover card and embeds read holds the whole list', () => {
-    expect(sectionOf(SHOPPING, { heading: null, block: 'groceries' })).toBe(
-      '- milk\n- eggs\n- bread',
+    expect(sectionOf(SHOPPING, { heading: null, block: 'groceries' })).toBe('- milk\n- eggs\n- bread')
+    expect(sectionOf('1. one\n2. two\n\n^steps\n', { heading: null, block: 'steps' })).toBe('1. one\n2. two')
+    expect(sectionOf('- [ ] call\n  - say hi\n- [ ] write\n\n^todo\n', { heading: null, block: 'todo' })).toBe(
+      '- [ ] call\n  - say hi\n- [ ] write',
     )
-    expect(sectionOf('1. one\n2. two\n\n^steps\n', { heading: null, block: 'steps' })).toBe(
-      '1. one\n2. two',
-    )
-    expect(
-      sectionOf('- [ ] call\n  - say hi\n- [ ] write\n\n^todo\n', { heading: null, block: 'todo' }),
-    ).toBe('- [ ] call\n  - say hi\n- [ ] write')
   })
 })

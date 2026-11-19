@@ -186,14 +186,7 @@ describe('what the dropdown offers', () => {
     installed('rose', 'Rose', PAIR)
     installed('warm-paper', 'Warm Paper', ONLY_LIGHT)
     await theme.reload()
-    expect(ids()).toEqual([
-      'default',
-      'contrast',
-      'glass',
-      'wallpaper',
-      'file:rose',
-      'file:warm-paper',
-    ])
+    expect(ids()).toEqual(['default', 'contrast', 'glass', 'wallpaper', 'file:rose', 'file:warm-paper'])
     expect(theme.all.slice(0, 3).map((one) => one.name)).toEqual(BUILT_IN.slice(0, 3))
   })
 
@@ -251,10 +244,7 @@ describe('a second window', () => {
     writtenElsewhere({ 'orden:theme-settings': JSON.stringify({ '*': { accent } }) })
     expect(theme.kept.accent).toBe(accent)
     theme.setFor('somewhere', 'dial', 3)
-    const written = JSON.parse(kept.getItem('orden:theme-settings') ?? '{}') as Record<
-      string,
-      { accent?: string }
-    >
+    const written = JSON.parse(kept.getItem('orden:theme-settings') ?? '{}') as Record<string, { accent?: string }>
     expect(written['*']?.accent).toBe(accent)
   })
 })
@@ -544,10 +534,7 @@ describe('an installed theme across a restart', () => {
 
   test('one saved from a browser before is still the Orden theme it was saved as', async () => {
     const css = `[data-theme=dark] { color-scheme: dark; --bg: #1c1b22; --text: #fbfbfe; }`
-    folder.files.set(
-      'balanced',
-      stamped({ id: 'balanced', name: 'Balanced', author: 'Firefox', version: '1' }, css),
-    )
+    folder.files.set('balanced', stamped({ id: 'balanced', name: 'Balanced', author: 'Firefox', version: '1' }, css))
     kept.setItem('orden:theme', 'file:balanced')
     theme.init()
     await theme.reload()
@@ -712,17 +699,14 @@ describe('an install on the built-in', () => {
     expect(theme.scheme).toBe('dark')
   })
 
-  test.each([true, false])(
-    'and one who picks the built-in again afterwards keeps it (new install: %s)',
-    (fresh) => {
-      if (fresh) kept.removeItem('orden:theme')
-      theme.init()
-      theme.select('default')
-      theme.init()
-      theme.init()
-      expect(theme.id).toBe('default')
-    },
-  )
+  test.each([true, false])('and one who picks the built-in again afterwards keeps it (new install: %s)', (fresh) => {
+    if (fresh) kept.removeItem('orden:theme')
+    theme.init()
+    theme.select('default')
+    theme.init()
+    theme.init()
+    expect(theme.id).toBe('default')
+  })
 
   test('any other theme stays where it is', () => {
     kept.setItem('orden:theme', 'contrast')
@@ -735,8 +719,7 @@ describe('an install on the built-in', () => {
 describe('an accent the first look gave', () => {
   beforeEach(() => kept.removeItem('orden:theme'))
 
-  const given = (accent: string) =>
-    kept.setItem('orden:theme-settings', JSON.stringify({ '*': { accent } }))
+  const given = (accent: string) => kept.setItem('orden:theme-settings', JSON.stringify({ '*': { accent } }))
 
   test('the day’s yellow, on an install still on the first look, turns green once', () => {
     given('yellow')
@@ -959,17 +942,7 @@ describe('a dial being dragged', () => {
 })
 
 describe('the wallpaper theme', () => {
-  const DIALS = [
-    'blur',
-    'dim',
-    'saturation',
-    'tint',
-    'tint-colour',
-    'grain',
-    'fit',
-    'empty',
-    'content',
-  ]
+  const DIALS = ['blur', 'dim', 'saturation', 'tint', 'tint-colour', 'grain', 'fit', 'empty', 'content']
   const HELD = {
     picture: 'data:image/png;base64,iVBORw0KGgo=',
     blur: 28,
@@ -1067,13 +1040,10 @@ describe('a theme’s own faces', () => {
       ':root { --bg: #fff; --text: #111; }\n#write h1 { color: red; }',
       ':root { --bg: #fff; --text: #111; }\n#write h1 { color: red; }',
     ],
-  ])(
-    'keep the reader’s in front of a stack the theme states, and touch nothing else: %s',
-    (css, out) => {
-      expect(chosenFirst(css)).toBe(out)
-      expect(chosenFirst(out)).toBe(out)
-    },
-  )
+  ])('keep the reader’s in front of a stack the theme states, and touch nothing else: %s', (css, out) => {
+    expect(chosenFirst(css)).toBe(out)
+    expect(chosenFirst(out)).toBe(out)
+  })
 })
 
 describe('another window of the app', () => {

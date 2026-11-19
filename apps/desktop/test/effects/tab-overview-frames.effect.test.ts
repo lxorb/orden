@@ -14,8 +14,7 @@ Element.prototype.scrollIntoView = () => undefined
 
 let drawn: (() => void)[] = []
 vi.mock('../../src/lib/reading/src/api', () => ({
-  readingHtml: () =>
-    new Promise<string>((done) => drawn.push(() => done('<p>Some words of it.</p>'))),
+  readingHtml: () => new Promise<string>((done) => drawn.push(() => done('<p>Some words of it.</p>'))),
   unreadableHtml: (text: string) => text,
 }))
 
@@ -59,8 +58,7 @@ beforeEach(() => {
   side.innerHTML = '<ul>' + '<li><span>A file</span></li>'.repeat(40) + '</ul>'
   const pane = document.createElement('div')
   pane.dataset.pane = workspace.panes.all[0]?.id ?? ''
-  pane.innerHTML =
-    '<div class="head"></div><div>' + '<p><span>Words</span></p>'.repeat(40) + '</div>'
+  pane.innerHTML = '<div class="head"></div><div>' + '<p><span>Words</span></p>'.repeat(40) + '</div>'
   pane.getBoundingClientRect = () => new DOMRect(0, 40, 900, 700)
   app.push(bar, side, pane)
   document.body.append(bar, side, pane)
@@ -109,9 +107,7 @@ test('the first frame that moves moves by one frame, however long the frame befo
   await drawnNow()
   frame()
   frame(400)
-  const open = Number(
-    document.querySelector<HTMLElement>('.top')?.style.getPropertyValue('--overview-open'),
-  )
+  const open = Number(document.querySelector<HTMLElement>('.top')?.style.getPropertyValue('--overview-open'))
   expect(open).toBeGreaterThan(0)
   expect(open).toBeLessThan(0.3)
 })
@@ -130,10 +126,7 @@ test('no frame sets a value that the panes, the sidebars or the windows’ pictu
       for (let k = 0; k < style.length; k++) {
         const name = style.item(k)
         if (!name.startsWith('--') || OWN.has(name)) continue
-        written.set(
-          one,
-          (written.get(one) ?? new Set()).add(`${name}=${style.getPropertyValue(name)}`),
-        )
+        written.set(one, (written.get(one) ?? new Set()).add(`${name}=${style.getPropertyValue(name)}`))
       }
     }
   }
@@ -310,9 +303,7 @@ test('the one bar is over every window on every frame, and a window under it sho
   }
   const floor = document.querySelector<HTMLElement>('.floor')
   const send = (type: string, y: number) =>
-    floor?.dispatchEvent(
-      new MouseEvent(type, { clientX: 400, clientY: y, button: 0, bubbles: true }),
-    )
+    floor?.dispatchEvent(new MouseEvent(type, { clientX: 400, clientY: y, button: 0, bubbles: true }))
   send('pointerdown', 600)
   for (const y of [580, 500, 400, 300, 200]) {
     send('pointermove', y)
@@ -322,9 +313,7 @@ test('the one bar is over every window on every frame, and a window under it sho
   frame()
   const windows = [...document.querySelectorAll<HTMLElement>('.window')]
   const under = windows.filter((one) => {
-    const [, y] = (/translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(one.style.transform) ?? [])
-      .slice(1)
-      .map(Number)
+    const [, y] = (/translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec(one.style.transform) ?? []).slice(1).map(Number)
     return (y ?? 0) < 40
   })
   expect(under.length).toBeGreaterThan(0)

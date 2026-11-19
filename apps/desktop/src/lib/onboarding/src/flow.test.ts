@@ -42,17 +42,7 @@ function walk(given: Answers, at: Reach): Step[] {
 
 describe('the setup', () => {
   test('asks in the order David settled', () => {
-    expect(STEPS).toEqual([
-      'account',
-      'appearance',
-      'heard',
-      'browser',
-      'import',
-      'notes',
-      'code',
-      'ai',
-      'welcome',
-    ])
+    expect(STEPS).toEqual(['account', 'appearance', 'heard', 'browser', 'import', 'notes', 'code', 'ai', 'welcome'])
   })
 
   test('walks every step for a known browser it can read', () => {
@@ -65,9 +55,7 @@ describe('the setup', () => {
 
   test('offers no import without a browser, or for one it cannot read here', () => {
     expect(walk(answers(), reach())).not.toContain('import')
-    expect(walk(answers({ browser: 'chrome' }), reach({ importable: () => false }))).not.toContain(
-      'import',
-    )
+    expect(walk(answers({ browser: 'chrome' }), reach({ importable: () => false }))).not.toContain('import')
     expect(stepAfter('browser', answers({ browser: 'chrome' }), reach())).toBe('import')
     expect(stepAfter('browser', answers(), reach())).toBe('notes')
   })
@@ -158,17 +146,7 @@ describe('the markdown display', () => {
 
   test('names only apps the notes step lists', () => {
     const listed = NOTES_APPS.map((one) => one.id)
-    for (const app of [
-      'notion',
-      'apple',
-      'evernote',
-      'keep',
-      'roam',
-      'obsidian',
-      'markdown',
-      'bear',
-      'logseq',
-    ]) {
+    for (const app of ['notion', 'apple', 'evernote', 'keep', 'roam', 'obsidian', 'markdown', 'bear', 'logseq']) {
       expect(listed).toContain(app)
     }
   })
@@ -212,9 +190,10 @@ describe('the lists', () => {
 
 describe('what the setup keeps', () => {
   test('reads a step and its answers back', () => {
-    expect(
-      keptProgress({ step: 'notes', answers: { browser: 'safari', notes: null, code: 'no' } }),
-    ).toEqual({ step: 'notes', answers: { browser: 'safari', notes: null, code: 'no' } })
+    expect(keptProgress({ step: 'notes', answers: { browser: 'safari', notes: null, code: 'no' } })).toEqual({
+      step: 'notes',
+      answers: { browser: 'safari', notes: null, code: 'no' },
+    })
   })
 
   test('remembers that it is done', () => {

@@ -1,15 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { describe, expect, test } from 'vitest'
-import {
-  buildGraph,
-  neighbourhood,
-  neighbours,
-  type NoteGraph,
-  signature,
-  without,
-  worthAGraph,
-} from '../src/api'
+import { buildGraph, neighbourhood, neighbours, type NoteGraph, signature, without, worthAGraph } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
 const SRC = join(HERE, 'src')
@@ -54,9 +46,8 @@ function chain(count: number): NoteGraph {
 
 describe('a note graph', () => {
   test('joins notes by their links, once a pair, and counts each side', () => {
-    const graph = buildGraph(
-      [note('a.md', 'b'), note('b.md', 'a'), note('c.md', 'a', 'a')],
-      (from, link) => (from === 'c.md' && link.target === 'a' ? 'a.md' : byName(from, link)),
+    const graph = buildGraph([note('a.md', 'b'), note('b.md', 'a'), note('c.md', 'a', 'a')], (from, link) =>
+      from === 'c.md' && link.target === 'a' ? 'a.md' : byName(from, link),
     )
     expect(graph.nodes.map((one) => [one.id, one.degree])).toEqual([
       ['a.md', 2],
@@ -93,11 +84,7 @@ describe('a note graph', () => {
   test('is walked to its neighbours and to a neighbourhood of a given depth', () => {
     const graph = chain(6)
     expect([...neighbours(graph, 2)].sort()).toEqual([1, 3])
-    expect(neighbourhood(graph, 'n0.md', 2).nodes.map((one) => one.id)).toEqual([
-      'n0.md',
-      'n1.md',
-      'n2.md',
-    ])
+    expect(neighbourhood(graph, 'n0.md', 2).nodes.map((one) => one.id)).toEqual(['n0.md', 'n1.md', 'n2.md'])
     expect(signature(graph)).toBe(signature(chain(6)))
     expect(signature(graph)).not.toBe(signature(chain(5)))
   })

@@ -35,8 +35,7 @@ vi.mock('./exchange', () => ({
 
 const { passSync } = await import('./syncing.svelte')
 const { pass } = await import('./store.svelte')
-const account = (await import('../../accounts/src/account.svelte'))
-  .account as unknown as AccountDouble
+const account = (await import('../../accounts/src/account.svelte')).account as unknown as AccountDouble
 
 function hold(): () => void {
   let free: () => void = () => undefined

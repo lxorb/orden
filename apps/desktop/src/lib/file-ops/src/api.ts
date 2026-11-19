@@ -47,10 +47,7 @@ export class FileOps {
 }
 
 function failed(op: FileOp, error: unknown) {
-  log(
-    'error',
-    `a store did not follow ${op.op} ${op.op === 'moved' ? op.from : op.path}: ${String(error)}`,
-  )
+  log('error', `a store did not follow ${op.op} ${op.op === 'moved' ? op.from : op.path}: ${String(error)}`)
 }
 
 export interface KeptByPath {
@@ -111,8 +108,7 @@ export function carried<T>(
   const went: T[] = []
   for (const one of held) {
     const path = pathOf(one)
-    const landed =
-      path === null || !move.was ? null : movedTo(path, move.was, move.now ?? '', move.root)
+    const landed = path === null || !move.was ? null : movedTo(path, move.was, move.now ?? '', move.root)
     if (landed === null) left.push(one)
     else if (move.now !== null) went.push(at(one, landed))
   }

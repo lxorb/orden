@@ -21,9 +21,7 @@ function filteredView() {
     filter: 'app',
     search: null,
     get names() {
-      return entries
-        .map((one) => one.name)
-        .filter((one) => !view.filter || one.includes(view.filter))
+      return entries.map((one) => one.name).filter((one) => !view.filter || one.includes(view.filter))
     },
     reload: () => {
       for (const path of made) entries.push({ name: path.slice('/space/'.length) })

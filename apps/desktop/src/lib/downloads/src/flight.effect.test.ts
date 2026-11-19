@@ -124,9 +124,7 @@ test('with no glyph on screen, it goes to the corner and fades there', async () 
 })
 
 test('a burst is a handful of flights, one after another, and the glyph answers each', async () => {
-  await Promise.all(
-    Array.from({ length: 8 }, (_, index) => started(`${String(index)}.pdf`, { tab: 'a' })),
-  )
+  await Promise.all(Array.from({ length: 8 }, (_, index) => started(`${String(index)}.pdf`, { tab: 'a' })))
 
   const going = flights()
   expect(going).toHaveLength(5)

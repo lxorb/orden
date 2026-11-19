@@ -25,11 +25,7 @@ export class AgentsPane {
 
   async open(): Promise<void> {
     try {
-      const [grants, days, program] = await Promise.all([
-        this.crate.read(),
-        this.crate.days(),
-        this.crate.program(),
-      ])
+      const [grants, days, program] = await Promise.all([this.crate.read(), this.crate.days(), this.crate.program()])
       this.grants = grants
       this.program = program
       this.unread = days

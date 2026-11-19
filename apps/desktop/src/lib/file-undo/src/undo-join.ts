@@ -5,10 +5,7 @@ import type { FileAction, FileActions } from './undo.svelte'
 
 type Replaced = Extract<FileAction, { kind: 'replace' }>['notes'][number]
 
-export function joinedAction(
-  earlier: FileAction | undefined,
-  notes: readonly Replaced[],
-): FileAction | null {
+export function joinedAction(earlier: FileAction | undefined, notes: readonly Replaced[]): FileAction | null {
   if (earlier?.kind !== 'replace') return null
   const next = [...earlier.notes]
   for (const note of notes) {
@@ -35,10 +32,7 @@ export function joinLast(undone: FileActions): boolean {
   return true
 }
 
-export function gatheredAction(
-  earlier: FileAction | undefined,
-  notes: readonly Replaced[],
-): FileAction | null {
+export function gatheredAction(earlier: FileAction | undefined, notes: readonly Replaced[]): FileAction | null {
   if (earlier?.kind !== 'replace') return null
   const mine = notes.filter((note) => earlier.notes.some((one) => samePath(one.path, note.path)))
   const joined = joinedAction(earlier, mine)

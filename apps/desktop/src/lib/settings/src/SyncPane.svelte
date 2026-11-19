@@ -56,9 +56,7 @@
         .then((rows) => {
           if (live) logged = rows
         })
-        .catch((error: unknown) =>
-          log('warn', `sync: the pass log would not read: ${String(error)}`),
-        )
+        .catch((error: unknown) => log('warn', `sync: the pass log would not read: ${String(error)}`))
     read()
     const stop = engine.on('pass', read)
     return () => {
@@ -96,9 +94,7 @@
     { value: 'ask', label: 'Ask me each time' },
   ]
 
-  const spaceId = $derived(
-    workspace.activeSpace ? sync.remoteIdFor(workspace.activeSpace.root) : null,
-  )
+  const spaceId = $derived(workspace.activeSpace ? sync.remoteIdFor(workspace.activeSpace.root) : null)
 
   const preview = $derived(asked?.days === chosen && asked.space === spaceId ? asked : null)
 
@@ -203,9 +199,7 @@
     <div class="orden-setting setting">
       <span class="name"
         ><span class="orden-named"
-          >On two devices<Hint
-            text="What happens when one note was changed on two devices before they synced."
-          /></span
+          >On two devices<Hint text="What happens when one note was changed on two devices before they synced." /></span
         ></span
       >
       <div class="orden-setting-value">
@@ -228,9 +222,7 @@
   <div class="orden-setting setting">
     <span class="name"
       ><span class="orden-named"
-        >Keep versions<Hint
-          text="How far back the account keeps earlier versions of your notes."
-        /></span
+        >Keep versions<Hint text="How far back the account keeps earlier versions of your notes." /></span
       ></span
     >
     <div class="orden-setting-value">
@@ -265,9 +257,7 @@
         <span class="hint">{when(clash.at, 'short')}</span>
         <div class="answers">
           <button class="orden-chip" onclick={() => void settle(clash, 'mine')}> Keep mine </button>
-          <button class="orden-chip" onclick={() => void settle(clash, 'theirs')}>
-            Take theirs
-          </button>
+          <button class="orden-chip" onclick={() => void settle(clash, 'theirs')}> Take theirs </button>
           <button class="orden-chip" onclick={() => void settle(clash, 'both')}> Keep both </button>
         </div>
       </div>
@@ -374,9 +364,7 @@
       {rolling ? 'Going back' : 'Go back'}
     </button>
   {:else}
-    <button class="orden-action" disabled={!spaceId} onclick={() => void look()}>
-      What would change?
-    </button>
+    <button class="orden-action" disabled={!spaceId} onclick={() => void look()}> What would change? </button>
   {/if}
 </div>
 

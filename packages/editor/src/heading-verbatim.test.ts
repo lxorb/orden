@@ -1,10 +1,5 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import {
-  EditorSelection,
-  EditorState,
-  type StateCommand,
-  type Transaction,
-} from '@codemirror/state'
+import { EditorSelection, EditorState, type StateCommand, type Transaction } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
 import { setHeading, shiftHeading } from './commands'

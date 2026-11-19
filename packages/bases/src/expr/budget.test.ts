@@ -127,9 +127,7 @@ describe('how much one evaluation of a guarded base may take', () => {
 
   test('a row past it leaves the next row its own budget', () => {
     const base = {
-      ...readBase(
-        `formulas:\n  f: 'if(note.deep, ${nested(7)}, 7)'\nviews:\n  - type: table\n    name: T\n`,
-      ),
+      ...readBase(`formulas:\n  f: 'if(note.deep, ${nested(7)}, 7)'\nviews:\n  - type: table\n    name: T\n`),
       guarded: true,
     }
     expect(cellValue(base, 'formula.f', noteRow('a.md', { deep: true }), context)).toBeNull()
@@ -167,8 +165,7 @@ describe('how much one evaluation of a guarded base may take', () => {
     expect(said.total).toBe(1)
     expect(said.partial).toBe(true)
     expect(
-      answer(baseWith(`if(note.deep, (${nested(7)}) != 1, true)`), 0, rows.slice(1), context)
-        .partial,
+      answer(baseWith(`if(note.deep, (${nested(7)}) != 1, true)`), 0, rows.slice(1), context).partial,
     ).toBeUndefined()
   })
 
@@ -193,12 +190,7 @@ describe('how much one evaluation of a guarded base may take', () => {
     let now = 2e7
     const clock = vi.spyOn(performance, 'now').mockImplementation(() => (now += 100))
     const rows = Array.from({ length: 1000 }, (_, at) => noteRow(`n${at}.md`, {}))
-    const said = answer(
-      baseWith('"a".repeat(10000).split("").length == 10000', true),
-      0,
-      rows,
-      context,
-    )
+    const said = answer(baseWith('"a".repeat(10000).split("").length == 10000', true), 0, rows, context)
     expect(said.total).toBeLessThan(1000)
     clock.mockRestore()
   })

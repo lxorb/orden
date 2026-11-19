@@ -76,8 +76,7 @@ export function readRollup(formula: string): RollupSpec | null {
   const property = found[4] ?? (found[5] === undefined ? undefined : String(JSON.parse(found[5])))
   const trimmed = formula.trim()
   for (const calc of ROLLUPS) {
-    const spec: RollupSpec =
-      property === undefined ? { relation, calc } : { relation, property, calc }
+    const spec: RollupSpec = property === undefined ? { relation, calc } : { relation, property, calc }
     if (rollupFormula(spec) === trimmed) return spec
   }
   return null

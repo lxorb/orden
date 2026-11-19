@@ -243,12 +243,7 @@ export class FolderIcons {
     )
   }
 
-  private said(
-    root: string,
-    landed: boolean,
-    icons: Record<string, string>,
-    colors: Record<string, string>,
-  ) {
+  private said(root: string, landed: boolean, icons: Record<string, string>, colors: Record<string, string>) {
     const held = this.spaces[root]
     if (!held || held.sent === landed) return
     if (landed && !(same(held.icons, icons) && same(held.colors, colors))) return

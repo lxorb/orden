@@ -48,11 +48,9 @@ print(json.dumps({"came": came, "asked": page.asked}))
 `
 
 function waited(answers: unknown[], patience: number): { came: unknown; asked: number } {
-  const said = execFileSync(
-    'python3',
-    ['-c', ASKING, E2E, JSON.stringify(answers), String(patience)],
-    { encoding: 'utf8' },
-  )
+  const said = execFileSync('python3', ['-c', ASKING, E2E, JSON.stringify(answers), String(patience)], {
+    encoding: 'utf8',
+  })
   return JSON.parse(said) as { came: unknown; asked: number }
 }
 

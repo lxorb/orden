@@ -128,37 +128,21 @@ describe('what a target names', () => {
       ['Note.md', '../other/Note.md', '#heading'],
       ['https://x.dev', 'mailto:a@b.dev', '//x.dev/a', 'javascript:alert(1)'],
     ],
-    [
-      isPdfTarget,
-      ['paper.pdf', 'reading/Deep Learning.PDF', '  paper.pdf  '],
-      ['paper', 'paper.pdf.md', 'pdf', ''],
-    ],
+    [isPdfTarget, ['paper.pdf', 'reading/Deep Learning.PDF', '  paper.pdf  '], ['paper', 'paper.pdf.md', 'pdf', '']],
     [
       isCanvasTarget,
       ['Board.canvas', 'boards/Quarter.CANVAS', '  Board.canvas  '],
       ['Board', 'Board.canvas.md', 'canvas', ''],
     ],
-    [
-      isImageTarget,
-      ['a/b/pic.PNG', 'shot.jpeg', 'drawing.svg', '  frame.apng  '],
-      ['Note.md', 'Note', 'png', ''],
-    ],
-    [
-      isAudioTarget,
-      ['take.MP3', 'a/b/talk.m4a', '  memo.opus  '],
-      ['Note.md', 'mp3', 'song.mp3.md'],
-    ],
+    [isImageTarget, ['a/b/pic.PNG', 'shot.jpeg', 'drawing.svg', '  frame.apng  '], ['Note.md', 'Note', 'png', '']],
+    [isAudioTarget, ['take.MP3', 'a/b/talk.m4a', '  memo.opus  '], ['Note.md', 'mp3', 'song.mp3.md']],
     [isVideoTarget, ['demo.mp4', 'clip.MOV'], ['']],
     [
       isWebTarget,
       ['Svelte docs.url', 'reading/Svelte docs.URL', 'Svelte docs.webloc', '  Svelte docs.url  '],
       ['Svelte docs', 'Svelte docs.url.md', 'url', ''],
     ],
-    [
-      isTabFile,
-      ['paper.pdf', 'Board.canvas', 'Svelte docs.url'],
-      ['Note.md', 'shot.png', '', 'take.mp3'],
-    ],
+    [isTabFile, ['paper.pdf', 'Board.canvas', 'Svelte docs.url'], ['Note.md', 'shot.png', '', 'take.mp3']],
   ])('%o', (is, yes, no) => {
     expect(yes.filter((one) => !is(one))).toEqual([])
     expect(no.filter(is)).toEqual([])
@@ -184,8 +168,7 @@ describe('what a target names', () => {
   test('the size an embed asks for is a width, or a width and a height, never words', () => {
     expect(embedSize('300')).toEqual({ width: 300, height: null })
     expect(embedSize('300x200')).toEqual({ width: 300, height: 200 })
-    for (const words of ['the sketch', '300 wide', 'x200', '', null])
-      expect(embedSize(words)).toBe(null)
+    for (const words of ['the sketch', '300 wide', 'x200', '', null]) expect(embedSize(words)).toBe(null)
   })
 
   test('the page a fragment names is the number after page=, from the first page on', () => {
@@ -235,9 +218,7 @@ describe('finding the links in a note', () => {
   test('a markdown target keeps its heading and loses its encoding; a markdown heading is the words it names, every escape undone', () => {
     const [link] = findLinks('[x](My%20Note.md#a-heading)')
     expect(link).toMatchObject({ target: 'My Note.md', heading: 'a-heading' })
-    const found = findLinks(
-      '[x](Note.md#Some%20Heading) [y](Note.md#Q&A:%20why%3F) [z](Note.md#50%%20off)',
-    )
+    const found = findLinks('[x](Note.md#Some%20Heading) [y](Note.md#Q&A:%20why%3F) [z](Note.md#50%%20off)')
     expect(found.map((one) => one.heading)).toEqual(['Some Heading', 'Q&A: why?', '50% off'])
   })
 
@@ -346,9 +327,7 @@ describe('block names', () => {
 
 describe('a section of a note with front matter', () => {
   test('is found past a fence opened in the front matter', () => {
-    const note = ['---', 'snippet: |', '  ```', '  npm i', '---', '# Books', '', 'Dune', ''].join(
-      '\n',
-    )
+    const note = ['---', 'snippet: |', '  ```', '  npm i', '---', '# Books', '', 'Dune', ''].join('\n')
     expect(sectionOf(note, { heading: 'Books', block: null })).toBe('# Books\n\nDune')
   })
 
@@ -371,9 +350,7 @@ describe('a section of a note with front matter', () => {
       '^table',
       '',
     ].join('\n')
-    expect(sectionOf(note, { heading: null, block: 'table' })).toBe(
-      '| a | b |\n|---|---|\n| 1 | 2 |',
-    )
+    expect(sectionOf(note, { heading: null, block: 'table' })).toBe('| a | b |\n|---|---|\n| 1 | 2 |')
   })
 
   test('is the block of the words, not a line of the front matter', () => {
@@ -404,9 +381,9 @@ describe('the headings a note holds', () => {
     const note = '- a\n  ```\n  # Not one\n  ```\n\n# One\n\nwords\n'
     expect(headingsOf(note)).toEqual(['One'])
     expect(sectionOf(note, { heading: 'Not one', block: null })).toBe(null)
-    expect(
-      sectionOf('# One\n\n- a\n  ```\n  # Two\n  ```\n', { heading: 'One', block: null }),
-    ).toBe('# One\n\n- a\n  ```\n  # Two\n  ```')
+    expect(sectionOf('# One\n\n- a\n  ```\n  # Two\n  ```\n', { heading: 'One', block: null })).toBe(
+      '# One\n\n- a\n  ```\n  # Two\n  ```',
+    )
   })
 })
 
@@ -553,20 +530,13 @@ describe('a markdown target the way a link names a file', () => {
 
 describe('parentheses and brackets in a markdown link', () => {
   const read = (text: string) =>
-    findLinks(text).map((link) => [
-      link.target,
-      link.alias,
-      text.slice(link.targetFrom, link.targetTo),
-    ])
+    findLinks(text).map((link) => [link.target, link.alias, text.slice(link.targetFrom, link.targetTo)])
 
   test('a target holds balanced parentheses, which is how Obsidian writes `a (1).md`', () => {
     expect(read('[x](a%20(1).md)')).toEqual([['a (1).md', 'x', 'a%20(1).md']])
     expect(read('[x](a(1).md)')).toEqual([['a(1).md', 'x', 'a(1).md']])
     expect(read('[x](a((1)).md)')).toEqual([['a((1)).md', 'x', 'a((1)).md']])
-    expect(read('[x](a(1).md "t") [y](b.md)').map(([target]) => target)).toEqual([
-      'a(1).md',
-      'b.md',
-    ])
+    expect(read('[x](a(1).md "t") [y](b.md)').map(([target]) => target)).toEqual(['a(1).md', 'b.md'])
   })
 
   test('escaped parentheses are the name and count for nothing; parentheses that do not balance are no link, or end it where they close', () => {
@@ -587,9 +557,7 @@ describe('parentheses and brackets in a markdown link', () => {
   })
 
   test('a wikilink is never read as a label; words between the target and the bracket are no link, as in CommonMark', () => {
-    expect(findLinks('[[a]](b.md)').map((link) => [link.kind, link.target])).toEqual([
-      ['wikilink', 'a'],
-    ])
+    expect(findLinks('[[a]](b.md)').map((link) => [link.kind, link.target])).toEqual([['wikilink', 'a']])
     expect(targets('[x [[a]] y](b.md)')).toEqual(['a'])
     expect(findLinks('[x](a b.md)')).toEqual([])
     expect(findLinks('[x](<a<b>)')).toEqual([])
@@ -634,12 +602,7 @@ describe('the walk agrees with links.rs', () => {
     expect(read('[x]([[a]])')).toEqual([['markdown', '[[a]]']])
     expect(read('[x](http://a/[[b]])')).toEqual([])
     expect(read('[[\\]](x)')).toEqual([['wikilink', '\\']])
-    expect(read('[a](b.md) [[c]] ![d](e.png) ![[f]]').map(([, one]) => one)).toEqual([
-      'b.md',
-      'c',
-      'e.png',
-      'f',
-    ])
+    expect(read('[a](b.md) [[c]] ![d](e.png) ![[f]]').map(([, one]) => one)).toEqual(['b.md', 'c', 'e.png', 'f'])
   })
 
   test('a blank is what JavaScript and the crate both call one', () => {
@@ -671,9 +634,7 @@ describe('a block name on a line of its own', () => {
 
   test('a link to it gets the block above, whatever blank lines that holds; a run with the name under it stays as it was; belongs to that block in the list of blocks', () => {
     expect(sectionOf(FENCED, { heading: null, block: 'abc123' })).toBe('```\nx\n\ny\n```')
-    expect(sectionOf('| a |\n| - |\n\n^tab\n\nb', { heading: null, block: 'tab' })).toBe(
-      '| a |\n| - |',
-    )
+    expect(sectionOf('| a |\n| - |\n\n^tab\n\nb', { heading: null, block: 'tab' })).toBe('| a |\n| - |')
     expect(sectionOf('a\nb\n^n\n\nc', { heading: null, block: 'n' })).toBe('a\nb')
     expect(blocksOf(FENCED).map((one) => [one.line, one.id])).toEqual([
       [0, null],
@@ -699,9 +660,7 @@ describe('a block name on a line of its own', () => {
     expect(sectionOf('- Pay rent\n  by Friday ^x\n- Buy milk', { heading: null, block: 'x' })).toBe(
       '- Pay rent\n  by Friday',
     )
-    expect(sectionOf('- a\n  - b\n    more ^y\n- c', { heading: null, block: 'y' })).toBe(
-      '- b\n  more',
-    )
+    expect(sectionOf('- a\n  - b\n    more ^y\n- c', { heading: null, block: 'y' })).toBe('- b\n  more')
     expect(namedBlock('- Pay rent\n  by Friday\n- Buy milk', 0, () => 'new123')?.source).toBe(
       '- Pay rent\n  by Friday ^new123\n- Buy milk',
     )
@@ -735,9 +694,7 @@ describe('a block name on a line of its own', () => {
     expect(block('---\ntitle: Plan\n---\nFirst para ^p\n\nMore\n', 'p')).toBe('First para')
     expect(block('a\n\n```\nx\n``` ^abc123\n\n# After\n\nb\n', 'abc123')).toBe('```\nx\n```')
     expect(block('Intro\n\n$$\na\n\nb\n$$\n\n^m\n\n# Next\n', 'm')).toBe('$$\na\n\nb\n$$')
-    expect(block('Intro\n\n    code line\n\n| a | b |\n|---|---|\n\n^t\n', 't')).toBe(
-      '| a | b |\n|---|---|',
-    )
+    expect(block('Intro\n\n    code line\n\n| a | b |\n|---|---|\n\n^t\n', 't')).toBe('| a | b |\n|---|---|')
     expect(block('Intro\n## Goals ^g\nShip it.\n', 'g')).toBe('## Goals')
     expect(block('Run:\n```\na\n\nb\n```\n^x', 'x')).toBe('Run:\n```\na\n\nb\n```')
   })
@@ -781,9 +738,7 @@ describe('a block name on a line of its own', () => {
     const fenced = 'a\n\n```\nx\n``` ^abc123\n\n# After\n'
     expect(namedBlock(fenced, 2, () => 'new123')).toEqual({ id: 'abc123', source: fenced })
     const note = '1. Install:\n   ```bash\n   npm i\n   ```\n2. Next\n'
-    expect(namedBlock(note, 2, () => 'new123')?.source).toBe(
-      note.replace('1. Install:', '1. Install: ^new123'),
-    )
+    expect(namedBlock(note, 2, () => 'new123')?.source).toBe(note.replace('1. Install:', '1. Install: ^new123'))
     expect(namedBlock('# Plan\n\n## Tasks\n- Buy milk', 2, () => 'new123')).toBeNull()
     expect(blocksOf('## Tasks\n- Buy milk').map((one) => [one.line, one.text])).toEqual([
       [0, 'Tasks'],
@@ -793,11 +748,7 @@ describe('a block name on a line of its own', () => {
 
   test('each list item is a block of its own in the list of blocks', () => {
     expect(
-      blocksOf('Steps:\n\n- Buy milk\n- Pay rent ^p\n- Call mum').map((one) => [
-        one.line,
-        one.text,
-        one.id,
-      ]),
+      blocksOf('Steps:\n\n- Buy milk\n- Pay rent ^p\n- Call mum').map((one) => [one.line, one.text, one.id]),
     ).toEqual([
       [0, 'Steps:', null],
       [2, 'Buy milk', null],
@@ -816,9 +767,7 @@ describe('a block name on a line of its own', () => {
       id: 'new123',
       source: 'a\n\n```\nx\n\ny\n```\n\n^new123\n\nb\n',
     })
-    expect(namedBlock('| a |\r\n| - |\r\n', 0, id)?.source).toBe(
-      '| a |\r\n| - |\r\n\r\n^new123\r\n',
-    )
+    expect(namedBlock('| a |\r\n| - |\r\n', 0, id)?.source).toBe('| a |\r\n| - |\r\n\r\n^new123\r\n')
     expect(namedBlock('---\n\nb', 0, id)?.source).toBe('---\n\n^new123\n\nb')
     expect(namedBlock('words\nmore\n\nb\n', 0, id)?.source).toBe('words\nmore ^new123\n\nb\n')
     expect(namedBlock('words\r\n\r\nb', 0, id)?.source).toBe('words ^new123\r\n\r\nb')
@@ -839,11 +788,7 @@ describe('naming a block by where it ends', () => {
 
   test.each([
     ['words over a fence', 'para\n```\nx\n```\n\nafter', 'para ^new123\n```\nx\n```\n\nafter'],
-    [
-      'a table under words',
-      'para\n\n| a |\n| - |\n| 1 |',
-      'para\n\n| a |\n| - |\n| 1 |\n\n^new123',
-    ],
+    ['a table under words', 'para\n\n| a |\n| - |\n| 1 |', 'para\n\n| a |\n| - |\n| 1 |\n\n^new123'],
     ['a rule under words', 'para\n***\n\nb', 'para\n***\n\n^new123\n\nb'],
     ['words with a rule under them', 'Title\n---\n\nb', 'Title\n---\n\n^new123\n\nb'],
     ['words with equals signs under them', 'Title\n===\n\nb', 'Title\n===\n\n^new123\n\nb'],
@@ -904,8 +849,7 @@ describe('a closing fence an older build named', () => {
 })
 
 describe('a line of links nothing closes', () => {
-  const quick = (source: (size: number) => string, size: number) =>
-    linearly((one) => renderMarkdown(source(one)), size)
+  const quick = (source: (size: number) => string, size: number) => linearly((one) => renderMarkdown(source(one)), size)
 
   test('renders in linear time', () => {
     expect(quick((n) => '[a]('.repeat(n), 25_000)).not.toContain('<a ')
@@ -979,17 +923,13 @@ describe('a block beside maths, a comment or a pre', () => {
   test('maths in a list item names the item', () => {
     const note = '- item\n  $$\n  x\n  $$\n- next\n'
     expect(namedBlock(note, 2, id)?.source).toBe(note.replace('- item', '- item ^new123'))
-    expect(block('- item ^x\n  $$\n  a\n\n  b\n  $$\n- next\n\nAfter\n', 'x')).toBe(
-      '- item\n  $$\n  a\n\n  b\n  $$',
-    )
+    expect(block('- item ^x\n  $$\n  a\n\n  b\n  $$\n- next\n\nAfter\n', 'x')).toBe('- item\n  $$\n  a\n\n  b\n  $$')
   })
 
   test('code in a loose list item names the item', () => {
     const note = '1. Install:\n\n   ```bash\n   npm i\n   ```\n2. Run it\n'
     expect(namedBlock(note, 3, id)?.source).toBe(note.replace('Install:', 'Install: ^new123'))
-    expect(block(note.replace('Install:', 'Install: ^i'), 'i')).toBe(
-      '1. Install:\n\n   ```bash\n   npm i\n   ```',
-    )
+    expect(block(note.replace('Install:', 'Install: ^i'), 'i')).toBe('1. Install:\n\n   ```bash\n   npm i\n   ```')
   })
 
   test('an opener nothing closes holds nothing, however many there are', () => {
@@ -1024,19 +964,13 @@ describe('a block in a list, a fence in a fence, and code after code', () => {
     expect(named).toBe(table.replace('2 |\n- Next', '2 |\n\n  ^new123\n- Next'))
     expect(block(named, 'new123')).toBe('  | a | b |\n  | - | - |\n  | 1 | 2 |')
     const rule = '1. Step one\n\n   ---\n\n2. Step two\n'
-    expect(namedBlock(rule, 2, id)?.source).toBe(
-      rule.replace('---\n\n2.', '---\n\n   ^new123\n\n2.'),
-    )
+    expect(namedBlock(rule, 2, id)?.source).toBe(rule.replace('---\n\n2.', '---\n\n   ^new123\n\n2.'))
   })
 
   test('a list-looking line inside maths, a pre or a comment names the whole block', () => {
     expect(namedBlock('$$\n- x + y\n$$\n', 1, id)?.source).toBe('$$\n- x + y\n$$\n\n^new123\n')
-    expect(namedBlock('<pre>\n- item\n</pre>\n', 1, id)?.source).toBe(
-      '<pre>\n- item\n</pre>\n\n^new123\n',
-    )
-    expect(namedBlock('<!--\n# Draft\n-->\n', 1, id)?.source).toBe(
-      '<!--\n# Draft\n-->\n\n^new123\n',
-    )
+    expect(namedBlock('<pre>\n- item\n</pre>\n', 1, id)?.source).toBe('<pre>\n- item\n</pre>\n\n^new123\n')
+    expect(namedBlock('<!--\n# Draft\n-->\n', 1, id)?.source).toBe('<!--\n# Draft\n-->\n\n^new123\n')
   })
 
   test('indented code and the fence after it are two blocks', () => {
@@ -1090,15 +1024,12 @@ describe('a block in a quote, a loose item, or under an item', () => {
 
 describe('a paragraph right over a quote, and a name before a later step', () => {
   test('the paragraph and the callout under it are two blocks', () => {
-    const note =
-      'Before you start:\n> [!warning] Back up first\n> It wipes the disk.\n\nNext para\n'
+    const note = 'Before you start:\n> [!warning] Back up first\n> It wipes the disk.\n\nNext para\n'
     const named = namedBlock(note, 0, id)?.source ?? ''
     expect(named).toBe(note.replace('start:', 'start: ^n'))
     expect(block(named, 'n')).toBe('Before you start:')
     expect(blocksOf(note).map((one) => one.line)).toEqual([0, 1, 4])
-    expect(block(namedBlock(note, 2, id)?.source ?? '', 'n')).toBe(
-      '> [!warning] Back up first\n> It wipes the disk.',
-    )
+    expect(block(namedBlock(note, 2, id)?.source ?? '', 'n')).toBe('> [!warning] Back up first\n> It wipes the disk.')
   })
 
   test('a name written apart before a step numbered past one keeps the step a list item', () => {

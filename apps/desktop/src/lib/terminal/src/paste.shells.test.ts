@@ -55,9 +55,7 @@ function drawn(count: number): string[] {
     return seed
   }
   return Array.from({ length: count }, () =>
-    Array.from({ length: 1 + (next() % 12) }, () => letters.charAt(next() % letters.length)).join(
-      '',
-    ),
+    Array.from({ length: 1 + (next() % 12) }, () => letters.charAt(next() % letters.length)).join(''),
   )
 }
 
@@ -134,12 +132,8 @@ describe('a dropped name for a host whose shell is not known', () => {
           }).stdout
         const driver = join(room, 'each.ps1')
         writeFileSync(driver, 'foreach ($f in $args) { try { & $f } catch { } }\n')
-        const heard =
-          shell.script === 'said.ps1'
-            ? [run([driver, ...scripts])]
-            : scripts.map((one) => run([one]))
-        if (posix)
-          expect(heard[0]?.split(/\r?\n/).slice(0, paths.length), shell.name).toEqual(paths)
+        const heard = shell.script === 'said.ps1' ? [run([driver, ...scripts])] : scripts.map((one) => run([one]))
+        if (posix) expect(heard[0]?.split(/\r?\n/).slice(0, paths.length), shell.name).toEqual(paths)
         expect(readdirSync(room)).not.toContain('PWNED')
       },
       120_000,

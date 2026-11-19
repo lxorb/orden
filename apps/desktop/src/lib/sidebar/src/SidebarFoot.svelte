@@ -56,12 +56,7 @@
       </button>
     {/if}
 
-    <button
-      class="orden-glyph act"
-      title="Send feedback"
-      aria-label="Send feedback"
-      onclick={showFeedback}
-    >
+    <button class="orden-glyph act" title="Send feedback" aria-label="Send feedback" onclick={showFeedback}>
       <svg class="bug" viewBox="0 0 14 14"
         ><path
           d="M4.6 4.2a2.4 2.4 0 0 1 4.8 0M3.9 5.4h6.2v3.4a3.1 3.1 0 0 1-6.2 0zM7 5.4v6.4M3.9 7.4H1.6M10.1 7.4h2.3M4.2 9.9l-1.9 1.4M9.8 9.9l1.9 1.4M4.4 5.4 2.6 3.8M9.6 5.4l1.8-1.6"

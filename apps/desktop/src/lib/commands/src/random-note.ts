@@ -11,11 +11,7 @@ export function randomChoices(): string[] {
   return workspace.notes
     .map((one) => one.path)
     .filter(
-      (path) =>
-        path !== open &&
-        isMarkdownPath(path) &&
-        !workspace.excluded.has(path) &&
-        !workspace.archive.has(path),
+      (path) => path !== open && isMarkdownPath(path) && !workspace.excluded.has(path) && !workspace.archive.has(path),
     )
 }
 

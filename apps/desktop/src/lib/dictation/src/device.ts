@@ -1,11 +1,4 @@
-import {
-  answer,
-  frameWord,
-  isRecord,
-  method,
-  speechRecogniser,
-  systemLocale,
-} from '../../platform/src/api'
+import { answer, frameWord, isRecord, method, speechRecogniser, systemLocale } from '../../platform/src/api'
 import type { Hooks, Listening } from './listening'
 import { type Field, Spot } from './spot'
 

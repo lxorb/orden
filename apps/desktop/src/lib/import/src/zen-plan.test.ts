@@ -83,9 +83,7 @@ describe("Zen's spaces as Orden's", () => {
       icon: null,
       added: NOW.toISOString(),
     })
-    expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe(
-      'data:image/png;base64,iVBORw0KGgo=',
-    )
+    expect(mail?.kind === 'note' && readShortcut(mail.text)?.icon).toBe('data:image/png;base64,iVBORw0KGgo=')
     expect(guide?.kind === 'note' && readShortcut(guide.text)?.title).toBe('The guide')
   })
 
@@ -109,13 +107,7 @@ describe("Zen's spaces as Orden's", () => {
       tabs: [...read.tabs, { ...read.tabs[6]!, url: 'https://board.example.com/2' }],
     }
     const work = zenImport(twice, NOW).spaces[1]
-    expect(work?.order['']).toEqual([
-      'Docs',
-      'Board.url',
-      'b - Search.url',
-      'Board 2.url',
-      'Later.md',
-    ])
+    expect(work?.order['']).toEqual(['Docs', 'Board.url', 'b - Search.url', 'Board 2.url', 'Later.md'])
   })
 
   test('takes an Essential of a container to the first space of that container', () => {

@@ -54,9 +54,7 @@ function dot(): number {
 test('zoomed in, the dot stays the width the pen writes on the screen', () => {
   expect(dot()).toBe(WIDE)
 
-  host
-    .querySelector('.canvas')
-    ?.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, ctrlKey: true, bubbles: true }))
+  host.querySelector('.canvas')?.dispatchEvent(new WheelEvent('wheel', { deltaY: -100, ctrlKey: true, bubbles: true }))
   flushSync()
 
   expect(dot()).toBe(WIDE)

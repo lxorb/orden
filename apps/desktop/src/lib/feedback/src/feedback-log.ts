@@ -9,10 +9,7 @@ const ROOT = String.raw`(?:file:/{2,3}|[A-Za-z]:[\\/]|\\\\|~[\\/]|${ROUTE}/)`
 
 const ENDS = String.raw`(?:-|\d+\b|not\b|is\b|was\b|were\b|could\b|has\b|had\b|are\b|and\b|to\b|from\b|into\b|for\b|failed\b|cannot\b|can't\b|does\b|did\b|already\b|because\b|of\b|in\b|on\b|at\b|with\b|after\b|before\b|but\b|so\b|as\b|took\b|unreadable\b)`
 
-const WHOLE = new RegExp(
-  String.raw`${NOT_INSIDE}${ROOT}(?:(?! - )[^\n"'\x60<>|])*?\.(${FILES})\b(?![\w-])`,
-  'gi',
-)
+const WHOLE = new RegExp(String.raw`${NOT_INSIDE}${ROOT}(?:(?! - )[^\n"'\x60<>|])*?\.(${FILES})\b(?![\w-])`, 'gi')
 
 const MORE = String.raw`(?: (?!${ENDS})[^\s"'\x60<>|:;,()]+)*`
 

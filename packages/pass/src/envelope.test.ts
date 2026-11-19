@@ -90,9 +90,9 @@ describe('contentIn', () => {
   })
 
   it('reads a field of an unknown kind as hidden', () => {
-    expect(
-      contentIn({ kind: 'note', fields: [{ id: 'f', kind: 'secret-question', value: 'v' }] }),
-    ).toMatchObject({ fields: [{ kind: 'hidden', value: 'v' }] })
+    expect(contentIn({ kind: 'note', fields: [{ id: 'f', kind: 'secret-question', value: 'v' }] })).toMatchObject({
+      fields: [{ kind: 'hidden', value: 'v' }],
+    })
   })
 
   it('drops keys and identity values it does not know', () => {
@@ -150,9 +150,11 @@ describe('envelopeIn', () => {
   })
 
   it('keeps a trash time and a folder', () => {
-    expect(
-      envelopeIn({ content: { kind: 'note' }, trashed: 9, folder: 'f1', used: 3 }),
-    ).toMatchObject({ trashed: 9, folder: 'f1', used: 3 })
+    expect(envelopeIn({ content: { kind: 'note' }, trashed: 9, folder: 'f1', used: 3 })).toMatchObject({
+      trashed: 9,
+      folder: 'f1',
+      used: 3,
+    })
   })
 })
 

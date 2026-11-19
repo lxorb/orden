@@ -13,10 +13,7 @@ describe('a note’s card in a chat', () => {
       '- [ ] Check the [figures](figures.md)',
       'Third line',
     ].join('\n')
-    expect(cardLines(note, 'Chapter 3')).toEqual([
-      'The second experiment ran on the lab data.',
-      'Check the figures',
-    ])
+    expect(cardLines(note, 'Chapter 3')).toEqual(['The second experiment ran on the lab data.', 'Check the figures'])
   })
 
   test('keeps a heading that is not the name, and skips code', () => {
@@ -37,9 +34,6 @@ describe('which note a message is about', () => {
 
 describe('a card past code', () => {
   test('a tilde line inside a backtick block does not close it', () => {
-    expect(cardLines('```\n~~~\nnot words\n```\nFirst\nSecond\n', 'Note')).toEqual([
-      'First',
-      'Second',
-    ])
+    expect(cardLines('```\n~~~\nnot words\n```\nFirst\nSecond\n', 'Note')).toEqual(['First', 'Second'])
   })
 })

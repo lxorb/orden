@@ -189,9 +189,7 @@ describe('a write in the air while a file moves', () => {
 
     expect(note?.path).toBe(`${ROOT}/Desk/Notes.md`)
     expect(disk.current?.files.has(`${ROOT}/Work/Notes.md`)).toBe(false)
-    expect(disk.current?.files.get(`${ROOT}/Desk/Notes.md`)).toBe(
-      '# Notes\ntyped before the rename\n',
-    )
+    expect(disk.current?.files.get(`${ROOT}/Desk/Notes.md`)).toBe('# Notes\ntyped before the rename\n')
   })
 
   test('and so does the undo of a move, which is a move back', async () => {
@@ -534,9 +532,7 @@ describe('the stores the app keeps by path', () => {
     try {
       if (disk.current && original) {
         disk.current.invoke = (command, args) =>
-          command === 'rename_space'
-            ? Promise.resolve({ name: 'Studio', path: '/Studio' })
-            : original(command, args)
+          command === 'rename_space' ? Promise.resolve({ name: 'Studio', path: '/Studio' }) : original(command, args)
       }
       await workspace.renameSpace('s', 'Studio')
 
@@ -642,8 +638,7 @@ async function indexed() {
 
 describe('a canvas showing a file that moves', () => {
   const card = { x: 0, y: 0, width: 250, height: 60 }
-  const board = (file: string) =>
-    JSON.stringify({ nodes: [{ id: 'f', type: 'file', file, ...card }], edges: [] })
+  const board = (file: string) => JSON.stringify({ nodes: [{ id: 'f', type: 'file', file, ...card }], edges: [] })
   const cards = () =>
     (
       JSON.parse(disk.current?.files.get(`${ROOT}/Board.canvas`) ?? '{}') as {
@@ -695,14 +690,9 @@ describe('a note renamed while a canvas showing it is open and drawn on', () => 
     const { CanvasStore } = await import('../src/lib/canvas/src/store.svelte')
     const text = { id: 'a', type: 'text', text: 'a', x: 0, y: 0, width: 250, height: 60 }
     const file = { id: 'f', type: 'file', file: 'Plan.md', x: 0, y: 200, width: 250, height: 60 }
-    disk.current?.files.set(
-      `${ROOT}/Board.canvas`,
-      JSON.stringify({ nodes: [text, file], edges: [] }),
-    )
+    disk.current?.files.set(`${ROOT}/Board.canvas`, JSON.stringify({ nodes: [text, file], edges: [] }))
     await indexed()
-    await vi.waitFor(() =>
-      expect(links.backlinks(`${ROOT}/Plan.md`).map((one) => one.path)).toContain('Board.canvas'),
-    )
+    await vi.waitFor(() => expect(links.backlinks(`${ROOT}/Plan.md`).map((one) => one.path)).toContain('Board.canvas'))
     await workspace.open(`${ROOT}/Board.canvas`)
     const tab = workspace.active
     if (!tab) throw new Error('no tab')
@@ -737,9 +727,7 @@ describe('a note renamed while a canvas showing it is drawn on and not yet writt
     const { CanvasStore } = await import('../src/lib/canvas/src/store.svelte')
     disk.current?.files.set(`${ROOT}/Board.canvas`, JSON.stringify(plane))
     await indexed()
-    await vi.waitFor(() =>
-      expect(links.backlinks(`${ROOT}/Plan.md`).map((one) => one.path)).toContain('Board.canvas'),
-    )
+    await vi.waitFor(() => expect(links.backlinks(`${ROOT}/Plan.md`).map((one) => one.path)).toContain('Board.canvas'))
     await workspace.open(`${ROOT}/Board.canvas`)
     const tab = workspace.active
     if (!tab) throw new Error('no tab')
@@ -851,9 +839,7 @@ describe('a note renamed while a canvas showing it is open in the back of its pa
     const { CanvasStore } = await import('../src/lib/canvas/src/store.svelte')
     disk.current?.files.set(`${ROOT}/Board.canvas`, JSON.stringify(plane))
     await indexed()
-    await vi.waitFor(() =>
-      expect(links.backlinks(`${ROOT}/Plan.md`).map((one) => one.path)).toContain('Board.canvas'),
-    )
+    await vi.waitFor(() => expect(links.backlinks(`${ROOT}/Plan.md`).map((one) => one.path)).toContain('Board.canvas'))
     await workspace.open(`${ROOT}/Board.canvas`)
     const tab = workspace.active
     if (!tab) throw new Error('no tab')

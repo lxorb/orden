@@ -30,9 +30,7 @@ const words = (doc: Y.Doc) => doc.getText(TEXT).toJSON()
 
 const rows = (user = 'a@b.dev') =>
   env.db
-    .prepare(
-      'select count(*) as many from pad_updates where user_id = (select id from users where email = ?)',
-    )
+    .prepare('select count(*) as many from pad_updates where user_id = (select id from users where email = ?)')
     .get(user) as { many: number }
 
 describe('the scratchpad an account keeps', () => {

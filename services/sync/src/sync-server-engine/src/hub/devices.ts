@@ -18,11 +18,7 @@ export interface Hello {
   app: string
 }
 
-export async function deviceOfSession(
-  env: Env,
-  user: string,
-  header: string | undefined,
-): Promise<string | null> {
+export async function deviceOfSession(env: Env, user: string, header: string | undefined): Promise<string | null> {
   const row = await env.DB.prepare(
     `select d.id as id from devices d join sessions s on s.id = d.session_id
       where s.token_hash = ? and d.user_id = ? and d.revoked_at is null`,
@@ -33,12 +29,7 @@ export async function deviceOfSession(
   return row?.id ?? null
 }
 
-export async function register(
-  env: Env,
-  user: string,
-  session: string,
-  hello: Hello,
-): Promise<boolean> {
+export async function register(env: Env, user: string, session: string, hello: Hello): Promise<boolean> {
   const wrote = await env.DB.prepare(
     `insert into devices (id, user_id, session_id, name, platform, app, created_at,
                           last_seen_at)
@@ -49,15 +40,7 @@ export async function register(
        last_seen_at = excluded.last_seen_at, revoked_at = null
      where devices.user_id = excluded.user_id`,
   )
-    .bind(
-      hello.device,
-      user,
-      session,
-      deviceIn(hello.name) || hello.platform,
-      hello.platform,
-      hello.app,
-      now(),
-    )
+    .bind(hello.device, user, session, deviceIn(hello.name) || hello.platform, hello.platform, hello.app, now())
     .run()
   return wrote.meta.changes > 0
 }
@@ -78,34 +61,26 @@ async function endDevice(env: Env, user: string, device: string): Promise<boolea
 
   await env.DB.batch([
     env.DB.prepare('delete from web_keys where user_id = ? and device_id = ?').bind(user, device),
-    env.DB.prepare('delete from app_catalogues where user_id = ? and device_id = ?').bind(
-      user,
-      device,
-    ),
+    env.DB.prepare('delete from app_catalogues where user_id = ? and device_id = ?').bind(user, device),
     env.DB.prepare(
       `delete from push_targets
         where user_id = ?1
           and (device_id = ?2
                or session_hash = (select token_hash from sessions where user_id = ?1 and id = ?3))`,
     ).bind(user, device, row.session ?? ''),
-    env.DB.prepare(
-      'update devices set revoked_at = ?, session_id = null where id = ? and user_id = ?',
-    ).bind(now(), device, user),
-    env.DB.prepare('delete from sessions where user_id = ? and id = ?').bind(
+    env.DB.prepare('update devices set revoked_at = ?, session_id = null where id = ? and user_id = ?').bind(
+      now(),
+      device,
       user,
-      row.session ?? '',
     ),
+    env.DB.prepare('delete from sessions where user_id = ? and id = ?').bind(user, row.session ?? ''),
   ])
 
   await askHub(env, user, 'revoke', { 'x-orden-device': device })
   return true
 }
 
-export async function devicesEnded(
-  env: Env,
-  user: string,
-  sessions: readonly string[],
-): Promise<void> {
+export async function devicesEnded(env: Env, user: string, sessions: readonly string[]): Promise<void> {
   for (const chunk of chunks(sessions)) {
     const { results } = await env.DB.prepare(
       `select id from devices

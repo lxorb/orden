@@ -38,11 +38,7 @@ function tree(
   const roots: Row[] = []
   for (const row of rows) {
     const parent = row.task?.parent
-    const said = row.task
-      ? parent === undefined
-        ? null
-        : `${row.path}#${parent}`
-      : (parentOf?.(row) ?? null)
+    const said = row.task ? (parent === undefined ? null : `${row.path}#${parent}`) : (parentOf?.(row) ?? null)
     const parentKey = said === null ? null : `${row.space}\n${said}`
     if (parentKey === null || !present.has(parentKey)) {
       roots.push(row)
@@ -91,9 +87,7 @@ export function distinctKeys(): (row: Row, group: string) => string {
   }
 }
 
-export const everyRow = (groups: readonly Group[]): Row[] => [
-  ...new Set(groups.flatMap((group) => group.rows)),
-]
+export const everyRow = (groups: readonly Group[]): Row[] => [...new Set(groups.flatMap((group) => group.rows))]
 
 export function listItems(groups: readonly Group[], options: ListOptions): Item[] {
   const out: Item[] = []
@@ -117,19 +111,14 @@ export function listItems(groups: readonly Group[], options: ListOptions): Item[
         twist: one.parent ? (options.shut.has(foldKey(one.row)) ? 'shut' : 'open') : null,
       })
     }
-    if (options.adding)
-      out.push({ kind: 'add', id: `add:${name}`, group: options.grouped ? group : null })
+    if (options.adding) out.push({ kind: 'add', id: `add:${name}`, group: options.grouped ? group : null })
   }
   return out
 }
 
-export function laneKeys(
-  groups: readonly Group[],
-  order: readonly Group['key'][] = [],
-): Group['key'][] {
+export function laneKeys(groups: readonly Group[], order: readonly Group['key'][] = []): Group['key'][] {
   const seen = new Map<string, Group['key']>()
-  for (const group of groups)
-    for (const one of group.sub ?? []) seen.set(groupName(one.key), one.key)
+  for (const group of groups) for (const one of group.sub ?? []) seen.set(groupName(one.key), one.key)
   const ordered = order.filter((key) => seen.has(groupName(key)))
   const placed = new Set(ordered.map(groupName))
   return [...ordered, ...[...seen].filter(([name]) => !placed.has(name)).map(([, key]) => key)]

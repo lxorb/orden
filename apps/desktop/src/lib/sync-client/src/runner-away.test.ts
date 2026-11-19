@@ -57,10 +57,7 @@ async function device(account: ReferenceAccount, id: string, lazy: boolean) {
     account: {
       ask: async (route, body) => {
         if (route === 'prepare') return null
-        const answer = unframe(await account.handle(id, route, frame(body))) as Record<
-          string,
-          unknown
-        >
+        const answer = unframe(await account.handle(id, route, frame(body))) as Record<string, unknown>
         return route === 'feed' ? { ...answer, index: true } : answer
       },
     },
@@ -102,13 +99,10 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     expect(keptAway.under(`${ROOT}/F`)).toHaveLength(2)
 
     let during: number | null = null
-    await runner.doer(
-      { op: 'moved', from: `${ROOT}/F`, to: `${ROOT}/G`, kind: 'folder', root: ROOT },
-      async () => {
-        await open.awayHeard(browser.engine, true)
-        during = keptAway.under(`${ROOT}/G`).length
-      },
-    )
+    await runner.doer({ op: 'moved', from: `${ROOT}/F`, to: `${ROOT}/G`, kind: 'folder', root: ROOT }, async () => {
+      await open.awayHeard(browser.engine, true)
+      during = keptAway.under(`${ROOT}/G`).length
+    })
 
     expect(during).toBe(0)
     expect(
@@ -118,10 +112,7 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
         .sort(),
     ).toEqual([`${ROOT}/G/a.md`, `${ROOT}/G/b.md`])
     expect(keptAway.under(`${ROOT}/F`)).toEqual([])
-    expect(moved.sort()).toEqual([
-      `${ROOT}/F/a.md -> ${ROOT}/G/a.md`,
-      `${ROOT}/F/b.md -> ${ROOT}/G/b.md`,
-    ])
+    expect(moved.sort()).toEqual([`${ROOT}/F/a.md -> ${ROOT}/G/a.md`, `${ROOT}/F/b.md -> ${ROOT}/G/b.md`])
     telling.mockRestore()
     open.current = null
     keptAway.clear()
@@ -189,18 +180,14 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
     const query = { text: 'a' } as never
 
     const heard: string[] = []
-    const searching = keptAway.search(ROOT, query, [], 10, (found) =>
-      heard.push(...found.hits.map((one) => one.path)),
-    )
+    const searching = keptAway.search(ROOT, query, [], 10, (found) => heard.push(...found.hits.map((one) => one.path)))
     expect(heard).toEqual([`${ROOT}/a.md`])
     await searching
     expect(heard).toEqual([`${ROOT}/a.md`, `${ROOT}/b.md`])
 
     finalIs = 'nothing streamed'
     heard.length = 0
-    await keptAway.search(ROOT, query, [], 10, (found) =>
-      heard.push(...found.hits.map((one) => one.path)),
-    )
+    await keptAway.search(ROOT, query, [], 10, (found) => heard.push(...found.hits.map((one) => one.path)))
     expect(heard).toEqual([`${ROOT}/a.md`, `${ROOT}/b.md`])
 
     saying.mockRestore()
@@ -218,9 +205,7 @@ describe('a browser moving a folder of notes it keeps no words of', () => {
       said.push({ kind, ...what })
     })
     keptAway.clear()
-    keptAway.keep([{ id: 'n1', path: `${ROOT}/a.md`, size: 1, modified: 1 }], () =>
-      Promise.resolve(true),
-    )
+    keptAway.keep([{ id: 'n1', path: `${ROOT}/a.md`, size: 1, modified: 1 }], () => Promise.resolve(true))
     keptAway.answeredBy(new Map(), (_root, _query, _terms, _limit, onFound) => {
       onFound({ hits: [{ path: `${ROOT}/a.md` }], loose: [] } as never)
       return Promise.resolve(true)

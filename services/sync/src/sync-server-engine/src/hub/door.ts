@@ -1,15 +1,7 @@
 import { Hono } from 'hono'
 import { tokenOf } from '@orden/rooms'
 import { deviceOffered, type OfferedDevice } from '@orden/sync-core'
-import {
-  askHub,
-  type Env,
-  HUB_AWAY,
-  note,
-  now,
-  sha256,
-  SIGN_IN,
-} from '../../../sync-server/src/api'
+import { askHub, type Env, HUB_AWAY, note, now, sha256, SIGN_IN } from '../../../sync-server/src/api'
 import { DEVICE } from './frames'
 
 const WHO = `with me as (

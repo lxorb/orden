@@ -135,10 +135,7 @@ export function spokenPath(path: string, shell: string): string | null {
   return seen.includes('%') ? null : `"${seen.replace(/"/g, '?')}"`
 }
 
-export function spokenPaths(
-  paths: readonly string[],
-  shell: string,
-): { said: string; left: number } {
+export function spokenPaths(paths: readonly string[], shell: string): { said: string; left: number } {
   const spoken = paths.map((path) => spokenPath(path, shell))
   const said = spoken.filter((one) => one !== null)
   return { said: said.join(' '), left: spoken.length - said.length }

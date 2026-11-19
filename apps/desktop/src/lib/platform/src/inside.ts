@@ -30,8 +30,8 @@ function shortName(step: string): boolean {
 export const namesByShortName = (path: string): boolean => path.split(/[\\/]/).some(shortName)
 
 function onWindows(): boolean {
-  const os = (globalThis as { window?: { __TAURI_OS_PLUGIN_INTERNALS__?: { platform?: string } } })
-    .window?.__TAURI_OS_PLUGIN_INTERNALS__
+  const os = (globalThis as { window?: { __TAURI_OS_PLUGIN_INTERNALS__?: { platform?: string } } }).window
+    ?.__TAURI_OS_PLUGIN_INTERNALS__
   return os?.platform === 'windows'
 }
 

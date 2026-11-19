@@ -32,9 +32,7 @@ export interface Left {
   alternate: boolean
 }
 
-const MOUSE_OFF = [9, 1000, 1001, 1002, 1003, 1005, 1006, 1015, 1016]
-  .map((mode) => `\x1b[?${mode}l`)
-  .join('')
+const MOUSE_OFF = [9, 1000, 1001, 1002, 1003, 1005, 1006, 1015, 1016].map((mode) => `\x1b[?${mode}l`).join('')
 
 export function tidied(left: Left, paste: boolean, all = true): string {
   const { modes } = left

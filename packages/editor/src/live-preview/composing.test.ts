@@ -23,10 +23,7 @@ function viewOf(doc: string, at: number): EditorView {
     state: EditorState.create({
       doc,
       selection: EditorSelection.cursor(at),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        livePreviewDecorations,
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), livePreviewDecorations],
     }),
     parent: document.body,
   })

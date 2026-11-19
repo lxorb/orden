@@ -4,13 +4,7 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const made = vi.hoisted(() => ({ titles: [] as string[] }))
 vi.mock('./add', () => ({
-  addNote: (
-    _base: unknown,
-    _at: number,
-    _file: unknown,
-    _group: unknown,
-    note: { title: string },
-  ) => {
+  addNote: (_base: unknown, _at: number, _file: unknown, _group: unknown, note: { title: string }) => {
     made.titles.push(note.title)
     return Promise.resolve(null)
   },
@@ -33,9 +27,7 @@ function shown(adds: boolean) {
   title.value = 'Fix the sync'
   title.dispatchEvent(new Event('input', { bubbles: true }))
   flushSync()
-  target
-    .querySelector('form')
-    ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+  target.querySelector('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
   return { title, done: () => void unmount(form) }
 }
 

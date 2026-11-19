@@ -14,9 +14,7 @@ import {
   setCell,
 } from './model'
 
-const SOURCE = ['| Name | Size |', '| :--- | ---: |', '| a    | 1    |', '| b    | 2    |'].join(
-  '\n',
-)
+const SOURCE = ['| Name | Size |', '| :--- | ---: |', '| a    | 1    |', '| b    | 2    |'].join('\n')
 
 describe('parsing', () => {
   test('reads header, alignment and rows', () => {
@@ -71,10 +69,7 @@ describe('a cell that ends in a backslash', () => {
   })
 
   test('an odd run still does', () => {
-    expect(parseTable('| a\\\\\\| b | c |\n|---|---|\n| 1 | 2 |')?.header).toEqual([
-      'a\\\\\\| b',
-      'c',
-    ])
+    expect(parseTable('| a\\\\\\| b | c |\n|---|---|\n| 1 | 2 |')?.header).toEqual(['a\\\\\\| b', 'c'])
     expect(parseTable('| a\\| b | c |\n|---|---|\n| 1 | 2 |')?.header).toEqual(['a\\| b', 'c'])
   })
 })

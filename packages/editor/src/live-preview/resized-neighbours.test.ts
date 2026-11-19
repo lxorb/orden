@@ -30,10 +30,7 @@ function opened(doc: string): EditorView {
       EditorState.create({
         doc,
         selection: EditorSelection.cursor(0),
-        extensions: [
-          markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-          livePreview(),
-        ],
+        extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), livePreview()],
       }),
     ),
     parent: document.body,

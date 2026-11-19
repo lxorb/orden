@@ -97,12 +97,7 @@ describe('the rows', () => {
   test('nothing selected is nothing to cut or copy', () => {
     field.setSelectionRange(3, 3)
     const [cut, copy, paste, all] = rows()
-    expect([cut?.disabled, copy?.disabled, paste?.disabled, all?.disabled]).toEqual([
-      true,
-      true,
-      false,
-      false,
-    ])
+    expect([cut?.disabled, copy?.disabled, paste?.disabled, all?.disabled]).toEqual([true, true, false, false])
   })
 
   test('a field that may not be changed is copied from and nothing else', () => {

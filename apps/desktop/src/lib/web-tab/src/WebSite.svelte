@@ -50,8 +50,7 @@
     intermediate: () => 'Intermediate',
     root: () => 'Root',
   }
-  const role = (link: Link, index: number): Role =>
-    index === 0 ? 'site' : link.root ? 'root' : 'intermediate'
+  const role = (link: Link, index: number): Role => (index === 0 ? 'site' : link.root ? 'root' : 'intermediate')
 
   const NAMES: Record<Ask, () => string> = {
     camera: () => 'Camera',
@@ -94,9 +93,7 @@
   const said = $derived(grants.of(site, privately))
   const decided = $derived(ASKS.filter((ask) => said[ask] !== undefined))
   let bubble = $state<HTMLElement>()
-  $effect(() =>
-    overlays.show(onclose, () => [bubble, ...document.querySelectorAll('[data-opens="site"]')]),
-  )
+  $effect(() => overlays.show(onclose, () => [bubble, ...document.querySelectorAll('[data-opens="site"]')]))
 </script>
 
 <div
@@ -150,8 +147,7 @@
         </ol>
         {#if certificate.separately}
           <p class="note">
-            Read from the site separately: the browser engine does not say which certificate this
-            page came with.
+            Read from the site separately: the browser engine does not say which certificate this page came with.
           </p>
         {/if}
         <dl class="details">
@@ -181,8 +177,7 @@
           <span>{NAMES[ask]()}</span>
           <button
             class="orden-button is-quiet"
-            onclick={() =>
-              grants.remember(site, ask, said[ask] === 'allow' ? 'block' : 'allow', privately)}
+            onclick={() => grants.remember(site, ask, said[ask] === 'allow' ? 'block' : 'allow', privately)}
           >
             {said[ask] === 'allow' ? 'Allowed' : 'Blocked'}
           </button>

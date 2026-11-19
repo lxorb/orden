@@ -3,10 +3,7 @@ import { join } from 'node:path'
 import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 
-const script = readFileSync(
-  join(import.meta.dirname, '../src-tauri/crates/web/src/page_drag.js'),
-  'utf8',
-)
+const script = readFileSync(join(import.meta.dirname, '../src-tauri/crates/web/src/page_drag.js'), 'utf8')
 
 function page(html = '') {
   const dom = new JSDOM(
@@ -68,8 +65,7 @@ function page(html = '') {
   for (const type of ['dragenter', 'dragover']) {
     byId('folder').addEventListener(type, (event) => {
       event.preventDefault()
-      ;(event as unknown as { dataTransfer: { dropEffect: string } }).dataTransfer.dropEffect =
-        'move'
+      ;(event as unknown as { dataTransfer: { dropEffect: string } }).dataTransfer.dropEffect = 'move'
     })
   }
 
@@ -101,9 +97,7 @@ function page(html = '') {
       byId(id).addEventListener(
         'dragstart',
         (one) => {
-          ;(
-            one as unknown as { dataTransfer: { effectAllowed: string } }
-          ).dataTransfer.effectAllowed = effect
+          ;(one as unknown as { dataTransfer: { effectAllowed: string } }).dataTransfer.effectAllowed = effect
         },
         { once: true },
       )

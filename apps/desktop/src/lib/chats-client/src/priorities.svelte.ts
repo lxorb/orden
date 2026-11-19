@@ -10,14 +10,7 @@ import {
   suggestionAsk,
   suggestionIn,
 } from '@orden/chats/priority'
-import {
-  heardElsewhere,
-  isNumber,
-  isRecord,
-  isString,
-  keepJson,
-  stored,
-} from '../../platform/src/api'
+import { heardElsewhere, isNumber, isRecord, isString, keepJson, stored } from '../../platform/src/api'
 
 const KEY = 'orden:chat-priorities'
 const MOST_LESSONS = 50
@@ -60,11 +53,7 @@ function keptOf(value: unknown): Kept {
   }
   if (Array.isArray(value.lessons)) {
     kept.lessons = value.lessons.flatMap((one: unknown) =>
-      isRecord(one) &&
-      isString(one.title) &&
-      isString(one.from) &&
-      isString(one.words) &&
-      isLevel(one.level)
+      isRecord(one) && isString(one.title) && isString(one.from) && isString(one.words) && isLevel(one.level)
         ? [{ title: one.title, from: one.from, words: one.words, level: one.level }]
         : [],
     )
@@ -142,11 +131,8 @@ export class Priorities {
       ...(part === 'reply' ? { reply: null } : {}),
       ...(part === 'todo' ? { todo: null } : {}),
     }
-    const rest = Object.fromEntries(
-      Object.entries(this.suggestions).filter(([one]) => one !== chat),
-    )
-    this.suggestions =
-      part === 'all' || (!next.reply && !next.todo) ? rest : { ...rest, [chat]: next }
+    const rest = Object.fromEntries(Object.entries(this.suggestions).filter(([one]) => one !== chat))
+    this.suggestions = part === 'all' || (!next.reply && !next.todo) ? rest : { ...rest, [chat]: next }
   }
 
   levelOf(chat: string): Level | null {
@@ -158,11 +144,7 @@ export class Priorities {
     this.keep()
   }
 
-  reassign(
-    chat: string,
-    level: Level,
-    about: { title: string; from: string; words: string },
-  ): void {
+  reassign(chat: string, level: Level, about: { title: string; from: string; words: string }): void {
     this.assign(chat, { level, by: 'reader', at: this.assigned[chat]?.at ?? Date.now() })
     this.lessons = [...this.lessons, { ...about, level }].slice(-MOST_LESSONS)
     this.keep()

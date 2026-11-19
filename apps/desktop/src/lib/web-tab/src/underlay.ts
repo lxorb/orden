@@ -18,8 +18,7 @@ function n(value: number): string {
 
 export function rounded(box: Rect, round: number | Foot, bottomOnly: boolean): string {
   const fit = (one: number) => Math.max(0, Math.min(one, box.width / 2, box.height / 2))
-  const [bl, br] =
-    typeof round === 'number' ? [fit(round), fit(round)] : [fit(round[0]), fit(round[1])]
+  const [bl, br] = typeof round === 'number' ? [fit(round), fit(round)] : [fit(round[0]), fit(round[1])]
   const [l, t, rt, b] = [box.x, box.y, box.x + box.width, box.y + box.height]
   const top = bottomOnly ? 0 : bl
   return [
@@ -50,9 +49,7 @@ export function groundOf(box: Rect, round: number, pages: readonly Hollow[]): st
   if (within.length === 0) return null
   const local = (one: Rect): Rect => ({ ...one, x: one.x - box.x, y: one.y - box.y })
   const outer = rounded(local({ ...box }), round, false)
-  const cut = within
-    .filter((one) => one.cut !== false)
-    .map((one) => rounded(local(one), one.corner, true))
+  const cut = within.filter((one) => one.cut !== false).map((one) => rounded(local(one), one.corner, true))
   return `path(evenodd, "${[outer, ...cut].join(' ')}")`
 }
 
@@ -86,8 +83,7 @@ function paint(): void {
   for (const [one, was] of given) {
     if (now.has(one)) continue
     one.removeAttribute(ATTRIBUTE)
-    for (const name of Object.keys(JSON.parse(was) as Record<string, string>))
-      one.style.removeProperty(name)
+    for (const name of Object.keys(JSON.parse(was) as Record<string, string>)) one.style.removeProperty(name)
     given.delete(one)
   }
   for (const [one, props] of now) {
@@ -112,11 +108,7 @@ export function underlaid(tab: string, hole: Hollow | null): void {
 }
 
 export function opacityOf(hole: Element): number {
-  if (
-    typeof hole.checkVisibility === 'function' &&
-    !hole.checkVisibility({ visibilityProperty: true })
-  )
-    return 0
+  if (typeof hole.checkVisibility === 'function' && !hole.checkVisibility({ visibilityProperty: true })) return 0
   let shown = 1
   for (let at: Element | null = hole; at; at = at.parentElement) {
     const own = parseFloat(getComputedStyle(at).opacity)

@@ -47,9 +47,7 @@ export function described(frame: Frame, waitingOn: string[]): string {
 }
 
 export function fileOf(said: string): string {
-  return /^[a-z][a-z0-9+.-]*:\/\//i.test(said)
-    ? (said.split(/[?#]/)[0]?.split('/').pop() ?? '')
-    : said
+  return /^[a-z][a-z0-9+.-]*:\/\//i.test(said) ? (said.split(/[?#]/)[0]?.split('/').pop() ?? '') : said
 }
 
 function waiting(): string[] {

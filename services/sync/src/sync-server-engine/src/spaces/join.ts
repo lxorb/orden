@@ -26,15 +26,7 @@ import {
   type User,
   type Variables,
 } from '../../../sync-server/src/api'
-import {
-  EMAIL_LIMIT,
-  itemName,
-  MOST_GUESTS,
-  MOST_MEMBERS,
-  personName,
-  presentItem,
-  roomForMember,
-} from './share'
+import { EMAIL_LIMIT, itemName, MOST_GUESTS, MOST_MEMBERS, personName, presentItem, roomForMember } from './share'
 import { onceShared, presentSpace, type Given } from './space'
 
 const EXPIRED = 'that link has expired'
@@ -164,12 +156,7 @@ async function takeInvitation(env: Env, found: Leads): Promise<Given | null> {
   return taken.role
 }
 
-async function memberNow(
-  env: Env,
-  found: Leads,
-  email: string,
-  role: Given,
-): Promise<Given | null> {
+async function memberNow(env: Env, found: Leads, email: string, role: Given): Promise<Given | null> {
   const { space, item } = found
 
   const joined = await env.DB.prepare(
@@ -184,9 +171,7 @@ async function memberNow(
   if (!joined.meta.changes) return null
   await onceShared(env, space.id, item)
 
-  const held = await env.DB.prepare(
-    'select role from space_members where space_id = ? and email = ? and item = ?',
-  )
+  const held = await env.DB.prepare('select role from space_members where space_id = ? and email = ? and item = ?')
     .bind(space.id, email, item)
     .first<{ role: Given }>()
 
@@ -258,15 +243,7 @@ async function writeGuestMember(
       where ${waiting ? waitingIn('?1', '?3') : GUESTS_IN} < ?7
      on conflict(space_id, guest_id, item) do nothing`,
   )
-    .bind(
-      spaceId,
-      guestId,
-      item,
-      role,
-      waiting ? null : now(),
-      now(),
-      waiting ? MOST_WAITING : MOST_GUESTS,
-    )
+    .bind(spaceId, guestId, item, role, waiting ? null : now(), now(), waiting ? MOST_WAITING : MOST_GUESTS)
     .run()
   if (!written.meta.changes && !(await guestStanding(env, spaceId, guestId, item))) return false
   if (!waiting) await onceShared(env, spaceId, item)
@@ -340,9 +317,7 @@ join.delete('/:token', async (context) => {
   const { space, item } = found
 
   if (who.kind === 'user') {
-    await context.env.DB.prepare(
-      'delete from space_requests where space_id = ? and email = ? and item = ?',
-    )
+    await context.env.DB.prepare('delete from space_requests where space_id = ? and email = ? and item = ?')
       .bind(space.id, who.user.email, item)
       .run()
   } else {
@@ -373,9 +348,7 @@ async function asAnAccount(context: Reply, found: Leads, user: User) {
   const owner = () => ownerOf(context.env, space)
 
   if (space.user_id === user.id) {
-    return context.json(
-      landedOn(context.env, found, 'owner', { name: user.name, email: user.email }),
-    )
+    return context.json(landedOn(context.env, found, 'owner', { name: user.name, email: user.email }))
   }
 
   if (found.kind === 'invite') {
@@ -511,12 +484,7 @@ async function asNobody(context: Reply, found: Leads) {
 
   if (!(await roomToWait(context.env, space.id, item))) return tooManyWaiting(context)
 
-  const { guest, token } = await newGuest(
-    context.env,
-    device ?? null,
-    named || gave,
-    isEmail(gave) ? gave : null,
-  )
+  const { guest, token } = await newGuest(context.env, device ?? null, named || gave, isEmail(gave) ? gave : null)
   if (!(await writeGuestMember(context.env, space.id, guest.id, found.role, true, item))) {
     await forgetEmptyGuest(context.env, guest.id)
     return tooManyWaiting(context)

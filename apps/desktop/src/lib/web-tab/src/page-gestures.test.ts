@@ -2,10 +2,7 @@ import { readFileSync } from 'node:fs'
 import { JSDOM } from 'jsdom'
 import { describe, expect, test } from 'vitest'
 
-const source = readFileSync(
-  new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url),
-  'utf8',
-)
+const source = readFileSync(new URL('../../../../src-tauri/crates/web/src/web_opens.rs', import.meta.url), 'utf8')
 const script = /pub const PAGE_SCRIPT: &str = r"([\s\S]*?)";/.exec(source)?.[1] ?? ''
 
 type Inside = Window &
@@ -18,10 +15,9 @@ function put(on: object, name: string, value: unknown) {
 }
 
 function page(ours = true, before?: (inside: Inside, reached: string[]) => void) {
-  const dom = new JSDOM(
-    '<input id="file" type="file"><input id="text"><label id="label" for="file">a file</label>',
-    { runScripts: 'outside-only' },
-  )
+  const dom = new JSDOM('<input id="file" type="file"><input id="text"><label id="label" for="file">a file</label>', {
+    runScripts: 'outside-only',
+  })
   const inside = dom.window as unknown as Inside
   const reached: string[] = []
   let now = 1_000_000
@@ -90,8 +86,7 @@ function page(ours = true, before?: (inside: Inside, reached: string[]) => void)
     for (const [name, ask] of Object.entries(asked)) {
       try {
         const answer = ask()
-        if (answer instanceof inside.Promise || answer instanceof Promise)
-          answer.catch(() => undefined)
+        if (answer instanceof inside.Promise || answer instanceof Promise) answer.catch(() => undefined)
         answers[name] = answer
       } catch (error) {
         answers[name] = error
@@ -212,8 +207,7 @@ describe('a press of the reader', () => {
 
 function stubbedFrames(inside: Inside, reached: string[]) {
   const owner = inside.HTMLIFrameElement.prototype
-  const was = Object.getOwnPropertyDescriptor(owner, 'contentWindow') as
-    { get?: () => unknown } | undefined
+  const was = Object.getOwnPropertyDescriptor(owner, 'contentWindow') as { get?: () => unknown } | undefined
   const get = was?.get
   if (!was || !get) return
   const stubbed = new WeakSet()
@@ -245,9 +239,10 @@ function framedIn(inside: Inside) {
     for (const ask of [
       () => from.Element.prototype.requestFullscreen.call(inside.document.body),
       () =>
-        (
-          from.Document.prototype as unknown as { execCommand: (name: string) => unknown }
-        ).execCommand.call(inside.document, 'copy'),
+        (from.Document.prototype as unknown as { execCommand: (name: string) => unknown }).execCommand.call(
+          inside.document,
+          'copy',
+        ),
       () => from.open('https://elsewhere.example/'),
     ]) {
       const answer = ask() as { catch?: (fn: () => void) => void } | undefined
@@ -272,9 +267,7 @@ describe('a frame the page makes itself', () => {
   test('is pressed by a press in it, spent for the page as well', () => {
     const { inside, reached } = page(true, stubbedFrames)
     const { child, tried } = framedIn(inside)
-    child.document.dispatchEvent(
-      new child.MouseEvent('mousedown', { bubbles: true, cancelable: true }),
-    )
+    child.document.dispatchEvent(new child.MouseEvent('mousedown', { bubbles: true, cancelable: true }))
     tried(inside)
     tried(child)
     expect(reached).toEqual(['fullscreen', 'execCommand copy', 'open'])

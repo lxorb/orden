@@ -42,8 +42,7 @@ describe('the sentence behind a setting', () => {
   })
 
   test('says more than the name does', () => {
-    for (const one of every)
-      expect(one.hint.toLowerCase(), one.label).not.toBe(one.label.toLowerCase())
+    for (const one of every) expect(one.hint.toLowerCase(), one.label).not.toBe(one.label.toLowerCase())
   })
 
   test('is one plain sentence, which is all a tooltip has room for', () => {
@@ -67,12 +66,7 @@ describe('the Markdown pane', () => {
 describe('the Note types pane', () => {
   test('switches each kind, in its line', () => {
     const kinds = preferences().find((one) => one.id === 'kinds')
-    expect(kinds?.groups.map((group) => group.title)).toEqual([
-      'Notes',
-      'Chats',
-      'Terminals',
-      'Browser',
-    ])
+    expect(kinds?.groups.map((group) => group.title)).toEqual(['Notes', 'Chats', 'Terminals', 'Browser'])
     expect(kinds?.groups.flatMap((group) => group.fields.map((one) => one.label))).toEqual([
       'Note',
       'Canvas',
@@ -129,9 +123,7 @@ describe('the Appearance pane', () => {
   })
 
   test('disables the segments the theme in force cannot show', () => {
-    theme.files = [
-      { id: 'file:warm-paper', name: 'Warm Paper', variants: ['light'], path: '/warm-paper.css' },
-    ]
+    theme.files = [{ id: 'file:warm-paper', name: 'Warm Paper', variants: ['light'], path: '/warm-paper.css' }]
     theme.id = 'file:warm-paper'
 
     try {
@@ -153,11 +145,7 @@ describe('the Appearance pane', () => {
   })
 
   test('and asks two questions, contrast being a theme rather than a switch', () => {
-    expect(pane('appearance').groups[0]?.fields.map((one) => one.label)).toEqual([
-      'Style',
-      'Mode',
-      'Accent',
-    ])
+    expect(pane('appearance').groups[0]?.fields.map((one) => one.label)).toEqual(['Style', 'Mode', 'Accent'])
   })
 
   test('and offers the pointing hand, off by default', () => {
@@ -305,9 +293,7 @@ describe('the version', () => {
 
 describe('the language', () => {
   test('is English, with nothing in the settings to change it', () => {
-    const labels = panes
-      .flatMap((one) => one.groups.flatMap((group) => group.fields))
-      .map((one) => one.label)
+    const labels = panes.flatMap((one) => one.groups.flatMap((group) => group.fields)).map((one) => one.label)
     expect(labels).not.toContain('Language')
     expect(pane('general').groups.map((group) => group.title)).not.toContain('Language')
   })
@@ -320,9 +306,7 @@ describe('the spelling dictionaries', () => {
 
   test('are the platform’s where Orden cannot choose them, and the pane says so', () => {
     const spelling = pane('spelling')
-    expect(spelling.groups.flatMap((group) => group.fields).map((one) => one.label)).toEqual([
-      'Check spelling',
-    ])
+    expect(spelling.groups.flatMap((group) => group.fields).map((one) => one.label)).toEqual(['Check spelling'])
     expect(spelling.groups[0]?.caption?.text).toMatch(/system or browser/)
   })
 })

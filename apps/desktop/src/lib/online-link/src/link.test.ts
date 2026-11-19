@@ -90,8 +90,7 @@ function pass(found: ReturnType<typeof fakeWorld>, ms: number) {
   found.clock.now = until
 }
 
-const beats = (socket: { sent: (string | Uint8Array)[] }) =>
-  socket.sent.filter((one) => one === 'beat').length
+const beats = (socket: { sent: (string | Uint8Array)[] }) => socket.sent.filter((one) => one === 'beat').length
 
 const settle = () => new Promise((done) => setTimeout(done, 0))
 
@@ -185,10 +184,7 @@ describe('the socket to an online session', () => {
     socket.sent.length = 0
     expect(link.take()).toBe(true)
     socket.events.heard(text({ t: 'hold' }))
-    expect(socket.sent).toEqual([
-      text({ t: 'take' }),
-      text({ t: 'hello', cols: 80, rows: 24, since: 5, hold: true }),
-    ])
+    expect(socket.sent).toEqual([text({ t: 'take' }), text({ t: 'hello', cols: 80, rows: 24, since: 5, hold: true })])
   })
 
   test('closing says it leaves, so the session is free at once', async () => {
@@ -217,9 +213,7 @@ describe('the socket to an online session', () => {
     socket.events.closed(1006)
     waiting(found)[0]?.run()
     await settle()
-    expect(opened(found).sent[0]).toBe(
-      text({ t: 'hello', cols: 80, rows: 24, since: 503, hold: true }),
-    )
+    expect(opened(found).sent[0]).toBe(text({ t: 'hello', cols: 80, rows: 24, since: 503, hold: true }))
   })
 
   test('waits for the reader after a refusal that asking again would get again', async () => {

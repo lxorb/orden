@@ -62,5 +62,4 @@ export async function walkSearch(
   onFound({ hits, loose: best(loose, limit) })
 }
 
-const best = (loose: FuzzyHit[], most: number): FuzzyHit[] =>
-  loose.sort((a, b) => b.score - a.score).slice(0, most)
+const best = (loose: FuzzyHit[], most: number): FuzzyHit[] => loose.sort((a, b) => b.score - a.score).slice(0, most)

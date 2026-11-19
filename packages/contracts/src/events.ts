@@ -44,10 +44,7 @@ export type Unlisten = () => void
 
 export interface EventBus {
   emit<Name extends KnownEvent>(name: Name, payload: EventPayload<Name>): void
-  listen<Name extends KnownEvent>(
-    name: Name,
-    heard: (payload: EventPayload<Name>) => void,
-  ): Promise<Unlisten>
+  listen<Name extends KnownEvent>(name: Name, heard: (payload: EventPayload<Name>) => void): Promise<Unlisten>
 }
 
 export const isEventName = (value: unknown): value is EventName =>

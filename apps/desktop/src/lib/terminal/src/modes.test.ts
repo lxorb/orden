@@ -20,8 +20,7 @@ const left = (modes: Partial<Left['modes']>, alternate = false): Left => ({
   alternate,
 })
 
-const MOUSE_OFF =
-  '\x1b[?9l\x1b[?1000l\x1b[?1001l\x1b[?1002l\x1b[?1003l\x1b[?1005l\x1b[?1006l\x1b[?1015l\x1b[?1016l'
+const MOUSE_OFF = '\x1b[?9l\x1b[?1000l\x1b[?1001l\x1b[?1002l\x1b[?1003l\x1b[?1005l\x1b[?1006l\x1b[?1015l\x1b[?1016l'
 
 describe('a prompt mark', () => {
   test('ends just past its terminator, BEL or ESC backslash', () => {
@@ -34,9 +33,7 @@ describe('a prompt mark', () => {
   })
 
   test('and nothing else is', () => {
-    expect(promptEnd(bytes('\x1b]9;9;C:\\\x1b\\\x1b]0;title\x07\x1b[31mred\x1b]133;B\x07'))).toBe(
-      -1,
-    )
+    expect(promptEnd(bytes('\x1b]9;9;C:\\\x1b\\\x1b]0;title\x07\x1b[31mred\x1b]133;B\x07'))).toBe(-1)
     expect(promptEnd(bytes('plain output'))).toBe(-1)
   })
 
@@ -89,10 +86,7 @@ describe('what a prompt switches off', () => {
   })
 
   test('after the prompt is drawn, only the mouse and focus', () => {
-    const late = left(
-      { mouseTrackingMode: 'drag', applicationCursorKeysMode: true, bracketedPasteMode: true },
-      true,
-    )
+    const late = left({ mouseTrackingMode: 'drag', applicationCursorKeysMode: true, bracketedPasteMode: true }, true)
     expect(tidied(late, false, false)).toBe(`${MOUSE_OFF}\x1b[?25h`)
     expect(reporting(late)).toBe(true)
     expect(reporting(left({ sendFocusMode: true }))).toBe(true)

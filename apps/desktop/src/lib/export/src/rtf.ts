@@ -71,13 +71,9 @@ function page(paper: PaperTwips): string {
 }
 
 function running(paper: PaperTwips): string {
-  const line = (word: string, text: string) =>
-    `{\\${word}\\pard\\plain\\qc\\f0\\fs18\\cf${GREY} ${escaped(text)}\\par}`
+  const line = (word: string, text: string) => `{\\${word}\\pard\\plain\\qc\\f0\\fs18\\cf${GREY} ${escaped(text)}\\par}`
 
-  return (
-    (paper.header ? line('header', paper.header) : '') +
-    (paper.footer ? line('footer', paper.footer) : '')
-  )
+  return (paper.header ? line('header', paper.header) : '') + (paper.footer ? line('footer', paper.footer) : '')
 }
 
 function columnOf(paper: PaperTwips): number {
@@ -266,8 +262,7 @@ function runOf(span: Span, sheet: Sheet): string {
   return span.href === undefined ? words : hyperlink(span.href, words)
 }
 
-const runs = (spans: readonly Span[], sheet: Sheet): string =>
-  spans.map((span) => runOf(span, sheet)).join('')
+const runs = (spans: readonly Span[], sheet: Sheet): string => spans.map((span) => runOf(span, sheet)).join('')
 
 interface Frame {
   indent: number

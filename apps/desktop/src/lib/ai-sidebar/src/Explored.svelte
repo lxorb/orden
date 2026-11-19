@@ -7,8 +7,7 @@
   import StepLine from './StepLine.svelte'
   import { objectOf } from './verbs'
 
-  const { rows, live = false }: { rows: Extract<Part, { kind: 'tool' }>[]; live?: boolean } =
-    $props()
+  const { rows, live = false }: { rows: Extract<Part, { kind: 'tool' }>[]; live?: boolean } = $props()
 
   let opened = $state(false)
   const open = $derived(opened || chat.unfolded)
@@ -17,13 +16,7 @@
 </script>
 
 <div class="row">
-  <StepLine
-    verb="Explored"
-    object={what.join(', ')}
-    {open}
-    {going}
-    onpress={() => (opened = !opened)}
-  />
+  <StepLine verb="Explored" object={what.join(', ')} {open} {going} onpress={() => (opened = !opened)} />
   {#if open}
     <div class="inner" transition:slide={{ duration: dur(150), easing: cubicOut }}>
       {#each rows as one, at (at)}

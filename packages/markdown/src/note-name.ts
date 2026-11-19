@@ -17,14 +17,12 @@ export function isReserved(name: string): boolean {
 
 export const AGENTS_NAME = 'AGENTS.md'
 
-export const isAgentsName = (name: string): boolean =>
-  /^agents\.(md|markdown|mdown|mkd)$/i.test(name.trim())
+export const isAgentsName = (name: string): boolean => /^agents\.(md|markdown|mdown|mkd)$/i.test(name.trim())
 
 const OWN = /\.(md|markdown|mdown|mkd|canvas|pages|url|webloc|chat|base|term|application)$/i
 export const shownName = (name: string): string => name.replace(OWN, '') || name
 
-export const rowName = (name: string, isFolder: boolean): string =>
-  isFolder ? name : shownName(name)
+export const rowName = (name: string, isFolder: boolean): string => (isFolder ? name : shownName(name))
 
 export function endingOf(name: string): string | null {
   const own = OWN.exec(name)

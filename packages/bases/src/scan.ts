@@ -100,11 +100,7 @@ function under(open: Open[], line: string, isTask: boolean, task: ScannedTask | 
 
 function lineOf(content: string, at: number): number {
   let lines = 0
-  for (
-    let found = content.indexOf('\n');
-    found !== -1 && found < at;
-    found = content.indexOf('\n', found + 1)
-  ) {
+  for (let found = content.indexOf('\n'); found !== -1 && found < at; found = content.indexOf('\n', found + 1)) {
     lines++
   }
   return lines

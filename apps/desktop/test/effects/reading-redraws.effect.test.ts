@@ -27,8 +27,7 @@ vi.mock('../../src/lib/link-index/src/api', () => ({
     },
     index: () => null,
     locksSeen: () => '',
-    reachedOf: (_from: string | null, link: { target: string }) =>
-      world.version > 0 ? `${link.target}.md` : null,
+    reachedOf: (_from: string | null, link: { target: string }) => (world.version > 0 ? `${link.target}.md` : null),
   },
 }))
 vi.mock('../../src/lib/workspace/src/api', () => ({
@@ -93,9 +92,7 @@ function scrolledTo(box: HTMLElement, at: number) {
 }
 
 test('another note saved in the space leaves a long note with a picture where it was read', async () => {
-  const words = Array.from({ length: 200 }, (_, at) => `Line ${String(at)} of the trip.`).join(
-    '\n\n',
-  )
+  const words = Array.from({ length: 200 }, (_, at) => `Line ${String(at)} of the trip.`).join('\n\n')
   const target = await opened(`${words}\n\n![[beach.png]]\n\n${words}`)
   const box = target.querySelector<HTMLElement>('.scroller')
   if (!box) throw new Error('no scroller')

@@ -11,10 +11,7 @@ export async function loadHighlights(path: string): Promise<Sheet> {
 
 const turns = new Map<string, Promise<unknown>>()
 
-export function editHighlights(
-  path: string,
-  change: (sheet: Sheet) => Sheet,
-): Promise<Sheet | Held> {
+export function editHighlights(path: string, change: (sheet: Sheet) => Sheet): Promise<Sheet | Held> {
   const turn = (turns.get(path) ?? Promise.resolve())
     .catch(() => undefined)
     .then(async () => {

@@ -14,9 +14,7 @@ class Arriving {
   private readonly stalling = afterQuiet(() => (this.stuck = true), STUCK)
 
   readonly said = $derived(
-    this.total === null || this.total === 0
-      ? 'Syncing'
-      : `${Math.min(this.done, this.total)} of ${this.total}`,
+    this.total === null || this.total === 0 ? 'Syncing' : `${Math.min(this.done, this.total)} of ${this.total}`,
   )
 
   get coming(): ReadonlySet<string> {

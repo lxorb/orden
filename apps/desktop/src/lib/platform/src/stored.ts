@@ -70,10 +70,7 @@ export class Shared<T> {
   }
 }
 
-export function heardElsewhere(
-  keys: readonly string[],
-  heard: (key: string | null) => void,
-): () => void {
+export function heardElsewhere(keys: readonly string[], heard: (key: string | null) => void): () => void {
   if (typeof window === 'undefined' || typeof window.addEventListener !== 'function') {
     return () => undefined
   }
@@ -115,5 +112,4 @@ export const isString = (value: unknown): value is string => typeof value === 's
 
 export const isBoolean = (value: unknown): value is boolean => typeof value === 'boolean'
 
-export const isNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
+export const isNumber = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value)

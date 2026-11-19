@@ -185,9 +185,7 @@
         Also gone for everyone in {shared}.
       </p>
     {/if}
-    <button class="orden-action is-danger" disabled={busy} onclick={() => void leave()}>
-      Delete now
-    </button>
+    <button class="orden-action is-danger" disabled={busy} onclick={() => void leave()}> Delete now </button>
     <button class="orden-action" disabled={busy} onclick={onend}>Cancel</button>
   {/if}
 

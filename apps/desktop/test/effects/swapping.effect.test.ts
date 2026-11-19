@@ -78,9 +78,7 @@ function editor(props: { tab: () => NoteTab; kept: () => NoteTab[] }) {
     if (!states.shows(showing)) switches++
 
     untrack(() => {
-      states.show(view, showing, () =>
-        HeldState.waiting(showing.note.live, editorState({ shared: showing.note.live })),
-      )
+      states.show(view, showing, () => HeldState.waiting(showing.note.live, editorState({ shared: showing.note.live })))
     })
   })
 

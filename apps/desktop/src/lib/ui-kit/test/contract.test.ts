@@ -75,9 +75,7 @@ describe('keys', () => {
       shiftKey: false,
     }
     expect(matchesCombination('Mod-K', press, 'mac')).toBe(true)
-    expect(matchesCombination('Mod-K', { ...press, metaKey: false, ctrlKey: true }, 'win')).toBe(
-      true,
-    )
+    expect(matchesCombination('Mod-K', { ...press, metaKey: false, ctrlKey: true }, 'win')).toBe(true)
     expect(matchesCombination('Mod-J', press, 'mac')).toBe(false)
     expect(matchesCombination('Mod-K', { ...press, isComposing: true }, 'mac')).toBe(false)
   })
@@ -146,9 +144,7 @@ describe('the viewport', () => {
     const phone = { native: true, handheld: true, agent: 'iPhone', finger: true }
     expect(deviceFor(390, 844, phone)).toBe('phone')
     expect(deviceFor(1024, 1366, phone)).toBe('tablet')
-    expect(
-      deviceFor(390, 844, { native: false, handheld: null, agent: 'X11', finger: false }),
-    ).toBe('desktop')
+    expect(deviceFor(390, 844, { native: false, handheld: null, agent: 'X11', finger: false })).toBe('desktop')
   })
 
   test('busy work is counted and told, and a failure is shown', async () => {

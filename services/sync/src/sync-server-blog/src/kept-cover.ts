@@ -1,10 +1,4 @@
-import {
-  type Cover,
-  COVER_KEY,
-  COVER_POSITION_KEY,
-  coverPosition,
-  coverSrc,
-} from '@orden/markdown/cover'
+import { type Cover, COVER_KEY, COVER_POSITION_KEY, coverPosition, coverSrc } from '@orden/markdown/cover'
 import { metaFromText } from '@orden/sync-core'
 export function keptCover(meta: string | null | undefined): Cover | null {
   const kept = metaFromText(meta)

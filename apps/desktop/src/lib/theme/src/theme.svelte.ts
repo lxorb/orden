@@ -1,10 +1,4 @@
-import {
-  isSchemeChoice,
-  portOf,
-  type Scheme,
-  type SchemeChoice,
-  type ThemeLooksPort,
-} from '@orden/contracts'
+import { isSchemeChoice, portOf, type Scheme, type SchemeChoice, type ThemeLooksPort } from '@orden/contracts'
 import type { Look } from '@orden/sync-core'
 import { contrastCss } from '@orden/themes/contrast'
 import { everySurface } from '@orden/themes/write'
@@ -216,15 +210,11 @@ class Themes {
   readonly wanted = $derived<Scheme>(this.scheme === 'system' ? this.preferred : this.scheme)
 
   readonly current = $derived<Scheme>(
-    this.active.variants.includes(this.wanted)
-      ? this.wanted
-      : (this.active.variants[0] ?? this.wanted),
+    this.active.variants.includes(this.wanted) ? this.wanted : (this.active.variants[0] ?? this.wanted),
   )
 
   readonly installed = $derived(
-    new Map(
-      this.fromFolder.flatMap((file) => (file.stamp ? [[file.stamp.id, file] as const] : [])),
-    ),
+    new Map(this.fromFolder.flatMap((file) => (file.stamp ? [[file.stamp.id, file] as const] : []))),
   )
 
   init(owns = true) {
@@ -349,8 +339,7 @@ class Themes {
     if (!FIRST_LOOK) return
 
     const held = drawers[SHARED]?.accent
-    const given =
-      storedText(GIVEN_KEY) ?? (unwritten && storedText(ACCENT_KEY) === null ? GIVEN_BEFORE : '')
+    const given = storedText(GIVEN_KEY) ?? (unwritten && storedText(ACCENT_KEY) === null ? GIVEN_BEFORE : '')
     const stillGiven = held === undefined ? first : held === given
 
     if (stillGiven && held !== FIRST_LOOK.accent) {
@@ -489,11 +478,7 @@ class Themes {
   async wearLook(look: Look) {
     const id = await this.reachable(look)
     const values = this.ownValues(look.values)
-    if (
-      id === this.keptId &&
-      look.scheme === this.keptScheme &&
-      JSON.stringify(values) === JSON.stringify(this.chosen)
-    )
+    if (id === this.keptId && look.scheme === this.keptScheme && JSON.stringify(values) === JSON.stringify(this.chosen))
       return
 
     this.chosen = values
@@ -537,13 +522,7 @@ class Themes {
 
   preview(id: string, scheme: SchemeChoice, accent: string) {
     const tried = Object.keys(this.trying)
-    if (
-      this.id === id &&
-      this.scheme === scheme &&
-      tried.length === 1 &&
-      this.trying.accent === accent
-    )
-      return
+    if (this.id === id && this.scheme === scheme && tried.length === 1 && this.trying.accent === accent) return
     this.id = id
     this.scheme = scheme
     this.trying = { accent }

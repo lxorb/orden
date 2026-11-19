@@ -11,8 +11,7 @@ const NOT_LAYERS: Record<string, string> = {
   'lib/web-tab/src/WebTab.svelte': 'a press hides the native page before what it opens is drawn',
   'lib/web-tab/src/AddressField.svelte': 'a press says where the keyboard goes once it is over',
   'lib/downloads/src/api.ts': 'a press says where a download was asked for, to fly from',
-  'lib/ui-kit/src/select-all.ts':
-    'a press inside a name field leaves its second take of the words alone',
+  'lib/ui-kit/src/select-all.ts': 'a press inside a name field leaves its second take of the words alone',
   'lib/panes/src/panes.svelte.ts': 'a press ends a drag whose row went away, no layer up',
   'site/site.ts': 'a published page has no layer stack; a tap past a link card hides it',
 }
@@ -40,16 +39,11 @@ describe('a layer closed by a press past it', () => {
 
   test('which is where every menu a button opens goes, with the button that opened it', () => {
     const menu = readFileSync(join(SOURCE, 'lib/context-menu/src/ContextMenu.svelte'), 'utf8')
-    expect(menu).toMatch(
-      /overlays\.show\(\s*\(\) => menu\.hide\(\),\s*\(\) => \[element\],\s*menu\.from/,
-    )
+    expect(menu).toMatch(/overlays\.show\(\s*\(\) => menu\.hide\(\),\s*\(\) => \[element\],\s*menu\.from/)
   })
 
   test('and the lists of exceptions name files that are there', () => {
-    const all = new Set(
-      walk(SOURCE, code).map((path) => relative(SOURCE, path).replace(/\\/g, '/')),
-    )
-    for (const name of [...Object.keys(NOT_LAYERS), ...NOT_YET])
-      expect(all.has(name), name).toBe(true)
+    const all = new Set(walk(SOURCE, code).map((path) => relative(SOURCE, path).replace(/\\/g, '/')))
+    for (const name of [...Object.keys(NOT_LAYERS), ...NOT_YET]) expect(all.has(name), name).toBe(true)
   })
 })

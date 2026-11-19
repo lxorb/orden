@@ -59,11 +59,7 @@ export async function nothingLockedWaits(item: TrashItem | null): Promise<void> 
 
 function sourceOf(rows: readonly { space: Space | null }[]): string | null {
   const shared = [
-    ...new Set(
-      rows.flatMap(({ space }) =>
-        space !== null && reachedByOthersIn(space.root) ? [space.name] : [],
-      ),
-    ),
+    ...new Set(rows.flatMap(({ space }) => (space !== null && reachedByOthersIn(space.root) ? [space.name] : []))),
   ]
   return shared.length ? `shared space ${shared.join(', ')}` : null
 }

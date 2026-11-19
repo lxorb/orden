@@ -36,15 +36,13 @@ export function formatted(value: Value, format: string | undefined): Shown | nul
       const share = Math.max(0, Math.min(1, value > 1 ? value / 100 : value))
       return { text: number(share, { style: 'percent' }), share }
     }
-    if (format.startsWith('currency:'))
-      return { text: number(value, { style: 'currency', currency: format.slice(9) }) }
+    if (format.startsWith('currency:')) return { text: number(value, { style: 'currency', currency: format.slice(9) }) }
     if (format === 'number') return { text: number(value, {}) }
     return null
   }
   if (typeof value !== 'string' || !value.trim()) return null
   const words = value.trim()
-  if (format === 'url')
-    return { text: words, href: /^[a-z][a-z0-9+.-]*:/i.test(words) ? words : `https://${words}` }
+  if (format === 'url') return { text: words, href: /^[a-z][a-z0-9+.-]*:/i.test(words) ? words : `https://${words}` }
   if (format === 'email') return { text: words, href: `mailto:${words}` }
   if (format === 'phone') return { text: words, href: `tel:${words.replace(/[^\d+]/g, '')}` }
   return null

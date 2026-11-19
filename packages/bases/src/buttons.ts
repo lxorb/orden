@@ -13,13 +13,10 @@ export interface Button {
 
 type Plain = Record<string, unknown>
 
-const isPlain = (value: unknown): value is Plain =>
-  value !== null && typeof value === 'object' && !Array.isArray(value)
+const isPlain = (value: unknown): value is Plain => value !== null && typeof value === 'object' && !Array.isArray(value)
 
 const word = (value: unknown): string | undefined =>
-  typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
-    ? String(value)
-    : undefined
+  typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean' ? String(value) : undefined
 
 export const BUTTON = 'button.'
 
@@ -33,9 +30,7 @@ export function readButtons(base: Base): Button[] {
     const button: Button = {
       name,
       set: isPlain(plain.set)
-        ? Object.fromEntries(
-            Object.entries(plain.set).map(([key, value]) => [key, word(value) ?? '']),
-          )
+        ? Object.fromEntries(Object.entries(plain.set).map(([key, value]) => [key, word(value) ?? '']))
         : {},
       kept: Object.fromEntries(
         Object.entries(plain).filter(([key]) => !['set', 'task', 'command', 'open'].includes(key)),

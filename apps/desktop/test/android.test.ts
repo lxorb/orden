@@ -21,8 +21,7 @@ const proguard = read(HERE, '..', 'src-tauri', 'gen', 'android', 'app', 'proguar
 
 const lockLayout = () => read(ANDROID, 'res', 'layout', 'widget_notes_lock.xml')
 
-const rowsIn = (text: string) =>
-  [...text.matchAll(/@\+id\/orden_row_(\d+)/g)].map((one) => Number(one[1]))
+const rowsIn = (text: string) => [...text.matchAll(/@\+id\/orden_row_(\d+)/g)].map((one) => Number(one[1]))
 
 const commands =
   read(SOURCE, 'lib', 'commands', 'src', 'commands.ts') +
@@ -46,9 +45,7 @@ describe('what Android may copy out of the app', () => {
 
 describe('what the app asks the phone for', () => {
   test('the microphone, for dictation, the reminders, and nothing else beyond the network', () => {
-    const asked = [...manifest.matchAll(/uses-permission android:name="([^"]+)"/g)].map(
-      (one) => one[1],
-    )
+    const asked = [...manifest.matchAll(/uses-permission android:name="([^"]+)"/g)].map((one) => one[1])
 
     expect(asked).toEqual([
       'android.permission.INTERNET',
@@ -123,9 +120,7 @@ describe('the press that started the app', () => {
     }
     for (const [name, text] of Object.entries(senders)) {
       const made = text.match(/Intent\(\w+, MainActivity::class\.java\)/g) ?? []
-      const sealed =
-        text.match(/MainActivity\.sealed\(\s*\w+,\s*Intent\(\w+, MainActivity::class\.java\)/g) ??
-        []
+      const sealed = text.match(/MainActivity\.sealed\(\s*\w+,\s*Intent\(\w+, MainActivity::class\.java\)/g) ?? []
       expect(made.length, name).toBeGreaterThan(0)
       expect(sealed.length, name).toBe(made.length)
     }
@@ -133,9 +128,7 @@ describe('the press that started the app', () => {
 })
 
 describe('the quick settings tiles', () => {
-  const declared = [
-    ...manifest.matchAll(/<service\s+android:name="\.(\w+Tile)"([\s\S]*?)<\/service>/g),
-  ]
+  const declared = [...manifest.matchAll(/<service\s+android:name="\.(\w+Tile)"([\s\S]*?)<\/service>/g)]
 
   test('are the three the page can answer', () => {
     expect(declared.map((one) => one[1])).toEqual(['NewNoteTile', 'SearchTile', 'RecordTile'])
@@ -246,14 +239,10 @@ describe('the bridge the page talks over', () => {
   const GUARDED = kotlin.filter((name) => name !== undefined && !HARMLESS.includes(name))
 
   test('wants the word for everything but how the window looks', () => {
-    expect(GUARDED).toEqual(
-      expect.arrayContaining(['handed', 'shared', 'sharedBytes', 'sharedDone', 'widgets']),
-    )
+    expect(GUARDED).toEqual(expect.arrayContaining(['handed', 'shared', 'sharedBytes', 'sharedDone', 'widgets']))
     expect(GUARDED).toContain('remindersTaken')
     for (const name of GUARDED) {
-      expect(bridge, `${name} is typed with the word first`).toMatch(
-        new RegExp(`^ {2}${name}\\(said: string`, 'm'),
-      )
+      expect(bridge, `${name} is typed with the word first`).toMatch(new RegExp(`^ {2}${name}\\(said: string`, 'm'))
       expect(page, `${name} is never called without the word`).not.toMatch(
         new RegExp(`method\\('${name}'\\)\\?\\.\\(\\)`),
       )
@@ -273,9 +262,7 @@ describe('the bridge the page talks over', () => {
     for (const name of GUARDED) {
       const found = new RegExp(`fun ${name}\\(\\s*said: String`).test(activity)
       expect(found, `${name} takes the word first`).toBe(true)
-      expect(activity, `${name} checks the word`).toMatch(
-        new RegExp(`fun ${name}\\([\\s\\S]{0,200}?said [!=]= frame`),
-      )
+      expect(activity, `${name} checks the word`).toMatch(new RegExp(`fun ${name}\\([\\s\\S]{0,200}?said [!=]= frame`))
     }
 
     expect(page).toContain(`answer('__ordenFrame'`)
@@ -298,9 +285,7 @@ describe('the bridge the page talks over', () => {
     expect(version, 'the keystore library is not declared').not.toBe(null)
 
     const [major, minor] = [Number(version?.[1]), Number(version?.[2])]
-    expect(major * 1000 + minor, `security-crypto ${version?.[0] ?? ''}`).toBeGreaterThanOrEqual(
-      1001,
-    )
+    expect(major * 1000 + minor, `security-crypto ${version?.[0] ?? ''}`).toBeGreaterThanOrEqual(1001)
   })
 
   test('is kept whole by a release build', () => {
@@ -353,9 +338,7 @@ describe('the Today widget', () => {
     const state = read(SOURCE, 'lib', 'mobile', 'src', 'widgets.svelte.ts')
     const most = Number(/const MOST = (\d+)/.exec(state)?.[1] ?? 0)
     const ids = (kind: string, text: string) =>
-      [...text.matchAll(new RegExp(String.raw`orden_today_${kind}_(\d+)`, 'g'))].map((one) =>
-        Number(one[1]),
-      )
+      [...text.matchAll(new RegExp(String.raw`orden_today_${kind}_(\d+)`, 'g'))].map((one) => Number(one[1]))
 
     for (const kind of ['row', 'box', 'text']) {
       expect(ids(kind, today), kind).toEqual([...Array(most).keys()])

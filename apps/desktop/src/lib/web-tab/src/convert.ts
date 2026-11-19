@@ -44,9 +44,7 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
   const written = writeShortcut(url, title, new Date())
   const shortcut = `${withoutExtension(path)}.url`
   const taken = ws.entryAt(shortcut) !== null || (await onDisk(shortcut))
-  const there = taken
-    ? await invoke<string>('read_note', { path: shortcut }).catch(() => null)
-    : null
+  const there = taken ? await invoke<string>('read_note', { path: shortcut }).catch(() => null) : null
   const said = there === null ? null : readWebFile(shortcut, there)
   const already = said !== null && sameSite(said.home ?? said.url, url)
   const free = taken && !already ? await ws.freeNameOnDisk(folderOf(path), nameOf(shortcut)) : null
@@ -68,10 +66,7 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
   return target
 }
 
-async function oldNoteGone(
-  ws: Converts,
-  path: string,
-): Promise<{ back: string | undefined } | null> {
+async function oldNoteGone(ws: Converts, path: string): Promise<{ back: string | undefined } | null> {
   const kept = await ws.bin(path, false).then(
     (one) => one ?? {},
     () => null,

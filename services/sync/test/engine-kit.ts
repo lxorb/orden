@@ -53,16 +53,12 @@ export interface Kit {
     files?: Record<string, string | Uint8Array>
   }): Promise<Device>
   firstPass(core: Core, space: unknown, v1: unknown): Promise<boolean>
-  mirrorsFrom(
-    core: Core,
-    listings: null,
-  ): Promise<Record<string, { notes: Record<string, unknown> }>>
+  mirrorsFrom(core: Core, listings: null): Promise<Record<string, { notes: Record<string, unknown> }>>
   Engine: { start(world: unknown, store: unknown): Promise<Device['engine']> }
 }
 
 export async function kit(): Promise<Kit> {
-  const at = (file: string) =>
-    new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
+  const at = (file: string) => new URL(`../../../apps/desktop/src/lib/sync-client/${file}`, import.meta.url).href
   const [device, migrate, engine] = await Promise.all([
     import(/* @vite-ignore */ at('test/test-device.ts')),
     import(/* @vite-ignore */ at('src/migrate.ts')),
@@ -78,9 +74,7 @@ export function engineSpace() {
     at.env = testEnv()
     at.rooms = live(at.env)
     at.token = await signIn(at.env, 'pictures@example.com')
-    at.space = (
-      await call(at.env, '/v1/spaces', { token: at.token, body: { name: 'Pictures' } })
-    ).json.space.id
+    at.space = (await call(at.env, '/v1/spaces', { token: at.token, body: { name: 'Pictures' } })).json.space.id
   })
 
   afterEach(() => at.env.close())

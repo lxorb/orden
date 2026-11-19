@@ -99,9 +99,7 @@ export async function push(
   if (delivery === 'gone') {
     await env.DB.prepare('delete from push_targets where id = ?').bind(target.id).run()
   } else if (delivery === 'failed' || delivery === 'busy') {
-    await env.DB.prepare('update push_targets set failed_at = ? where id = ?')
-      .bind(now, target.id)
-      .run()
+    await env.DB.prepare('update push_targets set failed_at = ? where id = ?').bind(now, target.id).run()
   }
   return delivery
 }

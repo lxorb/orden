@@ -145,10 +145,7 @@ describe('deleting', () => {
   })
 
   test('can also take an edge on its own', () => {
-    const canvas = canvasOf(
-      [card('a'), card('b', 300, 0)],
-      [{ id: 'ab', fromNode: 'a', toNode: 'b' }],
-    )
+    const canvas = canvasOf([card('a'), card('b', 300, 0)], [{ id: 'ab', fromNode: 'a', toNode: 'b' }])
 
     const left = removed(canvas, ['ab'])
     expect(left.nodes).toHaveLength(2)
@@ -235,10 +232,7 @@ describe('copying and pasting', () => {
 })
 
 describe('colouring', () => {
-  const canvas = canvasOf(
-    [card('a'), card('b', 300, 0)],
-    [{ id: 'ab', fromNode: 'a', toNode: 'b' }],
-  )
+  const canvas = canvasOf([card('a'), card('b', 300, 0)], [{ id: 'ab', fromNode: 'a', toNode: 'b' }])
 
   test('paints cards and connectors alike', () => {
     const painted = coloured(canvas, ['a', 'ab'], '3')
@@ -261,16 +255,11 @@ describe('the words on things', () => {
     const canvas = canvasOf([{ id: 'g', type: 'group', x: 0, y: 0, width: 100, height: 100 }])
 
     expect(withLabel(canvas, 'g', 'Ideas').nodes[0]).toMatchObject({ label: 'Ideas' })
-    expect(withLabel(withLabel(canvas, 'g', 'Ideas'), 'g', '  ').nodes[0]).not.toHaveProperty(
-      'label',
-    )
+    expect(withLabel(withLabel(canvas, 'g', 'Ideas'), 'g', '  ').nodes[0]).not.toHaveProperty('label')
   })
 
   test('go on an edge the same way', () => {
-    const canvas = canvasOf(
-      [card('a'), card('b', 300, 0)],
-      [{ id: 'ab', fromNode: 'a', toNode: 'b' }],
-    )
+    const canvas = canvasOf([card('a'), card('b', 300, 0)], [{ id: 'ab', fromNode: 'a', toNode: 'b' }])
 
     expect(withLabel(canvas, 'ab', 'leads to').edges[0]).toMatchObject({ label: 'leads to' })
     expect(withLabel(withLabel(canvas, 'ab', 'x'), 'ab', '').edges[0]).not.toHaveProperty('label')
@@ -457,9 +446,7 @@ describe('rubbing out along a way', () => {
     const once = rubbedOut(plane, way, 5, false)
     const oneByOne = way.reduce((canvas, at) => rubbedOut(canvas, [at], 5, false), plane)
 
-    expect(once.ink.map((stroke) => stroke.points)).toEqual(
-      oneByOne.ink.map((stroke) => stroke.points),
-    )
+    expect(once.ink.map((stroke) => stroke.points)).toEqual(oneByOne.ink.map((stroke) => stroke.points))
     expect(once.ink.filter((stroke) => stroke.id === 'b')).toEqual([plane.ink[1]])
     expect(once.ink.length).toBe(5)
   })

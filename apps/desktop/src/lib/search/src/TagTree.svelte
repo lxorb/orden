@@ -119,10 +119,7 @@
   }
 
   :global([data-touch]) .twist::before {
-    inset-inline-end: min(
-      calc(-1 * var(--space-1)),
-      calc(var(--icon-md) + 2 * var(--space-1) - var(--touch-target))
-    );
+    inset-inline-end: min(calc(-1 * var(--space-1)), calc(var(--icon-md) + 2 * var(--space-1) - var(--touch-target)));
   }
 
   .chevron {

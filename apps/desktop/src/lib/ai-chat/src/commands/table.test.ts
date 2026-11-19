@@ -3,14 +3,7 @@ import type { ProviderKind } from '../../../ai-providers/src/providers'
 import { availability } from './available'
 import { GOAL_CLEAR, ROWS, takenNames } from './table'
 
-const KINDS: readonly ProviderKind[] = [
-  'anthropic',
-  'openai',
-  'compatible',
-  'chatgpt',
-  'claude-code',
-  'codex',
-]
+const KINDS: readonly ProviderKind[] = ['anthropic', 'openai', 'compatible', 'chatgpt', 'claude-code', 'codex']
 
 describe('the command table', () => {
   test('holds 63 commands and 46 synonyms', () => {

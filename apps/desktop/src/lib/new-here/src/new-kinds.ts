@@ -141,8 +141,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
     mark: 'application',
     letter: 'a',
     make: (paneId) => {
-      if (!__EVEN_PLUGIN__)
-        inPane(paneId, () => tabKindLoaded('application').then((one) => one.make?.()))
+      if (!__EVEN_PLUGIN__) inPane(paneId, () => tabKindLoaded('application').then((one) => one.make?.()))
     },
   }),
   web: () => ({
@@ -168,9 +167,7 @@ const ROWS: Record<KindName, () => NewKindRow> = {
 }
 
 export function kindLines(kinds: readonly NewKindRow[]): NewKindRow[][] {
-  return LINES.map((line) => kinds.filter((one) => one.line === line)).filter(
-    (line) => line.length > 0,
-  )
+  return LINES.map((line) => kinds.filter((one) => one.line === line)).filter((line) => line.length > 0)
 }
 
 export function groupOf(line: readonly NewKindRow[]): NewKindRow | null {
@@ -204,9 +201,7 @@ export function fitsWhole(
   stacked: boolean,
 ): boolean {
   if (room.width <= 0 || card.width <= 0) return true
-  const across = stacked
-    ? 1
-    : Math.max(1, Math.floor((room.width + card.gap) / (card.width + card.gap)))
+  const across = stacked ? 1 : Math.max(1, Math.floor((room.width + card.gap) / (card.width + card.gap)))
   const rows = lines.reduce((sum, line) => sum + Math.ceil(line.length / across), 0)
   return rows * card.height + (rows - 1) * card.gap <= room.height
 }
@@ -260,12 +255,7 @@ function terminalRow(): NewKindRow {
   }
 }
 
-export function showOthers(
-  one: NewKindRow,
-  card: Element,
-  paneId?: string,
-  before?: () => void,
-): boolean {
+export function showOthers(one: NewKindRow, card: Element, paneId?: string, before?: () => void): boolean {
   const others = one.others
   if (!others) return false
 

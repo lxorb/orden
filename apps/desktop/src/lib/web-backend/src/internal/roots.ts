@@ -62,12 +62,7 @@ const FILE_COMMANDS = new Set([
   'file_there',
 ])
 
-const TRASH_COMMANDS = new Set([
-  'list_trash',
-  'restore_trash',
-  'purge_trash',
-  'purge_trash_older_than',
-])
+const TRASH_COMMANDS = new Set(['list_trash', 'restore_trash', 'purge_trash', 'purge_trash_older_than'])
 
 const ON_DISK: Record<string, string> = {
   pty_spawn: 'folder',

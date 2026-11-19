@@ -38,14 +38,7 @@ import {
   svgToPng,
 } from '../../pdf/src/api'
 import { isDesktop } from '../../platform/src/api'
-import {
-  chooseTarget,
-  download,
-  printInFrame,
-  printsInFrame,
-  writeFile,
-  zipOf,
-} from '../../files-out/src/api'
+import { chooseTarget, download, printInFrame, printsInFrame, writeFile, zipOf } from '../../files-out/src/api'
 import { laidOut, localFaces, type Run, type TextCard } from './laid'
 import { escapeAll } from '@orden/markdown/html'
 
@@ -82,9 +75,7 @@ async function facedOf(out: PagesOut): Promise<PagesOut> {
 export async function laidOf(given: PagesOut): Promise<PagesOut> {
   const out = await facedOf(given)
   if (out.laid) return out
-  const cards = allCards(out.canvas).filter(
-    (node): node is TextCard => node.type === 'text' && !!node.text.trim(),
-  )
+  const cards = allCards(out.canvas).filter((node): node is TextCard => node.type === 'text' && !!node.text.trim())
   const laid = await laidOut(cards, {
     path: out.path,
     root: out.root,
@@ -161,11 +152,7 @@ function rulingSvg(pattern: Pattern, width: number, rule: string): string {
     `<pattern id="ruling" patternUnits="userSpaceOnUse" width="${w}" height="${h}">${body}</pattern>`
   switch (pattern) {
     case 'lines':
-      return tile(
-        width,
-        LINES,
-        `<rect y="${LINES - 1}" width="${width}" height="1" fill="${rule}"/>`,
-      )
+      return tile(width, LINES, `<rect y="${LINES - 1}" width="${width}" height="1" fill="${rule}"/>`)
     case 'grid':
       return tile(
         GRID,
@@ -208,13 +195,9 @@ export function pageSvg(
     cards ? `<style>${plain ? localFaces() : ''}${styles(palette)}</style>` : '',
     `<defs><clipPath id="sheet"><rect width="${page.width}" height="${page.height}"/></clipPath>${ruling}</defs>`,
     ground ? `<rect width="${page.width}" height="${page.height}" fill="#ffffff"/>` : '',
-    paper
-      ? `<image href="${paper}" width="${page.width}" height="${page.height}" preserveAspectRatio="none"/>`
-      : '',
+    paper ? `<image href="${paper}" width="${page.width}" height="${page.height}" preserveAspectRatio="none"/>` : '',
     ruling ? `<rect width="${page.width}" height="${page.height}" fill="url(#ruling)"/>` : '',
-    cards
-      ? `<g clip-path="url(#sheet)"><g transform="translate(${-page.x} ${-page.y})">${cards}</g></g>`
-      : '',
+    cards ? `<g clip-path="url(#sheet)"><g transform="translate(${-page.x} ${-page.y})">${cards}</g></g>` : '',
     ink,
     '</svg>',
   ].join('')
@@ -320,9 +303,7 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
   const papers = new Set(pages.map((page) => page.file).filter((one): one is string => !!one))
   const source = papers.size === 1 ? [...papers][0] : null
   const shared = out.shared ?? null
-  const bytes = source
-    ? await paperBytesOf({ file: source, note: out.path, root: out.root, shared })
-    : null
+  const bytes = source ? await paperBytesOf({ file: source, note: out.path, root: out.root, shared }) : null
 
   const opened = bytes ? await PDFDocument.load(bytes, { ignoreEncryption: true }) : null
   if (opened?.isEncrypted) {
@@ -334,20 +315,12 @@ export async function pagesPdf(given: PagesOut): Promise<Uint8Array | null> {
   const used = new Set<number>()
   const carried = doc.getPageCount()
   const fonts = facesFor(lib, doc)
-  const glyphs = new Set(
-    (await fonts({ weight: 400, italic: false, mono: false })).getCharacterSet(),
-  )
+  const glyphs = new Set((await fonts({ weight: 400, italic: false, mono: false })).getCharacterSet())
   const palette = paperPalette(out.palette)
 
   for (const [at, page] of pages.entries()) {
-    const from =
-      page.page !== undefined && page.page >= 1 && page.page <= carried ? page.page : null
-    const copy =
-      from === null
-        ? undefined
-        : used.has(from)
-          ? (await doc.copyPages(doc, [from - 1]))[0]
-          : kept[from - 1]
+    const from = page.page !== undefined && page.page >= 1 && page.page <= carried ? page.page : null
+    const copy = from === null ? undefined : used.has(from) ? (await doc.copyPages(doc, [from - 1]))[0] : kept[from - 1]
     if (from !== null && copy) used.add(from)
     const sheet = copy
       ? doc.insertPage(carried + at, copy)
@@ -437,8 +410,7 @@ function placeOf(scale: number, turn: number, x: number, y: number): Six {
 }
 
 function cellOf(page: PageNode): { width: number; height: number; body: string } | null {
-  const bar = (left: number, top: number, w: number, h: number) =>
-    `${left} ${-(top + h)} ${w} ${h} re`
+  const bar = (left: number, top: number, w: number, h: number) => `${left} ${-(top + h)} ${w} ${h} re`
   switch (page.pattern) {
     case 'lines':
       return { width: page.width, height: LINES, body: bar(0, LINES - 1, page.width, 1) }
@@ -509,9 +481,7 @@ async function cardPdf(
 ): Promise<Placed | null> {
   const runs = card.type === 'text' ? (out.laid?.get(card.id) ?? []) : []
   if (card.type === 'text') {
-    const spelled = runs.every((run) =>
-      Array.from(run.text).every((one) => glyphs.has(one.codePointAt(0) ?? -1)),
-    )
+    const spelled = runs.every((run) => Array.from(run.text).every((one) => glyphs.has(one.codePointAt(0) ?? -1)))
     if (spelled) return null
   }
 
@@ -551,10 +521,7 @@ function round(value: number): number {
   return Math.round(value * 100) / 100
 }
 
-function frameOf(
-  card: CanvasNode & { type: 'text' },
-  palette: Palette,
-): { edge: string; wash: string | null } | null {
+function frameOf(card: CanvasNode & { type: 'text' }, palette: Palette): { edge: string; wash: string | null } | null {
   if (card.bare) return null
   if (card.color === undefined) return { edge: palette.line ?? '', wash: null }
   const colour = inkColour(card.color, palette)
@@ -660,8 +627,7 @@ async function wordsPdf(
   sheet.pushOperators(lib.popGraphicsState())
 }
 
-const rgb1 = (lib: PdfLib, colour: { r: number; g: number; b: number }) =>
-  lib.rgb(colour.r, colour.g, colour.b)
+const rgb1 = (lib: PdfLib, colour: { r: number; g: number; b: number }) => lib.rgb(colour.r, colour.g, colour.b)
 
 const PRINT_SCALE = 2
 
@@ -720,9 +686,7 @@ export async function printPages(out: PagesOut): Promise<void> {
       '</style></head><body>',
     ].join('')
     const tail = '</body></html>'
-    const html = linked
-      ? [head, ...texts, tail].join('')
-      : new Blob([head, ...pieces, tail], { type: 'text/html' })
+    const html = linked ? [head, ...texts, tail].join('') : new Blob([head, ...pieces, tail], { type: 'text/html' })
     pieces.length = 0
 
     await printInFrame(html, {

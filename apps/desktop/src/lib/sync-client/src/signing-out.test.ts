@@ -127,8 +127,7 @@ describe('a browser signed out of', () => {
 })
 
 describe("a device's name", () => {
-  const nameOf = (device: string) =>
-    (runner as unknown as { nameOf(device: string): Promise<string> }).nameOf(device)
+  const nameOf = (device: string) => (runner as unknown as { nameOf(device: string): Promise<string> }).nameOf(device)
 
   test('is asked for once by everyone who wants it at once, and a failure is not kept', async () => {
     const { account } = await import('../../accounts/src/account.svelte')

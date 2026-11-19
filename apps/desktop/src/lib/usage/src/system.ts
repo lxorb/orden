@@ -1,10 +1,4 @@
-import {
-  USAGE_ARCH,
-  USAGE_OS,
-  type UsageApp,
-  type UsageSystem,
-  type DailyPing,
-} from '@orden/sync-core'
+import { USAGE_ARCH, USAGE_OS, type UsageApp, type UsageSystem, type DailyPing } from '@orden/sync-core'
 type Common = Omit<DailyPing, 'v' | 'kind' | 'day'>
 
 export interface Seen {

@@ -6,13 +6,7 @@ import { record, text, type ToolDef } from './wire'
 
 export interface Tools {
   list(provider: Provider, mode: Mode): Promise<Listed>
-  call(
-    provider: Provider,
-    mode: Mode,
-    name: string,
-    args: unknown,
-    thread?: string,
-  ): Promise<ToolOutput>
+  call(provider: Provider, mode: Mode, name: string, args: unknown, thread?: string): Promise<ToolOutput>
   context(provider: Provider, thread?: string): Promise<string>
 }
 
@@ -61,9 +55,7 @@ export function outputIn(value: unknown): ToolOutput {
 export const crateTools: Tools = {
   async list(provider, mode) {
     if (!isDesktop) return { instructions: '', tools: [] }
-    const listed = record(
-      await invoke<unknown>('ai_agent_tools', { agent: agentOf(provider), mode }),
-    )
+    const listed = record(await invoke<unknown>('ai_agent_tools', { agent: agentOf(provider), mode }))
     const tools = Array.isArray(listed.tools) ? listed.tools : []
     return {
       instructions: text(listed.instructions),

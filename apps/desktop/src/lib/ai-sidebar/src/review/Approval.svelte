@@ -3,8 +3,7 @@
   import type { Part, Thread } from '../../../ai-providers/src/api'
   import Asked from './Asked.svelte'
 
-  const { part, thread }: { part: Extract<Part, { kind: 'tool' }>; thread: Thread | null } =
-    $props()
+  const { part, thread }: { part: Extract<Part, { kind: 'tool' }>; thread: Thread | null } = $props()
 
   let answering = $state(false)
 
@@ -21,9 +20,7 @@
   {#if part.result?.text}<p>{part.result.text}</p>{/if}
   <Asked {part} {thread} />
   <div class="answers">
-    <button class="orden-button" disabled={answering} onclick={() => void answer(true)}
-      >Approve</button
-    >
+    <button class="orden-button" disabled={answering} onclick={() => void answer(true)}>Approve</button>
     {#if thread && alwaysOffered(part.result?.category)}
       <button
         class="orden-button is-quiet"
@@ -32,9 +29,7 @@
         onclick={() => void answer(true, true)}>Always</button
       >
     {/if}
-    <button class="orden-button is-quiet" disabled={answering} onclick={() => void answer(false)}
-      >Deny</button
-    >
+    <button class="orden-button is-quiet" disabled={answering} onclick={() => void answer(false)}>Deny</button>
   </div>
 </div>
 

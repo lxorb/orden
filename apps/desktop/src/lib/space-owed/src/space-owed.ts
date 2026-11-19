@@ -25,8 +25,7 @@ class Shelf<T> {
     const saved = stored(this.key)
     if (!isRecord(saved)) return {}
     const out: Record<string, Record<string, T>> = {}
-    for (const [accountId, owed] of Object.entries(saved))
-      out[accountId] = recordOf(owed, this.valid)
+    for (const [accountId, owed] of Object.entries(saved)) out[accountId] = recordOf(owed, this.valid)
     return out
   }
 
@@ -59,10 +58,7 @@ class Shelf<T> {
   }
 }
 
-const ends = new Shelf<Ending>(
-  'orden:space-ends',
-  (value): value is Ending => value === 'delete' || value === 'leave',
-)
+const ends = new Shelf<Ending>('orden:space-ends', (value): value is Ending => value === 'delete' || value === 'leave')
 
 const icons = new Shelf<Icon>(
   'orden:space-icons-owed',
@@ -72,15 +68,11 @@ const icons = new Shelf<Icon>(
     (value.tint === null || typeof value.tint === 'string'),
 )
 
-const names = new Shelf<string>(
-  'orden:space-names-owed',
-  (value): value is string => typeof value === 'string',
-)
+const names = new Shelf<string>('orden:space-names-owed', (value): value is string => typeof value === 'string')
 
 const orders = new Shelf<string[]>(
   'orden:space-order-owed',
-  (value): value is string[] =>
-    Array.isArray(value) && value.every((one) => typeof one === 'string'),
+  (value): value is string[] => Array.isArray(value) && value.every((one) => typeof one === 'string'),
 )
 
 const ORDER = 'order'
@@ -106,12 +98,7 @@ export function endsOwed(accountId: string): Set<string> {
   return new Set(Object.keys(ends.of(accountId)))
 }
 
-export async function endSpace(
-  token: string,
-  accountId: string,
-  spaceId: string,
-  how: Ending,
-): Promise<void> {
+export async function endSpace(token: string, accountId: string, spaceId: string, how: Ending): Promise<void> {
   ends.put(accountId, spaceId, how)
   await told(token, accountId, spaceId, how)
 }
@@ -126,24 +113,14 @@ export function iconOwed(accountId: string, spaceId: string): Icon | null {
   return icons.of(accountId)[spaceId] ?? null
 }
 
-export async function sendIcon(
-  token: string,
-  accountId: string,
-  spaceId: string,
-  icon: Icon,
-): Promise<void> {
+export async function sendIcon(token: string, accountId: string, spaceId: string, icon: Icon): Promise<void> {
   icons.put(accountId, spaceId, icon)
   if (await settled(api.setSpaceIcon(token, spaceId, icon.icon, icon.tint))) {
     icons.paid(accountId, spaceId, icon)
   }
 }
 
-export async function sendName(
-  token: string,
-  accountId: string,
-  spaceId: string,
-  name: string,
-): Promise<void> {
+export async function sendName(token: string, accountId: string, spaceId: string, name: string): Promise<void> {
   names.put(accountId, spaceId, name)
   if (await settled(api.renameSpace(token, spaceId, name))) names.paid(accountId, spaceId, name)
 }

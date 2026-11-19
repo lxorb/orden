@@ -54,16 +54,12 @@ describe('a replacement', () => {
       '/space',
       (path) => Promise.resolve(notes[path] ?? null),
     )
-    expect(made.map((one) => [one.path, one.after])).toEqual([
-      ['/space/One.md', 'gamma here\nbeta\nalpha again\n'],
-    ])
+    expect(made.map((one) => [one.path, one.after])).toEqual([['/space/One.md', 'gamma here\nbeta\nalpha again\n']])
     expect(made[0]?.back).toEqual([{ from: 0, to: 5, insert: 'alpha' }])
   })
 
   test('changes nothing in a note that is gone', async () => {
-    const made = await changesFor(alpha, [hit('/space/One.md', 0)], 'gamma', '/space', () =>
-      Promise.resolve(null),
-    )
+    const made = await changesFor(alpha, [hit('/space/One.md', 0)], 'gamma', '/space', () => Promise.resolve(null))
     expect(made).toEqual([])
   })
 })

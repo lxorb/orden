@@ -66,9 +66,7 @@ function accountIn(value: unknown): Account | null {
 
 function namesIn(value: unknown): Record<string, string> {
   if (!isRecord(value)) return {}
-  return Object.fromEntries(
-    Object.entries(value).filter((entry): entry is [string, string] => isString(entry[1])),
-  )
+  return Object.fromEntries(Object.entries(value).filter((entry): entry is [string, string] => isString(entry[1])))
 }
 
 export function accountsIn(value: unknown): Accounts {
@@ -169,9 +167,7 @@ export function added(state: Accounts, kind: ProviderKind): { state: Accounts; a
     name: '',
     ...(kind === 'compatible' ? { baseUrl: '' } : {}),
     model: '',
-    ...(isLocal(kind) && state.accounts.some((one) => one.kind === kind)
-      ? { own: true as const }
-      : {}),
+    ...(isLocal(kind) && state.accounts.some((one) => one.kind === kind) ? { own: true as const } : {}),
   }
   return { state: including(state, account), account }
 }
@@ -181,11 +177,7 @@ export function including(state: Accounts, account: Account): Accounts {
   return tidied({ ...state, accounts: [...state.accounts, account] })
 }
 
-export function updated(
-  state: Accounts,
-  id: string,
-  change: Partial<Omit<Account, 'id' | 'kind' | 'own'>>,
-): Accounts {
+export function updated(state: Accounts, id: string, change: Partial<Omit<Account, 'id' | 'kind' | 'own'>>): Accounts {
   return {
     ...state,
     accounts: state.accounts.map((one) => (one.id === id ? { ...one, ...change } : one)),
@@ -199,13 +191,9 @@ export function renamed(state: Accounts, from: string, to: string): Accounts {
   const vendor = (one: Vendor) => (one === vendorOf(account) ? vendorOf(moved) : one)
   return {
     accounts: state.accounts.map((one) => (one === account ? moved : one)),
-    active: Object.fromEntries(
-      Object.entries(state.active).map(([one, id]) => [vendor(one), id === from ? to : id]),
-    ),
+    active: Object.fromEntries(Object.entries(state.active).map(([one, id]) => [vendor(one), id === from ? to : id])),
     defaultVendor: vendor(state.defaultVendor),
-    uses: Object.fromEntries(
-      Object.entries(state.uses).map(([feature, one]) => [feature, vendor(one)]),
-    ),
+    uses: Object.fromEntries(Object.entries(state.uses).map(([feature, one]) => [feature, vendor(one)])),
   }
 }
 
@@ -248,9 +236,7 @@ export function migrated(old: unknown): Accounts {
 }
 
 export function merged(kept: Accounts, brought: Accounts): Accounts {
-  const fresh = brought.accounts.filter(
-    (one) => !kept.accounts.some((there) => there.id === one.id),
-  )
+  const fresh = brought.accounts.filter((one) => !kept.accounts.some((there) => there.id === one.id))
   if (!fresh.length) return kept
   return tidied({
     ...kept,

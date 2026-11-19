@@ -7,11 +7,7 @@
   const { path }: { path: string } = $props()
 </script>
 
-<div
-  class="archived-strip"
-  role="status"
-  transition:slide={{ duration: dur(150), easing: cubicOut }}
->
+<div class="archived-strip" role="status" transition:slide={{ duration: dur(150), easing: cubicOut }}>
   <svg viewBox="0 0 13 13" aria-hidden="true"><path d={ARCHIVE_MARK} /></svg>
   <span class="said">Archived</span>
   <button class="back" onclick={() => void unarchive(path)}>Unarchive</button>

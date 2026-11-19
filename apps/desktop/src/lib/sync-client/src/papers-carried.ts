@@ -128,11 +128,7 @@ async function carryOne(note: Carried, how: Carrying): Promise<void> {
   settled.add(key)
 }
 
-async function stillWanted(
-  note: string,
-  paper: string,
-  how: Pick<Carrying, 'exists'>,
-): Promise<boolean> {
+async function stillWanted(note: string, paper: string, how: Pick<Carrying, 'exists'>): Promise<boolean> {
   return (await how.exists(note)) && !(await how.exists(paper))
 }
 

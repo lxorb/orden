@@ -52,18 +52,14 @@ describe('a picture, addressed', () => {
     expect(browser.assetUrl('/Read me/a#b.png')).toBe('/asset/Read%20me/a%23b.png')
 
     const app = await inApp(underHttp)
-    expect(app.assetUrl('C:/Read me/a#b.png')).toBe(
-      'http://asset.localhost/C%3A%2FRead%20me%2Fa%23b.png',
-    )
+    expect(app.assetUrl('C:/Read me/a#b.png')).toBe('http://asset.localhost/C%3A%2FRead%20me%2Fa%23b.png')
   })
 })
 
 describe('and read back', () => {
   test('the app reads its own protocol, both shapes of it', async () => {
     const { assetPath } = await inApp(underHttp)
-    expect(assetPath(underHttp('C:/Notes/Work/assets/pic.png'))).toBe(
-      'C:/Notes/Work/assets/pic.png',
-    )
+    expect(assetPath(underHttp('C:/Notes/Work/assets/pic.png'))).toBe('C:/Notes/Work/assets/pic.png')
     expect(assetPath(underScheme('/Users/emil/Notes/pic.png'))).toBe('/Users/emil/Notes/pic.png')
   })
 
@@ -95,8 +91,6 @@ describe('a picture a note names', () => {
     vi.resetModules()
     delete (globalThis as { window?: unknown }).window
     const { imageUrl } = await import('./images')
-    expect(imageUrl('https://example.com/pic.png', '/Work/Q1.md')).toBe(
-      'https://example.com/pic.png',
-    )
+    expect(imageUrl('https://example.com/pic.png', '/Work/Q1.md')).toBe('https://example.com/pic.png')
   })
 })

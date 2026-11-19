@@ -13,9 +13,7 @@ describe('a picture embed that shares its line with something else, in Word, RTF
   })
 
   test('in a table cell is a picture', () => {
-    expect(pictures('| Plant | Leaf |\n| --- | --- |\n| Fern | ![[fern.png]] |\n')).toEqual([
-      'fern.png',
-    ])
+    expect(pictures('| Plant | Leaf |\n| --- | --- |\n| Fern | ![[fern.png]] |\n')).toEqual(['fern.png'])
   })
 
   test('on a task is a picture', () => {

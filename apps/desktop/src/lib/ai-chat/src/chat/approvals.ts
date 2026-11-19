@@ -25,12 +25,7 @@ function alwaysKey(verb: string, site: string | undefined): string {
   return site ? `${verb}@${site}` : verb
 }
 
-export function always(
-  thread: Thread,
-  verb: string,
-  category: string | undefined,
-  site?: string,
-): boolean {
+export function always(thread: Thread, verb: string, category: string | undefined, site?: string): boolean {
   return alwaysOffered(category) && (thread.always?.includes(alwaysKey(verb, site)) ?? false)
 }
 

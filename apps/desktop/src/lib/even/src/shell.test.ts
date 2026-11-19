@@ -1,15 +1,7 @@
 import { BODY_INNER, BODY_ROWS } from '@orden/glasses'
 import { beforeEach, describe, expect, test } from 'vitest'
 import { Session } from './session'
-import {
-  type Option,
-  type Row,
-  type SettingRow,
-  type Settings,
-  Shell,
-  type Words,
-  type World,
-} from './shell'
+import { type Option, type Row, type SettingRow, type Settings, Shell, type Words, type World } from './shell'
 
 const WORDS: Words = {
   spaces: 'Spaces',

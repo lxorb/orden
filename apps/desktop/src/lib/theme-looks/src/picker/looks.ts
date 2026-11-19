@@ -122,14 +122,8 @@ function resolved(own: Map<string, string>, inherited = new Map<string, string>(
   return out
 }
 
-export function lookOf(
-  sheets: readonly string[],
-  scheme: Scheme,
-  inline: Readonly<Record<string, string>> = {},
-): Look {
-  const stated = sheets
-    .flatMap(statedIn)
-    .filter((one) => one.scheme === null || one.scheme === scheme)
+export function lookOf(sheets: readonly string[], scheme: Scheme, inline: Readonly<Record<string, string>> = {}): Look {
+  const stated = sheets.flatMap(statedIn).filter((one) => one.scheme === null || one.scheme === scheme)
   const written = Object.entries(inline).map(([name, value]): Stated => ({
     name,
     value,

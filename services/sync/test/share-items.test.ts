@@ -3,16 +3,7 @@ import { subprotocol } from '@orden/rooms'
 import { spacesFor } from '../src/sync-server-machines/src/mcp/tools'
 import { MOST_ITEMS } from '../src/sync-server-engine/src/spaces/space'
 import { purgeExpired } from '../src/sync-server-engine/src/trash'
-import {
-  call,
-  joined,
-  mail,
-  signIn,
-  testEnv,
-  type JoinView,
-  type ShareView,
-  type TestEnv,
-} from './harness'
+import { call, joined, mail, signIn, testEnv, type JoinView, type ShareView, type TestEnv } from './harness'
 import { doorway } from './room'
 
 const OWNER = 'owner@example.com'
@@ -55,14 +46,9 @@ function itemView(item = note, as = owner) {
   return call<ShareView>(env, `/v1/spaces/${space}/share?item=${item}`, { token: as })
 }
 
-const given = (email: string, role: 'write' | 'read', item = note) =>
-  joined(env, owner, space, email, role, { item })
+const given = (email: string, role: 'write' | 'read', item = note) => joined(env, owner, space, email, role, { item })
 
-async function itemLink(
-  role: 'write' | 'read',
-  mode: 'open' | 'approval',
-  item = note,
-): Promise<string> {
+async function itemLink(role: 'write' | 'read', mode: 'open' | 'approval', item = note): Promise<string> {
   const { json } = await call<ShareView>(env, `/v1/spaces/${space}/share/link?item=${item}`, {
     method: 'PUT',
     token: owner,
@@ -95,9 +81,7 @@ describe('a share about one file', () => {
 
     const { json } = await itemView()
     expect(json.item).toEqual({ id: note, path: SHARED_NOTE })
-    expect(json.members.map((one) => [one.email, one.role, one.pending])).toEqual([
-      [FRIEND, 'write', false],
-    ])
+    expect(json.members.map((one) => [one.email, one.role, one.pending])).toEqual([[FRIEND, 'write', false]])
   })
 
   test('and leaves the space itself shared with nobody', async () => {

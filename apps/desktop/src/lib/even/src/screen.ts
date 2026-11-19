@@ -1,11 +1,4 @@
-import {
-  type Band,
-  type BandName,
-  bandsOf,
-  BRIGHT,
-  PANEL_HEIGHT,
-  PANEL_WIDTH,
-} from '@orden/glasses'
+import { type Band, type BandName, bandsOf, BRIGHT, PANEL_HEIGHT, PANEL_WIDTH } from '@orden/glasses'
 import type { Container, Glasses, Made } from './sdk'
 import type { View } from './shell'
 

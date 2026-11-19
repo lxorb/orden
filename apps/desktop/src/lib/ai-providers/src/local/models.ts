@@ -47,10 +47,7 @@ export function modelsIn(kind: LocalKind, listed: unknown): ModelInfo[] {
       .filter((one) => typeof one.value === 'string' && one.value)
       .map((one) => ({
         id: String(one.value),
-        name:
-          typeof one.displayName === 'string' && one.displayName
-            ? one.displayName
-            : String(one.value),
+        name: typeof one.displayName === 'string' && one.displayName ? one.displayName : String(one.value),
         window: claudeWindow(one.value, one.resolvedModel),
         efforts: effortsOf(list(one.supportedEffortLevels)),
         images: true,
@@ -66,9 +63,7 @@ export function modelsIn(kind: LocalKind, listed: unknown): ModelInfo[] {
         id,
         name: typeof one.displayName === 'string' && one.displayName ? one.displayName : id,
         window: null,
-        efforts: effortsOf(
-          list(one.supportedReasoningEfforts).map((row) => record(row).reasoningEffort),
-        ),
+        efforts: effortsOf(list(one.supportedReasoningEfforts).map((row) => record(row).reasoningEffort)),
         images: list(one.inputModalities).includes('image'),
         fast: list(one.serviceTiers).some((tier) => record(tier).id === 'priority'),
       }

@@ -49,9 +49,7 @@ function freePlace(canvas: Canvas): { x: number; y: number } {
   if (!canvas.nodes.length) return { x: 0, y: 0 }
 
   const left = canvas.nodes.map((node) => node.x).reduce((low, one) => Math.min(low, one), Infinity)
-  const bottom = canvas.nodes
-    .map((node) => node.y + node.height)
-    .reduce((high, one) => Math.max(high, one), -Infinity)
+  const bottom = canvas.nodes.map((node) => node.y + node.height).reduce((high, one) => Math.max(high, one), -Infinity)
   return { x: left, y: bottom + DEFAULT_HEIGHT }
 }
 
@@ -70,8 +68,7 @@ function pageNamed(canvas: Canvas, op: Record<string, unknown>) {
   return pageIn(canvas, op.page)
 }
 
-const OPS =
-  'add_card, edit_text, move, connect, remove, and in a page note add_page, remove_page, move_page'
+const OPS = 'add_card, edit_text, move, connect, remove, and in a page note add_page, remove_page, move_page'
 
 export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: string[] } {
   if (!Array.isArray(ops) || !ops.length) {
@@ -89,9 +86,7 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
     switch (op.op) {
       case 'add_card': {
         const page = pageNamed(now, op)
-        const at = page
-          ? placeOnPage(now, page, numberOf(op, 'x'), numberOf(op, 'y'))
-          : freePlace(now)
+        const at = page ? placeOnPage(now, page, numberOf(op, 'x'), numberOf(op, 'y')) : freePlace(now)
         const colour = textOf(op, 'color') ?? textOf(op, 'colour')
         const card: CanvasNode = {
           id: freshId(),
@@ -126,9 +121,7 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
       case 'move': {
         const node = nodeIn(now, id)
         const page = pageNamed(now, op)
-        const corner = page
-          ? placeOnPage(now, page, numberOf(op, 'x') ?? 0, numberOf(op, 'y') ?? 0)
-          : null
+        const corner = page ? placeOnPage(now, page, numberOf(op, 'x') ?? 0, numberOf(op, 'y') ?? 0) : null
         const x = corner ? corner.x : numberOf(op, 'x')
         const y = corner ? corner.y : numberOf(op, 'y')
         const dx = held(x ?? node.x + (numberOf(op, 'dx') ?? 0)) - node.x
@@ -142,8 +135,7 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
         const to = nodeIn(now, textOf(op, 'to'))
         const [fromSide, toSide] = sidesBetween(from, to)
         const joined = connected(now, from.id, fromSide, to.id, toSide)
-        if (joined.id === null)
-          throw new Refused('bad_arguments', 'a card cannot connect to itself')
+        if (joined.id === null) throw new Refused('bad_arguments', 'a card cannot connect to itself')
 
         now = joined.canvas
         const label = textOf(op, 'label') ?? textOf(op, 'text')
@@ -154,13 +146,10 @@ export function applied(canvas: Canvas, ops: unknown): { canvas: Canvas; made: s
 
       case 'remove': {
         const there = [...now.nodes, ...now.edges, ...now.ink].some((one) => one.id === id)
-        if (id === null || !there)
-          throw new Refused('not_found', `there is no ${String(id)} on the canvas`)
+        if (id === null || !there) throw new Refused('not_found', `there is no ${String(id)} on the canvas`)
 
         const page = now.nodes.find((node) => node.id === id)?.type === 'page'
-        now = page
-          ? (pageOperation(now, { op: 'remove_page', id })?.canvas ?? now)
-          : removed(now, [id])
+        now = page ? (pageOperation(now, { op: 'remove_page', id })?.canvas ?? now) : removed(now, [id])
         break
       }
 

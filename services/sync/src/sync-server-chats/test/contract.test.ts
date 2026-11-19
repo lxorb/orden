@@ -1,12 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { askChat, CHAT_AWAY, eraseChats } from '../src/chats/ask'
-import {
-  askFrom,
-  challengeLooksRight,
-  tooLong,
-  unknownScopes,
-  wantsWrite,
-} from '../src/oauth/protocol'
+import { askFrom, challengeLooksRight, tooLong, unknownScopes, wantsWrite } from '../src/oauth/protocol'
 
 type Env = Parameters<typeof askChat>[0]
 

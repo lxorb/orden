@@ -73,22 +73,16 @@
     }, 'that code is not right')
 
   const promote = () =>
-    run(
-      async () => took(await asked<Held>('/second/primary', { method: 'POST' })),
-      'that did not work',
-    )
+    run(async () => took(await asked<Held>('/second/primary', { method: 'POST' })), 'that did not work')
 
-  const remove = () =>
-    run(async () => took(await asked<Held>('/second', { method: 'DELETE' })), 'that did not work')
+  const remove = () => run(async () => took(await asked<Held>('/second', { method: 'DELETE' })), 'that did not work')
 </script>
 
 <div class="orden-setting setting">
   <span class="name">Email</span>
   <span class="orden-field is-value is-read">{account.user?.email}</span>
   {#if !adding}
-    <button class="orden-chip is-quiet" aria-label="Change email" onclick={() => start('primary')}
-      >Change</button
-    >
+    <button class="orden-chip is-quiet" aria-label="Change email" onclick={() => start('primary')}>Change</button>
   {/if}
 </div>
 <div class="orden-setting setting">
@@ -96,19 +90,11 @@
   {#if second}
     <span class="orden-field is-value is-read">{second}</span>
     {#if !adding}
-      <button class="orden-chip is-quiet" disabled={busy} onclick={() => void promote()}
-        >Make primary</button
-      >
-      <button class="orden-chip is-quiet" disabled={busy} onclick={() => void remove()}
-        >Remove</button
-      >
+      <button class="orden-chip is-quiet" disabled={busy} onclick={() => void promote()}>Make primary</button>
+      <button class="orden-chip is-quiet" disabled={busy} onclick={() => void remove()}>Remove</button>
     {/if}
   {:else if !adding}
-    <button
-      class="orden-chip is-quiet"
-      aria-label="Add a second email"
-      onclick={() => start('second')}>Add</button
-    >
+    <button class="orden-chip is-quiet" aria-label="Add a second email" onclick={() => start('second')}>Add</button>
   {/if}
 </div>
 
@@ -164,20 +150,13 @@
       {/if}
       {#if adding === 'primary'}
         <p class="hint">
-          Your account will sign in with the new address. The old one gets a link to undo it for 7
-          days.
+          Your account will sign in with the new address. The old one gets a link to undo it for 7 days.
         </p>
       {/if}
     {/if}
     <div class="orden-setting setting">
-      <button type="button" class="orden-chip is-quiet" onclick={() => (adding = null)}
-        >Cancel</button
-      >
-      <button
-        type="submit"
-        class="orden-chip"
-        disabled={busy || !address.trim() || (sent && !code.trim())}
-      >
+      <button type="button" class="orden-chip is-quiet" onclick={() => (adding = null)}>Cancel</button>
+      <button type="submit" class="orden-chip" disabled={busy || !address.trim() || (sent && !code.trim())}>
         {sent ? 'Confirm' : 'Send code'}
       </button>
     </div>

@@ -56,9 +56,7 @@ describe('a checkbox and a number', () => {
     const zip = rows.find((one) => one.key === 'zip')
     const flag = rows.find((one) => one.key === 'flag')
     expect(applied(note, writeProperty(note, 'zip', '0071', zip?.kind))).toContain("zip: '0071'")
-    expect(applied(note, writeProperty(note, 'flag', 'false', flag?.kind))).toContain(
-      "flag: 'false'",
-    )
+    expect(applied(note, writeProperty(note, 'flag', 'false', flag?.kind))).toContain("flag: 'false'")
   })
 
   test('are the words YAML reads as a boolean and a number', () => {
@@ -76,9 +74,7 @@ describe('a list', () => {
     expect(writtenList(['one', 'two'])).toBe('[one, two]')
     expect(writtenList([])).toBe('[]')
     expect(writtenList(['one, two'])).toBe("['one, two']")
-    expect(applied(NOTE, writeList(NOTE, 'tags', ['one', 'two', 'three']))).toContain(
-      'tags: [one, two, three]',
-    )
+    expect(applied(NOTE, writeList(NOTE, 'tags', ['one', 'two', 'three']))).toContain('tags: [one, two, three]')
     const lines = '---\ntags:\n  - one\n  - two\n  - three\ntitle: A note\n---\n\nWords.\n'
     const written = applied(lines, writeList(lines, 'tags', ['one']))
     expect(written).toBe('---\ntags: [one]\ntitle: A note\n---\n\nWords.\n')
@@ -90,21 +86,13 @@ describe('a list', () => {
     expect(applied(note, writeProperty(note, 'title', 'b'))).toBe(
       '---\r\ntitle: b\r\ntags:\r\n  - x\r\n  - y\r\n---\r\nbody\r\n',
     )
-    expect(applied(note, writeList(note, 'tags', ['z']))).toBe(
-      '---\r\ntitle: a\r\ntags: [z]\r\n---\r\nbody\r\n',
-    )
+    expect(applied(note, writeList(note, 'tags', ['z']))).toBe('---\r\ntitle: a\r\ntags: [z]\r\n---\r\nbody\r\n')
   })
 
   test('is appended like any other key where the block does not hold it yet', () => {
     const written = applied(NOTE, writeList(NOTE, 'aliases', ['other']))
     expect(written).toContain('aliases: [other]')
-    expect(readProperties(written)?.map((one) => one.key)).toEqual([
-      'title',
-      'done',
-      'count',
-      'tags',
-      'aliases',
-    ])
+    expect(readProperties(written)?.map((one) => one.key)).toEqual(['title', 'done', 'count', 'tags', 'aliases'])
   })
 
   test('a chip added is on the end, and the same chip twice says nothing twice', () => {
@@ -130,10 +118,7 @@ describe('a list', () => {
     expect(written).toBe('---\ntags: ["a, b"]\n---\n\nWords.\n')
     expect(readProperties(written)?.find((one) => one.key === 'tags')?.items).toEqual(['a, b'])
     const again = applied(written, writeList(written, 'tags', ['a, b', "It's, here"]))
-    expect(readProperties(again)?.find((one) => one.key === 'tags')?.items).toEqual([
-      'a, b',
-      "It's, here",
-    ])
+    expect(readProperties(again)?.find((one) => one.key === 'tags')?.items).toEqual(['a, b', "It's, here"])
   })
 
   test('a chip taken off a list of numbers leaves the others numbers; each item keeps its type: bare where it is a number, a yes or nothing', () => {
@@ -142,9 +127,7 @@ describe('a list', () => {
     expect(scores).toBeDefined()
     const written = applied(note, writeList(note, 'scores', withoutItem(scores!, '2') ?? []))
     expect(written).toBe('---\nscores: [1, 10]\n---\n')
-    expect(writtenList([1, 2.5, -3, true, false, null, 'one'])).toBe(
-      '[1, 2.5, -3, true, false, null, one]',
-    )
+    expect(writtenList([1, 2.5, -3, true, false, null, 'one'])).toBe('[1, 2.5, -3, true, false, null, one]')
     expect(writtenList(['1', 'true', 'null', '~', ''])).toBe("['1', 'true', 'null', '~', '']")
   })
 
@@ -168,8 +151,7 @@ describe('a list', () => {
     const note = '---\nscores: [1, 10]\n---\n'
     const scores = readProperties(note)?.find((one) => one.key === 'scores')
     expect(scores).toBeDefined()
-    const added = (typed: string) =>
-      applied(note, writeList(note, 'scores', withItem(scores!, typed) ?? []))
+    const added = (typed: string) => applied(note, writeList(note, 'scores', withItem(scores!, typed) ?? []))
     expect(added('3')).toBe('---\nscores: [1, 10, 3]\n---\n')
     expect(added('-2.5')).toBe('---\nscores: [1, 10, -2.5]\n---\n')
     expect(added('true')).toBe('---\nscores: [1, 10, true]\n---\n')
@@ -203,13 +185,7 @@ describe('a list', () => {
     expect(ids).toBeDefined()
     const written = applied(note, writeList(note, 'ids', withItem(ids!, '3') ?? []))
     expect(written).toBe("---\nids: [007, 1.10, 'x', 'a, b', 3]\n---\n")
-    expect(readProperties(written)?.find((one) => one.key === 'ids')?.items).toEqual([
-      '007',
-      '1.10',
-      'x',
-      'a, b',
-      '3',
-    ])
+    expect(readProperties(written)?.find((one) => one.key === 'ids')?.items).toEqual(['007', '1.10', 'x', 'a, b', '3'])
   })
 
   test('a block list whose members are not flow members is still written as YAML', () => {
@@ -219,9 +195,7 @@ describe('a list', () => {
       return applied(note, writeList(note, 'ids', withItem(ids!, 'z') ?? []))
     }
     expect(added('---\nids:\n  - a\n  -\n  - b\n---\n')).toBe('---\nids: [a, null, b, z]\n---\n')
-    expect(added('---\nids:\n  - a\n  - e # note\n---\n')).toBe(
-      '---\nids:\n  - a\n  - e # note\n  - z\n---\n',
-    )
+    expect(added('---\nids:\n  - a\n  - e # note\n---\n')).toBe('---\nids:\n  - a\n  - e # note\n  - z\n---\n')
     expect(added('---\nids:\n- - x\n- b\n---\n')).toBe('---\nids:\n  - - x\n  - b\n  - z\n---\n')
     expect(added('---\nids:\n  - "x" # see "y"\n  - b\n---\n')).toBe(
       '---\nids:\n  - "x" # see "y"\n  - b\n  - z\n---\n',
@@ -230,9 +204,7 @@ describe('a list', () => {
 
   test('a list is written over the key the note spells in another case', () => {
     const note = '---\nTags:\n  - x\n  - y\ntitle: a\n---\n'
-    expect(applied(note, writeList(note, 'tags', ['x', 'z']))).toBe(
-      '---\nTags: [x, z]\ntitle: a\n---\n',
-    )
+    expect(applied(note, writeList(note, 'tags', ['x', 'z']))).toBe('---\nTags: [x, z]\ntitle: a\n---\n')
   })
 
   test('a list in a note whose lines end in CRLF keeps its members and its line ends', () => {
@@ -274,9 +246,7 @@ describe('a key renamed from the side panel', () => {
 
   test('takes any name front matter reads back as a key; refuses a name that is not a key, the same name, and one the block already has', () => {
     for (const name of ['priorität', 'due date', 'Size (cm)', '💰'])
-      expect(applied(NOTE, renameProperty(NOTE, 'done', name))).toBe(
-        NOTE.replace('done:', `${name}:`),
-      )
+      expect(applied(NOTE, renameProperty(NOTE, 'done', name))).toBe(NOTE.replace('done:', `${name}:`))
     expect(renameProperty(NOTE, 'done', 'two: words')).toBeNull()
     expect(renameProperty(NOTE, 'done', '#done')).toBeNull()
     expect(renameProperty(NOTE, 'done', '')).toBeNull()
@@ -288,12 +258,8 @@ describe('a key renamed from the side panel', () => {
 
 describe('a key added from the side panel', () => {
   test('is written with nothing after it, in a block or in a new one; refuses a name the block already has, in any case, and an empty one', () => {
-    expect(applied(NOTE, addProperty(NOTE, ' status '))).toBe(
-      NOTE.replace('---\n\n', "status: ''\n---\n\n"),
-    )
-    expect(applied('Words.\n', addProperty('Words.\n', 'status'))).toBe(
-      "---\nstatus: ''\n---\nWords.\n",
-    )
+    expect(applied(NOTE, addProperty(NOTE, ' status '))).toBe(NOTE.replace('---\n\n', "status: ''\n---\n\n"))
+    expect(applied('Words.\n', addProperty('Words.\n', 'status'))).toBe("---\nstatus: ''\n---\nWords.\n")
     const held = '---\ntags:\n  - a\n  - b\nStatus: open\n---\nWords.\n'
     expect(addProperty(held, 'tags')).toBeNull()
     expect(addProperty(held, 'status')).toBeNull()
@@ -313,25 +279,18 @@ describe('a key taken away from the side panel', () => {
   test('takes its line and leaves every other line as it was; takes a list written over several lines with it', () => {
     expect(applied(NOTE, removeProperty(NOTE, 'count'))).toBe(NOTE.replace('count: 3\n', ''))
     const note = '---\ntitle: A\ntags:\n  - one\n  - two\ndone: true\n---\nWords.\n'
-    expect(applied(note, removeProperty(note, 'tags'))).toBe(
-      '---\ntitle: A\ndone: true\n---\nWords.\n',
-    )
+    expect(applied(note, removeProperty(note, 'tags'))).toBe('---\ntitle: A\ndone: true\n---\nWords.\n')
   })
 
   test('takes the fences too when it was the last key, and the blank line under them', () => {
-    expect(
-      applied(
-        '---\ntitle: A\n---\n\nWords.\n',
-        removeProperty('---\ntitle: A\n---\n\nWords.\n', 'title'),
-      ),
-    ).toBe('Words.\n')
+    expect(applied('---\ntitle: A\n---\n\nWords.\n', removeProperty('---\ntitle: A\n---\n\nWords.\n', 'title'))).toBe(
+      'Words.\n',
+    )
   })
 
   test('keeps a file’s own line endings; and changes nothing for a key the note does not have', () => {
     const note = '---\r\ntitle: A\r\ndone: true\r\n---\r\nWords.\r\n'
-    expect(applied(note, removeProperty(note, 'title'))).toBe(
-      '---\r\ndone: true\r\n---\r\nWords.\r\n',
-    )
+    expect(applied(note, removeProperty(note, 'title'))).toBe('---\r\ndone: true\r\n---\r\nWords.\r\n')
     expect(removeProperty(NOTE, 'missing')).toBeNull()
   })
 })

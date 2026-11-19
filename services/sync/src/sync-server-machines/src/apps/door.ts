@@ -2,15 +2,7 @@ import { HOST_PROTOCOLS, UNKNOWN_APP } from '@orden/online/apps'
 import { tokenOf } from '@orden/rooms'
 import { deviceOffered } from '@orden/sync-core'
 import { Hono } from 'hono'
-import {
-  now,
-  sha256,
-  note,
-  NOT_FOUND,
-  SIGN_IN,
-  deviceName,
-  type Env,
-} from '../../../sync-server/src/api'
+import { now, sha256, note, NOT_FOUND, SIGN_IN, deviceName, type Env } from '../../../sync-server/src/api'
 import { WHO } from '../machines/reach'
 import { appsOn } from './catalogue'
 
@@ -28,16 +20,12 @@ appsDoor.get('/:app/socket', async (context) => {
   if (!namespace || !(await appsOn(env))) return context.json({ error: NOT_FOUND }, 404)
   const socket = context.req.header('upgrade')?.toLowerCase() === 'websocket'
 
-  const offered = (context.req.header('sec-websocket-protocol') ?? '')
-    .split(',')
-    .map((one) => one.trim())
+  const offered = (context.req.header('sec-websocket-protocol') ?? '').split(',').map((one) => one.trim())
   const token = socket
     ? tokenOf(offered.join(', '))
     : /^Bearer (.+)$/.exec(context.req.header('authorization') ?? '')?.[1]
   const hash = await sha256(token ?? '')
-  const signed = await env.DB.prepare(`select who from (${WHO})`)
-    .bind(hash, now())
-    .first<{ who: string }>()
+  const signed = await env.DB.prepare(`select who from (${WHO})`).bind(hash, now()).first<{ who: string }>()
   if (!signed) return context.json({ error: SIGN_IN }, 401)
   const who = signed.who
   const app = context.req.param('app')

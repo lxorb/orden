@@ -53,8 +53,7 @@ const PAIRS = [{ root: ROOT, spaceId: 's1' }]
 const settle = async () => {
   for (let i = 0; i < 20; i++) await new Promise((go) => setTimeout(go, 0))
 }
-const told = () =>
-  page.dispatchEvent(Object.assign(new Event('storage'), { key: main.STORAGE_KEY }))
+const told = () => page.dispatchEvent(Object.assign(new Event('storage'), { key: main.STORAGE_KEY }))
 
 test('a pull another window’s push overtook keeps the lock that push landed', async () => {
   expect(main.protection).not.toBe(second.protection)

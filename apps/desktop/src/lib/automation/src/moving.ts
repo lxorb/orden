@@ -25,16 +25,9 @@ export function ontoInstructions(root: string, from: string, to: string): boolea
   return folderOf(from) !== '' || !isAgentsName(nameOf(from))
 }
 
-export async function movedIn(
-  root: string,
-  from: string,
-  to: string,
-  undoing = false,
-): Promise<string> {
+export async function movedIn(root: string, from: string, to: string, undoing = false): Promise<string> {
   if (!undoing && ontoInstructions(root, from, to)) {
-    throw new Error(
-      `${AGENTS_NAME} at the top of a space is its instructions: ${ONTO_INSTRUCTIONS}`,
-    )
+    throw new Error(`${AGENTS_NAME} at the top of a space is its instructions: ${ONTO_INSTRUCTIONS}`)
   }
 
   const folder = folderOf(to)
@@ -60,8 +53,7 @@ export async function movedIn(
 
   const here = folderOf(source)
   const free = async (folderAt: string, called: string) =>
-    !(samePath(folderAt, root) && isAgentsName(called)) &&
-    !(await onDisk(joinPath(folderAt, called)))
+    !(samePath(folderAt, root) && isAgentsName(called)) && !(await onDisk(joinPath(folderAt, called)))
 
   if (await free(into, nameOf(from))) {
     await carried(source)

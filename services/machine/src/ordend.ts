@@ -158,8 +158,7 @@ export class Ordend {
       }
       case 'image': {
         const path = await this.images.part(frame.id, frame.kind, frame.data, frame.last)
-        if (path !== undefined)
-          this.send({ t: 'image', session: frame.session, id: frame.id, path })
+        if (path !== undefined) this.send({ t: 'image', session: frame.session, id: frame.id, path })
         return
       }
     }

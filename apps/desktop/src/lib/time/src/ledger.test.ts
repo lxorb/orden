@@ -73,10 +73,7 @@ describe('trading time records with the account', () => {
     const one = new Ledger()
     const other = new Ledger()
     one.write('span', 'a', { start: 1 }, 0)
-    const cursors = [
-      (await exchange(one, server, 0)).cursor,
-      (await exchange(other, server, 0)).cursor,
-    ]
+    const cursors = [(await exchange(one, server, 0)).cursor, (await exchange(other, server, 0)).cursor]
     other.write('span', 'a', { start: 9 }, 0)
     one.write('span', 'b', { start: 3 }, 0)
     cursors[1] = (await exchange(other, server, cursors[1] ?? 0)).cursor

@@ -111,9 +111,7 @@ function open() {
 const card = (id: string) => host.querySelector<HTMLElement>(`[data-account="${id}"]`)
 const cards = () => [...host.querySelectorAll<HTMLElement>('[data-account]')]
 const buttonIn = (root: ParentNode, words: string) =>
-  [...root.querySelectorAll<HTMLButtonElement>('button')].find(
-    (one) => one.textContent.trim() === words,
-  )
+  [...root.querySelectorAll<HTMLButtonElement>('button')].find((one) => one.textContent.trim() === words)
 const sheet = () => document.querySelector<HTMLElement>('[role="dialog"]')
 
 function start(...kinds: Parameters<typeof added>[1][]) {
@@ -239,12 +237,7 @@ describe('Add', () => {
     host.querySelector<HTMLButtonElement>('[data-add-account]')!.click()
     flushSync()
     const makers = [...sheet()!.querySelectorAll<HTMLElement>('[data-maker]')]
-    expect(makers.map((one) => one.dataset.maker)).toEqual([
-      'anthropic',
-      'openai',
-      'google',
-      'compatible',
-    ])
+    expect(makers.map((one) => one.dataset.maker)).toEqual(['anthropic', 'openai', 'google', 'compatible'])
     makers[1]!.click()
     flushSync()
     const roads = [...sheet()!.querySelectorAll<HTMLElement>('[data-road]')]

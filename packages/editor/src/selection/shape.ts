@@ -53,8 +53,7 @@ export function selectionBlocks(rects: readonly SelectionRect[], radius: number)
 
 const near = (one: number, other: number): boolean => Math.abs(one - other) <= SAME
 
-const overlap = (one: Run, other: Run): number =>
-  Math.min(one.right, other.right) - Math.max(one.left, other.left)
+const overlap = (one: Run, other: Run): number => Math.min(one.right, other.right) - Math.max(one.left, other.left)
 
 function rows(rects: readonly SelectionRect[]): Row[] {
   const found: Row[] = []
@@ -99,9 +98,7 @@ function stacks(rows: readonly Row[]): Band[][] {
     const carried = new Set<Band[]>()
 
     for (const run of row.runs) {
-      const meeting = above.filter(
-        (one) => near(one.band.bottom, row.top) && overlap(one.band, run) > SAME,
-      )
+      const meeting = above.filter((one) => near(one.band.bottom, row.top) && overlap(one.band, run) > SAME)
       const carries = meeting.length === 1 ? meeting[0] : undefined
 
       if (carries && !carried.has(carries.block)) {
@@ -147,8 +144,7 @@ function boxOf(bands: readonly Band[]): Omit<SelectionBlock, 'path'> {
     left,
     top,
     width: rights.reduce((high, one) => Math.max(high, one), -Infinity) - left,
-    height:
-      bands.map((band) => band.bottom).reduce((high, one) => Math.max(high, one), -Infinity) - top,
+    height: bands.map((band) => band.bottom).reduce((high, one) => Math.max(high, one), -Infinity) - top,
   }
 }
 
@@ -194,8 +190,7 @@ function pruned(corners: readonly Point[]): Point[] {
     const after = kept[(index + 1) % kept.length]
     if (!before || !after) return true
 
-    const straight =
-      (near(before.x, at.x) && near(at.x, after.x)) || (near(before.y, at.y) && near(at.y, after.y))
+    const straight = (near(before.x, at.x) && near(at.x, after.x)) || (near(before.y, at.y) && near(at.y, after.y))
     return !straight
   })
 }

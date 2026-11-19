@@ -24,9 +24,7 @@ describe('the export picker', () => {
           ),
         )
         const wanted = choices.map((one) => one.id).filter((id) => id !== SETUP)
-        expect([...reached].sort(), `${kind}${pandoc ? ' with pandoc' : ''}`).toEqual(
-          [...wanted].sort(),
-        )
+        expect([...reached].sort(), `${kind}${pandoc ? ' with pandoc' : ''}`).toEqual([...wanted].sort())
       }
     }
   })
@@ -39,8 +37,7 @@ describe('the export picker', () => {
       ['web', ['html']],
       ['pictures', ['png', 'jpg']],
     ])
-    for (const tile of shelves.flatMap((one) => one.tiles))
-      expect(tile.icon.length).toBeGreaterThan(0)
+    for (const tile of shelves.flatMap((one) => one.tiles)) expect(tile.icon.length).toBeGreaterThan(0)
   })
 
   test('folds the variants into options of their format', () => {

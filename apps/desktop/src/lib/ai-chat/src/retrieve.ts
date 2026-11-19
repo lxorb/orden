@@ -59,9 +59,7 @@ export function searchWords(question: string, most = 8): string[] {
 
   const seen = [...new Set(words)]
   const kept = new Set(
-    [...seen]
-      .sort((one, other) => other.length - one.length || (one < other ? -1 : 1))
-      .slice(0, most),
+    [...seen].sort((one, other) => other.length - one.length || (one < other ? -1 : 1)).slice(0, most),
   )
 
   return seen.filter((one) => kept.has(one))
@@ -115,9 +113,7 @@ export function ranked(hits: readonly Hit[], words: readonly string[]): Ranked[]
     }))
     .sort(
       (one, other) =>
-        other.score - one.score ||
-        other.lines.length - one.lines.length ||
-        (one.path < other.path ? -1 : 1),
+        other.score - one.score || other.lines.length - one.lines.length || (one.path < other.path ? -1 : 1),
     )
 }
 
@@ -182,10 +178,7 @@ export function passagesOf(
   return out
 }
 
-export function frontPassages(
-  note: { path: string; name: string; text: string },
-  words: readonly string[],
-): Passage[] {
+export function frontPassages(note: { path: string; name: string; text: string }, words: readonly string[]): Passage[] {
   const lines = linesSaying(note.text, words)
   const start = firstLine(note.text)
   const body = note.text.split('\n').slice(start).join('\n').trim()
@@ -345,10 +338,7 @@ export function linkedAnswer(
       return said
         .reduce((out, words, at) => {
           const name = words.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-          return out.replace(
-            new RegExp(`(?<![\\p{L}\\p{N}_])(${name})\\s*\uE000${at}\uE001`, 'gu'),
-            '$1',
-          )
+          return out.replace(new RegExp(`(?<![\\p{L}\\p{N}_])(${name})\\s*\uE000${at}\uE001`, 'gu'), '$1')
         }, folded)
         .replace(/\uE000(\d+)\uE001/g, (whole, at: string) => said[Number(at)] ?? whole)
         .replace(/(\[\[[^\]]+\]\])(?:\s*\1)+/g, '$1')

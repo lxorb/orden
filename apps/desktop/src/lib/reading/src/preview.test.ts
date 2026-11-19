@@ -103,11 +103,7 @@ function shown(render = true) {
         ...(render
           ? {
               render: (source: string, from: string | null) =>
-                readingHtml(
-                  { text: source, path: from === null ? null : `${ROOT}/${from}` },
-                  'light',
-                  true,
-                ),
+                readingHtml({ text: source, path: from === null ? null : `${ROOT}/${from}` }, 'light', true),
             }
           : {}),
       }),

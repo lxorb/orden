@@ -48,9 +48,7 @@ describe('writing a file', () => {
   test('text goes through the note writer, as text', async () => {
     await writeFile('C:/notes/Note.md', 'the words')
 
-    expect(calls).toEqual([
-      { command: 'write_note', args: { path: 'C:/notes/Note.md', content: 'the words' } },
-    ])
+    expect(calls).toEqual([{ command: 'write_note', args: { path: 'C:/notes/Note.md', content: 'the words' } }])
   })
 
   test('bytes go through the byte writer, as bytes', async () => {

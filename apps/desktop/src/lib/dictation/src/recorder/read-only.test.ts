@@ -6,8 +6,7 @@ const editor = vi.hoisted(() => ({ readOnly: false }))
 
 vi.mock('../../../sharing/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../../sharing/src/sharing.svelte')>()),
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 vi.mock('./container', async (importOriginal) => ({
@@ -53,9 +52,7 @@ function inFront(root: string, note: string | null) {
   vi.spyOn(workspace, 'active', 'get').mockReturnValue(
     (note ? { kind: 'note', path: note } : null) as typeof workspace.active,
   )
-  workspace.tabs = note
-    ? ([{ note: { path: note }, paneId: 'p' }] as unknown as typeof workspace.tabs)
-    : []
+  workspace.tabs = note ? ([{ note: { path: note }, paneId: 'p' }] as unknown as typeof workspace.tabs) : []
 }
 
 beforeEach(() => {

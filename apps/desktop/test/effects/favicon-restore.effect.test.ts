@@ -37,10 +37,7 @@ test('a tab restored with no page wears the mark its site last showed, in its fi
   const { pages } = await import('../../src/lib/web-tab/src/pages.svelte')
   const { TabMark } = await import('../../src/lib/marks/src/api')
 
-  const doc = new NoteDoc(
-    { kind: 'web', path: null, name: 'WhatsApp', text: '', dirty: false },
-    () => undefined,
-  )
+  const doc = new NoteDoc({ kind: 'web', path: null, name: 'WhatsApp', text: '', dirty: false }, () => undefined)
   const tab = new Tab(doc, 'pane')
   tab.address = SITE
 

@@ -53,10 +53,7 @@ class FakeEngine implements Engine {
       ),
   }
 
-  on<T extends keyof EngineEvents>(
-    type: T,
-    listener: (event: EngineEvents[T]) => void,
-  ): () => void {
+  on<T extends keyof EngineEvents>(type: T, listener: (event: EngineEvents[T]) => void): () => void {
     const listening: ((event: EngineEvents[T]) => void)[] = this.listeners[type]
     listening.push(listener)
     return () => {

@@ -13,10 +13,7 @@ export async function openMicrophone(): Promise<MediaStream> {
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       }),
       new Promise<never>((_resolve, reject) => {
-        ran = window.setTimeout(
-          () => reject(new Error('That microphone could not be opened.')),
-          PATIENCE,
-        )
+        ran = window.setTimeout(() => reject(new Error('That microphone could not be opened.')), PATIENCE)
       }),
     ])
   } finally {

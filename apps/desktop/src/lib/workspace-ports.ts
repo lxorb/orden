@@ -38,8 +38,7 @@ serveWorkspace({
   rowsCopied,
   mayCarryBetween,
   papers: async () => (await import('./pdf/src/api')).papers(),
-  readPapers: async (root, files, tree) =>
-    (await import('./pdf/src/api')).readPapers(root, files, tree),
+  readPapers: async (root, files, tree) => (await import('./pdf/src/api')).readPapers(root, files, tree),
   sheets: () => import('./pdf/src/api'),
   pdfPages: pdfTabs,
   sites: {
@@ -72,8 +71,7 @@ if (!__EVEN_PLUGIN__) {
       const key = readSpec(doc)?.key ?? ''
       moveHistory({ space: from, key }, { space: to, key })
     },
-    chatsCarried: async (path, folder) =>
-      (await import('./chats-client/src/api')).chatsCarried(path, folder),
+    chatsCarried: async (path, folder) => (await import('./chats-client/src/api')).chatsCarried(path, folder),
   })
   whenPortProvided('workspace.view', (view) =>
     view.follow((op) => {

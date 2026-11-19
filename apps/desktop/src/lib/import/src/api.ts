@@ -11,31 +11,21 @@ export { vaults } from './vaults'
 export const macNotes = () => import('./apple')
 
 export const bringing = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no import in the Even Realities plugin'))
-    : import('./bring')
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('no import in the Even Realities plugin')) : import('./bring')
 
 export const todoistAccount = () => import('./todoist')
 
 export const importingStore = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no import in the Even Realities plugin'))
-    : import('./importing.svelte')
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('no import in the Even Realities plugin')) : import('./importing.svelte')
 
 const migratingStore = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no import in the Even Realities plugin'))
-    : import('./migrating.svelte')
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('no import in the Even Realities plugin')) : import('./migrating.svelte')
 
 export const loadMigrateRows = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no import in the Even Realities plugin'))
-    : import('./MigrateRows.svelte')
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('no import in the Even Realities plugin')) : import('./MigrateRows.svelte')
 
 export const loadImportSheet = () =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no import in the Even Realities plugin'))
-    : import('./ImportSheet.svelte')
+  __EVEN_PLUGIN__ ? Promise.reject(new Error('no import in the Even Realities plugin')) : import('./ImportSheet.svelte')
 
 async function showImport() {
   const { importing } = await importingStore()

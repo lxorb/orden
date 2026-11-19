@@ -130,9 +130,7 @@ describe('the changes', () => {
     const last = first.json.items.at(-1)?.id ?? ''
     const second = await passCall<ItemPage>(env, bob, 'GET', `/vaults/${vault}/items?after=${last}`)
     expect(second.json.more).toBe(false)
-    expect([...first.json.items, ...second.json.items].map((one) => one.id).sort()).toEqual(
-      ids.sort(),
-    )
+    expect([...first.json.items, ...second.json.items].map((one) => one.id).sort()).toEqual(ids.sort())
   })
 
   test('stop at a vault one was removed from: it comes once as deleted, then nothing of it', async () => {
@@ -144,9 +142,7 @@ describe('the changes', () => {
     await api.item(ada, vault, anId())
 
     const after = await api.changes(bob, before)
-    expect(after.vaults).toEqual([
-      expect.objectContaining({ id: vault, deleted: true, key: null, meta: '' }),
-    ])
+    expect(after.vaults).toEqual([expect.objectContaining({ id: vault, deleted: true, key: null, meta: '' })])
     expect(after.items).toEqual([])
     expect((await api.changes(bob, after.seq)).vaults).toEqual([])
     expect((await passCall(env, bob, 'GET', `/vaults/${vault}/items`)).status).toBe(404)

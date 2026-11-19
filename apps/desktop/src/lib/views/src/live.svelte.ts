@@ -1,12 +1,4 @@
-import {
-  answer as answered,
-  type Answer,
-  type Base,
-  cellValue,
-  type Context,
-  type Row,
-  type View,
-} from '@orden/bases'
+import { answer as answered, type Answer, type Base, cellValue, type Context, type Row, type View } from '@orden/bases'
 import { untrack } from 'svelte'
 import { rows as store } from '../../rows/src/api'
 import { afterQuiet } from '../../platform/src/api'
@@ -189,9 +181,7 @@ export class LiveView {
     return typeof tone === 'string' ? toneColour(tone) : null
   }
 
-  readonly columns = $derived.by((): string[] =>
-    this.base ? columnsOf(this.base, this.at, this.rows) : [],
-  )
+  readonly columns = $derived.by((): string[] => (this.base ? columnsOf(this.base, this.at, this.rows) : []))
 
   search(words: string) {
     this.typed = words

@@ -7,9 +7,7 @@ export type Verb = (call: Call) => AgentAnswer | Promise<AgentAnswer>
 function ran(verb: Verb): AgentVerb {
   return async (name, args, caller, deadline) => {
     try {
-      return await verb(
-        deadline ? { verb: name, args, caller, deadline } : { verb: name, args, caller },
-      )
+      return await verb(deadline ? { verb: name, args, caller, deadline } : { verb: name, args, caller })
     } catch (error) {
       return answerOf(error)
     }
@@ -22,11 +20,7 @@ export function verbsOf(table: Readonly<Record<string, Verb>>): AgentVerbs {
 
 export function gatedBy(on: () => boolean, what: string, verb: Verb): Verb {
   return (call) => {
-    if (!on())
-      throw new Refused(
-        'not_granted',
-        `${what} turned off; the reader turns it on in Settings, Experimental`,
-      )
+    if (!on()) throw new Refused('not_granted', `${what} turned off; the reader turns it on in Settings, Experimental`)
     return verb(call)
   }
 }

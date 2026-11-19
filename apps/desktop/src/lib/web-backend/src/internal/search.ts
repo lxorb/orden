@@ -45,9 +45,7 @@ export async function searchInternal(
   if (!at) return false
   await follow(at.mount)
   const out = <T extends { path: string }>(hit: T): T => {
-    const inside = hit.path.startsWith(`${at.mount.web}/`)
-      ? hit.path.slice(at.mount.web.length + 1)
-      : ''
+    const inside = hit.path.startsWith(`${at.mount.web}/`) ? hit.path.slice(at.mount.web.length + 1) : ''
     return inside ? { ...hit, path: joinPath(at.mount.root, inside) } : hit
   }
   const { searchRows } = await import('../web/search')

@@ -38,9 +38,7 @@ class Importing {
 
   private sources: Source[] = []
 
-  readonly counts = $derived<Counts>(
-    this.plan ? counts(this.plan) : { notes: 0, files: 0, folders: 0, bytes: 0 },
-  )
+  readonly counts = $derived<Counts>(this.plan ? counts(this.plan) : { notes: 0, files: 0, folders: 0, bytes: 0 })
 
   readonly spaceName = $derived(rootedAt(workspace.spaces, this.root)?.name ?? '')
 
@@ -164,9 +162,7 @@ class Importing {
     const home = rootedAt(workspace.spaces, root)?.id ?? null
     if (root === null && imported.pictures.length) busy.failed('That picture could not be read.')
     const markdown =
-      root === null
-        ? imported.markdown
-        : await this.withPictures(imported, joinPath(root, imported.name))
+      root === null ? imported.markdown : await this.withPictures(imported, joinPath(root, imported.name))
     workspace.openBlank(imported.name, markdown, home)
     this.open = false
     this.forget()
@@ -190,10 +186,8 @@ class Importing {
   ): Promise<string> {
     if (!imported.pictures.length) return imported.markdown
     const { storeBeside } = await import('../../workspace/src/api')
-    const { markdown, lost } = await keepPictures(
-      imported.markdown,
-      imported.pictures,
-      (bytes, name) => storeBeside(bytes.slice().buffer, notePath, name),
+    const { markdown, lost } = await keepPictures(imported.markdown, imported.pictures, (bytes, name) =>
+      storeBeside(bytes.slice().buffer, notePath, name),
     )
     void workspace.loadTree()
     if (lost) busy.failed('That picture could not be read.')
@@ -217,9 +211,7 @@ class Importing {
     const into = await prompt.find({ title: 'Import into', options: [...targets] })
     if (!into) return
 
-    const space = workspace.spaces.find(
-      (one) => into === one.root || into.startsWith(`${one.root}/`),
-    )
+    const space = workspace.spaces.find((one) => into === one.root || into.startsWith(`${one.root}/`))
     this.root = space?.root ?? this.root
     this.under = space && into !== space.root ? relativeTo(space.root, into) : ''
   }
@@ -238,9 +230,7 @@ class Importing {
         plan,
         {
           root,
-          folder: [this.under, this.folder.trim() && safeName(this.folder)]
-            .filter(Boolean)
-            .join('/'),
+          folder: [this.under, this.folder.trim() && safeName(this.folder)].filter(Boolean).join('/'),
         },
         { onWritten: (done) => (this.written = done) },
       )

@@ -36,14 +36,11 @@ const noComments = rule(
 const noSpreadMath = rule(
   'problem',
   {
-    spread:
-      'Math.min and Math.max over a spread throw past some 65,000 values in WebKit: reduce the array instead.',
+    spread: 'Math.min and Math.max over a spread throw past some 65,000 values in WebKit: reduce the array instead.',
   },
   (context) => {
     return {
-      "CallExpression[callee.object.name='Math'][callee.property.name=/^(min|max)$/] > SpreadElement"(
-        node,
-      ) {
+      "CallExpression[callee.object.name='Math'][callee.property.name=/^(min|max)$/] > SpreadElement"(node) {
         context.report({ node, messageId: 'spread' })
       },
     }
@@ -128,15 +125,10 @@ const SETTLING = new Set([
 ])
 
 function settling(statement) {
-  if (statement.type === 'BlockStatement')
-    return statement.body.length > 0 && statement.body.every(settling)
+  if (statement.type === 'BlockStatement') return statement.body.length > 0 && statement.body.every(settling)
   if (statement.type !== 'ExpressionStatement') return false
-  const done =
-    statement.expression.type === 'AwaitExpression'
-      ? statement.expression.argument
-      : statement.expression
-  if (done.type === 'NewExpression')
-    return done.callee.type === 'Identifier' && done.callee.name === 'Promise'
+  const done = statement.expression.type === 'AwaitExpression' ? statement.expression.argument : statement.expression
+  if (done.type === 'NewExpression') return done.callee.type === 'Identifier' && done.callee.name === 'Promise'
   return done.type === 'CallExpression' && SETTLING.has(calleeName(done.callee))
 }
 
@@ -145,8 +137,7 @@ const timedWaits = rule(
   {
     sleep:
       'A test that sleeps a fixed time fails once the machine is slow: wait for the state with vi.waitFor, or use settle, elapse or idle from test/effects/settle.',
-    turns:
-      'A fixed count of turns does not wait for what is still loading: await settle() from test/effects/settle.',
+    turns: 'A fixed count of turns does not wait for what is still loading: await settle() from test/effects/settle.',
     advance:
       'Moving the fake clock while imports are still loading skips what they schedule: use elapse from test/effects/settle.',
   },
@@ -157,15 +148,11 @@ const timedWaits = rule(
         let around = node.parent
         while (around && !around.type.endsWith('FunctionExpression')) around = around.parent
         const given = around?.params[0]
-        const promised =
-          around?.parent.type === 'NewExpression' && around.parent.callee.name === 'Promise'
+        const promised = around?.parent.type === 'NewExpression' && around.parent.callee.name === 'Promise'
         if (!promised || done?.type !== 'Identifier' || done.name !== given?.name) return
-        if (delay && !(delay.type === 'Literal' && delay.value === 0))
-          context.report({ node, messageId: 'sleep' })
+        if (delay && !(delay.type === 'Literal' && delay.value === 0)) context.report({ node, messageId: 'sleep' })
       },
-      "CallExpression[callee.object.name='vi'][callee.property.name='advanceTimersByTimeAsync']"(
-        node,
-      ) {
+      "CallExpression[callee.object.name='vi'][callee.property.name='advanceTimersByTimeAsync']"(node) {
         context.report({ node, messageId: 'advance' })
       },
       ':matches(ForStatement, WhileStatement, DoWhileStatement)'(node) {
@@ -184,9 +171,7 @@ const ENDINGS = ['', '.ts', '.svelte.ts', '.svelte', '.js', '/index.ts']
 function moduleOfSpecifier(from, specifier) {
   if (specifier.startsWith('.')) {
     const target = resolve(dirname(from), specifier)
-    const file =
-      ENDINGS.map((one) => target + one).find((one) => existsSync(one) && statSync(one).isFile()) ??
-      target
+    const file = ENDINGS.map((one) => target + one).find((one) => existsSync(one) && statSync(one).isFile()) ?? target
     return { module: moduleOf(file, MODULES), file, subpath: null }
   }
   if (!specifier.startsWith('@orden/')) return null
@@ -251,9 +236,7 @@ function withApi(module) {
     reached.add(file)
     for (const match of readFileSync(file, 'utf8').matchAll(STATIC_IMPORTS)) {
       const target = resolve(dirname(file), match[1] ?? match[2])
-      const found = ENDINGS.map((one) => target + one).find(
-        (one) => existsSync(one) && statSync(one).isFile(),
-      )
+      const found = ENDINGS.map((one) => target + one).find((one) => existsSync(one) && statSync(one).isFile())
       if (found && moduleOf(found, MODULES) === module) queue.push(found)
     }
   }
@@ -268,8 +251,7 @@ const ownApi = rule(
   },
   (context) => {
     return eachImport(context, (node, specifier, own, found) => {
-      if (found.module !== own || node.type === 'ImportExpression' || node.importKind === 'type')
-        return
+      if (found.module !== own || node.type === 'ImportExpression' || node.importKind === 'type') return
       const api = resolve(own.absolute, own.api)
       if (found.file !== api || context.filename === api) return
       if (withApi(own).has(context.filename)) {
@@ -288,8 +270,7 @@ const pendingImports = rule(
   (context) => {
     return eachImport(context, (node, specifier, own, found) => {
       if (found.module || !found.file) return
-      if (!found.file.startsWith(ROOT + sep) || found.file.includes(`${sep}node_modules${sep}`))
-        return
+      if (!found.file.startsWith(ROOT + sep) || found.file.includes(`${sep}node_modules${sep}`)) return
       const path = relative(ROOT, found.file).split(sep).join('/')
       if (own.pending.some((one) => path === one || path.startsWith(one))) return
       context.report({
@@ -373,18 +354,12 @@ export default tseslint.config(
   {
     rules: {
       '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: true }],
-      '@typescript-eslint/no-misused-promises': [
-        'error',
-        { checksVoidReturn: { attributes: false } },
-      ],
+      '@typescript-eslint/no-misused-promises': ['error', { checksVoidReturn: { attributes: false } }],
       '@typescript-eslint/switch-exhaustiveness-check': 'error',
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
       '@typescript-eslint/no-confusing-void-expression': ['error', { ignoreArrowShorthand: true }],
       '@typescript-eslint/consistent-type-definitions': ['error', 'interface'],
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_', caughtErrors: 'none' },
-      ],
+      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', caughtErrors: 'none' }],
       '@typescript-eslint/no-non-null-assertion': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       eqeqeq: ['error', 'always', { null: 'ignore' }],
@@ -410,8 +385,7 @@ export default tseslint.config(
             {
               name: 'svelte/transition',
               importNames: ['blur', 'draw', 'fade', 'fly', 'scale', 'slide'],
-              message:
-                'Take a transition from lib/motion: one that does not move leaves the layout alone.',
+              message: 'Take a transition from lib/motion: one that does not move leaves the layout alone.',
             },
           ],
         },

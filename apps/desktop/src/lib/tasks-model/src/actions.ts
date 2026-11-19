@@ -28,10 +28,7 @@ const taskOut = (todo: Todo): TaskOut => ({
   ...(todo.priority === 0 ? {} : { priority: 4 - todo.priority }),
 })
 
-export async function addTask(
-  text: string,
-  options: { typed?: boolean } = {},
-): Promise<{ id: string } | null> {
+export async function addTask(text: string, options: { typed?: boolean } = {}): Promise<{ id: string } | null> {
   const said = text.trim()
   if (!said) return null
   await openTodos()
@@ -64,9 +61,7 @@ export async function addEntry(entry: Asked): Promise<Todo | null> {
   const titled = titledOf(entry.text)
   const made = await todos.add({
     title: titled.title,
-    description: fittedDescription(
-      [titled.description, entry.description].filter(Boolean).join('\n\n'),
-    ),
+    description: fittedDescription([titled.description, entry.description].filter(Boolean).join('\n\n')),
     labels: entry.fields.tags,
     start: entry.fields.due ?? null,
     deadline: entry.fields.deadline ?? null,

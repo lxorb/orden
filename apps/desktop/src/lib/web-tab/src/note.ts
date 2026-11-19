@@ -28,10 +28,7 @@ export function keptBody(text: string): string | null {
   return edit === null ? text : text.slice(0, edit.from) + edit.insert + text.slice(edit.to)
 }
 
-export function clipSource(
-  read: string | null | undefined,
-  fallback: string | null,
-): string | null {
+export function clipSource(read: string | null | undefined, fallback: string | null): string | null {
   const url = (read ?? '').trim() || (fallback ?? '').trim()
   return isWebAddress(url) ? url : null
 }

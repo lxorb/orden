@@ -26,13 +26,10 @@ export function exportCommands(): Row[] {
   const note = () => workspace.active
   const source = () => openTarget().source
   const name = () => note()?.name ?? 'Untitled.md'
-  const shut = (rows: Row[]) =>
-    frontShut() ? rows.map((one) => ({ ...one, disabled: true })) : rows
+  const shut = (rows: Row[]) => (frontShut() ? rows.map((one) => ({ ...one, disabled: true })) : rows)
 
   const open = note()
-  const kind = exportKindOf(
-    open ? { exports: TAB_KINDS[open.kind].exports, path: open.path } : null,
-  )
+  const kind = exportKindOf(open ? { exports: TAB_KINDS[open.kind].exports, path: open.path } : null)
 
   const noteOut = async (id: Exportable) => {
     const m = await import('./exporters')
@@ -130,10 +127,7 @@ export function exportPicker(): Row[] {
     {
       id: 'export',
       label: 'Export…',
-      also: [
-        ...formats.map((one) => one.label),
-        ...[...EXPORT_FORMATS, ...PANDOC_FORMATS].map((one) => one.label),
-      ],
+      also: [...formats.map((one) => one.label), ...[...EXPORT_FORMATS, ...PANDOC_FORMATS].map((one) => one.label)],
       disabled: formats.every((one) => one.disabled === true),
       run: () => picker.show(),
     },

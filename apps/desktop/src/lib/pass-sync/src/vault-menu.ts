@@ -109,9 +109,7 @@ function chooseFolderIcon(vault: Vault, folder: Folder): void {
   iconChoice.pass(folder.mark ?? null, (mark) => {
     const now = pass.vaults.find((one) => one.id === vault.id)
     if (!now?.folders.some((one) => one.id === folder.id)) return
-    const folders = now.folders.map((one) =>
-      one.id === folder.id ? { ...one, mark: mark ?? undefined } : one,
-    )
+    const folders = now.folders.map((one) => (one.id === folder.id ? { ...one, mark: mark ?? undefined } : one))
     void pass.updateVault(vault.id, { folders })
   })
 }

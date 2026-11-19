@@ -106,10 +106,7 @@ beforeEach(() => {
 describe('the applications', () => {
   test('are listed with where each runs and whether this device holds it', async () => {
     sessions.set('a1', session())
-    sessions.set(
-      'a2',
-      session({ holds: false, status: { is: 'held', holder: { by: 'Laptop', since: 1 } } }),
-    )
+    sessions.set('a2', session({ holds: false, status: { is: 'held', holder: { by: 'Laptop', since: 1 } } }))
     expect(await call({ op: 'list' })).toMatchObject({
       result: {
         applications: [
@@ -206,9 +203,9 @@ describe('the lock', () => {
       }),
     )
     expect(await call({ op: 'picture', tab: 'a1' })).toMatchObject({ code: 'failed' })
-    expect(
-      await call({ op: 'input', tab: 'a1', events: [{ type: 'key', key: 'a' }] }),
-    ).toMatchObject({ code: 'failed' })
+    expect(await call({ op: 'input', tab: 'a1', events: [{ type: 'key', key: 'a' }] })).toMatchObject({
+      code: 'failed',
+    })
   })
 })
 
@@ -220,9 +217,9 @@ describe('asked as #1072 decided', () => {
     expect(await call({ op: 'start', tab: 'a1' }, 'confirm')).toMatchObject({
       status: 'needs_approval',
     })
-    expect(
-      await call({ op: 'input', tab: 'a1', events: [{ type: 'key', key: 'Enter' }] }, 'confirm'),
-    ).toMatchObject({ status: 'needs_approval' })
+    expect(await call({ op: 'input', tab: 'a1', events: [{ type: 'key', key: 'Enter' }] }, 'confirm')).toMatchObject({
+      status: 'needs_approval',
+    })
     expect(asked.map((one) => one.args)).toMatchObject([
       { category: 'writing', summary: 'Start GIMP', site: 'application:/s/Work/GIMP.application' },
       { category: 'writing', summary: 'Use GIMP', site: 'application:/s/Work/GIMP.application' },

@@ -57,11 +57,7 @@ const PARSERS: Record<SourceId, Parser> = {
   csv: textOnly(parseCsv),
 }
 
-export function importFile(
-  source: SourceId,
-  name: string,
-  data: Uint8Array | Record<string, Uint8Array>,
-): Imported {
+export function importFile(source: SourceId, name: string, data: Uint8Array | Record<string, Uint8Array>): Imported {
   if (data instanceof Uint8Array) {
     if (needsZip(source, name)) throw new ImportError('Open the archive before reading it.')
     return PARSERS[source](textOf(data))
@@ -87,8 +83,7 @@ function jsonSource(text: string): SourceId | null {
   if (has('records') || has('shared_folders')) return 'keeper'
   if (Array.isArray(root.items)) {
     const first: unknown = root.items[0]
-    const item =
-      first !== null && typeof first === 'object' ? (first as Record<string, unknown>) : {}
+    const item = first !== null && typeof first === 'object' ? (first as Record<string, unknown>) : {}
     if ('template_type' in item || 'category' in item) return 'enpass'
     if ('login' in item || 'type' in item) return 'bitwarden'
   }
@@ -110,9 +105,7 @@ function csvSource(name: string, header: readonly string[]): SourceId | null {
   }
   if (all('type', 'name', 'url', 'email', 'username', 'password', 'vault')) return 'proton'
   if (all('title', 'url', 'username', 'password', 'otpauth')) {
-    return names.has('archived') || names.has('favorite') || names.has('tags')
-      ? 'onepassword'
-      : 'safari'
+    return names.has('archived') || names.has('favorite') || names.has('tags') ? 'onepassword' : 'safari'
   }
   if (all('cc_number') || all('account_holder') || all('place_of_issue')) return 'dashlane'
   if (all('name', 'url', 'username', 'password') && names.size <= 5) {
@@ -137,8 +130,7 @@ export function guessSource(name: string, text: string): SourceId | null {
   const body = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text
   const start = body.trimStart()
   if (start.includes('***5642bee8-a5ff-11dc-8314-0800200c9a66***')) return 'onepassword'
-  if (start.startsWith('<'))
-    return /<KeePassFile[\s>]/.test(start.slice(0, 4096)) ? 'keepass' : null
+  if (start.startsWith('<')) return /<KeePassFile[\s>]/.test(start.slice(0, 4096)) ? 'keepass' : null
   if (start.startsWith('-----BEGIN PGP')) return 'proton'
   if (start.startsWith('{') || start.startsWith('[')) return jsonSource(start)
   if (/^(Websites|Applications|Other Accounts|Notes)\s*$/m.test(start.slice(0, 200))) {

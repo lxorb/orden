@@ -21,9 +21,7 @@ function editorOn(doc: string): EditorView {
 }
 
 const drawn = (view: EditorView) =>
-  [...view.dom.querySelectorAll<HTMLElement>('.orden-table tbody tr[data-row]')].map((tr) =>
-    Number(tr.dataset.row),
-  )
+  [...view.dom.querySelectorAll<HTMLElement>('.orden-table tbody tr[data-row]')].map((tr) => Number(tr.dataset.row))
 
 describe('a long table', () => {
   const TABLE = tableOf(5000)
@@ -44,9 +42,7 @@ describe('a long table', () => {
     if (!table) throw new Error('no table drawn')
 
     expect(table.focusCell({ row: 4000, column: 1 }, 'end')).toBe(true)
-    expect(view.dom.querySelector('td[data-row="4000"][data-column="1"]')?.textContent).toBe(
-      's4000',
-    )
+    expect(view.dom.querySelector('td[data-row="4000"][data-column="1"]')?.textContent).toBe('s4000')
     expect(drawn(view).length).toBeLessThan(200)
   })
 
@@ -66,9 +62,7 @@ describe('a table taken off the page with a cell mid-edit', () => {
     const dom = widget.toDOM(view)
     document.body.append(dom)
 
-    const cell = [...dom.querySelectorAll<HTMLElement>('td')].find(
-      (one) => one.textContent === 'r1',
-    )
+    const cell = [...dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === 'r1')
     if (!cell) throw new Error('no cell holding r1')
     cell.focus()
     cell.textContent = 'r1 typed'

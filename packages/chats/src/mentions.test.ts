@@ -15,10 +15,7 @@ describe('mentions', () => {
   })
 
   it('takes the longest name that fits', () => {
-    expect(mentionsIn('@Lucile Martin and @Lucile', MEMBERS)).toEqual([
-      'user:martin',
-      'user:lucile',
-    ])
+    expect(mentionsIn('@Lucile Martin and @Lucile', MEMBERS)).toEqual(['user:martin', 'user:lucile'])
   })
 
   it('finds a person by their nickname in the space as by their name', () => {

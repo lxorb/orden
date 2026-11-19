@@ -18,10 +18,7 @@ import type { ChatMember, Hit, Scheduled } from './shapes'
 
 const chatPath = (chat: string) => `/v2/chats/${encodeURIComponent(chat)}`
 
-async function ask(
-  path: string,
-  options: { method?: string; body?: unknown } = {},
-): Promise<unknown> {
+async function ask(path: string, options: { method?: string; body?: unknown } = {}): Promise<unknown> {
   const token = account.token
   if (!token) return null
   try {
@@ -40,8 +37,7 @@ export const listChats = async (): Promise<ChatList | null> => chatListOf(await 
 export const makeChat = async (space: string): Promise<Pointer | null> =>
   chatOf(JSON.stringify(await ask('/v2/chats', { body: { space } })))
 
-export const moveChat = (chat: string, space: string) =>
-  answered(chatPath(chat), { method: 'PATCH', body: { space } })
+export const moveChat = (chat: string, space: string) => answered(chatPath(chat), { method: 'PATCH', body: { space } })
 
 export async function eventsOf(
   chat: string,
@@ -58,10 +54,7 @@ export async function stateOf(chat: string, before?: number): Promise<StatePage 
   return statePageOf(await ask(`${chatPath(chat)}/state${query}`))
 }
 
-export async function sendEvents(
-  chat: string,
-  events: readonly Event[],
-): Promise<Results | 'gone' | null> {
+export async function sendEvents(chat: string, events: readonly Event[]): Promise<Results | 'gone' | null> {
   try {
     return resultsOf(await ask(`${chatPath(chat)}/events`, { body: { events } }))
   } catch (error) {

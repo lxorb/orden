@@ -51,12 +51,8 @@ const { writeShortcut } = await import('@orden/scan/shortcut')
 const { callerOf } = await import('../../automation/src/api')
 const { noteBehind, protection } = await import('../../protect/src/api')
 const LOCKED = '/space/Finance/Bank.url'
-vi.spyOn(protection, 'agentsMay').mockImplementation(
-  (path) => !String(path).startsWith('/space/Finance'),
-)
-vi.spyOn(protection, 'locked').mockImplementation((path) =>
-  String(path).startsWith('/space/Finance'),
-)
+vi.spyOn(protection, 'agentsMay').mockImplementation((path) => !String(path).startsWith('/space/Finance'))
+vi.spyOn(protection, 'locked').mockImplementation((path) => String(path).startsWith('/space/Finance'))
 const { workspaceTabs } = await import('./tabs')
 const { answerTheCrate } = await import('./crate')
 

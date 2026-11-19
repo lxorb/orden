@@ -34,13 +34,7 @@ import {
   type Waiting,
 } from '../../sync-mirror/src/api'
 import type { HoldCheck } from '@orden/sync-core'
-import {
-  needPort,
-  providePort,
-  type SyncPairing,
-  type SyncWorkspacePort,
-  whenPortProvided,
-} from '@orden/contracts'
+import { needPort, providePort, type SyncPairing, type SyncWorkspacePort, whenPortProvided } from '@orden/contracts'
 import type { FileOp } from '../../file-ops/src/api'
 import { unixLines } from '../../documents/src/api'
 
@@ -623,9 +617,7 @@ class Sync {
   private notWritten(path: string) {
     if (this.toldUnwritten.has(path)) return
     this.toldUnwritten.add(path)
-    void import('../../sync-client/src/api').then(({ unsynced }) =>
-      unsynced.show(path.split(/[\\/]/).pop() ?? path),
-    )
+    void import('../../sync-client/src/api').then(({ unsynced }) => unsynced.show(path.split(/[\\/]/).pop() ?? path))
   }
 
   private noted(mirror: Mirror, began: number, failed: string | null) {
@@ -707,10 +699,7 @@ class Sync {
         .then((one) => one.papersCarrying())
         .then(({ carryNow, mirroredPages }) =>
           carryNow(
-            () =>
-              mirroredPages(Object.values(this.mirrors), workspace().spaces, (id) =>
-                this.reads(id),
-              ),
+            () => mirroredPages(Object.values(this.mirrors), workspace().spaces, (id) => this.reads(id)),
             (note, failed) =>
               record.wrote({
                 at: Date.now(),

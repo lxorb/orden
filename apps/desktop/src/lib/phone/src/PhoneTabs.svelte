@@ -33,9 +33,7 @@
 
   function go(tab: PhoneTab) {
     if (on === tab && workspace.panel === tab) {
-      document
-        .querySelector<HTMLElement>(`[data-panel="${tab}"]`)
-        ?.scrollTo({ top: 0, behavior: 'smooth' })
+      document.querySelector<HTMLElement>(`[data-panel="${tab}"]`)?.scrollTo({ top: 0, behavior: 'smooth' })
       return
     }
     workspace.showPanel(tab)
@@ -81,8 +79,7 @@
     display: flex;
     justify-content: space-around;
     padding: 0 max(var(--space-2), var(--inset-right))
-      max(var(--space-1), calc(var(--inset-bottom) - var(--keyboard, 0px)))
-      max(var(--space-2), var(--inset-left));
+      max(var(--space-1), calc(var(--inset-bottom) - var(--keyboard, 0px))) max(var(--space-2), var(--inset-left));
     background: var(--bg);
     box-shadow: inset 0 1px var(--line);
   }

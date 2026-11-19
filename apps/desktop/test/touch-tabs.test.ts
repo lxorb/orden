@@ -93,20 +93,17 @@ describe('a desktop', () => {
 })
 
 describe('a phone and a tablet', () => {
-  test.each(['phone', 'tablet'] as const)(
-    'keep every note that is opened, as tabs (%s)',
-    async (device) => {
-      viewport.device = device
+  test.each(['phone', 'tablet'] as const)('keep every note that is opened, as tabs (%s)', async (device) => {
+    viewport.device = device
 
-      await workspace.open('/space/One.md')
-      await workspace.open('/space/Two.md')
-      await workspace.open('/space/Three.md')
+    await workspace.open('/space/One.md')
+    await workspace.open('/space/Two.md')
+    await workspace.open('/space/Three.md')
 
-      expect(open()).toEqual(['One', 'Two', 'Three'])
-      expect(workspace.active?.shown).toBe('Three')
-      expect(workspace.closed.any).toBe(false)
-    },
-  )
+    expect(open()).toEqual(['One', 'Two', 'Three'])
+    expect(workspace.active?.shown).toBe('Three')
+    expect(workspace.closed.any).toBe(false)
+  })
 
   test('a note tapped in the list is a tab of its own, not a preview the next one replaces', async () => {
     viewport.device = 'phone'
@@ -140,8 +137,7 @@ describe('a phone and a tablet', () => {
     expect(workspace.active?.shown).toBe('One')
   })
 
-  const typed = (words: string) =>
-    workspace.active?.note.live.edit([{ from: 0, to: 0, insert: words }])
+  const typed = (words: string) => workspace.active?.note.live.edit([{ from: 0, to: 0, insert: words }])
 
   test.each([
     [
@@ -167,9 +163,7 @@ describe('a phone and a tablet', () => {
     typed('Shopping list\nmilk and eggs')
     await leave()
 
-    await vi.waitFor(() =>
-      expect(notes.get('/space/Shopping list.md')).toBe('Shopping list\nmilk and eggs'),
-    )
+    await vi.waitFor(() => expect(notes.get('/space/Shopping list.md')).toBe('Shopping list\nmilk and eggs'))
     expect(workspace.tabs.map((tab) => tab.path)).toContain('/space/Shopping list.md')
     expect(workspace.closed.any).toBe(false)
   })

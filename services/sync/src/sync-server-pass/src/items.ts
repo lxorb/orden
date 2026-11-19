@@ -13,15 +13,7 @@ import {
 import { activeIn, holdsSql, mayAct } from './access'
 import { filesGone, ITEM_FILES_GONE } from './files'
 import { type Sealed, sealedIn } from './item-body'
-import {
-  NO_SUCH_ITEM,
-  NO_SUCH_VAULT,
-  NOT_AN_ITEM,
-  NOT_YOUR_ROLE,
-  ROTATED,
-  STALE,
-  TOO_MANY_ITEMS,
-} from './refusals'
+import { NO_SUCH_ITEM, NO_SUCH_VAULT, NOT_AN_ITEM, NOT_YOUR_ROLE, ROTATED, STALE, TOO_MANY_ITEMS } from './refusals'
 import { ITEM_COLUMNS, type ItemDb, itemRowOf, versionOf, type VersionDb } from './rows'
 import { bump, SEQ } from './seq'
 import { fromOf, tellVault } from './tell'
@@ -32,21 +24,12 @@ const CURRENT_KEY = '(select key_version from pass_vaults where id = ?1 and dele
 const LIVE = '(select count(*) from pass_items where vault_id = ?1 and deleted_at is null)'
 
 export async function itemOf(env: Env, vault: string, id: string): Promise<ItemDb | null> {
-  return await env.DB.prepare(
-    `select ${ITEM_COLUMNS} from pass_items where vault_id = ? and id = ?`,
-  )
+  return await env.DB.prepare(`select ${ITEM_COLUMNS} from pass_items where vault_id = ? and id = ?`)
     .bind(vault, id)
     .first<ItemDb>()
 }
 
-function writeOf(
-  db: D1Database,
-  vault: string,
-  id: string,
-  sent: Sealed,
-  at: number,
-  email: string,
-) {
+function writeOf(db: D1Database, vault: string, id: string, sent: Sealed, at: number, email: string) {
   if (sent.rev === 0) {
     return db
       .prepare(
@@ -162,8 +145,7 @@ items.delete('/items/:vault/:id', async (context) => {
   if (!mayAct(held, 'editor')) return context.json({ error: NOT_YOUR_ROLE }, 403)
 
   const db = context.env.DB
-  const gone =
-    'exists (select 1 from pass_items where vault_id = ?1 and id = ?2 and deleted_at is not null)'
+  const gone = 'exists (select 1 from pass_items where vault_id = ?1 and id = ?2 and deleted_at is not null)'
   const results = await db.batch([
     bump(db),
     db
@@ -173,12 +155,8 @@ items.delete('/items/:vault/:id', async (context) => {
             and ${holdsSql('?1', '?5', 'editor')}`,
       )
       .bind(vault, id, rev, now(), user.email),
-    db
-      .prepare(`delete from pass_versions where vault_id = ?1 and id = ?2 and ${gone}`)
-      .bind(vault, id),
-    db
-      .prepare(`delete from pass_links where vault_id = ?1 and item_id = ?2 and ${gone}`)
-      .bind(vault, id),
+    db.prepare(`delete from pass_versions where vault_id = ?1 and id = ?2 and ${gone}`).bind(vault, id),
+    db.prepare(`delete from pass_links where vault_id = ?1 and item_id = ?2 and ${gone}`).bind(vault, id),
     ...filesGone(db, ITEM_FILES_GONE, [vault, id]),
   ])
   if (!results[1]?.meta.changes) {

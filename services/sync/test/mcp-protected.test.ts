@@ -43,9 +43,7 @@ afterEach(() => env.close())
 
 describe('an agent reaching the account', () => {
   test('cannot read what the reader protected', async () => {
-    expect(await tool('read_note', { space: 'Home', path: 'Diary/Today.md' })).toContain(
-      'is protected',
-    )
+    expect(await tool('read_note', { space: 'Home', path: 'Diary/Today.md' })).toContain('is protected')
     expect(await tool('read_note', { space: 'Home', path: 'Plans.md' })).toContain('Ship it')
   })
 
@@ -58,51 +56,40 @@ describe('an agent reaching the account', () => {
   })
 
   test('cannot write into it', async () => {
-    expect(
-      await tool('write_note', { space: 'Home', path: 'Diary/Today.md', content: 'gone' }),
-    ).toContain('is protected')
+    expect(await tool('write_note', { space: 'Home', path: 'Diary/Today.md', content: 'gone' })).toContain(
+      'is protected',
+    )
   })
 
   test('cannot write into it by another spelling of its folder', async () => {
-    expect(
-      await tool('write_note', { space: 'Home', path: 'diary/Planted.md', content: 'planted' }),
-    ).toContain('is protected')
-    expect(
-      await tool('write_note', { space: 'Home', path: 'DIARY/Planted.md', content: 'planted' }),
-    ).toContain('is protected')
+    expect(await tool('write_note', { space: 'Home', path: 'diary/Planted.md', content: 'planted' })).toContain(
+      'is protected',
+    )
+    expect(await tool('write_note', { space: 'Home', path: 'DIARY/Planted.md', content: 'planted' })).toContain(
+      'is protected',
+    )
   })
 
   test('cannot write into it by spelling it in other letters', async () => {
     for (const path of ['diary/New.md', 'DIARY/Today.md', 'D\u0131ary/New.md']) {
-      expect(await tool('write_note', { space: 'Home', path, content: 'planted' })).toContain(
-        'is protected',
-      )
+      expect(await tool('write_note', { space: 'Home', path, content: 'planted' })).toContain('is protected')
     }
     expect(await tool('list_notes', { space: 'Home' })).not.toMatch(/New\.md/i)
   })
 
   test('cannot reach into it through the to-do tools', async () => {
     const before = await tool('read_note', { space: 'Home', path: 'Plans.md' })
-    expect(await tool('update_task', { space: 'Home', id: 'abc', done: true })).toContain(
-      'There is no todo abc',
-    )
-    expect(await tool('query_base', { space: 'Home', path: 'Diary/Tasks.base' })).toContain(
-      'is protected',
-    )
-    expect(await tool('read_note', { space: 'Home', path: 'Diary/Today.md' })).toContain(
-      'is protected',
-    )
+    expect(await tool('update_task', { space: 'Home', id: 'abc', done: true })).toContain('There is no todo abc')
+    expect(await tool('query_base', { space: 'Home', path: 'Diary/Tasks.base' })).toContain('is protected')
+    expect(await tool('read_note', { space: 'Home', path: 'Diary/Today.md' })).toContain('is protected')
     expect(await tool('read_note', { space: 'Home', path: 'Plans.md' })).toBe(before)
   })
 })
 
 describe('an agent’s token on the routes a token may use', () => {
   const diaryId = () =>
-    (
-      env.db
-        .prepare("select id from notes where space_id = ? and path = 'Diary/Today.md'")
-        .get(home) as { id: string }
-    ).id
+    (env.db.prepare("select id from notes where space_id = ? and path = 'Diary/Today.md'").get(home) as { id: string })
+      .id
 
   test('reads nothing the reader protected, nor its versions', async () => {
     const id = diaryId()
@@ -115,11 +102,7 @@ describe('an agent’s token on the routes a token may use', () => {
   })
 
   test('is told of no change in it', async () => {
-    const answer = await call<{ notes: { path: string }[] }>(
-      env,
-      `/v1/spaces/${home}/changes?since=0`,
-      { token: key },
-    )
+    const answer = await call<{ notes: { path: string }[] }>(env, `/v1/spaces/${home}/changes?since=0`, { token: key })
     const paths = answer.json.notes.map((one) => one.path)
     expect(paths).toContain('Plans.md')
     expect(paths).not.toContain('Diary/Today.md')
@@ -140,9 +123,7 @@ describe('an agent’s token on the routes a token may use', () => {
     })
     expect(made.status).toBe(403)
 
-    const plans = (
-      env.db.prepare("select id from notes where path = 'Plans.md'").get() as { id: string }
-    ).id
+    const plans = (env.db.prepare("select id from notes where path = 'Plans.md'").get() as { id: string }).id
     const moved = await call(env, `/v1/notes/${plans}`, {
       method: 'PUT',
       token: key,
@@ -168,24 +149,18 @@ describe('an agent’s token on the routes a token may use', () => {
     })
     expect(into.status).toBe(403)
 
-    const plans = (
-      env.db.prepare("select id from notes where path = 'Plans.md'").get() as { id: string }
-    ).id
+    const plans = (env.db.prepare("select id from notes where path = 'Plans.md'").get() as { id: string }).id
     const moved = await call(env, `/v1/notes/${plans}`, {
       method: 'PUT',
       token: key,
       body: { path: 'diary/Plans.md', content: 'moved' },
     })
     expect(moved.status).toBe(403)
-    expect(await tool('write_note', { path: 'diary/Other.md', content: 'planted' })).not.toMatch(
-      /^(Wrote|Made|Saved)/,
+    expect(await tool('write_note', { path: 'diary/Other.md', content: 'planted' })).not.toMatch(/^(Wrote|Made|Saved)/)
+    const paths = (env.db.prepare('select path from notes where deleted = 0').all() as { path: string }[]).map(
+      (one) => one.path,
     )
-    const paths = (
-      env.db.prepare('select path from notes where deleted = 0').all() as { path: string }[]
-    ).map((one) => one.path)
-    expect(paths.filter((one) => one.toLowerCase().startsWith('diary/'))).toEqual([
-      'Diary/Today.md',
-    ])
+    expect(paths.filter((one) => one.toLowerCase().startsWith('diary/'))).toEqual(['Diary/Today.md'])
   })
 
   test('turns none of it back', async () => {

@@ -30,11 +30,7 @@ async function clearLater(digest: string, seconds: number, clipboard: Clipboard,
   await clipboard.write('').catch(() => undefined)
 }
 
-export async function copySecret(
-  text: string,
-  seconds: number,
-  clipboard: Clipboard = system,
-): Promise<void> {
+export async function copySecret(text: string, seconds: number, clipboard: Clipboard = system): Promise<void> {
   const copy = ++copies
   const digest = sha256Hex(text)
   copied = digest

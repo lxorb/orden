@@ -40,11 +40,7 @@ class Device {
   }
 }
 
-async function arrive(
-  made: NoteRoom,
-  state: FakeState,
-  note: { id: string; spaceId: string },
-): Promise<Device> {
+async function arrive(made: NoteRoom, state: FakeState, note: { id: string; spaceId: string }): Promise<Device> {
   const device = new Device(await join(made, note))
   await say(made, state, device.socket, syncStep1(device.doc))
   await settle(made, state, [device])
@@ -185,9 +181,7 @@ describe('a room', () => {
       await overwritten()
 
       const page = await call(env, `/v1/spaces/${spaceId}/changes?since=0`, { token })
-      const notes = (page.json.notes as { id: string; path: string }[]).filter(
-        (one) => one.path !== 'together.md',
-      )
+      const notes = (page.json.notes as { id: string; path: string }[]).filter((one) => one.path !== 'together.md')
 
       expect(notes).toHaveLength(1)
       expect(notes[0]?.path).toMatch(/^together \(from another device \d{4}-\d\d-\d\d\)\.md$/)
@@ -521,9 +515,7 @@ describe('a room', () => {
   })
 
   function versionsOf(id: string): { by: string }[] {
-    return env.db
-      .prepare('select by from note_versions where note_id = ? order by at desc')
-      .all(id) as { by: string }[]
+    return env.db.prepare('select by from note_versions where note_id = ? order by at desc').all(id) as { by: string }[]
   }
 
   function longAgo() {
@@ -631,10 +623,7 @@ describe('a room', () => {
     one.socket.take()
 
     const woken = new NoteRoom(state as unknown as DurableObjectState, env)
-    await woken.webSocketMessage(
-      one.socket as unknown as WebSocket,
-      syncStep1(one.doc).slice().buffer,
-    )
+    await woken.webSocketMessage(one.socket as unknown as WebSocket, syncStep1(one.doc).slice().buffer)
     await state.idle()
     await settle(woken, state, [one])
 
@@ -793,9 +782,9 @@ describe('a reader in a room', () => {
 
     await say(made, state, writer.socket, writer.type(11, 'typed here\n'))
     await made.alarm()
-    const kept = env.db
-      .prepare('select by from note_versions where note_id = ? order by at desc')
-      .all(noteId) as { by: string }[]
+    const kept = env.db.prepare('select by from note_versions where note_id = ? order by at desc').all(noteId) as {
+      by: string
+    }[]
     expect(kept[0]?.by).toBe('Ada Mac')
   })
 
@@ -831,9 +820,7 @@ describe('a reader in a room', () => {
     reader.awareness.setLocalStateField('who', { name: 'Ada' })
     await say(made, state, reader.socket, awarenessUpdate(reader.awareness, [reader.doc.clientID]))
     await settle(made, state, [writer, reader])
-    expect((reader.socket.deserializeAttachment() as { clients: number[] }).clients).toContain(
-      reader.doc.clientID,
-    )
+    expect((reader.socket.deserializeAttachment() as { clients: number[] }).clients).toContain(reader.doc.clientID)
 
     reader.awareness.setLocalState(null)
     await say(made, state, reader.socket, awarenessUpdate(reader.awareness, [reader.doc.clientID]))
@@ -924,9 +911,7 @@ describe('the door to a room', () => {
     const hash = await sha256(token)
     expect(await told('laptop')).toBe(`session:${hash.slice(0, 16)}`)
 
-    const session = env.db
-      .prepare('select id, user_id from sessions where token_hash = ?')
-      .get(hash) as {
+    const session = env.db.prepare('select id, user_id from sessions where token_hash = ?').get(hash) as {
       id: string
       user_id: string
     }
@@ -946,8 +931,7 @@ describe('the door to a room', () => {
     env = testEnv({ ROOMS: door.ROOMS })
 
     const owner = await signIn(env, 'owner@example.com')
-    const spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } })).json
-      .space.id
+    const spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } })).json.space.id
     const noteId = (
       await call(env, `/v1/spaces/${spaceId}/notes`, {
         token: owner,
@@ -1089,8 +1073,7 @@ describe('the door to a room', () => {
       env = testEnv({ ROOMS: door.ROOMS })
 
       const owner = await signIn(env, 'owner@example.com')
-      const spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } }))
-        .json.space.id
+      const spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } })).json.space.id
       const noteId = (
         await call(env, `/v1/spaces/${spaceId}/notes`, {
           token: owner,
@@ -1108,9 +1091,9 @@ describe('the door to a room', () => {
         body: { email, role: item },
       })
 
-      expect(
-        env.db.prepare('select count(*) as held from space_members where email = ?').get(email),
-      ).toEqual({ held: 2 })
+      expect(env.db.prepare('select count(*) as held from space_members where email = ?').get(email)).toEqual({
+        held: 2,
+      })
 
       const said = `${space} of the space, ${item} of the file`
       const answer = await call(env, `/rooms/${noteId}`, {
@@ -1133,8 +1116,7 @@ describe('the door to a room', () => {
     env = testEnv({ ROOMS: door.ROOMS })
 
     const owner = await signIn(env, 'owner@example.com')
-    const spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } })).json
-      .space.id
+    const spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Notes' } })).json.space.id
 
     const notes: string[] = []
     for (let made = 0; made < 8; made++) {
@@ -1291,9 +1273,7 @@ describe('a canvas in a room', () => {
 
     const past: Canvas = {
       ...DRAWN,
-      nodes: [
-        { id: 'card', type: 'text', x: 0, y: 0, width: 250, height: 60, text: 'written past' },
-      ],
+      nodes: [{ id: 'card', type: 'text', x: 0, y: 0, width: 250, height: 60, text: 'written past' }],
       at: { ...DRAWN.at, card: 2000 },
     }
     const pushed = await call(env, `/v1/notes/${noteId}`, {
@@ -1333,11 +1313,7 @@ describe('a canvas in a room', () => {
     await drain(made, state, [one, two])
 
     for (const device of [one, two]) {
-      expect(device.canvas.ink.map((stroke) => stroke.id)).toEqual([
-        'first',
-        'from-one',
-        'from-two',
-      ])
+      expect(device.canvas.ink.map((stroke) => stroke.id)).toEqual(['first', 'from-one', 'from-two'])
     }
   })
 
@@ -1378,10 +1354,7 @@ describe('a canvas in a room', () => {
 
     const read = await call(env, `/v1/notes/${noteId}`, { token })
     expect(read.json.content).toBe(writeCanvas(one.canvas))
-    expect(readCanvas(read.json.content).ink.map((stroke) => stroke.id)).toEqual([
-      'first',
-      'settled',
-    ])
+    expect(readCanvas(read.json.content).ink.map((stroke) => stroke.id)).toEqual(['first', 'settled'])
     expect(read.json.note.version).toBe(2)
   })
 
@@ -1412,10 +1385,7 @@ describe('a canvas in a room', () => {
 
     await made.alarm()
     const read = await call(env, `/v1/notes/${noteId}`, { token })
-    expect(readCanvas(read.json.content).ink.map((stroke) => stroke.id)).toEqual([
-      'first',
-      'theirs',
-    ])
+    expect(readCanvas(read.json.content).ink.map((stroke) => stroke.id)).toEqual(['first', 'theirs'])
   })
 
   test('folds the pile of strokes into one snapshot', async () => {
@@ -1487,8 +1457,7 @@ describe('somebody who stops being in the space while the file is open', () => {
     env.ROOMS = live.ROOMS
 
     owner = await signIn(env, 'owner@example.com')
-    spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json.space
-      .id
+    spaceId = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Plans' } })).json.space.id
     noteId = (
       await call(env, `/v1/spaces/${spaceId}/notes`, {
         token: owner,
@@ -1514,9 +1483,7 @@ describe('somebody who stops being in the space while the file is open', () => {
   test('is written down as having it open, and not once they have closed it', async () => {
     const socket = await open(writerId)
 
-    const held = env.db
-      .prepare('select space_id, who from room_sockets where note_id = ?')
-      .all(noteId)
+    const held = env.db.prepare('select space_id, who from room_sockets where note_id = ?').all(noteId)
     expect(held).toEqual([{ space_id: spaceId, who: writerId }])
 
     const { room: made } = live.of(noteId)
@@ -1599,9 +1566,7 @@ describe('somebody who stops being in the space while the file is open', () => {
       const socket = await open(writerId)
       await live.of(noteId).state.idle()
       expect(socket.closed).toBe(false)
-      expect(env.db.prepare('select who from room_sockets where note_id = ?').all(noteId)).toEqual([
-        { who: writerId },
-      ])
+      expect(env.db.prepare('select who from room_sockets where note_id = ?').all(noteId)).toEqual([{ who: writerId }])
     } finally {
       env.DB.prepare = prepare
     }
@@ -1633,9 +1598,7 @@ describe('somebody who stops being in the space while the file is open', () => {
     const phone = await open(writerId)
     env.DB.prepare = prepare
     expect(phone.closed).toBe(false)
-    expect(env.db.prepare('select who from room_sockets where note_id = ?').all(noteId)).toEqual([
-      { who: writerId },
-    ])
+    expect(env.db.prepare('select who from room_sockets where note_id = ?').all(noteId)).toEqual([{ who: writerId }])
   })
 
   async function signedIn(token: string, who: string): Promise<FakeSocket> {
@@ -1671,9 +1634,7 @@ describe('somebody who stops being in the space while the file is open', () => {
 
   test('has the socket closed within a minute where no revocation reached it', async () => {
     const socket = await signedIn(writer, writerId)
-    env.db
-      .prepare('delete from space_members where space_id = ? and email = ?')
-      .run(spaceId, WRITER)
+    env.db.prepare('delete from space_members where space_id = ? and email = ?').run(spaceId, WRITER)
     await aMinuteLater(() => typeInto(socket))
     expect(socket.closed).toBe(true)
     expect(socket.closedWith?.code).toBe(1008)
@@ -1681,9 +1642,7 @@ describe('somebody who stops being in the space while the file is open', () => {
 
   test('has the socket made a reader within a minute where no revocation reached it', async () => {
     const socket = await signedIn(writer, writerId)
-    env.db
-      .prepare("update space_members set role = 'read' where space_id = ? and email = ?")
-      .run(spaceId, WRITER)
+    env.db.prepare("update space_members set role = 'read' where space_id = ? and email = ?").run(spaceId, WRITER)
     await aMinuteLater(async () => {
       await typeInto(socket)
       await live.of(noteId).room.alarm()
@@ -1696,9 +1655,7 @@ describe('somebody who stops being in the space while the file is open', () => {
 
   test('has the socket closed when they are taken out during its handshake', async () => {
     env.justBefore(/insert into room_sockets/, () => {
-      env.db
-        .prepare('delete from space_members where space_id = ? and email = ?')
-        .run(spaceId, WRITER)
+      env.db.prepare('delete from space_members where space_id = ? and email = ?').run(spaceId, WRITER)
     })
 
     const socket = await signedIn(writer, writerId)
@@ -1711,9 +1668,7 @@ describe('somebody who stops being in the space while the file is open', () => {
 
   test('has the socket made a reader when the role drops during its handshake', async () => {
     env.justBefore(/insert into room_sockets/, () => {
-      env.db
-        .prepare("update space_members set role = 'read' where space_id = ? and email = ?")
-        .run(spaceId, WRITER)
+      env.db.prepare("update space_members set role = 'read' where space_id = ? and email = ?").run(spaceId, WRITER)
     })
 
     const socket = await signedIn(writer, writerId)
@@ -1966,9 +1921,7 @@ describe('somebody who stops being in the space while the file is open', () => {
     const theirs = await open(ownerId)
     const socket = await open(writerId)
 
-    expect(
-      (await call(env, `/v1/spaces/${spaceId}`, { method: 'DELETE', token: owner })).status,
-    ).toBe(200)
+    expect((await call(env, `/v1/spaces/${spaceId}`, { method: 'DELETE', token: owner })).status).toBe(200)
 
     expect(socket.closed).toBe(true)
     expect(socket.closedWith?.code).toBe(1008)
@@ -1981,9 +1934,7 @@ describe('somebody who stops being in the space while the file is open', () => {
     const theirs = await signedIn(owner, ownerId)
     const socket = await signedIn(writer, writerId)
 
-    expect(
-      (await call(env, `/v1/spaces/${spaceId}`, { method: 'DELETE', token: owner })).status,
-    ).toBe(200)
+    expect((await call(env, `/v1/spaces/${spaceId}`, { method: 'DELETE', token: owner })).status).toBe(200)
 
     expect(socket.closedWith?.code).toBe(1008)
     expect(theirs.closedWith?.code).toBe(1008)
@@ -2014,9 +1965,7 @@ describe('somebody who stops being in the space while the file is open', () => {
   test('and when a request to read is let in over a membership to write', async () => {
     const socket = await open(writerId)
     env.db
-      .prepare(
-        "insert into space_requests (space_id, email, item, role, created_at) values (?, ?, '', 'read', 1)",
-      )
+      .prepare("insert into space_requests (space_id, email, item, role, created_at) values (?, ?, '', 'read', 1)")
       .run(spaceId, WRITER)
 
     await call(env, `/v1/spaces/${spaceId}/share/requests/${WRITER}`, {
@@ -2064,8 +2013,7 @@ describe('a room that is not answering', () => {
     env = testEnv({ ROOMS: door.ROOMS })
 
     const token = await signIn(env, 'owner@example.com')
-    const spaceId = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space
-      .id
+    const spaceId = (await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })).json.space.id
     const noteId = (
       await call(env, `/v1/spaces/${spaceId}/notes`, {
         token,
@@ -2164,9 +2112,7 @@ describe('a room that could not be opened', () => {
     env = testEnv({ NOTES: store.NOTES })
     const { room: made } = room(env)
 
-    await expect(join(made, { id: 'n1', spaceId: 's1', who: 'u1' })).rejects.toThrow(
-      'not answering',
-    )
+    await expect(join(made, { id: 'n1', spaceId: 's1', who: 'u1' })).rejects.toThrow('not answering')
 
     store.well()
     const socket = await join(made, { id: 'n1', spaceId: 's1', who: 'u1' })
@@ -2387,9 +2333,7 @@ describe('a file that changed which kind of room it is', () => {
 
     expect(await contentOf(noteId)).toBe('# Kept\nevery word\n')
     expect(lines).toHaveLength(1)
-    expect(String((JSON.parse(lines[0] ?? '{}') as { said?: unknown }).said)).toContain(
-      'never held',
-    )
+    expect(String((JSON.parse(lines[0] ?? '{}') as { said?: unknown }).said)).toContain('never held')
   })
 
   test('still lets a note somebody emptied become empty', async () => {
@@ -2445,8 +2389,7 @@ describe('a room whose document has reached its ceiling', () => {
     const { room: made, state } = room(env)
     const one = await arrive(made, state, { id: noteId, spaceId })
 
-    const content = (): Promise<string> =>
-      call(env, `/v1/notes/${noteId}`, { token }).then((read) => read.json.content)
+    const content = (): Promise<string> => call(env, `/v1/notes/${noteId}`, { token }).then((read) => read.json.content)
 
     await say(made, state, one.socket, one.type(0, 'x'.repeat(MOST_DOCUMENT_BYTES)))
     const held = await content()

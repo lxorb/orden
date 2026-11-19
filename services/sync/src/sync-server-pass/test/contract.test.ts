@@ -22,8 +22,7 @@ describe('erasing an account', () => {
 })
 
 describe('vault access', () => {
-  const held = (role: string) =>
-    ({ role, deleted_at: null }) as unknown as Parameters<typeof mayAct>[0]
+  const held = (role: string) => ({ role, deleted_at: null }) as unknown as Parameters<typeof mayAct>[0]
 
   test('an owner may do anything, an editor may edit, a viewer may only view', () => {
     expect(mayAct(held('owner'), 'owner')).toBe(true)

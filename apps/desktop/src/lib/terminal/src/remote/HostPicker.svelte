@@ -77,9 +77,7 @@
     })
   })
 
-  const relative = $derived(
-    new Intl.RelativeTimeFormat(region(), { style: 'narrow', numeric: 'auto' }),
-  )
+  const relative = $derived(new Intl.RelativeTimeFormat(region(), { style: 'narrow', numeric: 'auto' }))
 
   function ago(at: number): string {
     const step = relativeStep(Date.now() - at)
@@ -105,11 +103,7 @@
 
 {#if typing}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div
-    class="orden-scrim"
-    transition:fade={{ duration: LAYER.fade }}
-    onclick={() => hostPicker.dismiss()}
-  ></div>
+  <div class="orden-scrim" transition:fade={{ duration: LAYER.fade }} onclick={() => hostPicker.dismiss()}></div>
 
   <div
     class="orden-screen is-centred is-steady picker"
@@ -128,10 +122,8 @@
       {#if parted && !typed}<hr />{/if}
       {#if head && !typed}
         <p class="head" role="none" oncontextmenu={(event) => aboutGroup(event, head)}>
-          <span>{head}</span><button
-            class="all"
-            tabindex="-1"
-            onclick={() => hostPicker.chooseGroup(head)}>Open all</button
+          <span>{head}</span><button class="all" tabindex="-1" onclick={() => hostPicker.chooseGroup(head)}
+            >Open all</button
           >
         </p>
       {/if}
@@ -143,27 +135,18 @@
         oncontextmenu={(event) => about(event, host)}
         use:longPress={(event) => about(event, host)}
       >
-        <SpacePlace place={at} {typed} held={typing.held}
-          ><HostMark colour={host.colour} /></SpacePlace
-        >
+        <SpacePlace place={at} {typed} held={typing.held}><HostMark colour={host.colour} /></SpacePlace>
         <span class="orden-row-label"
           >{#each isNumber(typed) ? [{ text: host.name, hit: false }] : pieces(host.name, typed) as piece, index (index)}{#if piece.hit}<b
                 >{piece.text}</b
-              >{:else}{piece.text}{/if}{/each}{#if host.detail}<span class="detail"
-              >{host.detail}</span
-            >{/if}</span
+              >{:else}{piece.text}{/if}{/each}{#if host.detail}<span class="detail">{host.detail}</span>{/if}</span
         >
         {#if host.last !== null}<span class="orden-row-meta">{ago(host.last)}</span>{/if}
       </button>
     {/each}
 
     {#if offer}
-      <button
-        class="orden-row"
-        role="menuitem"
-        bind:this={offerButton}
-        onclick={() => hostPicker.connect(offer)}
-      >
+      <button class="orden-row" role="menuitem" bind:this={offerButton} onclick={() => hostPicker.connect(offer)}>
         <HostMark />
         <span class="orden-row-label">{said(offer)}</span>
       </button>
@@ -182,8 +165,8 @@
   .picker {
     --screen-width: var(--screen-sheet);
     --screen-height: calc(
-      var(--rows) * var(--row-height) + var(--heads) * (var(--row-height-sm) + var(--space-2)) +
-        var(--parts) * (2 * var(--space-1) + 1px) + 2 * var(--space-1) + 2px
+      var(--rows) * var(--row-height) + var(--heads) * (var(--row-height-sm) + var(--space-2)) + var(--parts) *
+        (2 * var(--space-1) + 1px) + 2 * var(--space-1) + 2px
     );
     z-index: var(--z-sheet);
     padding: var(--space-1);

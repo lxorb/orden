@@ -1,14 +1,6 @@
 <script lang="ts">
   import { domainNotice } from './domain-status'
-  import {
-    localDate,
-    shownName,
-    nameOf,
-    isDesktop,
-    openExternal,
-    dur,
-    slide,
-  } from '../../platform/src/api'
+  import { localDate, shownName, nameOf, isDesktop, openExternal, dur, slide } from '../../platform/src/api'
   import { publish } from './publishing.svelte'
   import { segmented, Facts, viewport } from '../../ui-kit/src/api'
   import { Select, Sheet } from '../../ui-controls/src/api'
@@ -94,9 +86,7 @@
   const changes = $derived(publish.changes)
 
   const everything = $derived(
-    publish.rules.otherwise === 'all' &&
-      !publish.rules.exclude.length &&
-      !publish.rules.include.length,
+    publish.rules.otherwise === 'all' && !publish.rules.exclude.length && !publish.rules.include.length,
   )
 
   let markBox = $state<HTMLElement | null>(null)
@@ -119,11 +109,7 @@
   })
 </script>
 
-<Sheet
-  open={publish.open}
-  title="Publish {publish.space?.name ?? ''}"
-  onclose={() => publish.close()}
->
+<Sheet open={publish.open} title="Publish {publish.space?.name ?? ''}" onclose={() => publish.close()}>
   {#snippet mark()}
     <SpaceMark id={publish.space?.id ?? null} name={publish.space?.name ?? ''} />
   {/snippet}
@@ -146,9 +132,7 @@
     <input data-lands type="checkbox" bind:checked={publish.confirmed} disabled={published} />
     <span>
       <strong>
-        {everything
-          ? 'Everything in this space becomes public.'
-          : 'The folders you choose become public.'}
+        {everything ? 'Everything in this space becomes public.' : 'The folders you choose become public.'}
       </strong>
       Anyone with the address can read what is published, drafts included.
     </span>
@@ -350,12 +334,7 @@
     <div class="card">
       <label class="row">
         <span class="name">Description</span>
-        <input
-          class="field wide"
-          bind:value={publish.description}
-          placeholder="What this site is"
-          spellcheck="false"
-        />
+        <input class="field wide" bind:value={publish.description} placeholder="What this site is" spellcheck="false" />
       </label>
       <div class="row">
         <span class="name">Tab icon</span>
@@ -414,9 +393,7 @@
       {/if}
     </div>
 
-    <p class="hint">
-      The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.
-    </p>
+    <p class="hint">The reader’s visit goes to whoever serves that script. Nothing is sent when it is empty.</p>
 
     <h3>Password</h3>
 
@@ -434,11 +411,7 @@
         />
       </label>
       {#if publish.hasPassword}
-        <button
-          class="orden-action is-danger"
-          disabled={publish.busy}
-          onclick={() => void publish.removePassword()}
-        >
+        <button class="orden-action is-danger" disabled={publish.busy} onclick={() => void publish.removePassword()}>
           Remove the password
         </button>
       {/if}
@@ -473,11 +446,7 @@
               <small>{when(one.at)}</small>
             </span>
             <span class="said">
-              <Facts
-                parts={Object.entries(one.answers).map(
-                  ([question, said]) => `${question}: ${said}`,
-                )}
-              />
+              <Facts parts={Object.entries(one.answers).map(([question, said]) => `${question}: ${said}`)} />
             </span>
             <button class="orden-chip" onclick={() => void publish.forget(one)}>Delete</button>
           </div>
@@ -490,9 +459,7 @@
     {/if}
 
     <div class="card">
-      <button class="orden-action is-danger" onclick={() => void publish.unpublish()}>
-        Stop publishing
-      </button>
+      <button class="orden-action is-danger" onclick={() => void publish.unpublish()}> Stop publishing </button>
     </div>
   {/if}
 </Sheet>

@@ -1,21 +1,7 @@
 import type { PictureResolver } from '@orden/markdown'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import {
-  decodeTarget,
-  embedKind,
-  embedSize,
-  encodeTarget,
-  type FoundLink,
-  findLinks,
-} from '@orden/markdown/links'
-import {
-  assetUrl,
-  folderOf,
-  imagePath,
-  imageUrl,
-  isRemote,
-  relativePath,
-} from '../../platform/src/api'
+import { decodeTarget, embedKind, embedSize, encodeTarget, type FoundLink, findLinks } from '@orden/markdown/links'
+import { assetUrl, folderOf, imagePath, imageUrl, isRemote, relativePath } from '../../platform/src/api'
 import { links } from './links.svelte'
 
 function fileNamed(src: string, notePath: string | null): string | null {
@@ -23,12 +9,7 @@ function fileNamed(src: string, notePath: string | null): string | null {
   return links.fileFor(src, notePath) ?? (read === src ? null : links.fileFor(read, notePath))
 }
 
-export function picturePath(
-  src: string,
-  notePath: string | null,
-  source: string,
-  wikilink = false,
-): string | null {
+export function picturePath(src: string, notePath: string | null, source: string, wikilink = false): string | null {
   if (isRemote(src)) return null
   const held = heldAlready(src)
   if (held !== null) return held
@@ -39,12 +20,7 @@ export function picturePath(
   return fileNamed(src, notePath)
 }
 
-export function notePicture(
-  src: string,
-  notePath: string | null,
-  source: string,
-  wikilink = false,
-): string {
+export function notePicture(src: string, notePath: string | null, source: string, wikilink = false): string {
   const found = picturePath(src, notePath, source, wikilink)
   return found ? assetUrl(found) : imageUrl(src, notePath, source, links.topOf(notePath))
 }
@@ -57,12 +33,7 @@ function heldAlready(src: string): string | null {
 const ABSOLUTE = /^(?:[a-z]:[\\/]|[\\/])/i
 
 export const picturesOf =
-  (
-    notePath: string | null,
-    source: string,
-    finish: (path: string) => string,
-    every = false,
-  ): PictureResolver =>
+  (notePath: string | null, source: string, finish: (path: string) => string, every = false): PictureResolver =>
   (src, wikilink, from) => {
     if (!every && !wikilink && from?.path === undefined) return null
     const found = from?.path
@@ -103,8 +74,7 @@ export function picturesWrittenOut(source: string, notePath: string | null): str
     const found = picturePath(link.target, notePath, source, link.kind === 'wikilink')
     if (found === null) continue
     const to = pictureBeside(notePath)(found)
-    const [from, end] =
-      link.kind === 'wikilink' ? [link.from, link.to] : [link.targetFrom, link.targetTo]
+    const [from, end] = link.kind === 'wikilink' ? [link.from, link.to] : [link.targetFrom, link.targetTo]
     out = out.slice(0, from) + pictureWritten(link, to) + out.slice(end)
   }
   return out

@@ -14,8 +14,7 @@ describe.each([`${ROOT}/Work (# Name clash 2026-11-15 abc1234 #)`, `${ROOT}/Work
   (copy) => {
     beforeEach(() => {
       localStorage.clear()
-      for (const key of Object.keys(protection.ways(ROOT)))
-        protection.set(ROOT, `${ROOT}/${key}`, null)
+      for (const key of Object.keys(protection.ways(ROOT))) protection.set(ROOT, `${ROOT}/${key}`, null)
       protection.set(ROOT, `${ORIGINAL}/Secret.md`, 'password')
     })
 

@@ -36,8 +36,7 @@
   async function handOn(from: HTMLElement, left = 8) {
     await tick()
     const lost = !from.isConnected || from.closest('[inert]') !== null
-    if (!lost || (document.activeElement !== document.body && document.activeElement !== from))
-      return
+    if (!lost || (document.activeElement !== document.body && document.activeElement !== from)) return
     const other = [...document.querySelectorAll<HTMLElement>(`[data-side-toggle="${side}"]`)].find(
       (one) => one !== from && one.isConnected && one.closest('[inert]') === null,
     )

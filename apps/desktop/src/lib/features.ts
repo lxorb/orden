@@ -145,10 +145,7 @@ whenPortProvided('workspace.view', (view) =>
   }),
 )
 registerCommand('app.quick-question', async () => (await import('./ai-chat/src/api')).askQuickly)
-registerCommand(
-  'app.scratchpad',
-  async () => (await import('./scratchpad/src/api')).toggleScratchpad,
-)
+registerCommand('app.scratchpad', async () => (await import('./scratchpad/src/api')).toggleScratchpad)
 for (const row of ['random-note', 'print']) {
   registerCommand(`app.${row}`, async () => {
     const { runRow } = await import('./commands/src/api')
@@ -228,10 +225,7 @@ if (!__EVEN_PLUGIN__) {
     'app.ask-selection',
     async () => (await (await import('./ai-chat/src/api')).chatQuoting()).quoteSelection,
   )
-  registerCommand(
-    'agents.stop',
-    async () => (await (await import('./agents/src/api')).agentsUi()).stopAgents,
-  )
+  registerCommand('agents.stop', async () => (await (await import('./agents/src/api')).agentsUi()).stopAgents)
   registerCommand('app.explorer', async () => (await import('./explorer/src/api')).openExplorer)
   registerCommand('app.handwriting', async () => {
     const { handwrite } = await (await import('./canvas/src/api')).handwriting()
@@ -242,15 +236,11 @@ if (!__EVEN_PLUGIN__) {
     show: async (path) => (await import('./explorer/src/api')).showInExplorer(path),
   })
   providePort('explorer.carry', {
-    carry: async (paths, into, how) =>
-      (await import('./explorer/src/api')).carry(null, paths, into, how),
+    carry: async (paths, into, how) => (await import('./explorer/src/api')).carry(null, paths, into, how),
   })
   providePort('web.sites', {
     dropped: async (folder, list, html) => {
-      const [{ siteDropped }, { workspace }] = await Promise.all([
-        siteDropping(),
-        import('./workspace/src/api'),
-      ])
+      const [{ siteDropped }, { workspace }] = await Promise.all([siteDropping(), import('./workspace/src/api')])
       return siteDropped(workspace, folder, list, html)
     },
     showData: async (path) => (await webDataSheet()).showWebData(path),
@@ -264,10 +254,7 @@ if (!__EVEN_PLUGIN__) {
   })
   registerCommands('pass.', async () => (await import('./pass-sync/src/api')).passCommands)
   registerCommands('terminal.', async () => (await import('./terminal/src/api')).terminalCommands)
-  registerCommand(
-    'ai.tab',
-    async () => (await (await import('./ai-chat/src/api')).chatReveal()).newChatTab,
-  )
+  registerCommand('ai.tab', async () => (await (await import('./ai-chat/src/api')).chatReveal()).newChatTab)
   registerCommand('ai.threads', async () => {
     const { chat } = await (await import('./ai-chat/src/api')).chatStore()
     return () => chat.showThreads()
@@ -285,17 +272,12 @@ if (!__EVEN_PLUGIN__) {
   registerAgentVerbs(async () => (await import('./explorer/src/api')).explorerVerbs())
   registerAgentVerbs(async () => (await import('./apps/src/api')).applicationVerbs())
   registerAgentVerbs(async () => (await import('./chats-client/src/api')).chatVerbs())
-  registerAgentVerbs(
-    async () => (await (await import('./terminal/src/api')).terminalAgent()).terminalVerbs,
-  )
+  registerAgentVerbs(async () => (await (await import('./terminal/src/api')).terminalAgent()).terminalVerbs)
   registerAgentTabKind(
     'terminal',
     async () => (await (await import('./terminal/src/api')).terminalAgent()).terminalTabs,
   )
-  registerAgentTabKind(
-    'online',
-    async () => (await (await import('./terminal/src/api')).terminalAgent()).onlineTabs,
-  )
+  registerAgentTabKind('online', async () => (await (await import('./terminal/src/api')).terminalAgent()).onlineTabs)
   registerSettingsPart({
     section: 'import',
     card: true,
@@ -313,16 +295,12 @@ export async function warmDoors(): Promise<void> {
     () => findBar(),
     () => searchPanel(),
     () => linksPanel(),
-    __EVEN_PLUGIN__
-      ? undefined
-      : () => import('./native-menu/src/api').then((one) => one.appMenuRows()),
+    __EVEN_PLUGIN__ ? undefined : () => import('./native-menu/src/api').then((one) => one.appMenuRows()),
     () => readingSurface(),
     () => loadFind(),
     () => loadLineCommands(),
     () =>
-      Promise.all([import('./commands/src/api'), commandRowsLoaded()]).then(([{ blockRows }]) =>
-        setBlocks(blockRows),
-      ),
+      Promise.all([import('./commands/src/api'), commandRowsLoaded()]).then(([{ blockRows }]) => setBlocks(blockRows)),
     () => spacePickerDialog.ask(),
     () => spacesMenu(),
     () => paletteDoor.ask(),
@@ -332,18 +310,14 @@ export async function warmDoors(): Promise<void> {
     () => signInSheet.ask(),
     () => joinSheet.ask(),
     __EVEN_PLUGIN__ ? undefined : () => undoToastNotice.ask(),
-    __EVEN_PLUGIN__
-      ? undefined
-      : () => import('./context-menu/src/api').then((one) => one.loadFieldMenu()),
+    __EVEN_PLUGIN__ ? undefined : () => import('./context-menu/src/api').then((one) => one.loadFieldMenu()),
     () => import('./ai-providers/src/api'),
     () => import('./tab-strip/src/api').then((one) => one.tabMenus()),
     () => import('./tab-strip/src/api').then((one) => one.stripMenus()),
     () => import('./row-menu/src/api').then((one) => one.rowMenus()),
     () => import('./editor-menu/src/api'),
     () => import('./tab-cycle/src/api'),
-    __EVEN_PLUGIN__
-      ? undefined
-      : () => import('./tab-strip/src/api').then((one) => one.tabNumbers()),
+    __EVEN_PLUGIN__ ? undefined : () => import('./tab-strip/src/api').then((one) => one.tabNumbers()),
     __EVEN_PLUGIN__ ? undefined : () => paneMoves().then((one) => one.followPointer()),
     __EVEN_PLUGIN__ ? undefined : () => fillBar(),
     previewCards,
@@ -352,14 +326,12 @@ export async function warmDoors(): Promise<void> {
     __EVEN_PLUGIN__
       ? undefined
       : () =>
-          Promise.all([import('./first-screen/src/api'), import('./workspace/src/api')]).then(
-            ([one, { workspace }]) => one.keepFirstScreens(workspace),
+          Promise.all([import('./first-screen/src/api'), import('./workspace/src/api')]).then(([one, { workspace }]) =>
+            one.keepFirstScreens(workspace),
           ),
     () => reloadWhen(),
     () => import('./ui-controls/src/api').then((one) => one.watchKeyboard()),
-    __EVEN_PLUGIN__
-      ? undefined
-      : () => import('./back-swipe/src/api').then((one) => one.listenSwipes()),
+    __EVEN_PLUGIN__ ? undefined : () => import('./back-swipe/src/api').then((one) => one.listenSwipes()),
   ])
 }
 

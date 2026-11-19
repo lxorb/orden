@@ -88,8 +88,7 @@ function held(key: string): Promise<boolean> {
 function windowsPty(): { backend: 'conpty'; buildNumber: number } | undefined {
   if (platform() !== 'windows') return undefined
 
-  const os = (window as { __TAURI_OS_PLUGIN_INTERNALS__?: { version?: string } })
-    .__TAURI_OS_PLUGIN_INTERNALS__
+  const os = (window as { __TAURI_OS_PLUGIN_INTERNALS__?: { version?: string } }).__TAURI_OS_PLUGIN_INTERNALS__
   const build = Number(os?.version?.split('.')[2])
   return { backend: 'conpty', buildNumber: Number.isFinite(build) ? build : 22000 }
 }
@@ -98,9 +97,7 @@ function commandOf(event: KeyboardEvent): string | null {
   const chord = event.ctrlKey || event.metaKey || event.altKey || /^F\d+$/.test(event.key)
   if (!chord) return null
 
-  const found = SHORTCUTS.find(
-    (entry) => entry.scope === 'app' && entry.run && shortcuts.pressed(entry.id, event),
-  )
+  const found = SHORTCUTS.find((entry) => entry.scope === 'app' && entry.run && shortcuts.pressed(entry.id, event))
   return found?.id ?? null
 }
 
@@ -207,11 +204,7 @@ class Session {
       ? new LocalEcho(
           this.term,
           () =>
-            this.live &&
-            this.mayType &&
-            this.front.program === null &&
-            this.exited === null &&
-            this.resumable === null,
+            this.live && this.mayType && this.front.program === null && this.exited === null && this.resumable === null,
         )
       : null
 
@@ -320,15 +313,9 @@ class Session {
     this.running(name, program, null, null)
   }
 
-  private running(
-    name: string | null,
-    program: string | null,
-    host: string | null,
-    colour: string | null,
-  ) {
+  private running(name: string | null, program: string | null, host: string | null, colour: string | null) {
     const now = this.tab.running
-    const same =
-      now?.name === name && now.program === program && now.host === host && now.colour === colour
+    const same = now?.name === name && now.program === program && now.host === host && now.colour === colour
     if (!same) this.tab.running = { name, program, host, colour }
   }
 
@@ -347,8 +334,7 @@ class Session {
   }
 
   private askSoon(after = ASK_AFTER) {
-    if (this.asking !== undefined || this.spec().shell.startsWith('wsl:') || this.reachedHere)
-      return
+    if (this.asking !== undefined || this.spec().shell.startsWith('wsl:') || this.reachedHere) return
 
     const wait = Math.max(after, this.asked + ASK_EVERY - Date.now())
     this.asking = setTimeout(() => {
@@ -372,8 +358,7 @@ class Session {
     if (found !== 'ssh') {
       this.unmatched = null
       this.giveBack()
-    } else if (this.underneath !== null || hostIdOf(this.spec().shell) === null)
-      void this.adopt(pty, source)
+    } else if (this.underneath !== null || hostIdOf(this.spec().shell) === null) void this.adopt(pty, source)
   }
 
   private async adopt(pty: string, source: PtySource) {
@@ -466,9 +451,7 @@ class Session {
     }
 
     const spec = this.spec()
-    const twin = [...sessions.values()].some(
-      (other) => other !== this && other.opened && other.spec().key === spec.key,
-    )
+    const twin = [...sessions.values()].some((other) => other !== this && other.opened && other.spec().key === spec.key)
     if (twin || !spec.key) {
       const key = identifier()
       if (this.remote) markMade(key)
@@ -509,8 +492,7 @@ class Session {
     this.term.write(history.text, () => {
       const off = tidied(this.left(), false)
       fitted()
-      const under =
-        platform() === 'windows' ? restoredAbove(words, this.term.rows) : restoredLine(words)
+      const under = platform() === 'windows' ? restoredAbove(words, this.term.rows) : restoredLine(words)
       this.term.write(off + under, () => this.begin())
     })
   }
@@ -802,8 +784,7 @@ class Session {
       return
     }
 
-    if (this.term.cols !== cols || this.term.rows !== rows)
-      this.sized(this.term.cols, this.term.rows)
+    if (this.term.cols !== cols || this.term.rows !== rows) this.sized(this.term.cols, this.term.rows)
   }
 
   private ptySource(id: string, spec: Spec): PtySource {
@@ -1158,12 +1139,7 @@ class Session {
     if (this.remote) return true
 
     const spec = this.spec()
-    const folder = reportedFolder(
-      code,
-      data,
-      platform() === 'windows',
-      spec.shell.startsWith('wsl:'),
-    )
+    const folder = reportedFolder(code, data, platform() === 'windows', spec.shell.startsWith('wsl:'))
     if (folder && folder !== spec.folder) this.respec({ ...spec, folder })
     return true
   }
@@ -1367,11 +1343,7 @@ class Session {
     if (this.pty === null || !takesDrop(transfer)) return
 
     event.preventDefault()
-    const rows = isTreeDrag(transfer)
-      ? dragged(transfer)
-      : isExplorerDrag(transfer)
-        ? outsideRows(transfer)
-        : null
+    const rows = isTreeDrag(transfer) ? dragged(transfer) : isExplorerDrag(transfer) ? outsideRows(transfer) : null
     if (rows !== null) {
       this.droppedRows(rows)
       return
@@ -1398,8 +1370,7 @@ class Session {
     const host = hostIdOf(shell)
     const source = this.source
     if (host !== null && this.underneath === null) return (await remoteShell(host)) ?? shell
-    if (!(source instanceof PtySource) || (await source.program()) !== 'ssh')
-      return this.underneath ?? shell
+    if (!(source instanceof PtySource) || (await source.program()) !== 'ssh') return this.underneath ?? shell
     return host === null ? 'ssh:' : ((await remoteShell(host)) ?? shell)
   }
 
@@ -1417,8 +1388,7 @@ class Session {
 
   private showMenu(event: MouseEvent) {
     const mac = shortcuts.platform === 'mac'
-    const hint = (win: string, macKey: string) =>
-      showCombination(mac ? macKey : win, shortcuts.platform)
+    const hint = (win: string, macKey: string) => showCombination(mac ? macKey : win, shortcuts.platform)
 
     const rows: MenuEntry[] = [
       {
@@ -1560,9 +1530,7 @@ function watch() {
     for (const one of sessions.values()) one.remember()
   })
 
-  moveLegacy(
-    workspace.tabs.filter((tab) => tab.kind === 'terminal' && !isOnlineTab(tab)).map(placeOf),
-  )
+  moveLegacy(workspace.tabs.filter((tab) => tab.kind === 'terminal' && !isOnlineTab(tab)).map(placeOf))
 }
 
 watch()

@@ -1,18 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  accrue,
-  budgetLeft,
-  FREE,
-  monthOf,
-  near,
-  NONE,
-  resetAt,
-  shares,
-  SMALL,
-  spend,
-  sum,
-  usedOf,
-} from './usage'
+import { accrue, budgetLeft, FREE, monthOf, near, NONE, resetAt, shares, SMALL, spend, sum, usedOf } from './usage'
 
 const HOUR = 3600
 const GB = 1e9

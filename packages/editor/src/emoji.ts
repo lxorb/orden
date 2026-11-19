@@ -14,9 +14,7 @@ export function emojiFor(shortcode: string): string | null {
 
 const WORDY = /[\p{L}\p{N}_]/u
 
-export async function emojiCompletions(
-  context: CompletionContext,
-): Promise<CompletionResult | null> {
+export async function emojiCompletions(context: CompletionContext): Promise<CompletionResult | null> {
   const typed = context.matchBefore(/:[a-z0-9_+-]{2,}/i)
   if (!typed || (typed.from === typed.to && !context.explicit)) return null
   if (WORDY.test(context.state.sliceDoc(typed.from - 1, typed.from))) return null

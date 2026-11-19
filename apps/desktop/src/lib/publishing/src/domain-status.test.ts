@@ -56,12 +56,8 @@ describe('what the pane says about a domain', () => {
 
 describe('the state a refusal to verify comes back with', () => {
   test('is recognised, so the pane can show it', () => {
-    expect(isDomainStatus({ domain: 'a.example', state: 'unproved', detail: null, dns: [] })).toBe(
-      true,
-    )
-    expect(
-      isDomainStatus({ domain: 'a.example', state: 'unproved', detail: 'not yet', dns: [] }),
-    ).toBe(true)
+    expect(isDomainStatus({ domain: 'a.example', state: 'unproved', detail: null, dns: [] })).toBe(true)
+    expect(isDomainStatus({ domain: 'a.example', state: 'unproved', detail: 'not yet', dns: [] })).toBe(true)
   })
 
   test('and anything else off the network is not', () => {

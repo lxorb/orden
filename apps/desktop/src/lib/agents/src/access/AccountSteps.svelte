@@ -29,9 +29,7 @@
 </script>
 
 {#snippet chevron(open: boolean)}
-  <svg class="chevron" class:open viewBox="0 0 16 16" aria-hidden="true"
-    ><path d="M6 3l5 5-5 5" /></svg
-  >
+  <svg class="chevron" class:open viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" /></svg>
 {/snippet}
 
 {#key client}
@@ -68,12 +66,9 @@
       <ol class="steps">
         <li>
           <p>In ChatGPT, open Settings → Plugins and click the plus button.</p>
-          <button class="link" onclick={() => void openExternal(CHATGPT_PLUGINS)}>
-            Open ChatGPT’s plugins
-          </button>
+          <button class="link" onclick={() => void openExternal(CHATGPT_PLUGINS)}> Open ChatGPT’s plugins </button>
           <p class="hint">
-            No Plugins section or no plus button? Turn on Developer mode first, under Settings →
-            Security and login.
+            No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.
           </p>
         </li>
         <li>
@@ -82,8 +77,7 @@
           <Copyable label="Server URL" value={MCP_URL} />
           <Copyable label="Authentication" value="OAuth" plain />
           <p class="hint">
-            Leave the advanced OAuth settings as they are and tick “I understand and want to
-            continue”.
+            Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.
           </p>
         </li>
         <li>
@@ -94,16 +88,12 @@
     {:else}
       <div class="steps-wrap">
         <p class="note">
-          Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers
-          itself and opens Orden’s sign-in page.
+          Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s
+          sign-in page.
         </p>
         <Copyable label="Server URL" value={MCP_URL} />
 
-        <button
-          class="disclose"
-          aria-expanded={showConfig}
-          onclick={() => (showConfig = !showConfig)}
-        >
+        <button class="disclose" aria-expanded={showConfig} onclick={() => (showConfig = !showConfig)}>
           {@render chevron(showConfig)}
           Show config
         </button>
@@ -113,9 +103,7 @@
             <pre>{config()}</pre>
             <CopyButton value={config()} wide />
 
-            <p class="hint spaced">
-              A client that cannot sign in can be given a token instead. It is shown only once.
-            </p>
+            <p class="hint spaced">A client that cannot sign in can be given a token instead. It is shown only once.</p>
             <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
             <div class="switch" onclick={() => connectors.setReadOnly(!connectors.readOnly)}>
               <span class="name">Let it write to my notes, not only read them</span>
@@ -132,11 +120,7 @@
                 <CopyButton value={config(connectors.freshToken)} wide />
               </div>
             {:else}
-              <button
-                class="orden-button"
-                disabled={connectors.busy}
-                onclick={() => connectors.createToken()}
-              >
+              <button class="orden-button" disabled={connectors.busy} onclick={() => connectors.createToken()}>
                 {connectors.token?.exists ? 'Replace the token' : 'Create a token'}
               </button>
             {/if}

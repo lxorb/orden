@@ -27,8 +27,7 @@ vi.mock('../../chats-client/src/http', async (importOriginal) => ({
     if (answer) asked.spaces.set(chat, space)
     return answer
   },
-  listChats: () =>
-    Promise.resolve({ chats: [...asked.spaces].map(([id, space]) => ({ id, space }) as never) }),
+  listChats: () => Promise.resolve({ chats: [...asked.spaces].map(([id, space]) => ({ id, space }) as never) }),
 }))
 
 const { Disk, memoryStorage } = await import('../../../../test/disk')

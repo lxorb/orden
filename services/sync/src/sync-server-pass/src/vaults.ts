@@ -78,10 +78,7 @@ vaults.put('/vaults/:id', async (context) => {
     if (!results[1]?.meta.changes) {
       const held = await membershipOf(context.env, id, user.email)
       if (held) return context.json({ error: STALE, current: vaultRowOf(held, user.id) }, 409)
-      const taken = await db
-        .prepare('select 1 as one from pass_vaults where id = ?')
-        .bind(id)
-        .first()
+      const taken = await db.prepare('select 1 as one from pass_vaults where id = ?').bind(id).first()
       return context.json({ error: taken ? TAKEN : TOO_MANY_VAULTS }, 409)
     }
     await tell(context.env, [user.id], from)
@@ -179,9 +176,7 @@ vaults.delete('/vaults/:id', async (context) => {
       )
       .bind(now(), id),
     db.prepare('update pass_members set key = null where vault_id = ?').bind(id),
-    db
-      .prepare(`delete from pass_members where vault_id = ? and state in ('pending', 'confirm')`)
-      .bind(id),
+    db.prepare(`delete from pass_members where vault_id = ? and state in ('pending', 'confirm')`).bind(id),
     db.prepare('delete from pass_items where vault_id = ?').bind(id),
     db.prepare('delete from pass_versions where vault_id = ?').bind(id),
     db.prepare('delete from pass_links where vault_id = ?').bind(id),

@@ -42,8 +42,7 @@ export function youTurn(thread: Thread, draft: Draft, more: Partial<Turn> = {}):
   return { id: crypto.randomUUID(), role: 'you', at: Date.now(), draft, parts: [], effort, ...more }
 }
 
-export const errorText = (error: unknown) =>
-  error instanceof Error ? error.message : String(error)
+export const errorText = (error: unknown) => (error instanceof Error ? error.message : String(error))
 
 const MARK = 'untrusted'
 
@@ -68,14 +67,10 @@ export function readOutside(turns: readonly Turn[]): boolean {
     turns.some((turn) =>
       turn.role === 'you'
         ? turn.draft?.web === true ||
-          (turn.draft?.attachments ?? []).some(
-            (one) => one.untrusted === true || (one.text?.includes(OPENED) ?? false),
-          )
+          (turn.draft?.attachments ?? []).some((one) => one.untrusted === true || (one.text?.includes(OPENED) ?? false))
         : turn.parts.some(
             (part) =>
-              (part.kind === 'notice' &&
-                part.code === 'compacted' &&
-                part.text === SUMMED_OUTSIDE) ||
+              (part.kind === 'notice' && part.code === 'compacted' && part.text === SUMMED_OUTSIDE) ||
               (part.kind === 'tool' &&
                 (part.verb.startsWith('browser_') ||
                   !!part.result?.images.length ||
@@ -149,21 +144,13 @@ function replays(turn: Turn, api: Api, model: string): boolean {
   return !!turn.replay && turn.replay.api === api && turn.replay.model === model
 }
 
-export function sinceCompaction(
-  turns: readonly Turn[],
-  compaction: Compaction | undefined,
-): Turn[] {
+export function sinceCompaction(turns: readonly Turn[], compaction: Compaction | undefined): Turn[] {
   if (!compaction) return [...turns]
   const at = turns.findIndex((one) => one.id === compaction.upTo)
   return at < 0 ? [...turns] : turns.slice(at + 1)
 }
 
-function compactionStep(
-  compaction: Compaction,
-  api: Api,
-  model: string,
-  outside: boolean,
-): Step | null {
+function compactionStep(compaction: Compaction, api: Api, model: string, outside: boolean): Step | null {
   if (compaction.kind === api && compaction.model === model && compaction.block !== undefined) {
     return { role: 'compacted', block: compaction.block }
   }
@@ -184,9 +171,7 @@ export function stepsOf(
   model: string,
   perMessage = false,
 ): Step[] {
-  const head = thread.compaction
-    ? compactionStep(thread.compaction, api, model, readOutside(thread.turns))
-    : null
+  const head = thread.compaction ? compactionStep(thread.compaction, api, model, readOutside(thread.turns)) : null
   const turns = head ? sinceCompaction(thread.turns, thread.compaction) : thread.turns
   const steps: Step[] = head ? [head] : []
   let effort: Effort | undefined

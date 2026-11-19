@@ -15,9 +15,7 @@ describe('a comment in the source', () => {
     const source = '```html\n<!-- kept -->\n```\n\n<!-- gone -->'
     expect(withoutComments(source)).toBe('```html\n<!-- kept -->\n```\n\n')
     expect(withoutComments('~~~\n<!-- kept -->\n~~~')).toBe('~~~\n<!-- kept -->\n~~~')
-    expect(withoutComments('write `<!-- this -->` to hide a note')).toBe(
-      'write `<!-- this -->` to hide a note',
-    )
+    expect(withoutComments('write `<!-- this -->` to hide a note')).toBe('write `<!-- this -->` to hide a note')
   })
 
   test('is taken out either side of some inline code; that never closes takes the rest of the note with it; costs nothing to look for in a note that has none', () => {
@@ -54,9 +52,7 @@ describe('a percent comment', () => {
   })
 
   test('is left alone inside backticks; that never closes takes the rest of the note with it, as Obsidian does; costs nothing to look for in a note that has none', () => {
-    expect(withoutComments('write `%% this %%` to hide a note')).toBe(
-      'write `%% this %%` to hide a note',
-    )
+    expect(withoutComments('write `%% this %%` to hide a note')).toBe('write `%% this %%` to hide a note')
     expect(withoutComments('one\n\n%% open\ntwo')).toBe('one\n\n\n')
     const source = 'a note with 50 per cent and no comment\n'
     expect(withoutComments(source)).toBe(source)
@@ -72,9 +68,7 @@ describe('a comment on the page', () => {
   test('written as words by a conversion stays words, and so does the rest', () => {
     const code = htmlToMarkdown('<p>Write &lt;!-- to open a comment.</p><p>Second paragraph.</p>')
     expect(code).toBe('Write \\<!-- to open a comment.\n\nSecond paragraph.')
-    expect(renderMarkdown(code)).toBe(
-      '<p>Write &lt;!-- to open a comment.</p>\n<p>Second paragraph.</p>\n',
-    )
+    expect(renderMarkdown(code)).toBe('<p>Write &lt;!-- to open a comment.</p>\n<p>Second paragraph.</p>\n')
     expect(renderMarkdown(asWords('Write <!-- to open a comment.\n\nSecond paragraph.'))).toBe(
       '<p>Write &lt;!-- to open a comment.</p>\n<p>Second paragraph.</p>\n',
     )
@@ -165,15 +159,11 @@ describe('a whole note, its front matter included', () => {
     expect(noteWithoutComments('---\ntitle: Launch %% secret %%\nz: 1\n---\nWords\n')).toBe(
       '---\ntitle: Launch \nz: 1\n---\nWords\n',
     )
-    expect(noteWithoutComments('---\nt: a <!-- b --> c\n---\nWords\n')).toBe(
-      '---\nt: a  c\n---\nWords\n',
-    )
+    expect(noteWithoutComments('---\nt: a <!-- b --> c\n---\nWords\n')).toBe('---\nt: a  c\n---\nWords\n')
     expect(noteWithoutComments('---\nt: a\n%%\nsecret: 5\n%%\nz: 1\n---\nWords\n')).toBe(
       '---\nt: a\n\n\n\nz: 1\n---\nWords\n',
     )
-    expect(noteWithoutComments('---\nt: a\n<!-- secret: 5 -->\n---\nWords\n')).toBe(
-      '---\nt: a\n\n---\nWords\n',
-    )
+    expect(noteWithoutComments('---\nt: a\n<!-- secret: 5 -->\n---\nWords\n')).toBe('---\nt: a\n\n---\nWords\n')
   })
 
   test('an opener nothing closes on its line is the value own, and stops at the block', () => {

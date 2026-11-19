@@ -33,9 +33,7 @@
   const columns = $derived(grid ? Math.max(1, Math.floor(Math.max(0, width - 16) / TILE)) : 1)
   const lineHeight = $derived(grid ? TILE : rowHeight)
   const lines = $derived(Math.ceil(rows.length / columns))
-  const cursorAt = $derived(
-    view.picked.cursor === null ? -1 : view.names.indexOf(view.picked.cursor),
-  )
+  const cursorAt = $derived(view.picked.cursor === null ? -1 : view.names.indexOf(view.picked.cursor))
   const drawn = $derived.by(() => {
     const firstLine = Math.max(0, Math.floor(scrollTop / lineHeight) - SPARE)
     const lastLine = Math.min(lines, Math.ceil((scrollTop + height) / lineHeight) + SPARE)
@@ -85,8 +83,7 @@
     if (!box) return
     const top = Math.floor(index / columns) * lineHeight
     if (top < box.scrollTop) box.scrollTop = top
-    else if (top + lineHeight > box.scrollTop + box.clientHeight)
-      box.scrollTop = top + lineHeight - box.clientHeight
+    else if (top + lineHeight > box.scrollTop + box.clientHeight) box.scrollTop = top + lineHeight - box.clientHeight
     void tick().then(() => {
       box.querySelector<HTMLElement>(`[data-index="${index}"]`)?.focus({ preventScroll: true })
     })
@@ -136,11 +133,7 @@
       return
     }
 
-    const extend = pressed('tree.extend-down')
-      ? 'ArrowDown'
-      : pressed('tree.extend-up')
-        ? 'ArrowUp'
-        : null
+    const extend = pressed('tree.extend-down') ? 'ArrowDown' : pressed('tree.extend-up') ? 'ArrowUp' : null
     const plain = pressed('tree.down') ? 'ArrowDown' : pressed('tree.up') ? 'ArrowUp' : null
     const key = extend ?? plain ?? (event.altKey ? null : event.key)
     const how: How = event.shiftKey ? 'range' : event.ctrlKey || event.metaKey ? 'move' : 'one'
@@ -165,13 +158,7 @@
       return
     }
 
-    if (
-      event.key.length === 1 &&
-      event.key !== ' ' &&
-      !event.ctrlKey &&
-      !event.metaKey &&
-      !event.altKey
-    ) {
+    if (event.key.length === 1 && event.key !== ' ' && !event.ctrlKey && !event.metaKey && !event.altKey) {
       const spelt = spelled(spelling, event.key, event.timeStamp, view.names)
       spelling = { typed: spelt.typed, typedAt: spelt.typedAt }
       if (spelt.found >= 0) {
@@ -223,9 +210,7 @@
     const lastLine = Math.min(lines - 1, Math.floor(bottom / lineHeight))
     const ltr = getComputedStyle(room).direction !== 'rtl'
     const across = (x: number) => (ltr ? x : box.width - x)
-    const firstColumn = grid
-      ? Math.max(0, Math.floor(Math.min(across(band.fromX), across(band.toX)) / TILE))
-      : 0
+    const firstColumn = grid ? Math.max(0, Math.floor(Math.min(across(band.fromX), across(band.toX)) / TILE)) : 0
     const lastColumn = grid
       ? Math.min(columns - 1, Math.floor(Math.max(across(band.fromX), across(band.toX)) / TILE))
       : 0
@@ -259,10 +244,7 @@
     const row = scroller?.querySelector<HTMLElement>(`[data-index="${cursorAt}"]`)
     if (!entry || !row) return
     const box = row.getBoundingClientRect()
-    menu.show(
-      new MouseEvent('contextmenu', { clientX: box.left + 24, clientY: box.bottom }),
-      rowMenu(view, entry),
-    )
+    menu.show(new MouseEvent('contextmenu', { clientX: box.left + 24, clientY: box.bottom }), rowMenu(view, entry))
   }
 
   function naming(field: HTMLInputElement) {
@@ -354,9 +336,7 @@
     { key: 'name', at: 'name', label: 'Name' },
     { key: 'modified', at: 'modified', label: 'Modified' },
     { key: 'size', at: 'size', label: 'Size' },
-    view.search
-      ? { key: 'folder', at: 'kind', label: 'Folder' }
-      : { key: 'kind', at: 'kind', label: 'Kind' },
+    view.search ? { key: 'folder', at: 'kind', label: 'Folder' } : { key: 'kind', at: 'kind', label: 'Kind' },
   ])
 </script>
 
@@ -466,9 +446,7 @@
                   ondblclick={(event) => event.stopPropagation()}
                 />
               {:else}
-                <span class="orden-row-label" dir="auto"
-                  >{view.search ? nameOf(entry.name) : entry.name}</span
-                >
+                <span class="orden-row-label" dir="auto">{view.search ? nameOf(entry.name) : entry.name}</span>
                 {#if view.search && folderOf(entry.name)}
                   <span class="where" dir="auto">{folderOf(entry.name)}</span>
                 {/if}
@@ -476,11 +454,8 @@
             </span>
             {#if !grid}
               <span class="orden-row-meta modified">{when(entry.modified, 'short')}</span>
-              <span class="orden-row-meta size">{entry.folder ? '' : readableSize(entry.size)}</span
-              >
-              <span class="orden-row-meta kind"
-                >{view.search ? folderOf(entry.name) : kindOf(entry)}</span
-              >
+              <span class="orden-row-meta size">{entry.folder ? '' : readableSize(entry.size)}</span>
+              <span class="orden-row-meta kind">{view.search ? folderOf(entry.name) : kindOf(entry)}</span>
             {/if}
           </div>
         {/if}

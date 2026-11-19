@@ -71,9 +71,7 @@ test("an agent's snapshot hides a card's number, its code and a one-time code as
 })
 
 test("an agent's facts never name a text field acting as a button after what is in it", () => {
-  const inside = window(
-    '<input id="field" role="button"><input id="go" type="submit" value="Send">',
-  )
+  const inside = window('<input id="field" role="button"><input id="go" type="submit" value="Send">')
   const facts = inside.eval(`(${FACTS})`) as (this: Element, heard: unknown[]) => { name: string }
   const field = inside.document.getElementById('field') as HTMLInputElement
   field.value = SECRET

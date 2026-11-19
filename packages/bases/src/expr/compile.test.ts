@@ -23,11 +23,8 @@ const book = noteRow(
   { tags: ['book/sf', 'classic'], links: ['Textbook', 'Frank Herbert'] },
 )
 
-const run = (
-  source: string,
-  row: Row | null = book,
-  formulas: Record<string, string> = {},
-): Value => compile(source).evaluate(row, context, formulas)
+const run = (source: string, row: Row | null = book, formulas: Record<string, string> = {}): Value =>
+  compile(source).evaluate(row, context, formulas)
 
 const DOCUMENTED: [string, Value][] = [
   ['"hello".contains("ell")', true],
@@ -68,10 +65,7 @@ const DOCUMENTED: [string, Value][] = [
   ['[1,2,3].join(",")', '1,2,3'],
   ['[1,2,3,4].map(value + 1)', [2, 3, 4, 5]],
   ['[1,2,3].reduce(acc + value, 0)', 6],
-  [
-    '[3, 7, "x", 2].filter(value.isType("number")).reduce(if(acc == null || value > acc, value, acc), null)',
-    7,
-  ],
+  ['[3, 7, "x", 2].filter(value.isType("number")).reduce(if(acc == null || value > acc, value, acc), null)', 7],
   ['[1,2,3].reverse()', [3, 2, 1]],
   ['[1,2,3,4].slice(1,3)', [2, 3]],
   ['[3, 1, 2].sort()', [1, 2, 3]],
@@ -90,10 +84,7 @@ const DOCUMENTED: [string, Value][] = [
   ['date("2025-05-27").format("YYYY-MM-DD")', '2025-05-27'],
   ['now().date().format("YYYY-MM-DD HH:mm:ss")', '2026-10-04 00:00:00'],
   ['now().time()', '10:00:00'],
-  [
-    'date("2024-12-01") + "1M" + "4h" + "3m"',
-    { kind: 'date', iso: '2025-01-01', time: '04:03:00' },
-  ],
+  ['date("2024-12-01") + "1M" + "4h" + "3m"', { kind: 'date', iso: '2025-01-01', time: '04:03:00' }],
   ['number((now() + "1d") - now())', 86_400_000],
   ['(now() + "1d") - now()', { kind: 'duration', ms: 86_400_000, months: 0 }],
   ['now() + "1 day"', { kind: 'date', iso: '2026-10-05', time: '10:00:00' }],
@@ -236,8 +227,7 @@ describe('formulas', () => {
 
 describe('this', () => {
   const author = noteRow('People/Frank Herbert.md', { born: 1920, related: ['x'] })
-  const resolve = (target: string) =>
-    target === 'Frank Herbert' ? 'People/Frank Herbert.md' : null
+  const resolve = (target: string) => (target === 'Frank Herbert' ? 'People/Frank Herbert.md' : null)
   const withThis = { ...context, this: author, resolve }
 
   test('is the embedding note: its file, its properties, a link to it', () => {
@@ -384,9 +374,7 @@ describe('a pattern in a base somebody else could have written', () => {
 
   const guardedBase = (formula: string) =>
     ({
-      ...readBase(
-        `formulas:\n  f: ${JSON.stringify(formula)}\nviews:\n  - type: table\n    name: T\n`,
-      ),
+      ...readBase(`formulas:\n  f: ${JSON.stringify(formula)}\nviews:\n  - type: table\n    name: T\n`),
       guarded: true,
     }) as Base
 
@@ -407,14 +395,7 @@ describe('a pattern in a base somebody else could have written', () => {
     const base = guardedBase('/x$/.matches(note.long)')
     const row = noteRow('A.md', { long: 'x'.repeat(2000), short: 'x' })
     expect(cellValue(base, 'formula.f', row, context)).toBeNull()
-    expect(
-      cellValue(
-        { ...base, formulas: { f: '/x$/.matches(note.short)' } },
-        'formula.f',
-        row,
-        context,
-      ),
-    ).toBe(true)
+    expect(cellValue({ ...base, formulas: { f: '/x$/.matches(note.short)' } }, 'formula.f', row, context)).toBe(true)
     expect(cellValue({ ...base, guarded: false }, 'formula.f', row, context)).toBe(true)
   })
 

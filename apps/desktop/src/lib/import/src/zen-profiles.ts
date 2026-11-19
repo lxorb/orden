@@ -49,9 +49,7 @@ async function fileOf(profile: ZenProfile, file: string): Promise<unknown> {
 
 async function placesOf(profile: ZenProfile): Promise<ZenPlaces | null> {
   try {
-    const said = JSON.parse(
-      await invoke<string>('read_zen_places', { profile: profile.path }),
-    ) as Partial<ZenPlaces>
+    const said = JSON.parse(await invoke<string>('read_zen_places', { profile: profile.path })) as Partial<ZenPlaces>
     return {
       spaces: Array.isArray(said.spaces) ? said.spaces : [],
       pins: Array.isArray(said.pins) ? said.pins : [],

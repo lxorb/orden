@@ -6,12 +6,8 @@
 </script>
 
 {#each numbers.worn as one (one.id)}
-  <span
-    class="orden-keytip numeral"
-    style:translate="{one.x}px {one.y}px"
-    aria-hidden="true"
-    in:keytipIn
-    out:keytipOut>{one.label}</span
+  <span class="orden-keytip numeral" style:translate="{one.x}px {one.y}px" aria-hidden="true" in:keytipIn out:keytipOut
+    >{one.label}</span
   >
 {/each}
 

@@ -30,9 +30,7 @@ class Drawer {
     if (next === null) return false
     const kind = workspace.active?.kind
     return (
-      next !== 'outline' ||
-      kind === undefined ||
-      (TAB_KINDS[kind].panels as readonly TabPanel[]).includes('outline')
+      next !== 'outline' || kind === undefined || (TAB_KINDS[kind].panels as readonly TabPanel[]).includes('outline')
     )
   }
 

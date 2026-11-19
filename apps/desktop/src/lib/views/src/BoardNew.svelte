@@ -64,9 +64,7 @@
         base,
         kit.live.at,
         kit.home,
-        property
-          ? { property, key: keyWritten(base, property, group.key, kit.live.rows) }
-          : undefined,
+        property ? { property, key: keyWritten(base, property, group.key, kit.live.rows) } : undefined,
         { title, open: false, properties: valued() },
       )
       if (path) onmade?.(path)

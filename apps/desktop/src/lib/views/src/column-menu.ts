@@ -1,22 +1,8 @@
-import {
-  DEFAULT_SUMMARIES,
-  idRepairs,
-  inBase,
-  isButton,
-  readRollup,
-  reverseFormula,
-} from '@orden/bases'
+import { DEFAULT_SUMMARIES, idRepairs, inBase, isButton, readRollup, reverseFormula } from '@orden/bases'
 import { region } from '../../platform/src/api'
 import { DIVIDER, menu, type MenuEntry } from '../../ui-kit/src/api'
 import { writeEach } from './act'
-import {
-  bare,
-  displayName,
-  formatOf,
-  isNoteProperty,
-  knownProperties,
-  reverseOffers,
-} from './columns'
+import { bare, displayName, formatOf, isNoteProperty, knownProperties, reverseOffers } from './columns'
 import {
   freeFormulaName,
   setBaseOrden,
@@ -80,10 +66,7 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
     run: () => {
       const name = freeFormulaName(base, offer.name)
       kit.change((b, at) =>
-        setColumns(setFormula(b, name, reverseFormula(offer.property)), at, [
-          ...columns,
-          `formula.${name}`,
-        ]),
+        setColumns(setFormula(b, name, reverseFormula(offer.property)), at, [...columns, `formula.${name}`]),
       )
     },
   }))
@@ -99,10 +82,7 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
             }
             const property = 'id'
             kit.change((b, at) =>
-              setColumns(setBaseOrden(b, 'id', { property, prefix: '' }), at, [
-                ...columns,
-                `note.${property}`,
-              ]),
+              setColumns(setBaseOrden(b, 'id', { property, prefix: '' }), at, [...columns, `note.${property}`]),
             )
             const own = live.rows.filter((row) => inBase(base, row, live.context))
             void writeEach(
@@ -125,11 +105,7 @@ function additions(kit: Kit, columns: readonly string[]): MenuEntry[] {
   ]
 }
 
-export const grouped = (
-  event: MouseEvent | undefined,
-  label: string,
-  more: () => Promise<MenuEntry[]>,
-): MenuEntry => ({
+export const grouped = (event: MouseEvent | undefined, label: string, more: () => Promise<MenuEntry[]>): MenuEntry => ({
   label,
   more,
   run: () => {
@@ -137,12 +113,7 @@ export const grouped = (
   },
 })
 
-export function columnMenu(
-  kit: Kit,
-  column: string,
-  columns: readonly string[],
-  event?: MouseEvent,
-): MenuEntry[] {
+export function columnMenu(kit: Kit, column: string, columns: readonly string[], event?: MouseEvent): MenuEntry[] {
   const live = kit.live
   const base = live.base
   if (!base || !kit.writable) return []
@@ -224,9 +195,7 @@ export function columnMenu(
           },
         ]
       : []),
-    ...(isButton(column)
-      ? [{ label: 'Edit', run: () => (live.builder = { kind: 'button', column }) }]
-      : []),
+    ...(isButton(column) ? [{ label: 'Edit', run: () => (live.builder = { kind: 'button', column }) }] : []),
     ...(view?.type === 'form' && note
       ? [
           {

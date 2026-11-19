@@ -111,11 +111,7 @@ export interface SheetDrawn {
   palette: unknown
 }
 
-export function sheetDrawn(
-  page: PageNode,
-  ink: readonly InkStroke[],
-  palette: unknown,
-): SheetDrawn {
+export function sheetDrawn(page: PageNode, ink: readonly InkStroke[], palette: unknown): SheetDrawn {
   const { x, y, width, height } = page
   return {
     x,
@@ -127,9 +123,7 @@ export function sheetDrawn(
     palette,
     ink: ink.filter((stroke) => {
       const box = strokeBox(stroke)
-      return (
-        box.x < x + width && x < box.x + box.width && box.y < y + height && y < box.y + box.height
-      )
+      return box.x < x + width && x < box.x + box.width && box.y < y + height && y < box.y + box.height
     }),
   }
 }

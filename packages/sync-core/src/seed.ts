@@ -7,9 +7,7 @@ const OFFSET = 0x811c9dc5
 const PRIME = 0x01000193
 
 function spelled(parts: readonly (string | number)[]): Uint8Array {
-  const words = parts.map((part) =>
-    typeof part === 'number' ? `n${String(part)}` : `s${String(part.length)}:${part}`,
-  )
+  const words = parts.map((part) => (typeof part === 'number' ? `n${String(part)}` : `s${String(part.length)}:${part}`))
   return new TextEncoder().encode(words.join('\u0000'))
 }
 

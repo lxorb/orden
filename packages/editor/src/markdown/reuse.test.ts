@@ -18,8 +18,7 @@ function shape(tree: Tree): string {
 
 function itemAt(tree: Tree, pos: number): Tree | null {
   const cursor = tree.cursor()
-  while (cursor.childAfter(pos))
-    if (cursor.name === 'ListItem' || cursor.name === 'Blockquote') return cursor.tree
+  while (cursor.childAfter(pos)) if (cursor.name === 'ListItem' || cursor.name === 'Blockquote') return cursor.tree
   return null
 }
 
@@ -77,9 +76,7 @@ describe('parsing again after an edit', () => {
         const removed = Math.min(random(6), doc.length - at)
         const piece = pieces[random(pieces.length)] ?? ''
         const after = edited(doc, tree, at, removed, piece.slice(random(3)))
-        expect(shape(after.tree), `round ${round} step ${step}`).toBe(
-          shape(ordenMarkdownParser.parse(after.next)),
-        )
+        expect(shape(after.tree), `round ${round} step ${step}`).toBe(shape(ordenMarkdownParser.parse(after.next)))
         doc = after.next
         tree = after.tree
       }

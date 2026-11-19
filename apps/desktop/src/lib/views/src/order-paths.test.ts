@@ -48,10 +48,7 @@ beforeEach(() => {
 describe('a board following its cards', () => {
   test('renames a card in a .base file', () => {
     const after = movedWords(BASE, false, 'Plans/Ship.md', 'Plans/Launch.md')
-    expect(readBase(after ?? '').views[0]?.orden.order?.Doing).toEqual([
-      'Plans/Launch.md',
-      'Plans/Write.md',
-    ])
+    expect(readBase(after ?? '').views[0]?.orden.order?.Doing).toEqual(['Plans/Launch.md', 'Plans/Write.md'])
   })
 
   test('and in a database note’s fence, leaving the rest of the note', () => {
@@ -60,10 +57,7 @@ describe('a board following its cards', () => {
     expect(after.startsWith('# Plans\n\n```base\n')).toBe(true)
     expect(after.endsWith('```\n\nAfter.\n')).toBe(true)
     const body = after.split('```base\n')[1]?.split('```')[0] ?? ''
-    expect(readBase(body).views[0]?.orden.order?.Doing).toEqual([
-      'Projects/Ship.md',
-      'Projects/Write.md',
-    ])
+    expect(readBase(body).views[0]?.orden.order?.Doing).toEqual(['Projects/Ship.md', 'Projects/Write.md'])
   })
 
   test('and writes nothing where nothing named it', () => {
@@ -96,11 +90,7 @@ describe('a board following its cards', () => {
       '/s',
       folder(
         '/s/Renamed',
-        folder(
-          '/s/Renamed/Plans',
-          note('/s/Renamed/Plans/Plans.md'),
-          note('/s/Renamed/Plans/Ship.md'),
-        ),
+        folder('/s/Renamed/Plans', note('/s/Renamed/Plans/Plans.md'), note('/s/Renamed/Plans/Ship.md')),
       ),
     )
     notes.set('/s/Renamed/Plans/Plans.md', fenced('Work/Plans'))

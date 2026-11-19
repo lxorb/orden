@@ -28,9 +28,7 @@ async function confirmed(
   as: 'primary' | 'second',
   by = token,
 ): Promise<{ answer: Answer<Addresses>; mailed: string }> {
-  const said = await mail(() =>
-    call(env, '/v1/account/addresses/code', { token: by, body: { email } }),
-  )
+  const said = await mail(() => call(env, '/v1/account/addresses/code', { token: by, body: { email } }))
   const got: Answer<Addresses>[] = []
   const mailed = await mail(async () => {
     got.push(
@@ -45,11 +43,9 @@ async function confirmed(
   return { answer, mailed }
 }
 
-const idOf = async (as: string): Promise<string> =>
-  (await call(env, '/v1/me', { token: as })).json.user.id
+const idOf = async (as: string): Promise<string> => (await call(env, '/v1/me', { token: as })).json.user.id
 
-const memberRows = () =>
-  env.db.prepare('select email from space_members order by email').all() as { email: string }[]
+const memberRows = () => env.db.prepare('select email from space_members order by email').all() as { email: string }[]
 
 describe('a second address (#2029)', () => {
   test('is added once its code is given, and signs in to the same account', async () => {
@@ -62,9 +58,7 @@ describe('a second address (#2029)', () => {
   })
 
   test('is refused with a wrong code, and nothing changes', async () => {
-    await mail(() =>
-      call(env, '/v1/account/addresses/code', { token, body: { email: 'ann@work.example' } }),
-    )
+    await mail(() => call(env, '/v1/account/addresses/code', { token, body: { email: 'ann@work.example' } }))
     const wrong = await call<Addresses>(env, '/v1/account/addresses', {
       token,
       body: { email: 'ann@work.example', code: '000000', as: 'second' },
@@ -123,10 +117,8 @@ describe('a second address (#2029)', () => {
 
   test('an invite sent to it, before or after it was added, reaches the account', async () => {
     const bob = await signIn(env, 'bob@example.com')
-    const space = (await call(env, '/v1/spaces', { token: bob, body: { name: 'Team' } })).json.space
-      .id
-    const other = (await call(env, '/v1/spaces', { token: bob, body: { name: 'Other' } })).json
-      .space.id
+    const space = (await call(env, '/v1/spaces', { token: bob, body: { name: 'Team' } })).json.space.id
+    const other = (await call(env, '/v1/spaces', { token: bob, body: { name: 'Other' } })).json.space.id
     const invite = (id: string) =>
       mail(() =>
         call(env, `/v1/spaces/${id}/share/invite`, {
@@ -149,15 +141,12 @@ describe('a second address (#2029)', () => {
 describe('two addresses that were each let in to the same place', () => {
   test('become one account that keeps the most either was given', async () => {
     const bob = await signIn(env, 'bob@example.com')
-    const space = (await call(env, '/v1/spaces', { token: bob, body: { name: 'Team' } })).json.space
-      .id
+    const space = (await call(env, '/v1/spaces', { token: bob, body: { name: 'Team' } })).json.space.id
     for (const [email, role] of [
       ['ann@example.com', 'read'],
       ['ann@work.example', 'write'],
     ]) {
-      await mail(() =>
-        call(env, `/v1/spaces/${space}/share/invite`, { token: bob, body: { email, role } }),
-      )
+      await mail(() => call(env, `/v1/spaces/${space}/share/invite`, { token: bob, body: { email, role } }))
     }
     const vault = env.db.prepare(
       'insert into pass_members (vault_id, email, role, state, key, key_version, seq) values (?, ?, ?, ?, ?, 1, ?)',
@@ -173,9 +162,7 @@ describe('two addresses that were each let in to the same place', () => {
       { email: 'ann@example.com', role: 'write' },
     ])
     expect(
-      env.db
-        .prepare('select vault_id, email, role, state, key from pass_members order by vault_id')
-        .all(),
+      env.db.prepare('select vault_id, email, role, state, key from pass_members order by vault_id').all(),
     ).toEqual([
       { vault_id: 'v1', email: 'ann@example.com', role: 'manager', state: 'active', key: 'sealed' },
       { vault_id: 'v2', email: 'ann@example.com', role: 'editor', state: 'active', key: 'own' },
@@ -186,8 +173,7 @@ describe('two addresses that were each let in to the same place', () => {
 describe('changing the address (#2029)', () => {
   test('takes the new one once confirmed, moves what was shared, and tells the old one how to undo', async () => {
     const bob = await signIn(env, 'bob@example.com')
-    const space = (await call(env, '/v1/spaces', { token: bob, body: { name: 'Team' } })).json.space
-      .id
+    const space = (await call(env, '/v1/spaces', { token: bob, body: { name: 'Team' } })).json.space.id
     await mail(() =>
       call(env, `/v1/spaces/${space}/share/invite`, {
         token: bob,
@@ -204,9 +190,7 @@ describe('changing the address (#2029)', () => {
     const undo = /\/v1\/account\/undo\/([a-f0-9]+)/.exec(mailed)?.[1]
     expect(undo).toBeDefined()
     expect((await call(env, `/v1/account/undo/${undo}`)).status).toBe(200)
-    expect((await call<Addresses>(env, '/v1/account/addresses', { token })).json.email).toBe(
-      'ann@new.example',
-    )
+    expect((await call<Addresses>(env, '/v1/account/addresses', { token })).json.email).toBe('ann@new.example')
 
     const undone = await call(env, `/v1/account/undo/${undo}`, { method: 'POST' })
     expect(undone.status).toBe(200)
@@ -222,22 +206,16 @@ describe('changing the address (#2029)', () => {
       body: { email: 'bob@example.com' },
     })
     expect(asked.status).toBe(409)
-    expect((await call<Addresses>(env, '/v1/account/addresses', { token })).json.email).toBe(
-      'ann@example.com',
-    )
+    expect((await call<Addresses>(env, '/v1/account/addresses', { token })).json.email).toBe('ann@example.com')
   })
 
   test('is refused by the database itself where two accounts race for one address', () => {
     const insert = (id: string, email: string) =>
-      env.db
-        .prepare('insert into user_addresses (email, user_id, created_at) values (?, ?, 1)')
-        .run(email, id)
+      env.db.prepare('insert into user_addresses (email, user_id, created_at) values (?, ?, 1)').run(email, id)
     expect(() => insert('somebody', 'ann@example.com')).toThrow(/address taken/)
     insert('somebody', 'free@example.com')
     expect(() =>
-      env.db
-        .prepare('insert into users (id, email, created_at) values (?, ?, 1)')
-        .run('another', 'free@example.com'),
+      env.db.prepare('insert into users (id, email, created_at) values (?, ?, 1)').run('another', 'free@example.com'),
     ).toThrow(/address taken/)
   })
 })

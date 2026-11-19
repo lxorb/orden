@@ -73,13 +73,7 @@ function numberOrNullOf(raw: Raw, key: string): number | null {
   return raw[key] === null || raw[key] === undefined ? null : numberOf(raw, key, 0)
 }
 
-function wordOf<T extends string>(
-  raw: Raw,
-  key: string,
-  words: readonly T[],
-  fallback: T,
-  unknown: T = fallback,
-): T {
+function wordOf<T extends string>(raw: Raw, key: string, words: readonly T[], fallback: T, unknown: T = fallback): T {
   const value = textOf(raw, key, fallback)
   return (words as readonly string[]).includes(value) ? (value as T) : unknown
 }

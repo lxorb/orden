@@ -81,14 +81,9 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
       if (path === null) return
       const line = row.anchor?.line ?? 0
       const away = compact ? workspace.spaces.find((one) => one.name === row.space) : undefined
-      const there =
-        away && away.id !== workspace.activeSpaceId
-          ? workspace.selectSpace(away.id)
-          : Promise.resolve()
+      const there = away && away.id !== workspace.activeSpaceId ? workspace.selectSpace(away.id) : Promise.resolve()
       const opening = there.then(() =>
-        how === 'aside'
-          ? import('./peek').then((one) => one.peek(path, walkOf(live)))
-          : workspace.open(path),
+        how === 'aside' ? import('./peek').then((one) => one.peek(path, walkOf(live))) : workspace.open(path),
       )
       void opening.then(() => {
         workspace.goto = { path, line }

@@ -32,11 +32,7 @@ describe('a loop in a block', () => {
   test('that ends by itself does what it did', () => {
     let total = 0
     const add = (n: number) => (total += n)
-    compiled(
-      '__ordenSpin',
-      'add',
-      guarded('for (let i = 1; i <= 4; i++) add(i)') ?? '',
-    )(() => false, add)
+    compiled('__ordenSpin', 'add', guarded('for (let i = 1; i <= 4; i++) add(i)') ?? '')(() => false, add)
     expect(total).toBe(10)
   })
 
@@ -151,9 +147,7 @@ describe('the check the frame runs first', () => {
   test('lets a loop go on until its task has run past the limit, and cannot be replaced', () => {
     const holder = document.createElement('template')
     holder.innerHTML = guardedBlock('<script>for (;;) {}</script>')
-    const [check, script] = [...holder.content.querySelectorAll('script')].map(
-      (one) => one.textContent,
-    )
+    const [check, script] = [...holder.content.querySelectorAll('script')].map((one) => one.textContent)
     compiled(check ?? '')()
 
     let now = 0

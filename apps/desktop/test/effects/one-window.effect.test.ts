@@ -49,18 +49,14 @@ test('a web note another window has open is shown there, not opened here', async
   await workspace.openWeb(MAIL)
 
   expect(workspace.tabs).toEqual([])
-  await vi.waitFor(() =>
-    expect(heard).toContainEqual(expect.objectContaining({ show: MAIL, to: 'other' })),
-  )
+  await vi.waitFor(() => expect(heard).toContainEqual(expect.objectContaining({ show: MAIL, to: 'other' })))
 })
 
 test('one both windows came to hold stays with whoever had it first', async () => {
   await workspace.openWeb(SITE)
   const tab = workspace.active
   if (!tab) throw new Error('nothing opened')
-  await vi.waitFor(() =>
-    expect(heard).toContainEqual(expect.objectContaining({ held: [[SITE, expect.any(Number)]] })),
-  )
+  await vi.waitFor(() => expect(heard).toContainEqual(expect.objectContaining({ held: [[SITE, expect.any(Number)]] })))
 
   other.postMessage({ window: 'other', held: [[SITE, 0]] })
 

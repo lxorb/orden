@@ -14,8 +14,7 @@ import { prismaParser } from './prisma'
 
 const languages = await fenceLanguages()
 
-const languageFor = (word: string) =>
-  LanguageDescription.matchLanguageName(languages, word, true)?.name ?? null
+const languageFor = (word: string) => LanguageDescription.matchLanguageName(languages, word, true)?.name ?? null
 
 describe('the word a fence is opened with', () => {
   const expected: Record<string, string> = {
@@ -210,8 +209,7 @@ describe('what a fence is besides code', () => {
   })
 
   test('the two a clipped page may not choose are the two that need no press', () => {
-    const fenced = (language: string) =>
-      htmlToMarkdown(`<pre data-language="${language}"><code>x</code></pre>`)
+    const fenced = (language: string) => htmlToMarkdown(`<pre data-language="${language}"><code>x</code></pre>`)
 
     const block = (language: string) => ['```' + language, 'x', '```'].join('\n')
 

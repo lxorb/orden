@@ -35,16 +35,12 @@ function random(...parts) {
     int: (below) => Math.floor(next() * below),
     pick: (list) => list[Math.floor(next() * list.length)],
     word: (length) =>
-      Array.from(
-        { length },
-        () => 'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(next() * 36)],
-      ).join(''),
+      Array.from({ length }, () => 'abcdefghijklmnopqrstuvwxyz0123456789'[Math.floor(next() * 36)]).join(''),
     bytes(size) {
       const out = Buffer.allocUnsafe(size)
       for (let at = 0; at < size; at += 4) {
         const value = (next() * 4294967296) >>> 0
-        for (let one = 0; one < 4 && at + one < size; one++)
-          out[at + one] = (value >>> (one * 8)) & 0xff
+        for (let one = 0; one < 4 && at + one < size; one++) out[at + one] = (value >>> (one * 8)) & 0xff
       }
       return out
     },
@@ -100,10 +96,7 @@ function noteText(seed, n, title, total) {
   }
   lines.push(`# ${title}`, '', `${sentence(rng, 8 + rng.int(12))} ${marker}`, '')
   if (n % 5 === 0)
-    lines.push(
-      `See [[Note ${(n * 7 + 3) % total}]] and [[Note ${(n * 13 + 1) % total}|another one]].`,
-      '',
-    )
+    lines.push(`See [[Note ${(n * 7 + 3) % total}]] and [[Note ${(n * 13 + 1) % total}|another one]].`, '')
   if (n % 7 === 0)
     lines.push(
       `- [ ] ${sentence(rng, 4)}`,
@@ -113,22 +106,14 @@ function noteText(seed, n, title, total) {
     )
   if (n % 11 === 0) {
     lines.push('| key | value | count |', '| --- | :-: | --: |')
-    for (let row = 0; row < 3; row++)
-      lines.push(`| ${rng.pick(WORDS)} | ${rng.pick(WORDS)} | ${rng.int(1000)} |`)
+    for (let row = 0; row < 3; row++) lines.push(`| ${rng.pick(WORDS)} | ${rng.pick(WORDS)} | ${rng.int(1000)} |`)
     lines.push('')
   }
   if (n % 13 === 0)
-    lines.push(
-      '```ts',
-      `const n${n} = ${rng.int(99)} // ${rng.pick(WORDS)}`,
-      'export default n' + n,
-      '```',
-      '',
-    )
+    lines.push('```ts', `const n${n} = ${rng.int(99)} // ${rng.pick(WORDS)}`, 'export default n' + n, '```', '')
   if (n % 17 === 0) lines.push(rng.pick(CJK), '')
   if (n % 19 === 0) lines.push(`${rng.pick(EMOJI)} ${sentence(rng, 5)} ${rng.pick(EMOJI)}`, '')
-  for (let paragraph = rng.int(4); paragraph > 0; paragraph--)
-    lines.push(sentence(rng, 10 + rng.int(30)), '')
+  for (let paragraph = rng.int(4); paragraph > 0; paragraph--) lines.push(sentence(rng, 10 + rng.int(30)), '')
 
   return { text: lines.join('\n'), marker }
 }
@@ -273,11 +258,7 @@ async function makeTest(root, seed, scale, light) {
   await put(space, 'Tricky/aux.md', noteText(seed, 'aux', 'aux', total).text)
   await put(space, 'Tricky/Café ☕ & 100% «quotes».md', noteText(seed, 'cafe', 'Café', total).text)
   const long = `Tricky/${'Very long folder name '.repeat(4).trim()}/${'And another long folder '.repeat(3).trim()}/`
-  await put(
-    space,
-    `${long}${'n'.repeat(200 - long.length - 3)}.md`,
-    noteText(seed, 'long', 'Long', total).text,
-  )
+  await put(space, `${long}${'n'.repeat(200 - long.length - 3)}.md`, noteText(seed, 'long', 'Long', total).text)
 
   const day = new Date(Date.UTC(2026, 8, 1) + (seed % 30) * 86400000).toISOString()
   for (let n = 0; n < scaled(30, scale); n++) {
@@ -301,23 +282,11 @@ async function makeTest(root, seed, scale, light) {
       cap,
       Math.round(2048 * ((14 * 1024 * 1024) / 2048) ** (pictures > 1 ? n / (pictures - 1) : 0)),
     )
-    await put(
-      space,
-      `assets/picture-${String(n).padStart(2, '0')}.png`,
-      png(random(seed, 'png', n), size),
-    )
+    await put(space, `assets/picture-${String(n).padStart(2, '0')}.png`, png(random(seed, 'png', n), size))
   }
   for (let n = 0; n < scaled(3, scale); n++)
-    await put(
-      space,
-      `Papers/Paper ${n}.pdf`,
-      pdf(`Seed paper ${n} mk-pdf${n}-${random(seed, 'pdf', n).word(6)}`),
-    )
-  await put(
-    space,
-    'assets/recording.bin',
-    random(seed, 'big').bytes(Math.min(cap, 70 * 1024 * 1024)),
-  )
+    await put(space, `Papers/Paper ${n}.pdf`, pdf(`Seed paper ${n} mk-pdf${n}-${random(seed, 'pdf', n).word(6)}`))
+  await put(space, 'assets/recording.bin', random(seed, 'big').bytes(Math.min(cap, 70 * 1024 * 1024)))
 
   for (let n = 0; n < scaled(5, scale); n++) {
     const rng = random(seed, 'term', n)
@@ -393,9 +362,7 @@ async function churn(root, seed, scale, manifestPath) {
   const biggest = [...held].sort((one, two) => two[1] - one[1])[0]?.[0]
   const seconds = [
     ...new Set(
-      before
-        .filter((path) => path.split('/').length > 2)
-        .map((path) => path.split('/').slice(0, 2).join('/')),
+      before.filter((path) => path.split('/').length > 2).map((path) => path.split('/').slice(0, 2).join('/')),
     ),
   ]
     .filter((folder) => folder.split('/')[0] !== biggest)
@@ -433,10 +400,7 @@ async function churn(root, seed, scale, manifestPath) {
   for (const [n, path] of take(scaled(300, scale)).entries()) {
     const marker = `ed-${n}-${rng.word(6)}`
     const where = join(space, ...path.split('/'))
-    await writeFile(
-      where,
-      `${await readFile(where, 'utf8')}\nEdited: ${sentence(rng, 6)} ${marker}\n`,
-    )
+    await writeFile(where, `${await readFile(where, 'utf8')}\nEdited: ${sentence(rng, 6)} ${marker}\n`)
     markers[marker] = path
     log.push({ op: 'edit', path, marker })
   }
@@ -470,16 +434,12 @@ async function check(manifestPath, folders) {
   for (const folder of folders) {
     for (const path of await walk(folder)) {
       if (!/\.(md|canvas|pages|url|term|txt|pdf)$/i.test(path)) continue
-      for (const marker of (await readFile(join(folder, ...path.split('/')), 'utf8')).match(
-        MARKER,
-      ) ?? [])
+      for (const marker of (await readFile(join(folder, ...path.split('/')), 'utf8')).match(MARKER) ?? [])
         found.add(marker)
     }
   }
   const missing = Object.keys(markers).filter((one) => !found.has(one))
-  say(
-    `${Object.keys(markers).length - missing.length} of ${Object.keys(markers).length} markers found`,
-  )
+  say(`${Object.keys(markers).length - missing.length} of ${Object.keys(markers).length} markers found`)
   for (const one of missing.slice(0, 50)) say(`  missing ${one} (${markers[one]})`)
   if (missing.length > 50) say(`  … ${missing.length - 50} more`)
   if (missing.length) process.exitCode = 2
@@ -531,22 +491,19 @@ async function main() {
   const flags = {}
   for (let at = 0; at < argv.length; at++) {
     const one = argv[at]
-    if (['--seed', '--scale', '--only', '--manifest'].includes(one))
-      flags[one.slice(2)] = argv[++at]
+    if (['--seed', '--scale', '--only', '--manifest'].includes(one)) flags[one.slice(2)] = argv[++at]
     else if (one.startsWith('--')) flags[one.slice(2)] = true
     else words.push(one)
   }
   const [what, first, ...rest] = words
   const seed = Number(flags.seed ?? 1)
   const scale = Number(flags.scale ?? 1)
-  if (!Number.isFinite(seed) || !(scale > 0))
-    throw new Error('--seed is a number and --scale above 0')
+  if (!Number.isFinite(seed) || !(scale > 0)) throw new Error('--seed is a number and --scale above 0')
 
   if (what === 'make' && first) {
     await mkdir(first, { recursive: true })
     const made = []
-    if (flags.only !== 'big')
-      made.push(`${await makeTest(first, seed, scale, flags.light === true)} notes in ${TEST}`)
+    if (flags.only !== 'big') made.push(`${await makeTest(first, seed, scale, flags.light === true)} notes in ${TEST}`)
     if (flags.only !== 'test') made.push(`${await makeBig(first, seed, scale)} in ${BIG}`)
     const where = flags.manifest ?? `${first.replace(/[\\/]+$/, '')}.manifest.json`
     await writeManifest(where, {
@@ -557,12 +514,7 @@ async function main() {
     })
     say(`made ${made.join(' and ')}; manifest ${where}`)
   } else if (what === 'churn' && first) {
-    await churn(
-      first,
-      seed,
-      scale,
-      flags.manifest ?? `${first.replace(/[\\/]+$/, '')}.manifest.json`,
-    )
+    await churn(first, seed, scale, flags.manifest ?? `${first.replace(/[\\/]+$/, '')}.manifest.json`)
   } else if (what === 'manifest' && first && rest[0]) {
     await writeManifest(rest[0], await manifest(first))
     say(`manifest ${rest[0]}`)

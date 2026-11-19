@@ -9,10 +9,7 @@ function databaseBase(status: string, view: string, shown: string): Base {
   return {
     filters: { and: ['file.folder == this.file.folder', 'file.path != this.file.path'] },
     formulas: {},
-    properties:
-      shown.toLowerCase() === status
-        ? {}
-        : { [`note.${status}`]: { displayName: shown, kept: {} } },
+    properties: shown.toLowerCase() === status ? {} : { [`note.${status}`]: { displayName: shown, kept: {} } },
     summaries: {},
     views: [
       {

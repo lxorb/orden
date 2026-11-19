@@ -23,22 +23,8 @@ import {
   type StateCommand,
   type Text,
 } from '@codemirror/state'
-import {
-  type Command,
-  Decoration,
-  type DecorationSet,
-  EditorView,
-  ViewPlugin,
-  type ViewUpdate,
-} from '@codemirror/view'
-import {
-  type FindSpec,
-  type FindTally,
-  findShown,
-  MOST_COUNTED,
-  NO_TALLY,
-  SLOW_TALLY,
-} from './find'
+import { type Command, Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
+import { type FindSpec, type FindTally, findShown, MOST_COUNTED, NO_TALLY, SLOW_TALLY } from './find'
 import { TRIAL_MS, trialCost } from './find-trial'
 
 interface Vetting {
@@ -56,8 +42,7 @@ const vetting = StateField.define<Vetting>({
     for (const effect of transaction.effects) {
       if (effect.is(setSearchQuery)) now = { doc: transaction.state.doc, slow: false }
       else if (effect.is(refused)) now = { doc: transaction.state.doc, slow: true }
-      else if (effect.is(vetted) && effect.value === transaction.state.doc)
-        now = { doc: effect.value, slow: false }
+      else if (effect.is(vetted) && effect.value === transaction.state.doc) now = { doc: effect.value, slow: false }
     }
     return now
   },
@@ -124,11 +109,7 @@ interface Verdict {
   quick: boolean
 }
 
-async function verdictOn(
-  view: EditorView,
-  query: SearchQuery,
-  still: () => boolean,
-): Promise<Verdict | null> {
+async function verdictOn(view: EditorView, query: SearchQuery, still: () => boolean): Promise<Verdict | null> {
   const lines = !MULTILINE.test(query.search)
   let base: { doc: Text; spent: number } | null = null
   for (;;) {
@@ -170,9 +151,7 @@ export function clear(view: EditorView): Promise<boolean> {
       const verdict = await verdictOn(view, query, () => getSearchQuery(view.state) === query)
       if (!verdict) continue
       view.dispatch({
-        effects: verdict.quick
-          ? vetted.of(verdict.doc)
-          : [setSearchQuery.of(NOTHING), refused.of(null)],
+        effects: verdict.quick ? vetted.of(verdict.doc) : [setSearchQuery.of(NOTHING), refused.of(null)],
       })
       return verdict.quick
     }
@@ -264,12 +243,7 @@ const findHighlighter = ViewPlugin.fromClass(
   { decorations: (plugin) => plugin.decorations },
 )
 
-export const searching = (): Extension => [
-  search(),
-  vetting,
-  findHighlighter,
-  highlightSelectionMatches(),
-]
+export const searching = (): Extension => [search(), vetting, findHighlighter, highlightSelectionMatches()]
 
 function keptAsTyped(replacement: string): string {
   return replacement.replace(/\\/g, '\\\\')
@@ -293,14 +267,10 @@ export async function setQuery(view: EditorView, spec: FindSpec): Promise<void> 
   asking.set(view, turn)
 
   const verdict =
-    !query.regexp || !query.valid
-      ? { quick: true }
-      : await verdictOn(view, query, () => asking.get(view) === turn)
+    !query.regexp || !query.valid ? { quick: true } : await verdictOn(view, query, () => asking.get(view) === turn)
   if (!verdict) return
   view.dispatch({
-    effects: verdict.quick
-      ? setSearchQuery.of(query)
-      : [setSearchQuery.of(NOTHING), refused.of(null)],
+    effects: verdict.quick ? setSearchQuery.of(query) : [setSearchQuery.of(NOTHING), refused.of(null)],
   })
 }
 

@@ -15,10 +15,7 @@ function viewOf(doc: string, caret: number) {
     EditorState.create({
       doc,
       selection: EditorSelection.cursor(caret),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        history(),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), history()],
     }),
   )
 
@@ -258,9 +255,7 @@ describe('front matter', () => {
   })
 
   test('a drop at the top of the note lands under it', () => {
-    expect(dropped(doc, 'Bravo', '---')).toBe(
-      '---\ntitle: x\n---\n\nBravo words.\n\nAlpha words.\n',
-    )
+    expect(dropped(doc, 'Bravo', '---')).toBe('---\ntitle: x\n---\n\nBravo words.\n\nAlpha words.\n')
   })
 
   test('is never moved itself', () => {

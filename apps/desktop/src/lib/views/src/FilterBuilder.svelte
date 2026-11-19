@@ -51,10 +51,7 @@
   }
 
   function add() {
-    const property =
-      kinds === 'notes'
-        ? (properties.find((one) => one.startsWith('note.')) ?? 'file.name')
-        : 'task.due'
+    const property = kinds === 'notes' ? (properties.find((one) => one.startsWith('note.')) ?? 'file.name') : 'task.due'
     write({ ...rows, rows: [...rows.rows, { property, op: '==', value: '' }] })
   }
 
@@ -72,8 +69,7 @@
     }
   }
 
-  const describe = (filter: unknown): string =>
-    typeof filter === 'string' ? filter : JSON.stringify(filter)
+  const describe = (filter: unknown): string => (typeof filter === 'string' ? filter : JSON.stringify(filter))
 </script>
 
 <div class="orden-field query">
@@ -96,8 +92,7 @@
     class="orden-chip completed"
     class:is-on={view?.orden.showCompleted === true}
     aria-pressed={view?.orden.showCompleted === true}
-    onclick={() =>
-      kit.change((base, at) => setShowCompleted(base, at, view?.orden.showCompleted !== true))}
+    onclick={() => kit.change((base, at) => setShowCompleted(base, at, view?.orden.showCompleted !== true))}
     >Show completed</button
   >
 {/if}
@@ -129,10 +124,7 @@
       <Select
         label="Property"
         value={row.property}
-        options={(properties.includes(row.property)
-          ? properties
-          : [row.property, ...properties]
-        ).map((one) => ({
+        options={(properties.includes(row.property) ? properties : [row.property, ...properties]).map((one) => ({
           value: one,
           label: propertyName(one, live.base ? displayName(live.base, one) : undefined),
         }))}
@@ -161,8 +153,7 @@
       class="orden-glyph"
       title="Remove"
       aria-label="Remove"
-      onclick={() => write({ ...rows, rows: rows.rows.filter((_, index) => index !== at) })}
-      ><Cross small /></button
+      onclick={() => write({ ...rows, rows: rows.rows.filter((_, index) => index !== at) })}><Cross small /></button
     >
   </div>
 {/each}

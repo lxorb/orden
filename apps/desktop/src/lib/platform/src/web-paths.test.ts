@@ -1,14 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  basename,
-  isMarkdown,
-  join,
-  normalise,
-  parent,
-  safeName,
-  spaceOf,
-  under,
-} from './web-paths'
+import { basename, isMarkdown, join, normalise, parent, safeName, spaceOf, under } from './web-paths'
 
 describe('normalising a path', () => {
   test('always starts at the root and never ends in a slash', () => {

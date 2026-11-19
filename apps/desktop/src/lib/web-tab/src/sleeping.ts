@@ -13,8 +13,7 @@ export interface Held {
 
 function resting(id: string, page: Page): Resting {
   const site = siteOf(page.url)
-  const allowed = (ask: 'camera' | 'microphone' | 'notifications') =>
-    grants.said(site, ask, page.inPrivate) === 'allow'
+  const allowed = (ask: 'camera' | 'microphone' | 'notifications') => grants.said(site, ask, page.inPrivate) === 'allow'
   return {
     id,
     live: page.live,
@@ -39,9 +38,7 @@ export function rest(pages: Held, tabId: string, refused = false): void {
 
   clearTimeout(page.resting)
   page.resting = undefined
-  const { act, again } = refused
-    ? { act: null, again: FROZEN_AFTER }
-    : judged(one, saver.mode, Date.now())
+  const { act, again } = refused ? { act: null, again: FROZEN_AFTER } : judged(one, saver.mode, Date.now())
   if (act === 'park') {
     void pages.park(tabId, true)
     return
@@ -54,9 +51,7 @@ export function lull(pages: Held, tabId: string, page: Page, paused: boolean): P
   page.frozen = paused
   page.lulling = page.lulling.then(async () => {
     if (paused) await page.shooting
-    const done = await invoke<boolean | undefined>('web_pause', { tab: tabId, paused }).catch(
-      () => false,
-    )
+    const done = await invoke<boolean | undefined>('web_pause', { tab: tabId, paused }).catch(() => false)
     if (!paused || done !== false || !page.frozen) return
     page.frozen = false
     rest(pages, tabId, true)

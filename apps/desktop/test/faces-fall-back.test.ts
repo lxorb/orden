@@ -23,9 +23,7 @@ test('every person picture falls back when it fails to load, never showing a bro
       const text = read(path)
       const file = relative(LIB, path).replaceAll('\\', '/')
       const tags = [...text.matchAll(/<img\b[\s\S]*?\/>/g)].map((tag) => tag[0])
-      const faces = text.includes('faceUrl(')
-        ? tags
-        : tags.filter((tag) => /src=\{[^}]*face/.test(tag))
+      const faces = text.includes('faceUrl(') ? tags : tags.filter((tag) => /src=\{[^}]*face/.test(tag))
       return faces.map((tag) => ({ file, tag }))
     })
   expect([...new Set(pictures.map((one) => one.file))]).toEqual(
@@ -40,9 +38,7 @@ test('every person picture falls back when it fails to load, never showing a bro
 
 test('no face is painted as a background, where a failed load leaves an empty circle', () => {
   const painted = [...walk(LIB, code), ...walk(EDITOR, code)]
-    .filter((path) =>
-      /backgroundImage = `url\("\$\{this\.face|background-image=\{[^}]*face/.test(read(path)),
-    )
+    .filter((path) => /backgroundImage = `url\("\$\{this\.face|background-image=\{[^}]*face/.test(read(path)))
     .map((path) => relative(join(LIB, '../../..'), path).replaceAll('\\', '/'))
   expect(painted).toEqual([])
 })

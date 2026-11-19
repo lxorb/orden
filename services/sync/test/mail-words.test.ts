@@ -1,11 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  codeMessage,
-  goneMessage,
-  inviteMessage,
-  leavingMessage,
-  requestMessage,
-} from '../src/sync-server/src/email'
+import { codeMessage, goneMessage, inviteMessage, leavingMessage, requestMessage } from '../src/sync-server/src/email'
 
 const SENT = {
   code: codeMessage('123456'),

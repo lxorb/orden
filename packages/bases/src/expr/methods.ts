@@ -68,12 +68,7 @@ function linksTo(row: Row, other: Val, scope: Scope): boolean {
   return false
 }
 
-function fileMethod(
-  row: Row,
-  name: string,
-  args: readonly Arg[],
-  scope: Scope,
-): { value: Val } | null {
+function fileMethod(row: Row, name: string, args: readonly Arg[], scope: Scope): { value: Val } | null {
   switch (name) {
     case 'asLink': {
       const display = args[0]?.()
@@ -121,10 +116,7 @@ function stringMethod(value: string, name: string, args: readonly Arg[]): { valu
       return { value: value.toUpperCase() }
     case 'title':
       return {
-        value: value.replace(
-          /(^|\s)(\p{L})/gu,
-          (_, gap: string, letter: string) => gap + letter.toUpperCase(),
-        ),
+        value: value.replace(/(^|\s)(\p{L})/gu, (_, gap: string, letter: string) => gap + letter.toUpperCase()),
       }
     case 'trim':
       return { value: value.trim() }
@@ -138,10 +130,7 @@ function stringMethod(value: string, name: string, args: readonly Arg[]): { valu
     case 'slice': {
       const [start, end] = evaluated(args)
       return {
-        value: value.slice(
-          number(start ?? 0, 'slice'),
-          end == null ? undefined : number(end, 'slice'),
-        ),
+        value: value.slice(number(start ?? 0, 'slice'), end == null ? undefined : number(end, 'slice')),
       }
     }
     case 'replace': {
@@ -190,24 +179,16 @@ function numberMethod(value: number, name: string, args: readonly Arg[]): { valu
   }
 }
 
-const numbersOf = (list: readonly Val[]) =>
-  list.filter((one): one is number => typeof one === 'number')
+const numbersOf = (list: readonly Val[]) => list.filter((one): one is number => typeof one === 'number')
 
 function median(values: readonly number[]): number | null {
   if (!values.length) return null
   const sorted = [...values].sort((a, b) => a - b)
   const middle = Math.floor(sorted.length / 2)
-  return sorted.length % 2
-    ? (sorted[middle] ?? null)
-    : ((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2
+  return sorted.length % 2 ? (sorted[middle] ?? null) : ((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2
 }
 
-function listMethod(
-  list: readonly Val[],
-  name: string,
-  args: readonly Arg[],
-  scope: Scope,
-): { value: Val } | null {
+function listMethod(list: readonly Val[], name: string, args: readonly Arg[], scope: Scope): { value: Val } | null {
   const has = (wanted: Val) => list.some((one) => equal(one, wanted, scope))
   switch (name) {
     case 'contains':
@@ -253,17 +234,12 @@ function listMethod(
     case 'unique':
       spend((list.length * list.length) / 64)
       return {
-        value: list.filter(
-          (one, at) => list.findIndex((other) => equal(one, other, scope)) === at,
-        ) as Value[],
+        value: list.filter((one, at) => list.findIndex((other) => equal(one, other, scope)) === at) as Value[],
       }
     case 'slice': {
       const [start, end] = evaluated(args)
       return {
-        value: list.slice(
-          number(start ?? 0, 'slice'),
-          end == null ? undefined : number(end, 'slice'),
-        ) as Value[],
+        value: list.slice(number(start ?? 0, 'slice'), end == null ? undefined : number(end, 'slice')) as Value[],
       }
     }
     case 'sum':
@@ -297,12 +273,7 @@ function listMethod(
   }
 }
 
-function dateMethod(
-  written: DateValue,
-  name: string,
-  args: readonly Arg[],
-  scope: Scope,
-): { value: Val } | null {
+function dateMethod(written: DateValue, name: string, args: readonly Arg[], scope: Scope): { value: Val } | null {
   const date = onClock(written, scope.context.zone)
   switch (name) {
     case 'date':
@@ -344,8 +315,7 @@ export function callMethod(receiver: Val, name: string, args: readonly Arg[], sc
   if (receiver instanceof FileRef || receiver instanceof ThisRef) {
     found = fileMethod(receiver.row, name, args, scope)
   } else if (receiver instanceof TaskRef) {
-    found =
-      name === 'hasTag' ? { value: hasTag(receiver.row.task?.tags ?? [], evaluated(args)) } : null
+    found = name === 'hasTag' ? { value: hasTag(receiver.row.task?.tags ?? [], evaluated(args)) } : null
   } else if (receiver instanceof NoteRef) {
     found = objectMethod(receiver.row.note, name)
   } else if (receiver instanceof RegExp) {

@@ -1,14 +1,7 @@
 import type { EditorView } from '@orden/editor'
 import { CODE_PALETTES } from '@orden/editor'
 import { paletteName } from '../../highlight/src/api'
-import {
-  DEFAULTS,
-  modes,
-  choices,
-  DEFAULT_ID_FORMAT,
-  ID_FORMATS,
-  noteId,
-} from '../../modes/src/api'
+import { DEFAULTS, modes, choices, DEFAULT_ID_FORMAT, ID_FORMATS, noteId } from '../../modes/src/api'
 import type { Pane } from './fields'
 
 export function editorPane(view: EditorView | undefined, moment: Date): Pane {

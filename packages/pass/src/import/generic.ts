@@ -1,14 +1,4 @@
-import {
-  Collector,
-  type Extra,
-  ImportError,
-  dateOf,
-  fieldsOf,
-  itemOf,
-  loginOf,
-  noteOf,
-  urlsIn,
-} from './build'
+import { Collector, type Extra, ImportError, dateOf, fieldsOf, itemOf, loginOf, noteOf, urlsIn } from './build'
 import { csvRows } from './csv'
 import type { Imported } from './types'
 
@@ -50,9 +40,7 @@ export function columnsOf(header: readonly string[]): Partial<Record<Role, numbe
 
 export function csvLooksLike(header: readonly string[]): boolean {
   const columns = columnsOf(header)
-  return (
-    columns.password !== undefined || (columns.title !== undefined && columns.note !== undefined)
-  )
+  return columns.password !== undefined || (columns.title !== undefined && columns.note !== undefined)
 }
 
 export function parseCsv(text: string): Imported {

@@ -82,9 +82,9 @@ describe('OpenAI’s list', () => {
     expect(known.efforts).not.toContain('minimal')
     expect(known.window).toBe(400_000)
     learn('openai', 'gpt-4.1-mini', { reasons: false })
-    expect(
-      unlisted({ id: 'openai', kind: 'openai', name: 'OpenAI', model: '' }, 'gpt-4.1-mini').efforts,
-    ).toEqual(['auto'])
+    expect(unlisted({ id: 'openai', kind: 'openai', name: 'OpenAI', model: '' }, 'gpt-4.1-mini').efforts).toEqual([
+      'auto',
+    ])
   })
 })
 

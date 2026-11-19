@@ -70,13 +70,7 @@ export function sameCombination(left: string, right: string, platform: Platform)
   const b = parseCombination(right, platform)
   if (!a || !b) return false
 
-  return (
-    a.ctrl === b.ctrl &&
-    a.meta === b.meta &&
-    a.alt === b.alt &&
-    a.shift === b.shift &&
-    a.key === b.key
-  )
+  return a.ctrl === b.ctrl && a.meta === b.meta && a.alt === b.alt && a.shift === b.shift && a.key === b.key
 }
 
 export const PHYSICAL: Record<string, string> = {

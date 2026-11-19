@@ -1,13 +1,4 @@
-import type {
-  Content,
-  Field,
-  FieldKind,
-  IdentityKey,
-  MatchRule,
-  Passkey,
-  Section,
-  Website,
-} from '../types'
+import type { Content, Field, FieldKind, IdentityKey, MatchRule, Passkey, Section, Website } from '../types'
 import { blank } from '../envelope'
 import {
   Collector,
@@ -36,8 +27,7 @@ import type { Imported } from './types'
 
 const NAME = 'Proton Pass'
 
-const ENCRYPTED =
-  'The export is encrypted with a passphrase: export it again from Proton Pass without one.'
+const ENCRYPTED = 'The export is encrypted with a passphrase: export it again from Proton Pass without one.'
 
 const MODES: Record<number, MatchRule> = {
   0: 'domain',
@@ -86,12 +76,7 @@ const IDENTITY: Record<string, IdentityKey> = {
 
 const KNOWN = ['login', 'note', 'alias', 'creditCard', 'identity', 'sshKey', 'wifi', 'custom']
 
-const IDENTITY_EXTRA = [
-  'extraPersonalDetails',
-  'extraAddressDetails',
-  'extraContactDetails',
-  'extraWorkDetails',
-]
+const IDENTITY_EXTRA = ['extraPersonalDetails', 'extraAddressDetails', 'extraContactDetails', 'extraWorkDetails']
 
 export function parseProton(data: string | Files): Imported {
   if (typeof data !== 'string') return parseProtonZip(data)
@@ -231,10 +216,7 @@ function contentOf(item: Record<string, unknown>, aliasEmail: string): Content {
       })
       return {
         ...identity,
-        sections: [
-          ...identity.sections,
-          ...sectionsOf(content.extraSections).filter((one) => one.fields.length > 0),
-        ],
+        sections: [...identity.sections, ...sectionsOf(content.extraSections).filter((one) => one.fields.length > 0)],
       }
     }
     case 'sshKey':
@@ -288,8 +270,7 @@ function parseProtonJson(text: string): Imported {
       const content = contentOf(item, stringOf(item.aliasEmail))
       const title = content.title
       const kind = stringOf(recordOf(item.data).type)
-      if (!KNOWN.includes(kind))
-        into.skip(`Kept as a note: Orden has no kind for "${kind}".`, title)
+      if (!KNOWN.includes(kind)) into.skip(`Kept as a note: Orden has no kind for "${kind}".`, title)
       if (listOf(item.files).length > 0) into.skip('Its attachments were not imported.', title)
       into.add(
         itemOf(content, {
@@ -377,10 +358,7 @@ function parseProtonCsv(text: string): Imported {
     const type = row.type ?? ''
     if (content === null) continue
     if (!['', 'login', 'note', 'creditCard', 'identity', 'alias'].includes(type)) {
-      into.skip(
-        `Kept as a note: a Proton Pass CSV holds only the note of a "${type}".`,
-        content.title,
-      )
+      into.skip(`Kept as a note: a Proton Pass CSV holds only the note of a "${type}".`, content.title)
     }
     const parts = { created: dateOf(row.createTime ?? ''), modified: dateOf(row.modifyTime ?? '') }
     into.add(itemOf(content, parts), row.vault ?? '')

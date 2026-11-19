@@ -42,17 +42,14 @@
     return id ? (people.of(id)?.presence ?? null) : null
   }
 
-  const listed = $derived(
-    listedOf(page.view.members, (who) => nameOf(who, page.members, space), presenceOf),
-  )
+  const listed = $derived(listedOf(page.view.members, (who) => nameOf(who, page.members, space), presenceOf))
   const groups = $derived(grouped(listed, filter))
   const laid = $derived(placed(linesOf(groups), HEIGHTS))
   const shown = $derived(
-    visible(laid.rows, top - HEIGHTS.member * SPARE, top + height + HEIGHTS.member * SPARE).map(
-      (row) =>
-        row.line.kind === 'group'
-          ? { key: `g:${row.line.rank}`, top: row.top, height: row.height, group: row.line }
-          : { key: row.line.member.who, top: row.top, height: row.height, member: row.line.member },
+    visible(laid.rows, top - HEIGHTS.member * SPARE, top + height + HEIGHTS.member * SPARE).map((row) =>
+      row.line.kind === 'group'
+        ? { key: `g:${row.line.rank}`, top: row.top, height: row.height, group: row.line }
+        : { key: row.line.member.who, top: row.top, height: row.height, member: row.line.member },
     ),
   )
 
@@ -139,9 +136,7 @@
         }
       }}
     />
-    <button type="button" class="orden-glyph" aria-label="Close" onclick={onclose}
-      ><Glyph name="close" /></button
-    >
+    <button type="button" class="orden-glyph" aria-label="Close" onclick={onclose}><Glyph name="close" /></button>
   </header>
   <div
     class="list orden-scrolls"
@@ -168,11 +163,7 @@
               onclick={(event) => press(event, row.member)}
               oncontextmenu={(event) => showMenu(event, row.member)}
             >
-              <Avatar
-                face={faceOf(row.member.who, page.members, space)}
-                size={32}
-                presence={row.member.presence}
-              />
+              <Avatar face={faceOf(row.member.who, page.members, space)} size={32} presence={row.member.presence} />
               <span class="words">
                 <span class="name">{row.member.name}</span>
               </span>

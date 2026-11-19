@@ -40,9 +40,7 @@ export function readEvent(value: unknown): AgentEvent | null {
   switch (value.kind) {
     case 'acting': {
       const verb = text('verb')
-      return agent !== null && tab !== null && verb !== null
-        ? { kind: 'acting', agent, tab, verb }
-        : null
+      return agent !== null && tab !== null && verb !== null ? { kind: 'acting', agent, tab, verb } : null
     }
     case 'paused':
     case 'resumed':

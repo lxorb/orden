@@ -193,10 +193,7 @@ describe('an edit under the reader', () => {
     session.goTo(4)
     const words = session.page?.words
 
-    session.follow(
-      note({ text: `An inserted first paragraph, of some length.\n\n${LONG}` }),
-      paging,
-    )
+    session.follow(note({ text: `An inserted first paragraph, of some length.\n\n${LONG}` }), paging)
 
     const first = words?.split('\n')[0] ?? ''
     expect(first).not.toBe('')

@@ -110,8 +110,7 @@ async function explorer() {
   return { tab, view: viewOf(tab) }
 }
 
-const rows = (): string[] =>
-  [...target.querySelectorAll('.entry .orden-row-label')].map((one) => one.textContent)
+const rows = (): string[] => [...target.querySelectorAll('.entry .orden-row-label')].map((one) => one.textContent)
 
 function press(key: string, more: KeyboardEventInit = {}) {
   const focused = document.activeElement
@@ -138,9 +137,7 @@ describe('a file explorer', () => {
   test('lists the home folder, folders first, with the places beside it', async () => {
     await explorer()
     expect(rows()).toEqual(['Music', 'Pictures', 'notes.txt', 'plan.pdf'])
-    const places = [...target.querySelectorAll('.place .orden-row-label')].map(
-      (one) => one.textContent,
-    )
+    const places = [...target.querySelectorAll('.place .orden-row-label')].map((one) => one.textContent)
     expect(places).toEqual(['Home', 'Computer'])
     expect(target.querySelector('.place.is-on')?.textContent).toContain('Home')
     expect(target.querySelector('.foot')?.textContent).toContain('4 items')
@@ -173,9 +170,7 @@ describe('a file explorer', () => {
 
   test('opens a file outside the spaces in the app the system opens it with', async () => {
     await explorer()
-    const row = [...target.querySelectorAll<HTMLElement>('.entry')].find((one) =>
-      one.textContent.includes('plan.pdf'),
-    )
+    const row = [...target.querySelectorAll<HTMLElement>('.entry')].find((one) => one.textContent.includes('plan.pdf'))
     row?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
     await settle()
     expect(opened).toEqual(['/home/me/plan.pdf'])
@@ -203,9 +198,7 @@ describe('a file explorer', () => {
     const { view } = await explorer()
     await view.go('/home/me/Pictures')
     await settle()
-    const row = [...target.querySelectorAll<HTMLElement>('.entry')].find((one) =>
-      one.textContent.includes('a.png'),
-    )
+    const row = [...target.querySelectorAll<HTMLElement>('.entry')].find((one) => one.textContent.includes('a.png'))
     row?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
     await settle()
     expect(opened).toEqual(['/home/me/Pictures/a.png'])
@@ -325,9 +318,7 @@ describe('a file explorer', () => {
     view.pickAll()
     press('F2')
     await settle()
-    const [find, replace] = [
-      ...target.querySelectorAll<HTMLInputElement>('.many input.orden-field'),
-    ]
+    const [find, replace] = [...target.querySelectorAll<HTMLInputElement>('.many input.orden-field')]
     if (!find || !replace) throw new Error('no fields')
     find.value = 'draft'
     find.dispatchEvent(new Event('input', { bubbles: true }))
@@ -336,10 +327,7 @@ describe('a file explorer', () => {
     flushSync()
     find.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     await settle()
-    expect(changed).toEqual([
-      'rename /home/me/letters/draft.txt final.txt',
-      'rename /home/me/old/draft.txt final.txt',
-    ])
+    expect(changed).toEqual(['rename /home/me/letters/draft.txt final.txt', 'rename /home/me/old/draft.txt final.txt'])
     expect(search.found.map((one) => one.name)).toEqual(['letters/final.txt', 'old/final.txt'])
     expect(rows()).toEqual(['final.txt', 'final.txt'])
   })
@@ -440,8 +428,7 @@ describe('a file explorer', () => {
   test('the hidden files button wears an open eye while they are shown and a shut one while not', async () => {
     const { explorerPrefs } = await import('./prefs.svelte')
     await explorer()
-    const button = () =>
-      target.querySelector<HTMLButtonElement>('button[aria-label="Hidden files"]')
+    const button = () => target.querySelector<HTMLButtonElement>('button[aria-label="Hidden files"]')
     const shut = () => !!button()?.querySelector('path[d="m2 2 20 20"]')
     expect(explorerPrefs.hidden).toBe(false)
     expect(button()?.getAttribute('aria-pressed')).toBe('false')
@@ -464,9 +451,7 @@ describe('a file explorer', () => {
     await settle()
     const sheet = target.querySelector('.many')
     expect(sheet?.textContent).toContain('plan.pdf')
-    const [find, replace] = [
-      ...target.querySelectorAll<HTMLInputElement>('.many input.orden-field'),
-    ]
+    const [find, replace] = [...target.querySelectorAll<HTMLInputElement>('.many input.orden-field')]
     if (!find || !replace) return
     find.value = 'n'
     find.dispatchEvent(new Event('input', { bubbles: true }))
@@ -477,10 +462,7 @@ describe('a file explorer', () => {
     expect(target.querySelector('.many')?.textContent).toContain('plaN.pdf')
     find.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
     await settle()
-    expect(changed).toEqual([
-      'rename /home/me/notes.txt Notes.txt',
-      'rename /home/me/plan.pdf plaN.pdf',
-    ])
+    expect(changed).toEqual(['rename /home/me/notes.txt Notes.txt', 'rename /home/me/plan.pdf plaN.pdf'])
   })
 
   test('a key pressed in a sheet over the list never acts on the files behind it', async () => {
@@ -510,12 +492,8 @@ describe('a file explorer', () => {
     press(' ')
     await settle()
     const look = target.querySelector<HTMLElement>('.look')
-    look?.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }),
-    )
-    look?.dispatchEvent(
-      new KeyboardEvent('keydown', { key: 'F2', bubbles: true, cancelable: true }),
-    )
+    look?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }))
+    look?.dispatchEvent(new KeyboardEvent('keydown', { key: 'F2', bubbles: true, cancelable: true }))
     await settle()
     expect(changed).toEqual([])
     expect(target.querySelector('input.rename')).toBeNull()
@@ -590,9 +568,7 @@ describe('a file explorer', () => {
     listedPaths.length = 0
     press('ArrowDown')
     press('ArrowDown')
-    await vi.waitFor(() =>
-      expect(listedPaths.filter((path) => path !== '/home/me')).toEqual(['/home/me/Pictures']),
-    )
+    await vi.waitFor(() => expect(listedPaths.filter((path) => path !== '/home/me')).toEqual(['/home/me/Pictures']))
     explorerPrefs.show('list')
   })
 })

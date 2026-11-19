@@ -49,8 +49,7 @@ function began(thread: Thread): () => void {
 export function answeringAt(provider: string, at: number): string | null {
   for (let index = sends.length - 1; index >= 0; index--) {
     const send = sends[index]
-    if (send?.provider === provider && send.from <= at && (send.to === null || at <= send.to))
-      return send.thread
+    if (send?.provider === provider && send.from <= at && (send.to === null || at <= send.to)) return send.thread
   }
   return null
 }

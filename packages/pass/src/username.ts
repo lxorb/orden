@@ -18,11 +18,7 @@ function leetOf(text: string): string {
   return text.replace(/[aeiost]/gi, (letter) => LEET[letter.toLowerCase()] ?? letter)
 }
 
-export function username(
-  rule: UsernameRule,
-  words: readonly string[],
-  random: Random = secureRandom,
-): string {
+export function username(rule: UsernameRule, words: readonly string[], random: Random = secureRandom): string {
   const plain = words.filter((one) => /^[a-z]+$/i.test(one))
   const joined = joinedWords(chosenWords(rule, plain, random), rule.separator, random)
   return rule.leet ? leetOf(joined) : joined

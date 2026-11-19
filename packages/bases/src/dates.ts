@@ -17,13 +17,11 @@ export function civil(iso: string): Civil | null {
   return parts
 }
 
-export const daysInMonth = (year: number, month: number): number =>
-  new Date(Date.UTC(year, month, 0)).getUTCDate()
+export const daysInMonth = (year: number, month: number): number => new Date(Date.UTC(year, month, 0)).getUTCDate()
 
 const pad = (value: number, width = 2) => String(value).padStart(width, '0')
 
-export const isoOf = (year: number, month: number, day: number): string =>
-  `${pad(year, 4)}-${pad(month)}-${pad(day)}`
+export const isoOf = (year: number, month: number, day: number): string => `${pad(year, 4)}-${pad(month)}-${pad(day)}`
 
 export function dayNumber(iso: string): number {
   const known = dayNumbers.get(iso)
@@ -136,9 +134,7 @@ export function wallOf(epochMs: number, zone?: string): number {
       date.getMilliseconds(),
     )
   }
-  const parts = Object.fromEntries(
-    clock.formatToParts(epochMs).map((part) => [part.type, Number(part.value)]),
-  )
+  const parts = Object.fromEntries(clock.formatToParts(epochMs).map((part) => [part.type, Number(part.value)]))
   const millis = ((epochMs % 1000) + 1000) % 1000
   const { year = 0, month = 1, day = 1, hour = 0, minute = 0, second = 0 } = parts
   return Date.UTC(year, month - 1, day, hour, minute, second, millis)
@@ -155,16 +151,13 @@ function offsetMinutes(zone: string): number | null {
 }
 
 export function readDate(text: string): DateValue | null {
-  const found =
-    /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2})(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/.exec(
-      text.trim(),
-    )
+  const found = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2})(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/.exec(
+    text.trim(),
+  )
   if (!found?.[1] || !civil(found[1])) return null
   if (found[2] === undefined) return { kind: 'date', iso: found[1] }
   const time = `${pad(Number(found[2]))}:${found[3] ?? '00'}:${found[4] ?? '00'}${found[5] ?? ''}`
-  return found[6]
-    ? { kind: 'date', iso: found[1], time, zone: found[6] }
-    : { kind: 'date', iso: found[1], time }
+  return found[6] ? { kind: 'date', iso: found[1], time, zone: found[6] } : { kind: 'date', iso: found[1], time }
 }
 
 const MONTHS = [
@@ -313,5 +306,4 @@ export function relative(ms: number, now: number): string {
   return ms <= now ? `${words} ago` : `in ${words}`
 }
 
-export const todayOf = (now: Date = new Date()): string =>
-  isoOf(now.getFullYear(), now.getMonth() + 1, now.getDate())
+export const todayOf = (now: Date = new Date()): string => isoOf(now.getFullYear(), now.getMonth() + 1, now.getDate())

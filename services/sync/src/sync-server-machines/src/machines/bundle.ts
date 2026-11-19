@@ -14,9 +14,7 @@ export async function bundleSha(): Promise<string | null> {
   const carried = bytes
   digest ??= crypto.subtle
     .digest('SHA-256', carried)
-    .then((hash) =>
-      [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join(''),
-    )
+    .then((hash) => [...new Uint8Array(hash)].map((byte) => byte.toString(16).padStart(2, '0')).join(''))
   return await digest
 }
 

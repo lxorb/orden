@@ -23,11 +23,7 @@ export function entryOf(markup: string): string | null {
   return null
 }
 
-export function verdict(
-  running: string | null,
-  served: string,
-  reloadedFor: string | null,
-): 'reload' | 'offer' {
+export function verdict(running: string | null, served: string, reloadedFor: string | null): 'reload' | 'offer' {
   return served !== running && served !== reloadedFor ? 'reload' : 'offer'
 }
 

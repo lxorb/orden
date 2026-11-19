@@ -60,9 +60,7 @@ describe('the index', () => {
       updated_at: number
     }
     const stamp = { size: NOTE.length, mtime: row.updated_at, ctime: row.updated_at }
-    expect(items).toEqual([
-      { id, docSeq: row.doc_seq ?? row.seq, scan: indexed('Projects/Plans.md', NOTE, stamp) },
-    ])
+    expect(items).toEqual([{ id, docSeq: row.doc_seq ?? row.seq, scan: indexed('Projects/Plans.md', NOTE, stamp) }])
     const scan = items?.[0] && 'scan' in items[0] ? items[0].scan : null
     expect(scan?.links.map((one) => one.target)).toEqual(['Ideas'])
     expect(scan?.tags).toEqual(['work'])
@@ -139,27 +137,20 @@ describe('the search', () => {
     await made('Drafts/Old.md', 'garden\n')
     await made('.nib/Own.md', 'garden\n')
     const kept = await made('Kept.md', 'garden\n')
-    const answer = searchAnswerOf(
-      (await search({ q: 'garden', limit: 10, skip: [mine], excluded: ['Drafts'] })).json,
-    )
+    const answer = searchAnswerOf((await search({ q: 'garden', limit: 10, skip: [mine], excluded: ['Drafts'] })).json)
     expect(answer?.hits.map((one) => one.id)).toEqual([kept])
   })
 
   test('a page at a time, and on from where the last one ended', async () => {
     const ids: string[] = []
-    for (let at = 0; at < 205; at += 1)
-      ids.push(await made(`n${String(at)}.md`, `word ${String(at)}\n`))
+    for (let at = 0; at < 205; at += 1) ids.push(await made(`n${String(at)}.md`, `word ${String(at)}\n`))
     const first = searchAnswerOf((await search({ q: 'word', limit: 200 })).json)
     expect(first?.hits).toHaveLength(200)
     expect(first?.after).not.toBeNull()
 
-    const rest = searchAnswerOf(
-      (await search({ q: 'word', limit: 200, after: first?.after ?? '' })).json,
-    )
+    const rest = searchAnswerOf((await search({ q: 'word', limit: 200, after: first?.after ?? '' })).json)
     expect(rest?.after).toBeNull()
-    expect(new Set([...(first?.hits ?? []), ...(rest?.hits ?? [])].map((one) => one.id))).toEqual(
-      new Set(ids),
-    )
+    expect(new Set([...(first?.hits ?? []), ...(rest?.hits ?? [])].map((one) => one.id))).toEqual(new Set(ids))
   })
 
   test('loose guesses come back with their scores', async () => {
@@ -249,8 +240,7 @@ describe('who may ask', () => {
     const stranger = await signIn(env, 'stranger@example.com')
     expect(await reaches(stranger, id)).toEqual({ index: 404, search: 404 })
 
-    const theirs = (await call(env, '/v1/spaces', { token: stranger, body: { name: 'Theirs' } }))
-      .json.space.id
+    const theirs = (await call(env, '/v1/spaces', { token: stranger, body: { name: 'Theirs' } })).json.space.id
     const asked = await call(env, `/v2/spaces/${theirs}/index`, {
       token: stranger,
       body: { ids: [id] },

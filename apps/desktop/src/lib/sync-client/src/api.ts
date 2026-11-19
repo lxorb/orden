@@ -1,12 +1,5 @@
 export { appWorld } from './app-world'
-export {
-  asking,
-  type Engine,
-  type ForeignCopies,
-  type Held,
-  type HeldAnswer,
-  type Side,
-} from './asking.svelte'
+export { asking, type Engine, type ForeignCopies, type Held, type HeldAnswer, type Side } from './asking.svelte'
 export { connect } from './connect.svelte'
 export type { Core } from './core'
 export { default as HeldMark } from './HeldMark.svelte'

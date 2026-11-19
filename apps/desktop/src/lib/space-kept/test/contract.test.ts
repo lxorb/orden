@@ -1,13 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import {
-  Archive,
-  ArchivedSpaces,
-  DEEPEST,
-  isTile,
-  sameBookmark,
-  SHALLOWEST,
-  SpaceGraphSettings,
-} from '../src/api'
+import { Archive, ArchivedSpaces, DEEPEST, isTile, sameBookmark, SHALLOWEST, SpaceGraphSettings } from '../src/api'
 
 function storage(): Storage {
   const store = new Map<string, string>()

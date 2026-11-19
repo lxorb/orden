@@ -11,9 +11,7 @@ let held: Promise<typeof import('@codemirror/lang-html')> | null = null
 export function htmlGrammar(): Promise<typeof import('@codemirror/lang-html')> {
   if (held) return held
   const loading = import('@codemirror/lang-html').then((module) => {
-    closers = EditorState.create({ extensions: module.autoCloseTags }).facet(
-      EditorView.inputHandler,
-    )
+    closers = EditorState.create({ extensions: module.autoCloseTags }).facet(EditorView.inputHandler)
     here = module
 
     return module
@@ -67,13 +65,7 @@ export function html(config: HtmlConfig = {}): LanguageSupport {
   return new LanguageSupport(new Language(data, new LazyParser(config), [], 'html'), [closeTags])
 }
 
-type InputHandler = (
-  view: EditorView,
-  from: number,
-  to: number,
-  text: string,
-  insert: () => Transaction,
-) => boolean
+type InputHandler = (view: EditorView, from: number, to: number, text: string, insert: () => Transaction) => boolean
 
 let closers: readonly InputHandler[] = []
 

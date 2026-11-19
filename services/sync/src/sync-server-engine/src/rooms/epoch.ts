@@ -10,22 +10,14 @@ export function snapshotKey(noteId: string): string {
 }
 
 export function seedOf(kind: RoomKind, noteId: string, epoch: number, text: string): Uint8Array {
-  return kind === 'plane'
-    ? seedPlane(noteId, epoch, readCanvas(text))
-    : seedUpdate(noteId, epoch, text)
+  return kind === 'plane' ? seedPlane(noteId, epoch, readCanvas(text)) : seedUpdate(noteId, epoch, text)
 }
 
 function accountClient(noteId: string): number {
   return hash32(noteId, 'account')
 }
 
-export function ingested(
-  kind: RoomKind,
-  doc: Y.Doc,
-  noteId: string,
-  from: string,
-  to: string,
-): Uint8Array | null {
+export function ingested(kind: RoomKind, doc: Y.Doc, noteId: string, from: string, to: string): Uint8Array | null {
   if (from === to || !readsAs(kind, to)) return null
 
   const scratch = new Y.Doc()

@@ -105,14 +105,11 @@ function spansOf(tokens: readonly Token[] | undefined, marks: Marks = {}): Span[
     if (passing === null) for (const span of spansOfToken(token, marks)) out.push(span)
   }
 
-  return out.filter(
-    (span) => span.text !== '' || span.picture !== undefined || span.note !== undefined,
-  )
+  return out.filter((span) => span.text !== '' || span.picture !== undefined || span.note !== undefined)
 }
 
 function spansOfToken(token: Token, marks: Marks): Span[] {
-  const inner = (extra: Marks = {}) =>
-    spansOf((token as Tokens.Generic).tokens, { ...marks, ...extra })
+  const inner = (extra: Marks = {}) => spansOf((token as Tokens.Generic).tokens, { ...marks, ...extra })
 
   switch (token.type) {
     case 'strong':
@@ -122,9 +119,7 @@ function spansOfToken(token: Token, marks: Marks): Span[] {
     case 'del':
       return inner({ strike: true })
     case 'highlight':
-      return inner(
-        typeof token.tone === 'number' ? { mark: true, tone: token.tone } : { mark: true },
-      )
+      return inner(typeof token.tone === 'number' ? { mark: true, tone: token.tone } : { mark: true })
     case 'superscript':
       return inner({ sup: true })
     case 'subscript':
@@ -372,8 +367,7 @@ function blocksOf(tokens: readonly Token[], notes: Footnote[]): Block[] {
 const NOT_SHOWN =
   /^(?:script|style|template|head|title|noscript|textarea|select|svg|canvas|object|video|audio|iframe|embed|dialog)$/i
 
-const HIDDEN =
-  /\shidden(?:[\s=/>])|\sstyle\s*=\s*(?:"[^"]*display\s*:\s*none[^"]*"|'[^']*display\s*:\s*none[^']*')/i
+const HIDDEN = /\shidden(?:[\s=/>])|\sstyle\s*=\s*(?:"[^"]*display\s*:\s*none[^"]*"|'[^']*display\s*:\s*none[^']*')/i
 
 const VOID = /^(?:area|base|br|col|embed|hr|img|input|link|meta|source|track|wbr)$/i
 
@@ -464,13 +458,10 @@ function paragraphsOfHtml(source: string): Span[][] {
   }
 
   const comment = source.lastIndexOf('<!--')
-  const html =
-    comment !== -1 && !source.includes('-->', comment) ? source.slice(0, comment) : source
+  const html = comment !== -1 && !source.includes('-->', comment) ? source.slice(0, comment) : source
   for (const found of html
     .slice(0, html.lastIndexOf('>') + 1)
-    .matchAll(
-      /<!--[\s\S]*?(?:-->|$)|<[!?][^>]*>|<(\/?)([a-z][\w-]*)(?:"[^"]*"|'[^']*'|[^'">])*>/gi,
-    )) {
+    .matchAll(/<!--[\s\S]*?(?:-->|$)|<[!?][^>]*>|<(\/?)([a-z][\w-]*)(?:"[^"]*"|'[^']*'|[^'">])*>/gi)) {
     read(html.slice(at, found.index))
     at = found.index + found[0].length
 
@@ -514,9 +505,7 @@ export function documentOf(source: string, name: string, options: DocumentOption
   const body = withoutComments(withoutBlockIds(stripFrontMatter(source)))
 
   const cover = coverOf(source)
-  const banner: Block[] = cover
-    ? [{ kind: 'paragraph', spans: [{ text: '', picture: cover.src }] }]
-    : []
+  const banner: Block[] = cover ? [{ kind: 'paragraph', spans: [{ text: '', picture: cover.src }] }] : []
 
   const blocks = [...banner, ...flowed(blocksOf(lexMarkdown(body), notes), hard)]
 
@@ -612,9 +601,7 @@ function htmlSizeOf(tag: string): Pick<Span, 'width' | 'height' | 'zoom'> {
   }
 }
 
-function sizeOf(
-  size: { width: number; height: number | null } | null,
-): Pick<Span, 'width' | 'height'> {
+function sizeOf(size: { width: number; height: number | null } | null): Pick<Span, 'width' | 'height'> {
   if (size === null) return {}
   return size.height ? { width: size.width, height: size.height } : { width: size.width }
 }

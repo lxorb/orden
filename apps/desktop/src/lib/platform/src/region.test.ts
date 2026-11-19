@@ -32,12 +32,7 @@ describe('the region the app formats with', () => {
 
 describe('a length on a clock', () => {
   test('reads as minutes and seconds, with hours only past the hour', () => {
-    expect([elapsed(0), elapsed(9), elapsed(70), elapsed(725.4)]).toEqual([
-      '0:00',
-      '0:09',
-      '1:10',
-      '12:05',
-    ])
+    expect([elapsed(0), elapsed(9), elapsed(70), elapsed(725.4)]).toEqual(['0:00', '0:09', '1:10', '12:05'])
     expect([elapsed(3609), elapsed(3600 * 2 + 61)]).toEqual(['1:00:09', '2:01:01'])
   })
 

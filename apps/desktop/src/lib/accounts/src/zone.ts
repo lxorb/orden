@@ -9,15 +9,8 @@ export function zoneOffset(zone: string, at: number): number | null {
       hour: 'numeric',
       minute: 'numeric',
     }).formatToParts(at)
-    const part = (type: Intl.DateTimeFormatPartTypes) =>
-      Number(parts.find((one) => one.type === type)?.value ?? 0)
-    const wall = Date.UTC(
-      part('year'),
-      part('month') - 1,
-      part('day'),
-      part('hour'),
-      part('minute'),
-    )
+    const part = (type: Intl.DateTimeFormatPartTypes) => Number(parts.find((one) => one.type === type)?.value ?? 0)
+    const wall = Date.UTC(part('year'), part('month') - 1, part('day'), part('hour'), part('minute'))
     return Math.round((wall - Math.floor(at / 60_000) * 60_000) / 60_000)
   } catch {
     return null

@@ -82,9 +82,7 @@ function rig(
 }
 
 const tasks = (rows: readonly Row[]) =>
-  rows
-    .filter((row) => row.kind === 'task')
-    .map((row) => `${row.space}:${row.path}:${row.task?.text}`)
+  rows.filter((row) => row.kind === 'task').map((row) => `${row.space}:${row.path}:${row.task?.text}`)
 
 describe('the rows of every space', () => {
   test('take what the account says of a note kept away', async () => {
@@ -94,10 +92,7 @@ describe('the rows of every space', () => {
     answer(WORK)
     await settled()
 
-    store.indexed(WORK, [
-      scanned('Away.md', '- [ ] Call the bank\n'),
-      scanNote('Bare.md', '- [ ] Not a row\n'),
-    ])
+    store.indexed(WORK, [scanned('Away.md', '- [ ] Call the bank\n'), scanNote('Bare.md', '- [ ] Not a row\n')])
     expect(tasks(store.of())).toEqual(['Work:Plan.md:Ship it', 'Work:Away.md:Call the bank'])
     store.indexed(HOME, [scanned('Elsewhere.md', "- [ ] Nobody's\n")])
     expect(tasks(store.of())).toHaveLength(2)
@@ -214,10 +209,7 @@ describe('the rows of every space', () => {
   })
 
   test('a note written where it is going before its move is told keeps those rows', async () => {
-    const { store, disk, settled } = rig(
-      { [`${WORK}/A/Plan.md`]: '- [ ] Read [s](Spec.md)\n' },
-      WORK,
-    )
+    const { store, disk, settled } = rig({ [`${WORK}/A/Plan.md`]: '- [ ] Read [s](Spec.md)\n' }, WORK)
     store.spacesAre([{ root: WORK, name: 'Work' }])
     await settled()
 
@@ -252,10 +244,7 @@ describe('the rows of every space', () => {
   })
 
   test('a renamed or moved note says where it was, so it is not taken for a note just made', async () => {
-    const { store, heard, settled } = rig(
-      { [`${WORK}/Projects/Launch.md`]: '---\nstatus: Doing\n---\n' },
-      WORK,
-    )
+    const { store, heard, settled } = rig({ [`${WORK}/Projects/Launch.md`]: '---\nstatus: Doing\n---\n' }, WORK)
     store.spacesAre([{ root: WORK, name: 'Work' }])
     await settled()
     heard.length = 0
@@ -337,9 +326,7 @@ describe('the rows of every space', () => {
     answer(HOME)
     await settled()
     expect(tasks(store.of()).sort()).toEqual(['Home:Kept.md:Kept', 'Home:New/Moved.md:Moved'])
-    expect(
-      store.of().find((row) => row.path === 'Kept.md' && row.kind === 'task')?.task?.done,
-    ).toBe(true)
+    expect(store.of().find((row) => row.path === 'Kept.md' && row.kind === 'task')?.task?.done).toBe(true)
   })
 
   test('a note saved before its space is first read says its rows before it are not known yet', async () => {
@@ -350,9 +337,7 @@ describe('the rows of every space', () => {
     await settled()
 
     store.saved(`${WORK}/Bugs/Old.md`, '---\nstatus: Done\n---\nmore and more\n')
-    expect(heard.filter((one) => one.path === 'Bugs/Old.md').map((one) => one.firstRead)).toEqual([
-      true,
-    ])
+    expect(heard.filter((one) => one.path === 'Bugs/Old.md').map((one) => one.firstRead)).toEqual([true])
 
     answer(WORK)
     await settled()

@@ -9,8 +9,7 @@ const KEYBOARD_THRESHOLD = 120
 
 const FINGER = '(hover: none) and (pointer: coarse)'
 
-const HANDHELD =
-  /Android|iPhone|iPad|iPod|Mobile|Tablet|Silk|Kindle|BlackBerry|Opera Mini|IEMobile|Macintosh/
+const HANDHELD = /Android|iPhone|iPad|iPod|Mobile|Tablet|Silk|Kindle|BlackBerry|Opera Mini|IEMobile|Macintosh/
 
 export interface Machine {
   native: boolean

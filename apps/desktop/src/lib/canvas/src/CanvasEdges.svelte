@@ -1,14 +1,6 @@
 <script lang="ts">
   import type { CanvasEdge, CanvasNode, Side } from '@orden/markdown/canvas'
-  import {
-    arrowAt,
-    boxOf,
-    edgeEnds,
-    edgeMiddle,
-    edgePath,
-    facingSide,
-    shownColour,
-  } from '../../plane/src/api'
+  import { arrowAt, boxOf, edgeEnds, edgeMiddle, edgePath, facingSide, shownColour } from '../../plane/src/api'
 
   const {
     edges,
@@ -34,10 +26,7 @@
           from: provisional.from,
           to: provisional.to,
           fromSide: provisional.side,
-          toSide: facingSide(
-            { ...provisional.to, width: 0, height: 0 },
-            { ...provisional.from, width: 0, height: 0 },
-          ),
+          toSide: facingSide({ ...provisional.to, width: 0, height: 0 }, { ...provisional.from, width: 0, height: 0 }),
         })
       : null,
   )
@@ -86,22 +75,10 @@
   })
 </script>
 
-<svg
-  class="edges"
-  aria-hidden="true"
-  width={SPAN}
-  height={SPAN}
-  style:left="{-HALF}px"
-  style:top="{-HALF}px"
->
+<svg class="edges" aria-hidden="true" width={SPAN} height={SPAN} style:left="{-HALF}px" style:top="{-HALF}px">
   <g transform="translate({HALF} {HALF})">
     {#each lines as edge (edge.id)}
-      <g
-        class="edge"
-        class:picked={edge.picked}
-        style:--edge-colour={edge.colour}
-        data-edge={edge.id}
-      >
+      <g class="edge" class:picked={edge.picked} style:--edge-colour={edge.colour} data-edge={edge.id}>
         <path class="reach" d={edge.path} stroke-width={WEIGHT * 6} />
         <path class="line" d={edge.path} stroke-width={WEIGHT} />
         {#each edge.heads as head, index (index)}

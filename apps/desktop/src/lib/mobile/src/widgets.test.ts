@@ -7,12 +7,7 @@ function note(name: string, modified: number, path = `/Notes/${name}`): Entry {
 }
 
 describe('the rows', () => {
-  const notes = [
-    note('Plan.md', 300),
-    note('Diary.md', 500),
-    note('Kit.md', 100),
-    note('Trip.md', 400),
-  ]
+  const notes = [note('Plan.md', 300), note('Diary.md', 500), note('Kit.md', 100), note('Trip.md', 400)]
 
   test('are the notes last written in, newest first', () => {
     expect(widgetRows(notes, [])).toEqual([
@@ -41,9 +36,7 @@ describe('the rows', () => {
   })
 
   test('leave out a pinned note that is not in the space any more', () => {
-    expect(widgetRows([note('Plan.md', 1)], ['/Notes/Gone.md']).map((one) => one.name)).toEqual([
-      'Plan',
-    ])
+    expect(widgetRows([note('Plan.md', 1)], ['/Notes/Gone.md']).map((one) => one.name)).toEqual(['Plan'])
   })
 
   test('are named the way every other list names a note', () => {

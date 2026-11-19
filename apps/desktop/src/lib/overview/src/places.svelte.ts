@@ -33,9 +33,7 @@ export function readCamera(value: unknown): Camera | null {
 export function nextPlace(all: Record<string, Box>, size: { w: number; h: number }): Box {
   const placed = Object.values(all)
   if (!placed.length) return { x: 0, y: 0, ...size }
-  const right = placed
-    .map((one) => one.x + one.w)
-    .reduce((high, one) => Math.max(high, one), -Infinity)
+  const right = placed.map((one) => one.x + one.w).reduce((high, one) => Math.max(high, one), -Infinity)
   const top = placed.map((one) => one.y).reduce((low, one) => Math.min(low, one), Infinity)
   return { x: right + APART, y: top, ...size }
 }

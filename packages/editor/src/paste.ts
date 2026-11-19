@@ -27,11 +27,7 @@ export function delimitedToTable(text: string): string | null {
   const [firstLine] = lines
   if (firstLine === undefined || lines.length < 2) return null
 
-  const separator = firstLine.includes('\t')
-    ? '\t'
-    : lines.every((line) => line.split(',').length > 2)
-      ? ','
-      : null
+  const separator = firstLine.includes('\t') ? '\t' : lines.every((line) => line.split(',').length > 2) ? ',' : null
   if (!separator || lines.every((line) => line.startsWith(separator))) return null
 
   const rows = lines.map((line) => line.split(separator).map((cell) => cell.trim()))
@@ -41,8 +37,7 @@ export function delimitedToTable(text: string): string | null {
   if (
     separator === ',' &&
     lines.some((line) => /,\s/.test(line)) &&
-    (lines.some((line) => /[.!?]$/.test(line.trimEnd())) ||
-      !rows.flat().some((cell) => /^[\d$€£%.,+-]+$/.test(cell)))
+    (lines.some((line) => /[.!?]$/.test(line.trimEnd())) || !rows.flat().some((cell) => /^[\d$€£%.,+-]+$/.test(cell)))
   ) {
     return null
   }
@@ -50,15 +45,12 @@ export function delimitedToTable(text: string): string | null {
   const escape = (cell: string) => cell.replace(/\|/g, '\\|')
   const render = (row: string[]) => `| ${row.map(escape).join(' | ')} |`
 
-  return [
-    render(header),
-    `| ${Array.from({ length: columns }, () => '---').join(' | ')} |`,
-    ...body.map(render),
-  ].join('\n')
+  return [render(header), `| ${Array.from({ length: columns }, () => '---').join(' | ')} |`, ...body.map(render)].join(
+    '\n',
+  )
 }
 
-const copiedHere = (html: string, text: string): string | null =>
-  text && ourOwn(html) ? text : null
+const copiedHere = (html: string, text: string): string | null => (text && ourOwn(html) ? text : null)
 
 export interface Landing {
   changes: ChangeSpec
@@ -77,10 +69,7 @@ export function plainAt(range: SelectionRange, written: string): Landing {
   }
 }
 
-export function everywhere(
-  state: EditorState,
-  land: (range: SelectionRange) => Landing,
-): TransactionSpec {
+export function everywhere(state: EditorState, land: (range: SelectionRange) => Landing): TransactionSpec {
   return { ...state.changeByRange(land), scrollIntoView: true, userEvent: 'input.paste' }
 }
 
@@ -89,8 +78,7 @@ const inserted = (state: EditorState, text: string): TransactionSpec =>
 
 function codeLead(state: EditorState, range: SelectionRange): string {
   const block =
-    fenceNear(state, range.from) ??
-    enclosingNamed(syntaxTree(state).resolveInner(range.from, 1), 'BlockMath')
+    fenceNear(state, range.from) ?? enclosingNamed(syntaxTree(state).resolveInner(range.from, 1), 'BlockMath')
   return block ? fenceLead(state, block) : ''
 }
 
@@ -98,9 +86,7 @@ function heldInCode(state: EditorState, text: string): TransactionSpec | null {
   if (!/[\r\n]/.test(text) || state.selection.ranges.every((range) => !codeLead(state, range))) {
     return null
   }
-  return everywhere(state, (range) =>
-    plainAt(range, text.replace(/\r\n?|\n/g, `\n${codeLead(state, range)}`)),
-  )
+  return everywhere(state, (range) => plainAt(range, text.replace(/\r\n?|\n/g, `\n${codeLead(state, range)}`)))
 }
 
 const AN_ITEM = /^(?:[-*+]|\d+[.)])[ \t]/
@@ -225,9 +211,7 @@ export const richPaste = (): Extension =>
       }
 
       if (!html.trim()) {
-        if (
-          !view.state.selection.ranges.some((range) => endsAtLineStart(view.state, range, text))
-        ) {
+        if (!view.state.selection.ranges.some((range) => endsAtLineStart(view.state, range, text))) {
           return false
         }
         event.preventDefault()
@@ -284,10 +268,8 @@ async function readClipboard(): Promise<{ html: string; text: string } | null> {
     let text = ''
 
     for (const item of items) {
-      if (!html && item.types.includes('text/html'))
-        html = await (await item.getType('text/html')).text()
-      if (!text && item.types.includes('text/plain'))
-        text = await (await item.getType('text/plain')).text()
+      if (!html && item.types.includes('text/html')) html = await (await item.getType('text/html')).text()
+      if (!text && item.types.includes('text/plain')) text = await (await item.getType('text/plain')).text()
     }
 
     if (html || text) return { html, text }

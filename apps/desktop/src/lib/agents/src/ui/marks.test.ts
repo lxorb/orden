@@ -71,20 +71,13 @@ describe('a reader tab an agent acts in', () => {
   })
 
   test('a tab that closed wears nothing, stop and all', () => {
-    const seen = after([
-      acting,
-      { kind: 'paused', agent: 'claude' },
-      { kind: 'closed', agent: 'claude', id: 't1' },
-    ])
+    const seen = after([acting, { kind: 'paused', agent: 'claude' }, { kind: 'closed', agent: 'claude', id: 't1' }])
 
     expect(wornAt(seen, 1003, colour)).toEqual({})
   })
 
   test('the latest agent to call on a tab is the one it wears', () => {
-    const seen = after([
-      acting,
-      { kind: 'acting', agent: 'codex', tab: 't1', verb: 'browser_read' },
-    ])
+    const seen = after([acting, { kind: 'acting', agent: 'codex', tab: 't1', verb: 'browser_read' }])
 
     expect(wornAt(seen, 1002, colour).t1?.agent).toBe('codex')
   })

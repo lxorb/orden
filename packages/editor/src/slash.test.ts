@@ -35,11 +35,7 @@ describe('a slash on a line', () => {
 
   test('opens the list at the start of a line', () => {
     setBlocks(() => BLOCKS)
-    expect(completionsFor('/')?.options.map((one) => one.label)).toEqual([
-      'Table',
-      'Task list',
-      'Callout',
-    ])
+    expect(completionsFor('/')?.options.map((one) => one.label)).toEqual(['Table', 'Task list', 'Callout'])
   })
 
   test('opens it after a space as well', () => {

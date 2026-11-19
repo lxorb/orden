@@ -46,10 +46,7 @@ const FRONT = '---\ntitle: Long note\n---'
 
 describe('typing at the end of a 20,000 line note holding one %% comment block above', () => {
   test('costs about what it costs in the same note without it', { timeout: 60_000 }, () => {
-    const [plain = '', commented = ''] = warmed(
-      noteWith('Intro', PLAIN),
-      noteWith('Intro', COMMENT),
-    )
+    const [plain = '', commented = ''] = warmed(noteWith('Intro', PLAIN), noteWith('Intro', COMMENT))
     expect(typedAtEndMs(commented)).toBeLessThan(typedAtEndMs(plain) * 4 + 100)
   })
 

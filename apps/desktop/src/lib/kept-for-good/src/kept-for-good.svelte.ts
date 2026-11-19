@@ -5,9 +5,7 @@ const ASKED = 'orden:kept-for-good-asked'
 function storage(): StorageManager | null {
   if (isNative || typeof navigator === 'undefined') return null
   const manager = navigator.storage as StorageManager | undefined
-  return typeof manager?.persist === 'function' && typeof manager.persisted === 'function'
-    ? manager
-    : null
+  return typeof manager?.persist === 'function' && typeof manager.persisted === 'function' ? manager : null
 }
 
 class KeptForGood {

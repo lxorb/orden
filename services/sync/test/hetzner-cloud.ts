@@ -110,9 +110,7 @@ export class Cloud {
   }
 
   readonly fetch: typeof fetch = async (input, init) => {
-    const url = new URL(
-      typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
-    )
+    const url = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url)
     const method = (init?.method ?? 'GET').toUpperCase()
     const path = url.pathname + url.search
     this.asked.push(
@@ -167,10 +165,8 @@ export class Cloud {
     }
     if ((match = /^\/servers\/(\d+)\/actions\/(shutdown|poweroff|change_type)$/.exec(path))) {
       const server = this.servers.find((one) => one.id === Number(match?.[1]))
-      if (!server)
-        return Response.json({ error: { code: 'not_found', message: 'gone' } }, { status: 404 })
-      if (server.changing)
-        return Response.json({ error: { code: 'locked', message: 'busy' } }, { status: 423 })
+      if (!server) return Response.json({ error: { code: 'not_found', message: 'gone' } }, { status: 404 })
+      if (server.changing) return Response.json({ error: { code: 'locked', message: 'busy' } }, { status: 423 })
       if (match[2] === 'shutdown') {
         if (!this.stubborn) server.status = 'off'
       } else if (match[2] === 'poweroff') {
@@ -179,10 +175,7 @@ export class Cloud {
         const to = TYPES[String(given.server_type)]
         const from = TYPES[server.type]
         if (server.status !== 'off')
-          return Response.json(
-            { error: { code: 'server_not_stopped', message: 'on' } },
-            { status: 409 },
-          )
+          return Response.json({ error: { code: 'server_not_stopped', message: 'on' } }, { status: 409 })
         if (!to || (from && (to.disk < from.disk || to.architecture !== from.architecture)))
           return Response.json({ error: { code: 'invalid_input', message: 'no' } }, { status: 422 })
         server.changing = { to: String(given.server_type), looks: this.changeLooks }
@@ -216,15 +209,13 @@ export class Cloud {
     }
     if ((match = /^\/servers\/(\d+)$/.exec(path)) && method === 'DELETE') {
       const at = this.servers.findIndex((one) => one.id === Number(match?.[1]))
-      if (at < 0)
-        return Response.json({ error: { code: 'not_found', message: 'gone' } }, { status: 404 })
+      if (at < 0) return Response.json({ error: { code: 'not_found', message: 'gone' } }, { status: 404 })
       this.servers.splice(at, 1)
       return Response.json({ action: { id: 1 } })
     }
     if ((match = /^\/servers\/(\d+)\/actions\/(reset|poweron)$/.exec(path))) {
       const server = this.servers.find((one) => one.id === Number(match?.[1]))
-      if (server?.changing)
-        return Response.json({ error: { code: 'locked', message: 'busy' } }, { status: 423 })
+      if (server?.changing) return Response.json({ error: { code: 'locked', message: 'busy' } }, { status: 423 })
       if (server) server.status = 'running'
       return Response.json({ action: { id: 2 } }, { status: 201 })
     }
@@ -251,10 +242,7 @@ export class Cloud {
     if ((match = /^\/firewalls\/(\d+)$/.exec(path)) && method === 'DELETE') {
       const id = Number(match[1])
       if (this.servers.some((one) => one.firewall === id)) {
-        return Response.json(
-          { error: { code: 'resource_in_use', message: 'in use' } },
-          { status: 409 },
-        )
+        return Response.json({ error: { code: 'resource_in_use', message: 'in use' } }, { status: 409 })
       }
       const at = this.firewalls.findIndex((one) => one.id === id)
       if (at >= 0) this.firewalls.splice(at, 1)
@@ -320,17 +308,12 @@ export class Cloud {
   private cloudflare(method: string, url: URL, body: unknown): Response {
     const path = url.pathname.replace('/client/v4', '')
     const given = (body ?? {}) as Record<string, unknown>
-    const ok = (result: unknown, status = 200) =>
-      Response.json({ success: true, errors: [], result }, { status })
+    const ok = (result: unknown, status = 200) => Response.json({ success: true, errors: [], result }, { status })
     let match: RegExpExecArray | null
     if ((match = /^\/accounts\/[^/]+\/cfd_tunnel$/.exec(path))) {
       if (method === 'GET') {
         const name = url.searchParams.get('name')
-        return ok(
-          this.tunnels
-            .filter((one) => one.name === name)
-            .map(({ id, name: n }) => ({ id, name: n })),
-        )
+        return ok(this.tunnels.filter((one) => one.name === name).map(({ id, name: n }) => ({ id, name: n })))
       }
       const made = {
         id: `tunnel-${String(this.next++)}`,
@@ -357,10 +340,7 @@ export class Cloud {
     if ((match = /^\/accounts\/[^/]+\/cfd_tunnel\/([^/]+)$/.exec(path)) && method === 'DELETE') {
       const at = this.tunnels.findIndex((one) => one.id === match?.[1])
       if (this.tunnels[at]?.connections) {
-        return Response.json(
-          { success: false, errors: [{ code: 1022, message: 'connections' }] },
-          { status: 400 },
-        )
+        return Response.json({ success: false, errors: [{ code: 1022, message: 'connections' }] }, { status: 400 })
       }
       if (at >= 0) this.tunnels.splice(at, 1)
       return ok({})
@@ -384,9 +364,6 @@ export class Cloud {
       if (method === 'DELETE' && at >= 0) this.records.splice(at, 1)
       return ok({ id: match[1] })
     }
-    return Response.json(
-      { success: false, errors: [{ code: 7003, message: path }] },
-      { status: 404 },
-    )
+    return Response.json({ success: false, errors: [{ code: 7003, message: path }] }, { status: 404 })
   }
 }

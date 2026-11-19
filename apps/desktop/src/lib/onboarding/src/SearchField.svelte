@@ -17,9 +17,7 @@
 </script>
 
 <label class="orden-field search">
-  <svg viewBox="0 0 24 24" aria-hidden="true"
-    ><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></svg
-  >
+  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></svg>
   <input
     bind:this={field}
     {value}

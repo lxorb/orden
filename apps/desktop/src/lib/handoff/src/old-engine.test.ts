@@ -37,10 +37,7 @@ async function all(name: string, store: string): Promise<[IDBValidKey[], unknown
   const reading = db.transaction(store).objectStore(store)
   const ask = <T>(request: IDBRequest<T>) =>
     new Promise<T>((resolve) => (request.onsuccess = () => resolve(request.result)))
-  const out: [IDBValidKey[], unknown[]] = [
-    await ask(reading.getAllKeys()),
-    await ask(reading.getAll()),
-  ]
+  const out: [IDBValidKey[], unknown[]] = [await ask(reading.getAllKeys()), await ask(reading.getAll())]
   db.close()
   return out
 }
@@ -102,13 +99,9 @@ describe('what the old engine kept in its databases', () => {
     db.close()
     const [keys, values] = await all('orden-pass', 'keyring')
     expect(keys).toEqual(['this'])
-    expect(values).toEqual([
-      { keyring: { password: { sealed: 'U0VBTEVE' } }, rev: 4, pending: true },
-    ])
+    expect(values).toEqual([{ keyring: { password: { sealed: 'U0VBTEVE' } }, rev: 4, pending: true }])
     const [, files] = await all('orden-pass', 'files')
-    expect((files[0] as { bytes: Uint8Array }).bytes).toEqual(
-      new Uint8Array([1, 2, 3, 250, 0, 255]),
-    )
+    expect((files[0] as { bytes: Uint8Array }).bytes).toEqual(new Uint8Array([1, 2, 3, 250, 0, 255]))
   })
 
   test('never takes the place of what the new engine already wrote, and adds what it lacks', async () => {
@@ -124,9 +117,7 @@ describe('what the old engine kept in its databases', () => {
     db.close()
     await added({
       ...PASS,
-      stores: [
-        { ...PASS.stores[0]!, keys: ['this', 'older'], values: [{ old: true }, { older: true }] },
-      ],
+      stores: [{ ...PASS.stores[0]!, keys: ['this', 'older'], values: [{ old: true }, { older: true }] }],
     })
     const [keys, values] = await all('orden-pass', 'keyring')
     expect(keys).toEqual(['older', 'this'])

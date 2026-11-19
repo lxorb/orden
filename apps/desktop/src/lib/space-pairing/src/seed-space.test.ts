@@ -37,19 +37,13 @@ describe('the default space', () => {
   })
 
   test('with a word typed into the welcome note is the reader’s', async () => {
-    const read = disk(
-      { [ROOT]: space([file('Read me.md')]) },
-      { [`${ROOT}/Read me.md`]: `${WELCOME}\nmy own line\n` },
-    )
+    const read = disk({ [ROOT]: space([file('Read me.md')]) }, { [`${ROOT}/Read me.md`]: `${WELCOME}\nmy own line\n` })
     expect(await untouchedSeedSpace(ROOT, [ROOT], read)).toBeNull()
   })
 
   test('with a note, a picture or a folder added is the reader’s', async () => {
     for (const added of [file('Plan.md'), file('shot.png')]) {
-      const read = disk(
-        { [ROOT]: space([file('Read me.md'), added]) },
-        { ...SEEDS, [added.path]: 'mine' },
-      )
+      const read = disk({ [ROOT]: space([file('Read me.md'), added]) }, { ...SEEDS, [added.path]: 'mine' })
       expect(await untouchedSeedSpace(ROOT, [ROOT], read), added.path).toBeNull()
     }
     const folder: Listed = { path: `${ROOT}/Ideas`, is_dir: true, children: [] }

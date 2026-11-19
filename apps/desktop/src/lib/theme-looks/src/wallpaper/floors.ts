@@ -1,12 +1,4 @@
-import {
-  AA,
-  type Lift,
-  over,
-  type Rgb,
-  rgbOf,
-  scrimFloor,
-  type Span,
-} from '../../../ui-controls/src/api'
+import { AA, type Lift, over, type Rgb, rgbOf, scrimFloor, type Span } from '../../../ui-controls/src/api'
 
 export interface Palette {
   ink: Rgb
@@ -48,11 +40,7 @@ export interface Names {
 
 const WALLPAPER: Names = { scrim: '--wallpaper-scrim', layer: '--wallpaper-layer' }
 
-export function paletteOf(
-  css: string,
-  scheme: 'dark' | 'light',
-  names: Names = WALLPAPER,
-): Palette | null {
+export function paletteOf(css: string, scheme: 'dark' | 'light', names: Names = WALLPAPER): Palette | null {
   const block = blockOf(css, scheme)
   const ink = rgbOf(tokenIn(block, '--muted'))
   const text = rgbOf(tokenIn(block, '--text'))

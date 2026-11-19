@@ -120,11 +120,7 @@ function readFolds(value: unknown): readonly FoldLines[] | null {
 
   const out = value.filter(
     (one): one is FoldLines =>
-      Array.isArray(one) &&
-      one.length === 2 &&
-      one.every(Number.isInteger) &&
-      one[0] >= 1 &&
-      one[1] > one[0],
+      Array.isArray(one) && one.length === 2 && one.every(Number.isInteger) && one[0] >= 1 && one[1] > one[0],
   )
   return out.length ? out : null
 }
@@ -138,8 +134,7 @@ export function readDraft(value: unknown): Draft | null {
   if (path !== null && typeof path !== 'string') return null
 
   const shut = readFolds(folds)
-  const builtin =
-    path === null && tabKind(kind, path) === 'view' ? readViewSpec(doc)?.builtin : undefined
+  const builtin = path === null && tabKind(kind, path) === 'view' ? readViewSpec(doc)?.builtin : undefined
 
   return {
     kind: tabKind(kind, path),
@@ -289,9 +284,7 @@ export function arrivingWith(read: Layout, now: Layout): Layout {
     .filter((tab) => tab.dirty || !held.some((one) => one.path && samePath(one.path, tab.path)))
   const into = (panes.find((one) => one.id === read.focused) ?? panes[0])?.id
   const frame = open.length
-    ? eachPane(read.frame, (one) =>
-        one.id === into ? { ...one, tabs: [...one.tabs, ...open] } : one,
-      )
+    ? eachPane(read.frame, (one) => (one.id === into ? { ...one, tabs: [...one.tabs, ...open] } : one))
     : read.frame
   return { ...read, panel: now.panel, frame }
 }
@@ -392,9 +385,7 @@ const eachTab = (layout: Layout, change: (draft: Draft) => Draft): Layout => ({
 const unbased = ({ base: _base, ...draft }: Draft): Draft => draft
 
 export const withoutText = (layout: Layout): Layout =>
-  eachTab(layout, (draft) =>
-    draft.path && draft.doc ? { ...unbased(draft), doc: '', dirty: false } : draft,
-  )
+  eachTab(layout, (draft) => (draft.path && draft.doc ? { ...unbased(draft), doc: '', dirty: false } : draft))
 
 const withoutBases = (layout: Layout): Layout | null =>
   panesOf(layout.frame).some((pane) => pane.tabs.some((tab) => tab.base !== undefined))

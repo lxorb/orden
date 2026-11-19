@@ -19,9 +19,7 @@ export function rememberGround(): void {
     keep(KEY, ground)
 
     if (isDesktop) {
-      void invoke('remember_ground', { colour: ground, paint: paintOf(ground) }).catch(
-        () => undefined,
-      )
+      void invoke('remember_ground', { colour: ground, paint: paintOf(ground) }).catch(() => undefined)
     }
   })
 }

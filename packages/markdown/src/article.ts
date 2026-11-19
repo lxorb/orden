@@ -8,12 +8,7 @@ export type ClipKind = ClipOrigin['kind']
 
 const CONTROLS = ['.mw-editsection', '.editsection']
 
-const NOT_CONTENT = [
-  ...NEVER,
-  'input:not([type="checkbox"])',
-  '[aria-hidden="true"]',
-  ...CONTROLS,
-].join(',')
+const NOT_CONTENT = [...NEVER, 'input:not([type="checkbox"])', '[aria-hidden="true"]', ...CONTROLS].join(',')
 
 export type Origin = ClipOrigin
 
@@ -104,9 +99,7 @@ function unhide(element: Element): void {
   element.removeAttribute('hidden')
   element.removeAttribute('aria-hidden')
 
-  const left = (element.getAttribute('style') ?? '')
-    .replace(/(?:display|visibility)\s*:[^;]*;?/gi, '')
-    .trim()
+  const left = (element.getAttribute('style') ?? '').replace(/(?:display|visibility)\s*:[^;]*;?/gi, '').trim()
 
   if (left) element.setAttribute('style', left)
   else element.removeAttribute('style')
@@ -197,11 +190,7 @@ function contentOf(node: ParentNode, base: string): string {
 
 const baseOf = (document: Document, url: string): string => document.baseURI || url
 
-function readable(
-  document: Document,
-  url: string,
-  base: string,
-): { title: string; html: string } | null {
+function readable(document: Document, url: string, base: string): { title: string; html: string } | null {
   const clone = document.cloneNode(true) as Document
 
   absolutise(clone.body, base)

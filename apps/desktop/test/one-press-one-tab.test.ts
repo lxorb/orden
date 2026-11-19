@@ -23,19 +23,14 @@ describe('one press, one tab', () => {
     for (const one of pressed) {
       const body = one.before.slice(one.before.lastIndexOf('function ') + 1)
       const inline = one.before.slice(one.before.lastIndexOf('=>'))
-      expect(
-        body.includes('.preventDefault()') || inline.includes('.preventDefault()'),
-        one.path,
-      ).toBe(true)
+      expect(body.includes('.preventDefault()') || inline.includes('.preventDefault()'), one.path).toBe(true)
     }
   })
 
   test('the terminal follows a link from the press, never from xterm.js as well', () => {
     const session = readFileSync(join(SRC, 'lib/terminal/src/sessions.svelte.ts'), 'utf8')
     const links = readFileSync(join(SRC, 'lib/terminal/src/links.ts'), 'utf8')
-    expect(session).toMatch(
-      /addEventListener\('mousedown', \(event\) => this\.pressLink\(event\), true\)/,
-    )
+    expect(session).toMatch(/addEventListener\('mousedown', \(event\) => this\.pressLink\(event\), true\)/)
     expect(session).toMatch(/linkHandler: \{\s*activate: \(\) => undefined,/)
     expect(links).toMatch(/activate: \(\) => undefined,/)
     expect(session.match(/workspace\.openPage\(/g)).toHaveLength(1)

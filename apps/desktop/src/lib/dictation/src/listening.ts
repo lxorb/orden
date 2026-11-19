@@ -33,17 +33,11 @@ export interface Listening {
 
 type Hears = (samples: Float32Array, prompt: string, tries: number) => Promise<string>
 
-export async function listen(
-  field: Field,
-  engine: Road,
-  words: readonly string[],
-  hooks: Hooks,
-): Promise<Listening> {
+export async function listen(field: Field, engine: Road, words: readonly string[], hooks: Hooks): Promise<Listening> {
   const hears: Hears =
     engine === 'local'
       ? await hearsHere(words)
-      : async (samples, prompt, tries) =>
-          (await heardPiece(wavOf(samples, RATE), { prompt, road: engine, tries })).text
+      : async (samples, prompt, tries) => (await heardPiece(wavOf(samples, RATE), { prompt, road: engine, tries })).text
 
   const session = new Session(field, words, hears, LIVE_EVERY[engine], hooks)
   await session.open()
@@ -63,10 +57,7 @@ export async function hearsHere(words: readonly string[]): Promise<Hears> {
     const body = new Uint8Array(4 + said.length + samples.byteLength)
     new DataView(body.buffer).setUint32(0, said.length, true)
     body.set(said, 4)
-    body.set(
-      new Uint8Array(samples.buffer, samples.byteOffset, samples.byteLength),
-      4 + said.length,
-    )
+    body.set(new Uint8Array(samples.buffer, samples.byteOffset, samples.byteLength), 4 + said.length)
     return invoke<string>('dictation_local_hear', body)
   }
 }
@@ -113,9 +104,7 @@ export class Session {
     if (this.over) return
     this.ear.hear(samples)
     const recent = this.ear.levels.slice(-4)
-    const level = meter(
-      recent.length ? recent.reduce((high, one) => Math.max(high, one), -Infinity) : 0,
-    )
+    const level = meter(recent.length ? recent.reduce((high, one) => Math.max(high, one), -Infinity) : 0)
     this.shown = level > this.shown ? level : this.shown * 0.6 + level * 0.4
     this.hooks.level(this.shown)
     this.tick(samples)
@@ -157,13 +146,7 @@ export class Session {
     if (this.microphone) this.tick(this.microphone.samples())
   }
 
-  private async hear(
-    samples: Float32Array,
-    from: number,
-    to: number,
-    tries: number,
-    before: string,
-  ): Promise<string> {
+  private async hear(samples: Float32Array, from: number, to: number, tries: number, before: string): Promise<string> {
     const span = this.ear.trimmed(from, to)
     if (!span || !this.ear.saysAnything(span.from, span.to)) return ''
     const prompt = promptOf(before, this.words)

@@ -119,10 +119,7 @@ function carry(socket: Socket, doc: Y.Doc, awareness: Awareness) {
 
 async function onThePlane(kind: keyof typeof surfaces): Promise<{ socket: Socket; tab: Tab }> {
   const { shown, path, text } = surfaces[kind]
-  const note = new NoteDoc(
-    { kind, path, name: path.split('/').at(-1) ?? path, text, dirty: false },
-    () => undefined,
-  )
+  const note = new NoteDoc({ kind, path, name: path.split('/').at(-1) ?? path, text, dirty: false }, () => undefined)
   const tab = new Tab(note, 'pane')
   rooms.follow([{ key: note.key, noteId: 'plane-1', note, hash: null, version: 1 }])
 

@@ -62,12 +62,7 @@ describe('foreignCopy', () => {
   })
 
   test('a name of words, digits and brackets is never taken for one', () => {
-    fc.assert(
-      fc.property(
-        fc.stringMatching(/^[A-Za-z0-9 ()'\-_.]{1,40}$/),
-        (name) => foreignCopy(name) === null,
-      ),
-    )
+    fc.assert(fc.property(fc.stringMatching(/^[A-Za-z0-9 ()'\-_.]{1,40}$/), (name) => foreignCopy(name) === null))
   })
 
   test('the original is the name without the mark, whatever was around it', () => {

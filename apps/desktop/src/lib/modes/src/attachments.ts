@@ -13,11 +13,7 @@ function slashed(path: string): string {
   return path.replace(/\\/g, '/')
 }
 
-export function attachmentFolder(
-  choice: AttachmentFolder,
-  notePath: string,
-  spaceRoot: string | null,
-): string {
+export function attachmentFolder(choice: AttachmentFolder, notePath: string, spaceRoot: string | null): string {
   switch (choice) {
     case 'note':
       return ''

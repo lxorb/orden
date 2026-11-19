@@ -58,9 +58,7 @@ describe('what reading a note for the index costs', () => {
   test('says which line each link sits on', () => {
     const note = scanNote(
       'ideas/Plan.md',
-      ['# Plan', '', 'See [[One]].', '', 'And [[Two]] as well.', '', '[three](Three.md)'].join(
-        '\n',
-      ),
+      ['# Plan', '', 'See [[One]].', '', 'And [[Two]] as well.', '', '[three](Three.md)'].join('\n'),
     )
 
     expect(note.links.map((link) => [link.target, link.line])).toEqual([

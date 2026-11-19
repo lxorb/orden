@@ -54,9 +54,7 @@ describe('randomPassword', () => {
     }
     for (let at = 0; at < 50; at++) {
       const four = randomPassword({ length: 4, upper: true, digits: true, symbols: true })
-      expect(has(four, LOWER) && has(four, UPPER) && has(four, DIGITS) && has(four, SYMBOLS)).toBe(
-        true,
-      )
+      expect(has(four, LOWER) && has(four, UPPER) && has(four, DIGITS) && has(four, SYMBOLS)).toBe(true)
     }
   })
 
@@ -75,17 +73,12 @@ describe('randomPassword', () => {
   it('never uses characters that look alike', () => {
     const all = LOWER + UPPER + DIGITS + SYMBOLS
     for (const confusing of 'Il1O0o') expect(all).not.toContain(confusing)
-    for (let at = 0; at < 100; at++)
-      expect(randomPassword({ ...DEFAULT_RANDOM, length: 64 })).not.toMatch(/[Il1O0o]/)
+    for (let at = 0; at < 100; at++) expect(randomPassword({ ...DEFAULT_RANDOM, length: 64 })).not.toMatch(/[Il1O0o]/)
   })
 
   it('is decided by the random it is given', () => {
-    expect(randomPassword(DEFAULT_RANDOM, seeded(3))).toBe(
-      randomPassword(DEFAULT_RANDOM, seeded(3)),
-    )
-    expect(randomPassword(DEFAULT_RANDOM, seeded(3))).not.toBe(
-      randomPassword(DEFAULT_RANDOM, seeded(4)),
-    )
+    expect(randomPassword(DEFAULT_RANDOM, seeded(3))).toBe(randomPassword(DEFAULT_RANDOM, seeded(3)))
+    expect(randomPassword(DEFAULT_RANDOM, seeded(3))).not.toBe(randomPassword(DEFAULT_RANDOM, seeded(4)))
   })
 })
 
@@ -117,17 +110,13 @@ describe('memorablePassword', () => {
     } as const
     for (const word of WORDS) {
       const password = memorablePassword(rule, [word], seeded(word.length))
-      if (password.split(/[^a-z]/).join(' ') !== `${word} ${word} ${word} ${word}`)
-        wrong.push(password)
+      if (password.split(/[^a-z]/).join(' ') !== `${word} ${word} ${word} ${word}`) wrong.push(password)
     }
     expect(wrong).toEqual([])
   })
 
   it('takes words from the list it is given', () => {
-    const password = memorablePassword(
-      { words: 3, separator: 'space', capitalize: false, numbers: false },
-      ['cat'],
-    )
+    const password = memorablePassword({ words: 3, separator: 'space', capitalize: false, numbers: false }, ['cat'])
     expect(password).toBe('cat cat cat')
   })
 
@@ -137,13 +126,9 @@ describe('memorablePassword', () => {
     expect(memorablePassword({ ...rule, separator: 'period' }, words)).toBe('w.w.w.w')
     expect(memorablePassword({ ...rule, separator: 'comma' }, words)).toBe('w,w,w,w')
     expect(memorablePassword({ ...rule, separator: 'underscore' }, words)).toBe('w_w_w_w')
-    expect(memorablePassword({ ...rule, separator: 'digit' }, words)).toMatch(
-      /^w[2-9]w[2-9]w[2-9]w$/,
-    )
+    expect(memorablePassword({ ...rule, separator: 'digit' }, words)).toMatch(/^w[2-9]w[2-9]w[2-9]w$/)
     for (let at = 0; at < 50; at++)
-      expect(memorablePassword({ ...rule, separator: 'digitOrSymbol' }, words)).toMatch(
-        /^w[^w]w[^w]w[^w]w$/,
-      )
+      expect(memorablePassword({ ...rule, separator: 'digitOrSymbol' }, words)).toMatch(/^w[^w]w[^w]w[^w]w$/)
     expect(joinedWords(['a', 'b'], 'none')).toBe('ab')
     expect(SEPARATORS).toHaveLength(7)
   })

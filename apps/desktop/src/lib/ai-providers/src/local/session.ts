@@ -37,9 +37,7 @@ export type Say =
   | { kind: 'context' }
   | {
       kind: 'goal'
-      goal:
-        | { do: 'set'; objective: string; budget?: number }
-        | { do: 'pause' | 'resume' | 'clear' | 'get' }
+      goal: { do: 'set'; objective: string; budget?: number } | { do: 'pause' | 'resume' | 'clear' | 'get' }
     }
 
 export type Heard =
@@ -50,8 +48,7 @@ export type Heard =
 export function heardIn(value: unknown): Heard | null {
   if (typeof value !== 'object' || value === null) return null
   const said = value as Record<string, unknown>
-  if (said.kind === 'line' && typeof said.line === 'string')
-    return { kind: 'line', line: said.line }
+  if (said.kind === 'line' && typeof said.line === 'string') return { kind: 'line', line: said.line }
   if (said.kind === 'reply' && typeof said.to === 'string') {
     return {
       kind: 'reply',
@@ -80,10 +77,7 @@ export interface Session {
   close(): Promise<void>
 }
 
-export async function openSession(
-  opening: Opening,
-  heard: (said: Heard) => void,
-): Promise<Session> {
+export async function openSession(opening: Opening, heard: (said: Heard) => void): Promise<Session> {
   const id = `s-${identifier()}`
   let ended = false
   const channel = new Channel<unknown>()

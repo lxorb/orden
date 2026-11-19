@@ -62,8 +62,7 @@ function pathFor(target: LinkTarget, format: Exclude<LinkFormat, 'wikilink'>): s
   return target.from ? relativePath(folderOf(target.from), path) : path
 }
 
-const bareFragment = (fragment: string): string =>
-  fragment.startsWith('^') ? fragment.slice(1) : fragment
+const bareFragment = (fragment: string): string => (fragment.startsWith('^') ? fragment.slice(1) : fragment)
 
 const EXTENSION = /\.[^./]+$/
 const withExtension = (name: string): string => (EXTENSION.test(name) ? name : `${name}.md`)

@@ -66,17 +66,11 @@ function givenRole(value: unknown): Given | null {
 
 const WHOLE_SPACE: Scope = { id: '', path: null }
 
-async function scopeOf(
-  env: Env,
-  spaceId: string,
-  asked: string | undefined,
-): Promise<Scope | null> {
+async function scopeOf(env: Env, spaceId: string, asked: string | undefined): Promise<Scope | null> {
   const id = (asked ?? '').slice(0, ID_LIMIT)
   if (!id) return WHOLE_SPACE
 
-  const note = await env.DB.prepare(
-    'select id, path from notes where id = ? and space_id = ? and deleted = 0',
-  )
+  const note = await env.DB.prepare('select id, path from notes where id = ? and space_id = ? and deleted = 0')
     .bind(id, spaceId)
     .first<Pick<Note, 'id' | 'path'>>()
 
@@ -178,9 +172,7 @@ export function itemName(path: string): string {
 }
 
 async function accountAt(env: Env, email: string): Promise<string | null> {
-  const row = await env.DB.prepare('select id from users where email = ?')
-    .bind(email)
-    .first<{ id: string }>()
+  const row = await env.DB.prepare('select id from users where email = ?').bind(email).first<{ id: string }>()
 
   return row?.id ?? null
 }
@@ -267,9 +259,7 @@ async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
     requestsOf(env, space.id, scope.id),
     guestsOf(env, space.id, scope.id),
     linkOf(env, space.id, scope.id),
-    env.DB.prepare(`select ${FACE} from users u where u.id = ?`)
-      .bind(owner.id)
-      .first<FaceColumns>(),
+    env.DB.prepare(`select ${FACE} from users u where u.id = ?`).bind(owner.id).first<FaceColumns>(),
   ])
 
   return {
@@ -279,10 +269,7 @@ async function sharing(env: Env, space: Space, owner: User, scope: Scope) {
       ...faceOf(face ?? { user_id: owner.id, avatar: null }),
     },
     item: scope.path === null ? null : { id: scope.id, path: scope.path },
-    members: [
-      ...members.map(presentMember),
-      ...guests.filter((one) => one.joined_at !== null).map(presentGuest),
-    ],
+    members: [...members.map(presentMember), ...guests.filter((one) => one.joined_at !== null).map(presentGuest)],
     requests: [
       ...requests.map((one) => ({
         ...faceOf(one),
@@ -322,9 +309,7 @@ function about(): MiddlewareHandler<{ Bindings: Env; Variables: Variables }> {
 }
 
 share.get('/:id/share', atLeast('owner'), about(), async (context) => {
-  return context.json(
-    await sharing(context.env, spaceOf(context), context.get('user'), context.get('scope')),
-  )
+  return context.json(await sharing(context.env, spaceOf(context), context.get('user'), context.get('scope')))
 })
 
 share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
@@ -343,10 +328,7 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
   if (!isEmail(email)) return context.json({ error: NOT_AN_EMAIL }, 400)
   if (!role) return context.json({ error: SAY_WHICH_ROLE }, 400)
   if (email === owner.email) {
-    return context.json(
-      { error: scope.id ? 'this note is already yours' : 'this space is already yours' },
-      409,
-    )
+    return context.json({ error: scope.id ? 'this note is already yours' : 'this space is already yours' }, 409)
   }
 
   const held = await membersOf(context.env, space.id, scope.id)
@@ -373,29 +355,15 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
        invite_hash = excluded.invite_hash,
        expires_at = excluded.expires_at`,
   )
-    .bind(
-      space.id,
-      email,
-      scope.id,
-      role,
-      await sha256(token),
-      now() + INVITE_TTL,
-      now(),
-      MOST_MEMBERS,
-      MOST_ITEMS,
-    )
+    .bind(space.id, email, scope.id, role, await sha256(token), now() + INVITE_TTL, now(), MOST_MEMBERS, MOST_ITEMS)
     .run()
   if (!invited.meta.changes) {
-    const error = (await roomForAnItem(context.env, space.id, scope.id))
-      ? SPACE_IS_FULL
-      : TOO_MANY_ITEMS
+    const error = (await roomForAnItem(context.env, space.id, scope.id)) ? SPACE_IS_FULL : TOO_MANY_ITEMS
     return context.json({ error }, 409)
   }
   await onceShared(context.env, space.id, scope.id)
 
-  await context.env.DB.prepare(
-    'delete from space_requests where space_id = ? and email = ? and item = ?',
-  )
+  await context.env.DB.prepare('delete from space_requests where space_id = ? and email = ? and item = ?')
     .bind(space.id, email, scope.id)
     .run()
 
@@ -440,9 +408,7 @@ share.patch('/:id/share/members/:email', atLeast('owner'), about(), async (conte
 
   if (!held) return context.json({ error: 'nobody by that address' }, 404)
 
-  await context.env.DB.prepare(
-    'update space_members set role = ? where space_id = ? and email = ? and item = ?',
-  )
+  await context.env.DB.prepare('update space_members set role = ? where space_id = ? and email = ? and item = ?')
     .bind(role, space.id, email, scope.id)
     .run()
 
@@ -458,9 +424,7 @@ share.delete('/:id/share/members/:email', atLeast('owner'), about(), async (cont
   const scope = context.get('scope')
   const email = normaliseEmail(context.req.param('email'))
 
-  await context.env.DB.prepare(
-    'delete from space_members where space_id = ? and email = ? and item = ?',
-  )
+  await context.env.DB.prepare('delete from space_members where space_id = ? and email = ? and item = ?')
     .bind(space.id, email, scope.id)
     .run()
 
@@ -480,9 +444,7 @@ share.delete('/:id/share/me', atLeast('read'), async (context) => {
   if (space.role === 'owner') return context.json({ error: 'this space is yours' }, 409)
 
   if (who.kind === 'guest') {
-    await context.env.DB.prepare(
-      "delete from guest_members where space_id = ? and guest_id = ? and item = ''",
-    )
+    await context.env.DB.prepare("delete from guest_members where space_id = ? and guest_id = ? and item = ''")
       .bind(space.id, who.guest.id)
       .run()
     await forgetEmptyGuest(context.env, who.guest.id)
@@ -491,9 +453,7 @@ share.delete('/:id/share/me', atLeast('read'), async (context) => {
     return context.json({ ok: true })
   }
 
-  await context.env.DB.prepare(
-    "delete from space_members where space_id = ? and email = ? and item = ''",
-  )
+  await context.env.DB.prepare("delete from space_members where space_id = ? and email = ? and item = ''")
     .bind(space.id, who.user.email)
     .run()
 
@@ -547,14 +507,8 @@ share.delete('/:id/share/link', atLeast('owner'), about(), async (context) => {
     .all<{ guest_id: string }>()
 
   await context.env.DB.batch([
-    context.env.DB.prepare('delete from space_links where space_id = ? and item = ?').bind(
-      space.id,
-      scope.id,
-    ),
-    context.env.DB.prepare('delete from space_requests where space_id = ? and item = ?').bind(
-      space.id,
-      scope.id,
-    ),
+    context.env.DB.prepare('delete from space_links where space_id = ? and item = ?').bind(space.id, scope.id),
+    context.env.DB.prepare('delete from space_requests where space_id = ? and item = ?').bind(space.id, scope.id),
     context.env.DB.prepare(
       `delete from guest_members
         where space_id = ? and item = ? and joined_at is null and declined_at is null`,
@@ -597,9 +551,7 @@ share.post('/:id/share/requests/:email', atLeast('owner'), about(), async (conte
   if (!admitted.meta.changes) return context.json({ error: SPACE_IS_FULL }, 409)
   await onceShared(context.env, space.id, scope.id)
 
-  await context.env.DB.prepare(
-    'delete from space_requests where space_id = ? and email = ? and item = ?',
-  )
+  await context.env.DB.prepare('delete from space_requests where space_id = ? and email = ? and item = ?')
     .bind(space.id, email, scope.id)
     .run()
 
@@ -615,9 +567,7 @@ share.delete('/:id/share/requests/:email', atLeast('owner'), about(), async (con
   const scope = context.get('scope')
   const email = normaliseEmail(context.req.param('email'))
 
-  await context.env.DB.prepare(
-    'delete from space_requests where space_id = ? and email = ? and item = ?',
-  )
+  await context.env.DB.prepare('delete from space_requests where space_id = ? and email = ? and item = ?')
     .bind(space.id, email, scope.id)
     .run()
 
@@ -679,9 +629,7 @@ share.patch('/:id/share/guests/:guest', atLeast('owner'), about(), async (contex
 
   if (!held) return context.json({ error: 'nobody by that name' }, 404)
 
-  await context.env.DB.prepare(
-    'update guest_members set role = ? where space_id = ? and guest_id = ? and item = ?',
-  )
+  await context.env.DB.prepare('update guest_members set role = ? where space_id = ? and guest_id = ? and item = ?')
     .bind(role, space.id, guest, scope.id)
     .run()
 
@@ -716,9 +664,7 @@ share.delete('/:id/share/guests/:guest', atLeast('owner'), about(), async (conte
       : 0
 
   if (!declined) {
-    await context.env.DB.prepare(
-      'delete from guest_members where space_id = ? and guest_id = ? and item = ?',
-    )
+    await context.env.DB.prepare('delete from guest_members where space_id = ? and guest_id = ? and item = ?')
       .bind(space.id, guest, scope.id)
       .run()
     await forgetEmptyGuest(context.env, guest)
@@ -793,12 +739,8 @@ sharedWithMe.get('/', async (context) => {
   const who = context.get('who')
   const { results } =
     who.kind === 'user'
-      ? await context.env.DB.prepare(SHARED_WITH_ME)
-          .bind(who.user.email, MOST_ITEMS)
-          .all<SharedRow>()
-      : await context.env.DB.prepare(GUEST_SHARED_WITH_ME)
-          .bind(who.guest.id, MOST_ITEMS)
-          .all<SharedRow>()
+      ? await context.env.DB.prepare(SHARED_WITH_ME).bind(who.user.email, MOST_ITEMS).all<SharedRow>()
+      : await context.env.DB.prepare(GUEST_SHARED_WITH_ME).bind(who.guest.id, MOST_ITEMS).all<SharedRow>()
 
   return context.json({ shared: results.map(presentShared) })
 })
@@ -812,9 +754,7 @@ sharedWithMe.delete('/:noteId', async (context) => {
     .first<Pick<Note, 'id' | 'space_id'>>()
 
   if (note && who.kind === 'guest') {
-    await context.env.DB.prepare(
-      'delete from guest_members where space_id = ? and guest_id = ? and item = ?',
-    )
+    await context.env.DB.prepare('delete from guest_members where space_id = ? and guest_id = ? and item = ?')
       .bind(note.space_id, who.guest.id, note.id)
       .run()
     await forgetEmptyGuest(context.env, who.guest.id)
@@ -822,9 +762,7 @@ sharedWithMe.delete('/:noteId', async (context) => {
   }
 
   if (note && who.kind === 'user') {
-    await context.env.DB.prepare(
-      'delete from space_members where space_id = ? and email = ? and item = ?',
-    )
+    await context.env.DB.prepare('delete from space_members where space_id = ? and email = ? and item = ?')
       .bind(note.space_id, who.user.email, note.id)
       .run()
 

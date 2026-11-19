@@ -24,25 +24,12 @@ import {
 import { commandRows } from '@orden/contracts'
 import { HIGHLIGHT_COLOURS } from '@orden/markdown/highlights'
 import { account } from '../../accounts/src/api'
-import {
-  DIVIDER,
-  type MenuGroup,
-  type MenuItem,
-  type MenuRow,
-  viewport,
-  fullscreen,
-} from '../../ui-kit/src/api'
+import { DIVIDER, type MenuGroup, type MenuItem, type MenuRow, viewport, fullscreen } from '../../ui-kit/src/api'
 import { copySelection, cutSelection } from '../../ui-controls/src/api'
 import { blockCommands } from '../../commands/src/api'
 import { isDesktop, isNative, openExternal } from '../../platform/src/api'
 import { protection } from '../../protect/src/api'
-import {
-  canPrint,
-  EXPORT_EXTRAS,
-  EXPORT_FORMATS,
-  EXPORT_VARIANTS,
-  printable,
-} from '../../export-formats/src/api'
+import { canPrint, EXPORT_EXTRAS, EXPORT_FORMATS, EXPORT_VARIANTS, printable } from '../../export-formats/src/api'
 import { modes } from '../../modes/src/api'
 import { type AppContext, runEntry, shortcuts } from '../../shortcuts/src/api'
 import { DOWNLOAD_URL, ISSUES_URL, RELEASES_URL, SOURCE_URL, updates } from '../../updates/src/api'
@@ -56,9 +43,7 @@ interface Context {
 }
 
 function exportRows(): MenuRow[] {
-  const formats = new Set<string>(
-    [...EXPORT_FORMATS, ...EXPORT_EXTRAS].map((one) => `export-${one.id}`),
-  )
+  const formats = new Set<string>([...EXPORT_FORMATS, ...EXPORT_EXTRAS].map((one) => `export-${one.id}`))
   const variants = new Set<string>(EXPORT_VARIANTS.map((one) => `export-${one.id}`))
 
   const rows: MenuRow[] = []
@@ -380,12 +365,8 @@ export function appMenu(context: Context): MenuGroup[] {
               : (account.open = true),
         },
         DIVIDER,
-        ...(isDesktop
-          ? [{ label: 'Check for updates', asks: true, run: () => void updates.check() }]
-          : []),
-        ...(isNative
-          ? []
-          : [{ label: 'Download the app', run: () => void openExternal(DOWNLOAD_URL) }]),
+        ...(isDesktop ? [{ label: 'Check for updates', asks: true, run: () => void updates.check() }] : []),
+        ...(isNative ? [] : [{ label: 'Download the app', run: () => void openExternal(DOWNLOAD_URL) }]),
         { label: 'What is new', run: () => void openExternal(RELEASES_URL) },
         { label: 'Report an issue', run: () => void openExternal(ISSUES_URL) },
         { label: 'Source code', run: () => void openExternal(SOURCE_URL) },

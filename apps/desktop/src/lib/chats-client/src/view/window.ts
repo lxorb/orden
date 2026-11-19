@@ -85,11 +85,7 @@ export function anchorAt(heights: Heights, keys: readonly string[], top: number)
   return key === undefined ? null : { key, offset: heights.top(index) - top }
 }
 
-export function anchored(
-  heights: Heights,
-  keys: readonly string[],
-  anchor: Anchor | null,
-): number | null {
+export function anchored(heights: Heights, keys: readonly string[], anchor: Anchor | null): number | null {
   if (!anchor) return null
   const index = keys.indexOf(anchor.key)
   return index === -1 ? null : heights.top(index) - anchor.offset

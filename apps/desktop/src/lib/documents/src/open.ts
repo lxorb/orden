@@ -124,8 +124,7 @@ export class OpenDocuments {
 
   private rekind(note: NoteDoc) {
     const path = note.path
-    const kind =
-      path === null ? null : isPagesTarget(path) ? 'pages' : isCanvasTarget(path) ? 'canvas' : null
+    const kind = path === null ? null : isPagesTarget(path) ? 'pages' : isCanvasTarget(path) ? 'canvas' : null
     if (path === null || kind === null || kind === note.kind) return
     if (!TAB_KINDS[note.kind].plane) return
 

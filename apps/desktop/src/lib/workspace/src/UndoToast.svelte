@@ -36,15 +36,7 @@
   }
 
   const turn = $derived(
-    reservedName.root
-      ? 'reserved'
-      : failed.retry
-        ? 'failed'
-        : undoToast.kind
-          ? 'undo'
-          : unread.shown
-            ? 'unread'
-            : null,
+    reservedName.root ? 'reserved' : failed.retry ? 'failed' : undoToast.kind ? 'undo' : unread.shown ? 'unread' : null,
   )
 
   const up = {
@@ -192,8 +184,7 @@
     <p>{words}</p>
   </div>
 {/if}{#if unsynced.said}
-  {@const about =
-    unsynced.many > 1 ? (unsynced.many === 1 ? '1 file' : `${unsynced.many} files`) : unsynced.said}
+  {@const about = unsynced.many > 1 ? (unsynced.many === 1 ? '1 file' : `${unsynced.many} files`) : unsynced.said}
   {@const words = `Changes to ${about} are not syncing`}
   <div
     class="toast"

@@ -26,12 +26,7 @@
   import { firstScreen } from '../../first-screen/src/api'
   import { mark } from '../../platform/src/api'
   import { modes } from '../../modes/src/api'
-  import {
-    carriedIntoNotes,
-    type OverlayScrollbar,
-    overlayScrollbar,
-    viewport,
-  } from '../../ui-kit/src/api'
+  import { carriedIntoNotes, type OverlayScrollbar, overlayScrollbar, viewport } from '../../ui-kit/src/api'
   import { shortcuts } from '../../shortcuts/src/api'
   import { pastesMarkup, trustsHtmlIn } from '../../sharing/src/api'
   import type { Tab } from '../../documents/src/api'
@@ -94,19 +89,13 @@
       shared: one.note.live,
       selection: { anchor: one.cursor ?? 0 },
       ...(onimage ? { onImage: (file: File) => onimage(file, one) } : {}),
-      ...(resolveimage
-        ? { resolveImage: (src: string, wikilink?: boolean) => resolveimage(src, one, wikilink) }
-        : {}),
+      ...(resolveimage ? { resolveImage: (src: string, wikilink?: boolean) => resolveimage(src, one, wikilink) } : {}),
       ...(openlink ? { openLink: openlink } : {}),
       ...(onselection ? { onSelection: onselection } : {}),
       ...(notes ? { notes: notes(one) } : {}),
-      ...(opennote
-        ? { openNote: (jump: NoteJump, press?: LinkPress) => opennote(jump, press, one.path) }
-        : {}),
+      ...(opennote ? { openNote: (jump: NoteJump, press?: LinkPress) => opennote(jump, press, one.path) } : {}),
       openTag: (tag: string) => searching()?.show(`tag:${tag}`),
-      ...(nameblock
-        ? { nameBlock: (path: string, line: number) => nameblock(path, line, one) }
-        : {}),
+      ...(nameblock ? { nameBlock: (path: string, line: number) => nameblock(path, line, one) } : {}),
       writeLink: pickedLink,
       carriedNotes: (transfer) => workspace.carriedNotes(transfer),
       carriedFiles: carriedIntoNotes,

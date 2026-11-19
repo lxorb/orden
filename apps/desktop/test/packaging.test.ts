@@ -1,14 +1,6 @@
 import { createHash } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
-import {
-  chmodSync,
-  cpSync,
-  mkdirSync,
-  mkdtempSync,
-  readdirSync,
-  readFileSync,
-  writeFileSync,
-} from 'node:fs'
+import { chmodSync, cpSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -68,8 +60,7 @@ describe('the workflow that publishes it', () => {
 
 describe('the release', () => {
   const workflow = repo('.github', 'workflows', 'release.yml')
-  const publishJob = () =>
-    /\n {2}publish:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n|$)/.exec(workflow)?.[1] ?? ''
+  const publishJob = () => /\n {2}publish:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n|$)/.exec(workflow)?.[1] ?? ''
   const stepRun = (name: string) => {
     const step = new RegExp(`- name: ${name}\\n([\\s\\S]*?)(?=\\n {6}- |$)`).exec(publishJob())?.[1]
     const block = /run: \|\n([\s\S]*)/.exec(step ?? '')?.[1] ?? ''
@@ -80,20 +71,13 @@ describe('the release', () => {
     const at = mkdtempSync(join(tmpdir(), 'nib-release-'))
     mkdirSync(join(at, 'bin'))
     mkdirSync(join(at, 'artifacts'))
-    const bundles = [
-      'Nib-1.0.0-linux-x64.AppImage',
-      'Nib-1.0.0-windows-x64-setup.exe',
-      'Nib-1.0.0-linux-x64.rpm',
-    ]
+    const bundles = ['Nib-1.0.0-linux-x64.AppImage', 'Nib-1.0.0-windows-x64-setup.exe', 'Nib-1.0.0-linux-x64.rpm']
     for (const name of bundles) writeFileSync(join(at, 'artifacts', name), 'bytes')
     writeFileSync(
       join(at, 'latest.json'),
       JSON.stringify({
         platforms: Object.fromEntries(
-          bundles.map((name) => [
-            name,
-            { url: `https://github.com/o/r/releases/download/t/${name}` },
-          ]),
+          bundles.map((name) => [name, { url: `https://github.com/o/r/releases/download/t/${name}` }]),
         ),
       }),
     )
@@ -154,19 +138,11 @@ esac
   describe.skipIf(process.platform === 'win32')("takes the last build's files off edge", () => {
     const mobile = repo('.github', 'workflows', 'publish-mobile.yml')
     const mobileRun = () => {
-      const step = /- name: Take the last build's files off edge\n([\s\S]*?)(?=\n {6}- |$)/.exec(
-        mobile,
-      )?.[1]
+      const step = /- name: Take the last build's files off edge\n([\s\S]*?)(?=\n {6}- |$)/.exec(mobile)?.[1]
       return /run: (.*)/.exec(step ?? '')?.[1] ?? ''
     }
 
-    function prune(gh: {
-      failFirst?: boolean
-      stuck?: boolean
-      phone?: boolean
-      built?: string[]
-      held?: string[]
-    }) {
+    function prune(gh: { failFirst?: boolean; stuck?: boolean; phone?: boolean; built?: string[]; held?: string[] }) {
       const at = mkdtempSync(join(tmpdir(), 'orden-prune-'))
       mkdirSync(join(at, 'bin'))
       mkdirSync(join(at, 'scripts'))
@@ -257,19 +233,14 @@ esac
         held: [...both, 'Orden-1.0.1-7-ios-simulator.app.zip'],
       })
       expect(status, said).toBe(0)
-      expect(tried.trim().split('\n')).toEqual([
-        'Orden-1.0.1-6-android.apk',
-        'Orden-1.0.1-6-ios-simulator.app.zip',
-      ])
+      expect(tried.trim().split('\n')).toEqual(['Orden-1.0.1-6-android.apk', 'Orden-1.0.1-6-ios-simulator.app.zip'])
     })
 
     test('the phones neither delete nor make a release, and roll on edge', () => {
       expect(mobile).not.toMatch(/gh release (delete|create) /)
       expect(mobileRun()).toContain('prune-edge.sh "$TAG" phone')
       for (const workflow of ['release.yml', 'publish-mobile.yml']) {
-        expect(repo('.github', 'workflows', workflow), workflow).toContain(
-          'run: bash scripts/build-version.sh\n',
-        )
+        expect(repo('.github', 'workflows', workflow), workflow).toContain('run: bash scripts/build-version.sh\n')
       }
       expect(repo('scripts', 'build-version.sh')).toContain('echo "tag=edge"')
     })
@@ -283,23 +254,15 @@ esac
     ] as const) {
       mkdirSync(join(at, `nib-linux-${arch}`))
       for (const kind of kinds) {
-        writeFileSync(
-          join(at, `nib-linux-${arch}`, `Nib-1.0.0-linux-${arch}.${kind}.sig`),
-          `sig ${arch} ${kind}`,
-        )
+        writeFileSync(join(at, `nib-linux-${arch}`, `Nib-1.0.0-linux-${arch}.${kind}.sig`), `sig ${arch} ${kind}`)
       }
     }
-    const ran = spawnSync(
-      'node',
-      [join(HERE, 'scripts', 'update-manifest.mjs'), 'updates', '1.0.0', at],
-      {
-        encoding: 'utf8',
-      },
-    )
+    const ran = spawnSync('node', [join(HERE, 'scripts', 'update-manifest.mjs'), 'updates', '1.0.0', at], {
+      encoding: 'utf8',
+    })
     expect(ran.status, ran.stderr).toBe(0)
-    const platforms = (
-      JSON.parse(ran.stdout) as { platforms: Record<string, { url: string; signature: string }> }
-    ).platforms
+    const platforms = (JSON.parse(ran.stdout) as { platforms: Record<string, { url: string; signature: string }> })
+      .platforms
     for (const [key, file, signature] of [
       ['linux-x86_64', 'Nib-1.0.0-linux-x64.AppImage', 'sig x64 AppImage'],
       ['linux-x86_64-deb', 'Nib-1.0.0-linux-x64.deb', 'sig x64 deb'],
@@ -307,25 +270,18 @@ esac
       ['linux-aarch64-deb', 'Nib-1.0.0-linux-arm64.deb', 'sig arm64 deb'],
       ['linux-aarch64-rpm', 'Nib-1.0.0-linux-arm64.rpm', 'sig arm64 rpm'],
     ] as const) {
-      expect(platforms[key]?.url, key).toBe(
-        `https://github.com/lxorb/nibeditor/releases/download/updates/${file}`,
-      )
+      expect(platforms[key]?.url, key).toBe(`https://github.com/lxorb/nibeditor/releases/download/updates/${file}`)
       expect(platforms[key]?.signature, key).toBe(signature)
     }
   })
 
-  describe.skipIf(process.platform === 'win32')(
-    'puts on the release the app downloads from',
-    () => {
-      test('the .deb and the .rpm beside the setups', () => {
-        const { status, calls } = upload({})
-        expect(status).toBe(0)
-        expect(calls).toContain(
-          'release upload updates artifacts/Nib-1.0.0-linux-x64.rpm --clobber',
-        )
-      })
-    },
-  )
+  describe.skipIf(process.platform === 'win32')('puts on the release the app downloads from', () => {
+    test('the .deb and the .rpm beside the setups', () => {
+      const { status, calls } = upload({})
+      expect(status).toBe(0)
+      expect(calls).toContain('release upload updates artifacts/Nib-1.0.0-linux-x64.rpm --clobber')
+    })
+  })
 
   test('the managers built from edge take its Orden- packages, one each', () => {
     const snap = repo('.github', 'workflows', 'snap.yml')
@@ -346,9 +302,7 @@ esac
 
   describe('a tag', () => {
     const job = (workflowText: string, name: string) =>
-      new RegExp(`\\n {2}${name}:\\n([\\s\\S]*?)(?=\\n {2}[a-z-]+:\\n|$)`).exec(
-        workflowText,
-      )?.[1] ?? ''
+      new RegExp(`\\n {2}${name}:\\n([\\s\\S]*?)(?=\\n {2}[a-z-]+:\\n|$)`).exec(workflowText)?.[1] ?? ''
 
     test('one job makes the draft, on a tag and before anything is built', () => {
       const draft = job(workflow, 'draft')
@@ -358,9 +312,7 @@ esac
       expect(draft).toMatch(/needs: \[?version\]?/)
       expect(draft).toContain('NOTES: ${{ needs.version.outputs.notes }}')
       expect(draft).toContain('--notes "$NOTES"')
-      expect(job(workflow, 'version')).toContain(
-        'node scripts/release-notes.mjs "$GITHUB_REF_NAME"',
-      )
+      expect(job(workflow, 'version')).toContain('node scripts/release-notes.mjs "$GITHUB_REF_NAME"')
       expect(job(workflow, 'version')).toContain('notes: ${{ steps.notes.outputs.notes }}')
       expect(job(workflow, 'publish')).not.toContain('gh release create "$TAG"')
       expect(job(workflow, 'publish')).toMatch(/needs: \[.*draft.*\]/)
@@ -414,18 +366,12 @@ esac
 
     describe.skipIf(process.platform === 'win32')('when it comes out', () => {
       test('the newest version is the latest', () => {
-        expect(publish('v0.21.0', 'v0.20.0', true)).toEqual([
-          'release edit v0.21.0 --draft=false --latest',
-        ])
-        expect(publish('v0.10.0', 'v0.9.0', true)).toEqual([
-          'release edit v0.10.0 --draft=false --latest',
-        ])
+        expect(publish('v0.21.0', 'v0.20.0', true)).toEqual(['release edit v0.21.0 --draft=false --latest'])
+        expect(publish('v0.10.0', 'v0.9.0', true)).toEqual(['release edit v0.10.0 --draft=false --latest'])
       })
 
       test('an old tag run again does not take the latest back', () => {
-        expect(publish('v0.19.1', 'v0.20.0', true)).toEqual([
-          'release edit v0.19.1 --draft=false --latest=false',
-        ])
+        expect(publish('v0.19.1', 'v0.20.0', true)).toEqual(['release edit v0.19.1 --draft=false --latest=false'])
       })
 
       test('the first release there is, is the latest', () => {
@@ -463,12 +409,8 @@ esac
       .map((one) => one[1])
 
     expect(writing).toEqual(['draft', 'publish', 'nix-edge'])
-    expect(/\n {2}draft:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n)/.exec(workflow)?.[1]).not.toContain(
-      'uses:',
-    )
-    expect(/\n {2}nix-edge:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n)/.exec(workflow)?.[1]).not.toContain(
-      'download-artifact',
-    )
+    expect(/\n {2}draft:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n)/.exec(workflow)?.[1]).not.toContain('uses:')
+    expect(/\n {2}nix-edge:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n)/.exec(workflow)?.[1]).not.toContain('download-artifact')
   })
 })
 
@@ -531,12 +473,10 @@ describe('a check that cannot hang', () => {
 })
 
 describe('the phones, linted before a push to unstable finds them', () => {
-  const clippies = (text: string) =>
-    [...text.matchAll(/cargo clippy(?:[^\n]*\\\n)*[^\n]*/g)].map((one) => one[0])
+  const clippies = (text: string) => [...text.matchAll(/cargo clippy(?:[^\n]*\\\n)*[^\n]*/g)].map((one) => one[0])
   const published = clippies(repo('.github', 'workflows', 'publish-mobile.yml'))
   const check = repo('.github', 'workflows', 'check.yml')
-  const job =
-    check.slice(check.indexOf('\n  mobile-clippy:\n')).split(/\n(?= {2}[\w-]+:\n)/)[1] ?? ''
+  const job = check.slice(check.indexOf('\n  mobile-clippy:\n')).split(/\n(?= {2}[\w-]+:\n)/)[1] ?? ''
 
   test('every target the release lints with warnings as errors, check lints the same way', () => {
     const targets = published
@@ -612,9 +552,7 @@ describe('what nib claims to open', () => {
 
     expect(opened.length).toBeGreaterThan(0)
     for (const ext of opened) {
-      expect(windows.bundle.resources[`icons/documents/${ext}.ico`], ext).toBe(
-        `documents/${ext}.ico`,
-      )
+      expect(windows.bundle.resources[`icons/documents/${ext}.ico`], ext).toBe(`documents/${ext}.ico`)
       const progId = new RegExp(
         String.raw`WriteRegStr SHCTX "Software\\Classes\\\.${ext}\\OpenWithProgids" "(\w+)" ""`,
       ).exec(script)?.[1]
@@ -625,13 +563,11 @@ describe('what nib claims to open', () => {
       expect(fragments).toContain(
         `Key="Software\\Classes\\${progId}\\DefaultIcon" Type="string" Value="[INSTALLDIR]documents\\${ext}.ico"`,
       )
-      expect(mac.bundle.macOS.files[`Resources/${ext}.icns`], ext).toBe(
-        `icons/documents/${ext}.icns`,
-      )
+      expect(mac.bundle.macOS.files[`Resources/${ext}.icns`], ext).toBe(`icons/documents/${ext}.icns`)
     }
-    const icons = [
-      ...plist.matchAll(/<key>CFBundleTypeIconFile<\/key>\s*<string>([^<]+)<\/string>/g),
-    ].map((one) => one[1])
+    const icons = [...plist.matchAll(/<key>CFBundleTypeIconFile<\/key>\s*<string>([^<]+)<\/string>/g)].map(
+      (one) => one[1],
+    )
     expect(icons).toEqual(opened.map((ext) => `${ext}.icns`))
   })
 
@@ -655,9 +591,7 @@ describe('what nib claims to open', () => {
       )
     const files = [
       ...lists(ROOT).filter((file) => !/(node-sources\.json|\.md)$/.test(file)),
-      ...['tauri.conf.json', 'tauri.linux.conf.json'].map((name) =>
-        join(HERE, 'apps', 'desktop', 'src-tauri', name),
-      ),
+      ...['tauri.conf.json', 'tauri.linux.conf.json'].map((name) => join(HERE, 'apps', 'desktop', 'src-tauri', name)),
     ]
     for (const file of files) {
       const text = readFileSync(file, 'utf8')
@@ -675,9 +609,7 @@ describe('what nib claims to open', () => {
 
   test('an install claims no file type and forgets the ones it used to', () => {
     const script = tauri('installer.nsh')
-    const [, install = '', uninstall = ''] = script.split(
-      /!macro NSIS_HOOK_POSTINSTALL|!macro NSIS_HOOK_POSTUNINSTALL/,
-    )
+    const [, install = '', uninstall = ''] = script.split(/!macro NSIS_HOOK_POSTINSTALL|!macro NSIS_HOOK_POSTUNINSTALL/)
 
     const writes = script.split('\n').filter((line) => line.trim().startsWith('WriteRegStr'))
     expect(writes.length).toBeGreaterThan(0)
@@ -701,9 +633,7 @@ describe('what nib claims to open', () => {
 
   test('a Linux desktop entry is a browser and a reader of PDFs, no editor of files', () => {
     for (const [name, entry] of Object.entries(desktops)) {
-      expect(entry, name).toContain(
-        'MimeType=x-scheme-handler/http;x-scheme-handler/https;application/pdf;\n',
-      )
+      expect(entry, name).toContain('MimeType=x-scheme-handler/http;x-scheme-handler/https;application/pdf;\n')
       expect(entry, name).toMatch(/^\s*Exec=(?:nib|orden) %U$/m)
       expect(entry, name).not.toContain('text/markdown')
       expect(entry, name).not.toContain('%F')
@@ -808,9 +738,7 @@ describe('the rename, held back', () => {
   test('Chocolatey pushes nib alone, as Orden, without the rename', () => {
     const chocolatey = job('chocolatey')
     expect(chocolatey).toContain('echo "PACKAGES=nib:$VERSION" >> "$GITHUB_ENV"')
-    expect(chocolatey).toContain(
-      'echo "PACKAGES=orden:$VERSION nib:$VERSION.$day" >> "$GITHUB_ENV"',
-    )
+    expect(chocolatey).toContain('echo "PACKAGES=orden:$VERSION nib:$VERSION.$day" >> "$GITHUB_ENV"')
     expect(chocolatey).toMatch(/409 \\\(Conflict\\\)/)
     expect(read('chocolatey', 'orden.nuspec')).toMatch(
       /\nThis package was called `nib` until 0\.15\.0\. `nib` is now an empty package that depends on\n[^\n]+\n\n/,
@@ -828,9 +756,7 @@ describe('the apt repository', () => {
     expect(read('apt', 'README.md')).toContain(spaced)
     expect(read('apt', 'index.html')).toContain(spaced)
     expect(read('linux.md')).toContain(fingerprint)
-    expect(read('apt', 'orden-archive-keyring.asc')).toMatch(
-      /^-----BEGIN PGP PUBLIC KEY BLOCK-----/,
-    )
+    expect(read('apt', 'orden-archive-keyring.asc')).toMatch(/^-----BEGIN PGP PUBLIC KEY BLOCK-----/)
   })
 
   test('is written for stable by publish.yml and for unstable by release.yml', () => {
@@ -941,9 +867,7 @@ describe('the snap workflow', () => {
 
   test('is called for a release and for edge', () => {
     expect(snapYml).toContain('workflow_call:')
-    expect(repo('.github', 'workflows', 'publish-linux.yml')).toContain(
-      'uses: ./.github/workflows/snap.yml',
-    )
+    expect(repo('.github', 'workflows', 'publish-linux.yml')).toContain('uses: ./.github/workflows/snap.yml')
     const release = repo('.github', 'workflows', 'release.yml')
     expect(release).toMatch(
       /uses: \.\/\.github\/workflows\/snap\.yml\n\s+with:\n\s+tag: \$\{\{ needs\.version\.outputs\.tag \}\}/,
@@ -997,9 +921,7 @@ describe('the engine a Linux package runs', () => {
     const recipe = read('aur', 'orden-git', 'PKGBUILD')
     const build = /build\(\) \{([\s\S]*?)\n\}/.exec(recipe)?.[1] ?? ''
     expect(build).toContain('scripts/linux-cef.sh tauri build')
-    expect(repo('.github', 'workflows', 'release.yml')).toContain(
-      'scripts/linux-cef.sh tauri build',
-    )
+    expect(repo('.github', 'workflows', 'release.yml')).toContain('scripts/linux-cef.sh tauri build')
   })
 })
 
@@ -1067,8 +989,7 @@ describe('the packaging bump', () => {
     'chocolatey/tools/chocolateyinstall.ps1',
     'homebrew/orden.rb',
   ]
-  const hex = (version: string, kind: string) =>
-    createHash('sha256').update(`${version} ${kind}`).digest('hex')
+  const hex = (version: string, kind: string) => createHash('sha256').update(`${version} ${kind}`).digest('hex')
   const sri = (digest: string) => `sha256-${Buffer.from(digest, 'hex').toString('base64')}`
 
   const bump = (at: string, version: string) => {
@@ -1124,9 +1045,7 @@ describe('the packaging bump', () => {
       expect(text('snap/snapcraft.yaml')).toContain(`on arm64: sha256/${debArm}`)
       expect(text('snap/snapcraft.yaml')).toContain(`source-checksum: sha256/${deb}`)
       expect(text('scoop/orden.json')).toContain(hex(version, 'windows-arm64-setup.exe'))
-      expect(text('chocolatey/tools/chocolateyinstall.ps1')).toContain(
-        hex(version, 'windows-arm64.msi').toUpperCase(),
-      )
+      expect(text('chocolatey/tools/chocolateyinstall.ps1')).toContain(hex(version, 'windows-arm64.msi').toUpperCase())
       expect(text('homebrew/orden.rb')).toContain(hex(version, 'macos-arm64.dmg'))
       expect(text('homebrew/orden.rb')).toContain(hex(version, 'macos-x64.dmg'))
       before = version

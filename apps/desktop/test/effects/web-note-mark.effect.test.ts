@@ -65,10 +65,7 @@ test('the row of an open web note follows its tab’s mark, and keeps the last o
   })
 
   const tab = new Tab(
-    new NoteDoc(
-      { kind: 'web', path: PATH, name: 'Slack', text: '', dirty: false },
-      () => undefined,
-    ),
+    new NoteDoc({ kind: 'web', path: PATH, name: 'Slack', text: '', dirty: false }, () => undefined),
     'pane',
   )
   workspace.tabs = [tab]
@@ -108,10 +105,7 @@ test('a mark too large for the cache is still the row’s while its tab is open'
   })
 
   const tab = new Tab(
-    new NoteDoc(
-      { kind: 'web', path: CHATS, name: 'WhatsApp', text: '', dirty: false },
-      () => undefined,
-    ),
+    new NoteDoc({ kind: 'web', path: CHATS, name: 'WhatsApp', text: '', dirty: false }, () => undefined),
     'pane',
   )
   workspace.tabs = [tab]

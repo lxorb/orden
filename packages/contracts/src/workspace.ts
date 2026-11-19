@@ -13,12 +13,7 @@ export interface OpenNote {
   flush(): void
   edited(changes: readonly TextChange[], text: string): void
   wroteAs(written: string): void
-  writeTo(
-    path: string,
-    words: string,
-    knew: string | null,
-    first: () => Promise<unknown>,
-  ): Promise<string | null>
+  writeTo(path: string, words: string, knew: string | null, first: () => Promise<unknown>): Promise<string | null>
 }
 
 export interface WorkspaceNotesPort {

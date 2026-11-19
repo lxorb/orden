@@ -62,9 +62,7 @@ export async function addSpace(
   name: string,
   icon: string | null = null,
 ): Promise<Space | null> {
-  const last = await env.DB.prepare(
-    'select max(position) as last from spaces where user_id = ? and deleted = 0',
-  )
+  const last = await env.DB.prepare('select max(position) as last from spaces where user_id = ? and deleted = 0')
     .bind(userId)
     .first<{ last: number | null }>()
 
@@ -139,19 +137,13 @@ const GUEST_ITEM_REACHED = `select sp.*, g.role as role
   join guest_members g on g.space_id = sp.id and g.guest_id = ?2 and g.item = ?3
  where sp.id = ?1 and sp.deleted = 0 and g.joined_at is not null`
 
-export async function reachedSpace(
-  env: Env,
-  who: Whoever,
-  spaceId: string,
-): Promise<Reached | null> {
+export async function reachedSpace(env: Env, who: Whoever, spaceId: string): Promise<Reached | null> {
   const row =
     who.kind === 'user'
       ? await env.DB.prepare(REACHED)
           .bind(spaceId, who.user.id, who.user.email)
           .first<Space & { role: string | null }>()
-      : await env.DB.prepare(GUEST_REACHED)
-          .bind(spaceId, who.guest.id)
-          .first<Space & { role: string | null }>()
+      : await env.DB.prepare(GUEST_REACHED).bind(spaceId, who.guest.id).first<Space & { role: string | null }>()
 
   if (!row || !isRole(row.role)) return null
   return { ...row, role: row.role }
@@ -277,10 +269,7 @@ export async function trustAgain(env: Env, spaceId: string): Promise<void> {
 
 export const MOST_ITEMS = 200
 
-export async function itemsSharedIn(
-  env: Env,
-  spaceIds: readonly string[],
-): Promise<Map<string, string[]>> {
+export async function itemsSharedIn(env: Env, spaceIds: readonly string[]): Promise<Map<string, string[]>> {
   const out = new Map<string, string[]>()
   if (!spaceIds.length) return out
 
@@ -311,10 +300,7 @@ export async function itemsSharedIn(
   return out
 }
 
-export async function notesAmong(
-  env: Env,
-  spaceIds: readonly string[],
-): Promise<Map<string, number>> {
+export async function notesAmong(env: Env, spaceIds: readonly string[]): Promise<Map<string, number>> {
   if (!spaceIds.length) return new Map<string, number>()
 
   const found = await askInChunks(spaceIds, async (chunk) => {

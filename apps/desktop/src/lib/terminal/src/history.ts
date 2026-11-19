@@ -78,9 +78,7 @@ export const peekHistory = (place: Place) => lastOf(place, false)
 
 export function keepHistory(place: Place, history: History): void {
   if (!place.key) return
-  void inTurn(place.key, () =>
-    invoke('terminal_history_write', { space: place.space, key: place.key, history }),
-  )
+  void inTurn(place.key, () => invoke('terminal_history_write', { space: place.space, key: place.key, history }))
 }
 
 export function dropHistory(place: Place, last: History | null): void {
@@ -95,17 +93,13 @@ export function dropHistory(place: Place, last: History | null): void {
     }
   }
 
-  void inTurn(place.key, () =>
-    invoke('terminal_history_forget', { space: place.space, key: place.key }),
-  )
+  void inTurn(place.key, () => invoke('terminal_history_forget', { space: place.space, key: place.key }))
 }
 
 export function moveHistory(from: Place, to: Place): void {
   if (!from.key || from.space === to.space) return
   void inTurn(from.key, async () => {
-    const found = readHistory(
-      await invoke<unknown>('terminal_history_read', { space: from.space, key: from.key }),
-    )
+    const found = readHistory(await invoke<unknown>('terminal_history_read', { space: from.space, key: from.key }))
     if (found) {
       await invoke('terminal_history_write', { space: to.space, key: to.key, history: found })
     }
@@ -116,11 +110,7 @@ export function moveHistory(from: Place, to: Place): void {
 export function forgetHistories(): void {
   closed.clear()
   const before = Promise.all(turns.values())
-  writing(
-    before
-      .then(() => invoke('terminal_history_forget', { space: null, key: null }))
-      .catch(() => undefined),
-  )
+  writing(before.then(() => invoke('terminal_history_forget', { space: null, key: null })).catch(() => undefined))
 }
 
 const LEGACY = 'orden:terminal-lines'

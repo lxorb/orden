@@ -1,10 +1,6 @@
 const PRESSES = ['pointerdown', 'pointerup', 'pointercancel']
 
-const UNLOADED = [
-  'dynamically imported module',
-  'Importing a module script failed',
-  'Unable to preload CSS',
-]
+const UNLOADED = ['dynamically imported module', 'Importing a module script failed', 'Unable to preload CSS']
 
 function unloaded(error: unknown): boolean {
   const said = error instanceof Error ? error.message : ''

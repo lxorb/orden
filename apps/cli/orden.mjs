@@ -177,11 +177,9 @@ function readStdin() {
 async function ask(verb, args, rest) {
   const { port, secret } = await endpoint()
 
-  const response = await posted(port, secret, JSON.stringify({ verb, args, rest })).catch(
-    (error) => {
-      throw new Error(`Orden is not answering on 127.0.0.1:${port}: ${error.message}`)
-    },
-  )
+  const response = await posted(port, secret, JSON.stringify({ verb, args, rest })).catch((error) => {
+    throw new Error(`Orden is not answering on 127.0.0.1:${port}: ${error.message}`)
+  })
 
   const said = response.said
   const body = said ? JSON.parse(said) : {}
@@ -224,9 +222,7 @@ async function endpoint() {
   const path = endpointFile()
   const held = await readFile(path, 'utf8').catch(() => null)
   if (held === null) {
-    throw new Error(
-      `no endpoint file at ${path}: open Orden once, and note that the browser build has no command line`,
-    )
+    throw new Error(`no endpoint file at ${path}: open Orden once, and note that the browser build has no command line`)
   }
 
   const { port, secret, pid } = JSON.parse(held)
@@ -242,27 +238,13 @@ async function screenshot(asked) {
 
   const byPid = platform() === 'win32' || platform() === 'darwin'
   const { pid } = byPid ? await endpoint() : {}
-  if (byPid && !pid)
-    throw new Error('this app did not say which process it is, so it cannot be photographed')
+  if (byPid && !pid) throw new Error('this app did not say which process it is, so it cannot be photographed')
 
   if (platform() === 'win32') {
-    const script = resolve(
-      dirname(fileURLToPath(import.meta.url)),
-      '../../scripts/capture-window.ps1',
-    )
+    const script = resolve(dirname(fileURLToPath(import.meta.url)), '../../scripts/capture-window.ps1')
     const ran = spawnSync(
       'powershell',
-      [
-        '-NoProfile',
-        '-ExecutionPolicy',
-        'Bypass',
-        '-File',
-        script,
-        '-Out',
-        out,
-        '-Pid',
-        String(pid),
-      ],
+      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script, '-Out', out, '-Pid', String(pid)],
       { encoding: 'utf8' },
     )
     if (ran.status !== 0) throw new Error(ran.stderr.trim() || 'the capture failed')
@@ -271,9 +253,7 @@ async function screenshot(asked) {
     const ran = spawnSync('screencapture', ['-x', '-o', `-l${id}`, out], { encoding: 'utf8' })
     if (ran.status !== 0) throw new Error(ran.stderr.trim() || 'the capture failed')
   } else {
-    throw new Error(
-      'no screenshot on this platform: X11 and Wayland share no capture tool, so take one yourself',
-    )
+    throw new Error('no screenshot on this platform: X11 and Wayland share no capture tool, so take one yourself')
   }
 
   return show({ ok: true, value: { file: out, ...rect.value } }, asked)
@@ -335,8 +315,7 @@ function show(answered, asked) {
         for (const inner of Object.values(one)) {
           if (!Array.isArray(inner)) continue
           for (const row of inner) {
-            if (row !== null && typeof row === 'object')
-              console.log(`${line ? '  ' : ''}${asLine(row)}`)
+            if (row !== null && typeof row === 'object') console.log(`${line ? '  ' : ''}${asLine(row)}`)
           }
         }
       }

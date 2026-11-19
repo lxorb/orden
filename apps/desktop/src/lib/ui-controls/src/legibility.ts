@@ -66,20 +66,11 @@ export interface Lift {
   alpha: number
 }
 
-export function scrimFloor(
-  ink: Rgb,
-  scrim: Rgb,
-  span: Span,
-  lifts: readonly Lift[] = [],
-  floor = AA,
-): number {
+export function scrimFloor(ink: Rgb, scrim: Rgb, span: Span, lifts: readonly Lift[] = [], floor = AA): number {
   const own = luminance(ink)
   const reads = (alpha: number) => {
     const grounds = [span.least, span.most].map((under) =>
-      lifts.reduce(
-        (below, lift) => over(lift.colour, lift.alpha, below),
-        over(scrim, alpha, under),
-      ),
+      lifts.reduce((below, lift) => over(lift.colour, lift.alpha, below), over(scrim, alpha, under)),
     )
     const sides = new Set(grounds.map((ground) => luminance(ground) > own))
     return sides.size === 1 && grounds.every((ground) => ratio(ink, ground) >= floor)

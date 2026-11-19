@@ -103,10 +103,7 @@ for (const [where, path, name] of [
   test(`a ${where} terminal follows the whole address a program broke over rows`, () => {
     const opened = vi.spyOn(workspace, 'openPage').mockReturnValue(null)
     const text = JSON.stringify({ shell: 'pwsh', folder: null, key: where })
-    const tab = new Tab(
-      new NoteDoc({ kind: 'terminal', path, name, text, dirty: false }, () => undefined),
-      'pane',
-    )
+    const tab = new Tab(new NoteDoc({ kind: 'terminal', path, name, text, dirty: false }, () => undefined), 'pane')
     sessionOf(tab)
     const [screen] = made
     expect(screen?.providers).toHaveLength(1)

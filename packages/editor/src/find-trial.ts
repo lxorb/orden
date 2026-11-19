@@ -88,22 +88,12 @@ function once(source: string, flags: string, text: string, lines: boolean): Prom
   })
 }
 
-export function trialCost(
-  source: string,
-  flags: string,
-  text: string,
-  lines: boolean,
-): Promise<number | null> {
+export function trialCost(source: string, flags: string, text: string, lines: boolean): Promise<number | null> {
   const turn = queue.then(() => once(source, flags, text, lines))
   queue = turn.catch(() => undefined)
   return turn
 }
 
-export async function quickEnough(
-  source: string,
-  flags: string,
-  text: string,
-  lines: boolean,
-): Promise<boolean> {
+export async function quickEnough(source: string, flags: string, text: string, lines: boolean): Promise<boolean> {
   return (await trialCost(source, flags, text, lines)) !== null
 }

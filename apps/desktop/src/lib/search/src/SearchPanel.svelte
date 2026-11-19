@@ -18,8 +18,7 @@
 
   const { ongoto }: { ongoto?: ((line: number) => void) | undefined } = $props()
 
-  const STAR =
-    'M6.5 1.6l1.55 3.14 3.47.5-2.51 2.45.59 3.45L6.5 9.5 3.4 11.14l.59-3.45L1.48 5.24l3.47-.5z'
+  const STAR = 'M6.5 1.6l1.55 3.14 3.47.5-2.51 2.45.59 3.45L6.5 9.5 3.4 11.14l.59-3.45L1.48 5.24l3.47-.5z'
 
   const SWAP = 'M1.8 4h7.4M7.4 2.2 9.2 4 7.4 5.8M11.2 9H3.8M5.6 7.2 3.8 9l1.8 1.8'
   const TICK = 'M2.6 6.6 5 9l5.4-5.4'
@@ -72,9 +71,7 @@
   const tags = $derived(tagTree(workspace.tags))
   const tagPaths = $derived(nodesIn(tags).map((node) => node.path))
 
-  const asking = $derived(
-    focused && !shut ? (completing(search.text, caret) ?? naming(search.text, caret)) : null,
-  )
+  const asking = $derived(focused && !shut ? (completing(search.text, caret) ?? naming(search.text, caret)) : null)
 
   const suggestions = $derived.by(() => {
     if (!asking) return []
@@ -241,9 +238,7 @@
         onfocus={() => (focused = true)}
         onblur={() => (focused = false)}
         onkeydown={onKeydown}
-        placeholder={focused && !search.text
-          ? 'path: tag: file: -word "…" /re/'
-          : 'Search this space'}
+        placeholder={focused && !search.text ? 'path: tag: file: -word "…" /re/' : 'Search this space'}
         spellcheck="false"
         autocapitalize="off"
         autocorrect="off"
@@ -352,8 +347,7 @@
     {#each groups as group, index (`${group.path}:${index}`)}
       <li class="group">
         <div class="orden-section note">
-          {#if group.loose}<span class="guess" title="Close match">~</span
-            >{/if}{#if group.archived}<svg
+          {#if group.loose}<span class="guess" title="Close match">~</span>{/if}{#if group.archived}<svg
               class="archived"
               viewBox="0 0 13 13"
               aria-label="Archived"><path d={ARCHIVE_MARK} /></svg

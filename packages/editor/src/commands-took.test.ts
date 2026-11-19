@@ -1,11 +1,5 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import {
-  EditorSelection,
-  EditorState,
-  type Extension,
-  type StateCommand,
-  type Transaction,
-} from '@codemirror/state'
+import { EditorSelection, EditorState, type Extension, type StateCommand, type Transaction } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
 import {
   closeFence,
@@ -40,9 +34,7 @@ const PLAIN = markdown({ base: markdownLanguage })
 const NOTE = markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions })
 
 const stateOf = (doc: string, from: number, to = from, language: Extension = PLAIN) =>
-  parsed(
-    EditorState.create({ doc, selection: EditorSelection.range(from, to), extensions: [language] }),
-  )
+  parsed(EditorState.create({ doc, selection: EditorSelection.range(from, to), extensions: [language] }))
 
 function apply(command: StateCommand, doc: string, from: number, to = from, language = PLAIN) {
   const state = stateOf(doc, from, to, language)
@@ -61,15 +53,12 @@ function apply(command: StateCommand, doc: string, from: number, to = from, lang
 function applyMarked(command: StateCommand, marked: string) {
   const caret = marked.indexOf('|')
   const doc = marked.replace(/[[\]|]/g, '')
-  return caret >= 0
-    ? apply(command, doc, caret)
-    : apply(command, doc, marked.indexOf('['), marked.indexOf(']') - 1)
+  return caret >= 0 ? apply(command, doc, caret) : apply(command, doc, marked.indexOf('['), marked.indexOf(']') - 1)
 }
 
 const run = (command: StateCommand, marked: string) => applyMarked(command, marked).doc
 const took = (command: StateCommand, marked: string) => applyMarked(command, marked).took
-const runSelection = (command: StateCommand, marked: string) =>
-  applyMarked(command, marked).selection
+const runSelection = (command: StateCommand, marked: string) => applyMarked(command, marked).selection
 const at = (command: StateCommand, doc: string, offset: number) => apply(command, doc, offset).doc
 const strong = toggleWrap('**')
 const italic = toggleWrap('*')
@@ -81,9 +70,7 @@ const CALLOUT = '> [!note] Mind the gap\n> and the step.\n'
 const runs = (command: StateCommand, rows: [string, string][]) =>
   test.each(rows)('%j', (marked, wanted) => expect(run(command, marked)).toBe(wanted))
 const ats = (command: StateCommand, rows: [string, number, string][]) =>
-  test.each(rows)('%j at %i', (doc, offset, wanted) =>
-    expect(at(command, doc, offset)).toBe(wanted),
-  )
+  test.each(rows)('%j at %i', (doc, offset, wanted) => expect(at(command, doc, offset)).toBe(wanted))
 const selects = (command: StateCommand, rows: [string, number[]][]) =>
   test.each(rows)('%j', (marked, wanted) => expect(runSelection(command, marked)).toEqual(wanted))
 
@@ -340,9 +327,7 @@ describe('over a range', () => {
   })
 
   test('a rule goes under maths', () => {
-    expect(apply(insertHorizontalRule, '$$\na\nb\n$$', 4, 4, NOTE).doc).toBe(
-      '$$\na\nb\n$$\n\n---\n',
-    )
+    expect(apply(insertHorizontalRule, '$$\na\nb\n$$', 4, 4, NOTE).doc).toBe('$$\na\nb\n$$\n\n---\n')
   })
 
   test('fences three hundred thousand lines, one fence longer than any inside', () => {

@@ -19,8 +19,7 @@ const NUMS = GUTTER
 
 const PROSE = Array.from(
   { length: 30 },
-  (_one, at) =>
-    `Paragraph ${at} with enough words in it to run past the end of one line of the panel quite easily.`,
+  (_one, at) => `Paragraph ${at} with enough words in it to run past the end of one line of the panel quite easily.`,
 ).join('\n\n')
 
 describe('a page holds what the panel holds', () => {
@@ -82,11 +81,7 @@ describe('a page starts at a heading', () => {
   test('breaks at H1 and H2 by default, and not at H3', () => {
     const all = pages(note)
 
-    expect(all.map((page) => page.section)).toEqual([
-      'THE TITLE',
-      'FIRST SECTION',
-      'SECOND SECTION',
-    ])
+    expect(all.map((page) => page.section)).toEqual(['THE TITLE', 'FIRST SECTION', 'SECOND SECTION'])
   })
 
   test('breaks only at H1 when asked for one', () => {
@@ -178,9 +173,7 @@ describe('line numbers', () => {
   })
 
   test('have exactly as many lines as the body has rows', () => {
-    const long = Array.from({ length: 30 }, (_one, at) => `paragraph ${at} of this note`).join(
-      '\n\n',
-    )
+    const long = Array.from({ length: 30 }, (_one, at) => `paragraph ${at} of this note`).join('\n\n')
 
     for (const page of pages(long, { gutter: NUMS, breakAt: 0 })) {
       expect(page.numbers.split('\n')).toHaveLength(page.words.split('\n').length)
@@ -215,9 +208,7 @@ describe('line numbers', () => {
     const wide = pages(PROSE, { gutter: 0, breakAt: 0 })
     const narrow = pages(PROSE, { gutter: NUMS, breakAt: 0 })
     const widest = (all: ReturnType<typeof pages>) =>
-      Math.max(
-        ...all.flatMap((page) => page.words.split('\n').map((row) => width(row.trimStart()))),
-      )
+      Math.max(...all.flatMap((page) => page.words.split('\n').map((row) => width(row.trimStart()))))
 
     expect(widest(narrow)).toBeLessThan(widest(wide))
     expect(narrow.length).toBeGreaterThanOrEqual(wide.length)

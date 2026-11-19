@@ -1,16 +1,4 @@
-import type {
-  Event,
-  FileRef,
-  Message,
-  Meta,
-  Notify,
-  Poll,
-  Post,
-  Preview,
-  Role,
-  SearchQuery,
-  Who,
-} from '@orden/chats'
+import type { Event, FileRef, Message, Meta, Notify, Poll, Post, Preview, Role, SearchQuery, Who } from '@orden/chats'
 import type { Refusal } from '@orden/chats/wire'
 
 export interface Shown extends Message {

@@ -1,10 +1,6 @@
 export type ContextKind = 'selection' | 'note' | 'page' | 'thread'
 
-export function insertion(
-  doc: string,
-  at: number,
-  answer: string,
-): { from: number; insert: string; caret: number } {
+export function insertion(doc: string, at: number, answer: string): { from: number; insert: string; caret: number } {
   const end = doc.indexOf('\n', Math.min(Math.max(at, 0), doc.length))
   const from = end === -1 ? doc.length : end
   const words = answer.trim()

@@ -35,10 +35,8 @@ const NO_DATABASE = 'no database'
 
 export function notesFault(error: unknown): { noAccess: boolean; said: string } {
   const answered = typeof error === 'string' ? error : error instanceof Error ? error.message : ''
-  if (answered === NO_ACCESS)
-    return { noAccess: true, said: 'macOS keeps those notes behind Full Disk Access.' }
-  if (answered === NO_DATABASE)
-    return { noAccess: false, said: 'There are no notes in Apple Notes on this Mac.' }
+  if (answered === NO_ACCESS) return { noAccess: true, said: 'macOS keeps those notes behind Full Disk Access.' }
+  if (answered === NO_DATABASE) return { noAccess: false, said: 'There are no notes in Apple Notes on this Mac.' }
   return { noAccess: false, said: message(error, 'Those notes could not be read.') }
 }
 

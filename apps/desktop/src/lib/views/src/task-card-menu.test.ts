@@ -77,9 +77,8 @@ async function pick(label: string, row: Row) {
     targets: [],
     move: () => undefined,
   })
-  const entry = entries.find(
-    (one) => (one as { label?: string; run?: () => void } | null)?.label === label,
-  ) as { run?: () => void } | undefined
+  const entry = entries.find((one) => (one as { label?: string; run?: () => void } | null)?.label === label) as
+    { run?: () => void } | undefined
   if (!entry?.run) throw new Error(`no ${label}`)
   entry.run()
   await new Promise((resolve) => setTimeout(resolve))

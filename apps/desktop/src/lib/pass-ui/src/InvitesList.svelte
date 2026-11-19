@@ -15,23 +15,22 @@
   $effect(() => {
     const now = invites
     let current = true
-    void Promise.all(
-      now.map(async (one) => [one.vault, await pass.inviteMeta(one).catch(() => null)] as const),
-    ).then((found) => {
-      if (current) metas = Object.fromEntries(found)
-    })
-    void Promise.all(
-      now.map(async (one) => [one.vault, await pass.inviterCode(one).catch(() => null)] as const),
-    ).then((found) => {
-      if (current) codes = Object.fromEntries(found)
-    })
+    void Promise.all(now.map(async (one) => [one.vault, await pass.inviteMeta(one).catch(() => null)] as const)).then(
+      (found) => {
+        if (current) metas = Object.fromEntries(found)
+      },
+    )
+    void Promise.all(now.map(async (one) => [one.vault, await pass.inviterCode(one).catch(() => null)] as const)).then(
+      (found) => {
+        if (current) codes = Object.fromEntries(found)
+      },
+    )
     return () => {
       current = false
     }
   })
 
-  const fromOf = (invite: Invite) =>
-    invite.fromName ? `${invite.fromName} (${invite.from})` : invite.from
+  const fromOf = (invite: Invite) => (invite.fromName ? `${invite.fromName} (${invite.from})` : invite.from)
 
   async function answered(invite: Invite, accept: boolean) {
     if (busy !== null) return
@@ -63,9 +62,7 @@
           <span class="name">{meta?.name ?? 'A shared vault'}</span>
           <span class="meta">{fromOf(invite)} invited you: {roleName(invite.role)}</span>
           {#if codes[invite.vault]}
-            <span class="meta" data-inviter-code
-              >Their safety code: {codes[invite.vault] ?? ''}</span
-            >
+            <span class="meta" data-inviter-code>Their safety code: {codes[invite.vault] ?? ''}</span>
           {/if}
           {#if invite.key === null}
             <span class="meta">Waiting for them to confirm you</span>

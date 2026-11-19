@@ -20,8 +20,7 @@ describe('a link whose words start with a superscript', () => {
   })
 
   test('a raised Google Docs span inside a link stays a link', async () => {
-    const html =
-      '<p>Words<a href="https://example.com/cite"><span style="vertical-align:super">2</span></a> more.</p>'
+    const html = '<p>Words<a href="https://example.com/cite"><span style="vertical-align:super">2</span></a> more.</p>'
     const drawn = await shown(html, 'Words2 more.')
     expect(drawn).toContain('href="https://example.com/cite"')
     expect(drawn).not.toContain('footnote-ref')
@@ -30,8 +29,7 @@ describe('a link whose words start with a superscript', () => {
 
 describe('struck words whose strike is written twice', () => {
   test('a struck span inside a del is struck once and does not open a code fence', async () => {
-    const html =
-      '<p><del><span style="text-decoration:line-through">Old plan</span></del></p><p>New plan</p>'
+    const html = '<p><del><span style="text-decoration:line-through">Old plan</span></del></p><p>New plan</p>'
     const drawn = await shown(html, 'Old plan\nNew plan')
     expect(drawn).toContain('<del>Old plan</del>')
     expect(drawn).toContain('<p>New plan</p>')

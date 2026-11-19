@@ -15,12 +15,10 @@ export function labelOf(tex: string): string | undefined {
 }
 
 export function prepare(tex: string, labels = NO_LABELS): string {
-  return tex
-    .replace(/\\label\s*\{[^}]*\}/g, '')
-    .replace(/\\(?:eq)?ref\s*\{([^}]+)\}/g, (whole, name: string) => {
-      const number = labels.get(name)
-      return number ? `(${number})` : whole
-    })
+  return tex.replace(/\\label\s*\{[^}]*\}/g, '').replace(/\\(?:eq)?ref\s*\{([^}]+)\}/g, (whole, name: string) => {
+    const number = labels.get(name)
+    return number ? `(${number})` : whole
+  })
 }
 
 abstract class PictureWidget extends OrdenWidget {
@@ -205,9 +203,7 @@ export class QueryWidget extends OrdenWidget {
   }
 
   override eq(other: QueryWidget) {
-    return (
-      other.code === this.code && other.index === this.index && other.language === this.language
-    )
+    return other.code === this.code && other.index === this.index && other.language === this.language
   }
 
   toDOM() {
@@ -241,9 +237,7 @@ export class BaseWidget extends OrdenWidget {
   }
 
   override eq(other: BaseWidget) {
-    return (
-      JSON.stringify(other.ask) === JSON.stringify(this.ask) && other.index.path === this.index.path
-    )
+    return JSON.stringify(other.ask) === JSON.stringify(this.ask) && other.index.path === this.index.path
   }
 
   toDOM() {
@@ -259,8 +253,7 @@ export class BaseWidget extends OrdenWidget {
   }
 }
 
-const themeColour = (name: string): string =>
-  getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+const themeColour = (name: string): string => getComputedStyle(document.documentElement).getPropertyValue(name).trim()
 
 async function drawMermaid(host: HTMLElement, code: string, shared = false) {
   const id = `orden-diagram-${diagramSeq++}`

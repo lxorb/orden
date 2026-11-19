@@ -29,9 +29,7 @@ describe('a code fence before the note is drawn', () => {
   })
 
   test('is shown as its own code when it is a base and bases are on, and left alone when not', () => {
-    expect(fenceFrom({ ...none, base: true })('<a>', 'base')).toContain(
-      'data-base-code="&lt;a&gt;"',
-    )
+    expect(fenceFrom({ ...none, base: true })('<a>', 'base')).toContain('data-base-code="&lt;a&gt;"')
     expect(fenceFrom(none)('<a>', 'base')).toBeNull()
   })
 

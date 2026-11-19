@@ -62,10 +62,7 @@ const bubbles = walk(SRC, svelte).flatMap((file) => {
 describe('a bubble', () => {
   test('is found where the app draws one, sentences and buttons both', () => {
     expect(bubbles.filter((one) => one.presses).map((one) => one.file)).toEqual(
-      expect.arrayContaining([
-        'lib/web-tab/src/WebDownloads.svelte',
-        'lib/web-tab/src/WebSite.svelte',
-      ]),
+      expect.arrayContaining(['lib/web-tab/src/WebDownloads.svelte', 'lib/web-tab/src/WebSite.svelte']),
     )
     expect(bubbles.some((one) => !one.presses)).toBe(true)
   })

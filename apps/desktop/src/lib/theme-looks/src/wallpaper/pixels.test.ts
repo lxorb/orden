@@ -1,15 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  blurred,
-  boxesFor,
-  fitted,
-  LARGEST,
-  measured,
-  sharpBelow,
-  sharpSide,
-  sideFor,
-  toned,
-} from './pixels'
+import { blurred, boxesFor, fitted, LARGEST, measured, sharpBelow, sharpSide, sideFor, toned } from './pixels'
 
 function picture(
   width: number,
@@ -69,9 +59,7 @@ describe('the blur', () => {
 
   test('spreads a point evenly every way and keeps how much light there was', () => {
     const size = 31
-    const point = picture(size, size, (x, y) =>
-      x === 15 && y === 15 ? [255, 255, 255] : [0, 0, 0],
-    )
+    const point = picture(size, size, (x, y) => (x === 15 && y === 15 ? [255, 255, 255] : [0, 0, 0]))
     const out = blurred(point, size, size, 2)
     expect(at(out, size, 15, 15)[0]).toBeLessThan(255)
     expect(at(out, size, 13, 15)[0]).toBe(at(out, size, 17, 15)[0])

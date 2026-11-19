@@ -194,14 +194,10 @@ async function landing(): Promise<string | null> {
   return workspace.spaces.find((one) => canWriteAt(one.root))?.root ?? null
 }
 
-async function ask(
-  shared: Shared,
-  root: string | null,
-): Promise<'new' | 'here' | 'task' | 'kept' | null> {
+async function ask(shared: Shared, root: string | null): Promise<'new' | 'here' | 'task' | 'kept' | null> {
   const tab = workspace.active
   const view = views.of(workspace.panes.focusedId)
-  const into =
-    tab?.kind === 'note' && !!view && !view.state.readOnly && shared.fitsInNote ? tab : null
+  const into = tab?.kind === 'note' && !!view && !view.state.readOnly && shared.fitsInNote ? tab : null
   const words = shared.items.every((one) => one.text !== null)
   if (root === null && !into) return 'kept'
   if (root !== null && !into && !words) return 'new'

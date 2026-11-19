@@ -112,9 +112,7 @@ describe('matching a name that was said out loud', () => {
   })
 
   test('ignores the case and the punctuation of both', () => {
-    expect(likeness('MEETING NOTES!', 'meeting notes')).toBe(
-      likeness('meeting notes', 'Meeting Notes'),
-    )
+    expect(likeness('MEETING NOTES!', 'meeting notes')).toBe(likeness('meeting notes', 'Meeting Notes'))
   })
 
   test('matches the start of a word, for a plural nobody said', () => {

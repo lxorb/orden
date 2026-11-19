@@ -226,8 +226,7 @@ const BlockMath: MarkdownConfig = {
       name: 'BlockMath',
       before: 'HorizontalRule',
 
-      endLeaf: (_cx: BlockContext, line: Line) =>
-        line.next === DOLLAR && opensBlockMath(restOf(line)),
+      endLeaf: (_cx: BlockContext, line: Line) => line.next === DOLLAR && opensBlockMath(restOf(line)),
 
       parse(cx: BlockContext, line: Line) {
         const rest = restOf(line)
@@ -236,10 +235,7 @@ const BlockMath: MarkdownConfig = {
           const at = cx.lineStart + line.pos
           const end = at + rest.length
           cx.addElement(
-            cx.elt('BlockMath', at, end, [
-              cx.elt('MathMark', at, at + 2),
-              cx.elt('MathMark', end - 2, end),
-            ]),
+            cx.elt('BlockMath', at, end, [cx.elt('MathMark', at, at + 2), cx.elt('MathMark', end - 2, end)]),
           )
           cx.nextLine()
           return true

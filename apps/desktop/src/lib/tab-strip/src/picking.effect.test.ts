@@ -9,9 +9,7 @@ vi.mock('../../platform/src/api', async (importOriginal) => ({
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) =>
     Promise.resolve(
-      command === 'read_note' && typeof args?.path === 'string'
-        ? (notes.get(args.path) ?? '')
-        : undefined,
+      command === 'read_note' && typeof args?.path === 'string' ? (notes.get(args.path) ?? '') : undefined,
     ),
 }))
 

@@ -122,9 +122,7 @@ describe('every shortcut there is', () => {
     const windowsKey = (key: string | null, platform: 'win' | 'linux') =>
       key !== null && parseCombination(key, platform)?.meta === true
     for (const platform of ['win', 'linux'] as const) {
-      const defaults = registry.SHORTCUTS.filter((one) =>
-        windowsKey(defaultKeyFor(one, platform), platform),
-      )
+      const defaults = registry.SHORTCUTS.filter((one) => windowsKey(defaultKeyFor(one, platform), platform))
       expect(
         defaults.map((one) => one.id),
         platform,
@@ -226,8 +224,7 @@ describe('every shortcut there is', () => {
       if (!key) continue
 
       for (const [taken, by] of held) {
-        if (sameCombination(taken, key, platform))
-          clashes.push(`${entry.id} and ${by} both start on ${key}`)
+        if (sameCombination(taken, key, platform)) clashes.push(`${entry.id} and ${by} both start on ${key}`)
       }
       held.set(key, entry.id)
     }
@@ -569,9 +566,7 @@ describe('the keyboard the account carries', () => {
 
 describe('two shortcuts on one key', () => {
   test('is a conflict, and says whose key it is', () => {
-    expect(shortcuts.conflicts('app.new', 'Mod-o').map((one) => one.id)).toEqual([
-      'app.palette.open',
-    ])
+    expect(shortcuts.conflicts('app.new', 'Mod-o').map((one) => one.id)).toEqual(['app.palette.open'])
   })
 
   test('counts across the app and the editor, which cannot share one', () => {
@@ -586,37 +581,25 @@ describe('two shortcuts on one key', () => {
     shortcuts.set('app.palette.open', 'Mod-Alt-j')
 
     expect(shortcuts.conflicts('app.new', 'Mod-o')).toEqual([])
-    expect(shortcuts.conflicts('app.new', 'Mod-Alt-j').map((one) => one.id)).toEqual([
-      'app.palette.open',
-    ])
+    expect(shortcuts.conflicts('app.new', 'Mod-Alt-j').map((one) => one.id)).toEqual(['app.palette.open'])
   })
 
   test('leaves the contextual ones of other places out, which is how they share the arrows', () => {
     expect(shortcuts.conflicts('canvas.nudge.up', 'ArrowUp')).toEqual([])
     expect(shortcuts.conflicts('app.new', 'ArrowDown')).toEqual([])
-    expect(shortcuts.conflicts('table.below', 'ArrowUp').map((one) => one.id)).toEqual([
-      'table.above',
-    ])
+    expect(shortcuts.conflicts('table.below', 'ArrowUp').map((one) => one.id)).toEqual(['table.above'])
   })
 
   test('counts the contextual ones that answer in the same place', () => {
-    expect(shortcuts.conflicts('canvas.tool.rect', 'c').map((one) => one.id)).toEqual([
-      'canvas.tool.text',
-    ])
-    expect(shortcuts.conflicts('canvas.tool.rect', 'Mod-Alt-=').map((one) => one.id)).toEqual([
-      'canvas.zoom.in',
-    ])
+    expect(shortcuts.conflicts('canvas.tool.rect', 'c').map((one) => one.id)).toEqual(['canvas.tool.text'])
+    expect(shortcuts.conflicts('canvas.tool.rect', 'Mod-Alt-=').map((one) => one.id)).toEqual(['canvas.zoom.in'])
   })
 
   test('counts the list keys the explorer answers to as its own place', () => {
-    expect(shortcuts.conflicts('explorer.hidden', 'Mod-a').map((one) => one.id)).toEqual([
-      'tree.select-all',
-    ])
+    expect(shortcuts.conflicts('explorer.hidden', 'Mod-a').map((one) => one.id)).toEqual(['tree.select-all'])
     const held = shortcuts.keyFor('explorer.list')
     expect(held).toBeTruthy()
-    expect(shortcuts.conflicts('tree.rename', held ?? '').map((one) => one.id)).toEqual([
-      'explorer.list',
-    ])
+    expect(shortcuts.conflicts('tree.rename', held ?? '').map((one) => one.id)).toEqual(['explorer.list'])
   })
 
   test('finds no contextual row clashing as the keys ship, on any system', () => {
@@ -687,9 +670,7 @@ describe('the keyboard', () => {
     shortcuts.set('app.palette.open', 'Mod-Alt-9')
 
     expect(shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), context)).toBe(false)
-    expect(shortcuts.handle(press('9', { ctrl: true, alt: true, code: 'Digit9' }), context)).toBe(
-      true,
-    )
+    expect(shortcuts.handle(press('9', { ctrl: true, alt: true, code: 'Digit9' }), context)).toBe(true)
     expect(opened).toBe(1)
   })
 
@@ -701,9 +682,7 @@ describe('the keyboard', () => {
     }
 
     expect(shortcuts.handle(press('o', { ctrl: true, code: 'KeyO' }), context)).toBe(true)
-    expect(shortcuts.handle(press('P', { ctrl: true, shift: true, code: 'KeyP' }), context)).toBe(
-      true,
-    )
+    expect(shortcuts.handle(press('P', { ctrl: true, shift: true, code: 'KeyP' }), context)).toBe(true)
 
     expect(asked).toEqual([undefined, 'commands'])
   })
@@ -717,12 +696,8 @@ describe('the keyboard', () => {
 
     shortcuts.set('app.commands', 'Mod-Alt-9')
 
-    expect(shortcuts.handle(press('P', { ctrl: true, shift: true, code: 'KeyP' }), context)).toBe(
-      false,
-    )
-    expect(shortcuts.handle(press('9', { ctrl: true, alt: true, code: 'Digit9' }), context)).toBe(
-      true,
-    )
+    expect(shortcuts.handle(press('P', { ctrl: true, shift: true, code: 'KeyP' }), context)).toBe(false)
+    expect(shortcuts.handle(press('9', { ctrl: true, alt: true, code: 'Digit9' }), context)).toBe(true)
     expect(asked).toEqual(['commands'])
   })
 
@@ -777,8 +752,7 @@ describe('Alt and a digit', () => {
   })
 
   test('runs from the window, and says so', () => {
-    for (const one of [1, 3, 9, 0])
-      expect(shortcuts.handle(digit(one), idle), `Alt+${one}`).toBe(true)
+    for (const one of [1, 3, 9, 0]) expect(shortcuts.handle(digit(one), idle), `Alt+${one}`).toBe(true)
   })
 
   test('is never AltGr typing a character', () => {
@@ -793,12 +767,10 @@ describe('Alt and a digit', () => {
   })
 
   test.each(PLATFORMS)('displaces no other key (%s)', (platform) => {
-    const taken = registry.SHORTCUTS.filter((one) => !one.id.startsWith('app.note-')).flatMap(
-      (one) => {
-        const key = defaultKeyFor(one, platform)
-        return key && /^Alt-\d$/.test(key) ? [`${one.id} on ${key}`] : []
-      },
-    )
+    const taken = registry.SHORTCUTS.filter((one) => !one.id.startsWith('app.note-')).flatMap((one) => {
+      const key = defaultKeyFor(one, platform)
+      return key && /^Alt-\d$/.test(key) ? [`${one.id} on ${key}`] : []
+    })
     expect(taken).toEqual([])
   })
 
@@ -815,9 +787,7 @@ describe('Alt and a digit', () => {
 
 describe('the file list', () => {
   test('reads its own keys from the registry', () => {
-    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, code: 'KeyA' }))).toBe(
-      true,
-    )
+    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, code: 'KeyA' }))).toBe(true)
     expect(shortcuts.pressed('tree.deselect', press('Escape'))).toBe(true)
     expect(shortcuts.pressed('tree.delete', press('Delete'))).toBe(true)
     expect(shortcuts.pressed('tree.delete.alt', press('Backspace'))).toBe(true)
@@ -826,12 +796,8 @@ describe('the file list', () => {
   test('follows a rebind like everything else', () => {
     shortcuts.set('tree.select-all', 'Mod-Alt-a')
 
-    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, code: 'KeyA' }))).toBe(
-      false,
-    )
-    expect(
-      shortcuts.pressed('tree.select-all', press('a', { ctrl: true, alt: true, code: 'KeyA' })),
-    ).toBe(true)
+    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, code: 'KeyA' }))).toBe(false)
+    expect(shortcuts.pressed('tree.select-all', press('a', { ctrl: true, alt: true, code: 'KeyA' }))).toBe(true)
   })
 
   test('is not read off the window', () => {
@@ -872,12 +838,8 @@ describe('what a reader is shown', () => {
     const view = appMenu({ onpalette: () => undefined, onhistory: () => undefined }).find(
       (group) => group.id === 'view',
     )
-    const row = view?.rows.find(
-      (one) => one !== null && !isSubmenu(one) && one.label === command?.label,
-    )
-    expect(row !== null && row !== undefined && !isSubmenu(row) ? row.hint : null).toBe(
-      'Ctrl+Alt+9',
-    )
+    const row = view?.rows.find((one) => one !== null && !isSubmenu(one) && one.label === command?.label)
+    expect(row !== null && row !== undefined && !isSubmenu(row) ? row.hint : null).toBe('Ctrl+Alt+9')
   })
 })
 
@@ -1032,9 +994,7 @@ describe('a question on the side, and the scratchpad', () => {
     expect(registry.shortcuts.conflicts('app.scratchpad.alt', 'Mod-Shift-x')).toEqual([])
     for (const platform of PLATFORMS) {
       expect(BROWSER_KEYS.some((held) => sameCombination(held, key ?? '', platform))).toBe(false)
-      expect(SYSTEM_KEYS[platform].some((held) => sameCombination(held, key ?? '', platform))).toBe(
-        false,
-      )
+      expect(SYSTEM_KEYS[platform].some((held) => sameCombination(held, key ?? '', platform))).toBe(false)
     }
   })
 
@@ -1058,9 +1018,7 @@ describe('a page note’s zoom', () => {
   })
 
   test('and never on the three that change the size of the words', () => {
-    const size = ['app.zoom-in', 'app.zoom-out', 'app.zoom-reset'].map((id) =>
-      registry.shortcuts.keyFor(id),
-    )
+    const size = ['app.zoom-in', 'app.zoom-out', 'app.zoom-reset'].map((id) => registry.shortcuts.keyFor(id))
 
     for (const id of ['pages.zoom.in', 'pages.zoom.out', 'pages.fit']) {
       expect(size, id).not.toContain(registry.shortcuts.keyFor(id))
@@ -1105,27 +1063,14 @@ describe('a page note’s zoom', () => {
   test('answers the press the surface reads, and no other', () => {
     const press = (spelling: Partial<KeyboardEvent>) => spelling as KeyboardEvent
 
-    expect(
-      shortcuts.pressed(
-        'pages.fit',
-        press({ key: '0', code: 'Digit0', ctrlKey: true, altKey: true }),
-      ),
-    ).toBe(true)
-    expect(shortcuts.pressed('pages.fit', press({ key: '0', code: 'Digit0', ctrlKey: true }))).toBe(
-      false,
+    expect(shortcuts.pressed('pages.fit', press({ key: '0', code: 'Digit0', ctrlKey: true, altKey: true }))).toBe(true)
+    expect(shortcuts.pressed('pages.fit', press({ key: '0', code: 'Digit0', ctrlKey: true }))).toBe(false)
+    expect(shortcuts.pressed('pages.zoom.in', press({ key: '=', code: 'Equal', ctrlKey: true, altKey: true }))).toBe(
+      true,
     )
-    expect(
-      shortcuts.pressed(
-        'pages.zoom.in',
-        press({ key: '=', code: 'Equal', ctrlKey: true, altKey: true }),
-      ),
-    ).toBe(true)
-    expect(
-      shortcuts.pressed(
-        'pages.zoom.out',
-        press({ key: '-', code: 'Minus', ctrlKey: true, altKey: true }),
-      ),
-    ).toBe(true)
+    expect(shortcuts.pressed('pages.zoom.out', press({ key: '-', code: 'Minus', ctrlKey: true, altKey: true }))).toBe(
+      true,
+    )
   })
 
   test('while adding a page and fitting one start on no key at all', () => {
@@ -1185,41 +1130,29 @@ describe('on a Mac', () => {
     const kept = registry.SHORTCUTS.filter((one) => one.scope !== 'fixed').flatMap((one) => {
       const key = defaultKeyFor(one, platform)
       if (!key) return []
-      return SYSTEM_KEYS[platform].some((held) => sameCombination(held, key, platform))
-        ? [`${one.id} on ${key}`]
-        : []
+      return SYSTEM_KEYS[platform].some((held) => sameCombination(held, key, platform)) ? [`${one.id} on ${key}`] : []
     })
 
     expect(kept).toEqual([])
   })
 
-  test.each(PLATFORMS)(
-    'lets no keyboard that can be chosen bind a key the system keeps (%s)',
-    async (platform) => {
-      const { presetKeys } = await import('./preset-ids')
-      const kept = PRESETS.flatMap((preset) =>
-        Object.entries(presetKeys(preset, platform)).flatMap(([id, key]) =>
-          key && SYSTEM_KEYS[platform].some((held) => sameCombination(held, key, platform))
-            ? [`${preset.id}: ${id} on ${key}`]
-            : [],
-        ),
-      )
+  test.each(PLATFORMS)('lets no keyboard that can be chosen bind a key the system keeps (%s)', async (platform) => {
+    const { presetKeys } = await import('./preset-ids')
+    const kept = PRESETS.flatMap((preset) =>
+      Object.entries(presetKeys(preset, platform)).flatMap(([id, key]) =>
+        key && SYSTEM_KEYS[platform].some((held) => sameCombination(held, key, platform))
+          ? [`${preset.id}: ${id} on ${key}`]
+          : [],
+      ),
+    )
 
-      expect(kept).toEqual([])
-    },
-  )
+    expect(kept).toEqual([])
+  })
 
   test('warns about the keys the Mac keeps for itself', async () => {
     const { shortcuts } = await onMac()
 
-    for (const key of [
-      'F11',
-      'Mod-`',
-      'Mod-Shift-`',
-      'Ctrl-Space',
-      'Mod-Ctrl-q',
-      'Ctrl-ArrowLeft',
-    ]) {
+    for (const key of ['F11', 'Mod-`', 'Mod-Shift-`', 'Ctrl-Space', 'Mod-Ctrl-q', 'Ctrl-ArrowLeft']) {
       expect(shortcuts.warning(key), key).not.toBeNull()
     }
     expect(shortcuts.warning('Mod-Ctrl-f')).toBeNull()

@@ -13,14 +13,11 @@ function click(doc: string, pos: number): number {
     EditorState.create({
       doc: full,
       selection: EditorSelection.cursor(full.length),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        pointerSnap,
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), pointerSnap],
     }),
   )
-  return before.update({ selection: EditorSelection.cursor(pos), userEvent: 'select.pointer' })
-    .state.selection.main.head
+  return before.update({ selection: EditorSelection.cursor(pos), userEvent: 'select.pointer' }).state.selection.main
+    .head
 }
 
 describe('a click at the edge of a note link', () => {

@@ -7,10 +7,7 @@ function nameParts(name: string): { stem: string; extension: string } {
   return { stem: name.slice(0, dot), extension: name.slice(dot + 1) }
 }
 
-export async function savedAttachment(
-  attachment: Attachment,
-  bytes: Uint8Array,
-): Promise<string | null> {
+export async function savedAttachment(attachment: Attachment, bytes: Uint8Array): Promise<string | null> {
   const { stem, extension } = nameParts(attachment.name)
   return await deliver(stem, extension, 'File', { bytes, mime: attachment.type })
 }

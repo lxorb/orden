@@ -1,15 +1,7 @@
 import type { Scheme } from '@orden/contracts'
 import { glassCss } from '@orden/themes/glass'
 import { describe, expect, test } from 'vitest'
-import {
-  AA,
-  hexOf,
-  luminance,
-  type Rgb,
-  over,
-  ratio,
-  rgbOf,
-} from '../../../ui-controls/src/legibility'
+import { AA, hexOf, luminance, type Rgb, over, ratio, rgbOf } from '../../../ui-controls/src/legibility'
 import { paletteOf } from '../wallpaper/floors'
 import { along, DAWN, PAIRS, type Stops, stopsOf } from './pairs'
 import { barFor, DIALS, frameFor, GRAIN, MARK_TONE, PAGE_WASH, pairFor, type Sides } from './tint'
@@ -43,11 +35,7 @@ const SITES: Record<string, Rgb> = {
 
 function reads(scheme: Scheme, ground: Rgb): boolean {
   const side = sides[scheme]
-  const grounds = [
-    ground,
-    over(side.text, 0.1, ground),
-    over(side.layer.colour, side.layer.alpha, ground),
-  ]
+  const grounds = [ground, over(side.text, 0.1, ground), over(side.layer.colour, side.layer.alpha, ground)]
   return grounds.every((one) => ratio(side.ink, one) >= AA)
 }
 
@@ -90,12 +78,7 @@ describe("a page's bar", () => {
 
 describe('the frame', () => {
   test('is mostly the page, and the page alone where it reads as it is', () => {
-    const frame = frameFor(
-      { colour: SITES['white Google']!, page: true },
-      'dark',
-      sides,
-      PAPER.dark,
-    )
+    const frame = frameFor({ colour: SITES['white Google']!, page: true }, 'dark', sides, PAPER.dark)
     expect(frame.tint).toBe('#ffffff')
     expect(frame.scheme).toBe('light')
     const paper = frameFor({ colour: SITES.red!, page: true }, 'dark', sides, PAPER.dark)
@@ -223,10 +206,7 @@ describe("glass's own pair", () => {
   test('keeps every word at AA over every colour of the blend and the grain', () => {
     const pairs: Record<string, (app: Scheme) => Stops> = {
       ...Object.fromEntries(
-        PAIRS.map((pair) => [
-          pair.id,
-          (app: Scheme) => stopsOf(pair.id, app, 'violet', dark.scrim),
-        ]),
+        PAIRS.map((pair) => [pair.id, (app: Scheme) => stopsOf(pair.id, app, 'violet', dark.scrim)]),
       ),
       accent: (app) => stopsOf('accent', app, 'yellow', dark.scrim),
       ...Object.fromEntries(Object.entries(own).map(([name, stops]) => [name, () => stops])),

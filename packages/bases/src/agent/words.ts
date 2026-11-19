@@ -32,8 +32,7 @@ export const quickWords =
       for (const key of MARKED) {
         if (written[key] !== undefined) Object.assign(fields, { [key]: written[key] })
       }
-      if (written.priority !== fields.priority && written.priority !== 4)
-        fields.priority = written.priority
+      if (written.priority !== fields.priority && written.priority !== 4) fields.priority = written.priority
       fields.tags = [...new Set([...fields.tags, ...written.tags])]
       if (written.remind.length) fields.remind = [...fields.remind, ...written.remind]
       fields.dependsOn = written.dependsOn

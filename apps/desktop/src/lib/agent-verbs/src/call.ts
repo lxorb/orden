@@ -47,9 +47,7 @@ export function count(call: Call, name: string, fallback: number, most: number):
 }
 
 export function done(result: unknown, untrusted?: string | null): AgentAnswer {
-  return untrusted
-    ? { ok: true, status: 'ok', result, untrusted }
-    : { ok: true, status: 'ok', result }
+  return untrusted ? { ok: true, status: 'ok', result, untrusted } : { ok: true, status: 'ok', result }
 }
 
 export function ranOut(before: string): Refused {

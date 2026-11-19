@@ -31,9 +31,9 @@ const ROOT = '/spaces/Work'
 const at = (name: string) => `${ROOT}/${name}`
 
 beforeEach(() => {
-  space.notes = ['Plan.md', 'Ideas.md', 'Old.md', 'Hidden.md', 'Paper.pdf', 'Board.canvas'].map(
-    (name) => ({ path: at(name) }),
-  )
+  space.notes = ['Plan.md', 'Ideas.md', 'Old.md', 'Hidden.md', 'Paper.pdf', 'Board.canvas'].map((name) => ({
+    path: at(name),
+  }))
   space.active = { path: at('Plan.md') }
   space.excluded = new Set([at('Hidden.md')])
   space.archived = new Set([at('Old.md')])

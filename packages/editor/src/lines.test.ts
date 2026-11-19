@@ -10,9 +10,7 @@ function run(command: StateCommand, marked: string): { took: boolean; note: stri
   const caret = marked.indexOf('|')
   const doc = marked.replace(/[|«»]/g, '')
   const selection =
-    caret >= 0
-      ? EditorSelection.cursor(caret)
-      : EditorSelection.range(marked.indexOf('«'), marked.indexOf('»') - 1)
+    caret >= 0 ? EditorSelection.cursor(caret) : EditorSelection.range(marked.indexOf('«'), marked.indexOf('»') - 1)
 
   let state = parsed(
     EditorState.create({
@@ -61,9 +59,7 @@ describe('sorting and reversing lines', () => {
   })
 
   test('reads past markers and boxes, case, and counts numbers as numbers', () => {
-    expect(note(sortLines, '«- [x] item 10\n- [ ] Item 2\n- item 1»')).toBe(
-      '«- item 1\n- [ ] Item 2\n- [x] item 10»',
-    )
+    expect(note(sortLines, '«- [x] item 10\n- [ ] Item 2\n- item 1»')).toBe('«- item 1\n- [ ] Item 2\n- [x] item 10»')
   })
 
   test('leaves the line the selection ends in front of alone', () => {
@@ -132,9 +128,7 @@ describe('sorting and reversing lines in code or a table', () => {
   })
 
   test('sorting in code inside a list item sorts the code, not the list', () => {
-    expect(note(sortLines, '- step\n  ```\n  b|\n  a\n  ```\n- next')).toBe(
-      '- step\n  ```\n«  a\n  b»\n  ```\n- next',
-    )
+    expect(note(sortLines, '- step\n  ```\n  b|\n  a\n  ```\n- next')).toBe('- step\n  ```\n«  a\n  b»\n  ```\n- next')
   })
 
   test('gives way on a fence line', () => {
@@ -172,9 +166,7 @@ describe('joining lines', () => {
     expect(note(joinLines, 'The answer is on page|\n42. It says so there.')).toBe(
       'The answer is on page| 42. It says so there.',
     )
-    expect(note(joinLines, '- I moved here in|\n  1999. Then I left.')).toBe(
-      '- I moved here in| 1999. Then I left.',
-    )
+    expect(note(joinLines, '- I moved here in|\n  1999. Then I left.')).toBe('- I moved here in| 1999. Then I left.')
   })
 
   test('keeps a dash that starts a line of code', () => {

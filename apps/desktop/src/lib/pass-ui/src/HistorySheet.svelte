@@ -69,15 +69,11 @@
             <span class="title">{version.content.title || 'Untitled'}</span>
             <span class="when">{when(version.modified)}</span>
           </span>
-          <button class="orden-chip" type="button" onclick={() => void restored(version.rev)}>
-            Restore
-          </button>
+          <button class="orden-chip" type="button" onclick={() => void restored(version.rev)}> Restore </button>
         </div>
       {/each}
     </div>
-    <button class="orden-action is-danger" type="button" onclick={() => void cleared()}
-      >Clear history</button
-    >
+    <button class="orden-action is-danger" type="button" onclick={() => void cleared()}>Clear history</button>
   {/if}
 </Sheet>
 

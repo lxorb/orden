@@ -15,11 +15,11 @@ describe('a terminal written down', () => {
       ...spec,
       iconColor: 'violet',
     })
-    expect(
-      JSON.parse(
-        writeSpec({ shell: 'pwsh', folder: null, key: 'k', name: null, iconColor: 'violet' }),
-      ),
-    ).toEqual({ shell: 'pwsh', folder: null, key: 'k' })
+    expect(JSON.parse(writeSpec({ shell: 'pwsh', folder: null, key: 'k', name: null, iconColor: 'violet' }))).toEqual({
+      shell: 'pwsh',
+      folder: null,
+      key: 'k',
+    })
   })
 
   test('with no name where it has none', () => {
@@ -68,9 +68,7 @@ describe('the folder a shell says it is in', () => {
   })
 
   test('as a file address', () => {
-    expect(reportedFolder(7, 'file://mac.local/Users/me/My%20Notes', false, false)).toBe(
-      '/Users/me/My Notes',
-    )
+    expect(reportedFolder(7, 'file://mac.local/Users/me/My%20Notes', false, false)).toBe('/Users/me/My Notes')
     expect(reportedFolder(7, 'file:///home/me/100%', false, false)).toBe('/home/me/100%')
     expect(reportedFolder(7, 'https://example.com/', false, false)).toBeNull()
   })

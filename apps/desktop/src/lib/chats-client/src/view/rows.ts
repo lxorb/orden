@@ -65,11 +65,7 @@ function startsGroup(previous: Message, next: Message): boolean {
   )
 }
 
-function seenAt(
-  messages: readonly Message[],
-  reads: ReadonlyMap<Who, number>,
-  me: Who | null,
-): Map<string, Who[]> {
+function seenAt(messages: readonly Message[], reads: ReadonlyMap<Who, number>, me: Who | null): Map<string, Who[]> {
   const out = new Map<string, Who[]>()
   if (reads.size === 0 || messages.length === 0) return out
   const order = [...reads].filter(([who]) => who !== me).sort(([, a], [, b]) => a - b)

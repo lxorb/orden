@@ -9,11 +9,7 @@ export async function landZen(profile: ZenProfile): Promise<Space> {
   const sidebar = await withMarks(read.sidebar, 'zen', profile.path)
   const { spaces, lost } = zenImport(sidebar, new Date())
   const engine = await takeEngine(read.engine, 'Zen')
-  const first = await landSpaces(
-    spaces,
-    [...lost, ...droppedLine(sidebar), ...engine],
-    'Zen’s tabs could not be read.',
-  )
+  const first = await landSpaces(spaces, [...lost, ...droppedLine(sidebar), ...engine], 'Zen’s tabs could not be read.')
   await bringHistory('zen', profile.path)
   return first
 }

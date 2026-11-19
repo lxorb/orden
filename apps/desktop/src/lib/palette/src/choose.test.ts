@@ -115,24 +115,15 @@ describe('choosing the rest', () => {
     const { asked, hands: with_ } = hands()
     choose(row, key(), with_)
     choose(row, key({ ctrl: true }), with_)
-    expect(asked).toEqual([
-      'page ["https://svelte.dev/","plain"]',
-      'page ["https://svelte.dev/","behind"]',
-    ])
+    expect(asked).toEqual(['page ["https://svelte.dev/","plain"]', 'page ["https://svelte.dev/","behind"]'])
   })
 
   test('a command runs, and one that cannot run does nothing and keeps the list up', () => {
     let ran = 0
     const { hands: with_ } = hands()
+    expect(choose({ kind: 'command', command: command('a', 'A', { run: () => ran++ }) }, key(), with_)).toBe('close')
     expect(
-      choose({ kind: 'command', command: command('a', 'A', { run: () => ran++ }) }, key(), with_),
-    ).toBe('close')
-    expect(
-      choose(
-        { kind: 'command', command: command('b', 'B', { run: () => ran++, disabled: true }) },
-        key(),
-        with_,
-      ),
+      choose({ kind: 'command', command: command('b', 'B', { run: () => ran++, disabled: true }) }, key(), with_),
     ).toBe('nothing')
     expect(ran).toBe(1)
   })
@@ -142,13 +133,7 @@ describe('choosing the rest', () => {
     const press = () => (on = !on)
     const { asked, hands: with_ } = hands()
 
-    expect(
-      choose(
-        { kind: 'setting', setting: setting('Focus mode', 'Editor', { press }) },
-        key(),
-        with_,
-      ),
-    ).toBe('stay')
+    expect(choose({ kind: 'setting', setting: setting('Focus mode', 'Editor', { press }) }, key(), with_)).toBe('stay')
     expect(on).toBe(true)
     expect(asked).toEqual([])
   })
@@ -158,9 +143,7 @@ describe('choosing the rest', () => {
     const press = () => (pressed += 1)
     const { asked, hands: with_ } = hands()
 
-    expect(
-      choose({ kind: 'setting', setting: setting('Version', 'General', { press }) }, key(), with_),
-    ).toBe('stay')
+    expect(choose({ kind: 'setting', setting: setting('Version', 'General', { press }) }, key(), with_)).toBe('stay')
     expect(pressed).toBe(1)
     expect(asked).toEqual([])
   })
@@ -168,11 +151,7 @@ describe('choosing the rest', () => {
   test('any other setting opens its pane on it, and a pane opens on its top', () => {
     const { asked, hands: with_ } = hands()
     choose({ kind: 'setting', setting: setting('Text size', 'Editor') }, key(), with_)
-    choose(
-      { kind: 'setting', setting: setting('Editor', 'Settings', { row: false }) },
-      key(),
-      with_,
-    )
+    choose({ kind: 'setting', setting: setting('Editor', 'Settings', { row: false }) }, key(), with_)
     expect(asked).toEqual(['setting ["editor","Text size"]', 'setting ["editor",null]'])
   })
 
@@ -218,9 +197,7 @@ describe('another machine', () => {
     const wanted = { user: 'emil', hostname: 'box', port: 2222 }
 
     expect(choose({ kind: 'host', host }, undefined, hand)).toBe('close')
-    expect(choose({ kind: 'connect', wanted, said: 'emil@box:2222' }, undefined, hand)).toBe(
-      'close',
-    )
+    expect(choose({ kind: 'connect', wanted, said: 'emil@box:2222' }, undefined, hand)).toBe('close')
     expect(choose({ kind: 'group', group: 'Home', hosts: [host] }, undefined, hand)).toBe('close')
     expect(asked).toEqual(['host ["pi"]', `connect [${JSON.stringify(wanted)}]`, 'hosts [["pi"]]'])
   })

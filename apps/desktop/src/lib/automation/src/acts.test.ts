@@ -27,8 +27,7 @@ const made: { folder: string; name: string }[] = []
 
 vi.mock('../../link-index/src/api', () => ({
   links: {
-    targetOf: (_from: string | null, link: { target: string }) =>
-      link.target.includes('/') ? null : named,
+    targetOf: (_from: string | null, link: { target: string }) => (link.target.includes('/') ? null : named),
     scanned: () => {
       scans += 1
       return scanning
@@ -120,8 +119,7 @@ vi.mock('../../file-writes/src/api', () => ({
 
 const readOnly = new Set<string>()
 vi.mock('../../sharing/src/api', () => ({
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 const { appendNote, deleteFile, moveFile, newNote, openNote, runCommand, setProperty, writeFile } =
@@ -185,9 +183,7 @@ describe('a row of the palette', () => {
   })
 
   test('unless it is one only somebody at the keyboard may press', async () => {
-    await expect(runCommand({ id: 'record' }, 'link')).rejects.toThrow(
-      /not something a link may run/,
-    )
+    await expect(runCommand({ id: 'record' }, 'link')).rejects.toThrow(/not something a link may run/)
     expect(ran).toEqual([])
 
     expect(await runCommand({ id: 'record' }, 'here')).toEqual({ id: 'record', label: 'Record' })
@@ -195,9 +191,7 @@ describe('a row of the palette', () => {
   })
 
   test('and never one that opens a shell, on either road', async () => {
-    await expect(runCommand({ id: 'new-terminal' }, 'here')).rejects.toThrow(
-      /not something the command line may run/,
-    )
+    await expect(runCommand({ id: 'new-terminal' }, 'here')).rejects.toThrow(/not something the command line may run/)
     await expect(runCommand({ id: 'new-terminal' }, 'link')).rejects.toThrow(/not something/)
     expect(ran).toEqual([])
   })
@@ -235,9 +229,7 @@ describe('words appended to a note', () => {
   })
 
   test('never reach a path the space would not take', async () => {
-    await expect(appendNote({ path: '../../outside.md', content: 'x' })).rejects.toThrow(
-      /not a path inside the space/,
-    )
+    await expect(appendNote({ path: '../../outside.md', content: 'x' })).rejects.toThrow(/not a path inside the space/)
     expect(written).toEqual([])
     expect(made).toEqual([])
   })
@@ -326,9 +318,7 @@ describe('properties.set over a file that is not Markdown', () => {
   test('is refused, and writes nothing', async () => {
     for (const name of ['Board.canvas', 'Pages.pages', 'Base.base', 'Talk.chat', 'Link.url']) {
       held.set(`/Work/${name}`, '{}')
-      await expect(setProperty({ path: name, key: 'status', value: 'done' })).rejects.toThrow(
-        /not a markdown note/,
-      )
+      await expect(setProperty({ path: name, key: 'status', value: 'done' })).rejects.toThrow(/not a markdown note/)
     }
     expect(written).toEqual([])
   })
@@ -399,9 +389,7 @@ describe('the space’s instructions, which a move does not make', () => {
 
   test('and they may move off, or into a folder under the name', async () => {
     await expect(movedIn('/Work', 'AGENTS.md', 'Old.md')).resolves.toBe('Old.md')
-    await expect(movedIn('/Work', 'Notes/AGENTS.md', 'Other/AGENTS.md')).resolves.toBe(
-      'Other/AGENTS.md',
-    )
+    await expect(movedIn('/Work', 'Notes/AGENTS.md', 'Other/AGENTS.md')).resolves.toBe('Other/AGENTS.md')
   })
 })
 
@@ -432,9 +420,7 @@ describe('a write the note refuses, being locked', () => {
     await expect(appendNote({ path: 'Locked.md', content: 'More.' })).rejects.toThrow(
       /nothing was written to Locked.md/,
     )
-    await expect(writeFile({ path: 'Locked.md', content: 'Gone.' })).rejects.toThrow(
-      /nothing was written to Locked.md/,
-    )
+    await expect(writeFile({ path: 'Locked.md', content: 'Gone.' })).rejects.toThrow(/nothing was written to Locked.md/)
     await expect(setProperty({ path: 'Locked.md', key: 'status', value: 'done' })).rejects.toThrow(
       /nothing was written to Locked.md/,
     )
@@ -450,14 +436,11 @@ describe('words prepended to a note', () => {
     ['---\nstatus: draft\n---\n# Plan\n', '---\nstatus: draft\n---\nTop line.\n\n# Plan\n'],
     ['---\nstatus: draft\n---', '---\nstatus: draft\n---\nTop line.'],
     ['# Plan\n', 'Top line.\n\n# Plan\n'],
-  ])(
-    'go above the body of %j, under its front matter on a line of their own',
-    async (before, after) => {
-      held.set('/Work/Plan.md', before)
-      await newNote({ path: 'Plan.md', content: 'Top line.', prepend: true, silent: true })
-      expect(written[0]?.after).toBe(after)
-    },
-  )
+  ])('go above the body of %j, under its front matter on a line of their own', async (before, after) => {
+    held.set('/Work/Plan.md', before)
+    await newNote({ path: 'Plan.md', content: 'Top line.', prepend: true, silent: true })
+    expect(written[0]?.after).toBe(after)
+  })
 })
 
 describe('links, backlinks and orphans asked while the index is still being built', () => {

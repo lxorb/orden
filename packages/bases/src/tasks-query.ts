@@ -119,9 +119,7 @@ function filterLine(line: string): string | null {
   if (presence) {
     const field = presence[2] ?? ''
     const value =
-      field === 'happens'
-        ? '(task.due || task.scheduled || task.start)'
-        : (DATE_FIELDS[field] ?? 'task.due')
+      field === 'happens' ? '(task.due || task.scheduled || task.start)' : (DATE_FIELDS[field] ?? 'task.due')
     return presence[1] === 'no' ? `!${value}` : value
   }
 
@@ -131,18 +129,10 @@ function filterLine(line: string): string | null {
     )
   if (date) return dateLine(date[1] ?? '', date[2] ?? 'on', date[3] ?? '')
 
-  const priority =
-    /^priority is(?: (above|below|not))? (highest|high|medium|none|normal|low|lowest)$/.exec(text)
+  const priority = /^priority is(?: (above|below|not))? (highest|high|medium|none|normal|low|lowest)$/.exec(text)
   if (priority) {
     const level = PRIORITIES[priority[2] ?? 'none'] ?? 4
-    const op =
-      priority[1] === 'above'
-        ? '<'
-        : priority[1] === 'below'
-          ? '>'
-          : priority[1] === 'not'
-            ? '!='
-            : '=='
+    const op = priority[1] === 'above' ? '<' : priority[1] === 'below' ? '>' : priority[1] === 'not' ? '!=' : '=='
     return `task.priority ${op} ${level}`
   }
 
@@ -194,10 +184,7 @@ function booleanLine(line: string): Filter | null {
   }
   const word = (wanted: string) => {
     skip()
-    if (
-      text.slice(at, at + wanted.length).toUpperCase() === wanted &&
-      /[\s(]/.test(text.charAt(at + wanted.length))
-    ) {
+    if (text.slice(at, at + wanted.length).toUpperCase() === wanted && /[\s(]/.test(text.charAt(at + wanted.length))) {
       at += wanted.length
       return true
     }

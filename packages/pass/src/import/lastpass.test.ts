@@ -116,9 +116,7 @@ describe('parseLastPass', () => {
     expect(login.password).toBe('p,w"1')
     expect(login.totp).toEqual(totpOf(SECRET))
     expect(login.note).toBe('login note\nline 2')
-    expect(login.websites).toEqual([
-      { url: normalizeUrl('https://accounts.example.com/login'), match: 'domain' },
-    ])
+    expect(login.websites).toEqual([{ url: normalizeUrl('https://accounts.example.com/login'), match: 'domain' }])
     expect(example).toMatchObject({ pinned: true, folder: 'Work/Projects' })
     const multi = find(result, 'Multi')
     expect(as(multi.content, 'login').username).toBe('meier')
@@ -140,9 +138,7 @@ describe('parseLastPass', () => {
       expiry: '2027-03',
       note: 'first line\nsecond: line',
     })
-    expect(myCard.fields.map((one) => [one.name, one.value])).toEqual([
-      ['Start Date', 'January,2020'],
-    ])
+    expect(myCard.fields.map((one) => [one.name, one.value])).toEqual([['Start Date', 'January,2020']])
     const home = as(find(result, 'Home').content, 'identity')
     expect(home.values).toMatchObject({
       firstName: 'Jürg',
@@ -179,9 +175,7 @@ describe('parseLastPass', () => {
       ['Account Number', 'text'],
       ['PIN', 'hidden'],
     ])
-    expect(result.skipped).toEqual([
-      { reason: expect.stringContaining('Bank Account'), title: 'Konto' },
-    ])
+    expect(result.skipped).toEqual([{ reason: expect.stringContaining('Bank Account'), title: 'Konto' }])
   })
 
   it('refuses another CSV', () => {

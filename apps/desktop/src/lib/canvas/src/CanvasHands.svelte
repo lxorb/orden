@@ -118,13 +118,7 @@
             ongo?.(at)
           }}
         >
-          <circle
-            class="target"
-            cx={held.at.x}
-            cy={held.at.y}
-            r={TARGET * unit}
-            fill="transparent"
-          />
+          <circle class="target" cx={held.at.x} cy={held.at.y} r={TARGET * unit} fill="transparent" />
           <path
             d={ARROW}
             fill={hand.colour}
@@ -141,11 +135,8 @@
         </g>
       {:else}
         <circle cx={at.x} cy={at.y} r={DOT * unit} fill={hand.colour} />
-        <text
-          x={at.x + GAP * unit}
-          y={at.y - GAP * unit}
-          fill={hand.colour}
-          font-size="{LABEL * unit}px">{hand.name}</text
+        <text x={at.x + GAP * unit} y={at.y - GAP * unit} fill={hand.colour} font-size="{LABEL * unit}px"
+          >{hand.name}</text
         >
       {/if}
     {/each}

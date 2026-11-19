@@ -23,9 +23,7 @@
   let cursor = $state(0)
 
   const matches = $derived(
-    prompt.mode === 'find'
-      ? rank(prompt.value.trim(), prompt.options, (option) => option.label)
-      : [],
+    prompt.mode === 'find' ? rank(prompt.value.trim(), prompt.options, (option) => option.label) : [],
   )
 
   let list = $state<HTMLUListElement>()
@@ -63,8 +61,7 @@
     const height = where.row || LEAST
     const top = offsetOf(index, rows) + (box.scrollTop - where.top)
     if (top < box.scrollTop) box.scrollTop = top
-    else if (top + height > box.scrollTop + box.clientHeight)
-      box.scrollTop = top + height - box.clientHeight
+    else if (top + height > box.scrollTop + box.clientHeight) box.scrollTop = top + height - box.clientHeight
     where.refresh()
   }
 
@@ -99,10 +96,7 @@
   const mac = isDesktop && platform() === 'macos'
   const answers = $derived(
     mac
-      ? [
-          ...prompt.options.filter((one) => !one.primary),
-          ...prompt.options.filter((one) => one.primary),
-        ]
+      ? [...prompt.options.filter((one) => !one.primary), ...prompt.options.filter((one) => one.primary)]
       : prompt.options,
   )
 
@@ -114,11 +108,7 @@
 
 {#if prompt.open}
   <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-  <div
-    class="orden-scrim scrim"
-    transition:fade={{ duration: LAYER.fade }}
-    onclick={() => prompt.dismiss()}
-  ></div>
+  <div class="orden-scrim scrim" transition:fade={{ duration: LAYER.fade }} onclick={() => prompt.dismiss()}></div>
 
   <div
     class="orden-screen sheet"
@@ -138,12 +128,7 @@
       <p class="title">{prompt.title}</p>
 
       {#if prompt.mode === 'text'}
-        <input
-          bind:value={prompt.value}
-          placeholder={prompt.placeholder}
-          spellcheck="false"
-          use:selectAll
-        />
+        <input bind:value={prompt.value} placeholder={prompt.placeholder} spellcheck="false" use:selectAll />
       {:else if prompt.mode === 'find'}
         <!-- svelte-ignore a11y_autofocus -->
         <input
@@ -159,11 +144,7 @@
             <ul class="found" bind:this={list}>
               <li class="gap" style:height="{view.above}px" aria-hidden="true"></li>
               {#each drawn as { at: index, option, away } (option.id)}
-                <li
-                  data-row={index}
-                  class:away
-                  style:top={away ? `${offsetOf(index, rows)}px` : undefined}
-                >
+                <li data-row={index} class:away style:top={away ? `${offsetOf(index, rows)}px` : undefined}>
                   <button
                     type="button"
                     class="found-row"
@@ -174,13 +155,7 @@
                     {#if option.space}
                       <span class="space"><SpaceMark {...option.space} /></span>
                     {:else if option.picture}
-                      <img
-                        class="picture"
-                        src={option.picture}
-                        alt=""
-                        draggable="false"
-                        decoding="async"
-                      />
+                      <img class="picture" src={option.picture} alt="" draggable="false" decoding="async" />
                     {:else if option.mark}
                       <FileMark mark={option.mark} path={option.id} />
                     {/if}
@@ -201,11 +176,7 @@
       <div class="row">
         {#if prompt.mode === 'choose'}
           {#if prompt.tick}
-            <TickBox
-              label={prompt.tick}
-              checked={prompt.ticked}
-              onchange={(on: boolean) => (prompt.ticked = on)}
-            />
+            <TickBox label={prompt.tick} checked={prompt.ticked} onchange={(on: boolean) => (prompt.ticked = on)} />
           {/if}
           {#each answers as option (option.id)}
             <button
@@ -220,13 +191,9 @@
             </button>
           {/each}
         {:else if prompt.mode === 'find'}
-          <button type="button" class="orden-button is-quiet" onclick={() => prompt.dismiss()}
-            >Cancel</button
-          >
+          <button type="button" class="orden-button is-quiet" onclick={() => prompt.dismiss()}>Cancel</button>
         {:else}
-          <button type="button" class="orden-button is-quiet" onclick={() => prompt.dismiss()}
-            >Cancel</button
-          >
+          <button type="button" class="orden-button is-quiet" onclick={() => prompt.dismiss()}>Cancel</button>
           <button
             type="submit"
             class="orden-button"

@@ -98,8 +98,7 @@ export function setAgentMarks(view: EditorView, agent: string, given: AgentMark[
     }))
     .filter((one) => one.to > one.from)
   const effects: StateEffect<unknown>[] = [setMarks.of({ agent, marks: held })]
-  if (view.state.field(marks, false) === undefined)
-    effects.unshift(StateEffect.appendConfig.of([marks, look]))
+  if (view.state.field(marks, false) === undefined) effects.unshift(StateEffect.appendConfig.of([marks, look]))
   view.dispatch({ effects })
 }
 

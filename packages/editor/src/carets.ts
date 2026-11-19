@@ -37,11 +37,7 @@ interface Present {
 
 const nobody: Present = { peers: [], agents: [], marks: Decoration.none }
 
-function marksFor(
-  state: EditorState,
-  peers: readonly Peer[],
-  agents: readonly Peer[],
-): DecorationSet {
+function marksFor(state: EditorState, peers: readonly Peer[], agents: readonly Peer[]): DecorationSet {
   const length = state.doc.length
   const marks: Range<Decoration>[] = []
 
@@ -491,8 +487,7 @@ function heldCarets(): Extension {
         }
 
         private readonly go = (event: MouseEvent) => {
-          const id = (event.target as Element | null)?.closest<HTMLElement>('.cm-orden-held-name')
-            ?.dataset.peer
+          const id = (event.target as Element | null)?.closest<HTMLElement>('.cm-orden-held-name')?.dataset.peer
           const one = peersOf(this.view.state).find((peer) => String(peer.id) === id)
           if (!one) return
           event.preventDefault()
@@ -533,9 +528,7 @@ function heldCarets(): Extension {
             this.above.style.left = this.below.style.left = `${held.left}px`
           }
 
-          const said = JSON.stringify(
-            [above, below].map((side) => side.map((one) => [one.id, one.name, one.colour])),
-          )
+          const said = JSON.stringify([above, below].map((side) => side.map((one) => [one.id, one.name, one.colour])))
           if (said === this.drawn) return
           this.drawn = said
           this.above.replaceChildren(...above.map(pill))
@@ -595,8 +588,6 @@ const heldStyle = EditorView.baseTheme({
 
 export const remoteCarets = (): Extension => [present, caretLayer, style, heldCarets()]
 
-export const peersOf = (state: EditorState): readonly Peer[] =>
-  state.field(present, false)?.peers ?? []
+export const peersOf = (state: EditorState): readonly Peer[] => state.field(present, false)?.peers ?? []
 
-export const agentsOf = (state: EditorState): readonly Peer[] =>
-  state.field(present, false)?.agents ?? []
+export const agentsOf = (state: EditorState): readonly Peer[] => state.field(present, false)?.agents ?? []

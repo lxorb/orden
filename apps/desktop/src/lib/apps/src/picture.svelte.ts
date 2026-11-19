@@ -14,15 +14,7 @@ import {
   toHostText,
   type ToHost,
 } from '@orden/online/apps'
-import {
-  type Clock,
-  clockOf,
-  type Counts,
-  middle,
-  seenAt,
-  type StreamStats,
-  streamStats,
-} from './stats'
+import { type Clock, clockOf, type Counts, middle, seenAt, type StreamStats, streamStats } from './stats'
 
 export type PictureStatus =
   | { is: 'off' }
@@ -49,23 +41,18 @@ const pageWorld: PeerWorld = {
   async servers() {
     const { account, request } = await import('../../accounts/src/api')
     const token = account.accountToken
-    const answer = token
-      ? await request<{ iceServers?: unknown }>(ICE_PATH, { token }).catch(() => null)
-      : null
+    const answer = token ? await request<{ iceServers?: unknown }>(ICE_PATH, { token }).catch(() => null) : null
     const servers = iceServersOf(answer?.iceServers)
     return servers.length > 0 ? servers : [...FALLBACK_ICE]
   },
-  make: (servers) =>
-    typeof RTCPeerConnection === 'function' ? new RTCPeerConnection({ iceServers: servers }) : null,
+  make: (servers) => (typeof RTCPeerConnection === 'function' ? new RTCPeerConnection({ iceServers: servers }) : null),
   after: (ms, run) => {
     const timer = setTimeout(run, ms)
     return () => clearTimeout(timer)
   },
   now: () => Date.now(),
   copy: (text) => {
-    void import('../../ui-controls/src/api')
-      .then(({ copyText }) => copyText(text))
-      .catch(() => undefined)
+    void import('../../ui-controls/src/api').then(({ copyText }) => copyText(text)).catch(() => undefined)
   },
 }
 
@@ -175,11 +162,7 @@ export class Picture {
         ?.getStats()
         .then((report) => {
           if (this.peer !== peer || !this.measuring) return
-          const read = streamStats(
-            report.values() as Iterable<Record<string, unknown>>,
-            this.counts,
-            this.world.now(),
-          )
+          const read = streamStats(report.values() as Iterable<Record<string, unknown>>, this.counts, this.world.now())
           this.stats = read.stats
           this.counts = read.counts
         })

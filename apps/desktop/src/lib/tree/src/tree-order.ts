@@ -3,13 +3,7 @@ import type { Entry } from '@orden/contracts'
 type Shown = Pick<Entry, 'name' | 'is_dir' | 'modified' | 'created'>
 
 export type SortMode =
-  | 'name'
-  | 'name-desc'
-  | 'modified-desc'
-  | 'modified-asc'
-  | 'created-desc'
-  | 'created-asc'
-  | 'manual'
+  'name' | 'name-desc' | 'modified-desc' | 'modified-asc' | 'created-desc' | 'created-asc' | 'manual'
 
 export const SORT_MODES: readonly SortMode[] = [
   'name',
@@ -23,8 +17,7 @@ export const SORT_MODES: readonly SortMode[] = [
 
 export const FIRST_MODE: SortMode = 'name'
 
-export const isSortMode = (value: unknown): value is SortMode =>
-  SORT_MODES.some((one) => one === value)
+export const isSortMode = (value: unknown): value is SortMode => SORT_MODES.some((one) => one === value)
 
 const READING = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' })
 const EXACTLY = new Intl.Collator(undefined, { numeric: true })
@@ -63,11 +56,7 @@ function placesIn(listed: readonly string[]): Map<string, number> {
   return at
 }
 
-function group<T extends Shown>(
-  entries: readonly T[],
-  mode: SortMode,
-  listed: readonly string[],
-): T[] {
+function group<T extends Shown>(entries: readonly T[], mode: SortMode, listed: readonly string[]): T[] {
   const out = [...entries]
 
   if (mode === 'manual') {
@@ -88,11 +77,7 @@ function group<T extends Shown>(
   return out
 }
 
-export function ordered<T extends Shown>(
-  children: readonly T[],
-  mode: SortMode,
-  listed: readonly string[],
-): T[] {
+export function ordered<T extends Shown>(children: readonly T[], mode: SortMode, listed: readonly string[]): T[] {
   if (mode === 'manual') return group(children, mode, listed)
 
   const folders = children.filter((one) => one.is_dir)
@@ -101,23 +86,14 @@ export function ordered<T extends Shown>(
   return [...group(folders, mode, listed), ...group(files, mode, listed)]
 }
 
-export const shownNames = (
-  children: readonly Shown[],
-  mode: SortMode,
-  listed: readonly string[],
-): string[] => ordered(children, mode, listed).map((one) => one.name)
+export const shownNames = (children: readonly Shown[], mode: SortMode, listed: readonly string[]): string[] =>
+  ordered(children, mode, listed).map((one) => one.name)
 
-export function orderedTree(
-  tree: Entry,
-  mode: SortMode,
-  listOf: (folder: string) => readonly string[],
-): Entry {
+export function orderedTree(tree: Entry, mode: SortMode, listOf: (folder: string) => readonly string[]): Entry {
   const here = ordered(tree.children, mode, listOf(tree.path))
   const children = here.map((child) => (child.is_dir ? orderedTree(child, mode, listOf) : child))
 
-  const same =
-    children.length === tree.children.length &&
-    children.every((child, at) => child === tree.children[at])
+  const same = children.length === tree.children.length && children.every((child, at) => child === tree.children[at])
 
   return same ? tree : { ...tree, children }
 }

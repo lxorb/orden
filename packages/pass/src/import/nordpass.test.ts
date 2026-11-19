@@ -24,11 +24,7 @@ describe('parseNordPass', () => {
         kind: 'login',
         email: 'hello@example.com',
         note: 'a\nb',
-        websites: [
-          { url: 'https://example.com/' },
-          { url: 'https://example.net/' },
-          { url: 'https://example.org/' },
-        ],
+        websites: [{ url: 'https://example.com/' }, { url: 'https://example.net/' }, { url: 'https://example.org/' }],
         fields: [{ name: 'Secret Q', kind: 'hidden', value: 'blue' }],
       },
     })

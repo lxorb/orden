@@ -74,8 +74,7 @@ export function toggleWrap(before: string, after = before): StateCommand {
 
   return (target) => {
     const { state, dispatch } = target
-    if (across && state.selection.ranges.some((range) => spansLines(state, range)))
-      return across(target)
+    if (across && state.selection.ranges.some((range) => spansLines(state, range))) return across(target)
 
     const update = state.changeByRange((range) => {
       const { from, to } = inside(state, range.from, range.to)
@@ -85,9 +84,7 @@ export function toggleWrap(before: string, after = before): StateCommand {
       const trailing = doc.sliceString(to, Math.min(doc.length, to + after.length))
 
       const line = doc.lineAt(from)
-      const stars = italic
-        ? (/\*+$/u.exec(line.text.slice(0, from - line.from))?.[0].length ?? 0)
-        : 1
+      const stars = italic ? (/\*+$/u.exec(line.text.slice(0, from - line.from))?.[0].length ?? 0) : 1
 
       if (leading === before && trailing === after && stars % 2 === 1) {
         return {
@@ -160,12 +157,7 @@ const RUNS: Readonly<Record<string, { node: string; marks: readonly string[] }>>
   '`': { node: 'InlineCode', marks: ['`'] },
 }
 
-function runAround(
-  state: EditorState,
-  at: number,
-  before: string,
-  after: string,
-): { from: number; to: number } | null {
+function runAround(state: EditorState, at: number, before: string, after: string): { from: number; to: number } | null {
   const kind = before === after ? RUNS[before] : undefined
   if (!kind) return null
 
@@ -258,11 +250,7 @@ const ITEM_HEADING = /^[ \t]*(?:[-*+]|\d+[.)])[ \t]+(?=#{1,6}(?:[ \t]|$))/
 
 function inItemBody(state: EditorState, line: Line): boolean {
   const start = line.from + line.text.length - line.text.trimStart().length
-  for (
-    let node: SyntaxNode | null = syntaxTree(state).resolveInner(start, 1);
-    node;
-    node = node.parent
-  ) {
+  for (let node: SyntaxNode | null = syntaxTree(state).resolveInner(start, 1); node; node = node.parent) {
     if (node.name === 'ListItem') return node.from < line.from
   }
   return false
@@ -448,9 +436,7 @@ export const toggleTask: StateCommand = (target) => {
   if (!changes.length) return false
 
   const set = state.changes(changes)
-  dispatch(
-    state.update({ changes: set, selection: state.selection.map(set, 1), userEvent: 'input' }),
-  )
+  dispatch(state.update({ changes: set, selection: state.selection.map(set, 1), userEvent: 'input' }))
   return true
 }
 
@@ -515,8 +501,7 @@ function quotedLine(line: Line): Quoted {
 
 function columnOf(space: string): number {
   let column = 0
-  for (const character of space)
-    column = character === '\t' ? column + 4 - (column % 4) : column + 1
+  for (const character of space) column = character === '\t' ? column + 4 - (column % 4) : column + 1
   return column
 }
 
@@ -547,9 +532,7 @@ function shiftsOf(parents: Parent[], line: Quoted): number[] {
 }
 
 function quotePrefix(line: Quoted, shifts: number[]): string {
-  return line.leads
-    .map((lead, at) => shiftedSpace(lead, shifts[at] ?? 0) + (line.marks[at] ?? ''))
-    .join('')
+  return line.leads.map((lead, at) => shiftedSpace(lead, shifts[at] ?? 0) + (line.marks[at] ?? '')).join('')
 }
 
 function prefixOf(line: Quoted, shifts: number[]): string {
@@ -559,8 +542,7 @@ function prefixOf(line: Quoted, shifts: number[]): string {
 function leadShifts(parents: Parent[], line: Quoted): number[] {
   const probe = [...line.levels.slice(0, -1), Number.POSITIVE_INFINITY]
   const shifts = Array.from({ length: line.depth + 1 }, () => 0)
-  for (const parent of parents)
-    if (encloses(parent.levels, probe, false)) shifts[parent.depth] = parent.shift
+  for (const parent of parents) if (encloses(parent.levels, probe, false)) shifts[parent.depth] = parent.shift
   return shifts
 }
 
@@ -592,15 +574,7 @@ function carriedIn(state: EditorState, line: Quoted): boolean {
   return itemContent(state, line) !== null
 }
 
-const HELD = new Set([
-  'FencedCode',
-  'CodeBlock',
-  'Table',
-  'BlockMath',
-  'HTMLBlock',
-  'CommentBlock',
-  'FrontMatter',
-])
+const HELD = new Set(['FencedCode', 'CodeBlock', 'Table', 'BlockMath', 'HTMLBlock', 'CommentBlock', 'FrontMatter'])
 
 const SINGLE_LINE_FREE = new Set(['HTMLBlock', 'CommentBlock'])
 
@@ -619,11 +593,7 @@ interface Restart {
   active: boolean
 }
 
-function toggleList(
-  own: RegExp,
-  markerFor: (count: number) => string,
-  boxed = false,
-): StateCommand {
+function toggleList(own: RegExp, markerFor: (count: number) => string, boxed = false): StateCommand {
   return ({ state, dispatch }) => {
     const chosen = selectedLines(state)
     const quoted = chosen.map(quotedLine)
@@ -644,8 +614,7 @@ function toggleList(
     const parents: Parent[] = []
     const changes: ChangeSpec[] = []
     const drop = (held: Map<string, { levels: number[] }>, line: Quoted, orSibling: boolean) => {
-      for (const [key, one] of held)
-        if (!encloses(one.levels, line.levels, orSibling)) held.delete(key)
+      for (const [key, one] of held) if (!encloses(one.levels, line.levels, orSibling)) held.delete(key)
     }
 
     const first = chosen[0]?.number ?? 1
@@ -665,12 +634,10 @@ function toggleList(
         const held = inBlock(state, line)
         drop(counts, line, false)
         drop(restarts, line, true)
-        for (const one of restarts.values())
-          if (encloses(one.levels, line.levels, false)) one.active = true
+        for (const one of restarts.values()) if (encloses(one.levels, line.levels, false)) one.active = true
         const restart = restarts.get(key)
         const numbered = restart && !held ? NUMBERED.exec(line.text) : null
-        const renumbered =
-          restart && numbered && restart.active && numbered[0].trim().endsWith(restart.delimiter)
+        const renumbered = restart && numbered && restart.active && numbered[0].trim().endsWith(restart.delimiter)
         if (restart && !renumbered) restarts.delete(key)
         const shifts = shiftsOf(parents, line)
         if (!parents.length && number > last && !renumbered) break
@@ -756,10 +723,7 @@ function splitsStructure(state: EditorState, from: number, to: number): boolean 
   const last = state.doc.lineAt(to)
   if (from === to && from === first.from) return false
 
-  return (
-    (from > first.from && STRUCTURED.test(first.text)) ||
-    (to < last.to && STRUCTURED.test(last.text))
-  )
+  return (from > first.from && STRUCTURED.test(first.text)) || (to < last.to && STRUCTURED.test(last.text))
 }
 
 function roomAbove(state: EditorState, at: number, blank: boolean): string {
@@ -888,14 +852,7 @@ function fenceLine(text: string): { pad: string; rest: string } {
   return { pad: heldIn(prefix) + (/^ {0,3}/.exec(rest)?.[0] ?? ''), rest }
 }
 
-const NOT_PROSE = new Set([
-  'CodeBlock',
-  'HTMLBlock',
-  'CommentBlock',
-  'Comment',
-  'BlockMath',
-  'FrontMatter',
-])
+const NOT_PROSE = new Set(['CodeBlock', 'HTMLBlock', 'CommentBlock', 'Comment', 'BlockMath', 'FrontMatter'])
 
 function opensUnclosedFence(state: EditorState, line: Line): boolean {
   const tree = ensureSyntaxTree(state, state.doc.length, 50)
@@ -1104,10 +1061,7 @@ export const insertPageBreak = insertBlock(() => ({
 export function insertTable(rows = 2, columns = 2): StateCommand {
   const header = `| ${Array.from({ length: columns }, (_, i) => `Column ${i + 1}`).join(' | ')} |`
   const divider = `| ${Array.from({ length: columns }, () => '---').join(' | ')} |`
-  const body = Array.from(
-    { length: rows },
-    () => `| ${Array.from({ length: columns }, () => '   ').join(' | ')} |`,
-  )
+  const body = Array.from({ length: rows }, () => `| ${Array.from({ length: columns }, () => '   ').join(' | ')} |`)
 
   const block = insertBlock(() => ({ text: [header, divider, ...body].join('\n'), caret: 2 }), {
     above: true,
@@ -1236,10 +1190,7 @@ function pastFold(made: Transaction, fold: { from: number; to: number }): Transa
   })
   const lineStart = made.startState.doc.lineAt(fold.from).from
   const opened = changes.find(
-    (one) =>
-      one.to === fold.from &&
-      one.from >= lineStart &&
-      !made.startState.sliceDoc(one.from, one.to).trim(),
+    (one) => one.to === fold.from && one.from >= lineStart && !made.startState.sliceDoc(one.from, one.to).trim(),
   )
   if (!opened || changes.some((one) => one !== opened && one.from < fold.to)) return made
 
@@ -1318,8 +1269,7 @@ const continueListsAt: StateCommand = ({ state, dispatch }) => {
         if (!before || !ORDERED_TASK.test(state.doc.lineAt(before.head).text)) return
 
         const line = made.newDoc.lineAt(range.head)
-        if (FRESH_NUMBER.test(made.newDoc.sliceString(line.from, range.head)))
-          boxes.push(range.head)
+        if (FRESH_NUMBER.test(made.newDoc.sliceString(line.from, range.head))) boxes.push(range.head)
       })
       const apart = state.selection.ranges.flatMap((before) => {
         const line = state.doc.lineAt(before.head)
@@ -1343,10 +1293,7 @@ const continueListsAt: StateCommand = ({ state, dispatch }) => {
         return
       }
 
-      const boxed = ChangeSet.of(
-        [...boxes.map((at) => ({ from: at, insert: '[ ] ' })), ...apart],
-        made.newDoc.length,
-      )
+      const boxed = ChangeSet.of([...boxes.map((at) => ({ from: at, insert: '[ ] ' })), ...apart], made.newDoc.length)
       dispatch(
         state.update({
           changes: made.changes.compose(boxed),

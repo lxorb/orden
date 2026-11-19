@@ -12,9 +12,7 @@ export const PRIORITY_NAMES: Readonly<Record<Priority, string>> = {
 }
 
 export const priorityTone = (priority: number): string | undefined =>
-  (
-    ({ 1: 'var(--canvas-1)', 2: 'var(--canvas-2)', 3: 'var(--canvas-5)' }) as Record<number, string>
-  )[priority]
+  (({ 1: 'var(--canvas-1)', 2: 'var(--canvas-2)', 3: 'var(--canvas-5)' }) as Record<number, string>)[priority]
 
 interface Subtask {
   readonly id: string
@@ -91,8 +89,7 @@ export const isPriority = (value: unknown): value is Priority =>
 
 export const cleanLabel = (label: string): string => label.trim().replace(/\s+/g, ' ')
 
-const text = (value: InboxValue | undefined, fallback = ''): string =>
-  typeof value === 'string' ? value : fallback
+const text = (value: InboxValue | undefined, fallback = ''): string => (typeof value === 'string' ? value : fallback)
 
 const texts = (value: InboxValue | undefined): string[] =>
   Array.isArray(value) ? value.filter((one): one is string => typeof one === 'string') : []
@@ -142,9 +139,7 @@ export function fieldsOf(patch: TodoPatch): InboxFields {
   if (patch.priority !== undefined) fields.priority = patch.priority
   if (patch.done !== undefined) fields.done = patch.done
   if (patch.subtasks !== undefined) {
-    fields.subtasks = patch.subtasks.map((one) =>
-      JSON.stringify({ id: one.id, title: one.title, done: one.done }),
-    )
+    fields.subtasks = patch.subtasks.map((one) => JSON.stringify({ id: one.id, title: one.title, done: one.done }))
   }
   if (patch.order !== undefined) fields.order = patch.order
   return fields

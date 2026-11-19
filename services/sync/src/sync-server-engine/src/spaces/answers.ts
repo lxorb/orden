@@ -60,9 +60,7 @@ interface Row {
 function present(row: Row) {
   const held = objectIn(row.answers)
   const answers: Record<string, string> = Object.fromEntries(
-    Object.entries(held ?? {}).flatMap(([key, value]) =>
-      typeof value === 'string' ? [[key, value]] : [],
-    ),
+    Object.entries(held ?? {}).flatMap(([key, value]) => (typeof value === 'string' ? [[key, value]] : [])),
   )
   return { id: row.id, note: row.note_id, path: row.path, at: row.at, answers }
 }

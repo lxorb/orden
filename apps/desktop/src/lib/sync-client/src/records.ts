@@ -76,9 +76,7 @@ export interface Merging {
 }
 
 export type Outgoing =
-  | { t: 'op'; op: Op; sent?: boolean }
-  | { t: 'keep'; keep: KeepRequest }
-  | { t: 'merge'; merge: Merging }
+  { t: 'op'; op: Op; sent?: boolean } | { t: 'keep'; keep: KeepRequest } | { t: 'merge'; merge: Merging }
 
 export function outgoingBytes(record: Outgoing): Uint8Array {
   return frame(record)
@@ -370,9 +368,7 @@ export function keepingOf(row: MetaRow): { space: string; keeping: Keeping } | n
       used.inOneRow = true
     }
     const going = new Set(
-      Array.isArray(value.going)
-        ? value.going.filter((one): one is string => typeof one === 'string')
-        : [],
+      Array.isArray(value.going) ? value.going.filter((one): one is string => typeof one === 'string') : [],
     )
     const keeping: Keeping = { on: value.on === true, used, going }
     if (value.refused === true) keeping.refused = true

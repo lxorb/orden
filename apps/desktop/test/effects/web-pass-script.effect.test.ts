@@ -5,9 +5,7 @@ import { expect, test, vi } from 'vitest'
 import script from '../../src-tauri/crates/web/src/web_pass.js?raw'
 import { idle } from './settle'
 
-const jsdomUtils = createRequire(join(process.cwd(), 'package.json'))(
-  'jsdom/lib/generated/idl/utils.js',
-) as {
+const jsdomUtils = createRequire(join(process.cwd(), 'package.json'))('jsdom/lib/generated/idl/utils.js') as {
   implForWrapper(wrapper: unknown): { isTrusted: boolean; _dispatch(event: unknown): boolean }
 }
 
@@ -64,8 +62,10 @@ async function page(html: string, url = 'https://a.example/login') {
   const inside = dom.window as unknown as Inside
   const said: Said[] = []
   const closed: ShadowRoot[] = []
-  const attach = Object.getOwnPropertyDescriptor(inside.Element.prototype, 'attachShadow')
-    ?.value as (this: Element, init: ShadowRootInit) => ShadowRoot
+  const attach = Object.getOwnPropertyDescriptor(inside.Element.prototype, 'attachShadow')?.value as (
+    this: Element,
+    init: ShadowRootInit,
+  ) => ShadowRoot
   inside.Element.prototype.attachShadow = function attached(this: Element, init: ShadowRootInit) {
     const root = attach.call(this, init)
     if (init.mode === 'closed') closed.push(root)
@@ -153,18 +153,13 @@ test('a newsletter box with one email field is no sign-in', async () => {
 })
 
 test('a text field before the password is the username even when nothing names it', async () => {
-  const { roles, only } = await page(
-    `<form><input name="x1"><input type="password" name="x2"></form>`,
-  )
+  const { roles, only } = await page(`<form><input name="x1"><input type="password" name="x2"></form>`)
   expect(only().kind).toBe('login')
   expect(roles()).toEqual(['username', 'password'])
 })
 
 test('six boxes of one digit are a 2FA code, and a code fills across them', async () => {
-  const boxes = Array.from(
-    { length: 6 },
-    (_, at) => `<input maxlength="1" inputmode="numeric" name="d${at}">`,
-  ).join('')
+  const boxes = Array.from({ length: 6 }, (_, at) => `<input maxlength="1" inputmode="numeric" name="d${at}">`).join('')
   const { only, roles, fill, document } = await page(`<form>${boxes}<button>Verify</button></form>`)
   expect(only().kind).toBe('totp')
   expect(roles()).toEqual(Array(6).fill('totp'))
@@ -236,14 +231,7 @@ test('an address form is an identity, and a select is filled by what it shows', 
       <select name="country"><option value="">-</option><option value="CH">Switzerland</option></select>
     </form>`)
   expect(only().kind).toBe('identity')
-  expect(roles()).toEqual([
-    'given-name',
-    'family-name',
-    'street-address',
-    'postal-code',
-    'address-level2',
-    'country',
-  ])
+  expect(roles()).toEqual(['given-name', 'family-name', 'street-address', 'postal-code', 'address-level2', 'country'])
   const form = only()
   expect(
     fill({
@@ -407,9 +395,7 @@ test('Ctrl+Shift+L asks for the field that has the keyboard', async () => {
 })
 
 test('a fill goes past a framework that watches the value it set itself', async () => {
-  const { only, fill, input, inside } = await page(
-    '<form><input name="user"><input type="password" name="pw"></form>',
-  )
+  const { only, fill, input, inside } = await page('<form><input name="user"><input type="password" name="pw"></form>')
   const field = input('[name=user]')
   const native = Object.getOwnPropertyDescriptor(inside.HTMLInputElement.prototype, 'value')
   let tracked = ''
@@ -423,8 +409,7 @@ test('a fill goes past a framework that watches the value it set itself', async 
   })
   const changed: string[] = []
   const heard: string[] = []
-  for (const type of ['input', 'change', 'keyup', 'blur'])
-    field.addEventListener(type, () => heard.push(type))
+  for (const type of ['input', 'change', 'keyup', 'blur']) field.addEventListener(type, () => heard.push(type))
   field.addEventListener('input', () => {
     const now = native?.get?.call(field) as string
     if (now !== tracked) changed.push(now)
@@ -437,9 +422,7 @@ test('a fill goes past a framework that watches the value it set itself', async 
 })
 
 test('a fill for another document, another site or another form fills nothing', async () => {
-  const { only, fill, input, said } = await page(
-    '<form><input name="user"><input type="password" name="pw"></form>',
-  )
+  const { only, fill, input, said } = await page('<form><input name="user"><input type="password" name="pw"></form>')
   const form = only()
   const values = { [at(form, 0)]: 'alice' }
   expect(fill({ form: form.form, values, submit: false, doc: 'another' })).toBe(false)
@@ -495,14 +478,9 @@ test('what a person typed is read only when the form is sent', async () => {
   await idle(400)
   expect(JSON.stringify(said)).not.toContain('swordfish')
 
-  trusted(
-    input('[name=pw]'),
-    new inside.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true }),
-  )
+  trusted(input('[name=pw]'), new inside.KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true }))
   const sent = said.filter((one) => one.kind === 'submitted')
-  expect(sent.map((one) => [one.formKind, one.username, one.password])).toEqual([
-    ['login', 'bob', 'swordfish'],
-  ])
+  expect(sent.map((one) => [one.formKind, one.username, one.password])).toEqual([['login', 'bob', 'swordfish']])
 })
 
 test('a sign-up sent says its new password', async () => {
@@ -528,9 +506,7 @@ test('a sign-in a single-page app takes away once it is sent is said as sent', a
   document.getElementById('app')?.replaceChildren(document.createElement('main'))
   await vi.waitFor(() => {
     const sent = said.filter((one) => one.kind === 'submitted')
-    expect(sent.map((one) => [one.formKind, one.username, one.password])).toEqual([
-      ['login', 'dan', 'secret'],
-    ])
+    expect(sent.map((one) => [one.formKind, one.username, one.password])).toEqual([['login', 'dan', 'secret']])
   })
 })
 
@@ -544,7 +520,5 @@ test('a message waits for the channel when the engine has not put it in yet', as
   inside.eval(script)
   const said: string[] = []
   inside.ordenPass = (words: string) => void said.push(words)
-  await vi.waitFor(() =>
-    expect(said.map((one) => (JSON.parse(one) as Said).kind)).toEqual(['forms']),
-  )
+  await vi.waitFor(() => expect(said.map((one) => (JSON.parse(one) as Said).kind)).toEqual(['forms']))
 })

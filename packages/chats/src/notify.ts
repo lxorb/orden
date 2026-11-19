@@ -58,8 +58,7 @@ const DAY_MINUTES = 24 * 60
 export const levelOf = (notify: Notify | null, members: number): Notify =>
   notify ?? (members > MENTIONS_ONLY_PAST ? 'mentions' : 'all')
 
-export const isMuted = (mutedUntil: number | null, now: number): boolean =>
-  mutedUntil !== null && mutedUntil > now
+export const isMuted = (mutedUntil: number | null, now: number): boolean => mutedUntil !== null && mutedUntil > now
 
 const WORDY = '[\\p{L}\\p{N}_]'
 
@@ -74,12 +73,7 @@ export function keywordIn(body: string, keywords: readonly string[]): string | n
   return null
 }
 
-export function callOf(
-  message: Heard,
-  me: Who,
-  active: boolean,
-  keywords: readonly string[],
-): Call | null {
+export function callOf(message: Heard, me: Who, active: boolean, keywords: readonly string[]): Call | null {
   if (message.mentions.includes(me)) return 'name'
   if (message.mentions.includes('everyone')) return 'everyone'
   if (active && message.mentions.includes('here')) return 'here'
@@ -93,10 +87,7 @@ export function inHours(hours: Hours | null, moment: Moment): boolean {
   if (from === to) return days.includes(moment.day)
   if (from < to) return days.includes(moment.day) && moment.minute >= from && moment.minute < to
   const yesterday = (moment.day + 6) % 7
-  return (
-    (days.includes(moment.day) && moment.minute >= from) ||
-    (days.includes(yesterday) && moment.minute < to)
-  )
+  return (days.includes(moment.day) && moment.minute >= from) || (days.includes(yesterday) && moment.minute < to)
 }
 
 export function decide(asked: Asked): Ping {
@@ -107,28 +98,23 @@ export function decide(asked: Asked): Ping {
 
   const level = levelOf(chat.notify, chat.members)
   if (level === 'nothing') return 'level'
-  if (level === 'mentions' && callOf(message, me, asked.active, hush.keywords) === null)
-    return 'level'
+  if (level === 'mentions' && callOf(message, me, asked.active, hush.keywords) === null) return 'level'
 
   if (hush.dndUntil !== null && hush.dndUntil > moment.now) return 'dnd'
   return inHours(hush.hours, moment) ? 'show' : 'hours'
 }
 
-export const owesPush = (ping: Ping, desktopActive: boolean): boolean =>
-  ping === 'show' && !desktopActive
+export const owesPush = (ping: Ping, desktopActive: boolean): boolean => ping === 'show' && !desktopActive
 
 export const isKeywords = (value: unknown): value is string[] =>
   Array.isArray(value) &&
   value.length <= MOST_KEYWORDS &&
-  value.every(
-    (one) => typeof one === 'string' && one.trim().length > 0 && one.length <= LONGEST_KEYWORD,
-  )
+  value.every((one) => typeof one === 'string' && one.trim().length > 0 && one.length <= LONGEST_KEYWORD)
 
 export function isHours(value: unknown): value is Hours {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
   const { days, from, to } = value as Record<string, unknown>
-  const minute = (one: unknown) =>
-    typeof one === 'number' && Number.isInteger(one) && one >= 0 && one < DAY_MINUTES
+  const minute = (one: unknown) => typeof one === 'number' && Number.isInteger(one) && one >= 0 && one < DAY_MINUTES
   return (
     Array.isArray(days) &&
     days.every((one) => typeof one === 'number' && Number.isInteger(one) && one >= 0 && one <= 6) &&

@@ -28,14 +28,7 @@ import {
   rememberMoves,
 } from '../../../sync-server/src/api'
 
-export const DOCUMENT_KINDS: ReadonlySet<string> = new Set([
-  'note',
-  'canvas',
-  'pages',
-  'url',
-  'term',
-  'chat',
-])
+export const DOCUMENT_KINDS: ReadonlySet<string> = new Set(['note', 'canvas', 'pages', 'url', 'term', 'chat'])
 
 const DOCUMENTS_SQL = "('note', 'canvas', 'pages', 'url', 'term', 'chat')"
 
@@ -258,13 +251,7 @@ export class Tree {
     }
   }
 
-  private folderFor(
-    placing: Placing,
-    parent: string | null,
-    name: string,
-    live: boolean,
-    seq: number,
-  ): string {
+  private folderFor(placing: Placing, parent: string | null, name: string, live: boolean, seq: number): string {
     const found = placing.folder(parent, name)
     if (found?.live) return found.live.id
 
@@ -378,11 +365,7 @@ export class Tree {
     const out = new Set<string>()
     for (const entry of this.state.entries.values()) {
       const before = this.before.get(entry.id)
-      if (
-        before?.parent !== entry.parent ||
-        before.name !== entry.name ||
-        before.deleted !== entry.deleted
-      ) {
+      if (before?.parent !== entry.parent || before.name !== entry.name || before.deleted !== entry.deleted) {
         out.add(entry.id)
       }
     }
@@ -745,8 +728,7 @@ function noteEntry(row: NoteRow, name: string): TreeEntry {
   return entry
 }
 
-const FOLDER_COLUMNS =
-  'id, parent_id, name, deleted, seq, updated_by, deleted_in, pos, meta, changes_by'
+const FOLDER_COLUMNS = 'id, parent_id, name, deleted, seq, updated_by, deleted_in, pos, meta, changes_by'
 
 const NOTE_COLUMNS = `id, kind, folder_id, name, deleted, seq, doc_seq, updated_by, doc_by, deleted_in,
             placed_seq, placed_by, pos, meta, changes_by, path, epoch`
@@ -762,14 +744,10 @@ async function cursorOf(env: Env, spaceId: string): Promise<number> {
 
 export async function readTree(env: Env, spaceId: string, device?: string): Promise<Tree> {
   const next = await cursorOf(env, spaceId)
-  const folders = await env.DB.prepare(
-    `select ${FOLDER_COLUMNS} from folders where space_id = ? order by id`,
-  )
+  const folders = await env.DB.prepare(`select ${FOLDER_COLUMNS} from folders where space_id = ? order by id`)
     .bind(spaceId)
     .all<FolderRow>()
-  const notes = await env.DB.prepare(
-    `select ${NOTE_COLUMNS} from notes where space_id = ? and ${KEPT} order by id`,
-  )
+  const notes = await env.DB.prepare(`select ${NOTE_COLUMNS} from notes where space_id = ? and ${KEPT} order by id`)
     .bind(spaceId)
     .all<NoteRow>()
 
@@ -807,9 +785,7 @@ export function reachOf(ops: readonly Op[]): Reach {
     } else if (op.t === 'move') {
       if (op.parent !== null) ids.push(op.parent)
       touched.push(
-        op.name === undefined
-          ? { id: op.id, parent: op.parent }
-          : { id: op.id, parent: op.parent, name: op.name },
+        op.name === undefined ? { id: op.id, parent: op.parent } : { id: op.id, parent: op.parent, name: op.name },
       )
     } else if (op.t === 'rename') {
       touched.push({ id: op.id, name: op.name })
@@ -883,12 +859,7 @@ class Rows {
   foldersNamed(parent: string | null, name: string): string[] {
     const key = nameKey(name)
     return [...this.folders.values()]
-      .filter(
-        (row) =>
-          (row.parent_id ?? '') === (parent ?? '') &&
-          row.deleted === 0 &&
-          nameKey(row.name) === key,
-      )
+      .filter((row) => (row.parent_id ?? '') === (parent ?? '') && row.deleted === 0 && nameKey(row.name) === key)
       .map((row) => row.id)
   }
 
@@ -947,12 +918,7 @@ async function unhealed(env: Env, spaceId: string): Promise<{ raw: boolean; unma
   return { raw: row?.raw === 1, unmarked: row?.unmarked === 1 }
 }
 
-export async function readReach(
-  env: Env,
-  spaceId: string,
-  device: string | undefined,
-  reach: Reach,
-): Promise<Tree> {
+export async function readReach(env: Env, spaceId: string, device: string | undefined, reach: Reach): Promise<Tree> {
   const next = await cursorOf(env, spaceId)
   const { raw, unmarked } = await unhealed(env, spaceId)
   if (raw) return await readTree(env, spaceId, device)
@@ -1030,9 +996,7 @@ export async function changeTree<T>(
   reach?: Reach,
 ): Promise<Changed<T>> {
   for (let attempt = 0; ; attempt++) {
-    const tree = reach
-      ? await readReach(env, spaceId, device, reach)
-      : await readTree(env, spaceId, device)
+    const tree = reach ? await readReach(env, spaceId, device, reach) : await readTree(env, spaceId, device)
     if (opIds.length) tree.remember(await answeredBefore(env, spaceId, opIds))
     const value = await work(tree)
     const batch = tree.statements(env)
@@ -1063,11 +1027,7 @@ async function cursorMoved(env: Env, spaceId: string, next: number): Promise<boo
 
 const OPS_KEPT_FOR = 30 * 24 * 60 * 60 * 1000
 
-async function answeredBefore(
-  env: Env,
-  spaceId: string,
-  opIds: readonly string[],
-): Promise<Map<string, OpResult>> {
+async function answeredBefore(env: Env, spaceId: string, opIds: readonly string[]): Promise<Map<string, OpResult>> {
   const prefix = `${spaceId}/`
   const { results } = await env.DB.prepare(
     'select op_id, result from tree_ops where op_id in (select value from json_each(?))',

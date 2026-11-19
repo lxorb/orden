@@ -11,9 +11,7 @@ export interface Made {
 }
 
 export type Step =
-  | { kind: 'edits'; changes: Change[] }
-  | { kind: 'file'; file: FileChange }
-  | { kind: 'made'; made: Made }
+  { kind: 'edits'; changes: Change[] } | { kind: 'file'; file: FileChange } | { kind: 'made'; made: Made }
 
 export interface Plan {
   turn: Turn
@@ -106,10 +104,7 @@ export function planFor(
   }
 }
 
-function stepsBack(
-  acts: readonly { at: number; step: Step }[],
-  changes: readonly Change[],
-): Step[] {
+function stepsBack(acts: readonly { at: number; step: Step }[], changes: readonly Change[]): Step[] {
   const steps: Step[] = []
   let left = [...changes]
   const edits = (these: Change[]) => {

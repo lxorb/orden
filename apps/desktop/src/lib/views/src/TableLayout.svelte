@@ -42,8 +42,7 @@
         })
       }
       for (const row of group.rows) out.push({ kind: 'row', id: keyOf(row, key), row })
-      if (property !== undefined && summed && group.rows.length)
-        out.push({ kind: 'sums', id: `sums:${key}`, group })
+      if (property !== undefined && summed && group.rows.length) out.push({ kind: 'sums', id: `sums:${key}`, group })
     }
     return out
   })
@@ -54,12 +53,9 @@
   const widths = $derived.by((): Record<string, number> => {
     const said = view?.options.columnSize
     if (!said || typeof said !== 'object' || Array.isArray(said)) return {}
-    return Object.fromEntries(
-      Object.entries(said).filter((one): one is [string, number] => typeof one[1] === 'number'),
-    )
+    return Object.fromEntries(Object.entries(said).filter((one): one is [string, number] => typeof one[1] === 'number'))
   })
-  const widthOf = (column: string) =>
-    widths[column] ?? (column === 'task.text' || column === 'file.name' ? 280 : 150)
+  const widthOf = (column: string) => widths[column] ?? (column === 'task.text' || column === 'file.name' ? 280 : 150)
   const template = $derived(columns.map((column) => `${widthOf(column)}px`).join(' ') + ' 1fr')
   const stuck = $derived.by(() => {
     const out: number[] = []
@@ -129,8 +125,7 @@
         return
       }
       const width = Math.max(60, Math.round(was + one.clientX - start))
-      if (width !== was)
-        kit.change((b, i) => setViewOption(b, i, 'columnSize', { ...widths, [column]: width }))
+      if (width !== was) kit.change((b, i) => setViewOption(b, i, 'columnSize', { ...widths, [column]: width }))
     }
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', up)
@@ -142,9 +137,7 @@
     const startX = event.clientX
     let moved = false
     const heads = [
-      ...((event.currentTarget as HTMLElement).parentElement?.querySelectorAll<HTMLElement>(
-        '.head',
-      ) ?? []),
+      ...((event.currentTarget as HTMLElement).parentElement?.querySelectorAll<HTMLElement>('.head') ?? []),
     ]
     const move = (one: PointerEvent) => {
       if (Math.abs(one.clientX - startX) > 6) moved = true
@@ -210,9 +203,7 @@
       style:inset-inline-start={place < frozen ? `${stuck[place]}px` : undefined}
       role="gridcell"
     >
-      {#if view?.summaries[column]}<span class="what"
-          >{summaryName(view.summaries[column] ?? '')}</span
-        >
+      {#if view?.summaries[column]}<span class="what">{summaryName(view.summaries[column] ?? '')}</span>
         {summaryOf(column, group)}{/if}
     </div>
   {/each}
@@ -243,9 +234,7 @@
       >
         <button type="button" class="name" disabled={!kit.writable} onclick={() => sortBy(column)}>
           {propertyName(column, live.base ? displayName(live.base, column) : undefined)}
-          {#if sort}<span class="arrow" aria-hidden="true"
-              >{sort.direction === 'ASC' ? '↑' : '↓'}</span
-            >{/if}
+          {#if sort}<span class="arrow" aria-hidden="true">{sort.direction === 'ASC' ? '↑' : '↓'}</span>{/if}
         </button>
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <span class="grip" onpointerdown={(event) => resize(event, column)}></span>

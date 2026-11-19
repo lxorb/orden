@@ -93,8 +93,7 @@ function seeded(thread: Thread, instructions: string, message: string): string {
   const said: Message[] = []
   if (instructions) said.push({ role: 'system', content: instructions })
   for (const turn of thread.turns) {
-    if (turn.role === 'you' && turn.draft)
-      said.push({ role: 'user', content: userStep(turn.draft).text })
+    if (turn.role === 'you' && turn.draft) said.push({ role: 'user', content: userStep(turn.draft).text })
     else if (turn.role === 'model') {
       const words = wordsOf(turn)
       if (words) said.push({ role: 'assistant', content: words })
@@ -239,8 +238,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     const finished = new Promise<{ stop: Stop; error?: string }>((resolve) => {
       const close = (stop: Stop, error?: string) => {
         clearTimeout(quiet)
-        for (const part of turn.parts)
-          if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
+        for (const part of turn.parts) if (part.kind === 'tool' && part.state === 'running') part.state = 'error'
         resolve(error === undefined ? { stop } : { stop, error })
       }
       closing = close
@@ -271,13 +269,8 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         }
         const name = KIND_NAMES[kind]
         const words =
-          troubleOf(
-            name,
-            PLANS[kind],
-            heard,
-            { code: 1, timedOut: false, stopped: false, err: '' },
-            !!answered,
-          ) ?? 'The model did not answer.'
+          troubleOf(name, PLANS[kind], heard, { code: 1, timedOut: false, stopped: false, err: '' }, !!answered) ??
+          'The model did not answer.'
         close('error', words)
       }
 
@@ -301,8 +294,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           on({ type: 'model', model: said.model })
         }
         if (said.limit) {
-          const until =
-            said.limit.until ?? (heard.limit?.state === 'reached' ? heard.limit.until : null)
+          const until = said.limit.until ?? (heard.limit?.state === 'reached' ? heard.limit.until : null)
           heard.limit = { ...said.limit, until }
           plans.heard(provider.id, heard.limit)
           on({ type: 'limit', limit: heard.limit })
@@ -328,8 +320,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
         if (said.text) {
           answered += said.text
           const last = turn.parts.at(-1)
-          if (last?.kind === 'text')
-            grow(turn.parts.length - 1, { ...last, text: last.text + said.text })
+          if (last?.kind === 'text') grow(turn.parts.length - 1, { ...last, text: last.text + said.text })
           else say({ kind: 'text', text: said.text })
         }
         if (said.tool) {
@@ -344,8 +335,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
               }
             : null
           if (part?.kind === 'tool' && outcome) grow(at, { ...part, ...outcome })
-          else if (at < 0)
-            say({ kind: 'tool', id, verb: name, args: args ?? {}, state: 'running', ...outcome })
+          else if (at < 0) say({ kind: 'tool', id, verb: name, args: args ?? {}, state: 'running', ...outcome })
         }
         if (said.compacted) say({ kind: 'notice', code: 'compacted', text: '' })
         if (said.usage) counted(said.usage)
@@ -355,10 +345,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       const counted = (usage: NonNullable<Read['usage']>) => {
         if (usage.window) windows.set(thread.model, usage.window)
         const window =
-          usage.window ??
-          windows.get(thread.model) ??
-          listed.find((one) => one.id === thread.model)?.window ??
-          null
+          usage.window ?? windows.get(thread.model) ?? listed.find((one) => one.id === thread.model)?.window ?? null
         const now: Usage = {
           input: usage.input ?? 0,
           cached: usage.cached ?? 0,
@@ -382,8 +369,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
             return
           }
           const words =
-            troubleOf(KIND_NAMES[kind], PLANS[kind], heard, said.end, !!answered) ??
-            'The model did not answer.'
+            troubleOf(KIND_NAMES[kind], PLANS[kind], heard, said.end, !!answered) ?? 'The model did not answer.'
           close('error', words)
         }
       }
@@ -441,9 +427,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     signal.addEventListener('abort', stop, { once: true })
 
     try {
-      const instructions = opened
-        ? ((await setup.instructions?.(thread).catch(() => '')) ?? '')
-        : ''
+      const instructions = opened ? ((await setup.instructions?.(thread).catch(() => '')) ?? '') : ''
       const step = userStep(message)
       const seeding = opened && !!(instructions || before.turns.length)
       const text = seeding ? seeded(before, instructions, step.text) : step.text
@@ -462,9 +446,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
       else if (end.stop === 'error') say({ kind: 'notice', code: 'error', text: end.error ?? '' })
       if (turn.usage) spend(thread, turn.usage)
       on(
-        end.error === undefined
-          ? { type: 'done', stop: end.stop }
-          : { type: 'done', stop: end.stop, error: end.error },
+        end.error === undefined ? { type: 'done', stop: end.stop } : { type: 'done', stop: end.stop, error: end.error },
       )
       return end.stop
     } catch (error) {
@@ -486,10 +468,7 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
   return {
     async models(provider) {
       if (provider.kind !== kind) return []
-      listed =
-        kind === 'gemini-cli'
-          ? modelsIn(kind, null)
-          : modelsIn(kind, await listedModels(kind, provider.id))
+      listed = kind === 'gemini-cli' ? modelsIn(kind, null) : modelsIn(kind, await listedModels(kind, provider.id))
       return listed.map((one) => ({ ...one, window: one.window ?? windows.get(one.id) ?? null }))
     },
     async send(thread, message, on, signal) {
@@ -498,18 +477,11 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
     async goal(thread, to, on, signal) {
       if (to.do === 'pause' || to.do === 'clear') {
         const live = sessions.get(thread.id)
-        if (live && !live.session.ended)
-          await live.session.say(to.do === 'pause' ? goalHeld(kind) : GOAL_CLEARED)
+        if (live && !live.session.ended) await live.session.say(to.do === 'pause' ? goalHeld(kind) : GOAL_CLEARED)
         return to.do === 'pause' ? 'paused' : 'cleared'
       }
       const pursuit: Pursuit = { said: goalSaid(kind, to), state: 'pursuing', after: null }
-      const stop = await run(
-        thread,
-        { text: goalMessage(kind, to), attachments: [] },
-        on,
-        signal,
-        pursuit,
-      )
+      const stop = await run(thread, { text: goalMessage(kind, to), attachments: [] }, on, signal, pursuit)
       if (stop === 'stopped') return 'paused'
       if (stop !== 'end') return null
       return goesOn(kind) ? pursuit.state : null

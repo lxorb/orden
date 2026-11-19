@@ -48,9 +48,7 @@ describe('a device and the room that each wrote while apart', () => {
     expect(await apart('ask', NOTE, THEIRS)).toBe('wait')
 
     expect(wrote).toEqual([])
-    expect(record.clashes).toEqual([
-      expect.objectContaining({ path: NOTE.path, id: 'n1', version: 7, theirs: THEIRS }),
-    ])
+    expect(record.clashes).toEqual([expect.objectContaining({ path: NOTE.path, id: 'n1', version: 7, theirs: THEIRS })])
   })
 
   test('keeps the note out of a push while its clash waits', async () => {

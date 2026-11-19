@@ -48,9 +48,7 @@ describe('a table row named by a block id with no closing pipe', () => {
 
   test('keeps its name after another cell of the table is typed in', () => {
     const view = drawn()
-    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
-      (one) => one.textContent === '3',
-    )
+    const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '3')
     if (!cell) throw new Error('the table drew no cell holding 3')
     cell.focus()
     cell.textContent = '3333333'

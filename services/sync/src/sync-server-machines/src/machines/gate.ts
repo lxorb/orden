@@ -7,12 +7,7 @@ import { usedOf } from './meter'
 import type { Refusal } from '@orden/online/wire'
 import { type Service, serviceOf } from './service'
 
-export async function whyNotWake(
-  env: Env,
-  userId: string,
-  at: number,
-  known?: Service,
-): Promise<Refusal | null> {
+export async function whyNotWake(env: Env, userId: string, at: number, known?: Service): Promise<Refusal | null> {
   const service = known ?? (await serviceOf(env))
   if (!service.on) return 'off'
 
@@ -35,8 +30,6 @@ export async function whyNotWake(
 
   const used = await usedOf(env, userId, at)
   const spent =
-    used.awakeS >= ALLOWANCE.awakeS ||
-    used.cpuS >= ALLOWANCE.cpuS ||
-    used.egressBytes >= ALLOWANCE.egressBytes
+    used.awakeS >= ALLOWANCE.awakeS || used.cpuS >= ALLOWANCE.cpuS || used.egressBytes >= ALLOWANCE.egressBytes
   return spent ? 'allowance' : null
 }

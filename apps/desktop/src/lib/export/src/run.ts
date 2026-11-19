@@ -23,13 +23,7 @@ import {
 import { DEFAULT_PAGE_SETUP } from '@orden/contracts'
 import { nameOf, invoke, isDesktop, isNative } from '../../platform/src/api'
 import { documentOf, picturesIn } from './document'
-import {
-  type Exportable,
-  EXPORT_FORMATS,
-  EXPORT_VARIANTS,
-  extensionFor,
-  TEXTPACK,
-} from '../../export-formats/src/api'
+import { type Exportable, EXPORT_FORMATS, EXPORT_VARIANTS, extensionFor, TEXTPACK } from '../../export-formats/src/api'
 import { toMarkdown } from './markdown'
 import { type Picture, readPictures, sourcesIn } from './pictures'
 import { toPlainText } from './text'
@@ -95,11 +89,7 @@ async function exportPdf(note: Note, options: RunOptions): Promise<string | null
   return null
 }
 
-async function exportPicture(
-  id: 'jpg' | 'png',
-  note: Note,
-  options: RunOptions,
-): Promise<string | null> {
+async function exportPicture(id: 'jpg' | 'png', note: Note, options: RunOptions): Promise<string | null> {
   const mime = id === 'png' ? 'image/png' : 'image/jpeg'
   const html = await pageOf(note, options, await picturesFor(note, options, true))
   const { toImages } = await import('./image')
@@ -151,9 +141,7 @@ async function exportMarkdownWithPictures(note: Note, options: RunOptions): Prom
   const besideOf = (named: readonly Picture[]) =>
     bundleFiles(note.source, named, options.link ? { link: options.link } : {})
       .filter((file) => file.path !== 'info.json')
-      .map((file) =>
-        file.path === 'text.md' ? { ...file, path: fileNameFor(note.name, 'md') } : file,
-      )
+      .map((file) => (file.path === 'text.md' ? { ...file, path: fileNameFor(note.name, 'md') } : file))
   const beside = besideOf(pictures)
 
   if (isNative) {
@@ -205,11 +193,7 @@ async function payloadFor(id: OneFile, note: Note, options: RunOptions): Promise
       const { toRtf } = await import('./rtf')
       const doc = documentOf(note.source, note.name)
       return {
-        text: toRtf(
-          doc,
-          await picturesOf(picturesIn(doc), options),
-          paperFor(note, options, doc.title),
-        ),
+        text: toRtf(doc, await picturesOf(picturesIn(doc), options), paperFor(note, options, doc.title)),
         mime: 'application/rtf',
       }
     }
@@ -217,11 +201,7 @@ async function payloadFor(id: OneFile, note: Note, options: RunOptions): Promise
     case 'docx': {
       const { toDocx } = await import('./docx')
       const doc = documentOf(note.source, note.name)
-      const bytes = await toDocx(
-        doc,
-        await picturesOf(picturesIn(doc), options),
-        paperFor(note, options, doc.title),
-      )
+      const bytes = await toDocx(doc, await picturesOf(picturesIn(doc), options), paperFor(note, options, doc.title))
       return {
         bytes,
         mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -263,11 +243,7 @@ function picturesWrittenIn(note: Note, options: RunOptions): Note {
   return source === note.source ? note : { ...note, source }
 }
 
-export async function runExport(
-  id: Exportable,
-  given: Note,
-  options: RunOptions = {},
-): Promise<string | null> {
+export async function runExport(id: Exportable, given: Note, options: RunOptions = {}): Promise<string | null> {
   const note = await withKept(given)
   await loadFor(note.source)
 

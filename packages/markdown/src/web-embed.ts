@@ -13,15 +13,9 @@ interface CardShell {
 
 export function cardMarkup(shell: CardShell): string {
   const wide = shell.shape === 'video'
-  const classes = [
-    'embed-web',
-    ...(wide ? ['embed-wide'] : []),
-    ...(shell.extra ? [shell.extra] : []),
-  ]
+  const classes = ['embed-web', ...(wide ? ['embed-wide'] : []), ...(shell.extra ? [shell.extra] : [])]
   const shape = wide ? '' : ` style="--embed-height: ${shell.shape}px"`
-  const label =
-    iconMarkup(MARKS[shell.mark], 'embed-icon') +
-    `<span class="embed-name">${escape(shell.name)}</span>`
+  const label = iconMarkup(MARKS[shell.mark], 'embed-icon') + `<span class="embed-name">${escape(shell.name)}</span>`
 
   const inner =
     shell.href === null
@@ -63,9 +57,7 @@ export function webCard(address: string): string | null {
 const BY_HAND = 'allow-scripts'
 
 function attribute(tag: string, name: string): string | null {
-  const found = new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s"'<>\`]+))`, 'i').exec(
-    tag,
-  )
+  const found = new RegExp(`\\b${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s"'<>\`]+))`, 'i').exec(tag)
   const value = found?.[1] ?? found?.[2] ?? found?.[3]
   if (value === undefined) return null
 
@@ -129,10 +121,7 @@ export function iframeCard(tag: string): string | null {
   return cardMarkup({
     extra: 'embed-page',
     shape: askedHeight(tag),
-    data:
-      ' data-provider="page"' +
-      ` data-frame="${attributeUrl(address)}"` +
-      ` data-sandbox="${BY_HAND}"`,
+    data: ' data-provider="page"' + ` data-frame="${attributeUrl(address)}"` + ` data-sandbox="${BY_HAND}"`,
     mark: 'play',
     name: domainOf(url),
     href: address,

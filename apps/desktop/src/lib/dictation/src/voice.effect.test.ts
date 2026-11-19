@@ -20,9 +20,7 @@ vi.mock('./listening', () => ({
     return Promise.resolve({
       finish: () => {
         world.finished++
-        return world.slow
-          ? new Promise<void>((resolve) => world.done.push(resolve))
-          : Promise.resolve()
+        return world.slow ? new Promise<void>((resolve) => world.done.push(resolve)) : Promise.resolve()
       },
       cancel: () => world.cancelled++,
     })
@@ -79,8 +77,7 @@ vi.mock('../../shortcuts/src/api', () => ({
   },
 }))
 vi.mock('../../ui-kit/src/message', () => ({
-  message: (error: unknown, fallback: string) =>
-    error instanceof Error ? error.message : fallback,
+  message: (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback),
 }))
 
 const { engines } = await import('./engines.svelte')
@@ -108,8 +105,7 @@ function press(held: number) {
   vi.restoreAllMocks()
 }
 
-const chooser = () =>
-  [...target.querySelectorAll('[role="dialog"] button')].map((one) => one.textContent)
+const chooser = () => [...target.querySelectorAll('[role="dialog"] button')].map((one) => one.textContent)
 
 async function click() {
   press(0)

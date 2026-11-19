@@ -19,8 +19,6 @@ describe('the places settings search can land on', () => {
     const found = places()
     stop()
     expect(found.length).toBeGreaterThan(5)
-    expect(found.filter((place) => !shown.has(place.section)).map((place) => place.label)).toEqual(
-      [],
-    )
+    expect(found.filter((place) => !shown.has(place.section)).map((place) => place.label)).toEqual([])
   })
 })

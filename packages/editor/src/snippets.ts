@@ -71,8 +71,7 @@ export function snippetCompletions(context: CompletionContext): CompletionResult
 
   const typed = triggered(context, entries)
   if (!typed || inCode(context.state, typed.from)) return null
-  if (enclosingNamed(syntaxTree(context.state).resolveInner(typed.from, 1), 'FrontMatter'))
-    return null
+  if (enclosingNamed(syntaxTree(context.state).resolveInner(typed.from, 1), 'FrontMatter')) return null
 
   const { matches } = typed
 

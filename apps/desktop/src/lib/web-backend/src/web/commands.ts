@@ -248,19 +248,12 @@ async function textRow(path: string): Promise<FileRow | undefined> {
 function namedForEveryMachine(path: string): void {
   const name = basename(path)
   if (isReserved(name)) {
-    throw new Error(
-      `${name} is a name Windows keeps for a device, so a note or folder cannot be called it`,
-    )
+    throw new Error(`${name} is a name Windows keeps for a device, so a note or folder cannot be called it`)
   }
 }
 
 async function writeNote(path: string, content: string) {
-  await files.write(
-    normalise(path),
-    content,
-    now(),
-    isCanvas(path) || isPages(path) ? planeMarks(content) : undefined,
-  )
+  await files.write(normalise(path), content, now(), isCanvas(path) || isPages(path) ? planeMarks(content) : undefined)
 }
 
 async function renameNote(from: string, to: string, hold = false, alone = false, raw = false) {
@@ -303,13 +296,7 @@ async function stillAway(source: string): Promise<boolean> {
   return away.some((one) => !here.has(normalise(one.path)))
 }
 
-async function renameInTree(
-  tree: TreeRows,
-  source: string,
-  target: string,
-  hold: boolean,
-  alone: boolean,
-) {
+async function renameInTree(tree: TreeRows, source: string, target: string, hold: boolean, alone: boolean) {
   await paperFree(source, target, hold)
   if (!(await stats.holds(source))) throw new Error('nothing to rename')
 
@@ -520,14 +507,9 @@ async function holds(path: string, raw = false): Promise<boolean> {
   return (await assets.paths()).some((one) => one.startsWith(`${path}/`))
 }
 
-const freeSpot = (path: string, isFile: boolean) =>
-  firstSpot(path, isFile, async (one) => !(await taken(one)))
+const freeSpot = (path: string, isFile: boolean) => firstSpot(path, isFile, async (one) => !(await taken(one)))
 
-async function firstSpot(
-  path: string,
-  isFile: boolean,
-  fits: (one: string) => Promise<boolean>,
-): Promise<string> {
+async function firstSpot(path: string, isFile: boolean, fits: (one: string) => Promise<boolean>): Promise<string> {
   if (await fits(path)) return path
 
   const folder = parent(path)
@@ -553,12 +535,7 @@ async function pairedTaken(path: string): Promise<boolean> {
   return false
 }
 
-async function trashItem(
-  path: string,
-  kind: string,
-  alone = false,
-  arrived = false,
-): Promise<Trashed> {
+async function trashItem(path: string, kind: string, alone = false, arrived = false): Promise<Trashed> {
   const source = normalise(path)
   if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
   if (!(await holds(source))) throw new Error('nothing is there')
@@ -569,8 +546,7 @@ async function trashItem(
   if (tree) {
     const beside: string[] = []
     if (isPdf(source) && !alone) beside.push(sidecarOf(source))
-    if (isPages(source))
-      beside.push(paperOf(source), ...(alone ? [] : [sidecarOf(paperOf(source))]))
+    if (isPages(source)) beside.push(paperOf(source), ...(alone ? [] : [sidecarOf(paperOf(source))]))
     const entry = { id: `internal-${id}`, kind, name, trashedAt: now(), ...flagged(alone, arrived) }
     if (!(await tree.trash.take(source, entry, beside))) throw new Error('nothing is there')
     return { ...entry, from: source }
@@ -693,9 +669,7 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
 
   const notes: SpaceLinks['notes'] = []
   const beside: string[] = []
-  const paths = (await files.paths()).filter(
-    (path) => under(base, path) && !hiddenUnder(base, path),
-  )
+  const paths = (await files.paths()).filter((path) => under(base, path) && !hiddenUnder(base, path))
   const sizes = new Map<string, number>()
   const marked = new Map<string, PlaneMarks>()
   for (const row of await stats.all()) {
@@ -708,9 +682,7 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
   }
 
   const read = (path: string) =>
-    isMarkdown(path) ||
-    isWebTarget(path) ||
-    ((isCanvas(path) || isPages(path)) && !marked.has(path))
+    isMarkdown(path) || isWebTarget(path) || ((isCanvas(path) || isPages(path)) && !marked.has(path))
 
   for (const path of paths) {
     if (read(path)) continue
@@ -767,9 +739,7 @@ async function scanLinks(root: string): Promise<SpaceLinks> {
     if (!scan || isWebTarget(path) || isCanvas(path) || isPages(path)) beside.push(path)
   }
 
-  const pictures = (await assets.paths()).filter(
-    (path) => under(base, path) && !hiddenUnder(base, path),
-  )
+  const pictures = (await assets.paths()).filter((path) => under(base, path) && !hiddenUnder(base, path))
 
   return {
     notes: notes.sort((a, b) => (a.path < b.path ? -1 : 1)),
@@ -834,9 +804,7 @@ function themeKey(id: string): string {
 }
 
 async function keysUnder(prefix: string): Promise<string[]> {
-  return (await meta.keys()).filter(
-    (key): key is string => typeof key === 'string' && key.startsWith(prefix),
-  )
+  return (await meta.keys()).filter((key): key is string => typeof key === 'string' && key.startsWith(prefix))
 }
 
 function humanise(stem: string): string {
@@ -989,8 +957,7 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
   remove_empty_folder: ({ path }) => removeEmptyFolder(path),
   read_tree: ({ root, options, raw }) => tree(root, options ?? {}, raw === true),
 
-  path_exists: ({ path, raw }) =>
-    (raw !== true && keptAway.under(path).length > 0) || stats.holds(normalise(path)),
+  path_exists: ({ path, raw }) => (raw !== true && keptAway.under(path).length > 0) || stats.holds(normalise(path)),
 
   async let_go_note({ path }) {
     await files.remove(normalise(path))
@@ -1024,17 +991,14 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
           .map((one) => one.trashedAt)
           .reduce((high, one) => Math.max(high, one), -Infinity)
         const follows = (one: Trashed) => one.from.startsWith(`${from}/`) && one.trashedAt > gone
-        return entries.map((one) =>
-          follows(one) ? { ...one, from: `${target}${one.from.slice(from.length)}` } : one,
-        )
+        return entries.map((one) => (follows(one) ? { ...one, from: `${target}${one.from.slice(from.length)}` } : one))
       })
     }
     return { name: wanted, path: target }
   },
 
   delete_space: ({ path }) => removeFolder(path),
-  trash_item: ({ path, kind, alone, arrived }) =>
-    trashItem(path, kind, alone === true, arrived === true),
+  trash_item: ({ path, kind, alone, arrived }) => trashItem(path, kind, alone === true, arrived === true),
   trash_words: ({ path, content }) => trashWords(path, content),
   list_trash: async () => (await trashEntries()).sort((a, b) => b.trashedAt - a.trashedAt),
   restore_trash: ({ id }) => restoreTrash(id),
@@ -1065,11 +1029,7 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
     const data = btoa(binary)
     const same = async (one: string) =>
       (await assets.get(one))?.data === data && !(isPdf(one) && (await pairedTaken(one)))
-    const target = await firstSpot(
-      join(folder, name),
-      true,
-      async (one) => !(await taken(one)) || (await same(one)),
-    )
+    const target = await firstSpot(join(folder, name), true, async (one) => !(await taken(one)) || (await same(one)))
     const file = basename(target)
     if (!(await same(target))) await writeBytes(target, data, assetType(file))
     return relative ? `${relative}/${file}` : file
@@ -1156,10 +1116,7 @@ const COMMANDS: Record<string, (args: Args) => unknown> = {
   },
 }
 
-export async function webInvoke<T>(
-  command: string,
-  args: Record<string, unknown> = {},
-): Promise<T> {
+export async function webInvoke<T>(command: string, args: Record<string, unknown> = {}): Promise<T> {
   const run = Object.hasOwn(COMMANDS, command) ? COMMANDS[command] : undefined
   if (run) return (await run(args as Args)) as T
   if (command in UNSUPPORTED) return UNSUPPORTED[command] as T

@@ -16,9 +16,7 @@ beforeEach(async () => {
   vi.stubGlobal('fetch', (url: string) => {
     fetched.push(url)
     if (url.includes('huge')) {
-      return Promise.resolve(
-        new Response(new Uint8Array(70 * 1024), { headers: { 'content-type': 'image/png' } }),
-      )
+      return Promise.resolve(new Response(new Uint8Array(70 * 1024), { headers: { 'content-type': 'image/png' } }))
     }
     if (url.includes('page')) {
       return Promise.resolve(new Response('<html>', { headers: { 'content-type': 'text/html' } }))
@@ -32,8 +30,7 @@ afterEach(() => {
   env.close()
 })
 
-const seen = (body: Record<string, unknown>, as = token) =>
-  call(env, '/v2/site-icons', { token: as, body })
+const seen = (body: Record<string, unknown>, as = token) => call(env, '/v2/site-icons', { token: as, body })
 
 async function listed(as = token): Promise<{ site: string; label: string; hash: string | null }[]> {
   return (await call(env, '/v2/site-icons', { token: as })).json.sites
@@ -88,9 +85,7 @@ describe('the sites an account has been to', () => {
     const other = await signIn(env, 'c@d.dev')
 
     expect(await listed(other)).toEqual([])
-    expect((await call(env, '/v2/site-icons/github.com/picture', { token: other })).status).toBe(
-      404,
-    )
+    expect((await call(env, '/v2/site-icons/github.com/picture', { token: other })).status).toBe(404)
   })
 
   test('go with the history: those seen since a moment, those named, or all', async () => {

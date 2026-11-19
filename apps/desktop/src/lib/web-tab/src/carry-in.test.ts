@@ -20,8 +20,7 @@ vi.mock('../../platform/src/tauri', async (importOriginal) => ({
 
 const { workspace } = await import('../../workspace/src/api')
 await import('../../web-backend/src/internal/work')
-const { carriedToPages, carryToPages, carryingOf, droppedOnPage, leftPage, overPage } =
-  await import('./carry-in')
+const { carriedToPages, carryToPages, carryingOf, droppedOnPage, leftPage, overPage } = await import('./carry-in')
 
 const SHORTCUT = '[InternetShortcut]\nURL=https://example.com/a\n'
 
@@ -70,10 +69,7 @@ beforeEach(async () => {
 
 describe('what a drag of rows hands a page', () => {
   test('a note and a PDF as their files, a web note as its address, never a folder or a locked note', async () => {
-    const carrying = await carryingOf(
-      ['/s/Idea.md', '/s/Folder', '/s/Paper.pdf', '/s/Site.url', '/s/Locked.md'],
-      look,
-    )
+    const carrying = await carryingOf(['/s/Idea.md', '/s/Folder', '/s/Paper.pdf', '/s/Site.url', '/s/Locked.md'], look)
     expect(carrying).toEqual({
       files: ['/s/Idea.md', '/s/Paper.pdf'],
       addresses: ['https://example.com/a'],

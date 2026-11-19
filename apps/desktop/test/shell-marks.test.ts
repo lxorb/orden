@@ -126,9 +126,7 @@ describe('the mark that says shared', () => {
 
   test('and the file list says it on the note itself', () => {
     const tree = named('lib/sidebar/src/Tree.svelte')
-    expect(tree.text).toMatch(
-      /import \{[^}]*\bSharedMark\b[^}]*\} from '\.\.\/\.\.\/ui-kit\/src\/api'/,
-    )
+    expect(tree.text).toMatch(/import \{[^}]*\bSharedMark\b[^}]*\} from '\.\.\/\.\.\/ui-kit\/src\/api'/)
     expect(tree.text.match(/<SharedMark /g)).toHaveLength(2)
     expect(tree.text).toContain('othersIn(')
     expect(tree.text).toContain('isSharedItem(')
@@ -137,9 +135,7 @@ describe('the mark that says shared', () => {
   test('and the switcher says it with the mark instead', () => {
     const switcher = named('lib/sidebar/src/SpaceSwitcher.svelte')
     const row = named('lib/spaces/src/SpaceRow.svelte')
-    expect(switcher.text).toMatch(
-      /import \{[^}]*\bSharedMark\b[^}]*\} from '\.\.\/\.\.\/ui-kit\/src\/api'/,
-    )
+    expect(switcher.text).toMatch(/import \{[^}]*\bSharedMark\b[^}]*\} from '\.\.\/\.\.\/ui-kit\/src\/api'/)
     expect(switcher.text.match(/<SharedMark \/>/g)).toHaveLength(1)
     expect(row.text.match(/<SharedMark \/>/g)).toHaveLength(1)
     expect(row.text).toContain('<SharedMark icon={Eye} label="Read-only" />')

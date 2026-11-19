@@ -32,9 +32,7 @@ function plain(text) {
 }
 
 export function fenced(text, language = 'text') {
-  const longest = [...text.matchAll(/`+/g)]
-    .map((run) => run[0].length)
-    .reduce((high, one) => Math.max(high, one), 2)
+  const longest = [...text.matchAll(/`+/g)].map((run) => run[0].length).reduce((high, one) => Math.max(high, one), 2)
   const fence = '`'.repeat(longest + 1)
   return `${fence}${language}\n${text}\n${fence}`
 }
@@ -61,9 +59,7 @@ function frameLine(frame, index, symbols) {
 function threadText(thread, most, symbols) {
   const marks = [thread.crashed ? 'crashed' : null, thread.main ? 'main' : null].filter(Boolean)
   const head = `thread "${thread.name}"${marks.length ? ` (${marks.join(', ')})` : ''}`
-  const frames = thread.frames
-    .slice(0, most)
-    .map((frame, index) => frameLine(frame, index, symbols))
+  const frames = thread.frames.slice(0, most).map((frame, index) => frameLine(frame, index, symbols))
   const more = thread.frames.length > most ? [`   … ${thread.frames.length - most} more`] : []
   return [head, ...frames, ...more].join('\n')
 }
@@ -72,10 +68,9 @@ export function stackText(report, symbols) {
   const chosen = chosenThread(report.threads)
   if (!chosen) return report.stack ?? ''
   const others = report.threads.filter((one) => one !== chosen)
-  return [
-    threadText(chosen, Infinity, symbols),
-    ...others.map((one) => threadText(one, OTHER_FRAMES, symbols)),
-  ].join('\n\n')
+  return [threadText(chosen, Infinity, symbols), ...others.map((one) => threadText(one, OTHER_FRAMES, symbols))].join(
+    '\n\n',
+  )
 }
 
 function facts(report) {
@@ -84,10 +79,7 @@ function facts(report) {
     ['Kind', report.kind],
     ['Summary', report.summary],
     ['App', `${report.app.version} (${report.app.channel}, ${report.app.build})`],
-    [
-      'System',
-      `${report.system.os} ${report.system.osVersion} ${report.system.arch}, ${report.system.engine}`,
-    ],
+    ['System', `${report.system.os} ${report.system.osVersion} ${report.system.arch}, ${report.system.engine}`],
     ['Where', report.where],
     ['Doing', report.doing],
     ['Held', report.held === undefined ? undefined : seconds(report.held)],
@@ -186,9 +178,7 @@ function symbolize(report, symbolsFile) {
     encoding: 'utf8',
   })
   if (ran.error || ran.status !== 0) {
-    console.error(
-      `llvm-symbolizer did not run (${ran.error?.message ?? ran.stderr.trim()}); filing without symbols`,
-    )
+    console.error(`llvm-symbolizer did not run (${ran.error?.message ?? ran.stderr.trim()}); filing without symbols`)
     return undefined
   }
   const found = parseSymbolized(ran.stdout)
@@ -243,9 +233,7 @@ async function list(args) {
   const signature = args[0]
   if (!signature) throw new Error(USAGE)
   const limit = optionOf(args, '--limit') ?? '50'
-  const listed = await api(
-    `/v1/crashes?group=${encodeURIComponent(signature)}&limit=${encodeURIComponent(limit)}`,
-  )
+  const listed = await api(`/v1/crashes?group=${encodeURIComponent(signature)}&limit=${encodeURIComponent(limit)}`)
   for (const one of listed.reports) {
     console.log(
       `${plain(one.id)}  ${stamp(one.receivedAt)}  ${plain(one.kind)}  ${plain(one.version)}  ${plain(one.platform)}`,
@@ -282,11 +270,10 @@ async function file(args) {
   }
 
   const symbols = symbolsFile ? symbolize(whole.report, symbolsFile) : undefined
-  const made = spawnSync(
-    'gh',
-    ['issue', 'create', '--repo', repo, '--title', issueTitle(group), '--body-file', '-'],
-    { encoding: 'utf8', input: issueBody(group, whole.id, whole.report, symbols) },
-  )
+  const made = spawnSync('gh', ['issue', 'create', '--repo', repo, '--title', issueTitle(group), '--body-file', '-'], {
+    encoding: 'utf8',
+    input: issueBody(group, whole.id, whole.report, symbols),
+  })
   if (made.error || made.status !== 0) {
     throw new Error(`gh issue create failed: ${made.error?.message ?? made.stderr.trim()}`)
   }

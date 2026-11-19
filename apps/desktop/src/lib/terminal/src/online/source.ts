@@ -1,12 +1,5 @@
 import { termOf } from '@orden/online/term'
-import {
-  IMAGE_PART,
-  type ImageKind,
-  inputChunks,
-  MOST_INPUT,
-  INPUT_RATE,
-  type ServerFrame,
-} from '@orden/online/wire'
+import { IMAGE_PART, type ImageKind, inputChunks, MOST_INPUT, INPUT_RATE, type ServerFrame } from '@orden/online/wire'
 import { account, ApiError, BASE } from '../../../accounts/src/api'
 import { invoke, toBase64, isDesktop, isNative } from '../../../platform/src/api'
 import type { Said, Source } from '../source'
@@ -64,10 +57,7 @@ function refusalOf(error: unknown): string | null {
   return why === 'list' || why === 'sessions' || why === 'signed-out' ? refusalWords(why) : null
 }
 
-async function socketName(
-  path: string,
-  until: number,
-): Promise<{ name: string } | { refused: string }> {
+async function socketName(path: string, until: number): Promise<{ name: string } | { refused: string }> {
   const { sync } = await import('../../../sync-store/src/api')
   if (sync.version === 1) {
     try {
@@ -112,12 +102,7 @@ export class OnlineSource implements Source {
     private readonly place: Place,
     build: Build,
   ) {
-    this.opener = new Opener(
-      place.tab,
-      build,
-      (url) => this.link?.say({ t: 'callback', url }),
-      place.offer,
-    )
+    this.opener = new Opener(place.tab, build, (url) => this.link?.say({ t: 'callback', url }), place.offer)
   }
 
   async start(cols: number, rows: number, said: (what: Said) => void): Promise<void> {
@@ -131,9 +116,7 @@ export class OnlineSource implements Source {
       said({ refused: refusalWords('other') ?? '' })
       return
     }
-    const found = unsaved
-      ? { name: unsaved.session }
-      : await socketName(path ?? '', Date.now() + WAIT)
+    const found = unsaved ? { name: unsaved.session } : await socketName(path ?? '', Date.now() + WAIT)
     if ('refused' in found) {
       said({ refused: found.refused })
       return
@@ -192,8 +175,7 @@ export class OnlineSource implements Source {
       case 'refused': {
         if (frame.error === 'role') said({ typing: false })
         const words = refusalWords(frame.error)
-        if (words)
-          said(frame.error === 'gone' ? { refused: words, gone: true } : { refused: words })
+        if (words) said(frame.error === 'gone' ? { refused: words, gone: true } : { refused: words })
         return
       }
       case 'browse':
@@ -295,18 +277,11 @@ export class OnlineSource implements Source {
   }
 }
 
-export function onlineSource(
-  path: () => string | null,
-  words: () => string,
-  place: Place,
-): OnlineSource {
-  return new OnlineSource(
-    path,
-    words,
-    async () => (await import('../../../sync-client/src/api')).deviceId(),
-    place,
-    { pages: isDesktop && viewport.device !== 'phone', native: isNative },
-  )
+export function onlineSource(path: () => string | null, words: () => string, place: Place): OnlineSource {
+  return new OnlineSource(path, words, async () => (await import('../../../sync-client/src/api')).deviceId(), place, {
+    pages: isDesktop && viewport.device !== 'phone',
+    native: isNative,
+  })
 }
 
 export async function cacheKey(words: string, path: string | null): Promise<string> {

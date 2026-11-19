@@ -66,9 +66,7 @@ describe('prose', () => {
   test('names a link’s address once around a picture or footnote mark in it, and for a linked picture', () => {
     const plain = (source: string) => toPlainText(documentOf(source, 'Note.md'))
 
-    expect(plain('[see ![pic](p.png) here](https://x.org)\n')).toBe(
-      'see [pic] here (https://x.org)\n',
-    )
+    expect(plain('[see ![pic](p.png) here](https://x.org)\n')).toBe('see [pic] here (https://x.org)\n')
     expect(plain('[![CI](badge.png)](https://ci.org)\n')).toBe('[CI] (https://ci.org)\n')
   })
 

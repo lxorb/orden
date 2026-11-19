@@ -113,14 +113,9 @@ function identityGroups(content: Content): ShownGroup[] {
 export function groupsOf(content: Content): ShownGroup[] {
   const main: ShownGroup = { id: 'main', name: '', fields: present(mainOf(content)) }
   const sections =
-    content.kind === 'identity' ||
-    content.kind === 'custom' ||
-    content.kind === 'ssh' ||
-    content.kind === 'wifi'
+    content.kind === 'identity' || content.kind === 'custom' || content.kind === 'ssh' || content.kind === 'wifi'
       ? sectionGroups(content.sections)
       : []
   const extra: ShownGroup = { id: 'extra', name: '', fields: present(content.fields.map(extraOf)) }
-  return [main, ...identityGroups(content), ...sections, extra].filter(
-    (group) => group.fields.length > 0,
-  )
+  return [main, ...identityGroups(content), ...sections, extra].filter((group) => group.fields.length > 0)
 }

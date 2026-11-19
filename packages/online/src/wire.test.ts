@@ -143,8 +143,7 @@ describe('the app socket', () => {
   })
 
   it('takes a part of a picture no larger than an input frame', () => {
-    const image = (part: string) =>
-      text({ t: 'image', id: '0123456789abcdef0123', kind: 'png', part, last: false })
+    const image = (part: string) => text({ t: 'image', id: '0123456789abcdef0123', kind: 'png', part, last: false })
     expect(clientFrameOf(image('A'.repeat(MOST_INPUT)))).not.toBeNull()
     expect(clientFrameOf(image('A'.repeat(MOST_INPUT + 4)))).toBeNull()
     expect((IMAGE_PART / 3) * 4).toBe(MOST_INPUT)
@@ -325,10 +324,7 @@ describe('the link', () => {
     ['text for input', { t: 'in', session: 's', data: 'ls' }],
     ['a negative offset', { t: 'want', session: 's', since: -5 }],
     ['an unknown kind', { t: 'reboot', session: 's' }],
-    [
-      'a callback anywhere but loopback',
-      { t: 'callback', session: 's', url: 'http://10.0.0.1:1/' },
-    ],
+    ['a callback anywhere but loopback', { t: 'callback', session: 's', url: 'http://10.0.0.1:1/' }],
   ])('ordend drops a frame with %s', (_, value) => {
     expect(machineFrameOf(frame(value as object))).toBeNull()
   })
@@ -356,10 +352,7 @@ describe('the link', () => {
     ['text for output', { t: 'out', session: 's', seq: 0, data: 'hi' }],
     ['a screen with no size', { t: 'screen', session: 's', seq: 0, data: '' }],
     ['an activity with no home', { t: 'activity', activity: { at: 1, output: 0, cpu: 0, net: 0 } }],
-    [
-      'a negative CPU',
-      { t: 'activity', activity: { at: 1, output: 0, cpu: -1, net: 0, homeBytes: 0 } },
-    ],
+    ['a negative CPU', { t: 'activity', activity: { at: 1, output: 0, cpu: -1, net: 0, homeBytes: 0 } }],
     [
       'a disk that does not read',
       { t: 'activity', activity: { at: 1, output: 0, cpu: 0, net: 0, homeBytes: 0, disk: 5 } },

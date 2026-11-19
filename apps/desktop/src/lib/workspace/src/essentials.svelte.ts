@@ -1,11 +1,5 @@
 import type { Bookmark, Entry, OpenHow } from '@orden/contracts'
-import {
-  carriedRows,
-  draggedBookmark,
-  isBookmarkDrag,
-  isTreeDrag,
-  chorded,
-} from '../../ui-kit/src/api'
+import { carriedRows, draggedBookmark, isBookmarkDrag, isTreeDrag, chorded } from '../../ui-kit/src/api'
 import { moving } from './list-landing.svelte'
 import { workspace } from './workspace.svelte'
 import { canWriteAt } from '../../sharing/src/api'
@@ -58,22 +52,14 @@ export function leaving(event: DragEvent) {
   }
 }
 
-export function keepCarried(
-  event: DragEvent,
-  at: number,
-  entry: (path: string) => Entry | undefined,
-) {
+export function keepCarried(event: DragEvent, at: number, entry: (path: string) => Entry | undefined) {
   if (!isTreeDrag(event.dataTransfer)) return false
 
   keepRows(carriedRows(event.dataTransfer), at, entry)
   return true
 }
 
-export function keepRows(
-  rows: readonly string[],
-  at: number,
-  entry: (path: string) => Entry | undefined,
-) {
+export function keepRows(rows: readonly string[], at: number, entry: (path: string) => Entry | undefined) {
   const marks = rows
     .map(entry)
     .filter((one): one is Entry => one !== undefined)
@@ -180,12 +166,7 @@ export function pastMiddle(x: number, left: number, right: number): boolean {
   return x > (left + right) / 2
 }
 
-export function stepInGrid(
-  at: number,
-  count: number,
-  columns: number,
-  down: boolean,
-): number | null {
+export function stepInGrid(at: number, count: number, columns: number, down: boolean): number | null {
   const next = at + (down ? columns : -columns)
   if (next >= 0 && next < count) return next
 
@@ -221,11 +202,7 @@ export function nearestTile(boxes: readonly Box[], x: number, y: number): number
   return best
 }
 
-function landingNear(
-  zone: HTMLElement,
-  x: number,
-  y: number,
-): { at: number; after: boolean } | null {
+function landingNear(zone: HTMLElement, x: number, y: number): { at: number; after: boolean } | null {
   const all = [...zone.querySelectorAll<HTMLElement>('[data-at]')]
   const boxes = all.map((one) => one.getBoundingClientRect())
   const at = nearestTile(boxes, x, y)
@@ -254,9 +231,7 @@ export function essentialTab<T extends Held>(
 }
 
 export function released<T extends Held>(tabs: readonly T[], kept: readonly string[]): T[] {
-  return tabs.filter(
-    (one) => one.essential !== null && !kept.some((path) => samePath(path, one.essential)),
-  )
+  return tabs.filter((one) => one.essential !== null && !kept.some((path) => samePath(path, one.essential)))
 }
 
 export function openEssential(path: string): Promise<void> {
@@ -315,9 +290,7 @@ export async function keepAsTab(path: string): Promise<string | null> {
 export async function openInStrip(path: string, how: OpenHow) {
   const ws = workspace
   const open = ws.opened.at(path)
-  const inStrip = ws.tabs.some(
-    (one) => one.essential === null && one.note === open && ws.panes.at(one.paneId),
-  )
+  const inStrip = ws.tabs.some((one) => one.essential === null && one.note === open && ws.panes.at(one.paneId))
   if (open && !inStrip) ws.secondView(open, how)
   else await ws.openEntry(path, how)
 }

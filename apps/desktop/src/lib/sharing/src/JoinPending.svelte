@@ -17,13 +17,7 @@
       {said}
     </button>
     {#if joining.step === 'asking'}
-      <button
-        type="button"
-        class="orden-glyph"
-        aria-label="Dismiss"
-        title="Dismiss"
-        onclick={() => joining.dismiss()}
-      >
+      <button type="button" class="orden-glyph" aria-label="Dismiss" title="Dismiss" onclick={() => joining.dismiss()}>
         <Cross />
       </button>
     {/if}

@@ -133,10 +133,7 @@ class Server {
 }
 
 function documentOn(path: string, words: string, kind: 'note' | 'canvas' = 'note'): Doc {
-  return new NoteDoc(
-    { kind, path, name: path.split('/').at(-1) ?? path, text: words, dirty: false },
-    () => undefined,
-  )
+  return new NoteDoc({ kind, path, name: path.split('/').at(-1) ?? path, text: words, dirty: false }, () => undefined)
 }
 
 function surface(): PlaneSurface {
@@ -399,9 +396,7 @@ describe('what a room holds, for the sync that would write the file under it', (
       ...surface(),
       canvas: {
         ...emptyCanvas(),
-        nodes: [
-          { id: 'card', type: 'text', text: 'drawn here', x: 0, y: 0, width: 90, height: 40 },
-        ],
+        nodes: [{ id: 'card', type: 'text', text: 'drawn here', x: 0, y: 0, width: 90, height: 40 }],
       },
     }
     rooms.follow([{ key: note.key, noteId: 'note-1', note, hash: '{}', version: 1 }])
@@ -533,9 +528,7 @@ describe('a room the service threw away and will build again', () => {
       expect(words(note)).toBe('# A\ntyped while it was away\n')
       expect(rebuilt.file).toBe('# A\nand something from the phone\n')
       expect(rooms.carries('note-1')).toBe(false)
-      expect(record.clashes.map((one) => one.theirs)).toEqual([
-        '# A\nand something from the phone\n',
-      ])
+      expect(record.clashes.map((one) => one.theirs)).toEqual(['# A\nand something from the phone\n'])
 
       const opened = sockets.opened.length
       rooms.follow([

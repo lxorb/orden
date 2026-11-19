@@ -21,10 +21,7 @@ import {
   type TableName,
 } from './store'
 
-const SCHEMA = readFileSync(
-  new URL('../../../../src-tauri/crates/store/src/sync_store/1.sql', import.meta.url),
-  'utf8',
-)
+const SCHEMA = readFileSync(new URL('../../../../src-tauri/crates/store/src/sync_store/1.sql', import.meta.url), 'utf8')
 
 interface Made {
   name: string
@@ -93,9 +90,7 @@ describe('a row', () => {
     expect(() => rowOf('docs', { ...doc, extra: 1 })).toThrow('docs has no column extra')
     expect(() => rowOf('entries', null)).toThrow('not an object')
     expect(() => rowOf('meta', { key: 'k', value: true })).toThrow('meta.value')
-    expect(rowOf('meta', { key: 'k', value: new Uint8Array([9]) }).value).toEqual(
-      new Uint8Array([9]),
-    )
+    expect(rowOf('meta', { key: 'k', value: new Uint8Array([9]) }).value).toEqual(new Uint8Array([9]))
   })
 })
 
@@ -155,17 +150,6 @@ describe('a question and its answer', () => {
 })
 
 test('every table name is one TABLES has', () => {
-  const names: TableName[] = [
-    'meta',
-    'spaces',
-    'entries',
-    'written',
-    'docs',
-    'outbox',
-    'held',
-    'files',
-    'web',
-    'log',
-  ]
+  const names: TableName[] = ['meta', 'spaces', 'entries', 'written', 'docs', 'outbox', 'held', 'files', 'web', 'log']
   expect(Object.keys(TABLES)).toEqual(names)
 })

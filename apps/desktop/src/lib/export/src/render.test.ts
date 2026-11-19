@@ -152,16 +152,12 @@ describe('a styled export', () => {
       header: '',
       footer: '',
     } as const
-    expect(buildHtml('# Plain', 'p.md', { page })).toContain(
-      '@page { size: Letter landscape; margin: 1in; }',
-    )
+    expect(buildHtml('# Plain', 'p.md', { page })).toContain('@page { size: Letter landscape; margin: 1in; }')
   })
 
   test('writes the code palette in', () => {
     expect(html).toContain('#write .hl-keyword { color: var(--accent); }')
-    expect(buildHtml(NOTE, 'x.md', { codeTheme: 'github' })).toContain(
-      '#write .hl-keyword { color: #cf222e; }',
-    )
+    expect(buildHtml(NOTE, 'x.md', { codeTheme: 'github' })).toContain('#write .hl-keyword { color: #cf222e; }')
   })
 
   test('lets a theme file and custom css sit on top', () => {
@@ -175,8 +171,7 @@ describe('a styled export', () => {
 
   test('uses fences the caller prepared', () => {
     const styled = buildHtml(NOTE, 'x.md', {
-      fence: (code, language) =>
-        language === 'mermaid' ? `<figure class="diagram">${code}</figure>` : null,
+      fence: (code, language) => (language === 'mermaid' ? `<figure class="diagram">${code}</figure>` : null),
     })
     expect(styled).toContain('<figure class="diagram">graph TD; A-->B</figure>')
   })
@@ -209,10 +204,7 @@ function opened(html: string): DOMWindow {
 
 describe('an aligned table column in an exported document', () => {
   const window = opened(
-    buildHtml(
-      '| Name | Value | Unit | Note |\n| :-- | --: | :-: | --- |\n| mass | 42 | kg | dry |\n',
-      'x.md',
-    ),
+    buildHtml('| Name | Value | Unit | Note |\n| :-- | --: | :-: | --- |\n| mass | 42 | kg | dry |\n', 'x.md'),
   )
   const sides = [...window.document.querySelectorAll('th, td')].map((cell) =>
     window.getComputedStyle(cell).getPropertyValue('text-align'),
@@ -265,10 +257,7 @@ describe('the content policy an exported page carries', () => {
     /<meta http-equiv="Content-Security-Policy" content="([^"]*)">/.exec(html)?.[1] ?? ''
 
   test('runs no script, in a styled page and in a bare one', () => {
-    for (const html of [
-      buildHtml(NOTE, 'Handbook.md'),
-      buildHtml(NOTE, 'Handbook.md', { bare: true }),
-    ]) {
+    for (const html of [buildHtml(NOTE, 'Handbook.md'), buildHtml(NOTE, 'Handbook.md', { bare: true })]) {
       const policy = policyOf(html)
 
       expect(policy).toContain("default-src 'none'")
@@ -337,8 +326,7 @@ describe('rendering a whole note', () => {
 
   test('brings an embedded note into the document', async () => {
     const html = await renderNote('# Holder\n\n![[Quote]]\n', 'n.md', {
-      readNote: (target) =>
-        Promise.resolve(target === 'Quote' ? '## Quoted\n\nThe words.\n' : null),
+      readNote: (target) => Promise.resolve(target === 'Quote' ? '## Quoted\n\nThe words.\n' : null),
     })
 
     expect(html).toContain('<figure class="embed">')
@@ -371,9 +359,7 @@ describe('preparing the notes a document embeds', () => {
     })
 
     expect(asked.sort()).toEqual(['A', 'B'])
-    expect(resolve({ target: 'A', heading: null, block: null, alias: null, embed: true })).toBe(
-      'body of A',
-    )
+    expect(resolve({ target: 'A', heading: null, block: null, alias: null, embed: true })).toBe('body of A')
   })
 
   test('a plain link is not an embed and is not read', async () => {
@@ -388,9 +374,7 @@ describe('preparing the notes a document embeds', () => {
 
   test('a note that cannot be read is simply left out', async () => {
     const resolve = await prepareEmbeds('![[A]]\n', () => Promise.reject(new Error('gone')))
-    expect(
-      resolve({ target: 'A', heading: null, block: null, alias: null, embed: true }),
-    ).toBeNull()
+    expect(resolve({ target: 'A', heading: null, block: null, alias: null, embed: true })).toBeNull()
   })
 })
 

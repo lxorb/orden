@@ -43,12 +43,7 @@ export function picksOf(
     if (!price) return []
     if (kind !== 'any' && offer.cpu !== kind) return []
     if (arch !== 'any' && offer.arch !== arch) return []
-    const blocked =
-      made && offer.diskGb < made.diskGb
-        ? 'disk'
-        : archNow && offer.arch !== archNow
-          ? 'arch'
-          : null
+    const blocked = made && offer.diskGb < made.diskGb ? 'disk' : archNow && offer.arch !== archNow ? 'arch' : null
     const { monthly, hourly } = price
     return [{ offer, monthly, hourly, blocked, current: server?.type === offer.name }]
   })
@@ -76,21 +71,13 @@ const sizeOf = (one: Offer | ServerInfo) => [
 ]
 
 export function factsOf(offer: Pick['offer']): string[] {
-  return [
-    ...sizeOf(offer),
-    offer.cpu === 'dedicated' ? 'Dedicated' : 'Shared',
-    offer.arch === 'arm' ? 'Arm' : 'x86',
-  ]
+  return [...sizeOf(offer), offer.cpu === 'dedicated' ? 'Dedicated' : 'Shared', offer.arch === 'arm' ? 'Arm' : 'x86']
 }
 
 const kept = (part: string) => part.replaceAll(' ', '\u00a0')
 
 export function summaryOf(server: ServerInfo): { about: string[]; cost: string[] } {
-  const about = [
-    server.type.toUpperCase(),
-    ...(server.location ? [cityOf(server.location)] : []),
-    ...sizeOf(server),
-  ]
+  const about = [server.type.toUpperCase(), ...(server.location ? [cityOf(server.location)] : []), ...sizeOf(server)]
   const cost =
     server.price !== null && server.currency
       ? [
@@ -108,11 +95,7 @@ export function warningOf(running: number): string | null {
     : `${localNumber(running)} terminals are running. Resizing restarts the machine, and what runs in them stops.`
 }
 
-export function askedOf(
-  server: ServerInfo,
-  pick: Pick,
-  currency: string,
-): { title: string; detail: string } {
+export function askedOf(server: ServerInfo, pick: Pick, currency: string): { title: string; detail: string } {
   const disk =
     pick.offer.diskGb > server.diskGb
       ? `The disk grows from ${gb(server.diskGb)} to ${gb(pick.offer.diskGb)} and cannot shrink again; a smaller disk cannot be chosen.`

@@ -38,9 +38,7 @@ describe("Zen's sidebar", () => {
       pinned: true,
     })
     expect(tabs.find((one) => one.title === 'Board')?.container).toBe(2)
-    expect(tabs.find((one) => one.title === 'b - Search')?.url).toBe(
-      'https://search.example.com/?q=b',
-    )
+    expect(tabs.find((one) => one.title === 'b - Search')?.url).toBe('https://search.example.com/?q=b')
   })
 
   test('reads the folders, a split view among them', () => {

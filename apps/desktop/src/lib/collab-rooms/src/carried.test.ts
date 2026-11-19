@@ -1,14 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
 import { SharedDoc } from '@orden/editor'
-import {
-  awarenessUpdate,
-  forget,
-  readSync,
-  receive,
-  syncStep1,
-  TEXT,
-  unattended,
-} from '@orden/rooms'
+import { awarenessUpdate, forget, readSync, receive, syncStep1, TEXT, unattended } from '@orden/rooms'
 import { ackFrame, epochFrame, NEW_EPOCH } from '@orden/sync-core'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
@@ -207,9 +199,7 @@ describe('a room carrying the engine’s document', () => {
     const [question] = socket.take()
     const read = question ? readSync(question) : null
     expect(read?.kind).toBe('step1')
-    expect(read && 'sv' in read ? [...read.sv] : []).toEqual([
-      ...Y.encodeStateVectorFromUpdate(account),
-    ])
+    expect(read && 'sv' in read ? [...read.sv] : []).toEqual([...Y.encodeStateVectorFromUpdate(account)])
 
     one.doc.getText(TEXT).insert(0, '>')
     expect(socket.take()).toEqual([])
@@ -304,13 +294,10 @@ describe('a room carrying the engine’s document', () => {
     const hall = new Awareness(new Y.Doc())
     unattended(hall)
     const stayed = new Awareness(new Y.Doc())
-    hall.on(
-      'update',
-      ({ added, updated, removed }: Record<'added' | 'updated' | 'removed', number[]>) => {
-        const message = awarenessUpdate(hall, [...added, ...updated, ...removed])
-        receive(message, stayed.doc, stayed, 'room')
-      },
-    )
+    hall.on('update', ({ added, updated, removed }: Record<'added' | 'updated' | 'removed', number[]>) => {
+      const message = awarenessUpdate(hall, [...added, ...updated, ...removed])
+      receive(message, stayed.doc, stayed, 'room')
+    })
     const speak = () => {
       for (const said of socket.take()) receive(said, hall.doc, hall, 'socket')
     }

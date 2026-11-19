@@ -76,11 +76,7 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   return back
 }
 
-async function carryAsked(
-  names: readonly string[],
-  from: string,
-  to: string,
-): Promise<'chat' | 'file' | null> {
+async function carryAsked(names: readonly string[], from: string, to: string): Promise<'chat' | 'file' | null> {
   const { prompt } = await import('../../ui-kit/src/api')
   const answer = await prompt.choose(carryQuestion(names, from, to))
   return answer === 'chat' || answer === 'file' ? answer : null

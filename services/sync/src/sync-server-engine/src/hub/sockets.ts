@@ -44,10 +44,7 @@ export function socketOf(runtime: Runtime, device: string, except?: WebSocket): 
   return socketsOf(runtime, device, except).at(-1) ?? null
 }
 
-export function everySocket(
-  runtime: Runtime,
-  except?: WebSocket,
-): { socket: WebSocket; attached: Attached }[] {
+export function everySocket(runtime: Runtime, except?: WebSocket): { socket: WebSocket; attached: Attached }[] {
   return runtime.getWebSockets().flatMap((socket) => {
     const attached = attachedTo(socket)
     return socket !== except && socket.readyState === OPEN && attached ? [{ socket, attached }] : []

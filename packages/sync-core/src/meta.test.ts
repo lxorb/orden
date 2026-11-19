@@ -12,9 +12,7 @@ describe('item metadata', () => {
       expect(metaOf(bad)).toBeNull()
     }
     expect(metaOf({ icon: 'x'.repeat(2049) })).toBeNull()
-    expect(
-      metaOf(Object.fromEntries(Array.from({ length: 17 }, (_, at) => [`k${at}`, 'v']))),
-    ).toBeNull()
+    expect(metaOf(Object.fromEntries(Array.from({ length: 17 }, (_, at) => [`k${at}`, 'v'])))).toBeNull()
   })
 
   test('a patch sets and clears keys, and says nothing when it would change nothing', () => {
@@ -32,15 +30,15 @@ describe('item metadata', () => {
   test("a list's kept done days from two devices are merged todo by todo, not one over the other", () => {
     const one = patched({ 'done-on': 'aaa:20261101' }, { 'done-on': 'bbb:20261105' })
     expect(one).toEqual({ 'done-on': 'bbb:20261105 aaa:20261101' })
-    expect(
-      patched({ 'done-on': 'aaa:20261101 bbb:20261102' }, { 'done-on': 'bbb:20261103 bbb:-' }),
-    ).toEqual({ 'done-on': 'bbb:20261103 bbb:- aaa:20261101' })
+    expect(patched({ 'done-on': 'aaa:20261101 bbb:20261102' }, { 'done-on': 'bbb:20261103 bbb:-' })).toEqual({
+      'done-on': 'bbb:20261103 bbb:- aaa:20261101',
+    })
     expect(patched({ 'done-on': 'aaa:20261101', icon: 'x' }, { 'done-on': null })).toEqual({
       icon: 'x',
     })
-    expect(patched({ 'cancelled-on': 'aaa:20261101' }, { 'cancelled-on': 'ccc:20261102' })).toEqual(
-      { 'cancelled-on': 'ccc:20261102 aaa:20261101' },
-    )
+    expect(patched({ 'cancelled-on': 'aaa:20261101' }, { 'cancelled-on': 'ccc:20261102' })).toEqual({
+      'cancelled-on': 'ccc:20261102 aaa:20261101',
+    })
     expect(patched({ icon: 'a' }, { icon: 'b' })).toEqual({ icon: 'b' })
   })
 

@@ -38,13 +38,9 @@ export interface CrashReport {
 
 const SECRET_NAMES = String.raw`(?:pass(?:word|wd|phrase)?|pwd|secret|token|api[_-]?key|access[_-]?key|private[_-]?key|auth(?:orization)?|cookie|session)`
 
-const NAMED_SECRET = new RegExp(
-  String.raw`\b(${SECRET_NAMES})(\s*[:=]\s*)("[^"]*"|'[^']*'|\S+)`,
-  'gi',
-)
+const NAMED_SECRET = new RegExp(String.raw`\b(${SECRET_NAMES})(\s*[:=]\s*)("[^"]*"|'[^']*'|\S+)`, 'gi')
 
-const OPAQUE =
-  /(?<![\w.-])(?=[A-Za-z0-9_+/=-]*\d)(?=[A-Za-z0-9_+/=-]*[A-Za-z])[A-Za-z0-9_+/=-]{28,}(?![\w.-])/g
+const OPAQUE = /(?<![\w.-])(?=[A-Za-z0-9_+/=-]*\d)(?=[A-Za-z0-9_+/=-]*[A-Za-z])[A-Za-z0-9_+/=-]{28,}(?![\w.-])/g
 
 const COMMAND = /^[A-Za-z0-9_:.|-]{1,80}$/
 
@@ -60,10 +56,7 @@ const SYMBOL = /^[\w$.:<>~@?, *&()[\]-]{1,200}$/
 
 function secretsOut(text: string): string {
   return tokensOut(text)
-    .replace(
-      NAMED_SECRET,
-      (_whole: string, name: string, between: string) => `${name}${between}<hidden>`,
-    )
+    .replace(NAMED_SECRET, (_whole: string, name: string, between: string) => `${name}${between}<hidden>`)
     .replace(OPAQUE, '<token>')
 }
 
@@ -100,18 +93,14 @@ function doingOf(said: string): string {
     .split(' < ')
     .map((one) => {
       const [command, ...rest] = one.split(', ')
-      return [command && COMMAND.test(command) ? command : '?', ...rest.map(scrubbedText)].join(
-        ', ',
-      )
+      return [command && COMMAND.test(command) ? command : '?', ...rest.map(scrubbedText)].join(', ')
     })
     .join(' < ')
 }
 
 function kindsOf(kinds: Record<string, number>): Record<string, number> {
   return Object.fromEntries(
-    Object.entries(kinds).filter(
-      ([kind, count]) => KIND.test(kind) && Number.isInteger(count) && count >= 0,
-    ),
+    Object.entries(kinds).filter(([kind, count]) => KIND.test(kind) && Number.isInteger(count) && count >= 0),
   )
 }
 

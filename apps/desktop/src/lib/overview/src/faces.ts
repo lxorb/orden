@@ -42,10 +42,7 @@ export function drawInto(into: Element, html: string) {
     for (const { name, value } of [...one.attributes]) {
       const lower = name.toLowerCase()
       const link = /^(?:href|src|xlink:href|action|formaction|srcset)$/.test(lower)
-      if (
-        lower.startsWith('on') ||
-        (link && !/^(?:data:image\/|blob:|https?:|asset:|\/)/i.test(value.trim()))
-      )
+      if (lower.startsWith('on') || (link && !/^(?:data:image\/|blob:|https?:|asset:|\/)/i.test(value.trim())))
         one.removeAttribute(name)
     }
   }

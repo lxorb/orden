@@ -34,12 +34,7 @@ describe('a header an app from before the rename sends', () => {
     })
     const allowed = (answer.headers.get('access-control-allow-headers') ?? '').split(',')
     expect(allowed.map((one) => one.trim())).toEqual(
-      expect.arrayContaining([
-        'x-nib-device',
-        'x-orden-device',
-        'x-nib-diagram',
-        'x-orden-diagram',
-      ]),
+      expect.arrayContaining(['x-nib-device', 'x-orden-device', 'x-nib-diagram', 'x-orden-diagram']),
     )
   })
 })

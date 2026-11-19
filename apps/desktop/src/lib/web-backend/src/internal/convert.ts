@@ -1,14 +1,6 @@
 import { nameKey } from '@orden/sync-core'
 import { busy } from '../../../ui-kit/src/api'
-import {
-  locksHere,
-  locksWork,
-  log,
-  joinPath,
-  KEPT_HOME,
-  platform,
-  samePath,
-} from '../../../platform/src/api'
+import { locksHere, locksWork, log, joinPath, KEPT_HOME, platform, samePath } from '../../../platform/src/api'
 import { invoke as crate } from '../../../crate/src/api'
 import { folderBytes } from './bytes'
 import { InternalFolder } from './folder'
@@ -161,19 +153,14 @@ async function begun(
   home: string,
   from: string,
 ): Promise<{ taken: string[]; folder: string | null; backup: string | null }> {
-  const tree = await crate<Listed>('read_tree', { root: home, options: { every: true } }).catch(
-    () => null,
-  )
+  const tree = await crate<Listed>('read_tree', { root: home, options: { every: true } }).catch(() => null)
   const taken: string[] = []
   for (const one of tree?.children ?? []) {
     if (!one.is_dir) continue
     taken.push(one.name)
-    const said = await crate<string>('read_note', { path: joinPath(one.path, CONVERTING) }).catch(
-      () => '',
-    )
+    const said = await crate<string>('read_note', { path: joinPath(one.path, CONVERTING) }).catch(() => '')
     const [was, backup] = said.split('\n')
-    if (was === from)
-      return { taken, folder: one.path, backup: backup?.trim() ? backup.trim() : null }
+    if (was === from) return { taken, folder: one.path, backup: backup?.trim() ? backup.trim() : null }
   }
   return { taken, folder: null, backup: null }
 }
@@ -306,28 +293,18 @@ export async function retireTwins(ws: Twins): Promise<void> {
     for (const one of named.slice(1)) if (await sameAsSource(one.root, one.from)) spare.push(one)
     for (const one of spare) {
       if (!one.space) continue
-      log(
-        'warn',
-        `${one.space.name} was a second copy of ${one.from}, which is still there; it went to the trash`,
-      )
+      log('warn', `${one.space.name} was a second copy of ${one.from}, which is still there; it went to the trash`)
       await ws.deleteSpace(one.space.id, true)
     }
-    const left = named
-      .filter((one) => !spare.includes(one))
-      .map((one) => one.space?.name ?? one.root)
+    const left = named.filter((one) => !spare.includes(one)).map((one) => one.space?.name ?? one.root)
     if (left.length > 1) {
-      log(
-        'warn',
-        `${left.join(', ')} were all made from ${group[0]?.from ?? ''} and differ, so each is kept`,
-      )
+      log('warn', `${left.join(', ')} were all made from ${group[0]?.from ?? ''} and differ, so each is kept`)
     }
   }
 }
 
 export async function convertAll(ws: Twins): Promise<void> {
-  await retireTwins(ws).catch((error: unknown) =>
-    log('warn', `twin spaces not looked at: ${String(error)}`),
-  )
+  await retireTwins(ws).catch((error: unknown) => log('warn', `twin spaces not looked at: ${String(error)}`))
   const done = new Set(await keptFrom())
   const failed: string[] = []
   for (const space of [...ws.spaces]) {

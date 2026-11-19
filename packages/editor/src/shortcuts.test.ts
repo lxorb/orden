@@ -47,8 +47,8 @@ describe('building the keymap', () => {
   })
 
   test('and no longer scopes a key to a panel the editor does not have', () => {
-    const scoped = [...bindings(standardBindings, {}), ...bindings(ordenBindings, {})].filter(
-      (one) => (one.scope ?? '').includes('search-panel'),
+    const scoped = [...bindings(standardBindings, {}), ...bindings(ordenBindings, {})].filter((one) =>
+      (one.scope ?? '').includes('search-panel'),
     )
 
     expect(scoped).toEqual([])
@@ -122,8 +122,7 @@ describe('a state built with them', () => {
     const counted = new Map<string, number>()
     for (const chord of keysIn(installed)) counted.set(chord, (counted.get(chord) ?? 0) + 1)
 
-    for (const chord of ['Mod-f', 'Mod-g', 'F3', 'Mod-Alt-g'])
-      expect(counted.get(chord), chord).toBe(1)
+    for (const chord of ['Mod-f', 'Mod-g', 'F3', 'Mod-Alt-g']) expect(counted.get(chord), chord).toBe(1)
 
     expect(counted.get('Mod-Shift-l')).toBeUndefined()
     expect(counted.get('Mod-d')).toBeUndefined()

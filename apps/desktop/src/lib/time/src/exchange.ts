@@ -14,17 +14,12 @@ export interface Exchanged {
 
 const MOST_PAGES = 50
 
-export async function exchange(
-  ledger: Ledger,
-  server: TimeServer,
-  since: number,
-): Promise<Exchanged> {
+export async function exchange(ledger: Ledger, server: TimeServer, since: number): Promise<Exchanged> {
   const written: Row[] = []
   for (;;) {
     const sending = ledger.pending(MOST_TIME_CHANGES, (row) => timeChangeOf(changeOf(row)) !== null)
     if (!sending.length) break
-    if (!(await server.push(sending.map(changeOf))))
-      return { cursor: since, written, reached: false }
+    if (!(await server.push(sending.map(changeOf)))) return { cursor: since, written, reached: false }
     written.push(...ledger.sent(sending))
   }
 

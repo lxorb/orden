@@ -4,8 +4,7 @@ import { cloudInit, sshKeyOf } from '../src/sync-server-machines/src/machines/cl
 const SECRET = 'f'.repeat(64)
 const TUNNEL = 'eyJhIjoiYWNjb3VudCIsInQiOiJ0dW5uZWwiLCJzIjoic2VjcmV0In0='
 const BUNDLE = 'b'.repeat(64)
-const KEY =
-  'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK0wmN/Cr3JXqmLW7u+g9pTh+wyqDHpSQEIQczXkVx9q emil@laptop'
+const KEY = 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK0wmN/Cr3JXqmLW7u+g9pTh+wyqDHpSQEIQczXkVx9q emil@laptop'
 
 const boot = {
   secret: SECRET,
@@ -16,8 +15,7 @@ const boot = {
   sshKey: null,
 }
 
-const redacted = (text: string) =>
-  text.replaceAll(SECRET, '<ordend secret>').replaceAll(TUNNEL, '<tunnel token>')
+const redacted = (text: string) => text.replaceAll(SECRET, '<ordend secret>').replaceAll(TUNNEL, '<tunnel token>')
 
 describe('cloud-init', () => {
   test('as a server gets it, its secrets redacted', () => {

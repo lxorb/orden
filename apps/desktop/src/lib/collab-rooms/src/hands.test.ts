@@ -18,10 +18,7 @@ function pair() {
   }
 }
 
-function tell(
-  from: { doc: Y.Doc; awareness: Awareness },
-  to: { doc: Y.Doc; awareness: Awareness },
-) {
+function tell(from: { doc: Y.Doc; awareness: Awareness }, to: { doc: Y.Doc; awareness: Awareness }) {
   receive(awarenessUpdate(from.awareness, [from.doc.clientID]), to.doc, to.awareness, 'room')
 }
 
@@ -118,9 +115,7 @@ describe('whose hand is on the plane', () => {
     one.awareness.setLocalStateField(HAND, saidHand({ x: 0, y: 0 }, stroke(4)))
     tell(one, two)
 
-    expect(handsIn(two.awareness, two.doc, 'dark').hands[0]?.stroke?.id).toBe(
-      `hand:${one.doc.clientID}`,
-    )
+    expect(handsIn(two.awareness, two.doc, 'dark').hands[0]?.stroke?.id).toBe(`hand:${one.doc.clientID}`)
     expect(planeOf(two.doc).size).toBe(0)
   })
 

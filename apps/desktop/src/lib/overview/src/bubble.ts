@@ -54,8 +54,7 @@ function roundOf(boxes: readonly Box[], by = PAD): Float64Array | null {
     for (let i = 0; i < N; i++) {
       const c = COS[i] ?? 0
       const s = SIN[i] ?? 0
-      const far =
-        cx * c + cy * s + (Math.abs(a * c) ** DUAL + Math.abs(b * s) ** DUAL) ** (1 / DUAL)
+      const far = cx * c + cy * s + (Math.abs(a * c) ** DUAL + Math.abs(b * s) ** DUAL) ** (1 / DUAL)
       if (far > (out[i] ?? 0)) out[i] = far
     }
   }
@@ -78,8 +77,7 @@ function softened(h: Float64Array): Float64Array {
   let short = 0
   for (let i = 0; i < N; i++) {
     let sum = 0
-    for (let k = -SOFT; k <= SOFT; k++)
-      sum += (own[(i + k + N) % N] ?? 0) * (SOFTNESS[k + SOFT] ?? 0)
+    for (let k = -SOFT; k <= SOFT; k++) sum += (own[(i + k + N) % N] ?? 0) * (SOFTNESS[k + SOFT] ?? 0)
     out[i] = sum / SOFT_SUM
     short = Math.max(short, (own[i] ?? 0) - (out[i] ?? 0))
   }
@@ -240,8 +238,7 @@ export class Bubble {
       points = points.map(([px, py]) => {
         const angle = Math.atan2(py - y, px - x)
         let rest = breath
-        for (const wave of WAVES)
-          rest += WAVE * Math.sin(angle * wave.lobes + t * wave.rate * TAU + wave.phase)
+        for (const wave of WAVES) rest += WAVE * Math.sin(angle * wave.lobes + t * wave.rate * TAU + wave.phase)
         const far = Math.hypot(px - x, py - y) || 1
         return [px + ((px - x) / far) * rest, py + ((py - y) / far) * rest]
       })
@@ -283,16 +280,7 @@ export class Bubble {
       const [bx, by] = at(i)
       const [cx, cy] = at(i + 1)
       const [ex, ey] = at(i + 2)
-      out.push([
-        bx,
-        by,
-        bx + (cx - ax) / 6,
-        by + (cy - ay) / 6,
-        cx - (ex - bx) / 6,
-        cy - (ey - by) / 6,
-        cx,
-        cy,
-      ])
+      out.push([bx, by, bx + (cx - ax) / 6, by + (cy - ay) / 6, cx - (ex - bx) / 6, cy - (ey - by) / 6, cx, cy])
     }
     return out
   }
@@ -312,12 +300,7 @@ export class Bubble {
   }
 }
 
-export function apart(
-  one: Bubble,
-  other: Bubble,
-  ones: readonly Box[],
-  others: readonly Box[],
-): void {
+export function apart(one: Bubble, other: Bubble, ones: readonly Box[], others: readonly Box[]): void {
   const near = reachOf(ones, 0)
   const far = reachOf(others, 0)
   if (!near || !far) return

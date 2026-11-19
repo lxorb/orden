@@ -25,9 +25,7 @@
       />
     {/if}
   {:else}
-    <svg viewBox="0 0 14 14"
-      ><circle cx="7" cy="4.6" r="2.8" /><path d="M1.6 13a5.4 5.4 0 0 1 10.8 0" /></svg
-    >
+    <svg viewBox="0 0 14 14"><circle cx="7" cy="4.6" r="2.8" /><path d="M1.6 13a5.4 5.4 0 0 1 10.8 0" /></svg>
   {/if}
 </span>
 

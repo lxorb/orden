@@ -68,17 +68,12 @@ async function fetched(
 }
 
 function failure(host: string, status: number): BreachLookupError {
-  if (status === 429)
-    return new BreachLookupError(`${host} asks to wait before asking again.`, status)
+  if (status === 429) return new BreachLookupError(`${host} asks to wait before asking again.`, status)
   if (status === 401) return new BreachLookupError(`${host} did not take the API key.`, status)
   return new BreachLookupError(`${host} answered ${String(status)}.`, status)
 }
 
-export async function rangeOf(
-  prefix: string,
-  fetcher: Fetcher,
-  signal?: AbortSignal,
-): Promise<Map<string, number>> {
+export async function rangeOf(prefix: string, fetcher: Fetcher, signal?: AbortSignal): Promise<Map<string, number>> {
   if (!/^[0-9A-F]{5}$/.test(prefix)) throw new Error('pass: a range is five upper-case hex digits')
   const headers = { 'Add-Padding': 'true' }
   const response = await fetched(`${RANGE_URL}${prefix}`, headers, fetcher, signal)
@@ -86,11 +81,7 @@ export async function rangeOf(
   return parseRange(await response.text())
 }
 
-export async function pwnedCount(
-  password: string,
-  fetcher: Fetcher,
-  signal?: AbortSignal,
-): Promise<number> {
+export async function pwnedCount(password: string, fetcher: Fetcher, signal?: AbortSignal): Promise<number> {
   const hash = await sha1Hex(password)
   const range = await rangeOf(hash.slice(0, 5), fetcher, signal)
   return range.get(hash.slice(5)) ?? 0
@@ -167,16 +158,10 @@ export async function breachedAccount(
   try {
     body = JSON.parse(await response.text())
   } catch {
-    throw new BreachLookupError(
-      'Have I Been Pwned answered something that is not JSON.',
-      response.status,
-    )
+    throw new BreachLookupError('Have I Been Pwned answered something that is not JSON.', response.status)
   }
   if (!Array.isArray(body)) {
-    throw new BreachLookupError(
-      'Have I Been Pwned answered something that is not a list.',
-      response.status,
-    )
+    throw new BreachLookupError('Have I Been Pwned answered something that is not a list.', response.status)
   }
   return body.map(breachOf).filter((one): one is Breach => one !== null)
 }

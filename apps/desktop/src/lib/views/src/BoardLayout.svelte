@@ -1,15 +1,6 @@
 <script lang="ts">
   import { keyElsewhere, menu, type MenuEntry, viewport } from '../../ui-kit/src/api'
-  import {
-    type Answer,
-    groupName,
-    type Group,
-    orderId,
-    type Row,
-    rowId,
-    type Value,
-    isWhen,
-  } from '@orden/bases'
+  import { type Answer, groupName, type Group, orderId, type Row, rowId, type Value, isWhen } from '@orden/bases'
   import { tick, untrack } from 'svelte'
   import { asOneUndo, dropRow } from './act'
   import AddRow from './AddRow.svelte'
@@ -40,15 +31,7 @@
   import { editorOf, displayName, keyWritten } from './columns'
   import { dragging, droppable, placeAmong, type Point } from './drag.svelte'
   import { dropInto, inTurn } from './drop'
-  import {
-    placeColumn,
-    prunedOrder,
-    setHidden,
-    setManualOrder,
-    setProperty,
-    setSort,
-    setSummary,
-  } from './edit'
+  import { placeColumn, prunedOrder, setHidden, setManualOrder, setProperty, setSort, setSummary } from './edit'
   import { claimsGesture, drawer, isFinger, notices, rightDrawer } from '../../workspace/src/api'
   import { laneKeys, withEveryDay, withinDays } from './list-items'
   import type { Kit } from './kit'
@@ -89,11 +72,7 @@
 
   const answered = $derived(
     days
-      ? withinDays(
-          withEveryDay(live.answer?.groups ?? [], days.from, days.through),
-          days.from,
-          days.through,
-        )
+      ? withinDays(withEveryDay(live.answer?.groups ?? [], days.from, days.through), days.from, days.through)
       : (live.answer?.groups ?? []),
   )
   const groups = $derived.by(() => {
@@ -102,9 +81,7 @@
   })
   const shownGroups = $derived(
     groups.filter(
-      (group) =>
-        !hidden.includes(groupName(group.key)) &&
-        !(view?.orden.hideEmpty && group.rows.length === 0),
+      (group) => !hidden.includes(groupName(group.key)) && !(view?.orden.hideEmpty && group.rows.length === 0),
     ),
   )
   const hiddenGroups = $derived(groups.filter((group) => hidden.includes(groupName(group.key))))
@@ -129,31 +106,21 @@
   const laneOf = (lane: string | null): Value | undefined =>
     lane === null ? undefined : lanes.find((one) => groupName(one) === lane)
 
-  const placeKey = (column: string, lane: string | null) =>
-    lane === null ? column : `${column}\n${lane}`
+  const placeKey = (column: string, lane: string | null) => (lane === null ? column : `${column}\n${lane}`)
 
   const placeSelector = (column: string, lane: string | null) =>
-    `[data-column="${CSS.escape(column)}"]` +
-    (lane === null ? '' : `[data-lane="${CSS.escape(lane)}"]`)
+    `[data-column="${CSS.escape(column)}"]` + (lane === null ? '' : `[data-lane="${CSS.escape(lane)}"]`)
 
   const shown = $derived(cardProperties(live.columns, property, sub))
   const checked = $derived(checklists(live.rows))
-  const anyChecklist = $derived(
-    shownGroups.some((group) => group.rows.some((row) => checked.has(noteKey(row)))),
-  )
+  const anyChecklist = $derived(shownGroups.some((group) => group.rows.some((row) => checked.has(noteKey(row)))))
   const lines = $derived(
-    cardLines(
-      sizeOf(view?.orden.cardSize, notes),
-      notes ? shown.length : 0,
-      !notes || anyChecklist,
-    ),
+    cardLines(sizeOf(view?.orden.cardSize, notes), notes ? shown.length : 0, !notes || anyChecklist),
   )
   const height = $derived(cardHeight(lines, viewport.touch))
 
   const nothing = $derived(
-    property && !days
-      ? `No ${propertyName(property, base ? displayName(base, property) : undefined)}`
-      : 'None',
+    property && !days ? `No ${propertyName(property, base ? displayName(base, property) : undefined)}` : 'None',
   )
 
   function columnName(group: Group): string {
@@ -181,12 +148,7 @@
 
   function unlisted(group: Group): boolean {
     const key = group.key
-    return (
-      options.length > 0 &&
-      typeof key === 'string' &&
-      key !== '' &&
-      !options.some((one) => one.value === key)
-    )
+    return options.length > 0 && typeof key === 'string' && key !== '' && !options.some((one) => one.value === key)
   }
 
   let renaming = $state<string | null>(null)
@@ -243,10 +205,7 @@
       return names.map((summary) => ({
         label: `${label}: ${summaryName(summary)}`,
         checked: summaries[one] === summary,
-        run: () =>
-          kit.change((next, at) =>
-            setSummary(next, at, one, summaries[one] === summary ? null : summary),
-          ),
+        run: () => kit.change((next, at) => setSummary(next, at, one, summaries[one] === summary ? null : summary)),
       }))
     })
     menu.show(
@@ -256,9 +215,7 @@
           label: 'Count',
           checked: !Object.keys(summaries).length,
           run: () =>
-            kit.change((next, at) =>
-              Object.keys(summaries).reduce((one, key) => setSummary(one, at, key, null), next),
-            ),
+            kit.change((next, at) => Object.keys(summaries).reduce((one, key) => setSummary(one, at, key, null), next)),
         },
         ...offered,
       ],
@@ -305,20 +262,13 @@
     carryTo(row, group, laneKey, indexWithout(indexAt(place, at), was), at)
   }
 
-  function carryTo(
-    row: Row,
-    group: Group,
-    laneKey: Value | undefined,
-    index: number,
-    at: Point | null,
-  ) {
+  function carryTo(row: Row, group: Group, laneKey: Value | undefined, index: number, at: Point | null) {
     const by = property
     if (by === undefined) return
     const name = groupName(group.key)
     const picked = pickedFrom && holds(pickedFrom, row) ? pickedFrom : null
     pickedFrom = null
-    const from =
-      picked && (picked.lane !== null || sub === undefined) ? picked : whereIs(row, picked?.column)
+    const from = picked && (picked.lane !== null || sub === undefined) ? picked : whereIs(row, picked?.column)
     const toLane = laneKey ?? (sub === undefined ? undefined : laneOf(from.lane))
     const lane = toLane === undefined ? null : groupName(toLane)
     const ids = rowsOf(group, toLane).map(orderId)
@@ -386,11 +336,8 @@
   function writeOrder(name: string, order: string[], unsorted = false): Promise<boolean> {
     const alive = new Set(live.rows.flatMap((row) => [orderId(row), rowId(row)]))
     return kit.changed((one, view) =>
-      prunedOrder(
-        setManualOrder(unsorted ? setSort(one, view, []) : one, view, name, order),
-        view,
-        name,
-        (id) => alive.has(id),
+      prunedOrder(setManualOrder(unsorted ? setSort(one, view, []) : one, view, name, order), view, name, (id) =>
+        alive.has(id),
       ),
     )
   }
@@ -518,11 +465,7 @@
     focus = { column: name, lane, card }
     columns[placeKey(name, lane)]?.reveal(index)
     await tick()
-    board
-      ?.querySelector<HTMLElement>(
-        `${placeSelector(name, lane)} [data-index="${index}"] [data-card]`,
-      )
-      ?.focus()
+    board?.querySelector<HTMLElement>(`${placeSelector(name, lane)} [data-index="${index}"] [data-card]`)?.focus()
   }
 
   let board = $state<HTMLElement>()
@@ -558,11 +501,7 @@
         const next = index + (arrow === 'ArrowUp' ? -1 : 1)
         if (next < 0 || next >= rows.length) return
         const order = orderAfter(rows.map(orderId), orderId(row), next)
-        reorder(
-          name,
-          laneKey === undefined ? order : mergedOrder(group.rows.map(orderId), order),
-          null,
-        )
+        reorder(name, laneKey === undefined ? order : mergedOrder(group.rows.map(orderId), order), null)
         if (!sorted) void focusCard(name, laneKey, row)
       }
       return
@@ -577,15 +516,11 @@
   }
 
   let showing = $state<string | null>(null)
-  const phoneColumn = $derived(
-    shownGroups.find((group) => groupName(group.key) === showing) ?? shownGroups[0],
-  )
+  const phoneColumn = $derived(shownGroups.find((group) => groupName(group.key) === showing) ?? shownGroups[0])
 
   let swipeFrom: { x: number; y: number; id: number } | null = null
   function swipeStart(event: PointerEvent) {
-    swipeFrom = isFinger(event.pointerType)
-      ? { x: event.clientX, y: event.clientY, id: event.pointerId }
-      : null
+    swipeFrom = isFinger(event.pointerType) ? { x: event.clientX, y: event.clientY, id: event.pointerId } : null
   }
   function swipeEnd(event: PointerEvent) {
     const from = swipeFrom
@@ -673,8 +608,7 @@
         id: name,
         among: 'column',
         across: true,
-        place: (moving, target, after) =>
-          kit.change((one, at) => placeColumn(one, at, names, moving, target, after)),
+        place: (moving, target, after) => kit.change((one, at) => placeColumn(one, at, names, moving, target, after)),
       }}
     >
       <BoardHead
@@ -831,9 +765,7 @@
           use:droppable={(row) => carryTo(row, group, undefined, group.rows.length, null)}
           onclick={() => kit.change((one, at) => setHidden(one, at, groupName(group.key), false))}
         >
-          <span class="tag" class:toned={tone !== null} style:--pill={tone}
-            >{columnName(group)}</span
-          >
+          <span class="tag" class:toned={tone !== null} style:--pill={tone}>{columnName(group)}</span>
           <span class="count">{group.rows.length}</span>
         </button>
       {/each}

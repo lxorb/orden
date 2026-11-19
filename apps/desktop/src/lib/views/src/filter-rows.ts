@@ -1,19 +1,7 @@
 import type { Filter } from '@orden/bases'
 
-export type Operator =
-  '==' | '!=' | '<' | '>' | '<=' | '>=' | 'contains' | 'empty' | 'filled' | 'tag'
-export const OPERATORS: readonly Operator[] = [
-  '==',
-  '!=',
-  '<',
-  '>',
-  '<=',
-  '>=',
-  'contains',
-  'empty',
-  'filled',
-  'tag',
-]
+export type Operator = '==' | '!=' | '<' | '>' | '<=' | '>=' | 'contains' | 'empty' | 'filled' | 'tag'
+export const OPERATORS: readonly Operator[] = ['==', '!=', '<', '>', '<=', '>=', 'contains', 'empty', 'filled', 'tag']
 
 export interface ValueRow {
   property: string
@@ -92,8 +80,7 @@ export function expressionOf(row: ValueRow, holds?: HoldsOf): string {
   }
 }
 
-const quotedRow = (read: { value: string; quoted: boolean }) =>
-  read.quoted ? read : { value: read.value }
+const quotedRow = (read: { value: string; quoted: boolean }) => (read.quoted ? read : { value: read.value })
 
 export function rowOf(expression: string, holds?: HoldsOf): FilterRow {
   const text = expression.trim()
@@ -142,9 +129,7 @@ export function rowsOf(filter: Filter | undefined, holds?: HoldsOf): FilterRows 
 }
 
 export function filterOf(rows: FilterRows, holds?: HoldsOf): Filter | undefined {
-  const members = rows.rows.map((row): Filter =>
-    'kept' in row ? row.kept : expressionOf(row, holds),
-  )
+  const members = rows.rows.map((row): Filter => ('kept' in row ? row.kept : expressionOf(row, holds)))
   if (!members.length) return undefined
   if (members.length === 1 && rows.join === 'and') return members[0]
   return rows.join === 'and' ? { and: members } : { or: members }

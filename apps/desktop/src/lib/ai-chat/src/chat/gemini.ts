@@ -26,15 +26,7 @@ export const UNSIGNED = 'skip_thought_signature_validator'
 
 const MADE = 'gemini-call-'
 
-const REFUSED = new Set([
-  'SAFETY',
-  'RECITATION',
-  'BLOCKLIST',
-  'PROHIBITED_CONTENT',
-  'SPII',
-  'IMAGE_SAFETY',
-  'LANGUAGE',
-])
+const REFUSED = new Set(['SAFETY', 'RECITATION', 'BLOCKLIST', 'PROHIBITED_CONTENT', 'SPII', 'IMAGE_SAFETY', 'LANGUAGE'])
 
 function picture(one: { mime: string; data: string }): Piece {
   return { inlineData: { mimeType: one.mime, data: one.data } }
@@ -63,9 +55,7 @@ function resultContent(results: readonly { id: string; name: string; output: Too
     functionResponse: {
       ...(one.id.startsWith(MADE) ? {} : { id: one.id }),
       name: one.name,
-      response: one.output.error
-        ? { error: one.output.text || ' ' }
-        : { output: one.output.text || ' ' },
+      response: one.output.error ? { error: one.output.text || ' ' } : { output: one.output.text || ' ' },
     },
   }))
   for (const one of results) parts.push(...one.output.images.map(picture))
@@ -82,10 +72,7 @@ export function contentsOf(steps: readonly Step[]): Content[] {
       case 'assistant':
         out.push({
           role: 'model',
-          parts: [
-            ...(step.text ? [{ text: step.text }] : []),
-            ...step.calls.map((one, at) => callPart(one, at === 0)),
-          ],
+          parts: [...(step.text ? [{ text: step.text }] : []), ...step.calls.map((one, at) => callPart(one, at === 0))],
         })
         break
       case 'tool':
@@ -104,8 +91,7 @@ export function contentsOf(steps: readonly Step[]): Content[] {
 
 export const gemini: Wire = {
   request(ask: Ask) {
-    const thinks =
-      ask.model.thinking !== false && learnt(ask.provider.id, ask.model.id).reasons !== false
+    const thinks = ask.model.thinking !== false && learnt(ask.provider.id, ask.model.id).reasons !== false
     const level = thinks ? wireEffort('gemini', ask.effort) : null
     const declared = ask.tools.map((one) => ({
       name: one.name,
@@ -137,11 +123,7 @@ export const gemini: Wire = {
   },
 
   results(results) {
-    return [
-      resultContent(
-        results.map((one) => ({ id: one.call.id, name: one.call.name, output: one.output })),
-      ),
-    ]
+    return [resultContent(results.map((one) => ({ id: one.call.id, name: one.call.name, output: one.output })))]
   },
 }
 
@@ -164,8 +146,7 @@ class GeminiReader extends PartsReader implements Reader {
     const candidate = record(Array.isArray(said.candidates) ? said.candidates[0] : null)
     this.finish = text(candidate.finishReason) || this.finish
     const parts = record(candidate.content).parts
-    if (Array.isArray(parts))
-      for (const piece of parts.map(record)) changed.push(...this.took(piece))
+    if (Array.isArray(parts)) for (const piece of parts.map(record)) changed.push(...this.took(piece))
 
     return { changed, ...(model ? { model } : {}), ...(this.usage ? { usage: this.usage } : {}) }
   }
@@ -224,9 +205,7 @@ class GeminiReader extends PartsReader implements Reader {
   }
 
   answer(): Answer {
-    const parts = this.kept.filter(
-      (one) => typeof one.text !== 'string' || one.text || one.thoughtSignature,
-    )
+    const parts = this.kept.filter((one) => typeof one.text !== 'string' || one.text || one.thoughtSignature)
     const ending = endingOf(this.finish, this.blocked, this.calls.length > 0)
     return {
       messages: parts.length ? [{ role: 'model', parts }] : [],

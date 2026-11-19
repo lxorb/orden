@@ -42,9 +42,7 @@ describe('a picture embedded by its path in the space, from a note in a folder',
       path: 'Journal/Day.md',
       read: () => Promise.resolve(null),
     }
-    expect(noteLinks(index, ['trips/cat.png'], (target) => `[[${target.name}]]`)).toBe(
-      '![[trips/cat.png]]',
-    )
+    expect(noteLinks(index, ['trips/cat.png'], (target) => `[[${target.name}]]`)).toBe('![[trips/cat.png]]')
   })
 
   test('the reading view shows the picture at that path in the space', () => {

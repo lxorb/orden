@@ -2,15 +2,7 @@ import type { Completion, CompletionContext, CompletionResult } from '@codemirro
 import { MapMode, StateEffect, StateField } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { frontMatterBlock } from '@orden/markdown/front-matter'
-import {
-  blocksOf,
-  commentedLines,
-  foldName,
-  headingText,
-  isHeading,
-  type Row,
-  rowsOf,
-} from '@orden/markdown/links'
+import { blocksOf, commentedLines, foldName, headingText, isHeading, type Row, rowsOf } from '@orden/markdown/links'
 import { inCode } from '../code'
 import { bestShown } from './best-shown'
 import { blockNamer } from './block-namer'
@@ -41,32 +33,31 @@ const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
 const typing = (context: CompletionContext) => context.matchBefore(/\[\[[^[\]\n]*/)
 const REST_OF_LINK = /^([^[\]\n]*)\]\]/
 
-const insert =
-  (target: LinkWrite) => (view: EditorView, _completion: Completion, from: number, to: number) => {
-    const start = opened(view, from)
-    const line = view.state.doc.lineAt(to)
-    const rest = REST_OF_LINK.exec(view.state.doc.sliceString(to, line.to))?.[1] ?? null
-    const kept = rest === null ? '' : keptOf(rest, !!target.fragment)
-    const fragment = target.fragment ?? (kept.startsWith('#') ? headingOf(kept) : null)
-    const shown = target.shown ?? shownOf(kept)
-    const linked = view.state.facet(linkWriter)({
-      ...target,
-      fragment,
-      ...(shown ? { shown } : {}),
-    })
-    const wiki = linked.startsWith('[[') && linked.endsWith(']]')
-    const bar = linked.lastIndexOf('|')
-    const inTable = wiki && bar !== -1 && kept.includes('\\|')
-    const written = inTable ? `${linked.slice(0, bar)}\\${linked.slice(bar)}` : linked
-    const end = rest === null ? to : to + rest.length + 2
-    const text = !wiki && plainInMatter(view, start, end) ? JSON.stringify(linked) : written
+const insert = (target: LinkWrite) => (view: EditorView, _completion: Completion, from: number, to: number) => {
+  const start = opened(view, from)
+  const line = view.state.doc.lineAt(to)
+  const rest = REST_OF_LINK.exec(view.state.doc.sliceString(to, line.to))?.[1] ?? null
+  const kept = rest === null ? '' : keptOf(rest, !!target.fragment)
+  const fragment = target.fragment ?? (kept.startsWith('#') ? headingOf(kept) : null)
+  const shown = target.shown ?? shownOf(kept)
+  const linked = view.state.facet(linkWriter)({
+    ...target,
+    fragment,
+    ...(shown ? { shown } : {}),
+  })
+  const wiki = linked.startsWith('[[') && linked.endsWith(']]')
+  const bar = linked.lastIndexOf('|')
+  const inTable = wiki && bar !== -1 && kept.includes('\\|')
+  const written = inTable ? `${linked.slice(0, bar)}\\${linked.slice(bar)}` : linked
+  const end = rest === null ? to : to + rest.length + 2
+  const text = !wiki && plainInMatter(view, start, end) ? JSON.stringify(linked) : written
 
-    view.dispatch({
-      changes: { from: start, to: end, insert: text },
-      selection: { anchor: start + text.length },
-      userEvent: 'input.complete',
-    })
-  }
+  view.dispatch({
+    changes: { from: start, to: end, insert: text },
+    selection: { anchor: start + text.length },
+    userEvent: 'input.complete',
+  })
+}
 
 const OPENS_VALUE = /^[ \t]*(?:-[ \t]+|[^\s#:-][^:]*:[ \t]+)$/
 
@@ -109,10 +100,7 @@ export function offeredBlocks(source: string) {
 }
 
 export function about(index: NoteIndex, note: NoteRef): LinkWrite {
-  const markdown = shortestReaching(
-    note.path,
-    (written) => resolveRelative(index, written)?.path === note.path,
-  )
+  const markdown = shortestReaching(note.path, (written) => resolveRelative(index, written)?.path === note.path)
   return { name: nameFor(index, note), markdown, path: note.path, from: index.path }
 }
 
@@ -138,8 +126,7 @@ function rowsFor(index: NoteIndex, note: NoteRef, needle: string): Completion[] 
 
   for (const alias of note.aliases) {
     if (!alias.trim()) continue
-    if (archived ? foldName(alias) !== needle : needle && !foldName(alias).includes(needle))
-      continue
+    if (archived ? foldName(alias) !== needle : needle && !foldName(alias).includes(needle)) continue
 
     rows.push({
       label: alias,
@@ -186,12 +173,7 @@ function headingOptions(target: LinkWrite, note: NoteRef, typed: string): Comple
     }))
 }
 
-async function blockOptions(
-  index: NoteIndex,
-  target: LinkWrite,
-  note: NoteRef,
-  typed: string,
-): Promise<Completion[]> {
+async function blockOptions(index: NoteIndex, target: LinkWrite, note: NoteRef, typed: string): Promise<Completion[]> {
   const source = await index.read(note.path)
   if (source === null) return []
 
@@ -210,13 +192,7 @@ async function blockOptions(
 const headingRow = (row: Pick<Row, 'text' | 'code' | 'matter'> | undefined): string | null =>
   row && !row.code && !row.matter && isHeading(row.text) ? headingText(row.text) : null
 
-function linked(
-  path: string,
-  line: number,
-  heading: string | null,
-  id: string | null,
-  target: LinkWrite,
-) {
+function linked(path: string, line: number, heading: string | null, id: string | null, target: LinkWrite) {
   if (id) return insert({ ...target, fragment: `^${id}` })
   if (heading !== null) return insert({ ...target, fragment: heading })
   return name(path, line, target)
@@ -349,10 +325,7 @@ function foundBlock(index: NoteIndex, block: SpaceBlock, heading: string | null)
   }
 }
 
-async function spaceBlocks(
-  index: NoteIndex,
-  typed: string,
-): Promise<{ rows: Completion[]; all: boolean }> {
+async function spaceBlocks(index: NoteIndex, typed: string): Promise<{ rows: Completion[]; all: boolean }> {
   const needle = foldName(typed.trim())
   const ids = bestShown(namedBlocks(index, needle), needle, MOST_SHOWN)
   const rows = ids.rows
@@ -394,9 +367,7 @@ export function wikilinkCompletions(
 
   if (inner.startsWith('^^')) {
     return spaceBlocks(index, inner.slice(MARKER)).then(({ rows: options, all }) =>
-      options.length
-        ? { from: across, options, ...(all ? { validFor: /^[^[\]\n#|^]*$/ } : {}) }
-        : null,
+      options.length ? { from: across, options, ...(all ? { validFor: /^[^[\]\n#|^]*$/ } : {}) } : null,
     )
   }
 
@@ -408,9 +379,7 @@ export function wikilinkCompletions(
   }
 
   const named = inner.slice(0, hash).trim()
-  const note = named
-    ? resolveNote(index, named)
-    : (index.notes.find((one) => one.path === index.path) ?? null)
+  const note = named ? resolveNote(index, named) : (index.notes.find((one) => one.path === index.path) ?? null)
   if (!note) return null
 
   const after = inner.slice(hash + 1)

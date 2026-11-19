@@ -49,11 +49,8 @@ async function typing(pane: Pane, at: number, words: string, times: number) {
 
 function onPlan(text: string) {
   const at = deskOpen('plan.md', text)
-  const edit = (
-    edits: unknown,
-    agent = anAgent(),
-    ...rest: [ifRev?: string, deadline?: AbortSignal]
-  ) => editNote(at.desk, agent, PLAN, edits, ...rest)
+  const edit = (edits: unknown, agent = anAgent(), ...rest: [ifRev?: string, deadline?: AbortSignal]) =>
+    editNote(at.desk, agent, PLAN, edits, ...rest)
   return { ...at, edit }
 }
 
@@ -94,9 +91,7 @@ describe('an edit to an open note', () => {
   test('is refused when the words changed since the agent read them, if it asked', async () => {
     const { pane, edit } = onPlan('one')
     pane.type(3, '!')
-    expect(
-      await refusal(edit([{ at: { end: true }, insert_after: 'x' }], anAgent(), revOf('one'))),
-    ).toBe('rev_changed')
+    expect(await refusal(edit([{ at: { end: true }, insert_after: 'x' }], anAgent(), revOf('one')))).toBe('rev_changed')
   })
 
   test('uses the reader’s selection in the note in front of them', async () => {
@@ -224,12 +219,7 @@ describe('the reader’s typing wins', () => {
     const { pane, edit } = onPlan('word')
     pane.type(4, '!')
     const editing = timed(
-      edit(
-        [{ at: { quote: 'word' }, insert_after: '?' }],
-        anAgent(),
-        undefined,
-        deadlineIn(PATIENCE / 2),
-      ),
+      edit([{ at: { quote: 'word' }, insert_after: '?' }], anAgent(), undefined, deadlineIn(PATIENCE / 2)),
     )
     await typing(pane, 4, '!', PATIENCE / 500 + 4)
 
@@ -244,9 +234,7 @@ describe('the reader’s typing wins', () => {
     const agent = anAgent()
 
     const first = edit([{ at: { quote: 'x' }, replace: 'X' }], agent)
-    const second = timed(
-      edit([{ at: { quote: 'b' }, replace: 'B' }], agent, undefined, deadlineIn(3000)),
-    )
+    const second = timed(edit([{ at: { quote: 'b' }, replace: 'B' }], agent, undefined, deadlineIn(3000)))
     await typing(pane, 1, 'a', 10)
     await vi.advanceTimersByTimeAsync(3000)
     await first
@@ -354,9 +342,7 @@ describe('taking an agent’s edits back', () => {
     pane.type(0, 'Reader: ')
     await edit([{ at: { quote: 'Body' }, replace: 'Main' }])
     pane.type(pane.text.indexOf('adds') + 5, 'kindly ')
-    const waiting = edit([
-      { at: { quote: 'adds kindly this' }, replace: 'adds kindly this, and more' },
-    ])
+    const waiting = edit([{ at: { quote: 'adds kindly this' }, replace: 'adds kindly this, and more' }])
     await vi.advanceTimersByTimeAsync(2500)
     await waiting
     vi.useRealTimers()
@@ -426,9 +412,7 @@ describe('taking an agent’s edits back', () => {
   test('in a closed note, through what was written there since', async () => {
     const { desk, disk, fileOf } = deskWith({ 'log.md': 'first\n' })
     const agent = anAgent()
-    await editNote(desk, agent, { path: 'log.md' }, [
-      { at: { end: true }, insert_after: 'agent line' },
-    ])
+    await editNote(desk, agent, { path: 'log.md' }, [{ at: { end: true }, insert_after: 'agent line' }])
     disk.set('/space/log.md', `top\n${fileOf('log.md') ?? ''}`)
 
     expect(await undoAgent(desk, agent, { path: 'log.md' })).toEqual({ undone: 1 })
@@ -522,10 +506,9 @@ describe('the scratchpad', () => {
 
 describe('a note agents may not read', () => {
   test('is neither read, edited, written over nor undone by any way in', async () => {
-    const { desk, shut, fileOf, panes } = deskWith(
-      { 'locked/plan.md': 'secret words', 'open.md': 'plain' },
-      ['locked/plan.md'],
-    )
+    const { desk, shut, fileOf, panes } = deskWith({ 'locked/plan.md': 'secret words', 'open.md': 'plain' }, [
+      'locked/plan.md',
+    ])
     shut('locked/plan.md')
     const agent = anAgent()
     const at = { path: 'locked/plan.md' }

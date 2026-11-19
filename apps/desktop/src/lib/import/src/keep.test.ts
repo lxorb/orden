@@ -87,26 +87,20 @@ describe('a Google Keep export', () => {
   })
 
   test('an archived note goes to a folder called Archive, and says so', async () => {
-    const plan = await readKeep([
-      file('Keep/Old.json', keepNote({ title: 'Old', textContent: 'x', isArchived: true })),
-    ])
+    const plan = await readKeep([file('Keep/Old.json', keepNote({ title: 'Old', textContent: 'x', isArchived: true }))])
 
     expect(plan.files[0]?.path).toBe('Archive/Old.md')
     expect(plan.lost.some((one) => one.includes('Archive'))).toBe(true)
   })
 
   test('a colour is mentioned rather than kept', async () => {
-    const plan = await readKeep([
-      file('Keep/A.json', keepNote({ title: 'A', textContent: 'x', color: 'TEAL' })),
-    ])
+    const plan = await readKeep([file('Keep/A.json', keepNote({ title: 'A', textContent: 'x', color: 'TEAL' }))])
 
     expect(plan.lost.some((one) => one.includes('colours'))).toBe(true)
   })
 
   test('a note with no title is named after what it says', async () => {
-    const plan = await readKeep([
-      file('Keep/1600000.json', keepNote({ textContent: 'Ring the dentist' })),
-    ])
+    const plan = await readKeep([file('Keep/1600000.json', keepNote({ textContent: 'Ring the dentist' }))])
 
     expect(plan.files[0]?.path).toBe('Ring the dentist.md')
   })
@@ -125,10 +119,7 @@ describe('a Google Keep export', () => {
 describe('what a real Takeout does', () => {
   test('a list with no title is named after its first item, not its box', async () => {
     const plan = await readKeep([
-      file(
-        'Keep/1629964242424.json',
-        keepNote({ title: '', listContent: [{ text: 'Milk', isChecked: false }] }),
-      ),
+      file('Keep/1629964242424.json', keepNote({ title: '', listContent: [{ text: 'Milk', isChecked: false }] })),
     ])
 
     expect(plan.files[0]?.path).toBe('Milk.md')
@@ -314,9 +305,7 @@ test('a Keep list item reads none of its words as a field of the task', async ()
 })
 
 test('a Keep title is its words in the heading, maths, tags and links aside', async () => {
-  const plan = await readKeep([
-    file('Keep/A.json', keepNote({ title: 'Tickets $5-$10 #work', textContent: 'Words' })),
-  ])
+  const plan = await readKeep([file('Keep/A.json', keepNote({ title: 'Tickets $5-$10 #work', textContent: 'Words' }))])
   const [note] = plan.files.filter((one) => one.kind === 'note')
   if (note?.kind !== 'note') throw new Error('no note')
 

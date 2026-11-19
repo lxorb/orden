@@ -37,9 +37,7 @@ function treeOf(paths: Iterable<string>): Entry {
     })
   }
   const sort = (entry: Entry) => {
-    entry.children.sort((a, b) =>
-      a.is_dir !== b.is_dir ? (a.is_dir ? -1 : 1) : a.name.localeCompare(b.name),
-    )
+    entry.children.sort((a, b) => (a.is_dir !== b.is_dir ? (a.is_dir ? -1 : 1) : a.name.localeCompare(b.name)))
     entry.children.forEach(sort)
   }
   sort(root)
@@ -189,16 +187,14 @@ describe('a vault brought in as a space', () => {
         file('.Plan.md.icloud', 'bplist00'),
         file('.Budget.md.icloud', 'bplist00'),
       ]),
-    ).rejects.toThrow(
-      'Nothing in there can be read as notes. 2 files are in iCloud rather than on this Mac',
-    )
+    ).rejects.toThrow('Nothing in there can be read as notes. 2 files are in iCloud rather than on this Mac')
   })
 
   test('says it was not written when its space cannot be made', async () => {
     ws.refusing = true
-    await expect(
-      importAsSpace('Brain', [file('.obsidian/app.json', '{}'), file('Home.md', '# Home')]),
-    ).rejects.toThrow('That import could not be written.')
+    await expect(importAsSpace('Brain', [file('.obsidian/app.json', '{}'), file('Home.md', '# Home')])).rejects.toThrow(
+      'That import could not be written.',
+    )
     expect(wrote.size).toBe(0)
   })
 })

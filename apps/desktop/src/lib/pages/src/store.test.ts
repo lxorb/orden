@@ -11,10 +11,7 @@ const { readCanvas } = await import('@orden/markdown/canvas')
 const A4 = { width: 794, height: 1123 }
 
 function opened(text = blankPages(), path = '/space/Lecture.pages') {
-  const note = new NoteDoc(
-    { kind: 'pages', path, name: 'Lecture.pages', text, dirty: false },
-    () => undefined,
-  )
+  const note = new NoteDoc({ kind: 'pages', path, name: 'Lecture.pages', text, dirty: false }, () => undefined)
 
   const store = new PagesStore(new Tab(note, 'pane'))
   store.measured(1180, 722)

@@ -48,10 +48,7 @@ export class Search {
   }
 
   heard(batch: readonly Found[]) {
-    this.found = [
-      ...this.found,
-      ...batch.map((one) => ({ ...one, name: relativeName(this.root, one) })),
-    ]
+    this.found = [...this.found, ...batch.map((one) => ({ ...one, name: relativeName(this.root, one) }))]
   }
 
   moved(from: string, to: string): string | null {

@@ -40,8 +40,7 @@ export function changeable(view: ExplorerView): boolean {
   return !!listing && !listing.own && (!listing.spaces || inASpace(listing.path))
 }
 
-export const takenNames = (names: readonly string[]): Set<string> =>
-  new Set(names.map((one) => one.toLowerCase()))
+export const takenNames = (names: readonly string[]): Set<string> => new Set(names.map((one) => one.toLowerCase()))
 
 export const freeName = (taken: ReadonlySet<string>, name: string): string =>
   freePath(name, (candidate) => taken.has(candidate.toLowerCase()))
@@ -119,8 +118,7 @@ export async function removeForGood(view: ExplorerView, paths: readonly string[]
   if (inside.length) await trash(view, inside)
   if (!outside.length) return
   const sure = await prompt.confirm({
-    title:
-      outside.length === 1 ? 'Delete 1 item for good?' : `Delete ${outside.length} items for good?`,
+    title: outside.length === 1 ? 'Delete 1 item for good?' : `Delete ${outside.length} items for good?`,
     detail: 'This cannot be undone.',
     confirmLabel: 'Delete for good',
     danger: true,
@@ -171,21 +169,14 @@ export async function carry(
   await workspace.undone.batch(async () => {
     if (inASpace(folder)) {
       if (inside.length)
-        await (how === 'move'
-          ? workspace.moveMany(inside, folder)
-          : workspace.copyMany(inside, folder))
+        await (how === 'move' ? workspace.moveMany(inside, folder) : workspace.copyMany(inside, folder))
       if (outside.length) await bringInto(outside, folder, how === 'move', tell)
       return
     }
     const clash = await clashFor([...inside, ...outside], folder)
     if (clash === null) return
     const staying = how === 'move' ? inside : []
-    const stayed = await across(
-      [...outside, ...inside],
-      folder,
-      { how, clash, staying, fenced },
-      tell,
-    )
+    const stayed = await across([...outside, ...inside], folder, { how, clash, staying, fenced }, tell)
     if (stayed.length) await workspace.removeMany(stayed)
   })
   await view?.reload()
@@ -251,12 +242,7 @@ async function clashFor(sources: readonly string[], folder: string): Promise<Cla
   return answer === 'keep' || answer === 'replace' || answer === 'skip' ? answer : null
 }
 
-async function bringInto(
-  paths: readonly string[],
-  folder: string,
-  moving: boolean,
-  tell: (said: string) => void,
-) {
+async function bringInto(paths: readonly string[], folder: string, moving: boolean, tell: (said: string) => void) {
   const brought: PickedFile[] = []
   const whole: string[] = []
   for (const path of paths) {
@@ -298,10 +284,7 @@ function broughtFile(path: string, under: string): PickedFile {
   }
 }
 
-async function putBack(
-  staged: readonly { from: string; at: string }[],
-  done: readonly { from: string; to: string }[],
-) {
+async function putBack(staged: readonly { from: string; at: string }[], done: readonly { from: string; to: string }[]) {
   const left = new Set(staged.map((one) => one.from))
   for (const [index, { from, to }] of [...done.entries()].reverse()) {
     const aside = staged[index]?.at ?? from
@@ -312,10 +295,7 @@ async function putBack(
   }
 }
 
-export async function renameMany(
-  view: ExplorerView,
-  pairs: readonly { from: string; name: string }[],
-) {
+export async function renameMany(view: ExplorerView, pairs: readonly { from: string; name: string }[]) {
   const moving = pairs.filter(({ from, name }) => nameOf(from) !== name)
   if (!moving.length || !changeable(view)) return
   const folder = view.listing?.path ?? ''

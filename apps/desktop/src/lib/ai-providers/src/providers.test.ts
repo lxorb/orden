@@ -132,10 +132,7 @@ describe('the body one question is asked with', () => {
   })
 
   test('a question with no system prompt sends no empty one', () => {
-    const body = JSON.parse(bodyFor(claude, [{ role: 'user', content: 'Hello' }], true)) as Record<
-      string,
-      unknown
-    >
+    const body = JSON.parse(bodyFor(claude, [{ role: 'user', content: 'Hello' }], true)) as Record<string, unknown>
     expect(body).not.toHaveProperty('system')
   })
 })
@@ -256,9 +253,7 @@ describe('the model a provider starts on', () => {
         listed.filter((one) => one !== 'gemini-4-argon'),
       ),
     ).toBe('gemini-3.8-flash')
-    expect(firstModel('gemini', ['gemini-3-flash', 'gemini-3-pro-preview', 'gemini-3-pro'])).toBe(
-      'gemini-3-pro',
-    )
+    expect(firstModel('gemini', ['gemini-3-flash', 'gemini-3-pro-preview', 'gemini-3-pro'])).toBe('gemini-3-pro')
     expect(firstModel('gemini', ['gemini-embedding-2', 'imagen-4.0-generate'])).toBeNull()
   })
 
@@ -274,12 +269,7 @@ describe('the plans', () => {
 
   test('are offered on a desktop only, first, and Claude Code only where the build has it', () => {
     expect(offeredKinds(false, true)).toEqual(['anthropic', 'openai', 'gemini', 'compatible'])
-    expect(offeredKinds(true, true).slice(0, 4)).toEqual([
-      'claude-code',
-      'chatgpt',
-      'codex',
-      'gemini-cli',
-    ])
+    expect(offeredKinds(true, true).slice(0, 4)).toEqual(['claude-code', 'chatgpt', 'codex', 'gemini-cli'])
     expect(isLocal('gemini-cli')).toBe(true)
     expect(isLocal('gemini')).toBe(false)
     expect(offeredKinds(true, false)).not.toContain('claude-code')
@@ -289,9 +279,7 @@ describe('the plans', () => {
     expect(askUrl(plan)).toBe('https://api.openai.com/v1/responses')
     expect(deltaIn('chatgpt', { type: 'response.output_text.delta', delta: 'hi' })).toBe('hi')
     expect(deltaIn('chatgpt', { type: 'response.completed' })).toBe('')
-    expect(troubleIn({ type: 'response.failed', response: { error: { message: 'no' } } })).toBe(
-      'no',
-    )
+    expect(troubleIn({ type: 'response.failed', response: { error: { message: 'no' } } })).toBe('no')
     expect(troubleIn({ type: 'error', message: 'rate limited' })).toBe('rate limited')
   })
 
@@ -370,8 +358,6 @@ describe('a Gemini key', () => {
   })
 
   test('a trouble said as a list is its first error’s words', () => {
-    expect(troubleIn([{ error: { code: 429, message: 'Quota exceeded.' } }])).toBe(
-      'Quota exceeded.',
-    )
+    expect(troubleIn([{ error: { code: 429, message: 'Quota exceeded.' } }])).toBe('Quota exceeded.')
   })
 })

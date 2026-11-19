@@ -34,8 +34,7 @@ if (!edge && (release.draft || release.prerelease)) {
 
 const asset = 'Orden'
 const version = edge
-  ? (process.argv[3] ??
-    release.assets.map((one) => /^Orden-(.+)-linux-x64\.deb$/.exec(one.name)?.[1]).find(Boolean))
+  ? (process.argv[3] ?? release.assets.map((one) => /^Orden-(.+)-linux-x64\.deb$/.exec(one.name)?.[1]).find(Boolean))
   : asked
 if (!version) throw new Error(`${tag}: no Linux .deb on the release`)
 
@@ -144,9 +143,7 @@ edit('chocolatey/nib.nuspec', [
 ])
 edit('chocolatey/tools/chocolateyinstall.ps1', [
   ...['x64', 'arm64'].map((arch) => [
-    new RegExp(
-      String.raw`'https://github\.com/[^/]+/[^/]+/${OLD}(-windows-${arch}\.msi'[^]*?')[0-9A-Fa-f]{64}'`,
-    ),
+    new RegExp(String.raw`'https://github\.com/[^/]+/[^/]+/${OLD}(-windows-${arch}\.msi'[^]*?')[0-9A-Fa-f]{64}'`),
     `'${download}/Orden-${version}$1${digest(file(`windows-${arch}`, '.msi')).toUpperCase()}'`,
   ]),
 ])

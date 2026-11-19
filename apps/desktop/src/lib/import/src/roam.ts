@@ -69,9 +69,7 @@ export async function readRoam(sources: readonly Source[]): Promise<ImportPlan> 
 
       const day = dayName(said)
       const parts = said.split('/').filter((one) => one.trim())
-      const path = day
-        ? `${JOURNALS}/${day}`
-        : (parts.length ? parts : ['']).map((one) => safeName(one)).join('/')
+      const path = day ? `${JOURNALS}/${day}` : (parts.length ? parts : ['']).map((one) => safeName(one)).join('/')
       const title = path.split('/').pop() ?? path
 
       const body = linesOf(page.children, 0, graph, new Set()).join('\n')
@@ -103,9 +101,7 @@ function asPages(text: string): RoamPage[] | null {
     const said: unknown = JSON.parse(text)
     if (!Array.isArray(said)) return null
 
-    const pages = said.filter(
-      (one): one is RoamPage => !!one && typeof one === 'object' && 'title' in one,
-    )
+    const pages = said.filter((one): one is RoamPage => !!one && typeof one === 'object' && 'title' in one)
 
     return pages.length ? pages : null
   } catch {
@@ -135,12 +131,7 @@ function blocksIn(pages: readonly RoamPage[]): Pick<Graph, 'known' | 'under'> {
   return { known, under }
 }
 
-function linesOf(
-  blocks: unknown,
-  depth: number,
-  graph: Graph,
-  embedding: ReadonlySet<string>,
-): string[] {
+function linesOf(blocks: unknown, depth: number, graph: Graph, embedding: ReadonlySet<string>): string[] {
   if (!Array.isArray(blocks)) return []
 
   const out: string[] = []
@@ -288,5 +279,4 @@ export function dayName(title: string): string | null {
   return dayOf(`${found[3]}-${String(month).padStart(2, '0')}-${(found[2] ?? '').padStart(2, '0')}`)
 }
 
-const asNumber = (value: unknown): number | null =>
-  typeof value === 'number' && Number.isFinite(value) ? value : null
+const asNumber = (value: unknown): number | null => (typeof value === 'number' && Number.isFinite(value) ? value : null)

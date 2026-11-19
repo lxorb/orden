@@ -66,9 +66,7 @@ class Quick {
   }
 
   get asking(): boolean {
-    return this.drawn.some((turn) =>
-      turn.parts.some((part) => part.kind === 'tool' && part.state === 'asking'),
-    )
+    return this.drawn.some((turn) => turn.parts.some((part) => part.kind === 'tool' && part.state === 'asking'))
   }
 
   get running(): boolean {
@@ -238,8 +236,7 @@ class Quick {
     ) {
       const { view } = target
       const doc = view.state.doc.toString()
-      const at =
-        view.state.doc === target.doc ? target.at : carried(target.doc.toString(), doc, target.at)
+      const at = view.state.doc === target.doc ? target.at : carried(target.doc.toString(), doc, target.at)
       const { from, insert, caret } = insertion(doc, Math.min(at, doc.length), text)
       view.dispatch({
         changes: { from, insert },

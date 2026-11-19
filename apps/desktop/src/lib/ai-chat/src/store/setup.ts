@@ -20,9 +20,7 @@ async function instructionFile(path: string): Promise<string | null> {
 
 export async function instructionsOf(thread: Thread): Promise<string> {
   const space = workspace.spaces.find((one) => one.id === thread.space)
-  const read = space
-    ? await Promise.all(INSTRUCTIONS.map((name) => instructionFile(`${space.root}/${name}`)))
-    : []
+  const read = space ? await Promise.all(INSTRUCTIONS.map((name) => instructionFile(`${space.root}/${name}`))) : []
   const commands = await instructionsFor(thread).catch(() => '')
   const said = [
     ...read.filter((one): one is string => !!one),

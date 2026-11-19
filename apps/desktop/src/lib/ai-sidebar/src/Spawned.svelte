@@ -20,8 +20,7 @@
       <li>
         <button class="orden-row is-short" onclick={() => void chat.openThread(one.id)}>
           <span class="orden-row-label">{one.title || 'Untitled'}</span>
-          {#if chat.running.includes(one.id)}<span class="dot"></span>{:else}<span
-              class="orden-row-meta">Open</span
+          {#if chat.running.includes(one.id)}<span class="dot"></span>{:else}<span class="orden-row-meta">Open</span
             >{/if}
         </button>
       </li>

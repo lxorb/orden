@@ -57,9 +57,7 @@ afterEach(closed)
 const showing = (bubble: PassBubble) => draw(PassFill, { bubble })
 
 function press(words: string) {
-  const button = [...target.querySelectorAll('button')].find((one) =>
-    one.textContent.includes(words),
-  )
+  const button = [...target.querySelectorAll('button')].find((one) => one.textContent.includes(words))
   if (!button) throw new Error(`no button saying ${words}`)
   button.click()
   flushSync()

@@ -25,12 +25,9 @@ describe('walking it', () => {
     [-1, 'ArrowDown', 0],
     [-1, 'ArrowUp', 3],
     [1, 'z', 1],
-  ])(
-    'from row %i, %s steps, wraps, goes to an end, or stays for a word no row starts with',
-    (from, key, to) => {
-      expect(at(opensAt(from), key).walk.cursor).toBe(to)
-    },
-  )
+  ])('from row %i, %s steps, wraps, goes to an end, or stays for a word no row starts with', (from, key, to) => {
+    expect(at(opensAt(from), key).walk.cursor).toBe(to)
+  })
 
   test('jumps to what is being spelled, letters in a row counting as one word', () => {
     const first = at(opensAt(0), 'o')

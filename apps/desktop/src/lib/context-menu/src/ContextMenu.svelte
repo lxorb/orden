@@ -156,9 +156,7 @@
     if (menu.open) spelling = { typed: '', typedAt: 0 }
   })
 
-  const rows = () => [
-    ...(element?.querySelectorAll<HTMLElement>('.orden-row:not(:disabled)') ?? []),
-  ]
+  const rows = () => [...(element?.querySelectorAll<HTMLElement>('.orden-row:not(:disabled)') ?? [])]
 
   function onKey(event: KeyboardEvent) {
     const list = rows()

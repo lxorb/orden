@@ -76,11 +76,7 @@ export function nearest(typed: string, values: readonly string[]): string[] {
     .map((one) => one.value)
 }
 
-export function chosen(
-  source: string,
-  at: Completing,
-  value: string,
-): { text: string; caret: number } {
+export function chosen(source: string, at: Completing, value: string): { text: string; caret: number } {
   const escaped = value.replace(/[\\"]/g, '\\$&')
   const written = at.quoted ? escaped : /[\s"\\()]/.test(value) ? `"${escaped}"` : value
   const closed = source.charAt(at.to) === '"'

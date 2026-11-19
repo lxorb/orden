@@ -1,13 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import {
-  readSpec,
-  type Spec,
-  specMoved,
-  steppedBack,
-  steppedForward,
-  wentTo,
-  writeSpec,
-} from './spec'
+import { readSpec, type Spec, specMoved, steppedBack, steppedForward, wentTo, writeSpec } from './spec'
 
 describe("a file explorer's words", () => {
   it('come back as they were written, and nothing else reads as one', () => {

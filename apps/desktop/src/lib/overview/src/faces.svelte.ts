@@ -3,16 +3,7 @@ import { webPages } from '@orden/contracts'
 import type { Tab } from '../../documents/src/api'
 import { workspace } from '../../workspace/src/api'
 import { TAB_KINDS } from '../../tab-kinds/src/api'
-import {
-  evicted,
-  type Face,
-  forgetFaces,
-  LARGEST,
-  readFaces,
-  sizeOf,
-  upgradeFaces,
-  writeFace,
-} from './faces'
+import { evicted, type Face, forgetFaces, LARGEST, readFaces, sizeOf, upgradeFaces, writeFace } from './faces'
 import { shownBox, snapshotOf } from './mirror'
 import { upgradeWindows } from './places.svelte'
 import { lastingKeys } from './tab-keys'
@@ -55,8 +46,7 @@ class Faces {
     setTimeout(() => {
       if (!workspace.tabs.includes(tab)) return
       const snapshot = later()
-      if (snapshot.html.length <= LARGEST)
-        this.keep(tab, { ...snapshot, shot: null, at: Date.now() })
+      if (snapshot.html.length <= LARGEST) this.keep(tab, { ...snapshot, shot: null, at: Date.now() })
     }, TAKE_LATER)
   }
 

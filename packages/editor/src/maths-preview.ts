@@ -33,10 +33,7 @@ function texOf(read: (from: number, to: number) => string, node: SyntaxNode): st
   return body.trim()
 }
 
-function spanOf(
-  read: (from: number, to: number) => string,
-  node: SyntaxNode | null,
-): MathsSpan | null {
+function spanOf(read: (from: number, to: number) => string, node: SyntaxNode | null): MathsSpan | null {
   if (!node) return null
   return { from: node.from, to: node.to, tex: texOf(read, node), block: node.name === 'BlockMath' }
 }
@@ -145,9 +142,12 @@ function cellRange(cell: HTMLElement, from: number, to: number): Range {
   return range
 }
 
-const boxOf = (
-  rect: DOMRect | { top: number; bottom: number; left: number; right: number },
-): Box => ({ top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right })
+const boxOf = (rect: DOMRect | { top: number; bottom: number; left: number; right: number }): Box => ({
+  top: rect.top,
+  bottom: rect.bottom,
+  left: rect.left,
+  right: rect.right,
+})
 
 class Preview implements PluginValue {
   readonly dom: HTMLElement

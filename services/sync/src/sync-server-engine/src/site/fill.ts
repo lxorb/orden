@@ -1,12 +1,5 @@
 import { noteKey } from '../notes'
-import {
-  type Env,
-  FRONT_REV,
-  keepPictures,
-  keepWords,
-  titleFrom,
-  writeFront,
-} from '../../../sync-server/src/api'
+import { type Env, FRONT_REV, keepPictures, keepWords, titleFrom, writeFront } from '../../../sync-server/src/api'
 
 const AT_ONCE = 200
 

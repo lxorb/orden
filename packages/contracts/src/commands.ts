@@ -11,8 +11,7 @@ function held(key: string, load: () => Promise<Runs>): () => void {
   }
 }
 
-export const registerCommands = (space: `${string}.`, load: () => Promise<Runs>): (() => void) =>
-  held(space, load)
+export const registerCommands = (space: `${string}.`, load: () => Promise<Runs>): (() => void) => held(space, load)
 
 export const registerCommand = (id: string, load: () => Promise<() => void>): (() => void) =>
   held(id, async () => ({ [id]: await load() }))
@@ -26,25 +25,14 @@ export async function runCommand(id: string): Promise<boolean> {
 }
 
 export type CommandPlace =
-  | 'send'
-  | 'web'
-  | 'agent-undo'
-  | 'export-picker'
-  | 'export'
-  | 'record'
-  | 'ai-accounts'
-  | 'rewrite'
-  | 'transcribe'
+  'send' | 'web' | 'agent-undo' | 'export-picker' | 'export' | 'record' | 'ai-accounts' | 'rewrite' | 'transcribe'
 
 export type CommandRows = (view: object | undefined) => readonly CommandExtension[]
 
 const rowLoads = new Map<CommandPlace, () => Promise<CommandRows>>()
 const rowsLoaded = new Map<CommandPlace, CommandRows>()
 
-export function registerCommandRows(
-  place: CommandPlace,
-  load: () => Promise<CommandRows>,
-): () => void {
+export function registerCommandRows(place: CommandPlace, load: () => Promise<CommandRows>): () => void {
   rowLoads.set(place, load)
   rowsLoaded.delete(place)
   return () => {

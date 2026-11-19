@@ -62,9 +62,7 @@ const YESTERDAY = new Set(['yesterday', 'gestern'])
 
 export function weekdayFrom(day: number, fromToday: boolean): string {
   const ahead = `(${day} - number(today().format("E")) + 7) % 7`
-  return fromToday
-    ? `today() + duration((${ahead}) + "d")`
-    : `today() + duration(((${ahead}) || 7) + "d")`
+  return fromToday ? `today() + duration((${ahead}) + "d")` : `today() + duration(((${ahead}) || 7) + "d")`
 }
 
 function spanOf(count: string, unit: string): { text: string; clock: boolean } | null {
@@ -78,10 +76,7 @@ function spanOf(count: string, unit: string): { text: string; clock: boolean } |
   return null
 }
 
-export function dateWords(
-  words: string,
-  options: DateWordOptions,
-): { expression: string; clock: boolean } | null {
+export function dateWords(words: string, options: DateWordOptions): { expression: string; clock: boolean } | null {
   const text = words.trim().toLowerCase().replace(/\s+/g, ' ')
   if (TODAY.has(text)) return { expression: 'today()', clock: false }
   if (TOMORROW.has(text)) return { expression: 'today() + "1d"', clock: false }
@@ -109,9 +104,7 @@ export function dateWords(
 
   const year = Number((options.today ?? todayOf()).slice(0, 4))
   const named =
-    /^(?:([a-zäö]+)\.? (\d{1,2})(?:st|nd|rd|th)?|(\d{1,2})(?:st|nd|rd|th|\.)? ([a-zäö]+)\.?)(?:,? (\d{4}))?$/.exec(
-      text,
-    )
+    /^(?:([a-zäö]+)\.? (\d{1,2})(?:st|nd|rd|th)?|(\d{1,2})(?:st|nd|rd|th|\.)? ([a-zäö]+)\.?)(?:,? (\d{4}))?$/.exec(text)
   if (named) {
     const month = MONTHS[named[1] ?? named[4] ?? '']
     const dayOf = Number(named[2] ?? named[3])

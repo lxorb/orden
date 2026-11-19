@@ -125,9 +125,7 @@ export function folderPaths(
     if (!folder) return ''
     seen.add(id)
     const parent =
-      folder.parent !== null && byId.has(folder.parent) && !seen.has(folder.parent)
-        ? pathOf(folder.parent, seen)
-        : ''
+      folder.parent !== null && byId.has(folder.parent) && !seen.has(folder.parent) ? pathOf(folder.parent, seen) : ''
     const path = parent === '' ? folder.name.trim() : `${parent}/${folder.name.trim()}`
     paths.set(id, path)
     return path

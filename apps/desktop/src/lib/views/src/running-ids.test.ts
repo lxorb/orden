@@ -61,7 +61,5 @@ test('a copy that lands outside every base keeps its id', async () => {
 
   expect(withoutIds('/s/Notes/Archive/A.md', '---\nid: BUG-2\n---\n')).toBeNull()
   expect(withoutIds('/s/Notes/Papers/Smith.md', '---\nid: 2019\n---\n')).toBeNull()
-  expect(withoutIds('/s/Notes/Lit/Smith.md', '---\nid: 2019\ntitle: S\n---\n')).toBe(
-    '---\ntitle: S\n---\n',
-  )
+  expect(withoutIds('/s/Notes/Lit/Smith.md', '---\nid: 2019\ntitle: S\n---\n')).toBe('---\ntitle: S\n---\n')
 })

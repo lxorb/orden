@@ -27,10 +27,7 @@ export function fallen(raw: number, elapsed: number, still = false): number {
   return raw * left * left
 }
 
-export function startedNearEnd(
-  viewBottom: number,
-  last: { y: number; height: number } | null,
-): boolean {
+export function startedNearEnd(viewBottom: number, last: { y: number; height: number } | null): boolean {
   if (!last) return false
 
   return viewBottom >= last.y + last.height / 2

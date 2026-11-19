@@ -105,10 +105,7 @@ vi.mock('../../workspace/src/api', () => ({
       const { homeOf } = await import('../../left-spaces/src/api')
       const { account: signed } = await import('../../accounts/src/account.svelte')
       const kept = world.onDisk.find(
-        (one) =>
-          one.name === name &&
-          home !== undefined &&
-          homeOf(one.root, signed.user?.id ?? null) === home,
+        (one) => one.name === name && home !== undefined && homeOf(one.root, signed.user?.id ?? null) === home,
       )
       if (kept) {
         world.spaces.push(kept)
@@ -132,8 +129,7 @@ vi.mock('../../workspace/src/api', () => ({
 const { account } = await import('../../accounts/src/account.svelte')
 const { pairSpaces } = await import('./space-pairing')
 const { leaveSpaces, leftBy } = await import('../../left-spaces/src/api')
-const { endSpace, endsOwed, holder, iconOwed, sendIcon, sendOrder } =
-  await import('../../space-owed/src/api')
+const { endSpace, endsOwed, holder, iconOwed, sendIcon, sendOrder } = await import('../../space-owed/src/api')
 
 function pairing() {
   const pairs: { root: string; spaceId: string; shared: boolean }[] = []
@@ -141,8 +137,7 @@ function pairing() {
     pairs,
     pairing: {
       pairs: () => pairs,
-      pair: (root: string, spaceId: string, shared: boolean) =>
-        void pairs.push({ root, spaceId, shared }),
+      pair: (root: string, spaceId: string, shared: boolean) => void pairs.push({ root, spaceId, shared }),
       unpair: () => undefined,
       share: () => undefined,
     },

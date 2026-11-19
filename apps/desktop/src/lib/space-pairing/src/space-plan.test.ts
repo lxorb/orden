@@ -276,10 +276,7 @@ describe('a space somebody shared', () => {
     const again = plan({
       local: [local('Work'), { name: 'Work 2', root: '/spaces/Work 2' }],
       remote: [remote('Work', 'id-mine'), theirs('Work', 'id-theirs')],
-      mirrors: [
-        mirror('Work', 'id-mine'),
-        { root: '/spaces/Work 2', spaceId: 'id-theirs', shared: true },
-      ],
+      mirrors: [mirror('Work', 'id-mine'), { root: '/spaces/Work 2', spaceId: 'id-theirs', shared: true }],
     })
 
     expect(again).toEqual({

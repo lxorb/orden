@@ -30,9 +30,7 @@ describe('the space that holds a path', () => {
 
   test('is asked in one place only', () => {
     const copies = sources(LIB)
-      .filter((file) =>
-        /\.(?:find|some)\(\s*\((\w+)\) =>\s*within\(\1\.root,/.test(readFileSync(file, 'utf8')),
-      )
+      .filter((file) => /\.(?:find|some)\(\s*\((\w+)\) =>\s*within\(\1\.root,/.test(readFileSync(file, 'utf8')))
       .map((file) => relative(LIB, file))
     expect(copies).toEqual(['platform/src/space-paths.ts'])
   })

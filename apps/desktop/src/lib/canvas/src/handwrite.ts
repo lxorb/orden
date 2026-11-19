@@ -59,7 +59,5 @@ export async function handwrite(): Promise<void> {
   const root = workspace.rootHolding(path)
   const inSpace = root === null ? null : spaceRelative(root, path, written)
   tools.choose('draw')
-  await workspace.openCanvas(
-    root !== null && inSpace ? joinPath(root, inSpace) : joinPath(folderOf(path), written),
-  )
+  await workspace.openCanvas(root !== null && inSpace ? joinPath(root, inSpace) : joinPath(folderOf(path), written))
 }

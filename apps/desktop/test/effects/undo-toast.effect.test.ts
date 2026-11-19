@@ -165,9 +165,7 @@ test('the keyboard in it keeps it up, as the pointer on it does', () => {
 })
 
 test('Undo pressed from the keyboard leaves the keyboard in the note, not on the page', async () => {
-  vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([
-    new DOMRect(0, 0, 10, 10),
-  ] as unknown as DOMRectList)
+  vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([new DOMRect(0, 0, 10, 10)] as unknown as DOMRectList)
   vi.spyOn(workspace, 'undoFileAction').mockImplementation(() => {
     workspace.undone.drop()
     return Promise.resolve()
@@ -184,9 +182,7 @@ test('Undo pressed from the keyboard leaves the keyboard in the note, not on the
     undo?.focus()
     undo?.click()
     flushSync()
-    await vi.waitFor(() =>
-      expect(document.activeElement?.classList.contains('cm-content')).toBe(true),
-    )
+    await vi.waitFor(() => expect(document.activeElement?.classList.contains('cm-content')).toBe(true))
   } finally {
     note.remove()
   }

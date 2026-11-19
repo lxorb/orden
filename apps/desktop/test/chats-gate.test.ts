@@ -7,16 +7,8 @@ vi.stubGlobal('localStorage', {
   removeItem: (key: string) => void store.delete(key),
 })
 
-const {
-  hiddenKinds,
-  KINDS_KEY,
-  CHATS_WORD,
-  EXPERIMENTAL_WORD,
-  TIME_WORD,
-  PASS_WORD,
-  chatsOn,
-  kindsHere,
-} = await import('../src/lib/gates/src/api')
+const { hiddenKinds, KINDS_KEY, CHATS_WORD, EXPERIMENTAL_WORD, TIME_WORD, PASS_WORD, chatsOn, kindsHere } =
+  await import('../src/lib/gates/src/api')
 const { setWord, receive } = await import('../src/lib/gates/src/api')
 const { runnable, SHORTCUTS } = await import('../src/lib/shortcuts/src/registry')
 const { experimentalPane } = await import('../src/lib/settings/src/experimental-pane')
@@ -59,10 +51,7 @@ describe('Chats, until it is turned on', () => {
   })
 
   test('is off for someone who chose other features before, here and from the account', () => {
-    store.set(
-      KINDS_KEY,
-      JSON.stringify([EXPERIMENTAL_WORD, 'terminal', TIME_WORD, PASS_WORD, 'chat']),
-    )
+    store.set(KINDS_KEY, JSON.stringify([EXPERIMENTAL_WORD, 'terminal', TIME_WORD, PASS_WORD, 'chat']))
     hiddenKinds.restore()
     expect(chatsOn()).toBe(false)
     receive({ hiddenKinds: [EXPERIMENTAL_WORD, 'terminal', TIME_WORD] })

@@ -21,9 +21,7 @@ describe('heights', () => {
 
   test('finds the row at a height', () => {
     const list = plain([10, 20, 30, 40])
-    expect([-5, 0, 9, 10, 29, 30, 59, 60, 99, 500].map((y) => list.at(y))).toEqual([
-      0, 0, 0, 1, 1, 2, 2, 3, 3, 3,
-    ])
+    expect([-5, 0, 9, 10, 29, 30, 59, 60, 99, 500].map((y) => list.at(y))).toEqual([0, 0, 0, 1, 1, 2, 2, 3, 3, 3])
   })
 
   test('a span covers what is on screen and the overscan either side', () => {

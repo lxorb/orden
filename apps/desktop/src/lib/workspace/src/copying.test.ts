@@ -10,10 +10,7 @@ const { told, disk, reads } = vi.hoisted(() => ({
 
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
-  invoke: async (
-    command: string,
-    args: { from: string; to: string; path: string; content: string },
-  ) => {
+  invoke: async (command: string, args: { from: string; to: string; path: string; content: string }) => {
     if (command === 'read_note') {
       reads.push(args.path)
       return disk.get(args.path) ?? null
@@ -46,9 +43,7 @@ serveWorkspace({
     Promise.resolve({
       numbersAt: (path: string) => path.startsWith('/s/Bugs/'),
       withoutIds: (path: string, text: string) =>
-        path.startsWith('/s/Bugs/') && /^id: BUG-/m.test(text)
-          ? text.replace(/^id: .*\n/m, '')
-          : null,
+        path.startsWith('/s/Bugs/') && /^id: BUG-/m.test(text) ? text.replace(/^id: .*\n/m, '') : null,
     }),
 })
 const { copyRows } = await import('./copying')
@@ -195,9 +190,7 @@ describe('a copy keeps what Orden keeps about the item', () => {
       } as never,
       [{ from: '/s/Diary.md', into: '/t' }],
     )
-    expect(protection.covering('/t/Diary.md')).toEqual([
-      { root: '/t', key: 'Diary.md', way: 'password' },
-    ])
+    expect(protection.covering('/t/Diary.md')).toEqual([{ root: '/t', key: 'Diary.md', way: 'password' }])
   })
 
   test('a folder whose folder note is protected leaves a copy whose renamed folder note is as protected', async () => {

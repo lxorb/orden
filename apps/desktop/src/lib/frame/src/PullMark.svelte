@@ -6,9 +6,7 @@
   const waiting = $derived(pull.refreshing || pull.failed)
   const at = $derived(waiting ? REACH : pull.at)
   const ready = $derived(pull.ready)
-  const said = $derived(
-    pull.refreshing ? 'Syncing' : pull.failed ? 'Sync failed' : nameFor('app.refresh'),
-  )
+  const said = $derived(pull.refreshing ? 'Syncing' : pull.failed ? 'Sync failed' : nameFor('app.refresh'))
   const part = $derived(Math.min(1, at / REACH))
   const still = stillness()
 </script>

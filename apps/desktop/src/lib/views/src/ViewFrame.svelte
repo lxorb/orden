@@ -28,11 +28,7 @@
   function keydown(event: KeyboardEvent & { currentTarget: HTMLElement }) {
     const target = event.target
     if (keyElsewhere(event, event.currentTarget)) return
-    if (
-      target instanceof HTMLElement &&
-      target.closest('input, textarea, select, [contenteditable]')
-    )
-      return
+    if (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable]')) return
     if (shortcuts.pressed('edit.undo', event)) {
       event.preventDefault()
       void workspace.undoFileAction()

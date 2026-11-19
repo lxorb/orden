@@ -2,13 +2,7 @@ import { joined } from './bytes'
 import { newKey, open, openBytes, seal, sealBytes, WrongSecret } from './crypto'
 import { FILE_PART, MOST_FILE_BYTES } from './file-sizes'
 
-export {
-  FILE_PART,
-  MOST_FILE_BYTES,
-  MOST_FILE_PARTS,
-  MOST_SEALED_PART,
-  SEALED_EXTRA,
-} from './file-sizes'
+export { FILE_PART, MOST_FILE_BYTES, MOST_FILE_PARTS, MOST_SEALED_PART, SEALED_EXTRA } from './file-sizes'
 
 export interface SealedFile {
   key: string

@@ -125,9 +125,7 @@ describe('the web app, offline', () => {
     const shown = await app.open('/')
     expect(await shown?.text()).toBe(page('/assets/main-a1.js'))
     expect(await (await app.load('/assets/main-a1.js'))?.text()).toBe('main')
-    expect(await (await app.open('/Notes/Plan.md?orden=x'))?.text()).toBe(
-      page('/assets/main-a1.js'),
-    )
+    expect(await (await app.open('/Notes/Plan.md?orden=x'))?.text()).toBe(page('/assets/main-a1.js'))
   })
 
   test('keeps a part of the app loaded later, and asks the network for it no more', async () => {

@@ -45,11 +45,7 @@ const signedIn = () => true
 
 let marked: Record<string, MetaPatch>[] = []
 
-function space(
-  notes: Record<string, string>,
-  items: Record<string, ItemMeta> = {},
-  describes = true,
-): HoldsNotes {
+function space(notes: Record<string, string>, items: Record<string, ItemMeta> = {}, describes = true): HoldsNotes {
   for (const [path, text] of Object.entries(notes)) disk.set(path, text)
   return {
     itemMeta: {
@@ -164,10 +160,7 @@ describe('the mark a rewritten space carries', () => {
     kept.set(SETEXT_GONE, [SPACE])
     const items: Record<string, ItemMeta> = {}
     const ws = space({ [`${SPACE}/new.md`]: 'A rule since\n---\n' }, items)
-    ;(ws.itemMeta as { setMany: unknown }).setMany = (
-      _: string,
-      patches: Record<string, MetaPatch>,
-    ) => {
+    ;(ws.itemMeta as { setMany: unknown }).setMany = (_: string, patches: Record<string, MetaPatch>) => {
       for (const [at, patch] of Object.entries(patches)) items[at] = patch as ItemMeta
     }
     keepSetextMarked(ws, SPACE)
@@ -178,10 +171,7 @@ describe('the mark a rewritten space carries', () => {
 
   test('is left as it is where a note still holds it', () => {
     kept.set(SETEXT_GONE, [SPACE])
-    keepSetextMarked(
-      space({ [`${SPACE}/a.md`]: 'x\n' }, { 'b.md': { [SETEXT_KEY]: 'gone' } }),
-      SPACE,
-    )
+    keepSetextMarked(space({ [`${SPACE}/a.md`]: 'x\n' }, { 'b.md': { [SETEXT_KEY]: 'gone' } }), SPACE)
     expect(marked).toEqual([])
   })
 

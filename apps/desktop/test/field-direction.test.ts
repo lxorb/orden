@@ -18,8 +18,7 @@ test('every field reads each line in the direction of its words, its placeholder
 })
 
 test('a name alone in its label is laid out in its own direction, so a cut-off keeps its start', () => {
-  const alone =
-    /<(span|p|div|strong)\b(?:[^>{]|\{[^}]*\})*>\s*<bdi>\{[^<]*\}<\/bdi\s*>\s*<\/\1\s*>/g
+  const alone = /<(span|p|div|strong)\b(?:[^>{]|\{[^}]*\})*>\s*<bdi>\{[^<]*\}<\/bdi\s*>\s*<\/\1\s*>/g
   const isolated = walk(SOURCE, svelte).flatMap((path) =>
     [...readFileSync(path, 'utf8').matchAll(alone)].map(
       (one) => `${path.slice(SOURCE.length)}: ${one[0].replace(/\s+/g, ' ')}`,
@@ -41,8 +40,7 @@ test('a label aligned with its row says so in a way Chromium reads too', () => {
     readFileSync(path, 'utf8')
       .split('\n')
       .flatMap((line, at, lines) =>
-        /text-align:\s*match-parent/.test(line) &&
-        !/text-align:\s*-webkit-match-parent/.test(lines[at - 1] ?? '')
+        /text-align:\s*match-parent/.test(line) && !/text-align:\s*-webkit-match-parent/.test(lines[at - 1] ?? '')
           ? [`${path}:${at + 1}`]
           : [],
       ),
@@ -54,14 +52,8 @@ test('a box laid out in its name’s direction carries no gap or flow of its own
   const turned = walk(SOURCE, svelte).flatMap((path) => {
     const text = readFileSync(path, 'utf8')
     const style = text.slice(text.indexOf('<style'))
-    return [
-      ...text.matchAll(
-        /<(?!input|textarea)\w+\b((?:[^>{]|\{[^}]*\})*?\bdir="auto"(?:[^>{]|\{[^}]*\})*)>/g,
-      ),
-    ]
-      .flatMap((tag) =>
-        (/class="([^"]*)"/.exec(tag[1] ?? '')?.[1] ?? '').split(/\s+/).filter(Boolean),
-      )
+    return [...text.matchAll(/<(?!input|textarea)\w+\b((?:[^>{]|\{[^}]*\})*?\bdir="auto"(?:[^>{]|\{[^}]*\})*)>/g)]
+      .flatMap((tag) => (/class="([^"]*)"/.exec(tag[1] ?? '')?.[1] ?? '').split(/\s+/).filter(Boolean))
       .filter((name) => {
         const own = [...style.matchAll(/([^{}]*)\{([^}]*)\}/g)]
           .map(([, selector = '', body = '']) => ({ selector, body }))
@@ -71,8 +63,7 @@ test('a box laid out in its name’s direction carries no gap or flow of its own
               .some((one) => new RegExp(`\\.${name}(?![\\w-])[^\\s>+~]*$`).test(one.trim())),
           )
         const swapped = own.some(
-          ({ selector, body }) =>
-            selector.includes(`.${name}:dir(`) && /(?:margin|padding)-inline/.test(body),
+          ({ selector, body }) => selector.includes(`.${name}:dir(`) && /(?:margin|padding)-inline/.test(body),
         )
         return own.some(
           ({ body }) =>
@@ -96,11 +87,7 @@ test('a code, key or address is laid out left to right, so its groups keep their
     ...['Security', 'SignIn'].map((name) => join(SOURCE, 'lib/accounts-ui/src', `${name}.svelte`)),
   ]
   const turned = places.flatMap((path) =>
-    [
-      ...readFileSync(path, 'utf8').matchAll(
-        /<(?:output|code)\b[^>]*>|<\w+\b[^>]*class="(?:digits|codes)"[^>]*>/g,
-      ),
-    ]
+    [...readFileSync(path, 'utf8').matchAll(/<(?:output|code)\b[^>]*>|<\w+\b[^>]*class="(?:digits|codes)"[^>]*>/g)]
       .filter((tag) => !tag[0].includes('dir="ltr"'))
       .map((tag) => `${path.slice(SOURCE.length)}: ${tag[0]}`),
   )

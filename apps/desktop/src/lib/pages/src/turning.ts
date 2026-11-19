@@ -3,10 +3,7 @@ import { onDisk, invoke } from '../../platform/src/api'
 import { writeFile } from '../../file-writes/src/api'
 import type { Turning } from './from-pdf'
 
-export function turningIn(
-  root: string | null,
-  move: (from: string, to: string) => Promise<void>,
-): Turning {
+export function turningIn(root: string | null, move: (from: string, to: string) => Promise<void>): Turning {
   warmPdf()
   return {
     root,

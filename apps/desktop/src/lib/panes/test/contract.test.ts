@@ -10,9 +10,7 @@ describe('the module stands on its own', () => {
     const reached = readdirSync(SRC)
       .filter((name) => name.endsWith('.ts') && !name.includes('.test.'))
       .flatMap((name) =>
-        [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.\.[^']*)'/g)].map(
-          (found) => found[1],
-        ),
+        [...readFileSync(join(SRC, name), 'utf8').matchAll(/from '(\.\.[^']*)'/g)].map((found) => found[1]),
       )
     expect([...new Set(reached)]).toEqual(['../../platform/src/api'])
   })
@@ -39,9 +37,7 @@ describe('the panes of a window', () => {
     panes.activate(made, 't')
     panes.setStacked(made, true)
     panes.collapse()
-    expect(panesIn(panes.frame)).toEqual([
-      { kind: 'pane', id: made, activeTabId: 't', linked: false, stacked: true },
-    ])
+    expect(panesIn(panes.frame)).toEqual([{ kind: 'pane', id: made, activeTabId: 't', linked: false, stacked: true }])
   })
 
   test('a lone pane has nothing toward any side', () => {

@@ -38,12 +38,8 @@ describe('the providers', () => {
   })
 
   test('models that cannot chat are left out, and the newest one is first', () => {
-    expect(talkable('openai', ['gpt-4.1', 'whisper-1', 'text-embedding-3-small'])).toEqual([
-      'gpt-4.1',
-    ])
-    expect(firstModel('anthropic', ['claude-sonnet-4-5', 'claude-sonnet-4'])).toBe(
-      'claude-sonnet-4-5',
-    )
+    expect(talkable('openai', ['gpt-4.1', 'whisper-1', 'text-embedding-3-small'])).toEqual(['gpt-4.1'])
+    expect(firstModel('anthropic', ['claude-sonnet-4-5', 'claude-sonnet-4'])).toBe('claude-sonnet-4-5')
   })
 
   test('a stream is read line by line, with a part line kept for the next chunk', () => {

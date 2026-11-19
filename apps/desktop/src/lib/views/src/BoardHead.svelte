@@ -38,33 +38,17 @@
       <span class="name">{name}</span>
     </span>
   {/if}
-  <button
-    type="button"
-    class="count"
-    class:badge={circle}
-    aria-label="Calculate"
-    title="Calculate"
-    onclick={oncount}
+  <button type="button" class="count" class:badge={circle} aria-label="Calculate" title="Calculate" onclick={oncount}
     >{count}{#each sums as sum, at (at)}<span class="sum">{sum}</span>{/each}</button
   >
   <span class="spring"></span>
   <button type="button" class="orden-glyph tool" aria-label="More" title="More" onclick={onmenu}>
     <svg viewBox="0 0 13 13" aria-hidden="true" class="dots"
-      ><circle cx="3" cy="6.5" r="0.9" /><circle cx="6.5" cy="6.5" r="0.9" /><circle
-        cx="10"
-        cy="6.5"
-        r="0.9"
-      /></svg
+      ><circle cx="3" cy="6.5" r="0.9" /><circle cx="6.5" cy="6.5" r="0.9" /><circle cx="10" cy="6.5" r="0.9" /></svg
     >
   </button>
   {#if canAdd}
-    <button
-      type="button"
-      class="orden-glyph tool"
-      aria-label="New page"
-      title="New page"
-      onclick={onadd}
-    >
+    <button type="button" class="orden-glyph tool" aria-label="New page" title="New page" onclick={onadd}>
       <svg viewBox="0 0 13 13" aria-hidden="true" class="plus"><path d={ADD_MARK} /></svg>
     </button>
   {/if}

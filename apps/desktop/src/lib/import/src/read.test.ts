@@ -14,9 +14,7 @@ describe('which app an export came out of', () => {
   })
 
   test('a Notion export says so with an id on every name', async () => {
-    await expect(
-      detect([file('Plan 1a2b3c4d5e6f78901a2b3c4d5e6f7890.md', '# Plan')]),
-    ).resolves.toBe('notion')
+    await expect(detect([file('Plan 1a2b3c4d5e6f78901a2b3c4d5e6f7890.md', '# Plan')])).resolves.toBe('notion')
   })
 
   test('a Notion database exported on its own says so with the id before the _all', async () => {
@@ -38,10 +36,7 @@ describe('which app an export came out of', () => {
     const read = plan.files.find((one) => one.path === 'Standup.md')
     expect(read?.kind === 'note' && read.text).toBe(standup)
     await expect(
-      detect([
-        file('index.html', '<html></html>'),
-        file('Plan 1a2b3c4d5e6f78901a2b3c4d5e6f7890.html'),
-      ]),
+      detect([file('index.html', '<html></html>'), file('Plan 1a2b3c4d5e6f78901a2b3c4d5e6f7890.html')]),
     ).resolves.toBe('notion')
   })
 
@@ -59,10 +54,7 @@ describe('which app an export came out of', () => {
   })
 
   test('a folder of notes with a folder called Keep is a folder of notes', async () => {
-    const sources = [
-      file('Home.md', '# Home\n\nSee [[Shopping]].\n'),
-      file('Keep/Shopping.md', '- milk\n'),
-    ]
+    const sources = [file('Home.md', '# Home\n\nSee [[Shopping]].\n'), file('Keep/Shopping.md', '- milk\n')]
     await expect(detect(sources)).resolves.toBe('markdown')
 
     const plan = await readAs('markdown', sources)
@@ -81,9 +73,7 @@ describe('which app an export came out of', () => {
   })
 
   test('a Logseq graph says so by its folders', async () => {
-    await expect(
-      detect([file('journals/2026_01_02.md', '- x'), file('pages/A.md', '- y')]),
-    ).resolves.toBe('logseq')
+    await expect(detect([file('journals/2026_01_02.md', '- x'), file('pages/A.md', '- y')])).resolves.toBe('logseq')
     await expect(detect([file('pages/A.md', '- y')])).resolves.toBe('logseq')
     await expect(detect([file('Graph/pages/A.md', '- y')])).resolves.toBe('logseq')
   })
@@ -105,9 +95,9 @@ describe('which app an export came out of', () => {
       'Journals/2024/02/2024-02-01.md',
       'Projects/Plan.md',
     ])
-    await expect(
-      detect([file('journals/2026_01_02.md', '- x'), file('logseq/config.edn', '{}')]),
-    ).resolves.toBe('logseq')
+    await expect(detect([file('journals/2026_01_02.md', '- x'), file('logseq/config.edn', '{}')])).resolves.toBe(
+      'logseq',
+    )
   })
 
   test('a folder of notes with a pages folder deep inside is a folder of notes', async () => {
@@ -162,9 +152,7 @@ describe('which app an export came out of', () => {
 
   test('a CSV on its own is a table', async () => {
     await expect(detect([file('Books.csv', 'Name\nDune')])).resolves.toBe('table')
-    await expect(detect([file('Books.csv', 'Name\nDune'), file('A.md', '# A')])).resolves.toBe(
-      'markdown',
-    )
+    await expect(detect([file('Books.csv', 'Name\nDune'), file('A.md', '# A')])).resolves.toBe('markdown')
   })
 
   test('a tab separated file on its own is a table too', async () => {
@@ -172,12 +160,8 @@ describe('which app an export came out of', () => {
   })
 
   test('a folder of papers is papers, whatever a Mac left beside them', async () => {
-    await expect(
-      detect([file('Papers/One.pdf', '%PDF'), file('Papers/.DS_Store', 'junk')]),
-    ).resolves.toBe('pdf-pages')
-    await expect(
-      detect([file('One.pdf', '%PDF'), file('__MACOSX/._One.pdf', 'junk')]),
-    ).resolves.toBe('pdf-pages')
+    await expect(detect([file('Papers/One.pdf', '%PDF'), file('Papers/.DS_Store', 'junk')])).resolves.toBe('pdf-pages')
+    await expect(detect([file('One.pdf', '%PDF'), file('__MACOSX/._One.pdf', 'junk')])).resolves.toBe('pdf-pages')
   })
 
   test("a document only pandoc reads is named as pandoc's", async () => {

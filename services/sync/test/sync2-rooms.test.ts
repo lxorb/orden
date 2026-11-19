@@ -1,13 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { type Canvas, type CanvasNode, readCanvas, writeCanvas } from '@orden/markdown/canvas'
-import {
-  hash32,
-  type PullResponse,
-  type PushResponse,
-  roomNews,
-  seedPlane,
-  seedUpdate,
-} from '@orden/sync-core'
+import { hash32, type PullResponse, type PushResponse, roomNews, seedPlane, seedUpdate } from '@orden/sync-core'
 import { receive, syncStep1, syncUpdate, TEXT } from '@orden/rooms'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
@@ -71,10 +64,7 @@ class Device {
     return { base, update: Y.encodeStateAsUpdateV2(this.doc, base) }
   }
 
-  push(
-    pending: { base: Uint8Array; update: Uint8Array },
-    push = `${this.name}-${String(++this.pushes)}`,
-  ) {
+  push(pending: { base: Uint8Array; update: Uint8Array }, push = `${this.name}-${String(++this.pushes)}`) {
     return framed<PushResponse>(env, '/v2/docs/push', token, {
       docs: [{ id: this.id, push, epoch: 1, seq: this.seq, ...pending, at: 1 }],
     })
@@ -117,9 +107,7 @@ describe('a room holding a note on sync v2', () => {
     const laptop = new Device(id, 'one\n', 'laptop')
     const phone = new Device(id, 'one\n', 'phone')
 
-    expect(
-      await laptop.push(laptop.type(0, 'laptop ')).then((one) => one.value.docs[0]),
-    ).toMatchObject({ ok: true })
+    expect(await laptop.push(laptop.type(0, 'laptop ')).then((one) => one.value.docs[0])).toMatchObject({ ok: true })
 
     const { value } = await phone.push(phone.type(4, 'phone\n'))
     const moved = value.docs[0]
@@ -284,11 +272,9 @@ describe('the connector in a space whose tree is rows', () => {
       },
     })
     expect(written.json.result.content[0]?.text).toMatch(/another spelling/)
-    expect(env.db.prepare('select count(*) as n from notes where space_id = ?').get(space)).toEqual(
-      {
-        n: 1,
-      },
-    )
+    expect(env.db.prepare('select count(*) as n from notes where space_id = ?').get(space)).toEqual({
+      n: 1,
+    })
   })
 })
 
@@ -487,8 +473,7 @@ describe('the kept side', () => {
     expect(kept.status).toBe(200)
 
     const versions = await call(env, `/v1/notes/${id}/versions`, { token })
-    const newest = (versions.json as unknown as { versions: { at: number; by: string }[] })
-      .versions[0]
+    const newest = (versions.json as unknown as { versions: { at: number; by: string }[] }).versions[0]
     expect(newest?.by).toBe('Laptop')
     const words = await call(env, `/v1/notes/${id}/versions/${String(newest?.at)}`, { token })
     expect(words.json.content).toBe('the words that lost\n')
@@ -533,9 +518,7 @@ describe('the kept side', () => {
     await prepare()
     const { MOST_VERSION_BYTES } = await import('../src/sync-server/src/versions')
     env.db.prepare('update note_versions set size = 0').run()
-    env.db
-      .prepare('update note_versions set size = ? where note_id = ?')
-      .run(MOST_VERSION_BYTES - 4, id)
+    env.db.prepare('update note_versions set size = ? where note_id = ?').run(MOST_VERSION_BYTES - 4, id)
 
     const over = await call(env, '/v2/docs/keep', {
       token,

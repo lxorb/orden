@@ -170,9 +170,7 @@ describe("a domain of one's own", () => {
   function releasesFail() {
     const real = globalThis.fetch
     vi.stubGlobal('fetch', (input: RequestInfo | URL, init?: RequestInit) =>
-      init?.method === 'DELETE'
-        ? Promise.reject(new Error('Cloudflare is down'))
-        : real(input, init),
+      init?.method === 'DELETE' ? Promise.reject(new Error('Cloudflare is down')) : real(input, init),
     )
   }
 
@@ -199,9 +197,7 @@ describe("a domain of one's own", () => {
     await sweepLeftovers(env)
 
     expect(cloudflare.hostnames.has('notes.example.com')).toBe(true)
-    expect(env.db.prepare("select what from leftovers where what like 'domains/%'").all()).toEqual(
-      [],
-    )
+    expect(env.db.prepare("select what from leftovers where what like 'domains/%'").all()).toEqual([])
   })
 
   test('is swapped when the domain changes, and the new one starts unproved', async () => {
@@ -232,9 +228,7 @@ describe("a domain of one's own", () => {
     const other = await signIn(env, 'other@b.dev')
     const theirs = await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
     env.justBefore(/update spaces set blog_enabled = 1/, () => {
-      env.db
-        .prepare('update spaces set blog_domain = ? where id = ?')
-        .run('notes.example.com', theirs.json.space.id)
+      env.db.prepare('update spaces set blog_domain = ? where id = ?').run('notes.example.com', theirs.json.space.id)
     })
 
     const response = await publish({ domain: 'notes.example.com' })
@@ -300,9 +294,7 @@ describe("a domain of one's own", () => {
 
   test('is never served on the shared domain, whatever the row says', async () => {
     await publish({ subdomain: 'field' })
-    env.db
-      .prepare('update spaces set blog_subdomain = null, blog_domain = ? where id = ?')
-      .run('nibeditor.com', space)
+    env.db.prepare('update spaces set blog_subdomain = null, blog_domain = ? where id = ?').run('nibeditor.com', space)
 
     const response = await call(env, '/', { host: 'nibeditor.com' })
     expect(response.text).not.toContain('Field notes')
@@ -357,8 +349,7 @@ describe('proving a domain is yours', () => {
     const mine = (await wanted()).value
 
     const other = await signIn(env, 'other@b.dev')
-    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json
-      .space.id
+    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json.space.id
     await publish({ domain: 'blog.example.org' }, theirs, other)
 
     expect((await wanted(theirs, other)).value).not.toBe(mine)
@@ -409,16 +400,13 @@ describe('proving a domain is yours', () => {
 
   test('a claim nobody has proved does not stand in the real owner’s way', async () => {
     const squatter = await signIn(env, 'squatter@b.dev')
-    const theirs = (await call(env, '/v1/spaces', { token: squatter, body: { name: 'Squatted' } }))
-      .json.space.id
+    const theirs = (await call(env, '/v1/spaces', { token: squatter, body: { name: 'Squatted' } })).json.space.id
     await publish({ domain: 'notes.example.com' }, theirs, squatter)
 
     const taken = await publish({ domain: 'notes.example.com' })
     expect(taken.status).toBe(200)
 
-    const left = env.db
-      .prepare('select blog_domain, blog_domain_token from spaces where id = ?')
-      .get(theirs)
+    const left = env.db.prepare('select blog_domain, blog_domain_token from spaces where id = ?').get(theirs)
     expect(left).toEqual({ blog_domain: null, blog_domain_token: null })
 
     await prove()
@@ -434,9 +422,7 @@ describe('proving a domain is yours', () => {
     await publish({ domain: 'victim.example.org' })
     expect((await proveDomain(env, asked)).ok).toBe(false)
 
-    const row = env.db
-      .prepare('select blog_domain, blog_domain_verified_at as at from spaces where id = ?')
-      .get(space)
+    const row = env.db.prepare('select blog_domain, blog_domain_verified_at as at from spaces where id = ?').get(space)
     expect(row).toEqual({ blog_domain: 'victim.example.org', at: null })
     expect(cloudflare.hostnames.has('victim.example.org')).toBe(false)
     expect((await call(env, '/', { host: 'victim.example.org' })).text).not.toContain('Hello')
@@ -482,9 +468,9 @@ describe('proving a domain is yours', () => {
   const WEEK = 7 * 24 * 60 * 60 * 1000
 
   function proofAge(): number {
-    const row = env.db
-      .prepare('select blog_domain_verified_at as at from spaces where id = ?')
-      .get(space) as { at: number }
+    const row = env.db.prepare('select blog_domain_verified_at as at from spaces where id = ?').get(space) as {
+      at: number
+    }
     return row.at
   }
 })
@@ -627,9 +613,11 @@ describe('one address, never two', () => {
 
     database.exec(readFileSync(FOLDER + GUARD, 'utf8'))
 
-    const rows = database
-      .prepare('select id, blog_subdomain, blog_domain from spaces order by id')
-      .all() as { id: string; blog_subdomain: string | null; blog_domain: string | null }[]
+    const rows = database.prepare('select id, blog_subdomain, blog_domain from spaces order by id').all() as {
+      id: string
+      blog_subdomain: string | null
+      blog_domain: string | null
+    }[]
 
     expect(rows).toEqual([
       { id: 'both', blog_subdomain: null, blog_domain: 'notes.example.com' },
@@ -640,9 +628,9 @@ describe('one address, never two', () => {
   })
 
   test('the guard is written into the table itself', () => {
-    const row = env.db
-      .prepare("select sql from sqlite_master where type = 'table' and name = 'spaces'")
-      .get() as { sql: string }
+    const row = env.db.prepare("select sql from sqlite_master where type = 'table' and name = 'spaces'").get() as {
+      sql: string
+    }
     expect(row.sql).toMatch(/check \(blog_subdomain is null or blog_domain is null\)/i)
   })
 })
@@ -704,9 +692,9 @@ describe('names kept off the shared domain', () => {
   })
 
   test('and no space on the domain today holds one of them', async () => {
-    const held = env.db
-      .prepare('select blog_subdomain as name from spaces where blog_subdomain is not null')
-      .all() as { name: string }[]
+    const held = env.db.prepare('select blog_subdomain as name from spaces where blog_subdomain is not null').all() as {
+      name: string
+    }[]
 
     for (const { name } of held) expect(await available(name), name).toBe(true)
   })

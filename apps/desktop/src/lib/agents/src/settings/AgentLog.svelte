@@ -22,9 +22,7 @@
 
   const front = $derived(workspace.active?.kind === 'note' ? workspace.active.shown : null)
 
-  const span = $derived(
-    new Intl.DateTimeFormat(region(), { dateStyle: 'medium', timeStyle: 'short' }),
-  )
+  const span = $derived(new Intl.DateTimeFormat(region(), { dateStyle: 'medium', timeStyle: 'short' }))
   const spanOf = (session: Session) => span.formatRange(session.start, session.end)
   const timeOf = (at: number) => localDate(at, { hour: '2-digit', minute: '2-digit' })
 
@@ -50,20 +48,14 @@
 <div class="card">
   {#each sessions.slice(0, shown) as session (session.start)}
     {@const open = opened === session.start}
-    <button
-      class="orden-setting session"
-      aria-expanded={open}
-      onclick={() => (opened = open ? null : session.start)}
-    >
+    <button class="orden-setting session" aria-expanded={open} onclick={() => (opened = open ? null : session.start)}>
       <span class="name">
         {spanOf(session)}
         <small>
           {session.calls.length === 1 ? '1 call' : `${session.calls.length} calls`}
         </small>
       </span>
-      <svg class="chevron" class:open viewBox="0 0 16 16" aria-hidden="true"
-        ><path d="M6 3l5 5-5 5" /></svg
-      >
+      <svg class="chevron" class:open viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" /></svg>
     </button>
 
     {#if open}

@@ -29,8 +29,7 @@ vi.mock('../../workspace/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../workspace/src/api')>()),
   accountAddress: () => null,
   storeImage: () => {
-    if (world.full && world.stored >= world.full)
-      return Promise.reject(new Error('The account is out of space'))
+    if (world.full && world.stored >= world.full) return Promise.reject(new Error('The account is out of space'))
     world.stored += 1
     return Promise.resolve(`/space/assets/page-${String(world.stored)}.png`)
   },
@@ -40,8 +39,7 @@ vi.mock('../../platform/src/bytes', () => ({
 }))
 vi.mock('../../pdf/src/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../pdf/src/api')>()),
-  loading: (library: { getDocument: (source: object) => unknown }, data: Uint8Array) =>
-    library.getDocument({ data }),
+  loading: (library: { getDocument: (source: object) => unknown }, data: Uint8Array) => library.getDocument({ data }),
   pdfjs: () =>
     Promise.resolve({
       getDocument: () => ({
@@ -52,9 +50,7 @@ vi.mock('../../pdf/src/api', async (importOriginal) => ({
           getPage: (number: number) =>
             Promise.resolve({
               getViewport: ({ scale }: { scale: number }) =>
-                number === 3
-                  ? { width: 20 * scale, height: 90_000 * scale }
-                  : { width: 600, height: 800 },
+                number === 3 ? { width: 20 * scale, height: 90_000 * scale } : { width: 600, height: 800 },
               render: () => ({
                 promise: (async () => {
                   if (number === 2) world.meanwhile?.()
@@ -173,12 +169,7 @@ test('files dropped together are laid one below another, none over the last, and
   })
   vi.stubGlobal('document', paper)
   try {
-    await run.dropFiles(
-      store,
-      [picture('a.png'), pdf, picture('b.png')],
-      { x: 0, y: 0 },
-      '/space/Board.canvas',
-    )
+    await run.dropFiles(store, [picture('a.png'), pdf, picture('b.png')], { x: 0, y: 0 }, '/space/Board.canvas')
   } finally {
     vi.unstubAllGlobals()
     vi.stubGlobal('localStorage', memoryStorage())
@@ -215,9 +206,7 @@ test('a picture that finds the space full says so instead of vanishing', async (
 
 test('a picture added to a canvas keeps its own shape instead of being cut to a landscape card', async () => {
   const store = board()
-  vi.stubGlobal('createImageBitmap', () =>
-    Promise.resolve({ width: 1080, height: 2400, close: () => undefined }),
-  )
+  vi.stubGlobal('createImageBitmap', () => Promise.resolve({ width: 1080, height: 2400, close: () => undefined }))
   try {
     await run.dropImage(
       store,
@@ -237,9 +226,7 @@ test('a picture added to a canvas keeps its own shape instead of being cut to a 
 
 test('a tiny picture is drawn big enough to take hold of', async () => {
   const store = board()
-  vi.stubGlobal('createImageBitmap', () =>
-    Promise.resolve({ width: 16, height: 8, close: () => undefined }),
-  )
+  vi.stubGlobal('createImageBitmap', () => Promise.resolve({ width: 16, height: 8, close: () => undefined }))
   try {
     await run.dropImage(
       store,
@@ -259,9 +246,7 @@ test('a tiny picture is drawn big enough to take hold of', async () => {
 
 test('a picture dragged in from the files keeps its shape, and what comes after it lies below', async () => {
   const store = board()
-  vi.stubGlobal('createImageBitmap', () =>
-    Promise.resolve({ width: 1080, height: 2400, close: () => undefined }),
-  )
+  vi.stubGlobal('createImageBitmap', () => Promise.resolve({ width: 1080, height: 2400, close: () => undefined }))
   try {
     await run.dropPaths(store, ['/space/shots/phone.png', '/space/Ideas.md'], { x: 0, y: 0 })
   } finally {

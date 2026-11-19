@@ -125,10 +125,7 @@ export class ShareApi extends PassApi {
     return vaultRowIn(fieldsOf(answer).vault)
   }
 
-  async trust(
-    vault: string,
-    sent: { accepted?: Accepted; proof?: KeyProof; keyVersion?: number },
-  ): Promise<void> {
+  async trust(vault: string, sent: { accepted?: Accepted; proof?: KeyProof; keyVersion?: number }): Promise<void> {
     await this.ask(`/vaults/${part(vault)}/trust`, 'PUT', sent)
   }
 
@@ -136,12 +133,7 @@ export class ShareApi extends PassApi {
     await this.ask(`/invites/${part(vault)}/decline`, 'POST')
   }
 
-  async setRole(
-    vault: string,
-    email: string,
-    role: Role,
-    vouch: string | null = null,
-  ): Promise<void> {
+  async setRole(vault: string, email: string, role: Role, vouch: string | null = null): Promise<void> {
     await this.ask(`/vaults/${part(vault)}/members/${part(email)}`, 'PUT', { role, vouch })
   }
 
@@ -154,9 +146,7 @@ export class ShareApi extends PassApi {
   }
 
   async rotate(vault: string, sent: Rotation): Promise<{ rev: number; keyVersion: number }> {
-    const { rev, keyVersion } = fieldsOf(
-      await this.ask(`/vaults/${part(vault)}/rotate`, 'POST', sent),
-    )
+    const { rev, keyVersion } = fieldsOf(await this.ask(`/vaults/${part(vault)}/rotate`, 'POST', sent))
     if (!isCount(rev) || !isCount(keyVersion)) throw new Error('pass: unreadable answer')
     return { rev, keyVersion }
   }

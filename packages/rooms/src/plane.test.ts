@@ -10,16 +10,7 @@ import {
   writeCanvas,
 } from '@orden/markdown/canvas'
 import { merged, stamped } from '@orden/markdown/canvas-merge'
-import {
-  buriedOf,
-  EXTRAS,
-  planeIsEmpty,
-  planeOf,
-  pushPlane,
-  readPlane,
-  seedExtras,
-  seedPlane,
-} from './plane'
+import { buriedOf, EXTRAS, planeIsEmpty, planeOf, pushPlane, readPlane, seedExtras, seedPlane } from './plane'
 
 class Device {
   readonly doc = new Y.Doc()
@@ -213,9 +204,7 @@ describe('two devices on one plane', () => {
     both(one, two)
 
     expect(one.canvas.ink.map((held) => held.id)).toEqual(two.canvas.ink.map((held) => held.id))
-    expect(new Set(one.canvas.ink.map((held) => held.id))).toEqual(
-      new Set(['base', 'mine', 'yours']),
-    )
+    expect(new Set(one.canvas.ink.map((held) => held.id))).toEqual(new Set(['base', 'mine', 'yours']))
     expect(one.canvas.ink[0]?.id).toBe('base')
   })
 
@@ -331,9 +320,7 @@ describe('the room and the file say the same thing', () => {
     both(one, two)
 
     const asFiles = merged(mine, yours, 3000)
-    expect(new Set(one.canvas.ink.map((held) => held.id))).toEqual(
-      new Set(asFiles.ink.map((held) => held.id)),
-    )
+    expect(new Set(one.canvas.ink.map((held) => held.id))).toEqual(new Set(asFiles.ink.map((held) => held.id)))
   })
 })
 
@@ -474,8 +461,7 @@ describe('the order of the stack in a room', () => {
     }
   })
 
-  const places = (doc: Y.Doc) =>
-    Object.fromEntries([...planeOf(doc)].map(([id, record]) => [id, record.get('z')]))
+  const places = (doc: Y.Doc) => Object.fromEntries([...planeOf(doc)].map(([id, record]) => [id, record.get('z')]))
 
   test('two things in one place are told apart by id, and nothing is laid out for that', () => {
     const one = new Device()
@@ -555,11 +541,7 @@ describe('the order of the stack in a room', () => {
     carry(one, two)
     expect(readPlane(two.doc).moved).toEqual({ a: 5000 })
 
-    const stale = stamped(
-      emptyCanvas(),
-      { ...emptyCanvas(), nodes: [card('c'), card('a'), card('b')] },
-      900,
-    )
+    const stale = stamped(emptyCanvas(), { ...emptyCanvas(), nodes: [card('c'), card('a'), card('b')] }, 900)
     const old = { ...stale, moved: { c: 1500 } }
     const room = readPlane(two.doc)
     const together = merged(old, room, 6000)
@@ -635,10 +617,7 @@ describe('the order of the stack in a room', () => {
 
   test('a thing put in the middle sits in the middle', () => {
     const { one, two } = twoDevices('a', 'b')
-    one.edit(
-      { ...one.canvas, nodes: [one.canvas.nodes[0]!, card('m'), one.canvas.nodes[1]!] },
-      2000,
-    )
+    one.edit({ ...one.canvas, nodes: [one.canvas.nodes[0]!, card('m'), one.canvas.nodes[1]!] }, 2000)
     carry(one, two)
     expect(order(two.canvas)).toEqual(['a', 'm', 'b'])
   })
@@ -710,9 +689,7 @@ describe('what an edit on a heavy plane reads', () => {
 
   test('a stroke drawn on top reads only the one beneath it', () => {
     const one = heavy(600)
-    const reads = reading(() =>
-      one.edit(withInk(one.canvas, [...one.canvas.ink, stroke('new')]), 2000),
-    )
+    const reads = reading(() => one.edit(withInk(one.canvas, [...one.canvas.ink, stroke('new')]), 2000))
 
     expect(reads).toBeLessThan(20)
     expect(ids(readPlane(one.doc)).at(-1)).toBe('new')

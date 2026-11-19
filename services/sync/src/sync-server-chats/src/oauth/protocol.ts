@@ -19,14 +19,7 @@ export interface Ask {
   resource: string
 }
 
-export const FIELDS: (keyof Ask)[] = [
-  'client_id',
-  'redirect_uri',
-  'state',
-  'code_challenge',
-  'scope',
-  'resource',
-]
+export const FIELDS: (keyof Ask)[] = ['client_id', 'redirect_uri', 'state', 'code_challenge', 'scope', 'resource']
 
 const LIMITS: Record<keyof Ask, number> = {
   client_id: 2048,

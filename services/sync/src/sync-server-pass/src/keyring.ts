@@ -77,9 +77,7 @@ keyrings.put('/keyring', async (context) => {
            values (?, 1, ?, ?, ?, ?, ${SEQ}) on conflict(user_id) do nothing`,
         )
         .bind(user.id, text, keyring.pub, keyring.sign?.pub ?? null, now()),
-      db
-        .prepare('update pass_members set user_id = ?1 where email = ?2 and user_id is null')
-        .bind(user.id, user.email),
+      db.prepare('update pass_members set user_id = ?1 where email = ?2 and user_id is null').bind(user.id, user.email),
       db
         .prepare(
           `update pass_members set state = 'confirm', seq = ${SEQ}

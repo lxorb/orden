@@ -162,8 +162,7 @@
       <span>Priority</span>
       <select
         value={String(todo.priority)}
-        onchange={(event) =>
-          void change({ priority: Number(event.currentTarget.value) as Priority })}
+        onchange={(event) => void change({ priority: Number(event.currentTarget.value) as Priority })}
       >
         {#each PRIORITIES as priority (priority)}
           <option value={String(priority)}>{PRIORITY_NAMES[priority]}</option>
@@ -178,9 +177,7 @@
       {#each todo.labels as label (label)}
         <span class="chip">
           {label}
-          <button type="button" aria-label="Remove label {label}" onclick={() => dropLabel(label)}>
-            Remove
-          </button>
+          <button type="button" aria-label="Remove label {label}" onclick={() => dropLabel(label)}> Remove </button>
         </span>
       {/each}
       <input
@@ -218,9 +215,7 @@
             onchange={(event) => tickSubtask(subtask.id, event.currentTarget.checked)}
           />
           <span>{subtask.title}</span>
-          <button type="button" aria-label="Remove subtask" onclick={() => dropSubtask(subtask.id)}>
-            Remove
-          </button>
+          <button type="button" aria-label="Remove subtask" onclick={() => dropSubtask(subtask.id)}> Remove </button>
         </li>
       {/each}
     </ul>

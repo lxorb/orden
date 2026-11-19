@@ -46,12 +46,9 @@ writeFileSync(
 )
 
 const fan = (input, out) =>
-  execSync(
-    `pnpm --filter @orden/desktop exec tauri icon "${resolve(input)}" -o "${resolve(out)}"`,
-    {
-      stdio: 'inherit',
-    },
-  )
+  execSync(`pnpm --filter @orden/desktop exec tauri icon "${resolve(input)}" -o "${resolve(out)}"`, {
+    stdio: 'inherit',
+  })
 const desktop = join(work, 'desktop')
 const mac = join(work, 'mac')
 const mobile = join(work, 'mobile')
@@ -60,8 +57,7 @@ fan(join(work, 'mac.png'), mac)
 fan(join(work, 'mobile.json'), mobile)
 
 for (const file of readdirSync(desktop)) {
-  if (file.endsWith('.png') || file === 'icon.ico')
-    copyFileSync(join(desktop, file), join(ICONS, file))
+  if (file.endsWith('.png') || file === 'icon.ico') copyFileSync(join(desktop, file), join(ICONS, file))
 }
 copyFileSync(join(mac, 'icon.icns'), join(ICONS, 'icon.icns'))
 for (const platform of ['ios', 'android']) {

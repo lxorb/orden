@@ -11,11 +11,7 @@ const FLOOR = 4.5
 
 function channels(hex: string): [number, number, number] {
   const value = hex.replace('#', '')
-  return [0, 2, 4].map((at) => Number.parseInt(value.slice(at, at + 2), 16)) as [
-    number,
-    number,
-    number,
-  ]
+  return [0, 2, 4].map((at) => Number.parseInt(value.slice(at, at + 2), 16)) as [number, number, number]
 }
 
 function light(hex: string): number {
@@ -37,10 +33,7 @@ function block(css: string, selector: string): Record<string, string> {
   const body = css.slice(at, css.indexOf('\n}', at))
 
   return Object.fromEntries(
-    [...body.matchAll(/(--[\w-]+):\s*(#[0-9a-f]{6})\b/gi)].map((one): [string, string] => [
-      one[1] ?? '',
-      one[2] ?? '',
-    ]),
+    [...body.matchAll(/(--[\w-]+):\s*(#[0-9a-f]{6})\b/gi)].map((one): [string, string] => [one[1] ?? '', one[2] ?? '']),
   )
 }
 
@@ -95,22 +88,19 @@ describe('ink on a fill of the accent', () => {
 })
 
 describe('an accent written as words', () => {
-  test.each(['dark', 'light'] as const)(
-    'clears the floor on every ground words stand on, %s',
-    (scheme) => {
-      const grounds = ['--bg', '--surface']
-      const short = ACCENTS.flatMap((accent) => {
-        const words = accentTokens(accent.id, scheme)['--accent'] ?? ''
+  test.each(['dark', 'light'] as const)('clears the floor on every ground words stand on, %s', (scheme) => {
+    const grounds = ['--bg', '--surface']
+    const short = ACCENTS.flatMap((accent) => {
+      const words = accentTokens(accent.id, scheme)['--accent'] ?? ''
 
-        return grounds
-          .map((ground) => ({ ground, ratio: ratio(words, BUILT_IN[scheme][ground] ?? '') }))
-          .filter((one) => one.ratio < FLOOR)
-          .map((one) => `${accent.id} on ${one.ground} ${one.ratio.toFixed(2)}`)
-      })
+      return grounds
+        .map((ground) => ({ ground, ratio: ratio(words, BUILT_IN[scheme][ground] ?? '') }))
+        .filter((one) => one.ratio < FLOOR)
+        .map((one) => `${accent.id} on ${one.ground} ${one.ratio.toFixed(2)}`)
+    })
 
-      expect(short).toEqual([])
-    },
-  )
+    expect(short).toEqual([])
+  })
 })
 
 function files(dir: string, suffix: RegExp): string[] {
@@ -130,10 +120,7 @@ const WHITE_INK =
 
 describe('the stylesheets', () => {
   test('write on an accent in the ink, never in a white of their own', () => {
-    const sources = [
-      ...files(SOURCE, /\.svelte$/),
-      ...files(THEMES, /^(base|document|editor|tokens)\.css$/),
-    ]
+    const sources = [...files(SOURCE, /\.svelte$/), ...files(THEMES, /^(base|document|editor|tokens)\.css$/)]
 
     const white = sources
       .map((path) => ({

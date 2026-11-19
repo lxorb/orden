@@ -10,9 +10,7 @@ describe('a definition list on the glasses', () => {
   const lineOf = (words: string) => marked.find((line) => line.text.includes(words))
 
   test('numbers each meaning by its own line', () => {
-    expect([lineOf('A red fruit')?.at, lineOf('Round')?.at, lineOf('A yellow fruit')?.at]).toEqual([
-      4, 5, 7,
-    ])
+    expect([lineOf('A red fruit')?.at, lineOf('Round')?.at, lineOf('A yellow fruit')?.at]).toEqual([4, 5, 7])
   })
 
   test('numbers a later term by its own line', () => {

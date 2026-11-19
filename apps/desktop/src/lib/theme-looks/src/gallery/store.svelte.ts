@@ -15,9 +15,7 @@ export const GIVEN_THEMES = ['graphite', 'rose', 'warm-paper'] as const
 const GIVEN_KEY = 'orden:themes-given'
 
 function matches(one: StoreTheme, needle: string): boolean {
-  return [one.name, one.author, one.description, ...one.tags].some((text) =>
-    text.toLowerCase().includes(needle),
-  )
+  return [one.name, one.author, one.description, ...one.tags].some((text) => text.toLowerCase().includes(needle))
 }
 
 export function arrange(themes: StoreTheme[], query: string, order: Order): StoreTheme[] {
@@ -132,10 +130,7 @@ class Store {
 
     await invoke<string>('write_theme', {
       id: one.id,
-      css: stamped(
-        { id: one.id, name: one.name, author: one.author, version: one.version },
-        reviewed.css,
-      ),
+      css: stamped({ id: one.id, name: one.name, author: one.author, version: one.version }, reviewed.css),
     })
     return reviewed.refused
   }

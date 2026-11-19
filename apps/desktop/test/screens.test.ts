@@ -29,9 +29,7 @@ function rule(css: string, selector: string): string | null {
 
 const layers = walk(SOURCE, svelte).flatMap((path) => {
   const text = readFileSync(path, 'utf8')
-  const css = uncommented(
-    [...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((one) => one[1]).join('\n'),
-  )
+  const css = uncommented([...text.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((one) => one[1]).join('\n'))
   const name = path.slice(SOURCE.length).replace(/\\/g, '/')
   const fixed = /class="orden-screen(?: is-[a-z]+)* ([a-z-]+)"/.exec(text)?.[1]
   if (fixed) return [{ name, css, selector: `.${fixed}` }]
@@ -98,20 +96,15 @@ describe('every layer in the middle of the window', () => {
     ])
   })
 
-  test.each(layers)(
-    '$name says where and how tall in no number of its own',
-    ({ css, selector }) => {
-      const own = rule(css, selector)
-      expect(own, selector).not.toBeNull()
-      expect(own).not.toMatch(/(^|[\s;])(top|height|max-height|translate|position):/)
-    },
-  )
+  test.each(layers)('$name says where and how tall in no number of its own', ({ css, selector }) => {
+    const own = rule(css, selector)
+    expect(own, selector).not.toBeNull()
+    expect(own).not.toMatch(/(^|[\s;])(top|height|max-height|translate|position):/)
+  })
 
   test.each(layers)('$name is a width of the scale', ({ css, selector }) => {
     const width = /--screen-width:\s*([^;]+);/.exec(rule(css, selector) ?? '')?.[1]
     if (width === undefined) return
-    expect(width).toMatch(
-      /^(var\(--screen-[a-z]+\)|var\(--picker-width\)|calc\(var\(--screen-[a-z]+\)[^;]*\))$/,
-    )
+    expect(width).toMatch(/^(var\(--screen-[a-z]+\)|var\(--picker-width\)|calc\(var\(--screen-[a-z]+\)[^;]*\))$/)
   })
 })

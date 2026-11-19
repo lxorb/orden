@@ -33,11 +33,7 @@ const changes = (query: string, hits: Hit[], replacement: string) =>
 
 describe('what a replacement would do', () => {
   test('replaces several words typed together as the words they make, not one by one', async () => {
-    const made = await changes(
-      'quarterly plan',
-      [hit('/space/Plan.md', 0), hit('/space/Plan.md', 1)],
-      'annual plan',
-    )
+    const made = await changes('quarterly plan', [hit('/space/Plan.md', 0), hit('/space/Plan.md', 1)], 'annual plan')
 
     expect(made[0]?.after).toBe('The annual plan is due.\nA plan, quarterly or not.\n')
   })
@@ -58,39 +54,26 @@ describe('what a replacement would do', () => {
     expect(made[0]?.after).toBe('The annual plan is due.\nA plan, quarterly or not.\n')
   })
 
-  test.each([
-    'task:quarterly plan',
-    'line:quarterly plan',
-    'content:quarterly content:plan',
-    'content:quarterly plan',
-  ])('and with %s, whose words are read one by one', async (query) => {
-    const made = await changes(
-      query,
-      [hit('/space/Tasks.md', 0), hit('/space/Tasks.md', 1)],
-      'annual plan',
-    )
+  test.each(['task:quarterly plan', 'line:quarterly plan', 'content:quarterly content:plan', 'content:quarterly plan'])(
+    'and with %s, whose words are read one by one',
+    async (query) => {
+      const made = await changes(query, [hit('/space/Tasks.md', 0), hit('/space/Tasks.md', 1)], 'annual plan')
 
-    expect(made[0]?.after).toBe('- [ ] The annual plan is due\n- [ ] A plan, quarterly or not\n')
-  })
+      expect(made[0]?.after).toBe('- [ ] The annual plan is due\n- [ ] A plan, quarterly or not\n')
+    },
+  )
 
   test('and after a section, whose words are not on the line', async () => {
-    const made = await changes(
-      'section:Budget quarterly plan',
-      [hit('/space/Budget.md', 2)],
-      'annual plan',
-    )
+    const made = await changes('section:Budget quarterly plan', [hit('/space/Budget.md', 2)], 'annual plan')
 
     expect(made[0]?.after).toBe('# Budget\n\nThe annual plan is due.\n')
   })
 
-  test.each(['plan task:quarterly', 'plan -draft quarterly'])(
-    'but not words typed apart, as in %s',
-    async (query) => {
-      const made = await changes(query, [hit('/space/Review.md', 0)], 'X')
+  test.each(['plan task:quarterly', 'plan -draft quarterly'])('but not words typed apart, as in %s', async (query) => {
+    const made = await changes(query, [hit('/space/Review.md', 0)], 'X')
 
-      expect(made[0]?.after).toBe('- [ ] X the X review\n')
-    },
-  )
+    expect(made[0]?.after).toBe('- [ ] X the X review\n')
+  })
 
   test('and keeps the rest of the query as it was', async () => {
     const made = await changes('plan -draft', [hit('/space/Plan.md', 0)], 'road')
@@ -105,11 +88,7 @@ describe('what a replacement would do', () => {
   })
 
   test('reads each note once, however many of its lines were ticked', async () => {
-    const made = await changes(
-      'alpha',
-      [hit('/space/Work/One.md', 0), hit('/space/Work/One.md', 2)],
-      'gamma',
-    )
+    const made = await changes('alpha', [hit('/space/Work/One.md', 0), hit('/space/Work/One.md', 2)], 'gamma')
 
     expect(made).toHaveLength(1)
     expect(made[0]?.after).toBe('gamma here\nbeta there\ngamma again\n')
@@ -128,21 +107,13 @@ describe('what a replacement would do', () => {
   })
 
   test('touches one note per note, in the order the hits came', async () => {
-    const made = await changes(
-      'alpha',
-      [hit('/space/Work/One.md', 0), hit('/space/Two.md', 0)],
-      'gamma',
-    )
+    const made = await changes('alpha', [hit('/space/Work/One.md', 0), hit('/space/Two.md', 0)], 'gamma')
 
     expect(made.map((one) => one.path)).toEqual(['/space/Work/One.md', '/space/Two.md'])
   })
 
   test('puts back what a pattern caught', async () => {
-    const made = await changes(
-      '/(\\w+), (\\w+)/',
-      [hit('/space/Three.md', 0), hit('/space/Three.md', 1)],
-      '$2 $1',
-    )
+    const made = await changes('/(\\w+), (\\w+)/', [hit('/space/Three.md', 0), hit('/space/Three.md', 1)], '$2 $1')
 
     expect(made[0]?.after).toBe('John Doe\nJane Roe\n')
   })

@@ -7,8 +7,7 @@ export interface RootMoved {
   to: string
 }
 
-const isMove = (one: unknown): one is RootMoved =>
-  isRecord(one) && isString(one.from) && isString(one.to)
+const isMove = (one: unknown): one is RootMoved => isRecord(one) && isString(one.from) && isString(one.to)
 
 export function rootsMoved(): RootMoved[] {
   const said = stored(ROOTS_MOVED)

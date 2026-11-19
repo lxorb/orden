@@ -59,12 +59,7 @@ describe('walking the file list', () => {
 
 describe('the keys the list walks with', () => {
   test('are four, one per direction', () => {
-    expect(TREE_MOVES.map(([, key]) => key)).toEqual([
-      'ArrowDown',
-      'ArrowUp',
-      'ArrowRight',
-      'ArrowLeft',
-    ])
+    expect(TREE_MOVES.map(([, key]) => key)).toEqual(['ArrowDown', 'ArrowUp', 'ArrowRight', 'ArrowLeft'])
   })
 
   test('are all in the file list group of the registry', () => {

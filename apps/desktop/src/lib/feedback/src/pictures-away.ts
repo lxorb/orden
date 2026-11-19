@@ -1,11 +1,4 @@
-import {
-  dataUrlOf,
-  type Drawing,
-  pageSheet,
-  type Picture,
-  redrawn,
-  sheetDrawing,
-} from './feedback-pictures'
+import { dataUrlOf, type Drawing, pageSheet, type Picture, redrawn, sheetDrawing } from './feedback-pictures'
 
 interface Said {
   id: number

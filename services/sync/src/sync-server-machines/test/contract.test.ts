@@ -76,9 +76,7 @@ describe('asking a machine', () => {
 
 describe('machine hosts', () => {
   test('a machine host is one label under the machine domain', () => {
-    expect(machineDomain({ MACHINE_DOMAIN: 'machines.example' } as unknown as Env)).toBe(
-      'machines.example',
-    )
+    expect(machineDomain({ MACHINE_DOMAIN: 'machines.example' } as unknown as Env)).toBe('machines.example')
     const id = 'a'.repeat(32)
     expect(isMachineHost(`m-${id}.machines.example`, 'machines.example')).toBe(true)
     expect(isMachineHost(`M-${id}.Machines.Example`, 'machines.example')).toBe(true)

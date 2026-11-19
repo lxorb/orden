@@ -101,14 +101,11 @@ class Account {
         const pub = String(body.pub)
         if (row.pub) throw refused(409, 'revealed already')
         if ((await sha(pub)).slice(0, 32) !== id) throw refused(400, 'that key is not this device')
-        const committed = [...bytes(row.commitment)]
-          .map((one) => one.toString(16).padStart(2, '0'))
-          .join('')
+        const committed = [...bytes(row.commitment)].map((one) => one.toString(16).padStart(2, '0')).join('')
         if ((await sha(pub, String(body.nonce))) !== committed) {
           throw refused(400, 'not what this device committed to')
         }
-        if (!row.nonce && (this.blob !== null || this.allowed()))
-          throw refused(409, 'not answered yet')
+        if (!row.nonce && (this.blob !== null || this.allowed())) throw refused(409, 'not answered yet')
         row.pub = pub
         row.revealed = String(body.nonce)
         return { ok: true }
@@ -502,8 +499,7 @@ describe('a device let go of', () => {
     return { account, laptop, phone, tablet }
   }
 
-  const idOf = (account: Account, name: string) =>
-    [...account.devices].find(([, one]) => one.name === name)?.[0] ?? ''
+  const idOf = (account: Account, name: string) => [...account.devices].find(([, one]) => one.name === name)?.[0] ?? ''
 
   test('lists every device let in, this one marked', async () => {
     const { laptop } = await three()

@@ -10,10 +10,7 @@ function engineWithout() {
 
     getReader() {
       return {
-        read: () =>
-          Promise.resolve(
-            this.parts.length ? { done: false, value: this.parts.shift() } : { done: true },
-          ),
+        read: () => Promise.resolve(this.parts.length ? { done: false, value: this.parts.shift() } : { done: true }),
         cancel: () => {
           this.cancelled = true
           return Promise.resolve()

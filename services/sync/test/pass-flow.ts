@@ -153,16 +153,9 @@ export async function kit(): Promise<Kit> {
   const at = (file: string) => new URL(`../../../${file}`, import.meta.url).href
   const loaded = await Promise.all(
     [
-      ...[
-        'test-device',
-        'sync',
-        'exchange',
-        'synced',
-        'share',
-        'share-api',
-        'link-make',
-        'people',
-      ].map((file) => `apps/desktop/src/lib/pass-sync/src/${file}.ts`),
+      ...['test-device', 'sync', 'exchange', 'synced', 'share', 'share-api', 'link-make', 'people'].map(
+        (file) => `apps/desktop/src/lib/pass-sync/src/${file}.ts`,
+      ),
       'apps/desktop/src/lib/pass-links/src/link-seal.ts',
       'packages/pass/src/keys.ts',
       'packages/pass/src/crypto.ts',
@@ -215,9 +208,7 @@ export class Flow {
       rows: device.rows,
       email: who.email,
       versions: (vault, id) =>
-        Promise.resolve(
-          device.rows.versionRows.filter((one) => one.vault === vault && one.id === id).reverse(),
-        ),
+        Promise.resolve(device.rows.versionRows.filter((one) => one.vault === vault && one.id === id).reverse()),
     }
   }
 
@@ -242,13 +233,7 @@ export class Flow {
     return found.key === null ? found : await this.k.confirmedPerson(device.rows, found)
   }
 
-  async invited(
-    a: Device,
-    vault: string,
-    email: string,
-    role: Role,
-    by: Person = this.owner,
-  ): Promise<string> {
+  async invited(a: Device, vault: string, email: string, role: Role, by: Person = this.owner): Promise<string> {
     const person = await this.checked(a, by, email)
     return await this.k.invitedState(this.sharing(a, by), vault, person, role)
   }

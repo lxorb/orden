@@ -32,8 +32,7 @@ const remoteOpening = () => (__EVEN_PLUGIN__ ? refused() : import('./remote/open
 export const usageOfTab = async (...args: Parameters<typeof Sessions.usageOfTab>) =>
   (await sessions()).usageOfTab(...args)
 
-export const mayEnd = async (...args: Parameters<typeof Closing.mayEnd>) =>
-  (await closing()).mayEnd(...args)
+export const mayEnd = async (...args: Parameters<typeof Closing.mayEnd>) => (await closing()).mayEnd(...args)
 
 export const renameTerminal = async (...args: Parameters<typeof Rename.renameTerminal>) =>
   (await renaming()).renameTerminal(...args)
@@ -66,11 +65,9 @@ export const terminalTabKind = () =>
 
 export const loadTerminalTab = () => (__EVEN_PLUGIN__ ? refused() : import('./TerminalTab.svelte'))
 
-export const loadTerminalMark = () =>
-  __EVEN_PLUGIN__ ? refused() : import('./TerminalMark.svelte')
+export const loadTerminalMark = () => (__EVEN_PLUGIN__ ? refused() : import('./TerminalMark.svelte'))
 
-export const loadHostPicker = () =>
-  __EVEN_PLUGIN__ ? refused() : import('./remote/HostPicker.svelte')
+export const loadHostPicker = () => (__EVEN_PLUGIN__ ? refused() : import('./remote/HostPicker.svelte'))
 
 async function pickHost() {
   const { hostPicker } = await hostPicking()

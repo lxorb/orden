@@ -100,9 +100,7 @@ test('a press on the dot asks where, and Save writes it there under the name typ
 
   name.value = 'Monday'
   name.dispatchEvent(new Event('input', { bubbles: true }))
-  layer
-    .querySelector('form')
-    ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
+  layer.querySelector('form')?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }))
   flushSync()
 
   await vi.waitFor(() => expect(note.path).toBe('/space/Monday.md'))

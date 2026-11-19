@@ -74,8 +74,7 @@ function diskOf(telling: Telling): Disk {
     async remove(path, kind) {
       if (kind === 'file') {
         const words = await invoke<string>('read_note', { path, ...raw() }).catch(() => null)
-        if (words?.trim())
-          await invoke('snapshot_note', { path, content: words }).catch(() => undefined)
+        if (words?.trim()) await invoke('snapshot_note', { path, content: words }).catch(() => undefined)
       }
       let back: string | undefined
       if (syncDeletes(path, kind)) await invoke('delete_note', { path })
@@ -173,11 +172,7 @@ function reachingOf(token: () => string | null) {
     token,
     device: deviceName,
     fetch: (request: Request) =>
-      remote().fetchInTime(
-        request,
-        {},
-        BYTES.test(new URL(request.url).pathname) ? remote().bytesWithin : undefined,
-      ),
+      remote().fetchInTime(request, {}, BYTES.test(new URL(request.url).pathname) ? remote().bytesWithin : undefined),
   }
 }
 
@@ -211,9 +206,7 @@ export function appWorld(token: () => string | null, telling: Telling): World {
       },
       async write(path, bytes) {
         const fresh = !(await stamped(path))
-        await invoke('create_folder', { path: parentOf(path), arrived: true }).catch(
-          () => undefined,
-        )
+        await invoke('create_folder', { path: parentOf(path), arrived: true }).catch(() => undefined)
         await invoke('write_bytes', { path, bytes })
         telling.written(path, fresh)
       },
@@ -230,8 +223,7 @@ export function appWorld(token: () => string | null, telling: Telling): World {
         const body = await remote()
           .noteVersion(session, id, version.at)
           .catch(() => null)
-        if (body && (await sha256(body.content.replace(/\r\n?/g, '\n'))) === hash)
-          return body.content
+        if (body && (await sha256(body.content.replace(/\r\n?/g, '\n'))) === hash) return body.content
         if (body && (await sha256(body.content)) === hash) return body.content
       }
       return null

@@ -33,8 +33,7 @@
 
   const listed = (at: string) => workspace.spaces.some((one) => samePath(one.root, at))
 
-  const shown = (path: string) =>
-    protection.locked(path) ? Promise.resolve(null) : noteText(workspace, path)
+  const shown = (path: string) => (protection.locked(path) ? Promise.resolve(null) : noteText(workspace, path))
 
   const hands: FieldHands = {
     space: async (path) => {

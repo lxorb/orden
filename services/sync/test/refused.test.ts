@@ -26,9 +26,7 @@ describe('what the service refuses with', () => {
   test('and every one of them is lowercase, so it drops into a line of text', () => {
     for (const [name, sentence] of Object.entries(refused)) {
       expect(typeof sentence, name).toBe('string')
-      expect(sentence, name).toBe(
-        (sentence as string).replace(/^[A-Z]/, (one) => one.toLowerCase()),
-      )
+      expect(sentence, name).toBe((sentence as string).replace(/^[A-Z]/, (one) => one.toLowerCase()))
     }
   })
 })

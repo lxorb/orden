@@ -20,10 +20,7 @@ async function offered(typed: string, notes: NoteRef[]): Promise<string[]> {
     EditorState.create({
       doc: typed,
       selection: EditorSelection.cursor(typed.length),
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        noteIndex.of(index),
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), noteIndex.of(index)],
     }),
   )
   const found = await wikilinkCompletions(new CompletionContext(state, typed.length, false))
@@ -32,18 +29,12 @@ async function offered(typed: string, notes: NoteRef[]): Promise<string[]> {
 
 describe('note suggestions in a space with more than forty matching notes', () => {
   test('[[Meeting offers the note named Meeting though a Meetings folder holds 45 notes', async () => {
-    const standups = Array.from({ length: 45 }, (_, at) =>
-      note(`Meetings/2024-03-${twoDigits(at)} Standup.md`),
-    )
-    expect(await offered('[[Meeting', [...standups, note('Templates/Meeting.md')])).toContain(
-      'Meeting',
-    )
+    const standups = Array.from({ length: 45 }, (_, at) => note(`Meetings/2024-03-${twoDigits(at)} Standup.md`))
+    expect(await offered('[[Meeting', [...standups, note('Templates/Meeting.md')])).toContain('Meeting')
   })
 
   test('[[Plan offers the note named exactly Plan ahead of 45 Planning notes listed before it', async () => {
-    const planning = Array.from({ length: 45 }, (_, at) =>
-      note(`Archive/Planning ${twoDigits(at)}.md`),
-    )
+    const planning = Array.from({ length: 45 }, (_, at) => note(`Archive/Planning ${twoDigits(at)}.md`))
     expect(await offered('[[Plan', [...planning, note('Plan.md')])).toContain('Plan')
   })
 })

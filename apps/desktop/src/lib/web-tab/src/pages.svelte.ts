@@ -1,15 +1,7 @@
 import { providePort } from '@orden/contracts'
 import { landed } from '../../theme/src/api'
 import { replay } from '../../ui-kit/src/api'
-import {
-  isNumber,
-  isRecord,
-  isString,
-  stored,
-  storedText,
-  invoke,
-  isDesktop,
-} from '../../platform/src/api'
+import { isNumber, isRecord, isString, stored, storedText, invoke, isDesktop } from '../../platform/src/api'
 import { isExtensionPage, isWebAddress, keysOf } from '@orden/scan/web-address'
 import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 import type { Cut } from './covers'
@@ -32,8 +24,7 @@ function pagePermissions(): Promise<typeof import('./permissions.svelte')> {
 }
 
 function leftPrivate(privateLeft: boolean): void {
-  if (!__EVEN_PLUGIN__ && !privateLeft)
-    void pagePermissions().then(({ grants }) => grants.leftPrivate())
+  if (!__EVEN_PLUGIN__ && !privateLeft) void pagePermissions().then(({ grants }) => grants.leftPrivate())
 }
 
 function shut(tab: string, keep: boolean): Promise<unknown> {
@@ -159,9 +150,7 @@ interface Iconed {
 }
 
 function readIconed(said: unknown): Iconed | null {
-  return isRecord(said) && isString(said.tab) && isString(said.icon)
-    ? { tab: said.tab, icon: said.icon }
-    : null
+  return isRecord(said) && isString(said.tab) && isString(said.icon) ? { tab: said.tab, icon: said.icon } : null
 }
 
 interface Opening {
@@ -332,13 +321,7 @@ class Pages {
     return (this.held.get(tabId)?.halfTyped ?? null) !== null
   }
 
-  async show(
-    tabId: string,
-    url: string,
-    pane: Rect,
-    visible = true,
-    over: Over = NOTHING,
-  ): Promise<void> {
+  async show(tabId: string, url: string, pane: Rect, visible = true, over: Over = NOTHING): Promise<void> {
     this.gone.delete(tabId)
     const page = this.of(tabId)
     this.wake(page)
@@ -403,13 +386,7 @@ class Pages {
     else await this.build(tabId, page, wanted.pane, wanted.visible, wanted.over)
   }
 
-  async build(
-    tabId: string,
-    page: Page,
-    pane: Rect,
-    visible: boolean,
-    over: Over = NOTHING,
-  ): Promise<void> {
+  async build(tabId: string, page: Page, pane: Rect, visible: boolean, over: Over = NOTHING): Promise<void> {
     page.opening = true
 
     if (!visible) page.wanted = { pane, visible, covering: true, over }
@@ -446,8 +423,7 @@ class Pages {
       if (error === NOT_ANSWERING) {
         setTimeout(() => {
           const asking = this.held.get(tabId) === page && !page.live && !page.opening
-          if (asking && page.onScreen)
-            void this.build(tabId, page, page.pane ?? pane, visible, over)
+          if (asking && page.onScreen) void this.build(tabId, page, page.pane ?? pane, visible, over)
         }, ASK_AGAIN)
         return
       }
@@ -499,13 +475,7 @@ class Pages {
     else this.hide(tabId, wanted.pane)
   }
 
-  async place(
-    tabId: string,
-    pane: Rect,
-    visible: boolean,
-    covering = false,
-    over: Over = NOTHING,
-  ): Promise<void> {
+  async place(tabId: string, pane: Rect, visible: boolean, covering = false, over: Over = NOTHING): Promise<void> {
     if (__EVEN_PLUGIN__) return
     const page = this.held.get(tabId)
     if (!isDesktop || !page) return
@@ -542,8 +512,7 @@ class Pages {
     if (page.placings !== turn) return
     if (covering && goesAway(page.layering) && (page.shown || page.stowed)) {
       if (!page.stowed) await this.put(tabId, page, awayFrom(pane))
-      if (over.cut?.all)
-        page.stowing = setTimeout(() => void this.stow(tabId, page, pane, turn), COVER_HIDES)
+      if (over.cut?.all) page.stowing = setTimeout(() => void this.stow(tabId, page, pane, turn), COVER_HIDES)
       return
     }
     if (visible && page.stowed) {
@@ -612,10 +581,7 @@ class Pages {
     }
     if (one.away) return
 
-    if (
-      one.visible &&
-      (page.pane?.width !== one.pane.width || page.pane.height !== one.pane.height)
-    ) {
+    if (one.visible && (page.pane?.width !== one.pane.width || page.pane.height !== one.pane.height)) {
       page.shot = null
     }
     page.pane = one.pane
@@ -636,9 +602,7 @@ class Pages {
     this.still = true
     const shown = this.each().filter(([, page]) => this.heldWhere(page) !== null)
     if (shown.length === 0) return null
-    return Promise.all(shown.map(([tabId, page]) => this.holdOne(tabId, page))).then(
-      () => undefined,
-    )
+    return Promise.all(shown.map(([tabId, page]) => this.holdOne(tabId, page))).then(() => undefined)
   }
 
   private heldWhere(page: Page): Placement | null {
@@ -1076,8 +1040,8 @@ class Pages {
         }
         const path = page.path
         if (said.icon && path) {
-          void Promise.all([import('./favicons'), import('../../marks/src/api')]).then(
-            ([one, files]) => one.saw(files.addressOf(path), said.icon),
+          void Promise.all([import('./favicons'), import('../../marks/src/api')]).then(([one, files]) =>
+            one.saw(files.addressOf(path), said.icon),
           )
         }
       })
@@ -1212,9 +1176,7 @@ export const MARKS = 'orden:favicons'
 export const MARK = 'orden:favicon:'
 
 export function drawable(picture: string): boolean {
-  return (
-    picture.length <= 22 * 1024 && /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+=*$/i.test(picture)
-  )
+  return picture.length <= 22 * 1024 && /^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/]+=*$/i.test(picture)
 }
 
 export type Seen = [picture: string, used: number]

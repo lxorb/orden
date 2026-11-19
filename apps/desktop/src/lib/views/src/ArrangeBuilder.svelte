@@ -14,12 +14,10 @@
   const kinds = $derived(view?.orden.rows ?? 'notes')
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
   const options = (current?: string) =>
-    (current && !properties.includes(current) ? [current, ...properties] : properties).map(
-      (one) => ({
-        value: one,
-        label: propertyName(one, live.base ? displayName(live.base, one) : undefined),
-      }),
-    )
+    (current && !properties.includes(current) ? [current, ...properties] : properties).map((one) => ({
+      value: one,
+      label: propertyName(one, live.base ? displayName(live.base, one) : undefined),
+    }))
 
   const NONE = ''
 
@@ -37,9 +35,7 @@
     aria-label={sort.direction === 'ASC' ? 'Ascending' : 'Descending'}
     onclick={flip}
   >
-    <svg viewBox="0 0 13 13" class:down={sort.direction === 'DESC'}
-      ><path d="M6.5 10.5v-8M3.5 5.5l3-3 3 3" /></svg
-    >
+    <svg viewBox="0 0 13 13" class:down={sort.direction === 'DESC'}><path d="M6.5 10.5v-8M3.5 5.5l3-3 3 3" /></svg>
   </button>
 {/snippet}
 
@@ -89,10 +85,7 @@
     class="orden-row is-short adder"
     onclick={() =>
       kit.change((base, index) =>
-        setSort(base, index, [
-          ...(view?.sort ?? []),
-          { property: properties[0] ?? 'file.name', direction: 'ASC' },
-        ]),
+        setSort(base, index, [...(view?.sort ?? []), { property: properties[0] ?? 'file.name', direction: 'ASC' }]),
       )}
   >
     <span class="orden-row-label">Add a sort</span>
@@ -107,17 +100,11 @@
       options={[{ value: NONE, label: 'None' }, ...options(group?.property)]}
       onchange={(property: string) =>
         kit.change((base, index) =>
-          setGroup(
-            base,
-            index,
-            property === NONE ? undefined : { property, direction: group?.direction ?? 'ASC' },
-          ),
+          setGroup(base, index, property === NONE ? undefined : { property, direction: group?.direction ?? 'ASC' }),
         )}
     />
     {#if group}
-      {@render arrow(group, () =>
-        kit.change((base, index) => setGroup(base, index, direction(group))),
-      )}
+      {@render arrow(group, () => kit.change((base, index) => setGroup(base, index, direction(group))))}
     {/if}
   </div>
   {#if group}
@@ -128,17 +115,11 @@
         options={[{ value: NONE, label: 'None' }, ...options(sub?.property)]}
         onchange={(property: string) =>
           kit.change((base, index) =>
-            setSubGroup(
-              base,
-              index,
-              property === NONE ? undefined : { property, direction: sub?.direction ?? 'ASC' },
-            ),
+            setSubGroup(base, index, property === NONE ? undefined : { property, direction: sub?.direction ?? 'ASC' }),
           )}
       />
       {#if sub}
-        {@render arrow(sub, () =>
-          kit.change((base, index) => setSubGroup(base, index, direction(sub))),
-        )}
+        {@render arrow(sub, () => kit.change((base, index) => setSubGroup(base, index, direction(sub))))}
       {/if}
     </div>
   {/if}

@@ -45,19 +45,13 @@ describe('the chats in the sidebar, by space', () => {
   })
 
   test('a chat of a space this device does not hold comes last, under Other spaces', () => {
-    const groups = bySpace(
-      [chat('far', 'Chat', null), chat('near', 'General', '/spaces/Home')],
-      SPACES,
-    )
+    const groups = bySpace([chat('far', 'Chat', null), chat('near', 'General', '/spaces/Home')], SPACES)
 
     expect(shown(groups)).toEqual(['Home: near', 'Other spaces: far'])
   })
 
   test('keeps the order it was given inside each space and leaves out empty spaces', () => {
-    const groups = bySpace(
-      [chat('x', 'One', '/spaces/Lab'), chat('y', 'Two', '/spaces/Lab')],
-      SPACES,
-    )
+    const groups = bySpace([chat('x', 'One', '/spaces/Lab'), chat('y', 'Two', '/spaces/Lab')], SPACES)
 
     expect(shown(groups)).toEqual(['Lab: x y'])
   })

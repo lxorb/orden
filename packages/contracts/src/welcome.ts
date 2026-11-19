@@ -49,7 +49,5 @@ const EARLIER = [
 export function isUntouchedWelcome(path: string, content: string): boolean {
   const name = path.split(/[\\/]/u).at(-1) ?? ''
   if (name !== WELCOME_NAME) return false
-  return [WELCOME, ...EARLIER].some(
-    (seed) => content === seed || IMPORT_LINES.some((line) => content === seed + line),
-  )
+  return [WELCOME, ...EARLIER].some((seed) => content === seed || IMPORT_LINES.some((line) => content === seed + line))
 }

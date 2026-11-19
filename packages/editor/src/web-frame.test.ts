@@ -1,13 +1,6 @@
 import { providers } from '@orden/markdown/providers'
 import { describe, expect, test } from 'vitest'
-import {
-  FRAME_REFERRER,
-  frameHeight,
-  framePermissions,
-  frameSandbox,
-  framedPage,
-  htmlFrameDocument,
-} from './web-frame'
+import { FRAME_REFERRER, frameHeight, framePermissions, frameSandbox, framedPage, htmlFrameDocument } from './web-frame'
 
 describe('what a card may actually have', () => {
   test('every provider gets the sandbox its row asked for', () => {
@@ -18,9 +11,7 @@ describe('what a card may actually have', () => {
   })
 
   test('and nothing a card asked for beyond the list', () => {
-    expect(frameSandbox('allow-scripts allow-top-navigation allow-modals allow-downloads')).toBe(
-      'allow-scripts',
-    )
+    expect(frameSandbox('allow-scripts allow-top-navigation allow-modals allow-downloads')).toBe('allow-scripts')
     expect(frameSandbox('allow-top-navigation-by-user-activation')).toBe('')
     expect(framePermissions('camera; microphone; geolocation; fullscreen')).toBe('fullscreen')
     expect(framePermissions('payment')).toBe('')
@@ -43,16 +34,10 @@ describe('the document a block of the note’s own HTML runs in', () => {
 
   test('carries the block as data, and runs nothing inline', () => {
     const made = htmlFrameDocument('<div id="dial"></div>\n<script>run()</script>', SCRIPT)
-    const block = /<script type="application\/json" id="orden-block">([\s\S]*?)<\/script>/.exec(
-      made,
-    )?.[1]
+    const block = /<script type="application\/json" id="orden-block">([\s\S]*?)<\/script>/.exec(made)?.[1]
     expect(JSON.parse(block ?? '""')).toBe('<div id="dial"></div>\n<script>run()</script>')
     const scripts = [...made.matchAll(/<script([^>]*)>/g)].map((one) => one[1]?.trim())
-    expect(scripts).toEqual([
-      'type="application/json" id="orden-block"',
-      'type="text/plain" id="orden-frame"',
-      '',
-    ])
+    expect(scripts).toEqual(['type="application/json" id="orden-block"', 'type="text/plain" id="orden-frame"', ''])
   })
 
   test('and the one program that says how tall it turned out', () => {
@@ -98,9 +83,7 @@ describe('how tall an interactive block may say it is', () => {
 
 describe('the page a card may frame', () => {
   test('one asked for over https, and only that', () => {
-    expect(framedPage('https://www.youtube-nocookie.com/embed/a')).toBe(
-      'https://www.youtube-nocookie.com/embed/a',
-    )
+    expect(framedPage('https://www.youtube-nocookie.com/embed/a')).toBe('https://www.youtube-nocookie.com/embed/a')
     for (const address of [
       'http://x.test/a',
       'javascript:alert(1)',
@@ -116,17 +99,11 @@ describe('the page a card may frame', () => {
 
   test('and never one on the page’s own origin, however it is spelled', () => {
     const own = 'https://orden.so'
-    for (const address of [
-      'https://orden.so/',
-      'https://ORDEN.so/v1/me',
-      'https://orden.so:443/anything?at=1',
-    ]) {
+    for (const address of ['https://orden.so/', 'https://ORDEN.so/v1/me', 'https://orden.so:443/anything?at=1']) {
       expect(framedPage(address, own), address).toBe(null)
     }
 
-    expect(framedPage('https://www.youtube.com/embed/a', own)).toBe(
-      'https://www.youtube.com/embed/a',
-    )
+    expect(framedPage('https://www.youtube.com/embed/a', own)).toBe('https://www.youtube.com/embed/a')
     expect(framedPage('https://field.orden.so/', own)).toBe('https://field.orden.so/')
   })
 })

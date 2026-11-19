@@ -19,8 +19,7 @@ import {
 import type { Span } from './records'
 import { midnightOf } from '../../platform/src/api'
 
-const at = (day: number, hours: number, minutes = 0) =>
-  new Date(2026, 10, day, hours, minutes).getTime()
+const at = (day: number, hours: number, minutes = 0) => new Date(2026, 10, day, hours, minutes).getTime()
 
 const span = (id: string, start: number, end: number | null, activity: string | null = 'uni') =>
   ({

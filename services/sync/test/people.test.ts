@@ -52,9 +52,9 @@ describe('a profile change', () => {
   })
 
   test('takes a status as an emoji, a line, an end and quiet', () => {
-    expect(
-      profileChanges({ status: { emoji: '🌴', text: ' On  leave ', until: 5000, quiet: true } }),
-    ).toEqual({ changes: { status: { emoji: '🌴', text: 'On leave', until: 5000, quiet: true } } })
+    expect(profileChanges({ status: { emoji: '🌴', text: ' On  leave ', until: 5000, quiet: true } })).toEqual({
+      changes: { status: { emoji: '🌴', text: 'On leave', until: 5000, quiet: true } },
+    })
   })
 })
 
@@ -353,9 +353,7 @@ describe('the routes', () => {
     const memberId = await idOf(member)
     const otherId = await idOf(other)
     const peopleIn = async (token: string) =>
-      (await call<PeopleReply>(env, '/v1/spaces', { token })).json.spaces.find(
-        (one) => one.id === space,
-      )?.people
+      (await call<PeopleReply>(env, '/v1/spaces', { token })).json.spaces.find((one) => one.id === space)?.people
 
     expect(await peopleIn(owner)).toEqual([memberId, otherId])
     expect(await peopleIn(member)).toEqual([ownerId, otherId])
@@ -363,14 +361,10 @@ describe('the routes', () => {
 
   test('presence says offline for somebody who appears offline, to everybody but them', async () => {
     const memberId = await idOf(member)
-    env.db
-      .prepare("insert into presence (user_id, state, at) values (?, 'active', 1)")
-      .run(memberId)
+    env.db.prepare("insert into presence (user_id, state, at) values (?, 'active', 1)").run(memberId)
 
     const read = async (token: string) =>
-      (await call<PeopleReply>(env, `/v2/presence?ids=${memberId}`, { token })).json.presence[
-        memberId
-      ]
+      (await call<PeopleReply>(env, `/v2/presence?ids=${memberId}`, { token })).json.presence[memberId]
     expect(await read(owner)).toBe('active')
 
     await call(env, '/v2/me/profile', { method: 'PUT', token: member, body: { hidden: true } })
@@ -415,9 +409,7 @@ describe('the routes', () => {
     const guest = (await call(env, `/v1/join/${token}`, { method: 'POST', body: {} })).json.token
 
     expect((await call(env, '/v2/people?ids=x', { token: guest })).status).toBe(403)
-    expect(
-      (await call(env, '/v2/me/profile', { method: 'PUT', token: guest, body: {} })).status,
-    ).toBe(403)
+    expect((await call(env, '/v2/me/profile', { method: 'PUT', token: guest, body: {} })).status).toBe(403)
   })
 })
 
@@ -425,8 +417,7 @@ describe('two people each given one note of a space', () => {
   test('are not shown to each other; somebody in the whole space is', async () => {
     const env = testEnv()
     const owner = await signIn(env, OWNER)
-    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Shared' } })).json
-      .space.id
+    const space = (await call(env, '/v1/spaces', { token: owner, body: { name: 'Shared' } })).json.space.id
     const note = async (name: string) =>
       (
         await call(env, `/v1/spaces/${space}/notes`, {

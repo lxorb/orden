@@ -20,13 +20,7 @@ import { external } from './external'
 import { blockHandles } from './block/handle'
 import { landing } from './landing'
 import { folding, foldsChanged, type FoldLines, withFolds } from './fold'
-import {
-  type CarriedFiles,
-  imageHandling,
-  imageResolver,
-  type ImageResolver,
-  type ImageSink,
-} from './images'
+import { type CarriedFiles, imageHandling, imageResolver, type ImageResolver, type ImageSink } from './images'
 import { linkClicks, type LinkPress, linkOpener } from './links'
 import { tagClicks, tagOpener, type TagOpener } from './tag-press'
 import { coverMover, keptCoverExtension } from './live-preview/kept-cover'
@@ -108,9 +102,7 @@ export function editorState(options: StateOptions): EditorState {
 
   const state = EditorState.create({
     doc: text,
-    ...(selection
-      ? { selection: { anchor: Math.min(Math.max(0, selection.anchor), text.length) } }
-      : {}),
+    ...(selection ? { selection: { anchor: Math.min(Math.max(0, selection.anchor), text.length) } } : {}),
     extensions: [
       history(),
       Prec.high(
@@ -194,21 +186,10 @@ export function editorState(options: StateOptions): EditorState {
             .find((one) => one !== undefined)
           if (!update.docChanged) document?.selected(update.state.selection, userEvent)
           else if (document) {
-            document.local(
-              update.changes,
-              update.state.selection,
-              update.view,
-              userEvent,
-              update.startState.selection,
-            )
+            document.local(update.changes, update.state.selection, update.view, userEvent, update.startState.selection)
           } else onChange?.(update.state.doc)
         }
-        if (
-          update.selectionSet ||
-          update.docChanged ||
-          update.focusChanged ||
-          foldsChanged(update)
-        ) {
+        if (update.selectionSet || update.docChanged || update.focusChanged || foldsChanged(update)) {
           onSelection?.(update.view)
         }
       }),
@@ -258,8 +239,7 @@ const mathsPreview = ViewPlugin.fromClass(
   },
 )
 
-const coveredBelow = (covered: () => number) =>
-  EditorView.scrollMargins.of(() => ({ bottom: covered() }))
+const coveredBelow = (covered: () => number) => EditorView.scrollMargins.of(() => ({ bottom: covered() }))
 
 export function createEditor(options: EditorOptions): EditorView {
   const view = new EditorView({ parent: options.parent, state: editorState(options) })

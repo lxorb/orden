@@ -25,10 +25,7 @@ test('a large photograph goes to the model drawn smaller, as the picture type it
 })
 
 test('a picture of a kind no model reads goes as a PNG', async () => {
-  const picture = await chatPicture(
-    new Blob(['<svg/>'], { type: 'image/svg+xml' }),
-    drawing({ width: 64, height: 64 }),
-  )
+  const picture = await chatPicture(new Blob(['<svg/>'], { type: 'image/svg+xml' }), drawing({ width: 64, height: 64 }))
   expect(picture?.mime).toBe('image/png')
 })
 

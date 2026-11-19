@@ -56,10 +56,7 @@ export function clashing(
   return out
 }
 
-export function swapping(
-  pairs: readonly { from: string; to: string }[],
-  key: (path: string) => string,
-): boolean {
+export function swapping(pairs: readonly { from: string; to: string }[], key: (path: string) => string): boolean {
   const leaving = new Map<string, number[]>()
   pairs.forEach(({ from }, at) => {
     const held = leaving.get(key(from))

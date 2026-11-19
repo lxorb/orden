@@ -181,12 +181,7 @@ describe('the forces a reader can ask about', () => {
     )
   }
 
-  const settled = (options: {
-    spread?: number
-    gather?: boolean
-    distance?: number
-    push?: number
-  }) => {
+  const settled = (options: { spread?: number; gather?: boolean; distance?: number; push?: number }) => {
     const layout = new Layout(shape(), options)
     rested(layout)
     return layout
@@ -282,24 +277,16 @@ describe('a note or link that arrives while the graph is laid out', () => {
     40,
     Array.from({ length: 39 }, (_, one): [number, number] => [one, one + 1]),
   )
-  const after = graph(41, [
-    ...Array.from({ length: 39 }, (_, one): [number, number] => [one, one + 1]),
-    [40, 20],
-  ])
+  const after = graph(41, [...Array.from({ length: 39 }, (_, one): [number, number] => [one, one + 1]), [40, 20]])
 
   const old = new Layout(before)
   rested(old)
-  const placed = new Map(
-    before.nodes.map((node, one) => [node.id, { x: old.x[one] ?? 0, y: old.y[one] ?? 0 }]),
-  )
+  const placed = new Map(before.nodes.map((node, one) => [node.id, { x: old.x[one] ?? 0, y: old.y[one] ?? 0 }]))
 
   const drift = (layout: Layout) =>
     Math.max(
       ...before.nodes.map((_, one) =>
-        Math.hypot(
-          (layout.x[one] ?? 0) - (old.x[one] ?? 0),
-          (layout.y[one] ?? 0) - (old.y[one] ?? 0),
-        ),
+        Math.hypot((layout.x[one] ?? 0) - (old.x[one] ?? 0), (layout.y[one] ?? 0) - (old.y[one] ?? 0)),
       ),
     )
 

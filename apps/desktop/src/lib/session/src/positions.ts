@@ -18,9 +18,7 @@ export class Positions {
 
   of(path: string): Partial<Pick<Position, 'cursor' | 'scroll' | 'anchor' | 'folds'>> {
     const known = this.places[path] ?? this.spelledOtherwise(path)
-    return known
-      ? { cursor: known.cursor, scroll: known.scroll, anchor: known.anchor, folds: known.folds }
-      : {}
+    return known ? { cursor: known.cursor, scroll: known.scroll, anchor: known.anchor, folds: known.folds } : {}
   }
 
   private spelledOtherwise(path: string): Position | undefined {
@@ -28,13 +26,7 @@ export class Positions {
     return undefined
   }
 
-  remember(
-    path: string,
-    cursor: number,
-    scroll: number,
-    anchor?: number,
-    folds?: readonly FoldLines[],
-  ) {
+  remember(path: string, cursor: number, scroll: number, anchor?: number, folds?: readonly FoldLines[]) {
     const place: Position = {
       cursor,
       scroll,
@@ -56,10 +48,7 @@ export class Positions {
     if (op.op !== 'moved') return
 
     const was = Object.entries(this.places)
-    const now = was.map(([path, place]): [string, Position] => [
-      movedTo(path, op.from, op.to) ?? path,
-      place,
-    ])
+    const now = was.map(([path, place]): [string, Position] => [movedTo(path, op.from, op.to) ?? path, place])
 
     if (now.some(([path], at) => path !== was[at]?.[0])) this.places = Object.fromEntries(now)
   }

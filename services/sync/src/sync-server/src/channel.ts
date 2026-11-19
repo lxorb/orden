@@ -55,10 +55,7 @@ export function switchChannel(request: Request): Response | null {
   }
 
   const value = asked === 'unstable' ? UNSTABLE : STABLE
-  headers.append(
-    'set-cookie',
-    `${CHANNEL_COOKIE}=${value}; Path=/; Max-Age=${KEPT_FOR}; SameSite=Lax; Secure`,
-  )
+  headers.append('set-cookie', `${CHANNEL_COOKIE}=${value}; Path=/; Max-Age=${KEPT_FOR}; SameSite=Lax; Secure`)
   headers.append('set-cookie', `${OLD_CHANNEL_COOKIE}=; Path=/; Max-Age=0; SameSite=Lax; Secure`)
   return new Response(null, { status: 302, headers })
 }
@@ -125,9 +122,7 @@ function outOf(root: string, response: Response): Response {
       const inside = to.pathname.slice(root.length) || '/'
       headers.set(
         'location',
-        /^[a-z]+:/i.test(location)
-          ? new URL(inside + to.search, location).href
-          : inside + to.search,
+        /^[a-z]+:/i.test(location) ? new URL(inside + to.search, location).href : inside + to.search,
       )
     }
   }

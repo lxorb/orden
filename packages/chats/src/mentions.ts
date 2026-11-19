@@ -45,9 +45,6 @@ function calls(text: string, from: number, label: string): boolean {
 
 function withoutCode(body: string): string {
   const blank = (part: string) => part.replace(/[^\n]/g, ' ')
-  const fenced = body.replace(
-    /^ {0,3}(`{3,}|~{3,})[^\n]*\n[\s\S]*?(?:^ {0,3}\1[`~]*[ \t]*$|(?![\s\S]))/gm,
-    blank,
-  )
+  const fenced = body.replace(/^ {0,3}(`{3,}|~{3,})[^\n]*\n[\s\S]*?(?:^ {0,3}\1[`~]*[ \t]*$|(?![\s\S]))/gm, blank)
   return fenced.replace(/(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)/g, blank)
 }

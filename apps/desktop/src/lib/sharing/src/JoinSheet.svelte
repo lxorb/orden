@@ -9,9 +9,7 @@
   const invitation = $derived(joining.invitation)
   const who = $derived(invitation?.from ?? 'Somebody')
 
-  const shared = $derived(
-    invitation ? `${who} shared ${invitation.note ?? invitation.space} with you` : null,
-  )
+  const shared = $derived(invitation ? `${who} shared ${invitation.note ?? invitation.space} with you` : null)
 
   function close() {
     if (joining.step === 'waiting' || joining.step === 'asking') joining.close()
@@ -65,29 +63,18 @@
         Waiting for {who}
       </p>
       <div class="actions">
-        <button type="button" class="orden-button is-quiet" onclick={() => void joining.cancel()}
-          >Cancel</button
-        >
-        <button type="button" class="orden-button is-quiet" onclick={() => joining.close()}
-          >Close</button
-        >
+        <button type="button" class="orden-button is-quiet" onclick={() => void joining.cancel()}>Cancel</button>
+        <button type="button" class="orden-button is-quiet" onclick={() => joining.close()}>Close</button>
       </div>
     {:else if joining.step === 'declined'}
       <p class="quiet">{who} did not let you in</p>
-      <button type="button" class="orden-button is-quiet" onclick={() => joining.dismiss()}
-        >Done</button
-      >
+      <button type="button" class="orden-button is-quiet" onclick={() => joining.dismiss()}>Done</button>
     {:else if joining.step === 'unreached'}
       <div class="actions">
-        <button
-          type="button"
-          class="orden-button"
-          disabled={joining.busy}
-          onclick={() => void joining.retry()}>Try again</button
+        <button type="button" class="orden-button" disabled={joining.busy} onclick={() => void joining.retry()}
+          >Try again</button
         >
-        <button type="button" class="orden-button is-quiet" onclick={() => joining.dismiss()}
-          >Close</button
-        >
+        <button type="button" class="orden-button is-quiet" onclick={() => joining.dismiss()}>Close</button>
       </div>
     {:else}
       <p class="quiet">That link does not open anything</p>
@@ -211,9 +198,6 @@
     max-height: min(88dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
     overflow-y: auto;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    padding-bottom: max(
-      var(--space-5),
-      calc(var(--space-5) + var(--inset-bottom) - var(--keyboard))
-    );
+    padding-bottom: max(var(--space-5), calc(var(--space-5) + var(--inset-bottom) - var(--keyboard)));
   }
 </style>

@@ -46,14 +46,7 @@ orden:
     const heavy = noteRow('Bugs/Old.md', 'id: BUG-7\nheavy: true')
     const made = noteRow('Bugs/New.md', 'status: x')
     const context = contextFor({ rows: [heavy, made], today: TODAY, now: `${TODAY}T09:30:00` })
-    const out = planned(
-      [{ name: 'Bugs', space: 'Notes', base: guarded }],
-      [],
-      [made],
-      [heavy, made],
-      context,
-      filling,
-    )
+    const out = planned([{ name: 'Bugs', space: 'Notes', base: guarded }], [], [made], [heavy, made], context, filling)
     expect(out.writes).toEqual([])
   })
 })
@@ -64,9 +57,7 @@ describe('a base at work on a change', () => {
   test('a row going Done gets its date, as one change to that row', () => {
     const done = noteRow('Bugs/Crash.md', 'id: BUG-1\nstatus: Done', { ctime: day('2026-01-01') })
     const out = plan([older], [done], [done])
-    expect(out.writes).toEqual([
-      { row: done, change: { note: { finished: { kind: 'date', iso: TODAY } } } },
-    ])
+    expect(out.writes).toEqual([{ row: done, change: { note: { finished: { kind: 'date', iso: TODAY } } } }])
   })
 
   test('the same row looked at again fires nothing: once per change', () => {
@@ -84,9 +75,7 @@ describe('a base at work on a change', () => {
     const first = noteRow('Bugs/A.md', 'id: BUG-2', { ctime: day('2026-03-01') })
     const second = noteRow('Bugs/B.md', 'id: BUG-2', { ctime: day('2026-03-02') })
     const out = plan([], [second], [older, first, second])
-    expect(out.writes.map((one) => [one.row.path, one.change.note?.id])).toEqual([
-      ['Bugs/B.md', 'BUG-3'],
-    ])
+    expect(out.writes.map((one) => [one.row.path, one.change.note?.id])).toEqual([['Bugs/B.md', 'BUG-3']])
   })
 
   test('a note moved into the base is added to it: it gets an id and fires added', () => {
@@ -119,17 +108,8 @@ orden:
     const doing = noteRow('Tasks/A.md', 'status: Doing')
     const done = noteRow('Tasks/A.md', 'status: Done')
     const context = contextFor({ rows: [done], today: TODAY, now: `${TODAY}T09:30:00` })
-    const out = planned(
-      [{ name: 'Done', space: 'Notes', base: doneBase }],
-      [doing],
-      [done],
-      [done],
-      context,
-      filling,
-    )
-    expect(out.writes).toEqual([
-      { row: done, change: { note: { finished: { kind: 'date', iso: TODAY } } } },
-    ])
+    const out = planned([{ name: 'Done', space: 'Notes', base: doneBase }], [doing], [done], [done], context, filling)
+    expect(out.writes).toEqual([{ row: done, change: { note: { finished: { kind: 'date', iso: TODAY } } } }])
   })
 
   test('an edit that brings a note back into a base does not set it to what an added note is', () => {
@@ -190,9 +170,7 @@ describe("a property's choices", () => {
 
   test("a base's ids written again under a new prefix", () => {
     const ids = [noteRow('A.md', 'id: BUG-4'), noteRow('B.md', 'id: 7')]
-    expect(reprefixed(ids, 'id', 'BUG', 'ISSUE').map((one) => one.change)).toEqual([
-      { note: { id: 'ISSUE-4' } },
-    ])
+    expect(reprefixed(ids, 'id', 'BUG', 'ISSUE').map((one) => one.change)).toEqual([{ note: { id: 'ISSUE-4' } }])
   })
 })
 
@@ -231,20 +209,13 @@ describe("an automation's write", () => {
     const note = joined?.kind === 'replace' ? joined.notes[0] : undefined
     const edits = note?.edits ?? []
     let words = note?.after ?? ''
-    for (const edit of [...edits].reverse())
-      words = words.slice(0, edit.from) + edit.insert + words.slice(edit.to)
+    for (const edit of [...edits].reverse()) words = words.slice(0, edit.from) + edit.insert + words.slice(edit.to)
     expect(words).toBe('status: Doing')
   })
 
   test('stands alone where something else was written in between', () => {
-    expect(
-      joinedAction(last, [
-        { path: 'C:/s/Bug.md', content: 'status: Done!', after: 'x', edits: [] },
-      ]),
-    ).toBeNull()
-    expect(
-      joinedAction(last, [{ path: 'C:/s/Other.md', content: 'a', after: 'b', edits: [] }]),
-    ).toBeNull()
+    expect(joinedAction(last, [{ path: 'C:/s/Bug.md', content: 'status: Done!', after: 'x', edits: [] }])).toBeNull()
+    expect(joinedAction(last, [{ path: 'C:/s/Other.md', content: 'a', after: 'b', edits: [] }])).toBeNull()
     expect(joinedAction(undefined, [])).toBeNull()
   })
 })
@@ -280,10 +251,6 @@ describe('notes as sub-items', () => {
   test('fold under their parent, and two that name each other are not lost', () => {
     const epic = rows.find((one) => one.path === 'Epic.md')
     if (!epic) throw new Error('no epic')
-    expect(items(new Set([foldKey(epic)])).map(([path]) => path)).toEqual([
-      'Epic.md',
-      'A.md',
-      'B.md',
-    ])
+    expect(items(new Set([foldKey(epic)])).map(([path]) => path)).toEqual(['Epic.md', 'A.md', 'B.md'])
   })
 })

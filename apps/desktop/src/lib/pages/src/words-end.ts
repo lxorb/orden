@@ -10,11 +10,7 @@ function anchorOf(range: Range, start: boolean): Node | null {
   return anchor
 }
 
-function besideLine(
-  layer: HTMLElement,
-  x: number,
-  y: number,
-): { text: Text; offset: number } | null {
+function besideLine(layer: HTMLElement, x: number, y: number): { text: Text; offset: number } | null {
   let best: { text: Text; offset: number; gap: number } | null = null
   for (const span of layer.querySelectorAll('span')) {
     const text = span.firstChild

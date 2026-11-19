@@ -78,8 +78,7 @@ function store(spaces: Space[]) {
     panel: null,
     notes: [],
     tabs: [],
-    fileMoved: async (from: string, to: string, kind: string) =>
-      void told.push(`moved ${kind} ${from} -> ${to}`),
+    fileMoved: async (from: string, to: string, kind: string) => void told.push(`moved ${kind} ${from} -> ${to}`),
     fileGone: async (path: string, kind: string) => void told.push(`gone ${kind} ${path}`),
     holdingUnder: (_path: string, run: () => Promise<void>) => run(),
     close: (id: string) => void told.push(`closed ${id}`),
@@ -198,9 +197,7 @@ describe('the spaces folder read while a space comes or goes', () => {
       { name: 'Work', path: '/spaces/Work' },
     ]
     filtering = () => {
-      ws.spaces = ws.spaces.map((one) =>
-        one.id === 't' ? { ...one, name: 'Crew', root: '/spaces/Crew' } : one,
-      )
+      ws.spaces = ws.spaces.map((one) => (one.id === 't' ? { ...one, name: 'Crew', root: '/spaces/Crew' } : one))
     }
     await loadSpaces(ws)
     expect(ws.spaces.map((one) => one.root)).toEqual(['/spaces/Work', '/spaces/Crew'])

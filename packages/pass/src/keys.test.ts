@@ -81,9 +81,7 @@ describe('keyring', () => {
   it('refuses a wrong password or recovery code', async () => {
     const { keyring } = await newKeyring('correct horse', SMALL)
     await expect(openWithPassword(keyring, 'wrong horse')).rejects.toThrow(WrongSecret)
-    await expect(openWithRecovery(keyring, await recoveryCode(newKey()))).rejects.toThrow(
-      WrongSecret,
-    )
+    await expect(openWithRecovery(keyring, await recoveryCode(newKey()))).rejects.toThrow(WrongSecret)
     await expect(openWithRecovery(keyring, 'nonsense')).rejects.toThrow(WrongSecret)
     await expect(openWithRecovery({ ...keyring, recovery: null }, 'x')).rejects.toThrow(WrongSecret)
   })
@@ -138,9 +136,7 @@ describe('keyring', () => {
     expect(opened.signer?.pub).toBe(keyring.sign?.pub)
     const again = await openWithPassword(keyring, 'pw')
     const said = statementOf('test', 'one')
-    expect(await isSignedBy(keyring.sign!.pub, said, await signatureOf(again.signer!, said))).toBe(
-      true,
-    )
+    expect(await isSignedBy(keyring.sign!.pub, said, await signatureOf(again.signer!, said))).toBe(true)
     const swapped = {
       ...keyring,
       sign: { ...keyring.sign!, pub: (await newKeyring('x', SMALL)).keyring.sign!.pub },
@@ -231,9 +227,7 @@ describe('vaults and items', () => {
     expect(opened.itemKey).toEqual(itemKey)
     expect(opened.rev).toBe(1)
     const again = await sealItem(vaultKey, 'v1', 'i1', envelope, AT, itemKey)
-    expect((await openItem(vaultKey, 'v1', 'i1', again.key, again.body, 1)).itemKey).toEqual(
-      itemKey,
-    )
+    expect((await openItem(vaultKey, 'v1', 'i1', again.key, again.body, 1)).itemKey).toEqual(itemKey)
   })
 
   it('binds an item to its key version and its sealed revision, which anybody can read', async () => {
@@ -242,9 +236,7 @@ describe('vaults and items', () => {
     const sealed = await sealItem(vaultKey, 'v1', 'i1', envelope, { keyVersion: 3, rev: 7 })
     expect(sealedRevOf(sealed.body)).toBe(7)
     expect((await openItem(vaultKey, 'v1', 'i1', sealed.key, sealed.body, 3)).rev).toBe(7)
-    await expect(openItem(vaultKey, 'v1', 'i1', sealed.key, sealed.body, 2)).rejects.toThrow(
-      WrongSecret,
-    )
+    await expect(openItem(vaultKey, 'v1', 'i1', sealed.key, sealed.body, 2)).rejects.toThrow(WrongSecret)
     const bytes = Uint8Array.from(atob(sealed.body), (one) => one.charCodeAt(0))
     bytes[7] = 9
     const bumped = btoa(String.fromCharCode(...bytes))
@@ -268,22 +260,12 @@ describe('vaults and items', () => {
     const envelope = newEnvelope({ ...blank('login'), title: 'Old' }, 1)
     const item = await sealItem(vaultKey, 'v1', 'i1', envelope, AT)
     const version = await sealVersion(vaultKey, 'v1', 'i1', 4, envelope, item.itemKey)
-    expect(
-      (await openVersion(vaultKey, 'v1', 'i1', 4, version.key, version.body)).envelope,
-    ).toEqual(envelope)
-    await expect(openVersion(vaultKey, 'v1', 'i1', 5, version.key, version.body)).rejects.toThrow(
-      WrongSecret,
-    )
-    await expect(openItem(vaultKey, 'v1', 'i1', version.key, version.body, 1)).rejects.toThrow(
-      WrongSecret,
-    )
-    await expect(openVersion(vaultKey, 'v1', 'i1', 1, item.key, item.body)).rejects.toThrow(
-      WrongSecret,
-    )
+    expect((await openVersion(vaultKey, 'v1', 'i1', 4, version.key, version.body)).envelope).toEqual(envelope)
+    await expect(openVersion(vaultKey, 'v1', 'i1', 5, version.key, version.body)).rejects.toThrow(WrongSecret)
+    await expect(openItem(vaultKey, 'v1', 'i1', version.key, version.body, 1)).rejects.toThrow(WrongSecret)
+    await expect(openVersion(vaultKey, 'v1', 'i1', 1, item.key, item.body)).rejects.toThrow(WrongSecret)
     const legacy = await seal(item.itemKey, JSON.stringify(envelope), 'item', 'v1', 'i1')
-    expect((await openVersion(vaultKey, 'v1', 'i1', 2, item.key, legacy)).envelope).toEqual(
-      envelope,
-    )
+    expect((await openVersion(vaultKey, 'v1', 'i1', 2, item.key, legacy)).envelope).toEqual(envelope)
   })
 
   it('refuses an item moved to another id or vault, or given another key', async () => {
@@ -307,9 +289,7 @@ describe('vaults and items', () => {
     const key = await seal(vaultKey, itemKey, 'item-key', 'v1', 'i1')
     for (const text of ['{"content":{"kind":"note","title":1}}', 'not json']) {
       const body = await seal(itemKey, text, 'item', 'v1', 'i1')
-      await expect(openItem(vaultKey, 'v1', 'i1', key, body, 1)).rejects.toThrow(
-        'pass: unreadable item',
-      )
+      await expect(openItem(vaultKey, 'v1', 'i1', key, body, 1)).rejects.toThrow('pass: unreadable item')
     }
   })
 })

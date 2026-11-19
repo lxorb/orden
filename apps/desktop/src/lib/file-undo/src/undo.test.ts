@@ -57,9 +57,7 @@ describe("a file explorer's change outside the spaces (#1164)", () => {
         steps: [{ op: 'moved', pairs: [{ from: '/a/a.txt', to: '/a/b.txt' }] }],
       }),
     ).toBe('Undo renaming b.txt')
-    expect(said({ kind: 'outside', steps: [{ op: 'trashed', tickets: [ticket, ticket] }] })).toBe(
-      'Undo the deletion',
-    )
+    expect(said({ kind: 'outside', steps: [{ op: 'trashed', tickets: [ticket, ticket] }] })).toBe('Undo the deletion')
   })
 
   test('can be done again', () => {

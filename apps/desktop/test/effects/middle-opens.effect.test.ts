@@ -30,9 +30,7 @@ test('with Shift it asks for one in front', () => {
   const asked: string[] = []
   const button = drawn((event) => asked.push(tabAsk(event)))
 
-  button.dispatchEvent(
-    new MouseEvent('auxclick', { button: 1, shiftKey: true, bubbles: true, cancelable: true }),
-  )
+  button.dispatchEvent(new MouseEvent('auxclick', { button: 1, shiftKey: true, bubbles: true, cancelable: true }))
   expect(asked).toEqual(['front'])
 })
 

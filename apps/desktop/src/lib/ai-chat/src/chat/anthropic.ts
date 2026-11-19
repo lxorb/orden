@@ -93,16 +93,12 @@ export function messagesOf(steps: readonly Step[]): Message[] {
       }
     }
   }
-  return out.filter(
-    (one) => !Array.isArray(one.content) || one.content.length || one.role === 'system',
-  )
+  return out.filter((one) => !Array.isArray(one.content) || one.content.length || one.role === 'system')
 }
 
 function carriesCompaction(messages: readonly Message[]): boolean {
   return messages.some(
-    (one) =>
-      Array.isArray(one.content) &&
-      one.content.some((block) => record(block).type === 'compaction'),
+    (one) => Array.isArray(one.content) && one.content.some((block) => record(block).type === 'compaction'),
   )
 }
 
@@ -207,8 +203,7 @@ class AnthropicReader extends PartsReader implements Reader {
     this.open.set(index, open)
     const kind = text(block.type)
     if (kind === 'text') open.part = this.add({ kind: 'text', text: text(block.text) })
-    else if (kind === 'thinking')
-      open.part = this.add({ kind: 'thinking', text: text(block.thinking), ms: 0 })
+    else if (kind === 'thinking') open.part = this.add({ kind: 'thinking', text: text(block.thinking), ms: 0 })
     else if (kind === 'tool_use' || kind === 'server_tool_use') {
       const [id, verb] = [text(block.id), text(block.name)]
       open.part = this.add({ kind: 'tool', id, verb, args: {}, state: 'running' })
@@ -257,8 +252,7 @@ class AnthropicReader extends PartsReader implements Reader {
     if (!open) return { changed: [] }
     this.open.delete(index)
     const { block } = open
-    if (block.type === 'tool_use' || block.type === 'server_tool_use')
-      block.input = argsOf(open.json)
+    if (block.type === 'tool_use' || block.type === 'server_tool_use') block.input = argsOf(open.json)
     this.blocks.push(block)
     if (open.part === null) return { changed: [] }
     const part = this.parts[open.part]
@@ -276,8 +270,7 @@ class AnthropicReader extends PartsReader implements Reader {
 
   answer(): Answer {
     for (const open of this.open.values())
-      if (open.block.type !== 'tool_use' && open.block.type !== 'server_tool_use')
-        this.blocks.push(open.block)
+      if (open.block.type !== 'tool_use' && open.block.type !== 'server_tool_use') this.blocks.push(open.block)
     this.open.clear()
     const calls: Call[] = this.blocks
       .filter((one) => one.type === 'tool_use')

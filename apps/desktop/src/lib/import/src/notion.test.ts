@@ -104,9 +104,7 @@ describe('a Notion export', () => {
   })
 
   test('a database with no pages at all still has every row', async () => {
-    const plan = await readNotion([
-      file(`Tasks ${TASKS}_all.csv`, 'Name,Note\n"A | B","one\ntwo"\n,Empty\n'),
-    ])
+    const plan = await readNotion([file(`Tasks ${TASKS}_all.csv`, 'Name,Note\n"A | B","one\ntwo"\n,Empty\n')])
 
     expect(pathsOf(plan)).toEqual(['Tasks.md', 'Tasks/A B.md', 'Tasks/Untitled.md'])
     expect(noteAt(plan, 'Tasks/A B.md')).toContain('note: one two')
@@ -197,10 +195,7 @@ describe('a Notion export', () => {
 
   test('a link to a database named with brackets goes to its folder note', async () => {
     const plan = await readNotion([
-      file(
-        `Home ${PLAN}.md`,
-        `# Home\n\n[Reading (2024)](Home%20${PLAN}/Reading%20(2024)%20${TASKS}.csv)\n`,
-      ),
+      file(`Home ${PLAN}.md`, `# Home\n\n[Reading (2024)](Home%20${PLAN}/Reading%20(2024)%20${TASKS}.csv)\n`),
       file(`Home ${PLAN}/Reading (2024) ${TASKS}.csv`, 'Name\nOne\n'),
       file(`Home ${PLAN}/Reading (2024) ${TASKS}_all.csv`, 'Name\nOne\n'),
     ])
@@ -306,19 +301,11 @@ describe('a Notion export', () => {
     const plan = await readNotion([
       file(
         `Trips ${TASKS}_all.csv`,
-        [
-          'Name,Date,Created',
-          'One,"May 1, 2026 → May 3, 2026","January 2, 2026"',
-          'Two,,"January 3, 2026"',
-        ].join('\n'),
+        ['Name,Date,Created', 'One,"May 1, 2026 → May 3, 2026","January 2, 2026"', 'Two,,"January 3, 2026"'].join('\n'),
       ),
       file(
         `Visits ${TASKS}_all.csv`,
-        [
-          'Name,Date,Created',
-          'One,"March 5, 2026","January 2, 2026"',
-          'Two,,"January 3, 2026"',
-        ].join('\n'),
+        ['Name,Date,Created', 'One,"March 5, 2026","January 2, 2026"', 'Two,,"January 3, 2026"'].join('\n'),
       ),
     ])
 
@@ -405,19 +392,9 @@ describe('a Notion export', () => {
       file(`Untitled ${two}/Tent ${SUB}.html`, '<h1>Tent</h1>'),
     ])
 
-    expect(pathsOf(markdown).sort()).toEqual([
-      'Untitled 2.md',
-      'Untitled 2/Tent.md',
-      'Untitled.md',
-      'Untitled/Kit.md',
-    ])
+    expect(pathsOf(markdown).sort()).toEqual(['Untitled 2.md', 'Untitled 2/Tent.md', 'Untitled.md', 'Untitled/Kit.md'])
     expect(noteAt(markdown, 'Untitled 2.md')).toContain('[[Tent]]')
-    expect(pathsOf(html).sort()).toEqual([
-      'Untitled 2.md',
-      'Untitled 2/Tent.md',
-      'Untitled.md',
-      'Untitled/Kit.md',
-    ])
+    expect(pathsOf(html).sort()).toEqual(['Untitled 2.md', 'Untitled 2/Tent.md', 'Untitled.md', 'Untitled/Kit.md'])
   })
 
   test('an HTML export is read as HTML rather than refused', async () => {

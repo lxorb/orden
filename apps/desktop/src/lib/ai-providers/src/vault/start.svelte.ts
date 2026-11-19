@@ -46,10 +46,7 @@ async function signIns(): Promise<Record<string, string>> {
   return seen
 }
 
-async function whoStayed(
-  after: Contents,
-  moved: Record<string, string>,
-): Promise<Record<string, string>> {
+async function whoStayed(after: Contents, moved: Record<string, string>): Promise<Record<string, string>> {
   const who: Record<string, string> = {}
   for (const from of Object.keys(moved)) {
     const one = after.accounts.accounts.find((account) => account.id === from)
@@ -61,8 +58,7 @@ async function whoStayed(
 }
 
 export const world: VaultWorld = {
-  account: () =>
-    account.user && account.token && (isNative || browserVault.on) ? account.user.id : null,
+  account: () => (account.user && account.token && (isNative || browserVault.on) ? account.user.id : null),
   call: (path, method, body) =>
     request(path, {
       ...(method ? { method } : {}),
@@ -116,9 +112,7 @@ export function startVault(): void {
       hub.on('ai', () => void vault.refresh())
       hub.opened(() => void vault.refresh())
     })
-    .catch((error: unknown) =>
-      log('warn', `ai vault: could not hear the sync hub: ${String(error)}`),
-    )
+    .catch((error: unknown) => log('warn', `ai vault: could not hear the sync hub: ${String(error)}`))
   setInterval(() => void vault.refresh(), EVERY)
   void wordSaid().then(() => vault.refresh())
   if (typeof window !== 'undefined') {

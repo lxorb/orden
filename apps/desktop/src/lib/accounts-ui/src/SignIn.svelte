@@ -173,9 +173,7 @@
             <button class="orden-button" type="submit" disabled={account.busy}>Continue</button>
           </form>
         {:else}
-          <button class="link" type="button" onclick={() => (recovering = true)}>
-            Use a recovery code
-          </button>
+          <button class="link" type="button" onclick={() => (recovering = true)}> Use a recovery code </button>
         {/if}
       </div>
     {:else}
@@ -335,9 +333,6 @@
     max-height: min(88dvh, calc(100dvh - var(--keyboard) - var(--inset-top)));
     overflow-y: auto;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    padding-bottom: max(
-      var(--space-5),
-      calc(var(--space-5) + var(--inset-bottom) - var(--keyboard))
-    );
+    padding-bottom: max(var(--space-5), calc(var(--space-5) + var(--inset-bottom) - var(--keyboard)));
   }
 </style>

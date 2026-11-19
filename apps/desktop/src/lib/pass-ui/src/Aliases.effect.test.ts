@@ -24,16 +24,11 @@ const OPTIONS: [number, unknown] = [
   {
     can_create: true,
     prefix_suggestion: '',
-    suffixes: [
-      { suffix: '.cat@slmail.me', signed_suffix: '.cat@slmail.me.SIG', is_premium: false },
-    ],
+    suffixes: [{ suffix: '.cat@slmail.me', signed_suffix: '.cat@slmail.me.SIG', is_premium: false }],
   },
 ]
 
-const MAILBOXES: [number, unknown] = [
-  200,
-  { mailboxes: [{ id: 1, email: 'me@example.com', default: true }] },
-]
+const MAILBOXES: [number, unknown] = [200, { mailboxes: [{ id: 1, email: 'me@example.com', default: true }] }]
 
 let vault = ''
 
@@ -100,9 +95,7 @@ describe('Settings > Aliases', () => {
     })
     typed(key, 'bad')
     target.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }))
-    await vi.waitFor(() =>
-      expect(target.querySelector('[role="alert"]')?.textContent).toContain('Wrong api key'),
-    )
+    await vi.waitFor(() => expect(target.querySelector('[role="alert"]')?.textContent).toContain('Wrong api key'))
     expect(await pass.aliasProvider()).toBeNull()
   })
 })
@@ -125,9 +118,7 @@ describe('a new alias', () => {
     await ui.newItem(blank('alias'))
     showing(ItemEdit, { ui })
     const prefix = await vi.waitFor(() => {
-      const field = [...target.querySelectorAll<HTMLInputElement>('input')].find(
-        (one) => one.placeholder === 'shop',
-      )
+      const field = [...target.querySelectorAll<HTMLInputElement>('input')].find((one) => one.placeholder === 'shop')
       if (!field) throw new Error('no prefix')
       return field
     })
@@ -157,9 +148,7 @@ describe('a new alias', () => {
     const ui = new PassUi(null)
     await ui.newItem(blank('alias'))
     showing(ItemEdit, { ui })
-    await vi.waitFor(() =>
-      expect(target.textContent).toContain('Connect an alias service in Settings > Aliases'),
-    )
+    await vi.waitFor(() => expect(target.textContent).toContain('Connect an alias service in Settings > Aliases'))
     expect(target.querySelector('input[inputmode="email"]')).not.toBeNull()
   })
 })
@@ -213,9 +202,7 @@ describe('an alias from a service', () => {
   test('copies its address', async () => {
     const item = await made()
     showing(ItemView, { ui: new PassUi(null), item })
-    expect(target.querySelector('[data-field="Alias address"]')?.textContent).toContain(
-      'news.cat@slmail.me',
-    )
+    expect(target.querySelector('[data-field="Alias address"]')?.textContent).toContain('news.cat@slmail.me')
     expect(asked.every((one) => one.url.startsWith(SL))).toBe(true)
   })
 })

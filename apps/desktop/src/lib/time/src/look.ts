@@ -11,8 +11,7 @@ export function tintOf(activity: string | null): string {
 
 export const placeTint = (key: string): string => accentFor(key, theme.current)
 
-export const nameOf = (activity: string | null, none: string): string =>
-  time.activity(activity)?.name ?? none
+export const nameOf = (activity: string | null, none: string): string => time.activity(activity)?.name ?? none
 
 export const clock = (at: number): string => localDate(at, { hour: '2-digit', minute: '2-digit' })
 const units = new Map<string, [Intl.NumberFormat, Intl.NumberFormat]>()

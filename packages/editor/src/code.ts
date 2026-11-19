@@ -37,25 +37,16 @@ function betweenMarks(node: SyntaxNode, mark: string, pos: number): boolean {
 }
 
 function insideWrittenAsIs(state: EditorState, pos: number, side: -1 | 1): boolean {
-  const node = enclosingNamed(
-    syntaxTree(state).resolveInner(pos, side),
-    new Set(Object.keys(WRITTEN_AS_IS)),
-  )
+  const node = enclosingNamed(syntaxTree(state).resolveInner(pos, side), new Set(Object.keys(WRITTEN_AS_IS)))
   if (node) return betweenMarks(node, WRITTEN_AS_IS[node.name] ?? '', pos)
 
   const line = state.doc.lineAt(pos)
   const around = state.sliceDoc(Math.max(line.from, pos - 2), Math.min(line.to, pos + 2))
-  return (
-    line.text.trim() !== '$$' && state.sliceDoc(pos - 1, pos + 1) === '$$' && BARE_PAIR.test(around)
-  )
+  return line.text.trim() !== '$$' && state.sliceDoc(pos - 1, pos + 1) === '$$' && BARE_PAIR.test(around)
 }
 
 export function rangeWrittenAsIs(state: EditorState, range: SelectionRange): boolean {
-  return (
-    rangeInCode(state, range) ||
-    insideWrittenAsIs(state, range.from, 1) ||
-    insideWrittenAsIs(state, range.to, -1)
-  )
+  return rangeInCode(state, range) || insideWrittenAsIs(state, range.from, 1) || insideWrittenAsIs(state, range.to, -1)
 }
 
 const VERBATIM_BLOCKS = new Set([
@@ -68,10 +59,7 @@ const VERBATIM_BLOCKS = new Set([
   'CommentBlock',
 ])
 
-export function verbatimBlockAt(
-  state: EditorState,
-  line: { from: number; to: number },
-): SyntaxNode | null {
+export function verbatimBlockAt(state: EditorState, line: { from: number; to: number }): SyntaxNode | null {
   const tree = syntaxTree(state)
   return (
     enclosingNamed(tree.resolveInner(line.to, -1), VERBATIM_BLOCKS) ??

@@ -15,8 +15,7 @@ import {
   sideFor,
 } from './carets'
 
-const stateOn = (doc: string): EditorState =>
-  EditorState.create({ doc, extensions: [remoteCarets()] })
+const stateOn = (doc: string): EditorState => EditorState.create({ doc, extensions: [remoteCarets()] })
 
 const withPeers = (doc: string, peers: readonly Peer[]): EditorState =>
   stateOn(doc).update({ effects: setPeers.of(peers) }).state

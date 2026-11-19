@@ -30,11 +30,7 @@ describe('today on the glasses', () => {
     const today = new Today(answer)
     today.fresh()
     await settled()
-    expect(today.rows().map((one) => one.label)).toEqual([
-      '□ Call Mum',
-      '□ Send the slides',
-      '□ milk $3',
-    ])
+    expect(today.rows().map((one) => one.label)).toEqual(['□ Call Mum', '□ Send the slides', '□ milk $3'])
     expect(drawn()).toBe(1)
   })
 

@@ -71,8 +71,7 @@ const GLYPHS = {
   },
   F: {
     width: 0.5,
-    path: (x, y, h) =>
-      `M${n(x + 0.5 * h)} ${n(y)}H${n(x)}V${n(y + h)}M${n(x)} ${n(y + 0.48 * h)}H${n(x + 0.4 * h)}`,
+    path: (x, y, h) => `M${n(x + 0.5 * h)} ${n(y)}H${n(x)}V${n(y + h)}M${n(x)} ${n(y + 0.48 * h)}H${n(x + 0.4 * h)}`,
   },
 }
 
@@ -82,8 +81,7 @@ function label(text, { height, stroke, gap, y: middle }) {
     if (!glyph) throw new Error(`no glyph for ${c}`)
     return glyph
   })
-  const width =
-    letters.reduce((sum, g) => sum + g.width * height, 0) + gap * height * (letters.length - 1)
+  const width = letters.reduce((sum, g) => sum + g.width * height, 0) + gap * height * (letters.length - 1)
   let x = 512 - width / 2
   const y = middle - height / 2
   const d = letters
@@ -173,10 +171,7 @@ for (const [ext, type] of Object.entries(TYPES)) {
     drawn[variant] = (size) => readFileSync(join(out, `${size}x${size}.png`))
   }
 
-  writeFileSync(
-    join(OUT, `${ext}.ico`),
-    ico(WINDOWS.map((size) => [size, drawn[variantOf(size)](size)])),
-  )
+  writeFileSync(join(OUT, `${ext}.ico`), ico(WINDOWS.map((size) => [size, drawn[variantOf(size)](size)])))
   writeFileSync(
     join(OUT, `${ext}.icns`),
     icns(MAC.map(([kind, size, scale]) => [kind, drawn[variantOf(size)](size * scale)])),

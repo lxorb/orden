@@ -40,8 +40,7 @@ function type(words: string): HTMLInputElement {
   return field
 }
 
-const enter = () =>
-  fieldOf().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+const enter = () => fieldOf().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
 
 async function typeAndAdd(words: string): Promise<HTMLInputElement> {
   const field = type(words)

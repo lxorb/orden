@@ -27,26 +27,18 @@ describe('closing an HTML comment above %% comment blocks', () => {
   test('keeps the blocks below comments when the last > of an inline comment is typed', () => {
     const before = `Intro words here. <!--x--${BELOW}`
     const after = closedWith(before, before.indexOf('--\n') + 2, '>')
-    expect(commentBlocks(after.doc, after.tree)).toEqual([
-      '%%\nhidden one\n%%',
-      '%%\nhidden two\n%%',
-    ])
+    expect(commentBlocks(after.doc, after.tree)).toEqual(['%%\nhidden one\n%%', '%%\nhidden two\n%%'])
   })
 
   test('keeps them comments when a comment over two lines of a paragraph is closed', () => {
     const before = `Intro words <!-- a note\nstill the note --${BELOW}`
     const after = closedWith(before, before.indexOf('--\n') + 2, '>')
-    expect(commentBlocks(after.doc, after.tree)).toEqual([
-      '%%\nhidden one\n%%',
-      '%%\nhidden two\n%%',
-    ])
+    expect(commentBlocks(after.doc, after.tree)).toEqual(['%%\nhidden one\n%%', '%%\nhidden two\n%%'])
   })
 
   test('reads as a fresh parse of the same note', () => {
     const before = `Intro words here. <!--x--${BELOW}`
     const after = closedWith(before, before.indexOf('--\n') + 2, '>')
-    expect(commentBlocks(after.doc, after.tree)).toEqual(
-      commentBlocks(after.doc, ordenMarkdownParser.parse(after.doc)),
-    )
+    expect(commentBlocks(after.doc, after.tree)).toEqual(commentBlocks(after.doc, ordenMarkdownParser.parse(after.doc)))
   })
 })

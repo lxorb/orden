@@ -40,11 +40,7 @@ export const visit = (url: string, title: string, more: Partial<Visit> = {}): Vi
   ...more,
 })
 
-export const setting = (
-  label: string,
-  where: string,
-  more: Partial<PaletteSetting> = {},
-): PaletteSetting => ({
+export const setting = (label: string, where: string, more: Partial<PaletteSetting> = {}): PaletteSetting => ({
   section: 'editor',
   label,
   where,

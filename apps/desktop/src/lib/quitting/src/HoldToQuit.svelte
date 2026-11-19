@@ -4,9 +4,7 @@
 </script>
 
 {#if holding.shown}
-  <div class="orden-layer hold" role="status" transition:fade={{ duration: LAYER.fade }}>
-    Hold ⌘Q to quit
-  </div>
+  <div class="orden-layer hold" role="status" transition:fade={{ duration: LAYER.fade }}>Hold ⌘Q to quit</div>
 {/if}
 
 <style>

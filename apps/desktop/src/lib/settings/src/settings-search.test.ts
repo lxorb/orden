@@ -96,12 +96,9 @@ describe('searching the settings', () => {
     ['  DEUTSCH ', ['Language']],
     ['', []],
     ['   ', []],
-  ])(
-    'finds %j by name, group, choice, unit, explanation or a word on a hand-written pane',
-    (query, found) => {
-      expect(labels(query)).toEqual(found)
-    },
-  )
+  ])('finds %j by name, group, choice, unit, explanation or a word on a hand-written pane', (query, found) => {
+    expect(labels(query)).toEqual(found)
+  })
 
   test('finds a field by the pane it lives in, and says which pane a hit belongs to', () => {
     expect(labels('general')).toHaveLength(5)

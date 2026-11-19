@@ -36,16 +36,10 @@ describe('which stores', () => {
   test('a space of its own is one store, with every origin its history went to', () => {
     const plan = planned(
       { w: 'space' },
-      () => [
-        visit('https://moodle.ethz.ch/my'),
-        visit('https://moodle.ethz.ch/x'),
-        visit('https://github.com/'),
-      ],
+      () => [visit('https://moodle.ethz.ch/my'), visit('https://moodle.ethz.ch/x'), visit('https://github.com/')],
       registrable,
     )
-    expect(plan).toEqual([
-      { from: 'space_w', origins: ['https://moodle.ethz.ch', 'https://github.com'] },
-    ])
+    expect(plan).toEqual([{ from: 'space_w', origins: ['https://moodle.ethz.ch', 'https://github.com'] }])
   })
 
   test('a space kept per site is a store per site, with that site’s origins', () => {
@@ -85,16 +79,11 @@ describe('the merge', () => {
 
     await mergeOld()
 
-    expect(asked).toEqual([
-      { command: 'web_merge', args: { from: 'space_w', origins: ['https://a.example'] } },
-    ])
+    expect(asked).toEqual([{ command: 'web_merge', args: { from: 'space_w', origins: ['https://a.example'] } }])
     expect(kept.has('orden:web-data')).toBe(false)
     expect(kept.has('orden:web-visits:w')).toBe(false)
     const history = JSON.parse(kept.get('orden:web-visits') ?? '[]') as Visit[]
-    expect(history.map((one) => one.url).sort()).toEqual([
-      'https://a.example/',
-      'https://b.example/',
-    ])
+    expect(history.map((one) => one.url).sort()).toEqual(['https://a.example/', 'https://b.example/'])
     expect(kept.get(MERGED)).toBeTruthy()
 
     asked.length = 0
@@ -128,10 +117,7 @@ describe('two histories as one', () => {
   })
 
   test('a page in both is one row, counted up, as recent as its later side', () => {
-    const into = [
-      row('https://a.example/', 2, NOW - 1000, 'Old title'),
-      row('https://b.example/', 1, NOW),
-    ]
+    const into = [row('https://a.example/', 2, NOW - 1000, 'Old title'), row('https://b.example/', 1, NOW)]
     const from = [row('https://a.example/', 3, NOW, 'New title'), row('https://c.example/', 1, NOW)]
     const both = folded(into, from)
     expect(both.map((one) => one.url).sort()).toEqual([
@@ -139,15 +125,11 @@ describe('two histories as one', () => {
       'https://b.example/',
       'https://c.example/',
     ])
-    expect(both.find((one) => one.url === 'https://a.example/')).toEqual(
-      row('https://a.example/', 5, NOW, 'New title'),
-    )
+    expect(both.find((one) => one.url === 'https://a.example/')).toEqual(row('https://a.example/', 5, NOW, 'New title'))
   })
 
   test('and no longer than a history may be', () => {
-    const many = Array.from({ length: MOST_VISITS }, (_, at) =>
-      row(`https://${at}.example/`, 1, at),
-    )
+    const many = Array.from({ length: MOST_VISITS }, (_, at) => row(`https://${at}.example/`, 1, at))
     const more = [row('https://new.example/', 1, MOST_VISITS + 1)]
     const both = folded(many, more)
     expect(both).toHaveLength(MOST_VISITS)

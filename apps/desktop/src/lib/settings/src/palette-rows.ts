@@ -10,9 +10,7 @@ import { ICONS, sectionGroups } from './sections'
 import type { Place } from './settings-search'
 
 function choices(field: Field): string[] {
-  return field.kind === 'select' || field.kind === 'segmented'
-    ? field.options.map((one) => one.label)
-    : []
+  return field.kind === 'select' || field.kind === 'segmented' ? field.options.map((one) => one.label) : []
 }
 
 function fieldValue(field: Field): string | null {
@@ -85,9 +83,7 @@ export function settingRows(
   }
 
   for (const place of places) {
-    rows.push(
-      plain(place.section, place.label, nameOf(place.section), place.text.filter(Boolean), true),
-    )
+    rows.push(plain(place.section, place.label, nameOf(place.section), place.text.filter(Boolean), true))
   }
 
   return rows

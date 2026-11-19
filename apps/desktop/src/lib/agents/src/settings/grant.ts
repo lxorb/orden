@@ -79,8 +79,7 @@ export function withScope(grant: Grant, scope: Scope, on: boolean): Grant {
     scopes.push(scope)
     const needs = NEEDS[scope] ?? []
     const first = needs[0]
-    if (first && !needs.some((one) => holds(scopes, one)))
-      return withScope({ ...grant, scopes }, first, true)
+    if (first && !needs.some((one) => holds(scopes, one))) return withScope({ ...grant, scopes }, first, true)
   } else {
     let orphan = scopes.find((one) => !reachable(scopes, one))
     while (orphan !== undefined) {
@@ -120,8 +119,7 @@ export function withSpace(grant: Grant, space: string, on: boolean): Grant {
   return { ...grant, spaces: on ? [...rest, space] : rest }
 }
 
-export const reaches = (grant: Grant, space: string): boolean =>
-  grant.spaces === 'all' || grant.spaces.includes(space)
+export const reaches = (grant: Grant, space: string): boolean => grant.spaces === 'all' || grant.spaces.includes(space)
 
 export function withSite(grant: Grant, site: string, rule: SiteRule | null): Grant {
   const sites = Object.fromEntries(Object.entries(grant.sites).filter(([one]) => one !== site))
@@ -134,20 +132,13 @@ export function withoutAlways(grant: Grant, site: string, category: Category): G
   return { ...grant, always: left.length ? { ...always, [site]: left } : always }
 }
 
-export function withListed(
-  grant: Grant,
-  list: 'scripts' | 'programs',
-  word: string,
-  on: boolean,
-): Grant {
+export function withListed(grant: Grant, list: 'scripts' | 'programs', word: string, on: boolean): Grant {
   const trimmed = word.trim()
   const rest = grant[list].filter((one) => one !== trimmed)
   return { ...grant, [list]: on && trimmed ? [...rest, trimmed] : rest }
 }
 
-export function sitesOf(
-  grant: Grant,
-): { site: string; rule: SiteRule | null; always: Category[] }[] {
+export function sitesOf(grant: Grant): { site: string; rule: SiteRule | null; always: Category[] }[] {
   const names = [...new Set([...Object.keys(grant.sites), ...Object.keys(grant.always)])].sort()
   return names.map((site) => ({
     site,
@@ -167,9 +158,7 @@ export function ownGrant(id: string, client: string, created: number): Grant {
     id,
     name: client,
     client,
-    scopes: ALL_SCOPES.filter(
-      (one) => !['browser.script', 'browser.storage', 'settings'].includes(one),
-    ),
+    scopes: ALL_SCOPES.filter((one) => !['browser.script', 'browser.storage', 'settings'].includes(one)),
     spaces: 'all',
     sites: {},
     scripts: [],

@@ -11,8 +11,7 @@ A line about #work/orden and one about #work/orden/canvas.
 Nothing here about #working.
 `
 
-const change = (from: string, to: string | null, body = NOTE) =>
-  tagChange('/space/a.md', body, from, to)
+const change = (from: string, to: string | null, body = NOTE) => tagChange('/space/a.md', body, from, to)
 
 describe('renaming a tag in one note', () => {
   test('rewrites the node and leaves what hung off it', () => {
@@ -22,8 +21,7 @@ describe('renaming a tag in one note', () => {
   })
 
   test('keeps the case of the parents it did not rename', () => {
-    const body =
-      '---\ntags: [ProjectX/Notes, Reading]\n---\n\n#ProjectX/Notes and #ProjectX/Plans\n'
+    const body = '---\ntags: [ProjectX/Notes, Reading]\n---\n\n#ProjectX/Notes and #ProjectX/Plans\n'
     expect(change('projectx/notes', 'projectx/docs', body)?.after).toBe(
       '---\ntags: [ProjectX/docs, Reading]\n---\n\n#ProjectX/docs and #ProjectX/Plans\n',
     )
@@ -108,9 +106,7 @@ describe('across a space', () => {
   })
 
   test('and a note that cannot be read is not one of them', async () => {
-    const made = await tagChanges(['/space/gone.md'], 'work/orden', 'work/core', () =>
-      Promise.resolve(null),
-    )
+    const made = await tagChanges(['/space/gone.md'], 'work/orden', 'work/core', () => Promise.resolve(null))
     expect(made).toEqual([])
   })
 })
@@ -153,9 +149,7 @@ describe('next to a link to a heading', () => {
 describe('next to an address and inside marks', () => {
   test('a rename leaves a link that only names the tag in its query', () => {
     const note = 'see [docs](https://x.test/app?tab=#setup) #setup\n'
-    expect(change('setup', 'install', note)?.after).toBe(
-      'see [docs](https://x.test/app?tab=#setup) #install\n',
-    )
+    expect(change('setup', 'install', note)?.after).toBe('see [docs](https://x.test/app?tab=#setup) #install\n')
   })
 
   test('a rename keeps the marks round a tag, underscores included', () => {
@@ -163,9 +157,7 @@ describe('next to an address and inside marks', () => {
   })
 
   test('taking a tag away takes the marks it was the whole of', () => {
-    expect(change('todo', null, 'Shipped\n~~#todo~~\nMore #a\n')?.after).toBe(
-      'Shipped\n\nMore #a\n',
-    )
+    expect(change('todo', null, 'Shipped\n~~#todo~~\nMore #a\n')?.after).toBe('Shipped\n\nMore #a\n')
     expect(change('todo', null, 'Done ==#todo== and **#todo** now\n')?.after).toBe('Done and now\n')
   })
 })
@@ -175,12 +167,8 @@ describe('two tags taken away side by side', () => {
     expect(change('work', null, '#work #work/sub\n')?.after).toBe('\n')
     expect(change('todo', null, '#todo #todo\n')?.after).toBe('\n')
     expect(change('work', null, '**#work**, #work\n')?.after).toBe('\n')
-    expect(change('work', null, '---\ntags: [work, work/sub]\n---\n')?.after).toBe(
-      '---\ntags: []\n---\n',
-    )
-    expect(change('work', null, '---\ntags: work, work/sub\n---\n')?.after).toBe(
-      '---\ntags: \n---\n',
-    )
+    expect(change('work', null, '---\ntags: [work, work/sub]\n---\n')?.after).toBe('---\ntags: []\n---\n')
+    expect(change('work', null, '---\ntags: work, work/sub\n---\n')?.after).toBe('---\ntags: \n---\n')
   })
 
   test('a comma right before another mark stays, so that mark makes no new tag', () => {
@@ -189,8 +177,6 @@ describe('two tags taken away side by side', () => {
   })
 
   test('a space before the comma that follows goes with the tag', () => {
-    expect(change('work', null, '---\ntags: [work , home]\n---\n')?.after).toBe(
-      '---\ntags: [home]\n---\n',
-    )
+    expect(change('work', null, '---\ntags: [work , home]\n---\n')?.after).toBe('---\ntags: [home]\n---\n')
   })
 })

@@ -81,9 +81,7 @@ const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i
 const FORBIDDEN = '<>:"\\|?*'
 
 function safeName(name) {
-  let out = Array.from(name.normalize('NFC'), (char) =>
-    char < ' ' || FORBIDDEN.includes(char) ? '_' : char,
-  ).join('')
+  let out = Array.from(name.normalize('NFC'), (char) => (char < ' ' || FORBIDDEN.includes(char) ? '_' : char)).join('')
   if (RESERVED.test(out)) out = `_${out}`
   out = out.replace(/[. ]+$/, (tail) => '_'.repeat(tail.length))
   return out || '_'
@@ -117,8 +115,7 @@ async function earlier(root) {
   try {
     const index = JSON.parse(await readFile(join(root, 'index.json'), 'utf8'))
     const notes = new Map()
-    for (const space of index.spaces ?? [])
-      for (const note of space.notes ?? []) notes.set(note.id, note)
+    for (const space of index.spaces ?? []) for (const note of space.notes ?? []) notes.set(note.id, note)
     return notes
   } catch {
     return new Map()
@@ -179,8 +176,7 @@ async function backup(root, { history }) {
         versions: [],
       }
 
-      const same =
-        kept && kept.version === row.version && kept.hash === row.hash && kept.file === local
+      const same = kept && kept.version === row.version && kept.hash === row.hash && kept.file === local
       let content = null
       if (same && existsSync(join(root, ...local.split('/')))) {
         content = await readFile(join(root, ...local.split('/')), 'utf8')
@@ -198,10 +194,7 @@ async function backup(root, { history }) {
       if (content !== null) {
         if (sha256(content) !== row.hash) {
           if (row.deleted && content === '') entry.purged = true
-          else
-            problems.push(
-              `${space.name}/${row.path}: words do not match the hash the account lists`,
-            )
+          else problems.push(`${space.name}/${row.path}: words do not match the hash the account lists`)
         }
         if (!entry.purged) await put(root, local, content)
         else entry.file = null
@@ -240,8 +233,7 @@ async function backup(root, { history }) {
     api: API,
     history,
     spaces,
-    deletedSpaces:
-      deletedSpaces ?? 'not listed: a program token cannot read Recently deleted spaces',
+    deletedSpaces: deletedSpaces ?? 'not listed: a program token cannot read Recently deleted spaces',
     blobs: linked.sort((one, two) => (one.hash < two.hash ? -1 : 1)),
     problems,
   }
@@ -260,8 +252,7 @@ async function backup(root, { history }) {
 }
 
 function linkedIn(text, blobs) {
-  for (const match of text.matchAll(LINKED))
-    blobs.set(match[1].toLowerCase(), (match[2] ?? '').toLowerCase())
+  for (const match of text.matchAll(LINKED)) blobs.set(match[1].toLowerCase(), (match[2] ?? '').toLowerCase())
 }
 
 async function versionsOf(root, entry, kept, problems, counts, blobs) {

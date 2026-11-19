@@ -45,12 +45,5 @@ function words(field: Field, group: Group, pane: Pane): string[] {
         ? [field.unit]
         : []
 
-  return [
-    field.label,
-    group.title,
-    pane.label,
-    ...(field.hint ? [field.hint] : []),
-    ...own,
-    ...(field.words ?? []),
-  ]
+  return [field.label, group.title, pane.label, ...(field.hint ? [field.hint] : []), ...own, ...(field.words ?? [])]
 }

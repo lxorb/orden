@@ -11,8 +11,7 @@ function choiceOf(text: string | null): Choice {
   return text === 'on' || text === 'off' ? text : 'auto'
 }
 
-const hide = (): Promise<boolean> =>
-  invoke<boolean>('agents_hold', { hide: true }).catch(() => false)
+const hide = (): Promise<boolean> => invoke<boolean>('agents_hold', { hide: true }).catch(() => false)
 
 class Residency {
   choice = $state<Choice>(choiceOf(storedText(KEY)))

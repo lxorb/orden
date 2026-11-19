@@ -1,11 +1,6 @@
 <script lang="ts">
   import type { Poll } from '@orden/chats'
-  import {
-    FEWEST_ANSWERS,
-    LONGEST_ANSWER,
-    LONGEST_QUESTION,
-    MOST_ANSWERS,
-  } from '@orden/chats/limits'
+  import { FEWEST_ANSWERS, LONGEST_ANSWER, LONGEST_QUESTION, MOST_ANSWERS } from '@orden/chats/limits'
   import { Sheet } from '../../../ui-controls/src/api'
   import { segmented } from '../../../ui-kit/src/api'
   import { stretch } from './when'
@@ -70,13 +65,7 @@
         }}
       />
     {/each}
-    <button
-      type="button"
-      class="row"
-      role="switch"
-      aria-checked={several}
-      onclick={() => (several = !several)}
-    >
+    <button type="button" class="row" role="switch" aria-checked={several} onclick={() => (several = !several)}>
       <span>Several answers</span>
       <span class="orden-switch" class:on={several} aria-hidden="true"></span>
     </button>

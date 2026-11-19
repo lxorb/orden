@@ -85,12 +85,7 @@ export function pageCss(setup: PageSetup): string {
   return `@page { size: ${setup.paper} ${setup.orientation}; margin: ${margin}; }`
 }
 
-export function withRunningText(
-  body: string,
-  setup: PageSetup,
-  title: string,
-  date: string,
-): string {
+export function withRunningText(body: string, setup: PageSetup, title: string, date: string): string {
   if (!setup.header && !setup.footer) return body
 
   const header = setup.header

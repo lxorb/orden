@@ -10,8 +10,7 @@ function pressed(from: number, finger = false) {
   return drag
 }
 
-const to = (drag: TabDrag, along: number, inside = true, y = 20) =>
-  drag.move(along, along, y, inside, frame)
+const to = (drag: TabDrag, along: number, inside = true, y = 20) => drag.move(along, along, y, inside, frame)
 
 describe('a press on a tab', () => {
   test('is a click until it has gone ten pixels', () => {

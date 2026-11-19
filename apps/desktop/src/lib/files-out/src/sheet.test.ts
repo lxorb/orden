@@ -116,9 +116,7 @@ describe('a page with pictures written whole, for a PDF file', () => {
     const page = await wholeSheet(PAGE, resolve)
 
     expect(page).toBeInstanceOf(Blob)
-    expect(await (page as Blob).text()).toContain(
-      `<img src="data:image/png;base64,${btoa('/space/a.png')}" alt="a">`,
-    )
+    expect(await (page as Blob).text()).toContain(`<img src="data:image/png;base64,${btoa('/space/a.png')}" alt="a">`)
   })
 
   test('is the page as it is when it holds no picture of the space', async () => {

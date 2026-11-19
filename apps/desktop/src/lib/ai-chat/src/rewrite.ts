@@ -85,8 +85,7 @@ export function languageNames(): { id: string; name: string }[] {
 
 export function defaultLanguage(region: string): string {
   const base = region.split('-')[0]
-  const found =
-    LANGUAGES.find((one) => one.id === region) ?? LANGUAGES.find((one) => one.id === base)
+  const found = LANGUAGES.find((one) => one.id === region) ?? LANGUAGES.find((one) => one.id === base)
   return found?.id ?? 'en'
 }
 

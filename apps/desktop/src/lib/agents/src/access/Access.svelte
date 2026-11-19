@@ -1,14 +1,5 @@
 <script lang="ts">
-  import {
-    localDate,
-    dur,
-    slide,
-    keep,
-    storedText,
-    invoke,
-    isDesktop,
-    platform,
-  } from '../../../platform/src/api'
+  import { localDate, dur, slide, keep, storedText, invoke, isDesktop, platform } from '../../../platform/src/api'
   import { Facts, closeOnBack, arrive, segmented } from '../../../ui-kit/src/api'
   import { onMount } from 'svelte'
   import { cubicOut } from 'svelte/easing'
@@ -53,8 +44,7 @@
   const listed = $derived(
     pane
       ? [...pane.grants].sort(
-          (a, b) =>
-            (pane.last.get(b.id) ?? 0) - (pane.last.get(a.id) ?? 0) || a.created - b.created,
+          (a, b) => (pane.last.get(b.id) ?? 0) - (pane.last.get(a.id) ?? 0) || a.created - b.created,
         )
       : [],
   )
@@ -82,12 +72,10 @@
       ? 'Not used yet.'
       : `Last used ${localDate(at, { dateStyle: 'short', timeStyle: 'medium' })}.`
 
-  const access = (readOnly: boolean) =>
-    readOnly ? 'Reads your notes.' : 'Reads and writes your notes.'
+  const access = (readOnly: boolean) => (readOnly ? 'Reads your notes.' : 'Reads and writes your notes.')
 
   const anything = $derived(
-    listed.length > 0 ||
-      (!!account.user && (connectors.clients.length > 0 || !!connectors.token?.exists)),
+    listed.length > 0 || (!!account.user && (connectors.clients.length > 0 || !!connectors.token?.exists)),
   )
 
   let root = $state<HTMLElement>()
@@ -162,34 +150,21 @@
                 <span class="name">
                   {grant.name}
                   <small>
-                    <Facts
-                      parts={[
-                        grant.client !== grant.name && grant.client,
-                        when(pane?.last.get(grant.id)),
-                      ]}
-                    />
+                    <Facts parts={[grant.client !== grant.name && grant.client, when(pane?.last.get(grant.id))]} />
                   </small>
                 </span>
-                <svg class="chevron" viewBox="0 0 16 16" aria-hidden="true"
-                  ><path d="M6 3l5 5-5 5" /></svg
-                >
+                <svg class="chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M6 3l5 5-5 5" /></svg>
               </button>
             {/each}
 
             {#if account.user}
               {#each connectors.clients as one (one.id)}
-                {@render connected(one.name, one, 'Disconnect', false, () =>
-                  connectors.disconnect(one.id),
-                )}
+                {@render connected(one.name, one, 'Disconnect', false, () => connectors.disconnect(one.id))}
               {/each}
 
               {#if connectors.token?.exists}
-                {@render connected(
-                  'Pasted token',
-                  connectors.token,
-                  'Revoke',
-                  connectors.busy,
-                  () => connectors.revokeToken(),
+                {@render connected('Pasted token', connectors.token, 'Revoke', connectors.busy, () =>
+                  connectors.revokeToken(),
                 )}
               {/if}
             {/if}
@@ -207,29 +182,20 @@
                   /></span
                 ></span
               >
-              <Switch
-                on={enrolled}
-                label="Agents on this computer connect on their own"
-                onchange={enroll}
-              />
+              <Switch on={enrolled} label="Agents on this computer connect on their own" onchange={enroll} />
             </div>
           </div>
         {/if}
 
         {#if shortcuts}
           <div class="card">
-            <button
-              class="orden-setting agent"
-              onclick={() => void invoke('open_shortcuts').catch(() => undefined)}
-            >
+            <button class="orden-setting agent" onclick={() => void invoke('open_shortcuts').catch(() => undefined)}>
               <AgentMark name="Apple Shortcuts" />
               <span class="name">
                 Apple Shortcuts
                 <small>Add task</small>
               </span>
-              <svg class="chevron" viewBox="0 0 16 16" aria-hidden="true"
-                ><path d="M5 11l6-6M6 5h5v5" /></svg
-              >
+              <svg class="chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 11l6-6M6 5h5v5" /></svg>
             </button>
           </div>
         {/if}
@@ -238,12 +204,7 @@
           <h3>{anything ? 'Connect another' : 'Connect'}</h3>
           <div class="orden-segmented" role="tablist" use:segmented>
             {#each offered as one (one)}
-              <button
-                role="tab"
-                class:on={choice === one}
-                aria-selected={choice === one}
-                onclick={() => pick(one)}
-              >
+              <button role="tab" class:on={choice === one} aria-selected={choice === one} onclick={() => pick(one)}>
                 {LABELS[one]()}
               </button>
             {/each}

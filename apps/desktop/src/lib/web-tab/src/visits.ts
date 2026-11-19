@@ -28,11 +28,7 @@ export function bounded(list: Visit[]): Visit[] {
   return [...list].sort((one, other) => other.last - one.last).slice(0, MOST_VISITS)
 }
 
-function touched(
-  list: readonly Visit[],
-  url: string,
-  change: (was: Visit) => Visit,
-): readonly Visit[] {
+function touched(list: readonly Visit[], url: string, change: (was: Visit) => Visit): readonly Visit[] {
   const key = visitKey(url)
   if (key === null) return list
 
@@ -47,12 +43,7 @@ function titled(title: string, was: string): string {
   return said || was
 }
 
-export function visited(
-  list: readonly Visit[],
-  url: string,
-  title: string,
-  now: number,
-): readonly Visit[] {
+export function visited(list: readonly Visit[], url: string, title: string, now: number): readonly Visit[] {
   return touched(list, url, (was) => ({
     ...was,
     title: titled(title, was.title),

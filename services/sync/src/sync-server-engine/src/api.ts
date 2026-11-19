@@ -56,15 +56,7 @@ export {
   v2Files,
   WRONG_BYTES,
 } from './sync2/files'
-export {
-  type Account,
-  accountBy,
-  minimum,
-  move,
-  NEEDS_MIN,
-  type Standing,
-  standing,
-} from './sync2/gate'
+export { type Account, accountBy, minimum, move, NEEDS_MIN, type Standing, standing } from './sync2/gate'
 export { v2Docs, v2Spaces } from './sync2'
 export { everyoneBack, isMode, rolloutView, setRollout, startingVersion } from './sync2/rollout'
 export { sweepTreeOps } from './sync2/tree'

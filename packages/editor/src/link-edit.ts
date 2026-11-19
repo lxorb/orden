@@ -43,11 +43,7 @@ function wikilinkParts(state: EditorState, node: SyntaxNode): LinkParts | null {
 const labelKey = (label: string) => label.trim().replace(/\s+/g, ' ').toLowerCase().toUpperCase()
 const WHOLE_NOTE = 1e9
 
-function definedAddress(
-  state: EditorState,
-  tree: Tree,
-  label: string,
-): { from: number; to: number } | null {
+function definedAddress(state: EditorState, tree: Tree, label: string): { from: number; to: number } | null {
   const key = labelKey(label)
   let first: SyntaxNode | null = null
   tree.iterate({
@@ -55,8 +51,7 @@ function definedAddress(
       if (first) return false
       if (ref.name !== 'LinkReference') return ref.name !== 'Paragraph'
       const written = ref.node.getChild('LinkLabel')
-      if (written && labelKey(state.doc.sliceString(written.from + 1, written.to - 1)) === key)
-        first = ref.node
+      if (written && labelKey(state.doc.sliceString(written.from + 1, written.to - 1)) === key) first = ref.node
       return false
     },
   })
@@ -103,12 +98,9 @@ function labelParts(
 
 function markdownParts(state: EditorState, node: SyntaxNode): LinkParts {
   const marks = node.getChildren('LinkMark')
-  const pointer =
-    node.name === 'URL' ? node : node.name === 'Autolink' ? node.getChild('URL') : linkAddress(node)
+  const pointer = node.name === 'URL' ? node : node.name === 'Autolink' ? node.getChild('URL') : linkAddress(node)
   const empty = marks[3] ? { from: marks[2]?.to ?? node.to, to: marks[3].from } : null
-  const target = pointer
-    ? { from: pointer.from, to: pointer.to }
-    : (empty ?? { from: node.to, to: node.to })
+  const target = pointer ? { from: pointer.from, to: pointer.to } : (empty ?? { from: node.to, to: node.to })
 
   if (node.name !== 'Link') return { from: node.from, to: node.to, target, words: null }
 
@@ -144,9 +136,7 @@ export const editLink =
       if (!tree) return false
       const address = definedAddress(state, tree, parts.label.text)
       if (!address) {
-        dispatch(
-          writeAddress(state, state.doc.sliceString(target.from, target.to), parts.label.written),
-        )
+        dispatch(writeAddress(state, state.doc.sliceString(target.from, target.to), parts.label.written))
         return true
       }
       target = address

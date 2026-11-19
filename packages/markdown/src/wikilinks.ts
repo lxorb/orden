@@ -16,10 +16,7 @@ import {
 import { firstStart, lineStart, matchesAt } from './starts'
 import { remembering } from './tags'
 
-export type LinkResolver = (
-  link: Wikilink,
-  from?: EmbeddedNote,
-) => { href: string | null; text?: string } | null
+export type LinkResolver = (link: Wikilink, from?: EmbeddedNote) => { href: string | null; text?: string } | null
 
 export type EmbedResolver = (link: Wikilink) => string | EmbeddedNote | null
 
@@ -29,11 +26,7 @@ export interface EmbeddedNote {
   path?: string
 }
 
-export type PictureResolver = (
-  src: string,
-  wikilink: boolean,
-  from: EmbeddedNote | null,
-) => string | null
+export type PictureResolver = (src: string, wikilink: boolean, from: EmbeddedNote | null) => string | null
 
 export interface Embeds {
   sections: { text: string; escapeHtml: boolean; from: EmbeddedNote }[]
@@ -79,8 +72,7 @@ export function wikilinks(options: {
         },
         renderer(token: Tokens.Generic) {
           const link = token.link as Wikilink
-          const shown =
-            media(link, options.resolvePicture) ?? card(link, options) ?? frame(link, options)
+          const shown = media(link, options.resolvePicture) ?? card(link, options) ?? frame(link, options)
 
           return shown ?? `<p>${anchor(link, options.resolveLink, String(token.text ?? ''))}</p>\n`
         },
@@ -136,9 +128,7 @@ function media(link: Wikilink, resolve: PictureResolver | undefined): string | n
   if (!source) return null
 
   const size = embedSize(link.alias)
-  const sized = size
-    ? ` width="${size.width}"${size.height === null ? '' : ` height="${size.height}"`}`
-    : ''
+  const sized = size ? ` width="${size.width}"${size.height === null ? '' : ` height="${size.height}"`}` : ''
   const words = size === null ? (link.alias ?? '') : ''
 
   if (kind === 'image') return `<img src="${source}" alt="${escape(words)}"${sized}>`
@@ -169,10 +159,7 @@ function card(link: Wikilink, options: { resolveLink?: LinkResolver }): string |
   )
 }
 
-function frame(
-  link: Wikilink,
-  options: { resolveEmbed?: EmbedResolver; embeds: Embeds },
-): string | null {
+function frame(link: Wikilink, options: { resolveEmbed?: EmbedResolver; embeds: Embeds }): string | null {
   if (isTabFile(link.target)) return null
   const found = options.resolveEmbed?.(link) ?? null
   if (found === null) return null
@@ -182,8 +169,7 @@ function frame(
   const section = sectionOf(note.text, link)
   if (section === null) return null
 
-  const at =
-    options.embeds.sections.push({ text: section, escapeHtml: note.escapeHtml, from: note }) - 1
+  const at = options.embeds.sections.push({ text: section, escapeHtml: note.escapeHtml, from: note }) - 1
   const name = escape(shownText(link))
 
   return `<figure class="embed">\n<div class="embed-body">${options.embeds.marker(

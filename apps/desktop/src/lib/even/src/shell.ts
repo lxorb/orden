@@ -1,14 +1,4 @@
-import {
-  BODY_INNER,
-  BODY_ROWS,
-  fit,
-  pageOfLine,
-  ruleOf,
-  HEAD_INNER,
-  spread,
-  width,
-  wrap,
-} from '@orden/glasses'
+import { BODY_INNER, BODY_ROWS, fit, pageOfLine, ruleOf, HEAD_INNER, spread, width, wrap } from '@orden/glasses'
 import type { Session } from './session'
 
 export interface Row {
@@ -517,10 +507,7 @@ export class Shell {
         const shown = screen.rows.slice(from, from + SHOWN)
         const more = screen.rows.length > SHOWN
         return {
-          head: this.top(
-            screen.question,
-            more ? `${String(from + shown.length)}/${String(screen.rows.length)}` : '',
-          ),
+          head: this.top(screen.question, more ? `${String(from + shown.length)}/${String(screen.rows.length)}` : ''),
           rule: ruleOf('─', BODY_INNER),
           body: shown.join('\n'),
           nums: '',

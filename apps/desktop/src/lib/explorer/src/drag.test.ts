@@ -14,8 +14,7 @@ vi.mock('../../workspace/src/api', () => ({
   workspace: { spaces: [{ root: '/home/me/Orden/Work' }], undone: { record: vi.fn() } },
 }))
 
-const { dragged, explorerDragged, isExplorerDrag, isTreeDrag, landing } =
-  await import('../../ui-kit/src/api')
+const { dragged, explorerDragged, isExplorerDrag, isTreeDrag, landing } = await import('../../ui-kit/src/api')
 const { dropHow, dropInto, startDrag } = await import('./drag')
 
 function transfer() {
@@ -82,8 +81,6 @@ describe("a file explorer's drag", () => {
     const prevent = vi.fn()
     dropInto({} as never, dragEvent(outside, { preventDefault: prevent }), '/home/me/Music')
     expect(prevent).toHaveBeenCalled()
-    expect(carried).toEqual([
-      { sources: ['/home/me/Downloads/a.zip'], folder: '/home/me/Music', how: 'move' },
-    ])
+    expect(carried).toEqual([{ sources: ['/home/me/Downloads/a.zip'], folder: '/home/me/Music', how: 'move' }])
   })
 })

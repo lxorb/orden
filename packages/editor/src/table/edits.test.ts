@@ -11,9 +11,7 @@ import {
 } from './edits'
 import { parseTable, type TableModel } from './model'
 
-const MODEL: TableModel = parseTable(
-  ['| a | b | c |', '| - | :-: | - |', '| 1 | 2 | 3 |', '| 4 | 5 | 6 |'].join('\n'),
-)!
+const MODEL: TableModel = parseTable(['| a | b | c |', '| - | :-: | - |', '| 1 | 2 | 3 |', '| 4 | 5 | 6 |'].join('\n'))!
 
 const at = (row: number, column: number, offset = 0): Focus => ({ at: { row, column }, offset })
 

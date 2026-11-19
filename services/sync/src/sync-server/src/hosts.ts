@@ -16,9 +16,7 @@ function originOf(value: string): string | null {
 }
 
 export function origins(env: Env): string[] {
-  const all = [env.APP_ORIGIN, ...listed(env.OTHER_ORIGINS)]
-    .map(originOf)
-    .filter((one): one is string => one !== null)
+  const all = [env.APP_ORIGIN, ...listed(env.OTHER_ORIGINS)].map(originOf).filter((one): one is string => one !== null)
   return [...new Set(all)]
 }
 
@@ -47,9 +45,7 @@ export function originAt(env: Env, url: string): string {
 }
 
 export function blogRoots(env: Env): string[] {
-  return [
-    ...new Set([env.BLOG_ROOT, ...listed(env.OTHER_BLOG_ROOTS)].map((one) => one.toLowerCase())),
-  ]
+  return [...new Set([env.BLOG_ROOT, ...listed(env.OTHER_BLOG_ROOTS)].map((one) => one.toLowerCase()))]
 }
 
 export function blogRootOf(env: Env, hostname: string): string | null {

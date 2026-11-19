@@ -53,9 +53,7 @@ const dropPoints = StateField.define<ReadonlyMap<number, number>>({
   update(value, transaction) {
     let next = value
     if (transaction.docChanged && value.size) {
-      next = new Map(
-        [...value].map(([key, at]) => [key, transaction.changes.mapPos(at, 1)] as const),
-      )
+      next = new Map([...value].map(([key, at]) => [key, transaction.changes.mapPos(at, 1)] as const))
     }
     for (const effect of transaction.effects) {
       if (effect.is(dropAt)) next = new Map(next).set(effect.value.key, effect.value.at)
@@ -120,9 +118,7 @@ export function imageHandling(sink: ImageSink, carried?: CarriedFiles): Extensio
 
     if (
       carried?.carries(event.dataTransfer) ||
-      [...(event.dataTransfer?.items ?? [])].some(
-        (item) => item.kind === 'file' && item.type !== 'application/pdf',
-      )
+      [...(event.dataTransfer?.items ?? [])].some((item) => item.kind === 'file' && item.type !== 'application/pdf')
     ) {
       event.preventDefault()
     }
@@ -138,9 +134,7 @@ export function imageHandling(sink: ImageSink, carried?: CarriedFiles): Extensio
         const data = event.clipboardData
         const files = [...(data?.files ?? [])]
         if (!files.some(isKept)) return false
-        if (
-          wordsBesidePicture(data?.getData('text/html') ?? '', data?.getData('text/plain') ?? '')
-        ) {
+        if (wordsBesidePicture(data?.getData('text/html') ?? '', data?.getData('text/plain') ?? '')) {
           return false
         }
 

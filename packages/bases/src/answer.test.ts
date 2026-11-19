@@ -10,10 +10,7 @@ const names = (rows: readonly Row[]) => rows.map((row) => row.task?.text ?? row.
 const groups = (result: Answer) => result.groups.map((group) => [group.key, names(group.rows)])
 
 const books = [
-  noteRow(
-    'Books/Dune.md',
-    'status: Doing\npages: 412\nrating: 5\nread: true\nfinished: 2026-09-01',
-  ),
+  noteRow('Books/Dune.md', 'status: Doing\npages: 412\nrating: 5\nread: true\nfinished: 2026-09-01'),
   noteRow('Books/Emma.md', 'status: To do\npages: 474\nrating: 3\nread: false'),
   noteRow('Books/Ulysses.md', 'status: Done\npages: 730\nread: true\nfinished: 2026-06-01'),
   noteRow('Books/Beloved.md', 'status: Doing\npages: 324\nrating: 4\nread: false'),
@@ -113,12 +110,11 @@ describe('a view of notes', () => {
   })
 
   test("the view's own search looks through what the view shows", () => {
-    expect(
-      names(answer(base, 'All', books, { ...context, search: 'doing' }).groups[0]?.rows ?? []),
-    ).toEqual(['Dune', 'Beloved'])
-    expect(
-      names(answer(base, 'All', books, { ...context, search: 'emm 474' }).groups[0]?.rows ?? []),
-    ).toEqual(['Emma'])
+    expect(names(answer(base, 'All', books, { ...context, search: 'doing' }).groups[0]?.rows ?? [])).toEqual([
+      'Dune',
+      'Beloved',
+    ])
+    expect(names(answer(base, 'All', books, { ...context, search: 'emm 474' }).groups[0]?.rows ?? [])).toEqual(['Emma'])
   })
 
   test('the first view when none is named, and a cell as the view shows it', () => {
@@ -175,11 +171,7 @@ describe('groups', () => {
       ['b', ['a', 'd']],
       [null, ['c']],
     ])
-    expect(groups(answer(view('DESC'), 'L', rows, context)).map(([key]) => key)).toEqual([
-      'b',
-      'a',
-      null,
-    ])
+    expect(groups(answer(view('DESC'), 'L', rows, context)).map(([key]) => key)).toEqual(['b', 'a', null])
   })
 
   test('a sub-group splits each group, with its own summaries', () => {
@@ -294,10 +286,7 @@ describe('a view of tasks', () => {
 `)
 
   test('takes task rows only, done and cancelled ones out unless asked', () => {
-    expect(names(answer(tasks, 'Open', rows, context).groups[0]?.rows ?? [])).toEqual([
-      'Pay',
-      'Call the bank',
-    ])
+    expect(names(answer(tasks, 'Open', rows, context).groups[0]?.rows ?? [])).toEqual(['Pay', 'Call the bank'])
     expect(answer(tasks, 'All', rows, context).total).toBe(5)
   })
 })
@@ -340,14 +329,10 @@ views:
   })
 
   test('starts again when the day changes', () => {
-    const today = readBase(
-      'views:\n  - type: table\n    name: T\n    filters:\n      and:\n        - due == today()\n',
-    )
+    const today = readBase('views:\n  - type: table\n    name: T\n    filters:\n      and:\n        - due == today()\n')
     const rows = [noteRow('a.md', 'due: 2026-10-04'), noteRow('b.md', 'due: 2026-10-05')]
     expect(names(answer(today, 'T', rows, context).groups[0]?.rows ?? [])).toEqual(['a'])
-    expect(
-      names(answer(today, 'T', rows, contextAt({ today: '2026-10-05' })).groups[0]?.rows ?? []),
-    ).toEqual(['b'])
+    expect(names(answer(today, 'T', rows, contextAt({ today: '2026-10-05' })).groups[0]?.rows ?? [])).toEqual(['b'])
   })
 })
 
@@ -382,9 +367,7 @@ describe('the names a view gives', () => {
   test('every default summary has a name a view can use', () => {
     const rows = [noteRow('a.md', { n: 1, b: true }), noteRow('b.md', { n: 3, b: false })]
     for (const name of DEFAULT_SUMMARIES) {
-      const one = readBase(
-        `views:\n  - type: table\n    name: S\n    summaries:\n      n: ${name}\n`,
-      )
+      const one = readBase(`views:\n  - type: table\n    name: S\n    summaries:\n      n: ${name}\n`)
       expect(answer(one, 'S', rows, context).summaries.n, name).not.toBeUndefined()
     }
   })
@@ -421,11 +404,7 @@ describe('a board', () => {
 
   test("keeps the view's own column order, the group of no value first where it says", () => {
     const own = board('    orden:\n      groups: [iOS]\n      noneFirst: true\n')
-    expect(groups(answer(own, 'B', tagged, context)).map(([key]) => key)).toEqual([
-      null,
-      'iOS',
-      'Sync',
-    ])
+    expect(groups(answer(own, 'B', tagged, context)).map(([key]) => key)).toEqual([null, 'iOS', 'Sync'])
   })
 
   test('orders a task by its words, and by its line as an order written before did', () => {

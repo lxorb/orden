@@ -10,9 +10,7 @@ describe('the tags in a note', () => {
   })
 
   test('and a link to a heading is no tag, though a tag next to it is', () => {
-    expect(tagsIn('## Setup\n\nSee [setup](#setup) and ![x](#y). Real #setup.\n')).toEqual([
-      '#setup',
-    ])
+    expect(tagsIn('## Setup\n\nSee [setup](#setup) and ![x](#y). Real #setup.\n')).toEqual(['#setup'])
   })
 
   test('alike on the page and in the index, row by row', () => {
@@ -127,10 +125,7 @@ describe('where a tag sits', () => {
 
   test('and a slash nobody meant is read the way the tag tree reads it', () => {
     const body = '#a//b and #a//b/c'
-    expect(tagSpans(body, 'a/b').map((span) => body.slice(span.from, span.to))).toEqual([
-      'a//b',
-      'a//b',
-    ])
+    expect(tagSpans(body, 'a/b').map((span) => body.slice(span.from, span.to))).toEqual(['a//b', 'a//b'])
   })
 
   test('as long as the name is written, even where folding makes it longer', () => {
@@ -172,9 +167,7 @@ describe('what taking a tag away has to cut', () => {
   })
 
   test('and a list item that held nothing else goes with its line', () => {
-    expect(without('---\ntags:\n  - work\n  - other\n---\n', 'work')).toBe(
-      '---\ntags:\n  - other\n---\n',
-    )
+    expect(without('---\ntags:\n  - work\n  - other\n---\n', 'work')).toBe('---\ntags:\n  - other\n---\n')
   })
 
   test('but never cuts into code', () => {
@@ -211,18 +204,7 @@ describe('a tag in a flow list across lines', () => {
 describe('a tag after a comment in a flow list across lines', () => {
   test('is found where it is written', () => {
     for (const nl of ['\n', '\r\n']) {
-      const note = [
-        '---',
-        'tags: [',
-        '  work, # my comment',
-        '  b,',
-        '  c,',
-        ']',
-        'z: 1',
-        '---',
-        'rest',
-        '',
-      ].join(nl)
+      const note = ['---', 'tags: [', '  work, # my comment', '  b,', '  c,', ']', 'z: 1', '---', 'rest', ''].join(nl)
       for (const name of ['work', 'b', 'c']) {
         const [span] = tagSpans(note, name)
         expect(span && note.slice(span.from, span.to)).toBe(name)

@@ -157,8 +157,8 @@
     grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
     align-content: start;
     gap: var(--space-3);
-    padding: calc(var(--inset-top) + var(--space-3)) max(var(--space-3), var(--inset-right))
-      var(--space-3) max(var(--space-3), var(--inset-left));
+    padding: calc(var(--inset-top) + var(--space-3)) max(var(--space-3), var(--inset-right)) var(--space-3)
+      max(var(--space-3), var(--inset-left));
   }
 
   .card {
@@ -282,8 +282,8 @@
     justify-content: space-between;
     gap: var(--space-2);
     min-height: var(--touch-row);
-    padding: var(--space-1) max(var(--space-2), var(--inset-right))
-      max(var(--space-1), var(--inset-bottom)) max(var(--space-2), var(--inset-left));
+    padding: var(--space-1) max(var(--space-2), var(--inset-right)) max(var(--space-1), var(--inset-bottom))
+      max(var(--space-2), var(--inset-left));
     background: var(--bg);
     box-shadow: inset 0 1px var(--line);
   }

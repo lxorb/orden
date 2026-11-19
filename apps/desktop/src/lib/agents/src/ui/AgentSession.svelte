@@ -49,11 +49,7 @@
 
   const latest = $derived(activity.seen.doing[agent]?.at ?? 0)
 
-  const readSoon = afterQuiet(
-    () => void activity.readLog().catch(() => undefined),
-    LOG_EVERY,
-    LOG_EVERY,
-  )
+  const readSoon = afterQuiet(() => void activity.readLog().catch(() => undefined), LOG_EVERY, LOG_EVERY)
   $effect(() => {
     if (latest !== 0) readSoon()
   })

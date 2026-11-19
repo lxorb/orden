@@ -21,9 +21,7 @@ export function answerOf(part: Tool): Record<string, unknown> | null {
 }
 
 function argsOf(part: Tool): Record<string, unknown> {
-  return typeof part.args === 'object' && part.args !== null
-    ? (part.args as Record<string, unknown>)
-    : {}
+  return typeof part.args === 'object' && part.args !== null ? (part.args as Record<string, unknown>) : {}
 }
 
 const text = (value: unknown): string => (typeof value === 'string' ? value : '')
@@ -32,10 +30,7 @@ export function spaceOfCall(part: Tool): string {
   return text(answerOf(part)?.space) || text(argsOf(part).space)
 }
 
-export function spaceNamed<T extends { id: string; name: string }>(
-  spaces: readonly T[],
-  named: string,
-): T | undefined {
+export function spaceNamed<T extends { id: string; name: string }>(spaces: readonly T[], named: string): T | undefined {
   const folded = named.trim().toLowerCase()
   return (
     spaces.find((one) => one.id === named) ??
@@ -53,9 +48,7 @@ export function fileChangeOf(part: Tool): FileChange | null {
   if (verb === 'move_file') {
     const from = text(said?.from)
     const to = text(said?.to)
-    return from && to && from !== to
-      ? { id: part.id, kind: 'moved', from, path: to, ...where }
-      : null
+    return from && to && from !== to ? { id: part.id, kind: 'moved', from, path: to, ...where } : null
   }
   if (verb === 'trash_file' && said?.trashed === true) {
     const path = text(said.path)

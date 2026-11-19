@@ -21,8 +21,7 @@ vi.mock('../../src/lib/platform/src/tauri', async (importOriginal) => ({
     asked.push({ command, args })
     if (command === refuses) return Promise.reject(new Error(`${command} was refused`))
     if (command === 'web_open' && holding) return holding
-    if (command === 'web_look' && answersLooks !== null && answersLooks-- <= 0)
-      return new Promise(() => undefined)
+    if (command === 'web_look' && answersLooks !== null && answersLooks-- <= 0) return new Promise(() => undefined)
     if (command === 'web_place') return Promise.resolve(cuts)
     if (command === 'web_open' && cuts === 'under') return Promise.resolve(cuts)
     return Promise.resolve(undefined)
@@ -312,9 +311,7 @@ test('a layer that is not over the page leaves it alone', async () => {
   const off = overlays.show(() => undefined)
   await frames()
 
-  expect(asked.filter((one) => one.command === 'web_place' && one.args.visible === false)).toEqual(
-    [],
-  )
+  expect(asked.filter((one) => one.command === 'web_place' && one.args.visible === false)).toEqual([])
   expect(asked.map((one) => one.command)).not.toContain('web_shot')
 
   off()
@@ -441,9 +438,7 @@ test('a hover card never hides a page there is no picture of', async () => {
   const done = await hoverOver(tab)
 
   expect(asked.map((one) => one.command)).toContain('web_shot')
-  expect(asked.filter((one) => one.command === 'web_place' && one.args.visible === false)).toEqual(
-    [],
-  )
+  expect(asked.filter((one) => one.command === 'web_place' && one.args.visible === false)).toEqual([])
   expect(hovering.card).toBeNull()
 
   done()
@@ -559,8 +554,7 @@ describe('a layer is answered in the frame it is first drawn in, however it came
     for (const one of document.querySelectorAll('body > [data-box]')) one.remove()
   })
 
-  const cut = () =>
-    asked.filter((one) => one.command === 'web_place').at(-1)?.args.cut as Cut | null | undefined
+  const cut = () => asked.filter((one) => one.command === 'web_place').at(-1)?.args.cut as Cut | null | undefined
 
   for (const kind of kinds) {
     test(kind.name, async () => {
@@ -843,68 +837,65 @@ test('a picture of the page goes when the page is shown at another size', async 
 
 describe('a page held still while its hole moves, and let go', () => {
   for (const cutting of [true, false, 'under'] as const) {
-    test(
-      cutting === 'under' ? 'drawn under the app' : cutting ? 'cut' : 'out of the way',
-      async () => {
-        cuts = cutting
-        const { tab, app } = await opened(`https://example.com/still-${String(cutting)}`)
-        const page = pages.of(tab.id)
-        page.shot = 'data:image/png;base64,iVBORw0KGgo='
-        page.shotAt = Date.now()
-        await settle()
-        await frames()
-        const hole = document.querySelector('.hole')
-        if (!hole) throw new Error('no hole')
-        onTestFinished(async () => {
-          hole.removeAttribute('data-box')
-          await pages.letGo()
-          void unmount(app)
-        })
-        const shown = asked.filter((one) => one.command === 'web_place').at(-1)?.args.pane
-
-        asked.length = 0
-        await pages.holdStill()
-        await settle()
-        const held = asked.filter((one) => one.command === 'web_place')
-        expect(held.at(-1)?.args).toMatchObject(
-          cutting === 'under'
-            ? { visible: true, cut: { all: true } }
-            : cutting
-              ? { visible: false }
-              : { visible: true, cut: { all: true }, pane: { x: -OUT_OF_THE_WAY } },
-        )
-        expect(hole.classList.contains('still')).toBe(true)
-        expect(hole.classList.contains('under')).toBe(false)
-
-        asked.length = 0
-        for (const [step, scale] of [0.9, 0.7, 0.5].entries()) {
-          hole.setAttribute(
-            'data-box',
-            JSON.stringify({
-              x: 30 * (step + 1),
-              y: 40 + 20 * (step + 1),
-              width: 800 * scale,
-              height: 560 * scale,
-            }),
-          )
-          await settle()
-          await frames()
-        }
-        expect(asked.filter((one) => one.command === 'web_place')).toEqual([])
-
+    test(cutting === 'under' ? 'drawn under the app' : cutting ? 'cut' : 'out of the way', async () => {
+      cuts = cutting
+      const { tab, app } = await opened(`https://example.com/still-${String(cutting)}`)
+      const page = pages.of(tab.id)
+      page.shot = 'data:image/png;base64,iVBORw0KGgo='
+      page.shotAt = Date.now()
+      await settle()
+      await frames()
+      const hole = document.querySelector('.hole')
+      if (!hole) throw new Error('no hole')
+      onTestFinished(async () => {
         hole.removeAttribute('data-box')
         await pages.letGo()
+        void unmount(app)
+      })
+      const shown = asked.filter((one) => one.command === 'web_place').at(-1)?.args.pane
+
+      asked.length = 0
+      await pages.holdStill()
+      await settle()
+      const held = asked.filter((one) => one.command === 'web_place')
+      expect(held.at(-1)?.args).toMatchObject(
+        cutting === 'under'
+          ? { visible: true, cut: { all: true } }
+          : cutting
+            ? { visible: false }
+            : { visible: true, cut: { all: true }, pane: { x: -OUT_OF_THE_WAY } },
+      )
+      expect(hole.classList.contains('still')).toBe(true)
+      expect(hole.classList.contains('under')).toBe(false)
+
+      asked.length = 0
+      for (const [step, scale] of [0.9, 0.7, 0.5].entries()) {
+        hole.setAttribute(
+          'data-box',
+          JSON.stringify({
+            x: 30 * (step + 1),
+            y: 40 + 20 * (step + 1),
+            width: 800 * scale,
+            height: 560 * scale,
+          }),
+        )
         await settle()
         await frames()
-        expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args).toMatchObject({
-          visible: true,
-          cut: null,
-          pane: shown,
-        })
-        expect(page.heldAt).toBe(null)
-        expect(hole.classList.contains('under')).toBe(cutting === 'under')
-      },
-    )
+      }
+      expect(asked.filter((one) => one.command === 'web_place')).toEqual([])
+
+      hole.removeAttribute('data-box')
+      await pages.letGo()
+      await settle()
+      await frames()
+      expect(asked.filter((one) => one.command === 'web_place').at(-1)?.args).toMatchObject({
+        visible: true,
+        cut: null,
+        pane: shown,
+      })
+      expect(page.heldAt).toBe(null)
+      expect(hole.classList.contains('under')).toBe(cutting === 'under')
+    })
   }
 })
 

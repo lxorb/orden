@@ -18,8 +18,7 @@ import {
 
 const DAY = 86_400_000
 
-const dateValue = (iso: string | undefined): DateValue | null =>
-  iso ? { kind: 'date', iso } : null
+const dateValue = (iso: string | undefined): DateValue | null => (iso ? { kind: 'date', iso } : null)
 
 export function fileField(row: Row, name: string, scope: Scope): Val {
   const file = row.file
@@ -94,9 +93,7 @@ export function taskField(row: Row, name: string, scope: Scope): Val {
     case 'at': {
       const day = dayOf(task, task.dueReads)
       if (!day) return null
-      return task.time
-        ? { kind: 'date', iso: day, time: `${task.time}:00` }
-        : { kind: 'date', iso: day }
+      return task.time ? { kind: 'date', iso: day, time: `${task.time}:00` } : { kind: 'date', iso: day }
     }
     case 'started':
       return hasStarted(task, scope.context.today, task.dueReads)
@@ -105,9 +102,7 @@ export function taskField(row: Row, name: string, scope: Scope): Val {
     case 'zone':
       return task.zone ?? null
     case 'duration':
-      return task.duration === undefined
-        ? null
-        : { kind: 'duration', ms: task.duration * 60_000, months: 0 }
+      return task.duration === undefined ? null : { kind: 'duration', ms: task.duration * 60_000, months: 0 }
     case 'remind':
       return task.remind.map((one) => writeRemind([one]))
     case 'priority':
@@ -146,9 +141,7 @@ export function taskField(row: Row, name: string, scope: Scope): Val {
 }
 
 function dateField(date: DateValue, name: string): Val {
-  const [hours = 0, minutes = 0, seconds = 0] = (date.time ?? '')
-    .split(':')
-    .map((part) => Number.parseFloat(part) || 0)
+  const [hours = 0, minutes = 0, seconds = 0] = (date.time ?? '').split(':').map((part) => Number.parseFloat(part) || 0)
   switch (name) {
     case 'year':
       return Number(date.iso.slice(0, 4))
@@ -204,12 +197,10 @@ export function member(object: Val, name: string, scope: Scope): Val {
   }
   if (object instanceof NoteRef) return fieldOf(object.row.note, name)
   if (object instanceof TaskRef) return taskField(object.row, name, scope)
-  if (typeof object === 'string' || Array.isArray(object))
-    return name === 'length' ? object.length : null
+  if (typeof object === 'string' || Array.isArray(object)) return name === 'length' ? object.length : null
   if (isDate(object)) return dateField(onClock(object, scope.context.zone), name)
   if (isDuration(object)) return durationField(object.ms, object.months, name)
-  if (isLink(object))
-    return name === 'target' ? object.target : name === 'display' ? (object.display ?? null) : null
+  if (isLink(object)) return name === 'target' ? object.target : name === 'display' ? (object.display ?? null) : null
   if (isObject(object)) return fieldOf(object, name)
   return null
 }

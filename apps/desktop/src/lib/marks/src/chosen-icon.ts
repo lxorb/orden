@@ -92,8 +92,7 @@ export function faviconFor(path: string | undefined, url?: string | null): strin
   return siteMark(liveMarkOf(path), url ?? addressOf(path), writtenMarkOf(path))
 }
 
-export const wearsChosen = (path: string | null | undefined): boolean =>
-  !!path && readIcon(chosenIcon(path)) !== null
+export const wearsChosen = (path: string | null | undefined): boolean => !!path && readIcon(chosenIcon(path)) !== null
 
 export const addressOf = (path: string): string | null =>
   awayIn(path) === null ? links.shortcutOf(path) : (elsewhere.of(path)?.address ?? null)

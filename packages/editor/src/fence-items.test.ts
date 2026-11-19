@@ -11,10 +11,7 @@ function stateOf(doc: string): EditorState {
   return parsed(
     EditorState.create({
       doc,
-      extensions: [
-        markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }),
-        aiExtension,
-      ],
+      extensions: [markdown({ base: markdownLanguage, extensions: ordenMarkdownExtensions }), aiExtension],
     }),
   )
 }

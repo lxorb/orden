@@ -52,23 +52,14 @@ export async function keepCursor(rows: DeviceRows, cursor: Cursor | null): Promi
   await rows.keep(CURSOR, cursor)
 }
 
-export async function itemBaseOf(
-  rows: DeviceRows,
-  vault: string,
-  id: string,
-): Promise<ItemBase | null> {
+export async function itemBaseOf(rows: DeviceRows, vault: string, id: string): Promise<ItemBase | null> {
   const raw = await rows.read(itemKey(vault, id))
   if (!isFields(raw) || !whole(raw.rev) || !whole(raw.keyVersion)) return null
   if (typeof raw.key !== 'string' || typeof raw.body !== 'string') return null
   return { rev: raw.rev, key: raw.key, body: raw.body, keyVersion: raw.keyVersion }
 }
 
-export async function keepItemBase(
-  rows: DeviceRows,
-  vault: string,
-  id: string,
-  base: ItemBase | null,
-): Promise<void> {
+export async function keepItemBase(rows: DeviceRows, vault: string, id: string, base: ItemBase | null): Promise<void> {
   await rows.keep(itemKey(vault, id), base)
 }
 
@@ -78,11 +69,7 @@ export async function vaultBaseOf(rows: DeviceRows, id: string): Promise<VaultBa
   return { rev: raw.rev, meta: raw.meta }
 }
 
-export async function keepVaultBase(
-  rows: DeviceRows,
-  id: string,
-  base: VaultBase | null,
-): Promise<void> {
+export async function keepVaultBase(rows: DeviceRows, id: string, base: VaultBase | null): Promise<void> {
   await rows.keep(vaultKey(id), base)
 }
 
@@ -99,10 +86,7 @@ export async function accountKeyringOf(rows: DeviceRows): Promise<AccountKeyring
   return keyringRowIn(await rows.read(ACCOUNT_KEYRING))
 }
 
-export async function keepAccountKeyring(
-  rows: DeviceRows,
-  row: AccountKeyring | null,
-): Promise<void> {
+export async function keepAccountKeyring(rows: DeviceRows, row: AccountKeyring | null): Promise<void> {
   await rows.keep(ACCOUNT_KEYRING, row)
 }
 

@@ -51,8 +51,7 @@ vi.mock('./apply', () => ({
 
 const readOnly = new Set<string>()
 vi.mock('../../sharing/src/api', () => ({
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 vi.mock('../../ui-kit/src/busy.svelte', () => ({
@@ -82,12 +81,10 @@ vi.mock('../../workspace/src/api', () => {
         return Promise.resolve()
       },
       arranged: {
-        set: (folder: string, names: string[]) =>
-          void done.push(`order ${folder}: ${names.join(', ')}`),
+        set: (folder: string, names: string[]) => void done.push(`order ${folder}: ${names.join(', ')}`),
       },
       setSort: (mode: string) => void done.push(`sort ${String(active)} ${mode}`),
-      setIcon: (id: string, icon: string, tint: string | null) =>
-        void done.push(`icon ${id} ${icon} ${String(tint)}`),
+      setIcon: (id: string, icon: string, tint: string | null) => void done.push(`icon ${id} ${icon} ${String(tint)}`),
       folderIcons: { iconOf: () => null },
       setFolderIcon: (path: string, icon: string) => void done.push(`folder icon ${path} ${icon}`),
       bookmarks: {
@@ -142,17 +139,9 @@ describe('Zen brought into Orden', () => {
     await landZen(PROFILE)
     disk.set(
       '/spaces/Work/Board.url',
-      writeShortcut(
-        'https://board.example.com/sprint',
-        'Board',
-        new Date(),
-        'https://board.example.com/',
-      ),
+      writeShortcut('https://board.example.com/sprint', 'Board', new Date(), 'https://board.example.com/'),
     )
-    disk.set(
-      '/spaces/Work/b - Search.url',
-      writeShortcut('https://other.example.com/', 'b', new Date()),
-    )
+    disk.set('/spaces/Work/b - Search.url', writeShortcut('https://other.example.com/', 'b', new Date()))
     written.length = 0
     done.length = 0
 
@@ -171,10 +160,7 @@ describe('Zen brought into Orden', () => {
     const board = disk.get('/spaces/Work/Board.url') ?? ''
     disk.delete('/spaces/Work/Board.url')
     disk.set('/spaces/Work/Board (3).url', board)
-    disk.set(
-      '/spaces/Work/Docs/Board.url',
-      writeShortcut('https://elsewhere.example.com/', 'B', new Date()),
-    )
+    disk.set('/spaces/Work/Docs/Board.url', writeShortcut('https://elsewhere.example.com/', 'B', new Date()))
     written.length = 0
 
     await landZen(PROFILE)
@@ -185,9 +171,7 @@ describe('Zen brought into Orden', () => {
   test('finds the space it made again where the name it asked for was not a folder name', async () => {
     sidebar = {
       ...SIDEBAR,
-      spaces: SIDEBAR.spaces.map((one) =>
-        one.name === 'Work' ? { ...one, name: 'Work: Client' } : one,
-      ),
+      spaces: SIDEBAR.spaces.map((one) => (one.name === 'Work' ? { ...one, name: 'Work: Client' } : one)),
     }
     await landZen(PROFILE)
     written.length = 0

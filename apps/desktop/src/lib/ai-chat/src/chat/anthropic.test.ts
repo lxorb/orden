@@ -54,9 +54,7 @@ describe('a streamed message', () => {
   test('keeps every block whole for the next request, the thinking’s signature included', () => {
     const { answer } = read('anthropic-1')
     expect(answer.ending).toBe('tool')
-    expect(answer.calls).toEqual([
-      { id: 'toolu_01', name: 'read_note', args: { path: 'Birds.md' } },
-    ])
+    expect(answer.calls).toEqual([{ id: 'toolu_01', name: 'read_note', args: { path: 'Birds.md' } }])
     expect(answer.messages).toEqual([
       {
         role: 'assistant',
@@ -156,9 +154,7 @@ describe('the request', () => {
       system: 'Be brief.',
       thinking: { type: 'adaptive', display: 'summarized' },
       output_config: { effort: 'high' },
-      tools: [
-        { name: 'read_note', description: 'Reads a note.', input_schema: { type: 'object' } },
-      ],
+      tools: [{ name: 'read_note', description: 'Reads a note.', input_schema: { type: 'object' } }],
       max_tokens: 32_000,
     })
     expect(headers).toEqual({})
@@ -226,9 +222,7 @@ describe('a turn rebuilt from its parts', () => {
       },
       {
         role: 'tool',
-        results: [
-          { id: 't1', name: 'read_note', output: { text: 'gone', images: [], error: true } },
-        ],
+        results: [{ id: 't1', name: 'read_note', output: { text: 'gone', images: [], error: true } }],
       },
       { role: 'assistant', text: '', calls: [] },
     ])

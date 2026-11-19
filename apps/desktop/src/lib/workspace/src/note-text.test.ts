@@ -44,12 +44,10 @@ vi.mock('../../sync-store/src/api', () => ({ sync: { nudge: () => void told.push
 const readOnly = new Set<string>()
 
 vi.mock('../../sharing/src/api', () => ({
-  canWriteAt: (path: string) =>
-    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
-const { loadTags, noteText, replaceInNotes, retagNotes, toggleTaskAt, writeNoteText } =
-  await import('./note-text')
+const { loadTags, noteText, replaceInNotes, retagNotes, toggleTaskAt, writeNoteText } = await import('./note-text')
 const { FileActions } = await import('../../file-undo/src/api')
 const { undoLastFileAction } = await import('./undoing')
 type PutsBack = import('./undoing').PutsBack
@@ -243,10 +241,7 @@ describe('a space shared to be read', () => {
     const { taskHash } = await import('@orden/bases')
     const path = `${SPACE}/todo.md`
     const { ws } = space({ [path]: '- [ ] Alpha 🔁 every day 📅 2026-11-04\n- [ ] Bravo\n' })
-    await Promise.all([
-      toggleTaskAt(ws, path, 0, taskHash('Alpha')),
-      toggleTaskAt(ws, path, 1, taskHash('Bravo')),
-    ])
+    await Promise.all([toggleTaskAt(ws, path, 0, taskHash('Alpha')), toggleTaskAt(ws, path, 1, taskHash('Bravo'))])
     const said = (await noteText(ws, path)) ?? ''
     expect(said).toMatch(/- \[x\] Bravo/)
     expect(said).toMatch(/- \[x\] Alpha/)
@@ -340,9 +335,7 @@ describe('a task ticked from a row', () => {
   test('and a recurring one comes back above, in the same write', async () => {
     const { ws } = space({ [NOTE]: '- [ ] gym 🔁 every week 📅 2026-10-05\n' })
     expect(await toggleTaskAt(ws, NOTE, 0)).toBe(true)
-    expect(disk.get(NOTE)).toBe(
-      '- [ ] gym 🔁 every week 📅 2026-10-12\n- [x] gym 🔁 every week 📅 2026-10-05\n',
-    )
+    expect(disk.get(NOTE)).toBe('- [ ] gym 🔁 every week 📅 2026-10-12\n- [x] gym 🔁 every week 📅 2026-10-05\n')
   })
 
   test('and clears one that is ticked', async () => {
@@ -370,8 +363,7 @@ describe('a tag renamed everywhere', () => {
       [`${SPACE}/b.md`]: 'Nothing tagged\n',
       [`${SPACE}/c.md`]: 'Also #work/q3\n',
     })
-    for (const name of ['2024', 'a.b', 'a,b', 'a!'])
-      expect(await retagNotes(ws, 'work', name)).toBe(0)
+    for (const name of ['2024', 'a.b', 'a,b', 'a!']) expect(await retagNotes(ws, 'work', name)).toBe(0)
     expect(disk.get(`${SPACE}/a.md`)).toBe('Plan #work\n')
     expect(await retagNotes(ws, 'work', 'job')).toBe(2)
     expect(disk.get(`${SPACE}/a.md`)).toBe('Plan #job\n')
@@ -555,9 +547,7 @@ describe('an open file with Windows line endings', () => {
           path: URL_FILE,
           before: SHORTCUT,
           after: CHOSEN,
-          edits: [
-            { from: SHORTCUT.length, to: SHORTCUT.length, insert: 'Orden-Chosen-Icon=rocket\r\n' },
-          ],
+          edits: [{ from: SHORTCUT.length, to: SHORTCUT.length, insert: 'Orden-Chosen-Icon=rocket\r\n' }],
           back: [{ from: SHORTCUT.length, to: CHOSEN.length, insert: '' }],
         },
       ],
@@ -575,9 +565,7 @@ describe('an open file with Windows line endings', () => {
     const note = openNote(URL_FILE, SHORTCUT)
     const at = SHORTCUT.indexOf('Title=')
     note.edited([{ from: at, to: at + 6, insert: 'Name=' }], SHORTCUT.replace('Title=', 'Name='))
-    expect(note.live.text.toString()).toBe(
-      SHORTCUT.replace('Title=', 'Name=').replace(/\r\n/g, '\n'),
-    )
+    expect(note.live.text.toString()).toBe(SHORTCUT.replace('Title=', 'Name=').replace(/\r\n/g, '\n'))
   })
 })
 
@@ -724,10 +712,7 @@ describe('with another window here', () => {
       edits: [{ from: 0, to: 3, insert: after.slice(0, 3) }],
       back: [{ from: 0, to: 3, insert: before.slice(0, 3) }],
     })
-    await replaceInNotes(ws, [
-      change('/space/a.md', 'one\n', 'ONE\n'),
-      change('/space/b.md', 'two\n', 'TWO\n'),
-    ])
+    await replaceInNotes(ws, [change('/space/a.md', 'one\n', 'ONE\n'), change('/space/b.md', 'two\n', 'TWO\n')])
     expect(owed).toHaveBeenCalledWith(ws.documents[0])
     expect(ws.documents[0]?.dirty).toBe(true)
     expect(disk.get('/space/b.md')).toBe('TWO\n')
@@ -739,11 +724,7 @@ describe('with another window here', () => {
     const seen: { base: string | null; words: string; dirty: boolean }[] = []
     const across = {
       alone: false,
-      writing: async (
-        one: typeof note,
-        _path: string,
-        write: (words: string) => Promise<unknown>,
-      ) => {
+      writing: async (one: typeof note, _path: string, write: (words: string) => Promise<unknown>) => {
         seen.push({ base: one.onDisk, words: one.latest, dirty: one.dirty })
         await write(one.latest)
         one.onDisk = one.latest

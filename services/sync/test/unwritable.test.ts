@@ -10,12 +10,10 @@ interface Placed {
   local_path: string
 }
 
-const placed = (core: Core, id = at.space) =>
-  [...(core.spaces.get(id)?.entries.values() ?? [])] as unknown as Placed[]
+const placed = (core: Core, id = at.space) => [...(core.spaces.get(id)?.entries.values() ?? [])] as unknown as Placed[]
 
 async function tool(args: Record<string, unknown>) {
-  const nib = (await call(at.env, '/v1/mcp/token', { token: at.token, body: { readOnly: false } }))
-    .json.token
+  const nib = (await call(at.env, '/v1/mcp/token', { token: at.token, body: { readOnly: false } })).json.token
   await call(at.env, '/mcp', {
     token: nib,
     body: {
@@ -51,9 +49,7 @@ async function newDevice(name: string, refused: (path: string) => boolean) {
 }
 
 async function accountPaths() {
-  const rows = await at.env.DB.prepare(
-    'select path from notes where space_id = ? and deleted = 0 order by path',
-  )
+  const rows = await at.env.DB.prepare('select path from notes where space_id = ? and deleted = 0 order by path')
     .bind(at.space)
     .all<{ path: string }>()
   return rows.results.map((row) => row.path)
@@ -161,11 +157,7 @@ test('a name Windows keeps arrives under that name everywhere else, and the way 
 
   const k = await kit()
   const mirrors = await k.mirrorsFrom(desk.engine.core, null)
-  expect(Object.keys(mirrors[desk.root]?.notes ?? {}).sort()).toEqual([
-    'Con.md',
-    'aux/inside.md',
-    'one.md',
-  ])
+  expect(Object.keys(mirrors[desk.root]?.notes ?? {}).sort()).toEqual(['Con.md', 'aux/inside.md', 'one.md'])
 })
 
 test('a note moved on Windows keeps the name the account has for it', async () => {
@@ -216,9 +208,7 @@ test('a row a device cannot read does not stop its passes, whatever hangs under 
     .run()
   await row('a'.repeat(32), long, null, 901)
   await row('c'.repeat(32), 'pwn.md', 'b'.repeat(32), 902)
-  await at.env.DB.prepare('update space_cursor set next = 903 where space_id = ?')
-    .bind(at.space)
-    .run()
+  await at.env.DB.prepare('update space_cursor set next = 903 where space_id = ?').bind(at.space).run()
 
   const laptop = await device('laptop')
   await laptop.disk.write(`${laptop.root}/after.md`, 'after\n')
@@ -236,9 +226,7 @@ test('a row a device cannot read does not stop its passes, whatever hangs under 
 async function firstPassOverShut(words: string) {
   const laptop = await device('laptop', { 'shut/inside.md': 'inside\n', 'open.md': 'open\n' })
   await passed(laptop)
-  const rows = await at.env.DB.prepare(
-    'select id, path, version, hash from notes where space_id = ?',
-  )
+  const rows = await at.env.DB.prepare('select id, path, version, hash from notes where space_id = ?')
     .bind(at.space)
     .all<{ id: string; path: string; version: number; hash: string }>()
   const notes = Object.fromEntries(
@@ -260,13 +248,10 @@ async function firstPassOverShut(words: string) {
     exists: desk.disk.exists.bind(desk.disk),
   }
   const state = { locked: true }
-  desk.disk.read = (path) =>
-    state.locked && path.startsWith(shut) ? Promise.resolve(null) : read(path)
-  desk.disk.exists = (path) =>
-    state.locked && path.startsWith(shut) ? Promise.resolve(true) : exists(path)
+  desk.disk.read = (path) => (state.locked && path.startsWith(shut) ? Promise.resolve(null) : read(path))
+  desk.disk.exists = (path) => (state.locked && path.startsWith(shut) ? Promise.resolve(true) : exists(path))
   const open = core.world.list.bind(core.world)
-  core.world.list = async (root) =>
-    (await open(root)).filter((one) => !state.locked || !one.path.startsWith('shut/'))
+  core.world.list = async (root) => (await open(root)).filter((one) => !state.locked || !one.path.startsWith('shut/'))
   await core.commit(core.addSpace(at.space, desk.root, 'owner'))
   const v1 = { cursor: 1000, notes, untold: {} }
   const first = () => k.firstPass(core, core.spaces.get(at.space), v1)
@@ -303,8 +288,7 @@ test('and when it reads with other words, they are the note edited, not a second
 test('a note v1 knew that no listing shows but still reads is the note, not a delete', async () => {
   const { desk, core, first } = await firstPassOverShut('inside\n')
   const read = desk.disk.read.bind(desk.disk)
-  desk.disk.read = (path) =>
-    path.endsWith('/shut/inside.md') ? Promise.resolve('inside\n') : read(path)
+  desk.disk.read = (path) => (path.endsWith('/shut/inside.md') ? Promise.resolve('inside\n') : read(path))
   expect(await first()).toBe(true)
   await desk.engine.pass(at.space)
   await at.rooms.settle()

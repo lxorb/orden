@@ -45,12 +45,7 @@ function keptSpans(state: EditorState, from: number, to: number): Span[] {
   return kept.sort((one, other) => one.from - other.from)
 }
 
-function changedAround(
-  state: EditorState,
-  from: number,
-  to: number,
-  change: (text: string) => string,
-): string {
+function changedAround(state: EditorState, from: number, to: number, change: (text: string) => string): string {
   let out = ''
   let at = from
   for (const span of keptSpans(state, from, to)) {
@@ -69,11 +64,7 @@ function recased(change: (text: string) => string): StateCommand {
     const words = ranges.map((range) => (range.empty ? state.wordAt(range.head) : range))
     const changes = state.changes(
       words.flatMap((word, i) => {
-        if (
-          !word ||
-          words.slice(0, i).some((other) => other?.from === word.from && other.to === word.to)
-        )
-          return []
+        if (!word || words.slice(0, i).some((other) => other?.from === word.from && other.to === word.to)) return []
         const text = state.sliceDoc(word.from, word.to)
         const insert = changedAround(state, word.from, word.to, change)
         return insert === text ? [] : [{ from: word.from, to: word.to, insert }]
@@ -87,10 +78,7 @@ function recased(change: (text: string) => string): StateCommand {
       const from = changes.mapPos(word.from)
       return range.empty
         ? EditorSelection.cursor(from + changedAround(state, word.from, range.head, change).length)
-        : EditorSelection.range(
-            from,
-            from + changedAround(state, word.from, word.to, change).length,
-          )
+        : EditorSelection.range(from, from + changedAround(state, word.from, word.to, change).length)
     })
     dispatch(
       state.update({

@@ -39,8 +39,7 @@ interface Attribute {
 }
 
 const TAG_NAME = /^<[a-z][\w-]*/i
-const ATTRIBUTE =
-  /(\s*\/?\s*)([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?|\s*\/?>?/y
+const ATTRIBUTE = /(\s*\/?\s*)([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?|\s*\/?>?/y
 
 function attributesOf(tag: string): Attribute[] {
   const found: Attribute[] = []
@@ -91,8 +90,7 @@ export const withZoom = (image: ImageSpec, zoom: number): ImageSpec => ({
   zoom,
 })
 
-const bareAddress = (url: string): string =>
-  url.startsWith('<') && url.endsWith('>') ? url.slice(1, -1) : url
+const bareAddress = (url: string): string => (url.startsWith('<') && url.endsWith('>') ? url.slice(1, -1) : url)
 
 function writtenAddress(src: string): string {
   return /[\s<>()]/.test(src) ? `<${src}>` : src
@@ -141,8 +139,7 @@ function htmlImageIn(state: EditorState, node: SyntaxNode): ImageSpan | null {
   const written = state.doc.sliceString(node.from, node.to)
   const tags = [...written.matchAll(IMG_TAG)]
   const [tag] = tags
-  if (!tag || tags.length > 1 || written.replace(ANY_TAG, '').replace(BLANK, ' ').trim())
-    return null
+  if (!tag || tags.length > 1 || written.replace(ANY_TAG, '').replace(BLANK, ' ').trim()) return null
 
   const spec = parseHtmlImage(tag[0])
   const from = node.from + tag.index

@@ -19,9 +19,7 @@ const answering = new Map<string, Notice>()
 const showing = new Map<string, string>()
 const up = new Map<string, Notification>()
 const listening = door(() =>
-  import('../../windows/src/api').then(({ hearHere }) =>
-    hearHere<unknown>(PRESSED, (event) => pressed(event.payload)),
-  ),
+  import('../../windows/src/api').then(({ hearHere }) => hearHere<unknown>(PRESSED, (event) => pressed(event.payload))),
 )
 
 export function notify(title: string, body: string, tag?: string, opened?: () => void): void {
@@ -75,9 +73,7 @@ const byWorker = new Map<string, Notice>()
 let hearingTheWorker = false
 
 function worker(): ServiceWorkerContainer | null {
-  return typeof navigator !== 'undefined' && 'serviceWorker' in navigator
-    ? navigator.serviceWorker
-    : null
+  return typeof navigator !== 'undefined' && 'serviceWorker' in navigator ? navigator.serviceWorker : null
 }
 
 function shownByTheWorker(one: Notice, options: NotificationOptions): void {
@@ -97,9 +93,7 @@ function shownByTheWorker(one: Notice, options: NotificationOptions): void {
     workers.addEventListener('message', (event: MessageEvent) => {
       const said: unknown = event.data
       const { ordenNotice: pressed, ordenHolds: asked } =
-        typeof said === 'object' && said !== null
-          ? (said as { ordenNotice?: unknown; ordenHolds?: unknown })
-          : {}
+        typeof said === 'object' && said !== null ? (said as { ordenNotice?: unknown; ordenHolds?: unknown }) : {}
       if (typeof asked === 'string') event.ports[0]?.postMessage(byWorker.has(asked))
       if (typeof pressed === 'string') byWorker.get(pressed)?.opened?.()
     })
@@ -107,9 +101,7 @@ function shownByTheWorker(one: Notice, options: NotificationOptions): void {
   }
 
   void workers.ready
-    .then((held) =>
-      held.showNotification(one.title, { ...options, tag, data: { ordenNotice: tag } }),
-    )
+    .then((held) => held.showNotification(one.title, { ...options, tag, data: { ordenNotice: tag } }))
     .catch(() => undefined)
 }
 

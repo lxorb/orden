@@ -103,11 +103,7 @@ function heaviest(
   if (!best || counted === 0) return null
 
   return {
-    colour: [best.r / best.count, best.g / best.count, best.b / best.count].map(Math.round) as [
-      number,
-      number,
-      number,
-    ],
+    colour: [best.r / best.count, best.g / best.count, best.b / best.count].map(Math.round) as [number, number, number],
     share: best.count / counted,
   }
 }
@@ -133,14 +129,9 @@ function average(pixels: Pixels): Rgb | null {
   let counted = 0
   for (let at = 0; at + 3 < pixels.length; at += 4) {
     if ((pixels[at + 3] ?? 0) < 128) continue
-    for (const channel of [0, 1, 2])
-      sum[channel] = (sum[channel] ?? 0) + (pixels[at + channel] ?? 0)
+    for (const channel of [0, 1, 2]) sum[channel] = (sum[channel] ?? 0) + (pixels[at + channel] ?? 0)
     counted++
   }
   if (counted === 0) return null
-  return [0, 1, 2].map((channel) => Math.round((sum[channel] ?? 0) / counted)) as [
-    number,
-    number,
-    number,
-  ]
+  return [0, 1, 2].map((channel) => Math.round((sum[channel] ?? 0) / counted)) as [number, number, number]
 }

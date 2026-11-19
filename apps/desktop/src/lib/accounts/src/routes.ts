@@ -302,14 +302,13 @@ async function listen(
 }
 
 export const routes = {
-  requestCode: (email: string) =>
-    request<{ ok: true; resendIn: number }>('/v1/auth/code', { body: { email } }),
+  requestCode: (email: string) => request<{ ok: true; resendIn: number }>('/v1/auth/code', { body: { email } }),
 
   verifyCode: (email: string, code: string, guest?: string) =>
-    request<{ token?: string; user?: Account; second?: boolean; holding?: string }>(
-      '/v1/auth/verify',
-      { body: { email, code, ...(guest ? { guest } : {}) }, device: true },
-    ),
+    request<{ token?: string; user?: Account; second?: boolean; holding?: string }>('/v1/auth/verify', {
+      body: { email, code, ...(guest ? { guest } : {}) },
+      device: true,
+    }),
 
   verifySecond: (holding: string, code: string) =>
     request<{ token: string; user: Account }>('/v1/auth/second', {
@@ -350,8 +349,7 @@ export const routes = {
   endSession: (token: string, id: string) =>
     request<{ ok: boolean }>(`/v1/sessions/${id}`, { method: 'DELETE', token }),
 
-  endOtherSessions: (token: string) =>
-    request<{ ended: number }>('/v1/sessions', { method: 'DELETE', token }),
+  endOtherSessions: (token: string) => request<{ ended: number }>('/v1/sessions', { method: 'DELETE', token }),
 
   me: (token: string) => request<{ user?: Account; guest?: Guest }>('/v1/me', { token }),
 
@@ -362,16 +360,14 @@ export const routes = {
       body: { name },
     }),
 
-  listSpaces: (token: string) =>
-    request<{ spaces: RemoteSpace[]; deleted: string[] }>('/v1/spaces', { token }),
+  listSpaces: (token: string) => request<{ spaces: RemoteSpace[]; deleted: string[] }>('/v1/spaces', { token }),
 
   createSpace: (token: string, name: string) =>
     request<{ space: RemoteSpace }>('/v1/spaces', { token, body: { name } }),
 
   usage: (token: string) => request<{ used: number; limit: number }>('/v1/usage', { token }),
 
-  settings: (token: string) =>
-    request<{ settings: AccountSettings; key?: KeyState }>('/v1/settings', { token }),
+  settings: (token: string) => request<{ settings: AccountSettings; key?: KeyState }>('/v1/settings', { token }),
   saveSettings: (token: string, patch: AccountSettings) =>
     request<{ settings: AccountSettings }>('/v1/settings', {
       method: 'PATCH',
@@ -453,16 +449,12 @@ export const routes = {
       body: { bookmarks },
     }),
 
-  saveFolderIcons: (
-    token: string,
-    id: string,
-    icons: Record<string, string>,
-    tints: Record<string, string>,
-  ) =>
-    request<{ icons: Record<string, string>; tints: Record<string, string> }>(
-      `/v1/spaces/${id}/icons`,
-      { method: 'PUT', token, body: { icons, tints } },
-    ),
+  saveFolderIcons: (token: string, id: string, icons: Record<string, string>, tints: Record<string, string>) =>
+    request<{ icons: Record<string, string>; tints: Record<string, string> }>(`/v1/spaces/${id}/icons`, {
+      method: 'PUT',
+      token,
+      body: { icons, tints },
+    }),
 
   saveGraphSettings: (token: string, id: string, graph: unknown) =>
     request<{ graph: unknown }>(`/v1/spaces/${id}/graph`, {
@@ -495,8 +487,7 @@ export const routes = {
       body: { archived },
     }),
 
-  deleteSpace: (token: string, id: string) =>
-    request<{ ok: true }>(`/v1/spaces/${id}`, { method: 'DELETE', token }),
+  deleteSpace: (token: string, id: string) => request<{ ok: true }>(`/v1/spaces/${id}`, { method: 'DELETE', token }),
 
   sharing: (token: string, id: string, item = '') =>
     request<Sharing>(`/v1/spaces/${id}/share${about(item)}`, { token }),
@@ -598,14 +589,12 @@ export const routes = {
       },
     }),
 
-  withdraw: (key: string, token: string) =>
-    request<{ ok: true }>(`/v1/join/${key}`, { method: 'DELETE', token }),
+  withdraw: (key: string, token: string) => request<{ ok: true }>(`/v1/join/${key}`, { method: 'DELETE', token }),
 
   changes: (token: string, spaceId: string, since: number) =>
-    request<{ notes: RemoteNote[]; cursor: number; more: boolean }>(
-      `/v1/spaces/${spaceId}/changes?since=${since}`,
-      { token },
-    ),
+    request<{ notes: RemoteNote[]; cursor: number; more: boolean }>(`/v1/spaces/${spaceId}/changes?since=${since}`, {
+      token,
+    }),
 
   createNote: (token: string, spaceId: string, path: string, content: string) =>
     request<{ note: RemoteNote }>(`/v1/spaces/${spaceId}/notes`, {
@@ -614,8 +603,7 @@ export const routes = {
       device: true,
     }),
 
-  readNote: (token: string, id: string) =>
-    request<{ note: RemoteNote; content: string }>(`/v1/notes/${id}`, { token }),
+  readNote: (token: string, id: string) => request<{ note: RemoteNote; content: string }>(`/v1/notes/${id}`, { token }),
 
   writeNote: (token: string, id: string, path: string, content: string, baseVersion: number) =>
     request<{ note: RemoteNote }>(`/v1/notes/${id}`, {
@@ -650,20 +638,17 @@ export const routes = {
       device: true,
     }),
 
-  deleteNote: (token: string, id: string) =>
-    request<{ ok: true }>(`/v1/notes/${id}`, { method: 'DELETE', token }),
+  deleteNote: (token: string, id: string) => request<{ ok: true }>(`/v1/notes/${id}`, { method: 'DELETE', token }),
 
   trash: (token: string) => request<TrashListing>('/v1/trash', { token }),
   restoreNote: (token: string, id: string) =>
     request<{ note: RemoteNote }>(`/v1/trash/notes/${id}/restore`, { method: 'POST', token }),
   restoreSpace: (token: string, id: string) =>
     request<{ space: RemoteSpace }>(`/v1/trash/spaces/${id}/restore`, { method: 'POST', token }),
-  purgeNote: (token: string, id: string) =>
-    request<{ ok: true }>(`/v1/trash/notes/${id}`, { method: 'DELETE', token }),
+  purgeNote: (token: string, id: string) => request<{ ok: true }>(`/v1/trash/notes/${id}`, { method: 'DELETE', token }),
   purgeSpace: (token: string, id: string) =>
     request<{ ok: true; more?: boolean }>(`/v1/trash/spaces/${id}`, { method: 'DELETE', token }),
-  emptyTrash: (token: string) =>
-    request<{ ok: true; more?: boolean }>('/v1/trash', { method: 'DELETE', token }),
+  emptyTrash: (token: string) => request<{ ok: true; more?: boolean }>('/v1/trash', { method: 'DELETE', token }),
 
   subdomainAvailable: (token: string, subdomain: string, space?: string) =>
     request<{ available: boolean; reason?: string }>(
@@ -760,15 +745,12 @@ export const routes = {
   issueConnector: (token: string, readOnly: boolean) =>
     request<{ token: string }>('/v1/mcp/token', { token, body: { readOnly } }),
 
-  revokeConnector: (token: string) =>
-    request<{ ok: true }>('/v1/mcp/token', { method: 'DELETE', token }),
+  revokeConnector: (token: string) => request<{ ok: true }>('/v1/mcp/token', { method: 'DELETE', token }),
 
   siteIcons: (token: string) => request<{ sites: SiteIcon[] }>('/v2/site-icons', { token }),
 
-  sawSite: (
-    token: string,
-    site: { site: string; label: string; icon: string | null; seen: number },
-  ) => request<{ site: SiteIcon | null }>('/v2/site-icons', { token, body: site }),
+  sawSite: (token: string, site: { site: string; label: string; icon: string | null; seen: number }) =>
+    request<{ site: SiteIcon | null }>('/v2/site-icons', { token, body: site }),
 
   forgetSites: (token: string, which: { sites: string[] } | { since: number }) =>
     request<{ ok: true }>('/v2/site-icons', { method: 'DELETE', token, body: which }),

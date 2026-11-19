@@ -7,14 +7,7 @@
   const { size, assemble = false }: Props = $props()
 </script>
 
-<svg
-  class="mark"
-  class:assemble
-  width={size}
-  height={size}
-  viewBox="0 0 256 256"
-  aria-hidden="true"
->
+<svg class="mark" class:assemble width={size} height={size} viewBox="0 0 256 256" aria-hidden="true">
   <rect x="62" y="62" width="93" height="35" rx="11" style:--dx="-40px" style:--dy="0px" />
   <rect x="160" y="62" width="35" height="93" rx="11" style:--dx="0px" style:--dy="-40px" />
   <rect x="101" y="160" width="94" height="35" rx="11" style:--dx="40px" style:--dy="0px" />

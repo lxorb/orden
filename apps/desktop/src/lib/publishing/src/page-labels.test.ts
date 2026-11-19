@@ -16,9 +16,7 @@ const { asFile } = await import('./site-diagrams')
 const FENCE = 'flowchart TD\n  A[Start here] --> B[Finish line]'
 
 function wordsIn(file: string): string {
-  return (file.match(/<tspan[^>]*>[^<]+<\/tspan>/g) ?? [])
-    .map((one) => one.replace(/<[^>]*>/g, ''))
-    .join('')
+  return (file.match(/<tspan[^>]*>[^<]+<\/tspan>/g) ?? []).map((one) => one.replace(/<[^>]*>/g, '')).join('')
 }
 
 test('a published diagram drawn on its own keeps its words', async () => {

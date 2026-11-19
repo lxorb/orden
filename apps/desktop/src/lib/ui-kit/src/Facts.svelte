@@ -4,10 +4,7 @@
   const { parts, line = false }: { parts: readonly Part[]; line?: boolean } = $props()
 
   const shown = $derived(
-    parts.filter(
-      (one): one is string | number =>
-        one !== null && one !== undefined && one !== false && one !== '',
-    ),
+    parts.filter((one): one is string | number => one !== null && one !== undefined && one !== false && one !== ''),
   )
 </script>
 

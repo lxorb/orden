@@ -1,10 +1,4 @@
-import {
-  type AgentHeard,
-  providePort,
-  runAgentVerb,
-  settingsWindow,
-  webPages,
-} from '@orden/contracts'
+import { type AgentHeard, providePort, runAgentVerb, settingsWindow, webPages } from '@orden/contracts'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import { callerOf, type Caller } from '../src/lib/automation/src/api'
 
@@ -102,13 +96,11 @@ const workspace = {
   webAddressOf: () => null,
   documentAt: () => null,
   noteText: (path: string) => Promise.resolve(path === '/s/Work/Plan.md' ? '# Plan\n' : null),
-  openUnsaved: vi.fn(
-    (kind: string, _text: string, _name?: string, _beside?: string | null, _activate?: boolean) => {
-      const made = tab(`new-${kind}`, kind, null)
-      tabs.push(made)
-      return made
-    },
-  ),
+  openUnsaved: vi.fn((kind: string, _text: string, _name?: string, _beside?: string | null, _activate?: boolean) => {
+    const made = tab(`new-${kind}`, kind, null)
+    tabs.push(made)
+    return made
+  }),
   openPage: vi.fn((url: string) => {
     const made = tab('web-new', 'web', null)
     tabs.push(made)
@@ -117,9 +109,7 @@ const workspace = {
   openGraph: vi.fn(),
   open: vi.fn(() => Promise.resolve()),
   openEntry: vi.fn(() => Promise.resolve()),
-  save: vi.fn((_tab: FakeTab, folder: string, file: string) =>
-    Promise.resolve(`${folder}/${file}`),
-  ),
+  save: vi.fn((_tab: FakeTab, folder: string, file: string) => Promise.resolve(`${folder}/${file}`)),
   rename: vi.fn(() => Promise.resolve()),
   moveMany: vi.fn(() => Promise.resolve()),
   activate: vi.fn(),
@@ -228,9 +218,7 @@ vi.mock('../src/lib/scratchpad/src/api', async (importOriginal) => ({
 }))
 
 const docs = {
-  readNote: vi.fn((at: { path: string; tab?: string }) =>
-    Promise.resolve({ path: at.path, rev: 'r1', text: 'words' }),
-  ),
+  readNote: vi.fn((at: { path: string; tab?: string }) => Promise.resolve({ path: at.path, rev: 'r1', text: 'words' })),
   writeNote: vi.fn((_agent: unknown, at: { path: string; tab?: string }) =>
     Promise.resolve({ path: at.path, rev: 'r2' }),
   ),
@@ -274,8 +262,7 @@ vi.mock('../src/lib/terminal/src/running', () => ({
 }))
 
 vi.mock('../src/lib/terminal/src/history', () => ({
-  historyOf: () =>
-    Promise.resolve({ cols: 80, rows: 24, at: 7, text: '\x1b[32mbuilt\x1b[0m\r\nok\r\n' }),
+  historyOf: () => Promise.resolve({ cols: 80, rows: 24, at: 7, text: '\x1b[32mbuilt\x1b[0m\r\nok\r\n' }),
 }))
 
 const screen = {
@@ -335,11 +322,7 @@ vi.mock('../src/lib/terminal/src/sessions.svelte', () => ({
         running.add(tab.id)
       },
       agentBlocked: () =>
-        isOnline
-          ? online.blocked
-          : running.has(tab.id)
-            ? null
-            : { why: 'its shell is not running', lasting: false },
+        isOnline ? online.blocked : running.has(tab.id) ? null : { why: 'its shell is not running', lasting: false },
       agentTyped: (data: string) => {
         if (isOnline && online.blocked) return online.blocked.why
         term.input(data)
@@ -520,9 +503,9 @@ describe('where the reader is', () => {
 
 describe('a tab of every kind, made behind the reader', () => {
   test('a note with words, a canvas, a page note: behind, beside the selected tab', async () => {
-    expect(
-      await call('workspace_tabs', { op: 'new', kind: 'note', content: 'Hello' }),
-    ).toMatchObject({ result: { id: 'new-note', unsaved: true } })
+    expect(await call('workspace_tabs', { op: 'new', kind: 'note', content: 'Hello' })).toMatchObject({
+      result: { id: 'new-note', unsaved: true },
+    })
     expect(workspace.openUnsaved).toHaveBeenLastCalledWith('note', '', undefined, 'n1', false)
     expect(docs.writeNote).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'Claude Code' }),
@@ -539,9 +522,9 @@ describe('a tab of every kind, made behind the reader', () => {
   })
 
   test('in front only with workspace.focus', async () => {
-    expect(
-      await call('workspace_tabs', { op: 'new', kind: 'note', background: false }),
-    ).toMatchObject({ code: 'not_granted' })
+    expect(await call('workspace_tabs', { op: 'new', kind: 'note', background: false })).toMatchObject({
+      code: 'not_granted',
+    })
     expect(workspace.openUnsaved).not.toHaveBeenCalled()
 
     await call('workspace_tabs', { op: 'new', kind: 'note', background: false }, agent(focusing))
@@ -549,11 +532,7 @@ describe('a tab of every kind, made behind the reader', () => {
   })
 
   test('a denied site by another spelling is denied all the same (#1078)', async () => {
-    for (const url of [
-      'https://login.bank.example./',
-      'https://LOGIN.Bank.Example/',
-      'https://bank.example.:443/x',
-    ]) {
+    for (const url of ['https://login.bank.example./', 'https://LOGIN.Bank.Example/', 'https://bank.example.:443/x']) {
       expect(await call('workspace_tabs', { op: 'new', kind: 'web', url }), url).toMatchObject({
         code: 'site_denied',
       })
@@ -562,40 +541,41 @@ describe('a tab of every kind, made behind the reader', () => {
   })
 
   test('a web tab on its page, never a denied site or something not on the web', async () => {
-    expect(
-      await call('workspace_tabs', { op: 'new', kind: 'web', url: 'https://docs.example/' }),
-    ).toMatchObject({ result: { id: 'web-new' } })
+    expect(await call('workspace_tabs', { op: 'new', kind: 'web', url: 'https://docs.example/' })).toMatchObject({
+      result: { id: 'web-new' },
+    })
     expect(workspace.openPage).toHaveBeenCalledWith('https://docs.example/', 'behind')
 
-    expect(
-      await call('workspace_tabs', { op: 'new', kind: 'web', url: 'https://login.bank.example/' }),
-    ).toMatchObject({ code: 'site_denied' })
-    expect(
-      await call('workspace_tabs', { op: 'new', kind: 'web', url: 'file:///C:/secret.txt' }),
-    ).toMatchObject({ code: 'bad_arguments' })
+    expect(await call('workspace_tabs', { op: 'new', kind: 'web', url: 'https://login.bank.example/' })).toMatchObject({
+      code: 'site_denied',
+    })
+    expect(await call('workspace_tabs', { op: 'new', kind: 'web', url: 'file:///C:/secret.txt' })).toMatchObject({
+      code: 'bad_arguments',
+    })
     expect(workspace.openPage).toHaveBeenCalledTimes(1)
   })
 
   test('a terminal in the shell and folder asked for, behind', async () => {
-    expect(
-      await call('workspace_tabs', { op: 'new', kind: 'terminal', shell: 'git bash', cwd: 'src' }),
-    ).toMatchObject({ result: { id: 'term-bash', kind: 'terminal' } })
+    expect(await call('workspace_tabs', { op: 'new', kind: 'terminal', shell: 'git bash', cwd: 'src' })).toMatchObject({
+      result: { id: 'term-bash', kind: 'terminal' },
+    })
     expect(openTerminal).toHaveBeenCalledWith('bash', {
       folder: '/s/Work/src',
       beside: 'n1',
       activate: false,
     })
 
-    expect(
-      await call('workspace_tabs', { op: 'new', kind: 'terminal', shell: 'fish' }),
-    ).toMatchObject({ code: 'bad_arguments', message: expect.stringContaining('Git Bash') })
+    expect(await call('workspace_tabs', { op: 'new', kind: 'terminal', shell: 'fish' })).toMatchObject({
+      code: 'bad_arguments',
+      message: expect.stringContaining('Git Bash'),
+    })
   })
 
   test('in confirm mode, a new tab asks first', async () => {
     answer = { status: 'needs_approval', approval: 'a1', summary: 'A new note tab' }
-    expect(
-      await call('workspace_tabs', { op: 'new' }, agent(EVERY, { mode: 'confirm' })),
-    ).toMatchObject({ status: 'needs_approval' })
+    expect(await call('workspace_tabs', { op: 'new' }, agent(EVERY, { mode: 'confirm' }))).toMatchObject({
+      status: 'needs_approval',
+    })
     expect(workspace.openUnsaved).not.toHaveBeenCalled()
   })
 })
@@ -621,9 +601,9 @@ describe('opening', () => {
 
 describe('naming and saving', () => {
   test('a file tab renamed is the file renamed, through the one rename', async () => {
-    expect(
-      await call('workspace_tabs', { op: 'rename', tab: 'n1', name: 'Roadmap' }),
-    ).toMatchObject({ result: { from: 'Plan.md', to: 'Roadmap.md' } })
+    expect(await call('workspace_tabs', { op: 'rename', tab: 'n1', name: 'Roadmap' })).toMatchObject({
+      result: { from: 'Plan.md', to: 'Roadmap.md' },
+    })
     expect(workspace.rename).toHaveBeenCalledWith('/s/Work/Plan.md', 'Roadmap.md')
   })
 
@@ -640,9 +620,9 @@ describe('naming and saving', () => {
   })
 
   test('an unsaved tab saved at a path, under its kind ending', async () => {
-    expect(
-      await call('workspace_tabs', { op: 'save', tab: 'c1', path: 'boards/Map' }),
-    ).toMatchObject({ result: { path: 'boards/Map.canvas' } })
+    expect(await call('workspace_tabs', { op: 'save', tab: 'c1', path: 'boards/Map' })).toMatchObject({
+      result: { path: 'boards/Map.canvas' },
+    })
     expect(workspace.save).toHaveBeenCalledWith(tabs[2], '/s/Work/boards', 'Map.canvas')
 
     expect(await call('workspace_tabs', { op: 'save', tab: 'n1', path: 'x' })).toMatchObject({
@@ -653,9 +633,9 @@ describe('naming and saving', () => {
   test('an unsaved tab is not saved into a space shared to be read', async () => {
     readOnly = true
     try {
-      expect(
-        await call('workspace_tabs', { op: 'save', tab: 'c1', path: 'boards/Map' }),
-      ).toMatchObject({ code: 'read_only' })
+      expect(await call('workspace_tabs', { op: 'save', tab: 'c1', path: 'boards/Map' })).toMatchObject({
+        code: 'read_only',
+      })
       expect(workspace.save).not.toHaveBeenCalled()
     } finally {
       readOnly = false
@@ -678,9 +658,9 @@ describe('a file of every kind', () => {
     expect(await call('create_note', { path: 'Lecture', kind: 'pages' })).toMatchObject({
       result: { path: 'Lecture.pages' },
     })
-    expect(
-      await call('create_note', { path: 'Docs', kind: 'web', url: 'https://docs.example/' }),
-    ).toMatchObject({ result: { path: 'Docs.url' } })
+    expect(await call('create_note', { path: 'Docs', kind: 'web', url: 'https://docs.example/' })).toMatchObject({
+      result: { path: 'Docs.url' },
+    })
 
     const files = written()
     expect(JSON.parse(files['/s/Work/boards/Map.canvas'] ?? '')).toMatchObject({ nodes: [] })
@@ -713,10 +693,7 @@ describe('a note and a canvas, by their tab', () => {
     expect(docs.readNote).toHaveBeenLastCalledWith({ path: 'Plan.md', space: 'work' }, undefined)
 
     await call('read_note', { tab: 'd1' })
-    expect(docs.readNote).toHaveBeenLastCalledWith(
-      { path: '', space: 'work', tab: 'd1' },
-      undefined,
-    )
+    expect(docs.readNote).toHaveBeenLastCalledWith({ path: '', space: 'work', tab: 'd1' }, undefined)
 
     expect(await call('read_note', { tab: 'c1' })).toMatchObject({ code: 'bad_arguments' })
     expect(await call('read_note', { tab: 'nope' })).toMatchObject({ code: 'no_such_tab' })
@@ -786,19 +763,11 @@ describe('a PDF, Settings and Recently deleted', () => {
       code: 'not_granted',
     })
     expect(
-      await call(
-        'workspace_tabs',
-        { op: 'open', view: 'settings', section: 'ai' },
-        agent(focusing),
-      ),
+      await call('workspace_tabs', { op: 'open', view: 'settings', section: 'ai' }, agent(focusing)),
     ).toMatchObject({ result: { settings: 'ai' } })
     expect(settings.show).toHaveBeenCalledWith('ai')
     expect(
-      await call(
-        'workspace_tabs',
-        { op: 'open', view: 'settings', section: 'nope' },
-        agent(focusing),
-      ),
+      await call('workspace_tabs', { op: 'open', view: 'settings', section: 'nope' }, agent(focusing)),
     ).toMatchObject({ code: 'bad_arguments' })
   })
 
@@ -856,12 +825,12 @@ describe('tabs moved and panes arranged (#1078)', () => {
     expect(workspace.moveTab).toHaveBeenLastCalledWith('n1', 'p2', 0)
     await call('workspace_tabs', { op: 'move', tab: 'c1', toward: 'left' }, agent(focusing))
     expect(workspace.moveTab).toHaveBeenLastCalledWith('c1', 'p1', null)
-    expect(
-      await call('workspace_tabs', { op: 'move', tab: 'n1', toward: 'up' }, agent(focusing)),
-    ).toMatchObject({ code: 'bad_arguments' })
-    expect(
-      await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p9' }, agent(focusing)),
-    ).toMatchObject({ code: 'bad_arguments' })
+    expect(await call('workspace_tabs', { op: 'move', tab: 'n1', toward: 'up' }, agent(focusing))).toMatchObject({
+      code: 'bad_arguments',
+    })
+    expect(await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p9' }, agent(focusing))).toMatchObject({
+      code: 'bad_arguments',
+    })
   })
 
   test('the panes split, made even or gathered into one', async () => {
@@ -871,17 +840,16 @@ describe('tabs moved and panes arranged (#1078)', () => {
     expect(workspace.panes.equalise).toHaveBeenCalledWith('p1')
     await call('workspace_tabs', { op: 'arrange', layout: 'single' }, agent(focusing))
     expect(workspace.moveTab).toHaveBeenCalledWith('c1', 'p1')
-    expect(
-      await call('workspace_tabs', { op: 'arrange', layout: 'grid' }, agent(focusing)),
-    ).toMatchObject({ code: 'bad_arguments' })
+    expect(await call('workspace_tabs', { op: 'arrange', layout: 'grid' }, agent(focusing))).toMatchObject({
+      code: 'bad_arguments',
+    })
   })
 
   test('a move or an arrange answers only the tabs of the spaces granted', async () => {
     tabs.push(tab('h1', 'note', '/s/Home/Diary.md', { shown: 'Diary' }))
     tabs[5]!.note.home = 'home'
     const only = agent(focusing, { spaces: ['Work'] })
-    const idsOf = (said: unknown) =>
-      (said as { result: { id: string }[] }).result.map((one) => one.id)
+    const idsOf = (said: unknown) => (said as { result: { id: string }[] }).result.map((one) => one.id)
 
     const moved = await call('workspace_tabs', { op: 'move', tab: 'n1', pane: 'p2' }, only)
     expect(idsOf(moved)).toEqual(['n1', 'd1', 'c1', 't1', 's1'])
@@ -891,8 +859,7 @@ describe('tabs moved and panes arranged (#1078)', () => {
 })
 
 describe('the reader terminals', () => {
-  const withOnline = () =>
-    tabs.push(tab('o1', 'terminal', '/s/Work/Build.term', { shown: 'Build', doc: '' }))
+  const withOnline = () => tabs.push(tab('o1', 'terminal', '/s/Work/Build.term', { shown: 'Build', doc: '' }))
 
   test('read: the screen as lines once running, the lines it came back with before', async () => {
     expect(await call('read_terminal', { tab: 't1' })).toMatchObject({
@@ -922,10 +889,7 @@ describe('the reader terminals', () => {
 
   test('type: at most 100 keys and a line of 10000 characters, refused before anything is typed', async () => {
     running.add('t1')
-    for (const args of [
-      { keys: Array.from({ length: 101 }, () => 'Ctrl+C') },
-      { text: `git ${'x'.repeat(10_000)}` },
-    ]) {
+    for (const args of [{ keys: Array.from({ length: 101 }, () => 'Ctrl+C') }, { text: `git ${'x'.repeat(10_000)}` }]) {
       expect(await call('type_terminal', { tab: 't1', ...args, wait_ms: 1 })).toMatchObject({
         code: 'bad_arguments',
       })
@@ -998,9 +962,7 @@ describe('the reader terminals', () => {
     running.add('t1')
     running.add('o1')
     for (const tab of ['t1', 'o1']) {
-      expect(
-        await call('run_terminal', { tab, command: 'git status', timeout_ms: 1 }),
-      ).toMatchObject({
+      expect(await call('run_terminal', { tab, command: 'git status', timeout_ms: 1 })).toMatchObject({
         result: { tab, typed: 'git status + Enter' },
         untrusted: 'terminal output',
       })
@@ -1062,9 +1024,9 @@ describe('the reader terminals', () => {
     })
     expect(madeOnline).toHaveBeenCalledWith('n1', false)
 
-    expect(
-      await call('type_terminal', { tab: 'online-new', text: 'git log', wait_ms: 1 }),
-    ).toMatchObject({ result: { tab: 'online-new', typed: 'git log + Enter' } })
+    expect(await call('type_terminal', { tab: 'online-new', text: 'git log', wait_ms: 1 })).toMatchObject({
+      result: { tab: 'online-new', typed: 'git log + Enter' },
+    })
     expect(screen.typed).toEqual(['git log\r'])
     expect(await call('read_terminal', { tab: 'online-new' })).toMatchObject({
       result: { tab: 'online-new', output: expect.stringContaining('git log') },
@@ -1076,18 +1038,14 @@ describe('the reader terminals', () => {
   test('opening an online terminal asks as opening any tab does, and in front only with focus', async () => {
     answer = { status: 'needs_approval', approval: 'a5', summary: 'A new online tab' }
     expect(
-      await call(
-        'workspace_tabs',
-        { op: 'new', kind: 'online' },
-        agent(EVERY, { mode: 'confirm' }),
-      ),
+      await call('workspace_tabs', { op: 'new', kind: 'online' }, agent(EVERY, { mode: 'confirm' })),
     ).toMatchObject({ status: 'needs_approval' })
     expect(madeOnline).not.toHaveBeenCalled()
 
     answer = { status: 'ok', result: {} }
-    expect(
-      await call('workspace_tabs', { op: 'new', kind: 'online', background: false }),
-    ).toMatchObject({ code: 'not_granted' })
+    expect(await call('workspace_tabs', { op: 'new', kind: 'online', background: false })).toMatchObject({
+      code: 'not_granted',
+    })
     await call('workspace_tabs', { op: 'new', kind: 'online', background: false }, agent(focusing))
     expect(madeOnline).toHaveBeenCalledWith(null, true)
   })
@@ -1171,8 +1129,8 @@ describe('the reader terminals', () => {
     expect(await call('type_terminal', { tab: 't1', keys: ['F13'] })).toMatchObject({
       code: 'bad_arguments',
     })
-    expect(
-      await runAgentVerb('type_terminal', { tab: 't1', text: 'ls' }, { agent: null }),
-    ).toMatchObject({ code: 'by_hand' })
+    expect(await runAgentVerb('type_terminal', { tab: 't1', text: 'ls' }, { agent: null })).toMatchObject({
+      code: 'by_hand',
+    })
   })
 })

@@ -1,19 +1,6 @@
-import {
-  codeFolding,
-  ensureSyntaxTree,
-  foldable,
-  foldedRanges,
-  foldEffect,
-  syntaxTree,
-} from '@codemirror/language'
+import { codeFolding, ensureSyntaxTree, foldable, foldedRanges, foldEffect, syntaxTree } from '@codemirror/language'
 import type { EditorState, Extension, Line, StateCommand, TransactionSpec } from '@codemirror/state'
-import {
-  Decoration,
-  type DecorationSet,
-  EditorView,
-  ViewPlugin,
-  type ViewUpdate,
-} from '@codemirror/view'
+import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view'
 import { calloutOf } from '@orden/markdown/callouts'
 import { CHEVRON } from '@orden/markdown/icons'
 import {
@@ -30,13 +17,11 @@ import { OrdenWidget } from './live-preview/widget'
 
 export type FoldLines = readonly [head: number, last: number]
 
-const COULD_FOLD =
-  /^(?:[ \t]*(?:#{1,6}[ \t]|>|[-*+][ \t]|\d+[.)][ \t]|```|~~~)|(?: {2}|\t)[ \t]*\S)/
+const COULD_FOLD = /^(?:[ \t]*(?:#{1,6}[ \t]|>|[-*+][ \t]|\d+[.)][ \t]|```|~~~)|(?: {2}|\t)[ \t]*\S)/
 
 const HEADING = /^[ \t]*#{1,6}[ \t]/
 
-const foldAtLine = (state: EditorState, line: Line): FoldRange | null =>
-  foldable(state, line.from, line.to) ?? null
+const foldAtLine = (state: EditorState, line: Line): FoldRange | null => foldable(state, line.from, line.to) ?? null
 
 export const foldOpenedBy = (state: EditorState, line: Line): FoldRange | null =>
   COULD_FOLD.test(line.text) ? foldAtLine(state, line) : null
@@ -177,10 +162,7 @@ export const foldLess: StateCommand = (target) => {
   const shut = foldableBlocks(target.state).filter((one) => one.folded && !one.hidden)
   if (!shut.length) return false
 
-  const shallowest = shut.reduce(
-    (least, one) => Math.min(least, one.depth),
-    Number.MAX_SAFE_INTEGER,
-  )
+  const shallowest = shut.reduce((least, one) => Math.min(least, one.depth), Number.MAX_SAFE_INTEGER)
 
   openFolds(
     target,
@@ -201,8 +183,7 @@ export const unfoldEverything: StateCommand = (target) => {
   return true
 }
 
-export const cycleAllFolds: StateCommand = (target) =>
-  unfoldEverything(target) || foldHeadings(target)
+export const cycleAllFolds: StateCommand = (target) => unfoldEverything(target) || foldHeadings(target)
 
 export function foldLines(state: EditorState): FoldLines[] {
   const out: FoldLines[] = []
@@ -277,10 +258,7 @@ export function withFolds(given: EditorState, lines: readonly FoldLines[]): Edit
   }).state
 }
 
-export function sameFolds(
-  one: readonly FoldLines[] | undefined,
-  other: readonly FoldLines[] | undefined,
-): boolean {
+export function sameFolds(one: readonly FoldLines[] | undefined, other: readonly FoldLines[] | undefined): boolean {
   const first = one ?? []
   const second = other ?? []
   if (first.length !== second.length) return false
@@ -384,12 +362,7 @@ const hinges = ViewPlugin.fromClass(
     }
 
     update(update: ViewUpdate) {
-      if (
-        update.docChanged ||
-        update.viewportChanged ||
-        foldsChanged(update) ||
-        shuttingChanged(update)
-      ) {
+      if (update.docChanged || update.viewportChanged || foldsChanged(update) || shuttingChanged(update)) {
         this.decorations = build(update.view)
       }
     }
@@ -417,8 +390,4 @@ function build(view: EditorView): DecorationSet {
   return Decoration.set(marks, true)
 }
 
-export const folding = (): Extension => [
-  codeFolding({ placeholderDOM: placeholder }),
-  hinges,
-  foldMovement(),
-]
+export const folding = (): Extension => [codeFolding({ placeholderDOM: placeholder }), hinges, foldMovement()]

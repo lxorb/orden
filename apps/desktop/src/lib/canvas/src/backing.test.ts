@@ -30,9 +30,7 @@ describe('which backing a layer of ink gets', () => {
   })
 
   test('a refused hint is a plain layer, there being no latency left to keep', () => {
-    expect(inkMode({ agent: DESKTOP, reported: { ...ECHOED, desynchronized: false } })).toBe(
-      'plain',
-    )
+    expect(inkMode({ agent: DESKTOP, reported: { ...ECHOED, desynchronized: false } })).toBe('plain')
   })
 
   test('an engine that says nothing about the hint is left alone', () => {

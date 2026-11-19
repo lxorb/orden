@@ -28,9 +28,7 @@
   const root = $derived(workspace.activeSpace?.root ?? null)
   const backlinks = $derived.by(() => (path ? links.backlinks(path) : []))
 
-  const chatLinks = held(
-    () => surfaceLoad('chat-links') as Promise<{ default: Component<{ path: string }> }>,
-  )
+  const chatLinks = held(() => surfaceLoad('chat-links') as Promise<{ default: Component<{ path: string }> }>)
   const outgoing = $derived.by(() => (path ? links.outgoing(path) : []))
   const attachments = $derived(workspace.graphSettings.here.attachments)
 

@@ -93,17 +93,7 @@ export class Front {
 }
 
 export type TerminalMark =
-  | 'claude'
-  | 'codex'
-  | 'node'
-  | 'python'
-  | 'git'
-  | 'ssh'
-  | 'docker'
-  | 'vim'
-  | 'powershell'
-  | 'cmd'
-  | 'shell'
+  'claude' | 'codex' | 'node' | 'python' | 'git' | 'ssh' | 'docker' | 'vim' | 'powershell' | 'cmd' | 'shell'
 
 const PROGRAMS: readonly [RegExp, TerminalMark][] = [
   [/^claude$/, 'claude'],

@@ -9,41 +9,27 @@ const ticked = (note: string, line: number, today: string, skipPast = true) =>
 
 describe("the Tasks plugin's documented recurring examples, with its own dates", () => {
   test('take out the trash', () => {
-    expect(
-      ticked('- [ ] take out the trash 🔁 every Sunday 📅 2021-04-25\n', 0, '2021-04-24', false),
-    ).toBe(
+    expect(ticked('- [ ] take out the trash 🔁 every Sunday 📅 2021-04-25\n', 0, '2021-04-24', false)).toBe(
       '- [ ] take out the trash 🔁 every Sunday 📅 2021-05-02\n' +
         '- [x] take out the trash 🔁 every Sunday 📅 2021-04-25\n',
     )
   })
 
   test('sweep the floors, a week late, from the old date', () => {
-    expect(
-      ticked('- [ ] sweep the floors 🔁 every week ⏳ 2021-02-06\n', 0, '2022-02-13', false),
-    ).toBe(
-      '- [ ] sweep the floors 🔁 every week ⏳ 2021-02-13\n' +
-        '- [x] sweep the floors 🔁 every week ⏳ 2021-02-06\n',
+    expect(ticked('- [ ] sweep the floors 🔁 every week ⏳ 2021-02-06\n', 0, '2022-02-13', false)).toBe(
+      '- [ ] sweep the floors 🔁 every week ⏳ 2021-02-13\n' + '- [x] sweep the floors 🔁 every week ⏳ 2021-02-06\n',
     )
   })
 
   test('sweep the floors when done, from today', () => {
-    expect(
-      ticked('- [ ] sweep the floors 🔁 every week when done ⏳ 2021-02-06\n', 0, '2022-02-13'),
-    ).toBe(
+    expect(ticked('- [ ] sweep the floors 🔁 every week when done ⏳ 2021-02-06\n', 0, '2022-02-13')).toBe(
       '- [ ] sweep the floors 🔁 every week when done ⏳ 2022-02-20\n' +
         '- [x] sweep the floors 🔁 every week when done ⏳ 2021-02-06\n',
     )
   })
 
   test('mow the lawn: every date moves together', () => {
-    expect(
-      ticked(
-        '-   [ ] Mow the lawn 🔁 every 2 weeks ⏳ 2021-10-28 📅 2021-10-30',
-        0,
-        '2021-10-30',
-        false,
-      ),
-    ).toBe(
+    expect(ticked('-   [ ] Mow the lawn 🔁 every 2 weeks ⏳ 2021-10-28 📅 2021-10-30', 0, '2021-10-30', false)).toBe(
       '-   [ ] Mow the lawn 🔁 every 2 weeks ⏳ 2021-11-11 📅 2021-11-13\n' +
         '-   [x] Mow the lawn 🔁 every 2 weeks ⏳ 2021-10-28 📅 2021-10-30',
     )
@@ -85,21 +71,9 @@ describe('ticking', () => {
   })
 
   test('ticks the open sub-tasks with the parent, and leaves the done ones', () => {
-    const note = [
-      '- [ ] Move',
-      '  - [ ] Boxes',
-      '  - [x] Van ✅ 2026-10-01',
-      '  Notes on it',
-      '- [ ] Next',
-    ].join('\n')
+    const note = ['- [ ] Move', '  - [ ] Boxes', '  - [x] Van ✅ 2026-10-01', '  Notes on it', '- [ ] Next'].join('\n')
     expect(ticked(note, 0, '2026-10-04')).toBe(
-      [
-        '- [x] Move',
-        '  - [x] Boxes',
-        '  - [x] Van ✅ 2026-10-01',
-        '  Notes on it',
-        '- [ ] Next',
-      ].join('\n'),
+      ['- [x] Move', '  - [x] Boxes', '  - [x] Van ✅ 2026-10-01', '  Notes on it', '- [ ] Next'].join('\n'),
     )
   })
 
@@ -129,8 +103,7 @@ describe('ticking', () => {
   })
 
   test("Orden's fields come along and reminders at a moment move with the dates", () => {
-    const line =
-      '- [ ] Call [time:: 16:00] [remind:: 15m, 2026-10-04 09:00] 🔁 every week 📅 2026-10-04'
+    const line = '- [ ] Call [time:: 16:00] [remind:: 15m, 2026-10-04 09:00] 🔁 every week 📅 2026-10-04'
     expect(ticked(line, 0, '2026-10-04').split('\n')[0]).toBe(
       '- [ ] Call [time:: 16:00] [remind:: 15m, 2026-10-11 09:00] 🔁 every week 📅 2026-10-11',
     )
@@ -150,9 +123,7 @@ describe('ticking', () => {
   })
 
   test('a recurring task with no date makes its next line with none, as the plugin does', () => {
-    expect(ticked('- [ ] a 🔁 every day', 0, '2026-10-04')).toBe(
-      '- [ ] a 🔁 every day\n- [x] a 🔁 every day',
-    )
+    expect(ticked('- [ ] a 🔁 every day', 0, '2026-10-04')).toBe('- [ ] a 🔁 every day\n- [x] a 🔁 every day')
   })
 
   test('the created date, when asked for', () => {
@@ -189,8 +160,7 @@ describe('skip and finish', () => {
 
   test('a monthly task years overdue comes back next month, not months later', () => {
     expect(ticked('- [ ] Report 🔁 every month on the 1st 📅 2023-01-01', 0, '2026-10-16')).toBe(
-      '- [ ] Report 🔁 every month on the 1st 📅 2026-11-01\n' +
-        '- [x] Report 🔁 every month on the 1st 📅 2023-01-01',
+      '- [ ] Report 🔁 every month on the 1st 📅 2026-11-01\n' + '- [x] Report 🔁 every month on the 1st 📅 2023-01-01',
     )
   })
 
@@ -202,9 +172,7 @@ describe('skip and finish', () => {
 
 describe('a repeat counted from a deadline alone', () => {
   test('moves the deadline on, in both forms', () => {
-    expect(
-      ticked('- [ ] Pay [repeat:: every month] [deadline:: 2026-10-01]\n', 0, '2026-10-04'),
-    ).toBe(
+    expect(ticked('- [ ] Pay [repeat:: every month] [deadline:: 2026-10-01]\n', 0, '2026-10-04')).toBe(
       '- [ ] Pay [repeat:: every month] [deadline:: 2026-11-01]\n' +
         '- [x] Pay [repeat:: every month] [deadline:: 2026-10-01]\n',
     )
@@ -230,8 +198,7 @@ describe('a repeat for so many times', () => {
   test('counts down with each tick and stops after the last', () => {
     const first = ticked('- [ ] Pill 🔁 every day for 3 times 📅 2026-10-07\n', 0, '2026-10-07')
     expect(first).toBe(
-      '- [ ] Pill 🔁 every day for 2 times 📅 2026-10-08\n' +
-        '- [x] Pill 🔁 every day for 3 times 📅 2026-10-07\n',
+      '- [ ] Pill 🔁 every day for 2 times 📅 2026-10-08\n' + '- [x] Pill 🔁 every day for 3 times 📅 2026-10-07\n',
     )
     const second = ticked(first, 0, '2026-10-08')
     expect(second.split('\n')[0]).toBe('- [ ] Pill 🔁 every day for 1 time 📅 2026-10-09')
@@ -241,18 +208,13 @@ describe('a repeat for so many times', () => {
   })
 
   test('when done keeps its words after the count', () => {
-    const next = nextOccurrence(
-      readTask('- [ ] Pill 🔁 every day for 2 times when done 📅 2026-10-07')!,
-      '2026-10-07',
-    )
+    const next = nextOccurrence(readTask('- [ ] Pill 🔁 every day for 2 times when done 📅 2026-10-07')!, '2026-10-07')
     expect(next?.recurrence).toBe('every day for 1 time when done')
   })
 
   test('a skip spends one of the times', () => {
     const line = '- [ ] Pill 🔁 every week for 2 times 📅 2026-10-07'
-    expect(appliedEdits(line, skip(line, '2026-10-07'))).toBe(
-      '- [ ] Pill 🔁 every week for 1 time 📅 2026-10-14',
-    )
+    expect(appliedEdits(line, skip(line, '2026-10-07'))).toBe('- [ ] Pill 🔁 every week for 1 time 📅 2026-10-14')
     const last = '- [ ] Pill 🔁 every week for 1 time 📅 2026-10-14'
     expect(skip(last, '2026-10-14')).toEqual([])
   })

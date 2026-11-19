@@ -42,9 +42,7 @@ describe('the foot of the sidebar', () => {
     test(`on a ${device} offers the scratchpad beside the settings`, () => {
       const html = drawn(device)
       expect(html).toContain('aria-label="Scratchpad"')
-      expect(html.indexOf('aria-label="Scratchpad"')).toBeLessThan(
-        html.indexOf('aria-label="Settings"'),
-      )
+      expect(html.indexOf('aria-label="Scratchpad"')).toBeLessThan(html.indexOf('aria-label="Settings"'))
     })
   }
 

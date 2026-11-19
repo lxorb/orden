@@ -37,8 +37,7 @@ export async function drawDiagram(
   return drawMermaid(pictures ? mermaid : withoutPictures(mermaid), scheme, where, pictures)
 }
 
-const PICTURE_TAGS =
-  /<\/?(?:img|image|picture|source|video|audio|track|input|feimage|iframe|object|embed)\b[^>]*>/gi
+const PICTURE_TAGS = /<\/?(?:img|image|picture|source|video|audio|track|input|feimage|iframe|object|embed)\b[^>]*>/gi
 
 const LOADING_ATTRIBUTE = /\s(?:src|srcset|poster|background)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi
 
@@ -56,19 +55,10 @@ function withoutPictures(code: string): string {
   if (code.includes('@{') && PICTURE_SHAPE.test(code)) {
     throw new Error('a picture shape from elsewhere')
   }
-  return code
-    .replace(STYLE_LINE, (line) => (REACHES_OUT.test(line) ? '' : line))
-    .replace(ACTOR_PROPERTIES, '')
+  return code.replace(STYLE_LINE, (line) => (REACHES_OUT.test(line) ? '' : line)).replace(ACTOR_PROPERTIES, '')
 }
 
-const OWN_SECURE = [
-  'secure',
-  'securityLevel',
-  'startOnLoad',
-  'maxTextSize',
-  'suppressErrorRendering',
-  'maxEdges',
-]
+const OWN_SECURE = ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'suppressErrorRendering', 'maxEdges']
 
 const HELD_SECURE = [
   ...OWN_SECURE,
@@ -110,12 +100,7 @@ const HELD = {
   FORBID_ATTR: ['style', 'src', 'srcset', 'background', 'poster'],
 }
 
-async function drawMermaid(
-  code: string,
-  scheme: Scheme,
-  where: DiagramFor,
-  pictures: boolean,
-): Promise<string> {
+async function drawMermaid(code: string, scheme: Scheme, where: DiagramFor, pictures: boolean): Promise<string> {
   const svg = await mermaidSvg(`orden-export-${sequence++}`, code, {
     startOnLoad: false,
     securityLevel: 'strict',
@@ -125,9 +110,7 @@ async function drawMermaid(
     htmlLabels: where !== 'page',
     dompurifyConfig: pictures ? {} : HELD,
   })
-  return pictures
-    ? svg
-    : svg.replace(PICTURE_TAGS, '').replace(LOADING_ATTRIBUTE, '').replace(AWAY_URL, 'none')
+  return pictures ? svg : svg.replace(PICTURE_TAGS, '').replace(LOADING_ATTRIBUTE, '').replace(AWAY_URL, 'none')
 }
 
 async function drawFlowchart(code: string, scheme: Scheme): Promise<string> {

@@ -291,8 +291,7 @@ describe('listening', () => {
     await vi.waitFor(() => expect(heard).toEqual(['next']))
 
     expect(one.transcribe).toHaveBeenCalledTimes(1)
-    const sent = vi.mocked(one.transcribe as (wav: Uint8Array) => Promise<string | null>).mock
-      .calls[0]?.[0]
+    const sent = vi.mocked(one.transcribe as (wav: Uint8Array) => Promise<string | null>).mock.calls[0]?.[0]
     expect(String.fromCharCode(...(sent?.slice(0, 4) ?? []))).toBe('RIFF')
   })
 

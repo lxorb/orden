@@ -27,8 +27,7 @@ let list: ReturnType<typeof mount> | null = null
 
 const rowOf = (path: string) => document.querySelector(`[data-path="${path}"]`)!
 
-const picked = () =>
-  [...document.querySelectorAll<HTMLElement>('.row.is-picked')].map((row) => row.dataset.path)
+const picked = () => [...document.querySelectorAll<HTMLElement>('.row.is-picked')].map((row) => row.dataset.path)
 
 async function click(path: string, held: MouseEventInit = {}) {
   rowOf(path).dispatchEvent(new MouseEvent('click', { bubbles: true, ...held }))

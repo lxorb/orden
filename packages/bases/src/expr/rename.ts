@@ -9,8 +9,7 @@ const CONTAINS = new Set(['contains', 'containsAll', 'containsAny'])
 function reads(node: Node, name: string): boolean {
   if (node.type === 'name') return node.name === name
   if (node.type === 'member') return node.name === name && isNote(node.object)
-  if (node.type === 'index')
-    return node.index.type === 'literal' && node.index.value === name && isNote(node.object)
+  if (node.type === 'index') return node.index.type === 'literal' && node.index.value === name && isNote(node.object)
   return false
 }
 
@@ -41,11 +40,7 @@ export function renamedLiteral(source: string, property: string, from: string, t
         walk(node.right)
         return
       case 'call':
-        if (
-          node.callee.type === 'member' &&
-          CONTAINS.has(node.callee.name) &&
-          reads(node.callee.object, name)
-        )
+        if (node.callee.type === 'member' && CONTAINS.has(node.callee.name) && reads(node.callee.object, name))
           node.args.forEach(take)
         walk(node.callee)
         node.args.forEach(walk)
@@ -86,8 +81,7 @@ const PLACES = new Set(['folder', 'path'])
 
 const isFile = (node: Node) => node.type === 'name' && node.name === 'file'
 
-const isPlace = (node: Node) =>
-  node.type === 'member' && PLACES.has(node.name) && isFile(node.object)
+const isPlace = (node: Node) => node.type === 'member' && PLACES.has(node.name) && isFile(node.object)
 
 function children(node: Node): Node[] {
   switch (node.type) {
@@ -140,8 +134,7 @@ export function placedUnder(source: string, under: string, moved = unmoved): str
     return source
   }
   const spans = placeLiterals(tree).flatMap((node): [number, number, string][] => {
-    if (node.type !== 'literal' || typeof node.value !== 'string' || node.at === undefined)
-      return []
+    if (node.type !== 'literal' || typeof node.value !== 'string' || node.at === undefined) return []
     const written = node.value.replace(/^\/+/, '')
     const now = moved(written)
     if (!folder && now === written) return []
@@ -149,10 +142,7 @@ export function placedUnder(source: string, under: string, moved = unmoved): str
   })
   return spans
     .sort((one, other) => other[0] - one[0])
-    .reduce(
-      (text, [at, end, value]) => text.slice(0, at) + JSON.stringify(value) + text.slice(end),
-      source,
-    )
+    .reduce((text, [at, end, value]) => text.slice(0, at) + JSON.stringify(value) + text.slice(end), source)
 }
 
 export function baseUnder(yaml: string, under: string, moved = unmoved): string {
@@ -173,9 +163,7 @@ export function baseUnder(yaml: string, under: string, moved = unmoved): string 
   const expressions = [
     document.contents.get('filters', true),
     document.contents.get('formulas', true),
-    ...(isSeq(views)
-      ? views.items.map((view) => (isMap(view) ? view.get('filters', true) : null))
-      : []),
+    ...(isSeq(views) ? views.items.map((view) => (isMap(view) ? view.get('filters', true) : null)) : []),
   ]
   const changed = expressions.reduce((sum: number, one) => sum + follow(one), 0)
   return changed ? document.toString({ lineWidth: 0 }) : yaml

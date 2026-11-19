@@ -27,20 +27,14 @@ export function addAsTask(page: ChatPage, message: Message, space: string | null
   })
 }
 
-export async function saveAsNote(
-  page: ChatPage,
-  message: Message,
-  space: string | null,
-): Promise<void> {
+export async function saveAsNote(page: ChatPage, message: Message, space: string | null): Promise<void> {
   const entry = page.entry
   if (!entry?.path || !canWriteAt(entry.path)) return
   const folder = folderOf(entry.path)
   const name = noteNameOf(message.body, entry.name ?? 'Chat')
   const path = joinPath(folder, await workspace.freeNameOnDisk(folder, `${name}.md`))
 
-  const replies = message.replies
-    ? await store().history(page.id, { parent: message.id, limit: 200 })
-    : []
+  const replies = message.replies ? await store().history(page.id, { parent: message.id, limit: 200 }) : []
   const parts: string[] = []
   for (const one of [message, ...replies.filter((reply) => !reply.deleted)]) {
     const files: string[] = []

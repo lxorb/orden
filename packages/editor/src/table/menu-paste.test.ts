@@ -24,9 +24,7 @@ test('text pasted from the menu over a table cell lands in that cell, not at the
   const view = createEditor({ parent: document.body, doc: TABLE, selection: { anchor: 2 } })
   open.push(view)
   forceParsing(view, TABLE.length, 10_000)
-  const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find(
-    (one) => one.textContent === '1',
-  )
+  const cell = [...view.dom.querySelectorAll<HTMLElement>('td')].find((one) => one.textContent === '1')
   if (!cell) throw new Error('the table drew no cell holding 1')
 
   expect(editableCellAt(view, cell)).toBe(cell)

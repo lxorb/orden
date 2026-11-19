@@ -32,8 +32,7 @@ export function newestFirst(pages: readonly FeedPage[]): FeedPage[] {
 export function sitemap(pages: readonly FeedPage[]): Response {
   const entries = pages
     .map(
-      (page) =>
-        `<url><loc>${escape(page.url)}</loc><lastmod>${new Date(page.updated).toISOString()}</lastmod></url>`,
+      (page) => `<url><loc>${escape(page.url)}</loc><lastmod>${new Date(page.updated).toISOString()}</lastmod></url>`,
     )
     .join('')
 
@@ -120,9 +119,7 @@ ${site.author ? `<managingEditor>${escape(site.author)}</managingEditor>` : ''}$
 }
 
 export function robots(origin: string, locked: boolean): Response {
-  const body = locked
-    ? 'User-agent: *\nDisallow: /\n'
-    : `User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`
+  const body = locked ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\nSitemap: ${origin}/sitemap.xml\n`
 
   return new Response(body, {
     headers: {

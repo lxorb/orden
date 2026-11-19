@@ -26,9 +26,7 @@ interface Sheet {
 const sheets: Sheet[] = [
   ...files(SOURCE, /\.svelte$/).map((path) => ({
     name: path.slice(SOURCE.length).replace(/\\/g, '/'),
-    css: [...readFileSync(path, 'utf8').matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)]
-      .map((one) => one[1])
-      .join('\n'),
+    css: [...readFileSync(path, 'utf8').matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((one) => one[1]).join('\n'),
   })),
   ...files(THEMES, /\.css$/).map((path) => ({
     name: `themes/${path.slice(THEMES.length).replace(/\\/g, '/')}`,
@@ -99,9 +97,7 @@ describe('the stack', () => {
 
   test('and no script puts a layer somewhere of its own', () => {
     const scripted = files(SOURCE, /\.(svelte|ts)$/)
-      .filter((path) =>
-        /\.zIndex\b|style:z-index|style="[^"]*z-index/.test(readFileSync(path, 'utf8')),
-      )
+      .filter((path) => /\.zIndex\b|style:z-index|style="[^"]*z-index/.test(readFileSync(path, 'utf8')))
       .map((path) => path.slice(SOURCE.length).replace(/\\/g, '/'))
 
     expect(scripted).toEqual([])

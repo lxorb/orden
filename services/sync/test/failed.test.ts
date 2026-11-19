@@ -83,9 +83,7 @@ describe('what is never written down', () => {
     env.close()
     env = testEnv({ MAIL_FROM: 'Nib <nib@nibeditor.com>', EMAIL: refusing })
 
-    const lines = await logged(() =>
-      call(env, '/v1/auth/code', { body: { email: 'someone@example.com' } }),
-    )
+    const lines = await logged(() => call(env, '/v1/auth/code', { body: { email: 'someone@example.com' } }))
 
     expect(lines).toHaveLength(1)
     expect(lines[0]).not.toContain('someone@example.com')

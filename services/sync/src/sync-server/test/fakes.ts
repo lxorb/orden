@@ -18,10 +18,7 @@ type JustBefore = (sql: string) => void
 function asD1(row: unknown): unknown {
   if (!row || typeof row !== 'object') return row
   return Object.fromEntries(
-    Object.entries(row).map(([key, value]) => [
-      key,
-      value instanceof Uint8Array ? [...value] : value,
-    ]),
+    Object.entries(row).map(([key, value]) => [key, value instanceof Uint8Array ? [...value] : value]),
   )
 }
 
@@ -67,8 +64,7 @@ function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: Just
 
           const prepared = database.prepare(sql)
           if ((prepared as unknown as { columns(): unknown[] }).columns().length) {
-            const changed = () =>
-              (database.prepare('select total_changes() as n').get() as { n: number }).n
+            const changed = () => (database.prepare('select total_changes() as n').get() as { n: number }).n
             const before = changed()
             const results = prepared.all(...statement.args).map(asD1)
             return Promise.resolve({
@@ -105,10 +101,7 @@ function bucket() {
       customMetadata: Record<string, string> | undefined
     }
   >()
-  const uploads = new Map<
-    string,
-    { key: string; parts: Map<number, Uint8Array>; options: unknown }
-  >()
+  const uploads = new Map<string, { key: string; parts: Map<number, Uint8Array>; options: unknown }>()
   let uploadsMade = 0
 
   return {
@@ -165,9 +158,7 @@ function bucket() {
         uploadPart(partNumber: number, value: ArrayBuffer | Uint8Array) {
           const upload = uploads.get(uploadId)
           if (!upload) {
-            return Promise.reject(
-              new Error('uploadPart: The specified multipart upload does not exist. (10024)'),
-            )
+            return Promise.reject(new Error('uploadPart: The specified multipart upload does not exist. (10024)'))
           }
           upload.parts.set(partNumber, bytesOf(value))
           return Promise.resolve({ partNumber, etag: `etag-${String(partNumber)}` })
@@ -176,22 +167,16 @@ function bucket() {
           const upload = uploads.get(uploadId)
           if (!upload) {
             return Promise.reject(
-              new Error(
-                'completeMultipartUpload: The specified multipart upload does not exist. (10024)',
-              ),
+              new Error('completeMultipartUpload: The specified multipart upload does not exist. (10024)'),
             )
           }
           for (const { partNumber: number, etag } of parts) {
             if (!Number.isInteger(number) || number < 1 || number > 10_000) {
-              return Promise.reject(
-                new TypeError(`Part number must be between 1 and 10000 (inclusive).`),
-              )
+              return Promise.reject(new TypeError(`Part number must be between 1 and 10000 (inclusive).`))
             }
             if (!upload.parts.has(number) || etag !== `etag-${String(number)}`) {
               return Promise.reject(
-                new Error(
-                  'completeMultipartUpload: One or more of the specified parts could not be found. (10025)',
-                ),
+                new Error('completeMultipartUpload: One or more of the specified parts could not be found. (10025)'),
               )
             }
           }

@@ -2,8 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-const read = (path: string) =>
-  readFileSync(fileURLToPath(new URL(`../src-tauri/src/${path}`, import.meta.url)), 'utf8')
+const read = (path: string) => readFileSync(fileURLToPath(new URL(`../src-tauri/src/${path}`, import.meta.url)), 'utf8')
 
 function launchers(text: string): string[] {
   return text.split(/\nfn launch\(\) -> Result<\(\), String> \{/).slice(1)
@@ -11,10 +10,7 @@ function launchers(text: string): string[] {
 
 describe('an agent connecting and the reader’s window', () => {
   test('orden mcp starts the app asking for no window, on every desktop', () => {
-    const app = readFileSync(
-      fileURLToPath(new URL('../src-tauri/crates/ai/src/mcp/app.rs', import.meta.url)),
-      'utf8',
-    )
+    const app = readFileSync(fileURLToPath(new URL('../src-tauri/crates/ai/src/mcp/app.rs', import.meta.url)), 'utf8')
     const each = launchers(app)
     expect(each.length).toBe(3)
     for (const one of each) {

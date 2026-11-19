@@ -71,9 +71,7 @@ describe('the operations', () => {
     const start = plane(card('a', 0, 0))
     expect(refusal(() => applied(start, [{ op: 'move', id: 'nope', x: 1 }]))).toBe('not_found')
     expect(refusal(() => applied(start, [{ op: 'remove', id: 'nope' }]))).toBe('not_found')
-    expect(refusal(() => applied(start, [{ op: 'connect', from: 'a', to: 'a' }]))).toBe(
-      'bad_arguments',
-    )
+    expect(refusal(() => applied(start, [{ op: 'connect', from: 'a', to: 'a' }]))).toBe('bad_arguments')
     expect(refusal(() => applied(start, [{ op: 'paint' }]))).toBe('bad_arguments')
     expect(refusal(() => applied(start, []))).toBe('bad_arguments')
   })
@@ -158,10 +156,7 @@ describe('an agent edit beside the reader drawing', () => {
     const [reader, agent] = joined(start)
 
     const theirs = readPlane(reader)
-    reader.transact(
-      () => pushPlane(reader, theirs, stamped(theirs, movedBy(theirs, ['a'], 10, 0), 2000)),
-      'here',
-    )
+    reader.transact(() => pushPlane(reader, theirs, stamped(theirs, movedBy(theirs, ['a'], 10, 0), 2000)), 'here')
     const mine = readPlane(agent)
     const { canvas } = applied(mine, [{ op: 'edit_text', id: 'a', text: 'Both' }])
     agent.transact(() => pushPlane(agent, mine, stamped(mine, canvas, 2001)), 'agent')
@@ -177,11 +172,7 @@ describe('an agent edit beside the reader drawing', () => {
     const { canvas } = applied(before, [{ op: 'add_card', text: 'Agent' }])
     const mine = stamped(before, canvas, 2000)
 
-    const written = stamped(
-      before,
-      { ...before, nodes: [...before.nodes, card('r', 0, 300)] },
-      1999,
-    )
+    const written = stamped(before, { ...before, nodes: [...before.nodes, card('r', 0, 300)] }, 1999)
     const kept = merged(mine, written, 3000)
 
     expect(kept.nodes.map((one) => one.id).sort()).toEqual(

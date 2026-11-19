@@ -1,10 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  EXPORT_FORMATS,
-  EXPORT_VARIANTS,
-  extensionFor,
-  TEXTPACK,
-} from '../../export-formats/src/formats'
+import { EXPORT_FORMATS, EXPORT_VARIANTS, extensionFor, TEXTPACK } from '../../export-formats/src/formats'
 import { claimName, fileNameFor, freeName, stemOf } from './naming'
 
 describe('what an exported file is called', () => {

@@ -8,8 +8,7 @@ vi.mock('../../../crate/src/native', () => ({ invoke: () => Promise.resolve(null
 
 const ROOT = '/spaces/.orden/.work/Notes'
 
-const text = (bytes: Uint8Array | null | undefined) =>
-  bytes ? new TextDecoder().decode(bytes) : null
+const text = (bytes: Uint8Array | null | undefined) => (bytes ? new TextDecoder().decode(bytes) : null)
 
 class Disk implements WorkDisk {
   readonly root = ROOT

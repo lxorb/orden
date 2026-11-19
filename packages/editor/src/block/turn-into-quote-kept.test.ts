@@ -28,9 +28,7 @@ function turnedIntoQuote(doc: string, words: string, picked = false): string {
 describe('Turn into quote on blocks holding a quote of several paragraphs', () => {
   test('a paragraph and the quote under it, picked together, stay one quote', () => {
     const doc = 'Intro words.\n\n> First words.\n>\n> Second words.'
-    expect(turnedIntoQuote(doc, 'Intro', true)).toBe(
-      '> Intro words.\n\n> First words.\n>\n> Second words.',
-    )
+    expect(turnedIntoQuote(doc, 'Intro', true)).toBe('> Intro words.\n\n> First words.\n>\n> Second words.')
   })
 
   test('a callout of two paragraphs keeps its second paragraph', () => {

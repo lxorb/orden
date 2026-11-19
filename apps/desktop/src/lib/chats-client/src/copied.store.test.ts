@@ -9,8 +9,7 @@ const moves = vi.hoisted(() => [] as string[])
 const disk = vi.hoisted(() => ({ pointers: new Map<string, string>(), unreadable: [] as string[] }))
 
 const store = vi.hoisted(() => ({
-  remoteIdFor: (root: string) =>
-    ({ '/space': 'space-1', '/other': 'space-2', '/third': 'space-3' })[root] ?? null,
+  remoteIdFor: (root: string) => ({ '/space': 'space-1', '/other': 'space-2', '/third': 'space-3' })[root] ?? null,
   nudge: () => undefined,
   tracked: () => null,
   roleKept: () => null,

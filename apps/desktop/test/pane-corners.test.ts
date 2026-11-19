@@ -2,8 +2,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
 
-const read = (path: string) =>
-  readFileSync(fileURLToPath(new URL(`../src/${path}`, import.meta.url)), 'utf8')
+const read = (path: string) => readFileSync(fileURLToPath(new URL(`../src/${path}`, import.meta.url)), 'utf8')
 
 const app = read('App.svelte')
 const markup = app.slice(app.indexOf('</script>'), app.indexOf('<style>'))
@@ -50,8 +49,7 @@ describe('the note’s corners', () => {
   test('a split is as wide as its room: the divider’s room comes out of the shares', () => {
     expect(read('lib/pane-tree/src/PaneTree.svelte')).toContain('tracks(split)')
     const tree = read('lib/panes/src/pane-tree.ts')
-    const share =
-      /export function tracks\(split: Split\): string \{\s*return `([^`]*)`/.exec(tree)?.[1] ?? ''
+    const share = /export function tracks\(split: Split\): string \{\s*return `([^`]*)`/.exec(tree)?.[1] ?? ''
     expect(share).toContain('var(--card-gap)')
     expect(share).not.toContain('%')
     expect(share).toMatch(/fr\)/)

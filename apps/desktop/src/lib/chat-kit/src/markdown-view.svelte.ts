@@ -53,11 +53,7 @@ export interface ViewOptions {
   draws?: (code: string, language: string) => boolean
 }
 
-export function viewHtml(
-  markdown: string,
-  options: RenderOptions = {},
-  how: ViewOptions = {},
-): string {
+export function viewHtml(markdown: string, options: RenderOptions = {}, how: ViewOptions = {}): string {
   void landing()
   const scheme = theme.current
   const spelled = dollarMaths(markdown)
@@ -71,8 +67,7 @@ export function viewHtml(
     if (DIAGRAM_LANGUAGES.has(language)) {
       if (how.draws && !how.draws(code, language)) return null
       const key = `${language}\n${code}`
-      if (!how.live && !drawn.has(key) && !drawingNow.has(`${scheme}\n${key}`))
-        draws.push({ code, language, key })
+      if (!how.live && !drawn.has(key) && !drawingNow.has(`${scheme}\n${key}`)) draws.push({ code, language, key })
     } else if (language && !RENDERED_LANGUAGES.has(language) && !asked.has(language)) {
       wanted.push(language)
     }
