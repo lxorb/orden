@@ -17,8 +17,7 @@
           typeof one === 'object' &&
           one !== null &&
           typeof (one as Task).at === 'string' &&
-          typeof (one as Task).text === 'string' &&
-          typeof (one as Task).space === 'string',
+          typeof (one as Task).text === 'string',
       )
       return {
         tasks: rows,
@@ -31,7 +30,7 @@
   }
   const listed = $derived(read(said))
   let ticked = $state<Record<string, boolean>>({})
-  const placeOf = (one: Task) => `${one.space}\n${one.at}`
+  const placeOf = (one: Task) => one.at
   const isDone = (one: Task) => ticked[placeOf(one)] ?? (one.status === 'x' || one.status === 'X')
   function tick(one: Task) {
     const done = !isDone(one)
@@ -64,7 +63,7 @@
           aria-label="Done"
           onclick={() => tick(one)}
         ></button>
-        <button class="words" title={one.space} onclick={() => void runCommand('views.todos')}>{one.text}</button>
+        <button class="words" onclick={() => void runCommand('views.todos')}>{one.text}</button>
         {#if when(one)}
           <span class="when">{when(one)}</span>
         {/if}
