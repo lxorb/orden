@@ -227,12 +227,13 @@ describe('what is open in a set out of sight', () => {
     await vi.waitFor(() => expect(workspace.activeSpaceId).toBe('work'))
     await vi.waitFor(() => expect(workspace.activeTabId).toBe(plan.id))
   })
-  test('opening it again goes to where it is, and makes no second tab', async () => {
+  test('opening it again opens it in the space in sight, and leaves the other its own tab', async () => {
     await workspace.openEntry(PLAN)
     await workspace.showSpace('home')
     await workspace.openEntry(PLAN)
-    await vi.waitFor(() => expect(workspace.activeSpaceId).toBe('work'))
-    expect(workspace.tabs.filter((tab) => tab.path === PLAN)).toHaveLength(1)
+    expect(workspace.activeSpaceId).toBe('home')
+    expect(workspace.active?.path).toBe(PLAN)
+    expect(workspace.tabs.filter((tab) => tab.path === PLAN)).toHaveLength(2)
   })
   test('a deleted space takes its set with it', async () => {
     await workspace.openEntry(PLAN)
