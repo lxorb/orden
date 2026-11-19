@@ -137,7 +137,7 @@ describe('an answer, as orden mcp writes it', () => {
   test('a question asked of the reader carries its id', () => {
     expect(
       outputIn({
-        content: [{ type: 'text', text: 'nib asked the reader.' }],
+        content: [{ type: 'text', text: 'Orden asked the reader.' }],
         isError: false,
         _meta: {
           'so.orden.Orden/answer': {
