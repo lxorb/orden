@@ -1,0 +1,18 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><script src="probe.js"></script></head>
+<body style="margin:0;font:16px/1.5 Georgia,serif;background:#fafaf7;color:#222">
+<main id="m" style="max-width:640px;margin:0 auto;padding:24px"></main>
+<script>
+const words = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ';
+let html = '';
+for (let i = 0; i < 1500; i++) {
+  html += `<section><h2>Section ${i}</h2><p>${words.repeat(4)}</p><div style="height:60px;border-radius:8px;background:hsl(${(i * 37) % 360},60%,75%)"></div></section>`;
+}
+document.getElementById('m').innerHTML = html;
+addEventListener('scroll', () => {
+  if (scrollY + innerHeight > document.documentElement.scrollHeight - 3000) scrollTo(0, 0);
+}, { passive: true });
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="margin:0;height:100vh;background:#fff">
+<script>
+let on = false;
+const flip = () => { on = !on; document.body.style.background = on ? '#000' : '#fff'; };
+addEventListener('pointerdown', flip);
+addEventListener('keydown', flip);
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><script src="probe.js"></script></head>
+<body style="margin:0;background:#111;color:#eee;font:14px sans-serif">
+<p id="said" style="margin:8px">preparing</p>
+<video id="v" muted autoplay loop playsinline width="640" height="360"></video>
+<script>
+const c = document.createElement('canvas');
+c.width = 640; c.height = 360;
+const g = c.getContext('2d');
+let n = 0, drawing = true;
+function draw() {
+  if (!drawing) return;
+  n++;
+  g.fillStyle = `hsl(${(n * 2) % 360},60%,35%)`;
+  g.fillRect(0, 0, 640, 360);
+  for (let i = 0; i < 8; i++) {
+    g.fillStyle = `hsl(${(n * 3 + i * 40) % 360},80%,60%)`;
+    g.fillRect(((n * 4 + i * 90) % 720) - 80, 40 * i + 10, 80, 30);
+  }
+  g.fillStyle = '#fff';
+  g.font = '40px sans-serif';
+  g.fillText('frame ' + n, 20, 340);
+  requestAnimationFrame(draw);
+}
+draw();
+const v = document.getElementById('v'), said = document.getElementById('said');
+function fallback(why) {
+  said.textContent = 'canvas ' + why;
+  v.remove();
+  document.body.appendChild(c);
+  console.log('SPIKE video=canvas ' + why);
+}
+try {
+  const mime = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find((m) => MediaRecorder.isTypeSupported(m));
+  const rec = new MediaRecorder(c.captureStream(30), { mimeType: mime, videoBitsPerSecond: 4000000 });
+  const parts = [];
+  rec.ondataavailable = (e) => parts.push(e.data);
+  rec.onstop = () => {
+    drawing = false;
+    v.src = URL.createObjectURL(new Blob(parts, { type: 'video/webm' }));
+    v.onended = () => { v.currentTime = 0; v.play(); };
+    v.play().then(() => {
+      said.textContent = 'playing ' + mime;
+      console.log('SPIKE video=webm ' + mime);
+    }).catch((e) => fallback('play ' + e));
+  };
+  rec.start();
+  setTimeout(() => rec.stop(), 3000);
+} catch (e) {
+  fallback('record ' + e);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; font: 13px/1.4 "Segoe UI", sans-serif; color: #d8deea; }
+#hole { position: absolute; border-radius: 10px; box-shadow: 0 0 0 4000px #1f2430; }
+#top { position: absolute; left: 0; right: 0; top: 0; height: 40px; display: flex; align-items: center; gap: 10px; padding: 0 14px; }
+#dot { width: 10px; height: 10px; border-radius: 5px; background: #5fd38d; transition: transform .3s; }
+#top:hover #dot { transform: scale(1.8); }
+#side { position: absolute; left: 8px; top: 48px; width: 140px; }
+.item { padding: 7px 10px; margin: 2px 0; border-radius: 6px; transition: background .2s, transform .2s; }
+.item:hover { background: #3a4560; transform: translateX(4px); }
+#strip { position: absolute; left: 0; height: 1px; display: flex; }
+#strip i { display: block; width: 1px; height: 1px; }
+</style>
+</head>
+<body>
+<div id="hole"></div>
+<div id="top"><div id="dot"></div><b>Spike</b><span>composed</span></div>
+<div id="side">
+<div class="item">Notes</div><div class="item">Pages</div><div class="item">Tasks</div><div class="item">Calendar</div><div class="item">Settings</div>
+</div>
+<div id="strip"><i></i><i></i><i></i><i></i></div>
+<script>
+const q = new URLSearchParams(location.search);
+const hole = document.getElementById('hole');
+hole.style.left = q.get('x') + 'px';
+hole.style.top = q.get('y') + 'px';
+hole.style.width = q.get('w') + 'px';
+hole.style.height = q.get('h') + 'px';
+const strip = document.getElementById('strip');
+strip.style.top = (innerHeight - 1) + 'px';
+requestAnimationFrame(() => {
+  const r = hole.getBoundingClientRect();
+  const v = [r.left, r.top, r.width, r.height].map(Math.round);
+  v.forEach((n, i) => { strip.children[i].style.background = `rgb(${n >> 8},${n & 255},90)`; });
+  console.log('SPIKE strip=' + v.join(',') + ' rows=' + innerHeight);
+});
+</script>
+</body>
+</html>
