@@ -536,6 +536,8 @@ export const BORROWED_KEYS: Readonly<Record<string, ReadonlySet<string>>> = {
     'tree.down',
     'tree.extend-down',
     'tree.extend-up',
+    'tree.move-down',
+    'tree.move-up',
     'tree.select-all',
     'tree.toggle',
     'tree.up',

@@ -8,10 +8,7 @@ const STORAGE_KEY = 'orden:ai-sidebar'
 const FIRST_TASK_MODE: Mode = 'auto'
 export type TaskTool = 'browser' | 'notes' | 'edits'
 export const TASK_TOOLS: readonly TaskTool[] = ['browser', 'notes', 'edits']
-export const DEFAULT_ASK = [
-  'Do this task from my notes for me.',
-  'Read its note first: what is written around and under the task may be what it needs.',
-].join(' ')
+export const DEFAULT_ASK = 'Do this todo for me.'
 interface Prefs {
   mode: Mode
   task: Mode

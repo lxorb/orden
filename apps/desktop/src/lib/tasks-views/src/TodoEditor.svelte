@@ -20,6 +20,7 @@
     onchange,
     onremove,
     onclose,
+    onai,
   }: {
     todo: Todo
     spaces: readonly Space[]
@@ -27,6 +28,7 @@
     onchange: (patch: TodoPatch) => Promise<string | null>
     onremove: () => void
     onclose: () => void
+    onai?: () => void
   } = $props()
   const inSpace = $derived(spaces.find((one) => isTodoSpace(one, todo.space)) ?? null)
   let title = $state('')
@@ -279,6 +281,9 @@
   {/if}
 
   <div class="foot">
+    {#if onai && !todo.done}
+      <button type="button" class="ai orden-chip" data-todo-ai onclick={onai}>Do with AI</button>
+    {/if}
     <button type="button" class="danger orden-action is-danger" onclick={onremove}>Delete todo</button>
   </div>
 </div>
@@ -431,8 +436,13 @@
   }
   .foot {
     display: flex;
+    gap: var(--space-2);
+    align-items: center;
     justify-content: flex-end;
     border-top: 1px solid var(--line);
+  }
+  .ai {
+    margin-inline-end: auto;
   }
   .danger {
     width: auto;

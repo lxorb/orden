@@ -157,14 +157,18 @@ describe('tasks-model contract', () => {
     expect(shown(TODAY)).toEqual(['now', 'past', 'none'])
     expect(shown('2026-11-15')).toEqual(['later', 'now', 'past', 'none'])
   })
-  test('a done todo stays visible for the rest of its day, then leaves', () => {
+  test('a done todo stays out unless done ones are asked for or it is kept a moment, and a start date can be ignored', () => {
     const all = [
       todo({ id: 'today', done: true, doneAt: NOON }),
       todo({ id: 'yesterday', done: true, doneAt: NOON - 86_400_000 }),
       todo({ id: 'open' }),
+      todo({ id: 'later', start: '2099-01-01' }),
     ]
     const filter = { onlySpace: false, space: null, label: null, today: dayOf(NOON) }
-    expect(shownTodos(all, filter).map((t) => t.id)).toEqual(['today', 'open'])
+    expect(shownTodos(all, filter).map((t) => t.id)).toEqual(['open'])
+    expect(shownTodos(all, { ...filter, keep: ['today'] }).map((t) => t.id)).toEqual(['today', 'open'])
+    expect(shownTodos(all, { ...filter, done: true }).map((t) => t.id)).toEqual(['today', 'yesterday', 'open'])
+    expect(shownTodos(all, { ...filter, anyStart: true }).map((t) => t.id)).toEqual(['open', 'later'])
   })
   test('sorting is exactly deadline, priority and manual, done todos last', () => {
     expect([...SORTS]).toEqual(['deadline', 'priority', 'manual'])

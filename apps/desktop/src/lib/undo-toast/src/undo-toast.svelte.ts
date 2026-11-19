@@ -49,18 +49,30 @@ interface Undoable {
   readonly undone: { readonly stack: readonly FileAction[]; readonly last: FileAction | undefined }
   undoFileAction(only?: FileAction): Promise<void>
 }
+interface Own {
+  readonly said: Said
+  readonly undo: () => unknown
+}
 class UndoToast {
   batch = $state<Offered[]>([])
+  own = $state<Own | null>(null)
   private seen = new WeakSet<FileAction>()
   private timer: ReturnType<typeof setTimeout> | undefined
   get kind(): Told | null {
+    if (this.own) return this.own.said
     const first = this.batch[0]
     return first ? toldOf(first) : null
   }
   know(stack: readonly FileAction[]) {
     for (const action of stack) this.seen.add(action)
   }
+  offer(said: Said, undo: () => unknown) {
+    this.batch = []
+    this.own = { said, undo }
+    this.linger()
+  }
   tell(action: FileAction, said: Said, stack: readonly FileAction[]) {
+    this.own = null
     told.set(action, said)
     if (stack.at(-1) !== action) return
     const first = this.batch[0]
@@ -71,11 +83,19 @@ class UndoToast {
   heard(stack: readonly FileAction[]) {
     const fresh = stack.filter((action) => !this.seen.has(action))
     this.know(fresh)
+    if (this.own && !fresh.length) return
+    if (fresh.length) this.own = null
     this.batch = nextBatch(this.batch, fresh, stack)
     if (fresh.length && this.batch.length) this.linger()
     else if (!this.batch.length) this.stop()
   }
   async undo(from: Undoable) {
+    const own = this.own
+    if (own) {
+      this.dismiss()
+      await own.undo()
+      return
+    }
     const batch = this.batch
     this.dismiss()
     for (const action of [...batch].reverse()) {
@@ -85,6 +105,7 @@ class UndoToast {
   }
   dismiss() {
     this.batch = []
+    this.own = null
     this.stop()
   }
   hold() {

@@ -128,14 +128,14 @@ export function clockAfter(clock: string, minutes: number): string {
   const next = (((now + minutes) % 1440) + 1440) % 1440
   return `${two(Math.floor(next / 60))}:${two(next % 60)}`
 }
-export function dayWords(iso: string, today = todayIso()): string {
+export function dayWords(iso: string, today = todayIso(), weekday: 'long' | 'short' = 'long'): string {
   const date = dateOf(iso)
   if (!date) return iso
   const away = Math.round((date.getTime() - (dateOf(today)?.getTime() ?? date.getTime())) / 86_400_000)
   if (away === 0) return 'Today'
   if (away === 1) return 'Tomorrow'
   if (away === -1) return 'Yesterday'
-  if (away > 1 && away < 7) return localDate(date, { weekday: 'long' })
+  if (away > 1 && away < 7) return localDate(date, { weekday })
   const sameYear = iso.slice(0, 4) === today.slice(0, 4)
   return localDate(
     date,

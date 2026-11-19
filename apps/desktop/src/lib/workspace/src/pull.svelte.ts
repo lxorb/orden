@@ -1,4 +1,4 @@
-import { viewport } from '../../ui-kit/src/api'
+import { isThumbCarrying, viewport } from '../../ui-kit/src/api'
 import { forget } from '../../platform/src/api'
 import { CLAIM } from './drawer.svelte'
 
@@ -72,6 +72,10 @@ class Pull {
     }
     const onMove = (event: TouchEvent) => {
       if (!candidate) return
+      if (isThumbCarrying()) {
+        clear()
+        return
+      }
       const touch = event.touches[0]
       if (!touch) return
       const dx = touch.clientX - startX

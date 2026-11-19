@@ -41,7 +41,9 @@ test.each([
   remove.click()
   flushSync()
   await vi.waitFor(() => expect(todos.todo(made.id)).toBeNull())
-  flushSync()
-  expect(row()).toBeNull()
+  await vi.waitFor(() => {
+    flushSync()
+    expect(row()).toBeNull()
+  })
   expect([...target.querySelectorAll('button')].some((one) => one.textContent.trim() === 'Delete todo')).toBe(false)
 })

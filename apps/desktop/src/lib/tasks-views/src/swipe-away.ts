@@ -40,12 +40,14 @@ export function swipeAway(node: HTMLElement, away: () => void) {
   node.addEventListener('pointermove', move)
   node.addEventListener('pointerup', up)
   node.addEventListener('pointercancel', cancel)
+  node.addEventListener('orden-took-over', cancel)
   return {
     destroy() {
       node.removeEventListener('pointerdown', down)
       node.removeEventListener('pointermove', move)
       node.removeEventListener('pointerup', up)
       node.removeEventListener('pointercancel', cancel)
+      node.removeEventListener('orden-took-over', cancel)
     },
   }
 }

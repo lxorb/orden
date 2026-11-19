@@ -28,7 +28,7 @@
     if (undoToast.kind) untrack(() => failed.dismiss())
   })
   function toldUndo(kind: keyof typeof word) {
-    return told(undoToast.batch.length ? `${word[kind]}. Undo` : '')
+    return told(undoToast.kind ? `${word[kind]}. Undo` : '')
   }
   const turn = $derived(
     reservedName.root ? 'reserved' : failed.retry ? 'failed' : undoToast.kind ? 'undo' : unread.shown ? 'unread' : null,
