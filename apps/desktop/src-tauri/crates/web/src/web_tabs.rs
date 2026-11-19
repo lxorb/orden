@@ -371,7 +371,6 @@ fn page_built(
     }
     crate::web_follow::put(&view, bounds, scale)
         .map_err(|error| format!("that page could not be placed: {error}"))?;
-    crate::web_cut::lay_page_under(window, &view);
     Ok(())
 }
 pub fn warm(_app: &AppHandle) {}
@@ -464,6 +463,7 @@ pub async fn web_open(
     };
     drop(claim);
     made?;
+    crate::web_cut::settle(&webview, &label_of(&tab)).await;
     crate::keyboard::built(&label_of(&tab));
     listening(&app, &tab, store, onward);
     tabs.walked(&tab, &url);
@@ -683,7 +683,9 @@ pub fn web_place(
         crate::keyboard::hold_for_layer(&app, window.label());
     }
     crate::keyboard::placed(&app, &view, visible && cut.is_none());
-    Ok(crate::web_cut::layering(view.label()))
+    let said = crate::web_cut::layering(view.label());
+    crate::web_cut::answered(view.label(), said);
+    Ok(said)
 }
 impl From<&Pane> for crate::web_follow::Bounds {
     fn from(pane: &Pane) -> Self {

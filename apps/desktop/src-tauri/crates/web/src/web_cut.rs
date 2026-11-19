@@ -188,78 +188,104 @@ enum Verdict {
 }
 #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
 static VERDICTS: LazyLock<Mutex<HashMap<String, Verdict>>> = LazyLock::new(Mutex::default);
-pub fn lay_page_under(window: &tauri::Window, view: &Webview) {
+#[cfg_attr(not(target_os = "macos"), allow(clippy::unused_async))]
+pub async fn settle(own: &Webview, page: &str) {
     #[cfg(target_os = "macos")]
     if pages_under() {
-        let label = window.label().to_owned();
-        let was = VERDICTS.held().get(&label).copied();
-        match was {
-            Some(Verdict::Clear) => under::lower(window, view),
-            Some(Verdict::Asking | Verdict::Opaque) => {}
+        let window = own.window();
+        let key = window.label().to_owned();
+        let known = VERDICTS.held().get(&key).copied();
+        let verdict = match known {
+            Some(Verdict::Clear) => Verdict::Clear,
+            Some(Verdict::Opaque | Verdict::Asking) => Verdict::Opaque,
             None => {
-                VERDICTS.held().insert(label.clone(), Verdict::Asking);
-                let window = window.clone();
-                std::thread::spawn(move || ask_ground(&window, &label));
+                VERDICTS.held().insert(key.clone(), Verdict::Asking);
+                let asking = own.clone();
+                let said = tauri::async_runtime::spawn_blocking(move || ground_cleared(&asking))
+                    .await
+                    .unwrap_or_else(|why| Err(why.to_string()));
+                let verdict = if said.is_ok() { Verdict::Clear } else { Verdict::Opaque };
+                VERDICTS.held().insert(key.clone(), verdict);
+                match said {
+                    Err(why) => told_why(&format!("{why}; pages stay cut out")),
+                    Ok(()) => {
+                        let watching = window.clone();
+                        std::thread::spawn(move || watch(&watching, &key));
+                    }
+                }
+                verdict
+            }
+        };
+        if verdict == Verdict::Clear {
+            use tauri::Manager as _;
+            if let Some(view) = own.app_handle().get_webview(page) {
+                let (sending, mut waiting) = tauri::async_runtime::channel::<()>(1);
+                let laying = window.clone();
+                let _ = window.run_on_main_thread(move || {
+                    under::lower(&laying, &view);
+                    let _ = sending.try_send(());
+                });
+                let _ = waiting.recv().await;
             }
         }
     }
-    let _ = (window, view);
+    let _ = (own, page);
 }
-#[cfg(target_os = "macos")]
-fn ask_ground(window: &tauri::Window, label: &str) {
-    use tauri::Manager as _;
-    let Some(own) = window.app_handle().get_webview(label) else {
-        VERDICTS.held().insert(label.to_owned(), Verdict::Opaque);
-        return;
-    };
-    let said = ground_cleared(&own);
-    let verdict = if said.is_ok() { Verdict::Clear } else { Verdict::Opaque };
-    VERDICTS.held().insert(label.to_owned(), verdict);
-    if let Err(why) = said {
-        orden_base::trace::mark(&format!("pages under the app: {why}; pages stay cut out"));
-        eprintln!("pages under the app: {why}; pages stay cut out");
-        return;
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn told_why(why: &str) {
+    orden_base::trace::mark(&format!("pages under the app: {why}"));
+    eprintln!("pages under the app: {why}");
+}
+static TOLD: LazyLock<Mutex<HashMap<String, std::time::Instant>>> = LazyLock::new(Mutex::default);
+pub fn answered(label: &str, said: Layering) {
+    let mut all = TOLD.held();
+    if said == Layering::Under("under") {
+        all.entry(label.to_owned()).or_insert_with(std::time::Instant::now);
+    } else {
+        all.remove(label);
     }
-    let laying = window.clone();
-    let _ = window.run_on_main_thread(move || {
-        use tauri::Manager as _;
-        for (name, page) in laying.app_handle().webviews() {
-            if name.starts_with(crate::web_tabs::LABEL) && page.window().label() == laying.label() {
-                under::lower(&laying, &page);
-            }
-        }
-    });
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn told_long_enough(label: &str) -> bool {
+    TOLD.held().get(label).is_some_and(|at| at.elapsed() >= std::time::Duration::from_millis(600))
+}
+static SIZES: LazyLock<Mutex<HashMap<String, (u32, u32, f64)>>> = LazyLock::new(Mutex::default);
+#[cfg(target_os = "macos")]
+fn watch(window: &tauri::Window, key: &str) {
     for _ in 0..LOOKS {
         std::thread::sleep(std::time::Duration::from_millis(800));
         match looked(window) {
-            Sight::Unseen => continue,
+            Sight::Unseen => {}
             Sight::Through => return,
-            Sight::Unsure(why) => {
-                orden_base::trace::mark(&format!("pages under the app: {why}"));
-                eprintln!("pages under the app: {why}");
-                return;
-            }
+            Sight::Unsure(why) => return told_why(&why),
             Sight::Ground(why) => {
-                VERDICTS.held().insert(label.to_owned(), Verdict::Opaque);
-                orden_base::trace::mark(&format!(
-                    "pages under the app: {why}; pages go back to being cut out"
-                ));
-                eprintln!("pages under the app: {why}; pages go back to being cut out");
+                VERDICTS.held().insert(key.to_owned(), Verdict::Opaque);
+                told_why(&format!("{why}; pages go back to being cut out"));
                 let raising = window.clone();
                 let _ = window.run_on_main_thread(move || {
                     use tauri::Manager as _;
                     for (name, page) in raising.app_handle().webviews() {
                         if name.starts_with(crate::web_tabs::LABEL)
                             && page.window().label() == raising.label()
+                            && lowered(&name)
                         {
-                            lay_under(page.label(), false);
+                            lay_under(&name, false);
                             under::raise(&page);
+                            reshape(&page);
                         }
                     }
                 });
                 return;
             }
         }
+    }
+}
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn reshape(view: &Webview) {
+    let kept = given(|all| all.get(view.label()).map(|(cut, corner, _)| (cut.clone(), *corner)));
+    let sized = SIZES.held().get(view.label()).copied();
+    if let (Some((cut, corner)), Some((wide, tall, scale))) = (kept, sized) {
+        apply(view, cut, wide, tall, scale, corner);
     }
 }
 #[cfg(target_os = "macos")]
@@ -281,6 +307,7 @@ fn looked(window: &tauri::Window) -> Sight {
         page.label().starts_with(crate::web_tabs::LABEL)
             && page.window().label() == window.label()
             && lowered(page.label())
+            && told_long_enough(page.label())
             && under::shown(page)
     });
     let Some(page) = page else {
@@ -404,6 +431,7 @@ fn given<T>(look: impl FnOnce(&mut Given) -> T) -> T {
     look(&mut GIVEN.held())
 }
 pub fn apply(view: &Webview, cut: Option<Cut>, wide: u32, tall: u32, scale: f64, corner: Foot) {
+    SIZES.held().insert(view.label().to_owned(), (wide, tall, scale));
     let under = lowered(view.label());
     #[cfg(target_os = "macos")]
     if under {
@@ -431,6 +459,8 @@ pub fn refit(view: &Webview, wide: u32, tall: u32, scale: f64) {
 }
 pub fn uncut(label: &str) {
     given(|all| all.remove(label));
+    SIZES.held().remove(label);
+    TOLD.held().remove(label);
     lay_under(label, false);
     #[cfg(target_os = "macos")]
     under::forget(label);

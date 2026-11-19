@@ -412,7 +412,7 @@ def peek(app: App, pid: int, ratio: float, out: pathlib.Path, as_before: Any, un
     if not isinstance(box, dict) or not isinstance(drawn, (int, float)):
         return [], [f"the left peek did not come out over the page: {box}, {drawn}"]
     inside = (inner["x"] + box["x"] + box["width"] / 2, inner["y"] + box["y"] + box["height"] / 2)
-    beside = (inner["x"] + box["x"] + box["width"] + 120, inside[1])
+    beside = (inner["x"] + box["x"] + box["width"] + 120, inner["y"] + box["y"] + box["height"] * 0.85)
     after = [(at, one) for at, one in frames if at >= drawn + 34]
     late = [at for at, one in after if near(colour_at(one, inside, ratio), COLOUR)]
     folder = out / "peek"
@@ -432,7 +432,9 @@ def peek(app: App, pid: int, ratio: float, out: pathlib.Path, as_before: Any, un
         wrong.append("[peek] the page is drawn over the left peek")
     if not near(colour_at(image, beside, ratio), COLOUR):
         wrong.append("[peek] the page is not drawn beside the left peek")
-    if app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible && !one.sent.away)") is not True:
+    stays = app.eval("orden.pages.each().some(([, one]) => one.live && one.sent && one.sent.visible && !one.sent.away)") is True
+    measure("the page stays live under the left peek", stays)
+    if under and not stays:
         wrong.append("[peek] the page steps away for the left peek")
     return wrong, []
 def cleared_after_reload(app: App, hole: tuple[float, float, float, float], ratio: float, out: pathlib.Path) -> list[str]:
@@ -676,7 +678,7 @@ def main() -> int:
         wrong += overview(app, hole, ratio, args.out)
         if args.under and not (args.fail or args.falls_back):
             wrong += cleared_after_reload(app, hole, ratio, args.out)
-        peeked, unseen = peek(app, process.pid, ratio, args.out, as_before, args.under)
+        peeked, unseen = peek(app, process.pid, ratio, args.out, as_before, app.eval("orden.pages.under") is True)
         wrong += peeked
         unverified += unseen
     finally:
