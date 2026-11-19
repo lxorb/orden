@@ -1,5 +1,5 @@
 import { webPages } from '@orden/contracts'
-import type { Usage } from '@orden/online/apps'
+import type { Usage } from '@orden/online/load'
 import { FitAddon } from '@xterm/addon-fit'
 import { type ISearchOptions, SearchAddon } from '@xterm/addon-search'
 import { SerializeAddon } from '@xterm/addon-serialize'

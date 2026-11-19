@@ -1,4 +1,4 @@
-import { type Usage, usageOf } from '@orden/online/apps'
+import { type Usage, usageOf } from '@orden/online/load'
 import type { DownReason, ImageKind } from '@orden/online/wire'
 import { Channel } from '../../crate/src/api'
 import { isNumber, isRecord, invoke } from '../../platform/src/api'
