@@ -588,6 +588,18 @@ describe('a store copy of the contrast theme', () => {
     expect(theme.id).toBe('file:contrast')
     expect(ids()).toContain('file:contrast')
   })
+  test.each([
+    ['a hand-made contrast.css', 'contrast'],
+    ['a theme named like the one shipped', 'Glass'],
+  ])('is %s, listed once under a name of its own beside the built-in', async (_what, name) => {
+    folder.files.set(name, PAIR)
+    folder.files.set('rose', PAIR)
+    await theme.reload()
+    const names = theme.all.map((one) => one.name.toLowerCase())
+    expect(names).toEqual([...new Set(names)])
+    expect(theme.all.find((one) => one.id === `file:${name}`)?.name).toBe(`${name} (${name}.css)`)
+    expect(theme.all.find((one) => one.id === 'file:rose')?.name).toBe('rose')
+  })
 })
 describe('answering a system that asks for more contrast', () => {
   test('is made once to a fresh install whose system asks, with the theme chosen, written down and not painted as contrast', () => {

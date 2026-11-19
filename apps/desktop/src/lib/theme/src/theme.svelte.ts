@@ -151,6 +151,16 @@ function variantsOf(css: string): Scheme[] {
   return [/color-scheme\s*:\s*light/.test(css) ? 'light' : 'dark']
 }
 const FILE = 'file:'
+function namedApart(themes: ThemeInfo[]): ThemeInfo[] {
+  const taken: string[] = []
+  return themes.map((theme) => {
+    const plain = theme.name.trim().toLowerCase()
+    const file = theme.path?.split(/[\\/]/).pop()
+    const named = taken.includes(plain) && file ? { ...theme, name: `${theme.name} (${file})` } : theme
+    taken.push(plain, named.name.trim().toLowerCase())
+    return named
+  })
+}
 class Themes {
   id = $state<string>(DEFAULT_ID)
   scheme = $state<SchemeChoice>('system')
@@ -171,13 +181,15 @@ class Themes {
   offerContrast = $state(false)
   readonly accents = ACCENTS
   private readonly fromFolder = $derived(this.files.filter((file) => !copiesBuiltIn(file)))
-  readonly all = $derived<ThemeInfo[]>([
-    DEFAULT_THEME,
-    CONTRAST,
-    ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(GLASS)]),
-    ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(WALLPAPER)]),
-    ...this.fromFolder,
-  ])
+  readonly all = $derived<ThemeInfo[]>(
+    namedApart([
+      DEFAULT_THEME,
+      CONTRAST,
+      ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(GLASS)]),
+      ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(WALLPAPER)]),
+      ...this.fromFolder,
+    ]),
+  )
   readonly active = $derived(this.all.find((one) => one.id === this.id) ?? DEFAULT_THEME)
   readonly wanted = $derived<Scheme>(this.scheme === 'system' ? this.preferred : this.scheme)
   readonly current = $derived<Scheme>(
