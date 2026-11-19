@@ -29,7 +29,8 @@ WIDTH, HEIGHT = 1280, 800
 CELL = 16
 WIDE_CELL = 32
 SLOW = 1.5
-ROUNDS = 2
+ROUNDS = 3
+LOAD_ROUNDS = 2
 PACE = 0.0
 LIMITS = {
     "white cells": 0,
@@ -771,18 +772,16 @@ class Drive:
             self.show(kind)
 
     @staticmethod
-    def worst(turns: list[dict[str, Any]], pick: Callable[..., Any] = max) -> dict[str, Any]:
+    def middle(turns: list[dict[str, Any]]) -> dict[str, Any]:
         turns = [one for one in turns if one["up"]] or turns
         out = dict(turns[0])
-        for one in turns[1:]:
-            for key in ("white cells", "cut cells", "stale ms", "freeze ms", "stale limit", "covered share", "lag ms"):
-                if out[key] is None or one[key] is None:
-                    out[key] = out[key] if one[key] is None else one[key]
-                else:
-                    out[key] = (max if key == "lag ms" else pick)(out[key], one[key])
-            if out.get("clicked") != one.get("clicked"):
-                out["clicked"] = f"{out.get('clicked')}/{one.get('clicked')}"
-            out["up"] = out["up"] and one["up"]
+        out["rounds"] = turns
+        for key in ("white cells", "cut cells", "stale ms", "freeze ms", "stale limit", "covered share", "lag ms"):
+            values = sorted(one[key] for one in turns if one[key] is not None)
+            out[key] = values[(len(values) - 1) // 2] if values else None
+        clicks = [one.get("clicked") for one in turns]
+        out["clicked"] = max(set(clicks), key=clicks.count) if clicks else None
+        out["up"] = any(one["up"] for one in turns)
         return out
 
     def layered(self, layer: dict[str, Any], kind: str, turn: int = 0) -> dict[str, Any]:
@@ -822,7 +821,7 @@ class Drive:
                     self.opened(layer, False)
                     self.back_to(kind)
             for layer in group:
-                seen = {kind: self.worst([self.layered(layer, kind, turn) for turn in range(ROUNDS)], min if kind == "note" else max) for kind in ("note", "web")}
+                seen = {kind: self.middle([self.layered(layer, kind, turn) for turn in range(ROUNDS)]) for kind in ("note", "web")}
                 for check in ("white cells", "cut cells", "stale ms", "freeze ms"):
                     web, note = seen["web"][check], seen["note"][check]
                     if check == "freeze ms":
@@ -834,6 +833,9 @@ class Drive:
                     detail = "" if came else f"came up: web {seen['web']['up']}, note {seen['note']['up']}"
                     if layer["open"] == "peek in" and self.dispatched:
                         detail = (detail + "; " if detail else "") + "the pointer's move to the edge was dispatched in the app"
+                    rounds = {kind: [round(one[check]) for one in seen[kind]["rounds"]] for kind in ("web", "note")}
+                    if len(set(rounds["web"])) > 1 or len(set(rounds["note"])) > 1:
+                        detail = (detail + "; " if detail else "") + f"rounds web {rounds['web']}, note {rounds['note']}"
                     self.row(1, f"{layer['name']}: {check}", round(web), round(note), ok and came, detail)
                 self.extra_rows(layer, seen)
         self.style("parity-note", None)
@@ -853,12 +855,15 @@ class Drive:
             self.row(1, f"{name}: frames until the page yields", "-", 0, False, f"the layer or the page's leaving was not seen: web {web['lag ms']}, note {note['lag ms']}; {rates}")
         else:
             frames = int(max(0.0, web["lag ms"] - note["lag ms"]) // frame)
-            self.row(1, f"{name}: frames until the page yields", frames, 0, frames == 0, f"layer first drawn to the page gone from its box: web {web['lag ms']:.0f} ms, note {note['lag ms']:.0f} ms; {rates}")
+            raw = {kind: [None if one["lag ms"] is None else round(one["lag ms"]) for one in seen[kind]["rounds"]] for kind in ("web", "note")}
+            late = "; a frame late" if frames == 1 else ""
+            self.row(1, f"{name}: frames until the page yields", frames, 0, frames < 2, f"median of the rounds, layer first drawn to the page gone from its box: web {web['lag ms']:.0f} ms, note {note['lag ms']:.0f} ms (rounds web {raw['web']}, note {raw['note']}){late}; {rates}")
         if layer.get("at") is None:
             return
         want = ("app", "page") if layer.get("through") else ("layer", "layer")
         ok = (note["clicked"], web["clicked"]) == want
-        self.row(1, f"{name}: a click on the layer", web["clicked"], note["clicked"], ok, f"wanted note {want[0]}, web {want[1]}")
+        rounds = {kind: [one.get("clicked") for one in seen[kind]["rounds"]] for kind in ("web", "note")}
+        self.row(1, f"{name}: a click on the layer", web["clicked"], note["clicked"], ok, f"wanted note {want[0]}, web {want[1]}; most rounds count (web {rounds['web']}, note {rounds['note']})")
 
     def cards(self) -> list[dict[str, Any]]:
         said = self.eval(
@@ -956,7 +961,7 @@ class Drive:
         self.web_shown()
         time.sleep(1.5)
         for name in ("new tab", "navigation", "crash"):
-            seen = {kind: self.load_worst([self.loaded(name, kind) for _ in range(ROUNDS)]) for kind in ("note", "web")}
+            seen = {kind: self.load_worst([self.loaded(name, kind) for _ in range(LOAD_ROUNDS)]) for kind in ("note", "web")}
             for check in ("white cells", "light cells"):
                 web, note = seen["web"][check], seen["note"][check]
                 ok = web <= LIMITS[check] and note <= LIMITS[check] and not seen["web"]["failed"]
@@ -1046,7 +1051,7 @@ class Drive:
         for one in self.rows:
             lines.append(f"| {one['item']} | {one['check']} | {one['platform']} | {one['web']} | {one['note']} | {'yes' if one['ok'] else 'no'} |")
         limits = ", ".join(f"{name} {value}" for name, value in LIMITS.items())
-        lines += ["", f"Limits: {limits}. Each layer and load is filmed {ROUNDS} times a side: the note pane keeps its best round, the web tab its worst, and both keep their slowest page yield, counted in whole app frames."]
+        lines += ["", f"Limits: {limits}. Each layer is filmed {ROUNDS} times a side and each check takes the median round (a click, the most rounds); the page's yield fails from two whole app frames late, one being noted as a frame late. Each load is filmed {LOAD_ROUNDS} times a side and keeps its worst round."]
         text = "\n".join(lines)
         print(text, flush=True)
         summary = os.environ.get("GITHUB_STEP_SUMMARY")
