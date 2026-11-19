@@ -36,18 +36,18 @@ export async function storeAttachment(file: File, notePath: string | null): Prom
   if (file.size > MOST_BYTES) throw new Error('That file is larger than a note can keep.')
   const written = await storeBeside(await file.arrayBuffer(), notePath, file.name)
   if (!written) return null
-  const root = workspace.rootHolding(notePath)
-  const relative = root === null ? null : spaceRelative(root, notePath, written)
-  if (root !== null && relative) links.fileWritten(root, relative)
   void workspace.loadTree()
   return written
 }
-export function storeBeside(bytes: ArrayBuffer, notePath: string, name: string): Promise<string | null> {
-  const folder = attachmentFolder(modes.attachments, notePath, workspace.rootHolding(notePath))
-  return invoke<string>('save_asset', {
+export async function storeBeside(bytes: ArrayBuffer, notePath: string, name: string): Promise<string | null> {
+  const root = workspace.rootHolding(notePath)
+  const written = await invoke<string>('save_asset', {
     notePath,
-    folder,
+    folder: attachmentFolder(modes.attachments, notePath, root),
     name,
     bytes: new Uint8Array(bytes),
   }).catch(() => null)
+  const relative = written === null || root === null ? null : spaceRelative(root, notePath, written)
+  if (root !== null && relative) links.fileWritten(root, relative)
+  return written
 }
