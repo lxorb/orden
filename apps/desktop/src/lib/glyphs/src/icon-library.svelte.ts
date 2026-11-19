@@ -39,6 +39,7 @@ class IconLibrary {
   drawing(icon: WrittenIcon | null): IconShape | null {
     if (!icon) return null
     if (icon.kind === 'emoji') return { kind: 'emoji', text: icon.text }
+    if (icon.kind === 'picture') return { kind: 'picture', src: icon.src }
     if (icon.kind === 'lucide') {
       const found = this.shape(icon.name)
       return found ? { kind: 'stroked', icon: found } : null
@@ -46,7 +47,7 @@ class IconLibrary {
     return Object.hasOwn(this.loaded, icon.set) ? (this.loaded[icon.set]?.shape(icon.name) ?? null) : null
   }
   setFor(icon: WrittenIcon | null): string | null {
-    if (!icon || icon.kind === 'emoji') return null
+    if (!icon || icon.kind === 'emoji' || icon.kind === 'picture') return null
     return icon.kind === 'lucide' ? LUCIDE : icon.set
   }
 }

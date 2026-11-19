@@ -1,6 +1,6 @@
 import { providePort, type SiteIcon } from '@orden/contracts'
 import { describe, expect, test } from 'vitest'
-import { ICON_SETS, LATER_SETS, PICKER_SETS, refreshSites, setNamed } from '../src/api'
+import { ICON_SETS, keptPicture, keptSitePicture, LATER_SETS, PICKER_SETS, refreshSites, setNamed } from '../src/api'
 
 const PNG = 'data:image/png;base64,iVBORw0KGgo='
 function sites(list: SiteIcon[]) {
@@ -54,5 +54,56 @@ describe('the web icons', () => {
   test('are absent while no module provides the port', async () => {
     await expect(web()?.load()).rejects.toThrow()
     expect(() => refreshSites()).not.toThrow()
+  })
+})
+describe('a kept picture', () => {
+  const png = (length: number) => `data:image/png;base64,${'A'.repeat(length - 'data:image/png;base64,'.length)}`
+  test('is drawn smaller until it fits the longest value an icon may be', async () => {
+    const asked: number[] = []
+    const sized: Record<number, number> = { 32: 4000, 24: 2049, 16: 1400 }
+    const kept = await keptPicture('data:image/x-icon;base64,AAAA', (_src, size) => {
+      asked.push(size)
+      return Promise.resolve(png(sized[size] ?? 0))
+    })
+    expect(asked).toEqual([32, 24, 16])
+    expect(kept).toBe(png(1400))
+    expect(kept?.length).toBeLessThanOrEqual(2048)
+  })
+  test('stops at the first size that fits', async () => {
+    const asked: number[] = []
+    const kept = await keptPicture(PNG, (_src, size) => {
+      asked.push(size)
+      return Promise.resolve(png(900))
+    })
+    expect(asked).toEqual([32])
+    expect(kept).toBe(png(900))
+  })
+  test('is nothing when no size fits or the picture cannot be drawn', async () => {
+    expect(await keptPicture(PNG, () => Promise.resolve(png(5000)))).toBeNull()
+    expect(await keptPicture(PNG, () => Promise.resolve(null))).toBeNull()
+    expect(await keptPicture(PNG, () => Promise.reject(new Error('broken')))).toBeNull()
+    expect(await keptPicture(PNG, () => Promise.resolve('data:image/jpeg;base64,AAAA'))).toBeNull()
+    expect(await keptPicture(PNG)).toBeNull()
+  })
+})
+describe('a web icon kept as a picture', () => {
+  const small = 'data:image/png;base64,QUJD'
+  test('is drawn from the picture the site list holds for that site, asking again when it holds none', async () => {
+    const held = sites([{ site: 'a.dev', label: '', picture: 'data:image/x-icon;base64,AAAA' }])
+    const stop = providePort('web.siteIcons', { held: () => Promise.resolve(held) })
+    const drawn: string[] = []
+    const paint = (src: string) => {
+      drawn.push(src)
+      return Promise.resolve(small)
+    }
+    expect(await keptSitePicture('a.dev', paint)).toBe(small)
+    expect(drawn).toEqual(['data:image/x-icon;base64,AAAA'])
+    expect(held.refreshed).toBe(0)
+    expect(await keptSitePicture('b.dev', paint)).toBeNull()
+    expect(held.refreshed).toBe(1)
+    stop()
+  })
+  test('is nothing while no module holds the site list', async () => {
+    expect(await keptSitePicture('a.dev', () => Promise.resolve(small))).toBeNull()
   })
 })
