@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { describe, expect, test } from 'vitest'
 import {
   dayOf,
+  followingMoves,
   groupedByLabel,
   labelsOf,
   LIMITS,
@@ -60,7 +61,49 @@ const todo = (over: Partial<Todo>): Todo => ({
   ...over,
 })
 describe('tasks-model contract', () => {
-  test('nothing under src reaches the shell: only contracts, sync-core, the held database and the task line of markdown', () => {
+  test('a todo link follows its note when the note or its folder moves or comes back, but not a move heard from elsewhere or into another space', async () => {
+    const { store, open } = world(null)
+    await open(null)
+    const spaces = [
+      { id: 'home', name: 'Home', root: '/s/home' },
+      { id: 'work', name: 'Work', root: '/s/work' },
+    ]
+    const follow = followingMoves(store, () => spaces)
+    const add = async (description: string, space = 'home') => {
+      const made = await store.add({ title: 'Call Sam', description, space })
+      if (!made.ok) throw new Error(made.error.message)
+      return () => store.todo(made.value.id)?.description
+    }
+    const bare = await add('[[Plan]]\n[[Plan#Goals|the plan]]')
+    const path = await add('[[Work/Plan]] and [[Work/Other]]')
+    const elsewhere = await add('[[Plan]]', 'work')
+    const moved = (from: string, to: string, more: object = {}) =>
+      follow({
+        op: 'moved',
+        from: `/s/home/${from}`,
+        to: `/s/home/${to}`,
+        kind: 'file',
+        root: '/s/home',
+        into: '/s/home',
+        ...more,
+      })
+    await moved('Work/Plan.md', 'Work/Roadmap.md', { heard: true })
+    expect(bare()).toBe('[[Plan]]\n[[Plan#Goals|the plan]]')
+    await moved('Work/Plan.md', 'Work/Roadmap.md', { into: '/s/work' })
+    expect(bare()).toBe('[[Plan]]\n[[Plan#Goals|the plan]]')
+    await moved('Work/Plan.md', 'Work/Roadmap.md')
+    expect(bare()).toBe('[[Roadmap]]\n[[Roadmap#Goals|the plan]]')
+    expect(path()).toBe('[[Work/Roadmap]] and [[Work/Other]]')
+    expect(elsewhere()).toBe('[[Plan]]')
+    await moved('Work', 'Projects', { kind: 'folder' })
+    expect(path()).toBe('[[Projects/Roadmap]] and [[Projects/Other]]')
+    expect(bare()).toBe('[[Roadmap]]\n[[Roadmap#Goals|the plan]]')
+    await moved('Projects', 'Work', { kind: 'folder', heard: true, watched: true })
+    await moved('Work/Roadmap.md', 'Work/Plan.md')
+    expect(bare()).toBe('[[Plan]]\n[[Plan#Goals|the plan]]')
+    expect(path()).toBe('[[Work/Plan]] and [[Work/Other]]')
+  })
+  test('nothing under src reaches the shell: only contracts, sync-core, the held database and the task line and links of markdown', () => {
     const src = join(import.meta.dirname, '..', 'src')
     for (const name of readdirSync(src)) {
       const text = readFileSync(join(src, name), 'utf8')
@@ -71,7 +114,8 @@ describe('tasks-model contract', () => {
           one === '@orden/contracts' ||
           one === '@orden/sync-core' ||
           one === '../../held-database/src/api' ||
-          one === '@orden/markdown/task-line'
+          one === '@orden/markdown/task-line' ||
+          one === '@orden/markdown/links'
         expect(allowed, `${name} imports ${one}`).toBe(true)
       }
     }
