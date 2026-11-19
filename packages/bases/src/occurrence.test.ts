@@ -1,7 +1,7 @@
 import { appliedEdits } from '@orden/markdown/edits'
 import { readTask } from '@orden/markdown/task-line'
 import { describe, expect, test } from 'vitest'
-import { finish, nextOccurrence, skip, tick } from './occurrence'
+import { finish, nextOccurrence, nextRepeat, skip, tick } from './occurrence'
 import { growth, GROWS_AT_MOST } from '../../../scripts/growth'
 
 const ticked = (note: string, line: number, today: string, skipPast = true) =>
@@ -211,5 +211,48 @@ describe('a note with CRLF line breaks', () => {
     const ticked = appliedEdits(note, tick(note, 1, '2026-11-15'))
     expect(ticked.split('\r\n')).toHaveLength(5)
     expect(ticked.replace(/\r\n/g, '')).not.toContain('\n')
+  })
+})
+describe('a repeating todo done', () => {
+  const at = (repeat: string, start: string | null, deadline: string | null, today: string) =>
+    nextRepeat({ repeat, start, deadline }, today)
+  test('on a fixed day goes to the next one after today, late or early', () => {
+    const monthly = 'every month on the 1st'
+    expect(at(monthly, null, '2026-11-01', '2026-11-03')).toEqual({
+      repeat: monthly,
+      start: null,
+      deadline: '2026-12-01',
+    })
+    expect(at(monthly, null, '2026-11-01', '2026-10-28')?.deadline).toBe('2026-12-01')
+    expect(at(monthly, null, '2026-12-01', '2026-11-03')?.deadline).toBe('2027-01-01')
+    expect(at('every week on Monday', '2026-11-02', null, '2026-11-19')?.start).toBe('2026-11-23')
+  })
+  test('when done counts from today', () => {
+    const tenDays = 'every 10 days when done'
+    expect(at(tenDays, '2026-11-01', null, '2026-11-05')?.start).toBe('2026-11-15')
+    expect(at(tenDays, '2026-11-01', null, '2026-10-25')?.start).toBe('2026-11-04')
+    expect(at(tenDays, '2026-11-15', null, '2026-11-05')?.start).toBe('2026-11-15')
+  })
+  test('keeps to the end of a short month', () => {
+    expect(at('every month', null, '2026-01-31', '2026-01-31')?.deadline).toBe('2026-02-28')
+    expect(at('every month on the last', null, '2026-02-28', '2026-02-28')?.deadline).toBe('2026-03-31')
+    expect(at('every month when done', null, null, '2026-01-31')?.start).toBe('2026-02-28')
+  })
+  test('moves start and deadline together, and starts from today with neither', () => {
+    expect(at('every week', '2026-11-02', '2026-11-04', '2026-11-02')).toEqual({
+      repeat: 'every week',
+      start: '2026-11-09',
+      deadline: '2026-11-11',
+    })
+    expect(at('every month on the 1st', null, null, '2026-11-19')).toEqual({
+      repeat: 'every month on the 1st',
+      start: '2026-12-01',
+      deadline: null,
+    })
+  })
+  test('counts its times down and stops at the last, or on a rule it cannot read', () => {
+    expect(at('every day for 1 time', '2026-11-19', null, '2026-11-19')).toBeNull()
+    expect(at('every day for 3 times', '2026-11-19', null, '2026-11-19')?.repeat).toBe('every day for 2 times')
+    expect(at('now and then', '2026-11-19', null, '2026-11-19')).toBeNull()
   })
 })
