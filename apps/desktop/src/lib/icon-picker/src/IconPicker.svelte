@@ -399,16 +399,14 @@
     display: flex;
     align-items: center;
   }
-  .head {
-    padding: 0 calc((var(--cell) - var(--icon-lg)) / 2);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-strong);
-    color: var(--muted);
-  }
+  .head,
   .note {
     padding: 0 calc((var(--cell) - var(--icon-lg)) / 2);
     font-size: var(--text-sm);
     color: var(--muted);
+  }
+  .head {
+    font-weight: var(--weight-strong);
   }
   .recent {
     display: flex;
@@ -426,7 +424,6 @@
     border-radius: var(--radius-sm);
     background: none;
     color: var(--muted-strong);
-    cursor: default;
     transition:
       background var(--dur-instant) var(--ease-out),
       color var(--dur-instant) var(--ease-out);
@@ -453,17 +450,16 @@
     stroke: currentColor;
     stroke-width: 1.8;
   }
-  .empty {
-    margin: 0;
-    padding: var(--space-5) 0;
-    text-align: center;
-    font-size: var(--text-sm);
-    color: var(--muted);
-  }
+  .empty,
   .credit {
     margin: 0;
     font-size: var(--text-xs);
     color: var(--muted);
+  }
+  .empty {
+    padding: var(--space-5) 0;
+    text-align: center;
+    font-size: var(--text-sm);
   }
   .tints {
     display: flex;
@@ -476,7 +472,6 @@
     border: 1px solid var(--line-strong);
     border-radius: 50%;
     background: var(--dot);
-    cursor: default;
   }
   .plain {
     background: var(--text);
@@ -499,7 +494,6 @@
     color: var(--muted);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-    cursor: default;
   }
   .clear:hover {
     background: var(--surface-2);
