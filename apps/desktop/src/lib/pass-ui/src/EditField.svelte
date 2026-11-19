@@ -4,6 +4,7 @@
   import Eye from 'lucide/dist/esm/icons/eye.mjs'
   import EyeOff from 'lucide/dist/esm/icons/eye-off.mjs'
   import { Cross } from '../../ui-kit/src/api'
+  import { DateField } from '../../ui-controls/src/api'
   import Glyph from './Glyph.svelte'
 
   /* eslint-disable prefer-const, @typescript-eslint/no-useless-default-assignment -- the content is bindable, and a $props() pattern cannot be split */
@@ -65,13 +66,26 @@
         {placeholder}
         spellcheck="false"
         oninput={() => oninput?.()}></textarea>
+    {:else if kind === 'date'}
+      <div class="value">
+        <DateField
+          bare
+          {label}
+          {value}
+          {placeholder}
+          onchange={(next: string) => {
+            value = next
+            oninput?.()
+          }}
+        />
+      </div>
     {:else}
       <input
         {id}
         class="value"
         class:is-mono={mono || kind === 'hidden'}
         class:is-big={big}
-        type={kind === 'hidden' && !shown ? 'password' : kind === 'date' ? 'date' : 'text'}
+        type={kind === 'hidden' && !shown ? 'password' : 'text'}
         bind:value
         {placeholder}
         {inputmode}

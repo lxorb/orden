@@ -97,7 +97,7 @@
   <AgentMark name={grant.name} />
   <span class="name">
     <input
-      class="title"
+      class="title orden-title-field"
       value={grant.name}
       aria-label="Name"
       spellcheck="false"
@@ -288,27 +288,8 @@
     color: var(--muted);
   }
   .title {
-    width: 100%;
-    margin-inline-start: -7px;
-    padding: 2px 6px;
-    border: 1px solid transparent;
-    border-radius: var(--radius-sm);
-    background: none;
-    color: var(--text-strong);
-    font-family: var(--font-ui);
+    margin-inline-start: calc(-1px - var(--space-2));
     font-size: var(--text-base);
-    font-weight: var(--weight-strong);
-    transition:
-      border-color var(--dur-fast) var(--ease-out),
-      background var(--dur-fast) var(--ease-out);
-  }
-  @media (hover: hover) {
-    .title:hover {
-      border-color: var(--line);
-    }
-  }
-  .title:focus {
-    background: var(--bg);
   }
   .connected {
     margin: 0;

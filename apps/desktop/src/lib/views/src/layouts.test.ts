@@ -172,7 +172,8 @@ views:
         editing: true,
       },
     }).body
-    expect(html).toContain('<select')
+    expect(html).toContain('role="combobox"')
+    expect(html).not.toContain('<select')
   })
 })
 describe('the form', () => {
@@ -186,7 +187,8 @@ describe('the form', () => {
     const html = render(FormLayout, { props: { kit: kitOf(base, NOTES) } }).body
     expect(html.match(/class="field/g)).toHaveLength(2)
     expect(html).toMatch(/class="needed/)
-    expect(html).toContain('type="date"')
+    expect(html).toContain('aria-label="Choose a date"')
+    expect(html).not.toContain('type="date"')
     expect(html).toContain('Send')
   })
   test('offers no Send where the note would land in a space shared to be read', () => {

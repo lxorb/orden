@@ -68,6 +68,44 @@ const noCopyAppend = rule(
     }
   },
 )
+const NATIVE_PICKS = new Set(['date', 'time', 'datetime-local', 'month', 'week'])
+function picksNatively(node, seen = new Set()) {
+  if (!node || typeof node !== 'object' || seen.has(node)) return false
+  seen.add(node)
+  if ((node.type === 'Literal' || node.type === 'SvelteLiteral') && NATIVE_PICKS.has(node.value)) return true
+  if (node.type === 'TemplateElement' && NATIVE_PICKS.has(node.value.cooked)) return true
+  return Object.entries(node).some(
+    ([key, value]) =>
+      key !== 'parent' &&
+      (Array.isArray(value) ? value.some((one) => picksNatively(one, seen)) : picksNatively(value, seen)),
+  )
+}
+const ownPickers = rule(
+  'problem',
+  {
+    select: 'A native <select> opens the system menu: use Select from the ui-controls api.',
+    date: 'A native date or time input opens the system picker: use DateField or TimeField from the ui-controls api.',
+  },
+  (context) => {
+    return {
+      "SvelteElement[name.name='select']"(node) {
+        context.report({ node, messageId: 'select' })
+      },
+      "SvelteElement[name.name='input'] > SvelteStartTag > SvelteAttribute[key.name='type']"(node) {
+        if (node.value.some((one) => picksNatively(one))) context.report({ node, messageId: 'date' })
+      },
+      "CallExpression[callee.property.name='createElement'][arguments.0.value='select']"(node) {
+        context.report({ node, messageId: 'select' })
+      },
+      "AssignmentExpression[left.property.name='type']"(node) {
+        if (picksNatively(node.right)) context.report({ node, messageId: 'date' })
+      },
+      "CallExpression[callee.property.name='showPicker']"(node) {
+        context.report({ node, messageId: 'date' })
+      },
+    }
+  },
+)
 const EFFECTS = new Set(['$effect', '$effect.pre'])
 function calleeName(callee) {
   if (callee.type === 'Identifier') return callee.name
@@ -457,10 +495,16 @@ export default tseslint.config(
           'own-api': ownApi,
           'effect-imports': effectImports,
           'timed-waits': timedWaits,
+          'own-pickers': ownPickers,
         },
       },
     },
     rules: { 'orden/no-comments': 'error', 'orden/effect-imports': 'error' },
+  },
+  {
+    files: ['apps/desktop/src/**/*.{ts,svelte}', 'packages/**/*.{ts,svelte}'],
+    ignores: ['**/*.test.ts', '**/test/**'],
+    rules: { 'orden/own-pickers': 'error' },
   },
   {
     files: ['**/*.effect.test.ts', 'apps/desktop/test/effects/**/*.ts'],

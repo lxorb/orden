@@ -1,5 +1,5 @@
 {
   "name": "tasks-views",
   "layer": "content",
-  "dependsOn": ["contracts", "tasks-model"]
+  "dependsOn": ["contracts", "tasks-model", "ui-controls"]
 }

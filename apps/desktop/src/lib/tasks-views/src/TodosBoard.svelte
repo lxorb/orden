@@ -1,5 +1,6 @@
 <script lang="ts">
   import { placedBetween, SORTS, startTodos, todos, type Todo, type TodoPatch } from '../../tasks-model/src/api'
+  import { Select } from '../../ui-controls/src/api'
   import { addTodo, patchTodo, removeTodo } from './acts'
   import { dropAt } from './drop-at'
   import Filters from './Filters.svelte'
@@ -34,18 +35,16 @@
 <div class="board" data-todos-board>
   <header class="bar">
     <Filters {shown} />
-    <label class="sort">
+    <div class="sort" data-todos-sort>
       <span>Sort</span>
-      <select
-        data-todos-sort
+      <Select
+        plain
+        label="Sort"
         value={shown.sort}
-        onchange={(event) => shown.setSort(event.currentTarget.value as (typeof SORTS)[number])}
-      >
-        {#each SORTS as sort (sort)}
-          <option value={sort}>{SORT_NAMES[sort]}</option>
-        {/each}
-      </select>
-    </label>
+        options={SORTS.map((sort) => ({ value: sort, label: SORT_NAMES[sort] }))}
+        onchange={(next: string) => shown.setSort(next as (typeof SORTS)[number])}
+      />
+    </div>
     <form
       class="adder"
       onsubmit={(event) => {

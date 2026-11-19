@@ -1214,7 +1214,8 @@ textarea.orden-field.is-value {
 select:focus-visible,
 :is(textarea, input:not([type='range'], [type='checkbox'], [type='radio'], [type='color'], [type='file'])):not(
     .orden-field *,
-    .orden-edit-row *
+    .orden-edit-row *,
+    .orden-title-field
   ):focus,
 .orden-field:has(:is(input, textarea, [contenteditable]):focus) {
   outline: none;
@@ -1231,6 +1232,33 @@ select:focus-visible,
 .orden-edit-row:focus-within {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
+}
+.orden-title-field {
+  width: 100%;
+  min-width: 0;
+  padding: 2px var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-strong);
+  font-family: var(--font-ui);
+  font-size: inherit;
+  font-weight: var(--weight-strong);
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+@media (hover: hover) {
+  .orden-title-field:hover {
+    border-color: var(--line);
+  }
+}
+.orden-title-field:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg);
 }
 .orden-field-mark {
   width: var(--icon-md);

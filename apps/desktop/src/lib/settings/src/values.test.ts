@@ -22,6 +22,7 @@ const styleOf = (source: string) => /<style>([\s\S]*)<\/style>/.exec(source)?.[1
 const NOT_VALUES = [
   /placeholder="Search (settings|shortcuts|commands)"/,
   /class="title"/,
+  /class="[^"]*\borden-title-field\b/,
   /rows="12"/,
   /class="slider orden-slider"/,
 ]

@@ -2,6 +2,7 @@
   import type { Property } from '@orden/markdown/properties'
   import { type ListItem, withItem, withoutItem } from '@orden/markdown/property-edits'
   import { Cross } from '../../ui-kit/src/api'
+  import { DateField, Select, TimeField } from '../../ui-controls/src/api'
 
   const {
     property,
@@ -29,13 +30,8 @@
     event.preventDefault()
     if (event.currentTarget instanceof HTMLElement) event.currentTarget.blur()
   }
-  const dated = (field: HTMLInputElement): string =>
-    field.type === 'datetime-local' ? field.value.replace('T', ' ') : field.value
-  function fieldType(one: Property): string {
-    if (one.kind === 'number') return 'number'
-    if (one.kind !== 'date') return 'text'
-    return one.value.length > 10 ? 'datetime-local' : 'date'
-  }
+  const day = $derived(property.value.slice(0, 10))
+  const clock = $derived(property.value.slice(11, 16))
   function addItem(field: HTMLInputElement) {
     const said = field.value
     field.value = ''
@@ -106,27 +102,41 @@
       onchange={(event) => onwrite(event.currentTarget.checked ? 'true' : 'false')}
     />
   {:else if choices && writable}
-    <select
-      class="field"
-      aria-label={property.key}
+    <Select
+      label={property.key}
       value={property.value}
-      use:focusOnMount
-      onchange={(event) => onwrite(event.currentTarget.value || null)}
-    >
-      {#each choices.includes(property.value) || !property.value ? choices : [property.value, ...choices] as one (one)}
-        <option value={one}>{one}</option>
-      {/each}
-    </select>
+      options={(choices.includes(property.value) || !property.value ? choices : [property.value, ...choices]).map(
+        (one) => ({ value: one, label: one }),
+      )}
+      {autofocus}
+      onchange={(next: string) => onwrite(next || null)}
+    />
+  {:else if property.kind === 'date' && writable}
+    <span class="when">
+      <DateField
+        label={property.key}
+        value={day}
+        {autofocus}
+        onchange={(next: string) => onwrite(next ? next + property.value.slice(10) : null)}
+      />
+      {#if property.value.length > 10}
+        <TimeField
+          label="{property.key} time"
+          value={clock}
+          onchange={(next: string) => onwrite(next ? `${day} ${next}` : day)}
+        />
+      {/if}
+    </span>
   {:else}
     <input
       class="field"
-      type={fieldType(property)}
-      value={fieldType(property) === 'datetime-local' ? property.value.replace(' ', 'T') : property.value}
+      type={property.kind === 'number' ? 'number' : 'text'}
+      value={property.value}
       readonly={!writable}
       aria-label={property.key}
       use:focusOnMount
       onkeydown={commitOnEnter}
-      onchange={(event) => onwrite(dated(event.currentTarget) || null)}
+      onchange={(event) => onwrite(event.currentTarget.value || null)}
     />
   {/if}
 </span>
@@ -154,10 +164,14 @@
       border-color var(--dur-fast) var(--ease-out),
       background var(--dur-fast) var(--ease-out);
   }
-  .field[type='number'],
-  .field[type='date'],
-  .field[type='datetime-local'] {
+  .field[type='number'] {
     font-variant-numeric: tabular-nums;
+  }
+  .when {
+    display: flex;
+    gap: var(--space-1);
+    width: 100%;
+    min-width: 0;
   }
   @media (hover: hover) {
     .field:hover:not([readonly]) {

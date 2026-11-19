@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Value } from '@orden/bases'
   import { menu } from '../../ui-kit/src/api'
-  import { Select } from '../../ui-controls/src/api'
+  import { DateField, Select } from '../../ui-controls/src/api'
   import { workspace } from '../../workspace/src/api'
   import { addNote } from './add'
   import { columnMenu } from './column-menu'
@@ -104,11 +104,18 @@
           options={[{ value: '', label: 'None' }, ...choices.map((one) => ({ value: one, label: one }))]}
           onchange={(next: string) => (values = { ...values, [field]: next })}
         />
+      {:else if kind === 'date'}
+        <DateField
+          label={propertyName(field, base ? displayName(base, field) : undefined)}
+          placeholder=""
+          value={typeof values[field] === 'string' ? values[field] : ''}
+          onchange={(next: string) => (values = { ...values, [field]: next })}
+        />
       {:else}
         <input
           class="orden-field"
           aria-label={propertyName(field, base ? displayName(base, field) : undefined)}
-          type={kind === 'number' ? 'number' : kind === 'date' ? 'date' : 'text'}
+          type={kind === 'number' ? 'number' : 'text'}
           value={typeof values[field] === 'string' ? values[field] : ''}
           oninput={(event) => (values = { ...values, [field]: event.currentTarget.value })}
         />

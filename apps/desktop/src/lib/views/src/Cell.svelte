@@ -4,6 +4,7 @@
   import type { Property } from '@orden/markdown/properties'
   import type { ListItem } from '@orden/markdown/property-edits'
   import PropertyValue from './PropertyValue.svelte'
+  import { TimeField } from '../../ui-controls/src/api'
   import { valueText, toneColour } from './chips'
   import {
     bare,
@@ -110,6 +111,12 @@
     if (editor === 'select' && base) return optionWritten(base, property, value, kit.live.rows, words)
     return words
   }
+  function holds(editing: HTMLElement, node: Node): boolean {
+    if (editing.contains(node)) return true
+    return [...editing.querySelectorAll('[aria-controls]')].some(
+      (one) => document.getElementById(one.getAttribute('aria-controls') ?? '')?.contains(node) === true,
+    )
+  }
   function stopOnKeys(event: KeyboardEvent) {
     if (event.key === 'Escape') {
       event.preventDefault()
@@ -119,10 +126,6 @@
       void tick().then(() => cell?.focus())
     }
   }
-  function focusIt(node: HTMLElement) {
-    node.focus()
-    if (node instanceof HTMLInputElement && node.type === 'text') node.select()
-  }
 </script>
 
 {#if editing && writable && editor !== 'checkbox'}
@@ -131,17 +134,15 @@
     class="editing"
     onkeydown={stopOnKeys}
     onfocusout={(event) => {
-      if (!(event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget))) onstop?.()
+      if (!(event.relatedTarget instanceof Node && holds(event.currentTarget, event.relatedTarget))) onstop?.()
     }}
   >
     {#if editor === 'time'}
-      <input
-        class="edit"
-        type="time"
-        aria-label="Time"
+      <TimeField
+        label="Time"
         value={typeof value === 'string' ? value : ''}
-        use:focusIt
-        onchange={(event) => write(event.currentTarget.value || null)}
+        autofocus
+        onchange={(next: string) => write(next || null)}
       />
     {:else}
       <PropertyValue
@@ -260,17 +261,5 @@
     align-items: center;
     min-width: 0;
     width: 100%;
-  }
-  .edit {
-    flex: 1;
-    min-width: 0;
-    width: 100%;
-    padding: 0.15em 0.3em;
-    border: 1px solid var(--line-strong);
-    border-radius: var(--radius-sm);
-    background: var(--bg);
-    color: var(--text-strong);
-    font: inherit;
-    font-variant-numeric: tabular-nums;
   }
 </style>

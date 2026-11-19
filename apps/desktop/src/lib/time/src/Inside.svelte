@@ -1,5 +1,6 @@
 <script lang="ts">
   import { midnightOf } from '../../platform/src/api'
+  import { Select, TimeField } from '../../ui-controls/src/api'
   import { atClock, clockOf, daysAfter } from './days'
   import { type Picked, type Stretch, within } from './lanes'
   import { clock, length, nameOf, placeTint, tintOf } from './look'
@@ -70,32 +71,24 @@
 
   {#if entry}
     <div class="entry">
-      <select
-        class="orden-field"
-        aria-label="Activity"
+      <Select
+        label="Activity"
         value={entry.activity ?? ''}
-        onchange={(event) => time.changeSpan(entry.id, { activity: event.currentTarget.value || null })}
-      >
-        <option value="">No activity</option>
-        {#each time.activities.filter((one) => !one.archived || one.id === entry.activity) as one (one.id)}
-          <option value={one.id}>{one.name}</option>
-        {/each}
-      </select>
+        options={[
+          { value: '', label: 'No activity' },
+          ...time.activities
+            .filter((one) => !one.archived || one.id === entry.activity)
+            .map((one) => ({ value: one.id, label: one.name })),
+        ]}
+        onchange={(next: string) => time.changeSpan(entry.id, { activity: next || null })}
+      />
       <div class="clocks">
-        <input
-          class="orden-field"
-          type="time"
-          aria-label="Start time"
-          value={clockOf(entry.start)}
-          onchange={(event) => moved('start', event.currentTarget.value)}
-        />
-        <input
-          class="orden-field"
-          type="time"
-          aria-label="End time"
+        <TimeField label="Start time" value={clockOf(entry.start)} onchange={(next: string) => moved('start', next)} />
+        <TimeField
+          label="End time"
           value={entry.end === null ? '' : clockOf(entry.end)}
           disabled={entry.end === null}
-          onchange={(event) => moved('end', event.currentTarget.value)}
+          onchange={(next: string) => moved('end', next)}
         />
       </div>
       <input
