@@ -1,6 +1,6 @@
 import { err, failure, ok, type Result } from '@orden/contracts'
 import { type Kept, TodoRecords, type TodoDisk, type TodoServer } from './records'
-import { nextOrder } from './query'
+import { dayOf, nextOrder } from './query'
 import { type Board, BOARD_ID, boardFields, boardOf } from './board'
 import { checkedPatch, fieldsOf, fitsOneChange, KIND, newId, type Todo, todoOf, type TodoPatch } from './todo'
 
@@ -26,12 +26,25 @@ export interface StoreWorld {
   later(run: () => void, ms: number): () => void
 }
 const missing = (what: string) => err(failure('tasks-model', 'missing', what))
+const refused = (what: string) => err(failure('tasks-model', 'invalid', what))
+const RULE = 'repeat is a rule like "every 3 days" or "every! 10 days"'
+interface Moved {
+  readonly copy: string
+  readonly was: Pick<Todo, 'start' | 'deadline' | 'repeat' | 'subtasks'>
+}
+async function ruled(patch: TodoPatch): Promise<Result<TodoPatch>> {
+  if (typeof patch.repeat !== 'string') return ok(patch)
+  const { parseRule, ruleText } = await import('@orden/bases')
+  const rule = parseRule(patch.repeat)
+  return rule ? ok({ ...patch, repeat: ruleText(rule) }) : refused(RULE)
+}
 export class TodoStore {
   todos = $state<readonly Todo[]>([])
   board = $state<Board>(boardOf(null))
   answers = $state<boolean | null>(null)
   openedFor = $state<string | null | undefined>(undefined)
   private records: TodoRecords | null = null
+  private moved: readonly (Moved & { readonly id: string })[] = []
   private disk: OpenedDisk | null = null
   private owner: string | null | undefined = undefined
   private server: TodoServer | null = null
@@ -139,7 +152,8 @@ export class TodoStore {
   async add(patch: TodoPatch & { title: string }): Promise<Result<Todo>> {
     const records = this.records
     if (!records) return missing('the todos are not open yet')
-    const checked = checkedPatch(patch)
+    const plain = checkedPatch(patch)
+    const checked = plain.ok ? await ruled(plain.value) : plain
     if (!checked.ok) return checked
     const id = newId()
     const now = this.world.now()
@@ -151,6 +165,7 @@ export class TodoStore {
       priority: 0,
       done: false,
       subtasks: [],
+      repeat: null,
       order: nextOrder(this.todos),
       ...checked.value,
     })
@@ -167,8 +182,16 @@ export class TodoStore {
     if (!records) return missing('the todos are not open yet')
     const was = this.todo(id)
     if (!was) return missing(`no todo ${id}`)
-    const checked = checkedPatch(patch)
+    const plain = checkedPatch(patch)
+    const checked = plain.ok ? await ruled(plain.value) : plain
     if (!checked.ok) return checked
+    if (checked.value.done === true && !was.done && was.repeat !== null) {
+      const { nextRepeat } = await import('@orden/bases/occurrence')
+      const next = nextRepeat({ repeat: was.repeat, start: was.start, deadline: was.deadline }, dayOf(this.world.now()))
+      if (next) return this.moveOn(was, checked.value, next)
+    }
+    const back = this.moved.find((one) => one.id === id)
+    if (checked.value.done === false && !was.done && back) return this.moveBack(id, back)
     const fields = fieldsOf(checked.value)
     if (checked.value.done !== undefined && checked.value.done !== was.done) {
       fields.doneAt = checked.value.done ? this.world.now() : null
@@ -177,6 +200,60 @@ export class TodoStore {
     const fits = fitsOneChange(id, { ...records.fieldsOf(id), ...fields }, this.device)
     if (!fits.ok) return fits
     await records.change([{ id, fields }])
+    this.wrote()
+    const now = this.todo(id)
+    return now ? ok(now) : missing(`no todo ${id}`)
+  }
+  private async moveOn(
+    was: Todo,
+    patch: TodoPatch,
+    next: { repeat: string; start: string | null; deadline: string | null },
+  ): Promise<Result<Todo>> {
+    const records = this.records
+    if (!records) return missing('the todos are not open yet')
+    const now = this.world.now()
+    const copy = newId()
+    const { title, description, labels, start, deadline, priority, subtasks, order } = was
+    const kept = fieldsOf({
+      title,
+      description,
+      labels,
+      start,
+      deadline,
+      priority,
+      subtasks,
+      order,
+      done: true,
+      repeat: null,
+    })
+    const fields = fieldsOf({
+      ...patch,
+      done: false,
+      start: next.start,
+      deadline: next.deadline,
+      repeat: next.repeat,
+      subtasks: was.subtasks.map((one) => ({ ...one, done: false })),
+    })
+    await records.change([
+      { id: copy, fields: { ...kept, kind: KIND, created: now, doneAt: now } },
+      { id: was.id, fields },
+    ])
+    this.moved = [
+      ...this.moved.filter((one) => one.id !== was.id),
+      { id: was.id, copy, was: { start, deadline, repeat: was.repeat, subtasks } },
+    ]
+    this.wrote()
+    const moved = this.todo(was.id)
+    return moved ? ok(moved) : missing(`no todo ${was.id}`)
+  }
+  private async moveBack(id: string, back: Moved): Promise<Result<Todo>> {
+    const records = this.records
+    if (!records) return missing('the todos are not open yet')
+    await records.change([
+      { id, fields: fieldsOf(back.was) },
+      { id: back.copy, fields: { gone: true } },
+    ])
+    this.moved = this.moved.filter((one) => one.id !== id)
     this.wrote()
     const now = this.todo(id)
     return now ? ok(now) : missing(`no todo ${id}`)

@@ -27,6 +27,7 @@ export interface Todo {
   readonly done: boolean
   readonly doneAt: number | null
   readonly subtasks: readonly Subtask[]
+  readonly repeat: string | null
   readonly order: number
   readonly created: number
 }
@@ -102,6 +103,7 @@ export function todoOf(id: string, fields: InboxFields): Todo | null {
     subtasks: texts(fields.subtasks)
       .map(subtaskOf)
       .filter((one): one is Subtask => one !== null),
+    repeat: typeof fields.repeat === 'string' && fields.repeat.trim() !== '' ? fields.repeat : null,
     order: typeof fields.order === 'number' ? fields.order : 0,
     created: typeof fields.created === 'number' ? fields.created : 0,
   }
@@ -118,6 +120,7 @@ export function fieldsOf(patch: TodoPatch): InboxFields {
   if (patch.subtasks !== undefined) {
     fields.subtasks = patch.subtasks.map((one) => JSON.stringify({ id: one.id, title: one.title, done: one.done }))
   }
+  if (patch.repeat !== undefined) fields.repeat = patch.repeat
   if (patch.order !== undefined) fields.order = patch.order
   return fields
 }
@@ -167,6 +170,10 @@ export function checkedPatch(patch: TodoPatch): Result<TodoPatch> {
       return refused(`a subtask title is at most ${LIMITS.title} characters`)
     }
     out.subtasks = subtasks
+  }
+  if (patch.repeat !== undefined) {
+    const typed = patch.repeat?.trim() ?? ''
+    out.repeat = typed === '' ? null : typed
   }
   if (patch.order !== undefined) {
     if (!Number.isFinite(patch.order)) return refused('order must be a number')

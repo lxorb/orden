@@ -55,9 +55,88 @@ const todo = (over: Partial<Todo>): Todo => ({
   done: false,
   doneAt: null,
   subtasks: [],
+  repeat: null,
   order: 0,
   created: 0,
   ...over,
+})
+describe('a repeating todo', () => {
+  const opened = async () => {
+    const { store, open } = world(null)
+    await open(null)
+    const add = async (repeat: string, start: string | null, deadline: string | null = null) => {
+      const made = await store.add({
+        title: 'Pay rent',
+        repeat,
+        start,
+        deadline,
+        subtasks: [{ id: 's', title: 'Log in', done: true }],
+      })
+      if (!made.ok) throw new Error(made.error.message)
+      return made.value.id
+    }
+    const copies = () => store.todos.filter((one) => one.done && one.title === 'Pay rent')
+    return { store, add, copies }
+  }
+  test('done on a fixed day moves to the next date and leaves a done copy behind', async () => {
+    const { store, add, copies } = await opened()
+    const id = await add('every month on the 1st', null, '2026-11-01')
+    const kept = await store.update(id, { done: true })
+    expect(kept.ok && kept.value).toMatchObject({
+      done: false,
+      deadline: '2026-12-01',
+      repeat: 'every month on the 1st',
+    })
+    expect(store.todo(id)?.subtasks).toEqual([{ id: 's', title: 'Log in', done: false }])
+    expect(copies()).toHaveLength(1)
+    expect(copies()[0]).toMatchObject({ deadline: '2026-11-01', repeat: null, done: true })
+    await store.update(id, { done: true })
+    expect(store.todo(id)?.deadline).toBe('2027-01-01')
+    expect(
+      copies()
+        .map((one) => one.deadline)
+        .sort(),
+    ).toEqual(['2026-11-01', '2026-12-01'])
+  })
+  test('done when it counts from done moves on from today', async () => {
+    const { store, add } = await opened()
+    const id = await add('every! 10 days', '2026-11-01')
+    expect(store.todo(id)?.repeat).toBe('every 10 days when done')
+    await store.update(id, { done: true })
+    expect(store.todo(id)?.start).toBe('2026-11-24')
+  })
+  test('undone again goes back to where it was and its done copy goes', async () => {
+    const { store, add, copies } = await opened()
+    const id = await add('every week', '2026-11-02', '2026-11-04')
+    await store.update(id, { done: true })
+    expect(copies()).toHaveLength(1)
+    await store.update(id, { done: false })
+    expect(store.todo(id)).toMatchObject({ start: '2026-11-02', deadline: '2026-11-04', done: false })
+    expect(store.todo(id)?.subtasks).toEqual([{ id: 's', title: 'Log in', done: true }])
+    expect(copies()).toHaveLength(0)
+  })
+  test('one with no next date is simply done, and a rule it cannot read is refused', async () => {
+    const { store, add, copies } = await opened()
+    const id = await add('every day for 1 time', '2026-11-14')
+    await store.update(id, { done: true })
+    expect(store.todo(id)?.done).toBe(true)
+    expect(copies()).toHaveLength(1)
+    const bad = await store.add({ title: 'x', repeat: 'now and then' })
+    expect(bad.ok).toBe(false)
+    if (!bad.ok) expect(bad.error.message).toBe('repeat is a rule like "every 3 days" or "every! 10 days"')
+  })
+  test('its rule reaches another device of the user', async () => {
+    const server = new MemoryTodoServer()
+    const one = world(server)
+    const two = world(server)
+    await one.open('u')
+    await two.open('u')
+    const made = await one.store.add({ title: 'Water plants', repeat: 'every 3 days' })
+    if (!made.ok) throw new Error(made.error.message)
+    await one.store.exchange()
+    await two.store.exchange()
+    expect(two.store.todo(made.value.id)?.repeat).toBe('every 3 days')
+  })
 })
 describe('tasks-model contract', () => {
   test('every todo link follows its note when the note or its folder moves or comes back, but not a move heard from elsewhere or into another space', async () => {

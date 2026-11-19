@@ -41,6 +41,7 @@
   const subtasksDone = $derived(todo.subtasks.filter((one) => one.done).length)
   const notes = $derived(linksIn(todo.description))
   const tone = $derived(priorityTone(todo.priority))
+  const repeats = $derived(todo.repeat === null ? null : todo.repeat.replace(/ when done$/, ' after done'))
 </script>
 
 <div
@@ -74,7 +75,7 @@
   >
     <span class="title">{todo.title}</span>
     {#if picked}<span class="orden-said">Selected</span>{/if}
-    {#if todo.priority > 0 || todo.deadline !== null || todo.subtasks.length || (showLabels && todo.labels.length)}
+    {#if todo.priority > 0 || todo.deadline !== null || repeats !== null || todo.subtasks.length || (showLabels && todo.labels.length)}
       <span class="meta">
         {#if todo.priority > 0}
           <span class="priority" style:--tone={tone}>{PRIORITY_NAMES[todo.priority]}</span>
@@ -84,6 +85,15 @@
             <svg viewBox="0 0 16 16" aria-hidden="true"
               ><rect x="2.5" y="3.5" width="11" height="10" rx="1.5" /><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3" /></svg
             >{dayWords(todo.deadline, today, 'short')}</span
+          >
+        {/if}
+        {#if repeats !== null}
+          <span class="repeat" data-repeat>
+            <svg class="wide" viewBox="0 0 24 24" aria-hidden="true"
+              ><path d="m17 2 4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14" /><path d="m7 22-4-4 4-4" /><path
+                d="M21 13v1a4 4 0 0 1-4 4H3"
+              /></svg
+            >{repeats}</span
           >
         {/if}
         {#if todo.subtasks.length}
@@ -222,6 +232,9 @@
     stroke-width: 1.4;
     stroke-linecap: round;
     stroke-linejoin: round;
+  }
+  svg.wide {
+    stroke-width: 2;
   }
   .priority {
     color: var(--tone, var(--muted));

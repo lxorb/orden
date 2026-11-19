@@ -24,6 +24,7 @@ const todo = (over: Partial<Todo>): Todo => ({
   done: false,
   doneAt: null,
   subtasks: [],
+  repeat: null,
   order: 0,
   created: 0,
   ...over,
