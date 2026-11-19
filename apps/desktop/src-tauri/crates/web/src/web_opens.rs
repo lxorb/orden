@@ -438,15 +438,6 @@ pub const SCRIPT: &str = r"(function () {
     }, true)
   }
 })()";
-const STORE_PART: &str = "  var here = typeof location";
-const STORE_END: &str = "    }, true)\n  }\n";
-fn without_store_button(script: &str) -> String {
-    let Some(start) = script.find(STORE_PART) else {
-        return script.to_owned();
-    };
-    let end = script[start..].find(STORE_END).map_or(start, |at| start + at + STORE_END.len());
-    format!("{}{}", &script[..start], &script[end..])
-}
 pub fn chord(name: &str) -> Option<Pressed> {
     match name {
         CTRL_D => Some(Pressed::with_ctrl("d", "KeyD", false)),
@@ -494,7 +485,7 @@ pub fn placed(name: &str, user: bool, held: Held, menu: bool) -> Option<Asked> {
 }
 pub const BINDING: &str = "ordenAsked";
 pub fn script() -> String {
-    without_store_button(SCRIPT)
+    SCRIPT
         .replacen(
             "var open = window.open.bind(window)",
             concat!(
@@ -716,19 +707,16 @@ mod tests {
         }
     }
     #[test]
-    fn chromium_leaves_the_store_s_button_to_the_store() {
-        let left = super::without_store_button(SCRIPT);
-        assert!(!left.contains("orden-install-extension"));
-        assert!(!left.contains("chromewebstore"));
-        assert!(left.contains("'orden-ctrl-d'") && left.contains("'orden-twice-shift'"));
-        assert!(left.trim_end().ends_with("})()"));
-        assert_eq!(
-            SCRIPT.len() - left.len(),
-            SCRIPT.find(super::STORE_PART).map_or(0, |start| {
-                SCRIPT[start..].find(super::STORE_END).expect("the part ends")
-                    + super::STORE_END.len()
-            })
-        );
+    fn chromium_takes_the_store_s_add_button_for_orden_s_own_install() {
+        let script = super::script();
+        assert!(script.contains("'orden-install-extension'"));
+        assert!(script.contains("chromewebstore\\.google\\.com|microsoftedge\\.microsoft\\.com"));
+        assert!(script.contains("/\\/detail\\//.test(here.pathname)"));
+        assert!(script.contains("event.preventDefault()\n      event.stopImmediatePropagation()"));
+        assert!(script
+            .contains("addEventListener('click', function (event) {\n      if (!event.isTrusted"));
+        assert!(!script.contains("webstorePrivate"));
+        assert!(script.trim_end().ends_with("})()"));
     }
     #[test]
     fn ctrl_0_asks_by_a_name_of_its_own() {
