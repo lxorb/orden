@@ -6,7 +6,7 @@ const store = vi.hoisted(() => ({
   space: { id: 'Notes', name: 'Notes', root: 'Notes' },
   spaceId: 'space-1',
   item: null as { id: string; path: string } | null,
-  who: null as unknown,
+  who: null as object | null,
   error: null,
   email: 'ada@example.com',
   role: 'write',
@@ -53,12 +53,12 @@ function draw() {
 }
 const field = () => target.querySelector<HTMLInputElement>('input[aria-label="Add people by email"]')
 const send = () => target.querySelector<HTMLButtonElement>('button[aria-label="Invite"]')
-const says = (words: string) => (target.textContent ?? '').includes(words)
+const says = (words: string) => target.textContent.includes(words)
 describe('the places in a shared space', () => {
   test('are counted beside who has access', () => {
     store.seats = { used: 3, most: 10 }
     draw()
-    expect(target.querySelector('.seats')?.textContent?.trim()).toBe('3 of 10 places used')
+    expect(target.querySelector('.seats')?.textContent.trim()).toBe('3 of 10 places used')
     expect(field()?.disabled).toBe(false)
     expect(says('This space is full')).toBe(false)
   })
@@ -66,7 +66,7 @@ describe('the places in a shared space', () => {
     store.seats = { used: 10, most: 10 }
     store.full = true
     draw()
-    expect(target.querySelector('.seats')?.textContent?.trim()).toBe('10 of 10 places used')
+    expect(target.querySelector('.seats')?.textContent.trim()).toBe('10 of 10 places used')
     expect(field()?.disabled).toBe(true)
     expect(send()?.disabled).toBe(true)
     expect(says('This space is full. Remove someone to invite more.')).toBe(true)
@@ -75,7 +75,7 @@ describe('the places in a shared space', () => {
     store.seats = { used: 12, most: 10 }
     store.full = true
     draw()
-    expect(target.querySelector('.seats')?.textContent?.trim()).toBe('12 of 10 places used')
+    expect(target.querySelector('.seats')?.textContent.trim()).toBe('12 of 10 places used')
     expect(field()?.disabled).toBe(true)
     expect(says('ada@example.com')).toBe(true)
     expect(says('bob@example.com')).toBe(true)
