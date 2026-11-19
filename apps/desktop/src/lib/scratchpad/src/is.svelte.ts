@@ -7,7 +7,7 @@ export const WIDTH = 320
 export const isScratchpad = (path: string | null | undefined): boolean =>
   !!path && nameOf(path) === SCRATCHPAD && workspace.outside(path)
 export function padTab(): { id: string } | null {
-  return workspace.tabs.find((one) => isScratchpad(one.path)) ?? null
+  return workspace.tabHere((one) => isScratchpad(one.path))
 }
 const inCard = () =>
   typeof document !== 'undefined' && !!document.activeElement?.closest('[data-scratchpad], [data-scratchpad-card]')

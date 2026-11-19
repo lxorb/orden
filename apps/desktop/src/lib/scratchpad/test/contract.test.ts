@@ -4,6 +4,7 @@ const right = vi.hoisted(() => ({ shows: null as string | null, closed: 0 }))
 vi.mock('../../workspace/src/api', () => ({
   workspace: {
     tabs: [],
+    tabHere: () => null,
     outside: (path: string) => !path.startsWith('/space/'),
     showRight: (what: string) => {
       right.shows = what

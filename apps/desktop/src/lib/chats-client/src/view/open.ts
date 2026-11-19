@@ -25,7 +25,7 @@ export function chatName(path: string): string {
 export function openChat(path: string, how: OpenHow = {}, message?: string): void {
   if (!chatsAreOn()) return
   if (message) jumps.set(path, message)
-  const open = workspace.tabs.find((one) => one.kind === 'channel' && samePath(one.path, path))
+  const open = workspace.tabHere((one) => one.kind === 'channel' && samePath(one.path, path))
   if (open) {
     if (how.activate !== false) workspace.activeTabId = open.id
     if (message) for (const hear of hearers) hear(path)
