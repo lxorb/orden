@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { askedFrom, HANDED, openable } from './handed'
 
-const nothing = { command: '', open: '', tick: '', tickSpace: '' }
+const nothing = { command: '', open: '', tick: '' }
 describe('what the press asked for', () => {
   test('a command', () => {
     expect(askedFrom('{"command":"new","open":""}')).toEqual({ ...nothing, command: 'new' })
@@ -12,11 +12,10 @@ describe('what the press asked for', () => {
       open: '/Notes/Plan.md',
     })
   })
-  test('a task a Today box asked to tick', () => {
-    expect(askedFrom('{"tick":"Inbox.md#0:abc","tickSpace":"Home"}')).toEqual({
+  test('a task a Today box asked to tick, the space the widget still sends left out', () => {
+    expect(askedFrom('{"tick":"t1","tickSpace":"Home"}')).toEqual({
       ...nothing,
-      tick: 'Inbox.md#0:abc',
-      tickSpace: 'Home',
+      tick: 't1',
     })
   })
   test('only a command a tile or a widget sends', () => {

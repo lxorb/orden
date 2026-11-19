@@ -12,8 +12,6 @@ export interface WidgetRow {
 export interface TodayRow {
   text: string
   at: string
-  space: string
-  path: string
 }
 interface WidgetState {
   title: string
@@ -21,21 +19,8 @@ interface WidgetState {
   notes: WidgetRow[]
   today: { title: string; empty: string; tasks: TodayRow[] }
 }
-export function todayRows(
-  tasks: readonly { text: string; at: string; space: string }[],
-  rootOf: (space: string) => string | undefined,
-  most = MOST,
-): TodayRow[] {
-  return tasks.slice(0, most).map((one) => {
-    const root = rootOf(one.space)
-    const relative = one.at.replace(/#\d+:[0-9a-z]+$/, '')
-    return {
-      text: shownWords(one.text),
-      at: one.at,
-      space: one.space,
-      path: root ? insideSpace(root, relative) : '',
-    }
-  })
+export function todayRows(tasks: readonly { text: string; at: string }[], most = MOST): TodayRow[] {
+  return tasks.slice(0, most).map((one) => ({ text: shownWords(one.text), at: one.at }))
 }
 export function widgetRows(notes: readonly Entry[], kept: readonly string[], most = MOST): WidgetRow[] {
   const rows: WidgetRow[] = []
@@ -72,7 +57,7 @@ export function watchWidgets(): () => void {
   const read = async () => {
     const { listed } = await import('../../tasks-model/src/api')
     const { tasks } = await listed()
-    today = todayRows(tasks, (space) => workspace.spaces.find((one) => one.id === space)?.root)
+    today = todayRows(tasks)
   }
   const reread = afterQuiet(() => void read(), 600)
   void read()

@@ -19,17 +19,17 @@ registerAgentVerbs(() =>
 )
 const { dispatch, verbForAction } = await import('./verbs')
 describe('the to-dos from a terminal and a link', () => {
-  test('the command line asks the agent verbs as the reader, with every argument', async () => {
+  test('the command line asks the agent verbs as the reader, with every argument but a space', async () => {
     asked.length = 0
     expect(await dispatch('tasks', { space: 'Shop' }, ['add', 'Milk'])).toEqual({
       ok: true,
       value: { at: 'Inbox.md#0:abc' },
     })
-    await dispatch('tasks', { label: 'p1', limit: '5' }, ['list'])
-    await dispatch('tasks', {}, ['done', 'Inbox.md#0:abc'])
+    await dispatch('tasks', { label: 'p1', limit: '5', space: 'Shop' }, ['list'])
+    await dispatch('tasks', { space: 'Shop' }, ['done', 'Inbox.md#0:abc'])
     await dispatch('base', { view: 'Shelf' }, ['query', 'Books.base'])
     expect(asked).toEqual([
-      { name: 'add_task', args: { space: 'Shop', text: 'Milk' }, agent: null },
+      { name: 'add_task', args: { text: 'Milk' }, agent: null },
       { name: 'list_tasks', args: { label: 'p1', limit: '5' }, agent: null },
       { name: 'update_task', args: { at: 'Inbox.md#0:abc', done: true }, agent: null },
       { name: 'query_base', args: { view: 'Shelf', path: 'Books.base' }, agent: null },
@@ -66,11 +66,11 @@ describe('the to-dos from a terminal and a link', () => {
       error: 'that task is not there',
     })
   })
-  test('orden://add-task adds to an inbox and nowhere else', async () => {
+  test('orden://add-task adds a todo and nothing else, an old space left out', async () => {
     asked.length = 0
     expect(verbForAction('add-task')).toBe('tasks.add')
     expect(verbForAction('tasks.add')).toBeNull()
     await dispatch('tasks.add', { text: 'Call mum', note: 'Diary', under: 'Secrets', space: 'Home' }, [], 'link')
-    expect(asked).toEqual([{ name: 'add_task', args: { text: 'Call mum', space: 'Home' }, agent: null }])
+    expect(asked).toEqual([{ name: 'add_task', args: { text: 'Call mum' }, agent: null }])
   })
 })
