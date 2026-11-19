@@ -1,15 +1,63 @@
 import { describe, expect, test } from 'vitest'
 import { isIcon, isTint } from '../src/sync-server-engine/src/spaces/icons'
+import { call } from './harness'
 import { spaceField } from './space-field'
 
 const { at, put, listed, column, reader, kept, owned } = spaceField('icons')
 const DRESSED = { Work: 'Briefcase', 'Work/Ideas': 'folder-open' }
+const PNG = 'data:image/png;base64,'
+const picture = (length: number) => `${PNG}${'A'.repeat(length - PNG.length - 2)}==`
 kept({}, DRESSED, { Work: 'Folder' })
 owned({}, DRESSED)
 describe("a space's folder icons", () => {
   test('take an emoji, which is what a vault imported from Iconize brings', async () => {
     expect((await put({ Work: '📚', Travel: '🇩🇪' })).status).toBe(200)
     expect(await listed()).toEqual({ Work: '📚', Travel: '🇩🇪' })
+  })
+})
+describe('a picture a folder or a space wears', () => {
+  test('is a small PNG kept in the icon itself, up to 2048 characters', () => {
+    expect(isIcon(picture(2048))).toBe(true)
+    expect(isIcon(`${PNG}iVBORw0KGgo+/A=`)).toBe(true)
+    expect(isIcon(picture(2049))).toBe(false)
+  })
+  test('and never any other kind of data, nor anything that is not base64', () => {
+    expect(isIcon('data:image/svg+xml;base64,PHN2Zz4=')).toBe(false)
+    expect(isIcon('data:text/html;base64,PHNjcmlwdD4=')).toBe(false)
+    expect(isIcon('data:image/jpeg;base64,/9j/4AAQ')).toBe(false)
+    expect(isIcon('data:image/png,iVBORw0KGgo')).toBe(false)
+    expect(isIcon(`${PNG}iVBOR w0KGgo`)).toBe(false)
+    expect(isIcon(`${PNG}iVBOR"w0KGgo`)).toBe(false)
+    expect(isIcon(`${PNG}iVBORw0KGgo===`)).toBe(false)
+    expect(isIcon(`${PNG}iVBORw0KGgo=A`)).toBe(false)
+    expect(isIcon(PNG)).toBe(false)
+  })
+  test('is kept on a folder and read back from the stored map', async () => {
+    const set = await put({ Work: picture(2048), Travel: 'data:image/svg+xml;base64,PHN2Zz4=' })
+    expect(set.status).toBe(200)
+    expect(set.json.icons).toEqual({ Work: picture(2048) })
+    expect(await listed()).toEqual({ Work: picture(2048) })
+  })
+  test('fits on every one of the 400 folders a space dresses', async () => {
+    const all = Object.fromEntries(
+      Array.from({ length: 400 }, (_, at) => [`Projects/${String(at).padStart(3, '0')} folder`, picture(2048)]),
+    )
+    expect((await put(all)).status).toBe(200)
+    expect(await listed()).toEqual(all)
+  })
+  test('is kept on the space itself, and taken off again', async () => {
+    const patch = (icon: unknown) =>
+      call(at.env, `/v1/spaces/${at.space}`, { method: 'PATCH', token: at.token, body: { icon } })
+    const set = await patch(picture(2048))
+    expect(set.status).toBe(200)
+    expect(set.json.space.icon).toBe(picture(2048))
+    const space = async () =>
+      (await call(at.env, '/v1/spaces', { token: at.token })).json.spaces.find((one) => one.id === at.space)
+    expect((await space())?.icon).toBe(picture(2048))
+    expect((await patch(picture(2049))).status).toBe(400)
+    await patch('data:image/svg+xml;base64,PHN2Zz4=')
+    expect((await space())?.icon).toBe(picture(2048))
+    expect((await patch(null)).json.space.icon).toBeNull()
   })
 })
 describe('what a folder may wear', () => {
@@ -97,8 +145,10 @@ describe('more folder icons than a space holds', () => {
     expect(past.json.error).toBe('icons holds at most 400 folders')
   })
   test('is refused by the size, when every entry is legal on its own', async () => {
-    const deep = Object.fromEntries(Array.from({ length: 200 }, (_, at) => [`${'folder/'.repeat(40)}${at}`, 'Folder']))
-    expect((await put(deep)).status).toBe(413)
+    const path = (at: number) => `${String(at).padStart(3, '0')}/${'x'.repeat(295)}`
+    const deep = Object.fromEntries(Array.from({ length: 400 }, (_, at) => [path(at), picture(2048)]))
+    const tints = Object.fromEntries(Array.from({ length: 400 }, (_, at) => [path(at), `a${'b'.repeat(31)}`]))
+    expect((await put(deep, { tints })).status).toBe(413)
     expect(await listed()).toEqual({})
   })
 })

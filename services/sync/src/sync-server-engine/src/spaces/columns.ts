@@ -8,7 +8,7 @@ export const MOST_BYTES: Record<Column | 'icons', number> = {
   excluded: 16 * 1024,
   site: 24 * 1024,
   files: 32 * 1024,
-  icons: 32 * 1024,
+  icons: 1024 * 1024,
   arranged: 32 * 1024,
   archived: 96 * 1024,
 }

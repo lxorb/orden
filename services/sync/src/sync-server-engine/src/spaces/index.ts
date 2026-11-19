@@ -19,7 +19,7 @@ import { spaceArchived } from './archived'
 import { spaceFiles } from './files'
 import { spaceGraph } from './graph'
 import { spaceSort } from './sort'
-import { folderIcons, isIcon, isTint } from './icons'
+import { folderIcons, isIcon, isTint, LONGEST_PICTURE_ICON } from './icons'
 import { answers } from './answers'
 import { site } from './site'
 import { publish } from './publish'
@@ -132,7 +132,7 @@ spaces.patch('/:id', atLeast('write'), async (context) => {
   const space = spaceOf(context)
   const body = await readBody(context)
   const name = body.text('name', SPACE_NAME_LIMIT)
-  const chosen = body.nullableText('icon', ID_LIMIT)
+  const chosen = body.nullableText('icon', LONGEST_PICTURE_ICON)
   const painted = body.nullableText('tint', ID_LIMIT)
   if (body.problem) return context.json({ error: body.problem }, 400)
   if (name !== undefined && space.role !== 'owner') {
