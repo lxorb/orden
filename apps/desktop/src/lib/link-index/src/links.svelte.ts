@@ -45,6 +45,7 @@ import {
   invoke,
   isVault,
   log,
+  onDisk,
   breathe,
   coveredBy,
   keepVersion,
@@ -142,6 +143,15 @@ function stillReaches(
     return at === whole || shownName(at) === whole
   }
   return ends(at, written) || ends(shownName(at), written)
+}
+const paperOf = (pages: string): string => `${pages}.pdf`
+function carried(was: string, now: string): (path: string) => string | null {
+  const paper = isPagesTarget(was) && isPagesTarget(now) ? paperOf(was) : null
+  return (path) => {
+    if (path === was) return now
+    if (path.startsWith(`${was}/`)) return `${now}${path.slice(was.length)}`
+    return path === paper ? paperOf(now) : null
+  }
 }
 const BREATHE_EVERY = 500
 interface FilesNamed {
@@ -513,7 +523,8 @@ class Links {
   noteGone(path: string) {
     const relative = this.relative(path)
     if (!relative) return
-    const inside = (one: string) => one === relative || one.startsWith(`${relative}/`)
+    const covered = carried(relative, relative)
+    const inside = (one: string) => covered(one) !== null
     const gone = (notes: readonly ScannedNote[]) => notes.filter((note) => !inside(note.path))
     this.editFiles((files) => (files.some(inside) ? files.filter((one) => !inside(one)) : files))
     if (!this.scanning && gone(this.notes).length === this.notes.length) return
@@ -530,6 +541,9 @@ class Links {
       }
       const content = await invoke<string>('read_note', { path }).catch(() => null)
       if (content !== null && this.scans === mine) this.noteSaved(path, content)
+      if (isPagesTarget(relative) && (await onDisk(paperOf(path))) && this.scans === mine) {
+        this.fileAdded(paperOf(relative))
+      }
       return
     }
     const found = await invoke<SpaceLinks>('scan_links', { root: path }).catch(() => null)
@@ -546,7 +560,8 @@ class Links {
       this.noteGone(from)
       return
     }
-    const moved = (path: string) => (path === was || path.startsWith(`${was}/`) ? now + path.slice(was.length) : path)
+    const carry = carried(was, now)
+    const moved = (path: string) => carry(path) ?? path
     this.editFiles((files) => (files.some((path) => moved(path) !== path) ? files.map(moved).sort() : files))
     this.edit((notes) =>
       notes.map((note) => {
@@ -1037,8 +1052,8 @@ class Links {
     }
     const found = await invoke<SpaceLinks>('scan_links', { root }).catch(() => null)
     if (!found) return 0
-    const back = (path: string) =>
-      path === now ? was : path.startsWith(`${now}/`) ? `${was}${path.slice(now.length)}` : path
+    const carry = carried(now, was)
+    const back = (path: string) => carry(path) ?? path
     const notes = found.notes.map((note) => {
       const path = back(note.path)
       return path === note.path ? note : { ...note, path, name: noteName(path) }
@@ -1082,8 +1097,7 @@ class Links {
     const { was, now, root, open, how, files, listed } = asked
     const { moved = false, only, touched: told } = how
     const name = comparable(nameOf(was))
-    const moving = (path: string) =>
-      path === was ? now : path.startsWith(`${was}/`) ? `${now}${path.slice(was.length)}` : null
+    const moving = carried(was, now)
     const movingNames = new Set(
       [...notes.map((one) => one.path), ...files]
         .filter((path) => moving(path) !== null)

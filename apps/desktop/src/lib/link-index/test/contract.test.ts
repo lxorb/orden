@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
-import { describe, expect, test } from 'vitest'
-import { providePort, workspaceNotes } from '@orden/contracts'
+import { describe, expect, test, vi } from 'vitest'
+import { type OpenNote, portOf, providePort, type SyncFileOp, workspaceNotes } from '@orden/contracts'
 import { pressQueryRow, queryRowsHtml, readsWords, serveLinks, spaceLinks } from '../src/api'
 
 const HERE = join(import.meta.dirname, '..')
@@ -98,5 +98,81 @@ describe('the link index', () => {
       '[y](y.md)\n[plan](../../Work/Plan.md)\n![](../../assets/a.png)',
     )
     expect(index.rebased(inner, '/s/Work/Sub/x.md', '/s/Copied/Sub/x.md')).toContain('[y](../../Work/Sub/y.md)')
+  })
+  test('a page note carries its paper through renames, moves into a folder, their undoing and its removal', async () => {
+    const before = '![[Paper.pages.pdf]]\n[[Paper.pages.pdf#page=2]]\n[p](Paper.pages.pdf)'
+    const card = (file: string) =>
+      JSON.stringify({ nodes: [{ id: 'c', type: 'file', file, x: 0, y: 0, width: 9, height: 9 }], edges: [] })
+    const disk = new Map([
+      ['/s/Paper.pages', '{"nodes":[],"edges":[]}'],
+      ['/s/Paper.pages.pdf', '%PDF'],
+      ['/s/Alpha.md', before],
+      ['/s/Board.canvas', card('Paper.pages.pdf')],
+    ])
+    const answer = (command: string, args: Record<string, unknown> = {}): unknown => {
+      const path = String(args.path)
+      if (command === 'path_exists') return disk.has(path)
+      if (command === 'read_note') return disk.get(path) ?? Promise.reject(new Error(path))
+      if (command === 'write_note') return void disk.set(path, String(args.content))
+      if (command === 'scan_links') return { notes: index.held(), files: papers() }
+      return null
+    }
+    const papers = () => [...disk.keys()].filter((one) => one.endsWith('.pdf')).map((one) => one.slice(3))
+    const backend = portOf('backend.web')
+    providePort('backend.web', {
+      invoke: <T>(command: string, args?: Record<string, unknown>) => Promise.resolve(answer(command, args) as T),
+    })
+    const index = spaceLinks()
+    void index.build('/s')
+    for (const [path, text] of disk) if (!path.endsWith('.pdf')) index.noteSaved(path, text)
+    index.fileAdded(...papers())
+    await vi.waitFor(() => expect(index.held()).toHaveLength(3))
+    const saved = () => index.noteSaved('/s/Alpha.md', disk.get('/s/Alpha.md') ?? '')
+    const open = (path: string): OpenNote | null => {
+      const text = disk.get(path)
+      if (text === undefined) return null
+      const writeTo = (at: string, words: string) => Promise.resolve(void disk.set(at, words)).then(() => words)
+      return { text, onDisk: text, flush: () => undefined, edited: () => undefined, wroteAs: () => undefined, writeTo }
+    }
+    const moved = async (from: string, to: string) => {
+      for (const [path, text] of [...disk]) {
+        const now = path === from ? to : path === `${from}.pdf` ? `${to}.pdf` : null
+        if (now === null) continue
+        disk.delete(path)
+        disk.set(now, text)
+      }
+      const op: SyncFileOp = { op: 'moved', kind: 'file', from, to, root: '/s', into: '/s' }
+      await index.follow(op)
+      await index.retarget(from, to, '/s', open, { moved: true })
+    }
+    const reached = () => index.outgoing('/s/Alpha.md').map((one) => one.to)
+    await moved('/s/Paper.pages', '/s/Thesis.pages')
+    expect(reached()).toEqual([null, null, null])
+    expect(disk.get('/s/Alpha.md')).toBe(before.replaceAll('Paper', 'Thesis'))
+    expect(disk.get('/s/Board.canvas')).toBe(card('Thesis.pages.pdf'))
+    saved()
+    expect(reached()).toEqual(['Thesis.pages.pdf', 'Thesis.pages.pdf', 'Thesis.pages.pdf'])
+    await moved('/s/Thesis.pages', '/s/Paper.pages')
+    expect([disk.get('/s/Alpha.md'), disk.get('/s/Board.canvas')]).toEqual([before, card('Paper.pages.pdf')])
+    saved()
+    await moved('/s/Paper.pages', '/s/Box/Paper.pages')
+    saved()
+    expect(reached()).toEqual(['Box/Paper.pages.pdf', 'Box/Paper.pages.pdf', 'Box/Paper.pages.pdf'])
+    expect(disk.get('/s/Board.canvas')).toBe(card('Box/Paper.pages.pdf'))
+    await moved('/s/Box/Paper.pages', '/s/Paper.pages')
+    expect([disk.get('/s/Alpha.md'), disk.get('/s/Board.canvas')]).toEqual([before, card('Paper.pages.pdf')])
+    saved()
+    await index.follow({ op: 'removed', kind: 'file', path: '/s/Paper.pages', root: '/s' })
+    expect(reached()).toEqual([null, null, null])
+    await index.follow({
+      op: 'moved',
+      kind: 'file',
+      from: '/x/Paper.pages',
+      to: '/s/Paper.pages',
+      root: null,
+      into: '/s',
+    })
+    expect(reached()).toEqual(['Paper.pages.pdf', 'Paper.pages.pdf', 'Paper.pages.pdf'])
+    if (backend.ok) providePort('backend.web', backend.value)
   })
 })
