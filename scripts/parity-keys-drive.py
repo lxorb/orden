@@ -805,10 +805,18 @@ return true
             said: dict[str, Any] = {}
             unsure = ""
             for side in ("note", "web"):
+                if PLATFORM == "windows" and side != "note":
+                    self.undo_layout()
+                    switched = self.dead_layout()
+                    if switched is not None:
+                        said[side] = (switched, False)
+                        unsure = switched
+                        continue
                 if not self.staged(side):
                     said[side] = ("no keyboard", False)
                     unsure = f"the {side} side could not be given the keyboard by a click"
                     continue
+                self.keys.chord("Shift")
                 if MAC:
                     self.keys.chord("Alt-e")
                 else:
