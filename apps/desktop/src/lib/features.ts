@@ -185,7 +185,6 @@ if (!__EVEN_PLUGIN__) {
     pages: () => import('./pages/src/api').then((one) => one.loadPages()),
     'pages-navigator': () => import('./pages/src/api').then((one) => one.loadNavigator()),
     web: loadWebTab,
-    application: () => import('./apps/src/api').then((one) => one.loadApplicationTab()),
     explorer: () => import('./explorer/src/api').then((one) => one.loadExplorerTab()),
     pass: () => import('./pass-ui/src/api').then((one) => one.loadPassTab()),
     'pass-fill': () => import('./pass-ui/src/api').then((one) => one.loadPassFill()),
@@ -266,11 +265,9 @@ if (!__EVEN_PLUGIN__) {
   registerCommands('time.', async () => (await import('./time/src/api')).timeCommands)
   registerHearing(async () => (await (await import('./web-tab/src/api')).pagesHanded()).hearPages)
   registerHearing(async () => (await (await import('./pdf/src/api')).handed()).hearPdfs)
-  registerTabKind('application', async () => (await import('./apps/src/api')).applicationTabKind)
   registerTabKind('chat', async () => (await import('./chats-client/src/api')).chatTabKind)
   registerAgentVerbs(async () => (await import('./agent-host/src/api')).hostVerbs)
   registerAgentVerbs(async () => (await import('./explorer/src/api')).explorerVerbs())
-  registerAgentVerbs(async () => (await import('./apps/src/api')).applicationVerbs())
   registerAgentVerbs(async () => (await import('./chats-client/src/api')).chatVerbs())
   registerAgentVerbs(async () => (await (await import('./terminal/src/api')).terminalAgent()).terminalVerbs)
   registerAgentTabKind(

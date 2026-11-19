@@ -2,8 +2,6 @@ import { settingFieldsIn } from '@orden/contracts'
 import { glassesGroups, wordFields } from '../../glasses-choices/src/api'
 import {
   setWord,
-  APPS_WORD,
-  appsOn,
   BASES_WORD,
   CHATS_WORD,
   chatsOn,
@@ -18,7 +16,6 @@ import {
 } from '../../gates/src/api'
 import { prompt } from '../../ui-kit/src/api'
 import { isDesktop, isMobile } from '../../platform/src/api'
-import { clipboardSharing } from './apps-clipboard.svelte'
 import type { Field, Group, Pane } from './fields'
 
 async function turnExperimental(on: boolean): Promise<void> {
@@ -62,20 +59,6 @@ function featureGroup(one: Feature): Group {
     ],
   }
 }
-function clipboardFields(): Field[] {
-  if (!appsOn()) return []
-  return [
-    {
-      kind: 'switch',
-      label: 'Share the clipboard with applications',
-      hint: 'An application on another of your computers pastes what you copied here, and what it copies comes here.',
-      words: ['clipboard', 'copy', 'paste', 'application', 'remote'],
-      initial: true,
-      get: () => clipboardSharing.on,
-      set: (on) => clipboardSharing.set(on),
-    },
-  ]
-}
 function chatFields(): Field[] {
   if (!chatsOn()) return []
   return isMobile ? [] : settingFieldsIn('experimental', 'Chats')
@@ -109,14 +92,6 @@ function features(): Feature[] {
       hint: 'Adds chats with people, mail, Telegram, Slack, WhatsApp and Signal; turning it off keeps your messages.',
       words: ['chat', 'chats', 'messages', 'mail', 'telegram', 'slack', 'whatsapp', 'signal'],
       more: chatFields,
-    },
-    {
-      key: 'applications',
-      word: APPS_WORD,
-      label: 'Applications',
-      hint: 'Adds applications, programs on another of your computers that you see and use in a tab.',
-      words: ['application', 'applications', 'app', 'remote', 'desktop', 'stream'],
-      more: clipboardFields,
     },
     ...(isDesktop
       ? [

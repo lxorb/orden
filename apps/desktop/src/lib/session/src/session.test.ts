@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from 'vitest'
 import { pane } from '../../panes/src/api'
+import { holdsRetiredTab } from '../../documents/src/api'
 import {
   type Draft,
   frameDraft,
@@ -234,6 +235,17 @@ describe('reading an arrangement of panes', () => {
   test('answers nothing for an arrangement with no panes in it', () => {
     expect(readLayout({ focused: 'p1' })).toBeNull()
     expect(readLayout(null)).toBeNull()
+  })
+  test('leaves out a tab of an application, a kind that is gone, without a word, and keeps the others', () => {
+    const app = { kind: 'application', path: '/s/Box.application', name: 'Box', doc: '' }
+    const value = {
+      focused: 'p1',
+      frame: { kind: 'pane', pane: { id: 'p1', tabs: [draft('/Notes/a.md', ''), app], active: 0 } },
+    }
+    expect(readDraft(app)).toBeNull()
+    expect(panesRead(value).flatMap((one) => one.tabs.map((tab) => tab.path))).toEqual(['/Notes/a.md'])
+    expect(readSession({ ...spaceless, tabs: [app] })?.tabs).toEqual([])
+    expect(holdsRetiredTab({ layout: value })).toBe(false)
   })
   test('takes the sidebar from the arrangement rather than from beside it', () => {
     const layout = { focused: 'p1', panel: 'outline', frame: onePane([]) }
