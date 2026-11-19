@@ -63,7 +63,10 @@
   const roomTop = $derived((barBottom > 0 ? barBottom : ROW) + MARGIN / 2)
   let panes = $state<Record<string, { w: number; h: number }>>({})
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- written as the layer comes up, read once a frame
-  const panesAsWindows = new Map<string, { node: HTMLElement; box: DOMRect; head: number; corners: Corners }>()
+  const panesAsWindows = new Map<
+    string,
+    { pane: string; node: HTMLElement; box: DOMRect; head: number; corners: Corners }
+  >()
   let asPanes = $state<Record<string, true>>({})
   let tabsAsDrawn = $state<Record<string, HTMLElement>>({})
   let ridersDrawn = $state<Record<string, HTMLElement>>({})
@@ -450,6 +453,7 @@
     }
     void done.then(settled, settled)
   }
+  const unwaited = () => undefined
   function fly() {
     if (frameAsked) return
     last = performance.now()
@@ -652,7 +656,20 @@
   function putBack(node: HTMLElement) {
     for (const name of PANE_STYLES) node.style.removeProperty(name)
   }
+  function frontsNow(): string[] {
+    const moved: string[] = []
+    for (const [id, one] of [...panesAsWindows]) {
+      const front = workspace.panes.at(one.pane)?.activeTabId
+      if (!front || front === id || panesAsWindows.has(front) || !flights.has(front)) continue
+      panesAsWindows.delete(id)
+      panesAsWindows.set(front, one)
+      moved.push(id, front)
+    }
+    if (moved.length) asPanes = Object.fromEntries([...panesAsWindows.keys()].map((id) => [id, true as const]))
+    return moved
+  }
   function aimAll() {
+    const fronts = frontsNow()
     const hands = untrack(() => heldIds)
     for (const { slot, tab } of untrack(() => windows)) {
       if (hands.has(tab.id)) continue
@@ -664,6 +681,7 @@
         flight?.aim(home)
       }
     }
+    if (started) for (const id of fronts) paint(id)
     if (stillness()) {
       if (!started) begin()
       opening.to = out ? 1 : 0
@@ -726,7 +744,7 @@
         const box = node?.getBoundingClientRect()
         if (!node || !box || box.width <= 0 || box.height <= 0) continue
         const head = node.querySelector(':scope > .head')?.getBoundingClientRect().height ?? 0
-        panesAsWindows.set(tab.id, { node, box, head, corners: cornersOf(node) })
+        panesAsWindows.set(tab.id, { pane: pane.id, node, box, head, corners: cornersOf(node) })
         asWindows[tab.id] = true
         faces.take(pane.id, tab)
       }
@@ -1399,6 +1417,7 @@
 
     {#each windows as { slot, tab } (tab.id)}
       {@const face = faceOf(slot)}
+      {@const live = asPanes[tab.id] && workspace.panes.at(tab.paneId)?.activeTabId === tab.id}
       <button
         class="window"
         class:is-at={at === tab.id}
@@ -1419,17 +1438,15 @@
         onpointercancel={cancelled}
         use:placed={tab.id}
       >
-        <span class="face-box" style:scale={slot.w / face.w}>
-          {#if !asPanes[tab.id] || workspace.panes.at(tab.paneId)?.activeTabId !== tab.id}
-            <WindowFace
-              {tab}
-              face={faces.of(tab.id)}
-              width={face.w}
-              height={face.h}
-              drawing={readying}
-              flying={onTheWay}
-            />
-          {/if}
+        <span class="face-box" class:is-live={live} style:scale={slot.w / face.w}>
+          <WindowFace
+            {tab}
+            face={faces.of(tab.id)}
+            width={face.w}
+            height={face.h}
+            drawing={live ? unwaited : readying}
+            flying={onTheWay}
+          />
         </span>
         <span class="chip" class:is-copy={!!tabsAsDrawn[tab.id]} aria-hidden="true">
           {#if tabsAsDrawn[tab.id]}
@@ -1615,6 +1632,9 @@
     top: 0;
     left: 0;
     transform-origin: 0 0;
+  }
+  .face-box.is-live {
+    visibility: hidden;
   }
   .chip.is-copy {
     background: none;
