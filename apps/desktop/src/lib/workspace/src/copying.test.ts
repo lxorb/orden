@@ -2,14 +2,20 @@ import type { Entry } from '@orden/contracts'
 import { describe, expect, test, vi } from 'vitest'
 import { memoryStorage } from '../../../../test/disk'
 
-const { told, disk, reads } = vi.hoisted(() => ({
+const { told, disk, reads, scanned } = vi.hoisted(() => ({
   reads: [] as string[],
   told: [] as string[],
   disk: new Map<string, string>(),
+  scanned: { notes: [] as string[], files: [] as string[] },
 }))
 vi.mock('../../platform/src/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../platform/src/tauri')>()),
   invoke: async (command: string, args: { from: string; to: string; path: string; content: string }) => {
+    if (command === 'scan_links') {
+      const { scanNote } = await import('@orden/scan/note')
+      return { notes: scanned.notes.map((one) => scanNote(one, disk.get(`/s/${one}`) ?? '')), files: scanned.files }
+    }
+    if (command === 'file_stamp') return null
     if (command === 'read_note') {
       reads.push(args.path)
       return disk.get(args.path) ?? null
@@ -44,6 +50,9 @@ serveWorkspace({
     }),
 })
 const { copyRows } = await import('./copying')
+const { links } = await import('../../link-index/src/api')
+const { startup } = await import('../../launch/src/api')
+void startup.shown()
 const { ItemMetaStore } = await import('../../space-kept/src/api')
 const { Protection } = await import('../../protect/src/protection.svelte')
 const meta = new ItemMetaStore((path) => (path?.startsWith('/t/') ? '/t' : '/s'))
@@ -198,5 +207,38 @@ describe('a copy that fails', () => {
     const made = await copyRows(ws as never, [{ from: '/s/Locked.md', into: '/s/Box' }])
     expect(made).toEqual([])
     expect([...ws.shown]).toEqual([])
+  })
+})
+describe('a note copied into another folder', () => {
+  async function space(notes: Record<string, string>, files: string[]) {
+    disk.clear()
+    for (const [path, text] of Object.entries(notes)) disk.set(`/s/${path}`, text)
+    scanned.notes = Object.keys(notes)
+    scanned.files = files
+    await links.build('/s')
+  }
+  test('resolves every link and picture its source resolved', async () => {
+    const plan = '![](../assets/a.png) [readme](../Read%20me.md) [[Read me]]\n'
+    await space({ 'Work/Plan.md': plan, 'Read me.md': '# Read me\n' }, ['assets/a.png'])
+    await copyRows(rig([entry('/s/Work/Plan.md')]) as never, [{ from: '/s/Work/Plan.md', into: '/s' }])
+    expect(disk.get('/s/Plan.md')).toBe('![](assets/a.png) [readme](Read%20me.md) [[Read me]]\n')
+    expect(disk.get('/s/Work/Plan.md')).toBe(plan)
+  })
+  test('of a copied folder, keeps the links within the folder and puts right the ones out of it', async () => {
+    const day = '![](../../assets/a.png) [gear](Gear/List.md) ![](map.png)\n'
+    await space({ 'Work/Tour/Day.md': day, 'Work/Tour/Gear/List.md': '# List\n' }, [
+      'assets/a.png',
+      'Work/Tour/map.png',
+    ])
+    const ws = rig([
+      entry('/s/Work/Tour', [
+        entry('/s/Work/Tour/Day.md'),
+        entry('/s/Work/Tour/map.png'),
+        entry('/s/Work/Tour/Gear', [entry('/s/Work/Tour/Gear/List.md')]),
+      ]),
+    ])
+    await copyRows(ws as never, [{ from: '/s/Work/Tour', into: '/s' }])
+    expect(disk.get('/s/Tour/Day.md')).toBe('![](../assets/a.png) [gear](Gear/List.md) ![](map.png)\n')
+    expect(disk.get('/s/Work/Tour/Day.md')).toBe(day)
   })
 })
